@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.server.service.handler;
 
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandler;
@@ -19,7 +18,7 @@ import static org.terracotta.inet.HostAndIpValidator.isValidIPv6;
 public class ServerAttributeConfigChangeHandler implements ConfigChangeHandler {
 
   @Override
-  public Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
+  public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
       throw new InvalidConfigChangeException("Invalid change: " + change);
     }
@@ -33,10 +32,6 @@ public class ServerAttributeConfigChangeHandler implements ConfigChangeHandler {
         // When node-bind-address is set, set the node-group-bind-address to the same value because platform does it
         nodeContext.getNode().setNodeGroupBindAddress(change.getValue());
       }
-
-      Cluster updatedCluster = nodeContext.getCluster();
-      change.apply(updatedCluster);
-      return updatedCluster;
     } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
     }

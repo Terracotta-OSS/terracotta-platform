@@ -33,10 +33,10 @@ public class DataDirectoryConfigChangeHandlerTest {
   public void testGetConfigWithChange() throws Exception {
     DataDirectoriesConfig dataDirectoriesConfig = mock(DataDirectoriesConfig.class);
     DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, identity());
-    Cluster updatedXmlConfig = dataDirectoryConfigChangeHandler.tryApply(topology, set.toConfiguration(topology.getCluster()));
+    dataDirectoryConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
 
-    assertThat(updatedXmlConfig.getSingleNode().get().getDataDirs().entrySet(), Matchers.hasSize(1));
-    assertThat(updatedXmlConfig.getSingleNode().get().getDataDirs(), hasEntry("new-root", Paths.get("/path/to/data/root")));
+    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().entrySet(), Matchers.hasSize(1));
+    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs(), hasEntry("new-root", Paths.get("/path/to/data/root")));
   }
 
   @Test

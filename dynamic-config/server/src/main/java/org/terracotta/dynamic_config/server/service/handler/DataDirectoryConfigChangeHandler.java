@@ -5,7 +5,6 @@
 package org.terracotta.dynamic_config.server.service.handler;
 
 import org.terracotta.config.data_roots.DataDirectoriesConfig;
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandler;
@@ -25,7 +24,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public Cluster tryApply(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
+  public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
       throw new InvalidConfigChangeException("Invalid change: " + change);
     }
@@ -34,20 +33,15 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
       String dataDirectoryName = change.getKey();
       String dataDirectoryPath = change.getValue();
       dataDirectoriesConfig.validateDataDirectory(dataDirectoryName, dataDirectoryPath);
-
-      Cluster updatedCluster = baseConfig.getCluster();
-      change.apply(updatedCluster);
-      return updatedCluster;
     } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
     }
   }
 
   @Override
-  public boolean apply(Configuration change) {
+  public void apply(Configuration change) {
     String dataDirectoryName = change.getKey();
     String dataDirectoryPath = parameterSubstitutor.substitute(change.getValue());
     dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
-    return true;
   }
 }

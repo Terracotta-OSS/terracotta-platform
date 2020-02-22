@@ -42,8 +42,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNA
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
-import static org.terracotta.dynamic_config.api.service.ConfigChangeHandler.applyAfterRestart;
-import static org.terracotta.dynamic_config.api.service.ConfigChangeHandler.applyAtRuntime;
+import static org.terracotta.dynamic_config.api.service.ConfigChangeHandler.accept;
 
 @BuiltinService
 public class DynamicConfigServiceProvider implements ServiceProvider {
@@ -90,11 +89,11 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       addToManager(manager, serverAttributeConfigChangeHandler, NODE_GROUP_BIND_ADDRESS);
 
       // failover-priority
-      addToManager(manager, applyAfterRestart(), FAILOVER_PRIORITY);
+      addToManager(manager, accept(), FAILOVER_PRIORITY);
 
       // public hostname/port
-      addToManager(manager, applyAtRuntime(), NODE_PUBLIC_HOSTNAME);
-      addToManager(manager, applyAtRuntime(), NODE_PUBLIC_PORT);
+      addToManager(manager, accept(), NODE_PUBLIC_HOSTNAME);
+      addToManager(manager, accept(), NODE_PUBLIC_PORT);
 
       // tc-logging
       LoggerOverrideConfigChangeHandler loggerOverrideConfigChangeHandler = new LoggerOverrideConfigChangeHandler(topologyService);
@@ -103,7 +102,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       // tc-properties
       manager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
           .selector(Configuration::getKey)
-          .fallback(applyAfterRestart()));
+          .fallback(accept()));
 
       // initialize the config handlers that need do to something at startup
       loggerOverrideConfigChangeHandler.init();

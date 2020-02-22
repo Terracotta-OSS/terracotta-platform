@@ -33,7 +33,7 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public Cluster tryApply(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
+  public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
       throw new InvalidConfigChangeException("Invalid change: " + change);
     }
@@ -55,14 +55,13 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
 
       LOGGER.debug("Validating the update cluster: {} against the license", updatedCluster);
       topologyService.validateAgainstLicense(updatedCluster);
-      return updatedCluster;
     } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
     }
   }
 
   @Override
-  public boolean apply(Configuration change) {
+  public void apply(Configuration change) {
     OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(change.getKey());
     OffHeapResource offHeapResource = offHeapResources.getOffHeapResource(identifier);
     Measure<MemoryUnit> measure = Measure.parse(change.getValue(), MemoryUnit.class);
@@ -74,6 +73,5 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
       offHeapResource.setCapacity(measure.getQuantity(MemoryUnit.B));
       LOGGER.debug("Set the capacity of offheap-resource: {} to: {}", change.getKey(), measure);
     }
-    return true;
   }
 }

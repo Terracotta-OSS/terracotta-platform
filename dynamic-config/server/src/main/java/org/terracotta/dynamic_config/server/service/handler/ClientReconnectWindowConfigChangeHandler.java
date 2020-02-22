@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandler;
@@ -27,25 +26,22 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
   private static final String ATTR_NAME = "ReconnectWindowTimeout";
 
   @Override
-  public Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
+  public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
       throw new InvalidConfigChangeException("Invalid change: " + change);
     }
 
     ensureMBeanAttributeExists(change);
 
-    Cluster updatedCluster = nodeContext.getCluster();
     try {
       Measure.parse(change.getValue(), TimeUnit.class);
-      change.apply(updatedCluster);
     } catch (RuntimeException e) {
       throw new InvalidConfigChangeException(e.getMessage(), e);
     }
-    return updatedCluster;
   }
 
   @Override
-  public boolean apply(Configuration change) {
+  public void apply(Configuration change) {
     int value = (int) Measure.parse(change.getValue(), TimeUnit.class).getQuantity(TimeUnit.SECONDS);
     MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
     try {
@@ -54,7 +50,6 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
       LOGGER.error("Invoke resulted in exception", e); // log the exception so that server logs get it too
       throw new AssertionError(e);
     }
-    return true;
   }
 
   private void ensureMBeanAttributeExists(Configuration change) throws InvalidConfigChangeException {

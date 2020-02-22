@@ -18,6 +18,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.server.NomadException;
 
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.Requirement.RESTART;
 
 /**
  * Supports the processing of {@link SettingNomadChange} for dynamic configuration.
@@ -41,28 +42,25 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   @Override
   public NodeContext tryApply(NodeContext baseConfig, SettingNomadChange change) throws NomadException {
     try {
-      // Note the call to baseConfig.clone() which is important
-      NodeContext clone = baseConfig.clone();
-      Configuration configuration = change.toConfiguration(clone.getCluster());
-      configuration.validate(change.getOperation());
+      // ensure we can build the change
+      Cluster original = baseConfig.getCluster();
+      Configuration configuration = change.toConfiguration(original);
 
+      // validate through external handlers
       ConfigChangeHandler configChangeHandler = getConfigChangeHandlerManager(change);
-      LOGGER.debug("NodeContext before tryApply(): {}", clone);
-      Cluster updated = configChangeHandler.tryApply(clone, configuration);
+      LOGGER.debug("NodeContext before tryApply(): {}", baseConfig);
 
-      if (updated == null) {
-        LOGGER.debug("Change: {} rejected in config change handler: {}", change, configChangeHandler.getClass().getSimpleName());
-        return null;
+      configChangeHandler.validate(baseConfig, configuration);
+
+      Cluster updated = change.apply(original);
+
+      if (updated.equals(original)) {
+        LOGGER.debug("Cluster not updated for change: {} in config change handler: {}", change, configChangeHandler.getClass().getSimpleName());
       } else {
-        if (baseConfig.getCluster().equals(updated)) {
-          LOGGER.debug("Cluster not updated for change: {} in config change handler: {}", change, configChangeHandler.getClass().getSimpleName());
-          return baseConfig;
-        } else {
-          LOGGER.info("Cluster updated to: {} for change: {} in: {}", updated, change, configChangeHandler.getClass().getSimpleName());
-          // Make a new NodeContext object just in case a clone of the original Cluster was returned from tryApply
-          return new NodeContext(updated, baseConfig.getStripeId(), baseConfig.getNodeName());
-        }
+        LOGGER.info("Cluster updated to: {} for change: {} in: {}", updated, change, configChangeHandler.getClass().getSimpleName());
       }
+
+      return new NodeContext(updated, baseConfig.getStripeId(), baseConfig.getNodeName());
     } catch (InvalidConfigChangeException | RuntimeException e) {
       throw new NomadException("Error when trying to apply setting change '" + change.getSummary() + "': " + e.getMessage(), e);
     }
@@ -71,22 +69,27 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   @Override
   public void apply(SettingNomadChange change) throws NomadException {
     try {
-      // try to apply the change on the runtime configuration
-      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
-      Configuration configuration = change.toConfiguration(runtimeNodeContext.getCluster());
-      boolean changeAppliedAtRuntime = getConfigChangeHandlerManager(change).apply(configuration);
-      LOGGER.debug("Change: {} applied at runtime ? {}", change.getSummary(), changeAppliedAtRuntime);
+      boolean changeAppliedAtRuntime = !change.getSetting().requires(RESTART);
 
       if (changeAppliedAtRuntime) {
-        // configuration was saved following tryApply call, and applied at runtime
-        configuration.apply(runtimeNodeContext.getCluster());
-        listener.onNewConfigurationAppliedAtRuntime(runtimeNodeContext, configuration);
+        LOGGER.debug("Applying change at runtime: {}", change.getSummary());
+
+        NodeContext nodeContext = topologyService.getRuntimeNodeContext();
+        Configuration configuration = change.toConfiguration(nodeContext.getCluster());
+
+        getConfigChangeHandlerManager(change).apply(configuration);
+
+        NodeContext updated = new NodeContext(change.apply(nodeContext.getCluster()), nodeContext.getStripeId(), nodeContext.getNodeName());
+        listener.onNewConfigurationAppliedAtRuntime(updated, configuration);
 
       } else {
-        // configuration was saved following tryApply call, but not applied at runtime because requires a restart
-        NodeContext upcomingNodeContext = topologyService.getUpcomingNodeContext();
-        Configuration cfg = change.toConfiguration(upcomingNodeContext.getCluster());
-        listener.onNewConfigurationPendingRestart(runtimeNodeContext, cfg);
+        LOGGER.debug("Change will be applied after restart: {}", change.getSummary());
+
+        NodeContext nodeContext = topologyService.getUpcomingNodeContext();
+        Configuration configuration = change.toConfiguration(nodeContext.getCluster());
+
+        NodeContext updated = new NodeContext(change.apply(nodeContext.getCluster()), nodeContext.getStripeId(), nodeContext.getNodeName());
+        listener.onNewConfigurationPendingRestart(updated, configuration);
       }
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying setting change '" + change.getSummary() + "': " + e.getMessage(), e);

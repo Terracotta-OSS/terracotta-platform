@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 
@@ -15,19 +14,14 @@ public interface ConfigChangeHandler {
 
   /**
    * Try to apply a change to the provided topology and returns the updated topology (or non updated).
-   *
-   * @return the (eventually) updated cluster object, or null if we reject the change
    */
-  Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException;
+  default void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {}
 
 
   /**
    * Apply a change at runtime on the server
-   *
-   * @return true if the change was applied at runtime. Returning true means that the runtime topology will also need to be updated.
    */
-  default boolean apply(Configuration change) {
-    return false;
+  default void apply(Configuration change) {
   }
 
   /**
@@ -36,8 +30,8 @@ public interface ConfigChangeHandler {
   static ConfigChangeHandler reject() {
     return new ConfigChangeHandler() {
       @Override
-      public Cluster tryApply(NodeContext nodeContext, Configuration change) {
-        return null;
+      public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
+        throw new InvalidConfigChangeException("Unable to apply this change: " + change);
       }
 
       @Override
@@ -48,70 +42,13 @@ public interface ConfigChangeHandler {
   }
 
   /**
-   * Handler that will do nothing
-   */
-  static ConfigChangeHandler noop() {
-    return new ConfigChangeHandler() {
-      @Override
-      public Cluster tryApply(NodeContext nodeContext, Configuration change) {
-        return nodeContext.getCluster();
-      }
-
-      @Override
-      public String toString() {
-        return "ConfigChangeHandler#noop()";
-      }
-    };
-  }
-
-  /**
    * Handler that will just apply the change after a restart
    */
-  static ConfigChangeHandler applyAfterRestart() {
+  static ConfigChangeHandler accept() {
     return new ConfigChangeHandler() {
       @Override
-      public Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
-        try {
-          Cluster updatedCluster = nodeContext.getCluster();
-          change.apply(updatedCluster);
-          return updatedCluster;
-        } catch (RuntimeException e) {
-          throw new InvalidConfigChangeException(e.getMessage(), e);
-        }
-      }
-
-      @Override
       public String toString() {
-        return "ConfigChangeHandler#applyAfterRestart()";
-      }
-    };
-  }
-
-  /**
-   * Handler that will just apply the change at runtime
-   */
-  static ConfigChangeHandler applyAtRuntime() {
-
-    return new ConfigChangeHandler() {
-      @Override
-      public Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
-        try {
-          Cluster updatedCluster = nodeContext.getCluster();
-          change.apply(updatedCluster);
-          return updatedCluster;
-        } catch (RuntimeException e) {
-          throw new InvalidConfigChangeException(e.getMessage(), e);
-        }
-      }
-
-      @Override
-      public boolean apply(Configuration change) {
-        return true;
-      }
-
-      @Override
-      public String toString() {
-        return "ConfigChangeHandler#applyAtRuntime()";
+        return "ConfigChangeHandler#accept()";
       }
     };
   }

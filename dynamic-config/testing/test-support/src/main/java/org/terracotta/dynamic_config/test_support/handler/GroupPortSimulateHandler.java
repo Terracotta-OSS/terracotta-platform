@@ -13,7 +13,7 @@ import org.terracotta.dynamic_config.api.service.InvalidConfigChangeException;
 
 public class GroupPortSimulateHandler implements ConfigChangeHandler {
   @Override
-  public Cluster tryApply(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
+  public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     Cluster cluster = nodeContext.getCluster();
     String configVal = change.getValue();
     String tmpConfig[] = configVal.split("#");
@@ -21,6 +21,6 @@ public class GroupPortSimulateHandler implements ConfigChangeHandler {
     String groupPort = tmpConfig[1];
     Node node = cluster.getNode(nodeContext.getStripeId(), serverName).get();
     node.setNodeGroupPort(Integer.parseInt(groupPort));
-    return cluster;
+    //TODO [DYNAMIC-CONFIG]: no return anymore. So find another way to hack the config repo xml file to update the bind port. Idea: directly update the xml file written on disk (server section only)
   }
 }

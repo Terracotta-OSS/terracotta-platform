@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.test_support.handler;
 
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandler;
@@ -26,8 +25,6 @@ import org.terracotta.dynamic_config.api.service.InvalidConfigChangeException;
  * Simulate a Nomad change requiring a restart with:
  * <pre>set -c stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=restart-required</pre>
  * <p>
- * Simulate a Nomad change applied at runtime with any value:
- * <pre>set -c stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=foo</pre>
  *
  * @author Mathieu Carbou
  */
@@ -36,7 +33,7 @@ public class SimulationHandler implements ConfigChangeHandler {
   private volatile String state = "";
 
   @Override
-  public Cluster tryApply(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
+  public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
       throw new InvalidConfigChangeException("Invalid change: " + change);
     }
@@ -44,41 +41,28 @@ public class SimulationHandler implements ConfigChangeHandler {
     if ("prepare-failure".equals(change.getValue())) {
       throw new InvalidConfigChangeException("Simulate prepare failure");
     }
-
-    try {
-      Cluster updatedCluster = baseConfig.getCluster();
-      change.apply(updatedCluster);
-      return updatedCluster;
-    } catch (RuntimeException e) {
-      throw new InvalidConfigChangeException(e.getMessage(), e);
-    }
   }
 
   @Override
-  public boolean apply(Configuration change) {
+  public void apply(Configuration change) {
     switch (change.getValue()) {
 
       case "recover-needed":
         if (state.equals("failed")) {
           state = "recovered";
-          return true;
         } else {
           state = "failed";
           throw new IllegalStateException("Simulate commit failure");
         }
+        break;
 
       case "commit-failure":
         throw new IllegalStateException("Simulate commit failure");
 
       case "restart-required":
-        return false;
-
-      case "runtime-applied":
-        return true;
+        break;
 
       default:
-        // we do not change state
-        return true;
     }
   }
 }

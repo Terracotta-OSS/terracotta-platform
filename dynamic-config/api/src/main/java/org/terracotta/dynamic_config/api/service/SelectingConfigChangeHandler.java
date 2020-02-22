@@ -4,7 +4,6 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 
@@ -54,29 +53,32 @@ public class SelectingConfigChangeHandler<T> implements ConfigChangeHandler {
   }
 
   @Override
-  public Cluster tryApply(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
+  public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
     T key = selector.apply(change);
     if (key != null) {
       ConfigChangeHandler handler = handlers.get(key);
       if (handler != null) {
-        return handler.tryApply(baseConfig, change);
+        handler.validate(baseConfig, change);
+      } else {
+        fallback.validate(baseConfig, change);
       }
+    } else {
+      fallback.validate(baseConfig, change);
     }
-    return fallback.tryApply(baseConfig, change);
   }
 
   @Override
-  public boolean apply(Configuration change) {
+  public void apply(Configuration change) {
     T key = selector.apply(change);
     if (key != null) {
       ConfigChangeHandler handler = handlers.get(key);
       if (handler != null) {
-        return handler.apply(change);
+        handler.apply(change);
       } else {
-        return fallback.apply(change);
+        fallback.apply(change);
       }
     } else {
-      return fallback.apply(change);
+      fallback.apply(change);
     }
   }
 }
