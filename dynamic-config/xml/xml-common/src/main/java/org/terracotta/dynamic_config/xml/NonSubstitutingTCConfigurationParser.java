@@ -6,16 +6,16 @@ package org.terracotta.dynamic_config.xml;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.config.TcConfig;
+import org.terracotta.config.BindPort;
+import org.terracotta.config.Config;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
 import org.terracotta.config.Service;
-import org.terracotta.config.Config;
-import org.terracotta.config.BindPort;
-import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TCConfigDefaults;
-import org.terracotta.config.TcConfiguration;
+import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TCConfigurationSetupException;
+import org.terracotta.config.TcConfig;
+import org.terracotta.config.TcConfiguration;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -157,18 +157,13 @@ public class NonSubstitutingTCConfigurationParser {
   public static Element getRootElement(InputStream in, ClassLoader loader) throws IOException, SAXException {
     Collection<Source> schemaSources = new ArrayList<>();
 
-    Map<URI, ServiceConfigParser> serviceParsers = new HashMap<>();
-    Map<URI, ExtendedConfigParser> configParsers = new HashMap<>();
-
     schemaSources.add(new StreamSource(TERRACOTTA_XML_SCHEMA.openStream()));
 
     for (ServiceConfigParser parser : loadServiceConfigurationParserClasses(loader)) {
       schemaSources.add(parser.getXmlSchema());
-      serviceParsers.put(parser.getNamespace(), parser);
     }
     for (ExtendedConfigParser parser : loadConfigurationParserClasses(loader)) {
       schemaSources.add(parser.getXmlSchema());
-      configParsers.put(parser.getNamespace(), parser);
     }
 
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
