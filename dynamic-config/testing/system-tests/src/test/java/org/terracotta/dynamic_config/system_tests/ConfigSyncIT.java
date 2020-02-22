@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
@@ -71,6 +72,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     tsa.start(getNode(1, passiveNodeId));
     waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
 
+    verifyTopologies();
+
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     tsa.stopAll();
     assertContentsBeforeOrAfterSync(5, 5);
@@ -84,7 +87,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // trigger commit failure on active
     // the passive should zap when restarting
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.org.terracotta.dynamic-config.simulate=commit-failure"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".node-logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
         not(hasExitStatus(0)));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
@@ -114,7 +117,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // but passive is fine
     // when passive restarts, its history is greater and not equal to the active, so it zaps
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.org.terracotta.dynamic-config.simulate=commit-failure"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".node-logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
         not(hasExitStatus(0)));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
@@ -145,7 +148,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // the active is OK
     // the passive should restart fine
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, passiveNodeId), "-c", "stripe.1.node." + passiveNodeId + ".tc-properties.org.terracotta.dynamic-config.simulate=recover-needed"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, passiveNodeId), "-c", "stripe.1.node." + passiveNodeId + ".node-logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         not(hasExitStatus(0)));
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
@@ -157,6 +160,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
     tsa.start(getNode(1, passiveNodeId));
     waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+
+    verifyTopologies();
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     tsa.stopAll();
@@ -199,6 +204,15 @@ public class ConfigSyncIT extends DynamicConfigIT {
         assertEquals(activeOpsObject.getString("summary"), passiveOpsObject.getString("summary"));
       }
     }
+  }
+
+  private void verifyTopologies() throws Exception {
+    // config repos written on disk should be the same
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
+    // runtime topology should be the same
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(equalTo(getRuntimeCluster("localhost", getNodePort(1, 2)))));
+    // runtime topology should be the same as upcoming one
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
   }
 }
 

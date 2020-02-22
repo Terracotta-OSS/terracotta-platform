@@ -20,36 +20,36 @@ public class SimulationHandlerIT extends DynamicConfigIT {
   @Test
   public void test_missing_value() {
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate="),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate="),
         allOf(
             not(hasExitStatus(0)),
-            containsOutput("Invalid input: 'stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate='. Reason: Operation set requires a value")));
+            containsOutput("Invalid input: 'stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate='. Reason: Operation set requires a value")));
   }
 
   @Test
   public void test_prepare_fails() {
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=prepare-failure"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=TRACE"),
         allOf(
             not(hasExitStatus(0)),
-            containsOutput("Prepare rejected for node localhost:" + getNodePort() + ". Reason: Error when trying to apply setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=prepare-failure (stripe ID: 1, node: node1-1)': Simulate prepare failure")));
+            containsOutput("Prepare rejected for node localhost:" + getNodePort() + ". Reason: Error when trying to apply setting change 'set node-logger-overrides.org.terracotta.dynamic-config.simulate=TRACE (stripe ID: 1, node: node1-1)': Simulate prepare failure")));
   }
 
   @Test
-  public void test_commit_fails() {
+  public void test_commit_fails_permanently() {
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=commit-failure"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
         allOf(
             not(hasExitStatus(0)),
-            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set tc-properties.org.terracotta.dynamic-config.simulate=commit-failure (stripe ID: 1, node: node1-1)': Simulate commit failure")));
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set node-logger-overrides.org.terracotta.dynamic-config.simulate=INFO (stripe ID: 1, node: node1-1)': Simulate permanent commit failure")));
   }
 
   @Test
-  public void test_requires_restart() {
+  public void test_commit_fails_temporary() {
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.org.terracotta.dynamic-config.simulate=restart-required"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         allOf(
-            hasExitStatus(0),
-            containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
+            not(hasExitStatus(0)),
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set node-logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (stripe ID: 1, node: node1-1)': Simulate temporary commit failure")));
   }
 }
