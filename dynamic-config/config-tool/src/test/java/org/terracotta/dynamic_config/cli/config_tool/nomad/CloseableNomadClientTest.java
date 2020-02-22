@@ -9,9 +9,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
+import org.terracotta.dynamic_config.cli.config_tool.SimpleNomadChange;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
-import org.terracotta.nomad.client.change.SimpleNomadChange;
 
 import static org.mockito.Mockito.verify;
 

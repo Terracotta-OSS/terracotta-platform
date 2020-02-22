@@ -5,6 +5,7 @@
 package org.terracotta.nomad.client.change;
 
 import org.junit.Test;
+import org.terracotta.nomad.SimpleNomadChange;
 
 import static org.junit.Assert.assertEquals;
 

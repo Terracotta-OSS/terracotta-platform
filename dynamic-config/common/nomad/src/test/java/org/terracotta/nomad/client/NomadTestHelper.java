@@ -4,7 +4,7 @@
  */
 package org.terracotta.nomad.client;
 
-import org.terracotta.nomad.client.change.SimpleNomadChange;
+import org.terracotta.nomad.SimpleNomadChange;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.ChangeRequestState;

@@ -7,6 +7,7 @@ package org.terracotta.nomad.client.change;
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.terracotta.nomad.SimpleNomadChange;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadClientProcessTest;
 import org.terracotta.nomad.messages.CommitMessage;

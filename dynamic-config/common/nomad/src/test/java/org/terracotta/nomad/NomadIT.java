@@ -13,7 +13,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
-import org.terracotta.nomad.client.change.SimpleNomadChange;
 import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
