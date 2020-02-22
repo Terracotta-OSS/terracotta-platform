@@ -4,6 +4,7 @@
  */
 package org.terracotta.nomad.server;
 
+import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiFunction;
 
 public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   private final UpgradableNomadServer<T> underlying;
@@ -29,6 +31,16 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
     lock.lock();
     try {
       underlying.reset();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<T, NomadChange, T> fn) throws NomadException {
+    lock.lock();
+    try {
+      underlying.forceSync(changes, fn);
     } finally {
       lock.unlock();
     }

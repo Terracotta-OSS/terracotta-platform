@@ -4,9 +4,7 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
@@ -16,12 +14,12 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Collections;
 
 import static java.util.Collections.singletonList;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
@@ -33,12 +31,6 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
 @Parameters(commandNames = "attach", commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
 @Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class AttachCommand extends TopologyCommand {
-
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
-
-  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Override
   public void validate() {
@@ -128,7 +120,12 @@ public class AttachCommand extends TopologyCommand {
   }
 
   @Override
-  protected void onNomadChangeCommitted(Cluster result) {
+  protected void beforeNomadChange(Cluster result) {
+    setUpcomingCluster(Collections.singletonList(source), result);
+  }
+
+  @Override
+  protected void afterNomadChange(Cluster result) {
     Collection<InetSocketAddress> newNodes = operationType == NODE ?
         singletonList(source) :
         sourceCluster.getStripe(source).get().getNodeAddresses();
@@ -146,6 +143,15 @@ public class AttachCommand extends TopologyCommand {
     // we are running a cluster activation only on the new nodes
     runClusterActivation(newNodes, result);
     logger.debug("Configuration repositories have been created for nodes: {}", toString(newNodes));
+
+    //TODO [DYNAMIC-CONFIG]: TDB-4835: remove this code
+    // [[=====================================================================================
+    logger.info("Restarting nodes: {}", toString(destinationCluster.getNodeAddresses()));
+    restartNodes(
+        destinationCluster.getNodeAddresses(),
+        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
+    // =======================================================================================]]
 
     logger.info("Restarting nodes: {}", toString(newNodes));
     restartNodes(

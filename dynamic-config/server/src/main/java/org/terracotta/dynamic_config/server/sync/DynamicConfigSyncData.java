@@ -6,9 +6,14 @@ package org.terracotta.dynamic_config.server.sync;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.util.List;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.terracotta.json.Json.parse;
+import static org.terracotta.json.Json.toJson;
 
 /**
  * @author Mathieu Carbou
@@ -31,5 +36,13 @@ public class DynamicConfigSyncData {
 
   public String getLicense() {
     return license;
+  }
+
+  public static DynamicConfigSyncData decode(byte[] bytes) {
+    return parse(new String(bytes, UTF_8), new TypeReference<DynamicConfigSyncData>() {});
+  }
+
+  public byte[] encode() {
+    return toJson(this).getBytes(UTF_8);
   }
 }

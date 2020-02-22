@@ -7,6 +7,9 @@ package org.terracotta.nomad.server;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.nomad.client.change.NomadChange;
+import org.terracotta.nomad.messages.CommitMessage;
+import org.terracotta.nomad.messages.PrepareMessage;
+import org.terracotta.nomad.messages.RollbackMessage;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -98,5 +101,35 @@ public class NomadChangeInfo {
         ", creationTimestamp=" + creationTimestamp +
         ", nomadChange=" + nomadChange.getSummary() +
         '}';
+  }
+
+
+  public PrepareMessage toPrepareMessage(long mutativeMessageCount) {
+    return new PrepareMessage(
+        mutativeMessageCount,
+        getCreationHost(),
+        getCreationUser(),
+        getCreationTimestamp(),
+        getChangeUuid(),
+        getVersion(),
+        getNomadChange());
+  }
+
+  public CommitMessage toCommitMessage(long mutativeMessageCount) {
+    return new CommitMessage(
+        mutativeMessageCount,
+        getCreationHost(),
+        getCreationUser(),
+        getCreationTimestamp(),
+        getChangeUuid());
+  }
+
+  public RollbackMessage toRollbackMessage(long mutativeMessageCount) {
+    return new RollbackMessage(
+        mutativeMessageCount,
+        getCreationHost(),
+        getCreationUser(),
+        getCreationTimestamp(),
+        getChangeUuid());
   }
 }

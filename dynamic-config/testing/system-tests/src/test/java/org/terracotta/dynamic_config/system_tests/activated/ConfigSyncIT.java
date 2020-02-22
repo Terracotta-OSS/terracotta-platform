@@ -100,12 +100,12 @@ public class ConfigSyncIT extends DynamicConfigIT {
     tsa.start(getNode(1, activeNodeId));
     assertThat(tsa.getActives().size(), is(1));
 
-    out.clearLog();
+    err.clearLog();
     try {
       tsa.start(getNode(1, passiveNodeId));
       fail();
     } catch (Exception e) {
-      waitUntil(out::getLog, containsString("Active has some PREPARED configuration changes that are not yet committed."));
+      waitUntil(err::getLog, containsString("Active has some PREPARED configuration changes that are not yet committed."));
     }
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
@@ -132,11 +132,12 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertThat(tsa.getActives().size(), is(1));
     out.clearLog();
 
+    err.clearLog();
     try {
       tsa.start(getNode(1, passiveNodeId));
       fail();
     } catch (Exception e) {
-      waitUntil(out::getLog, containsString("Passive cannot sync because the configuration change history does not match"));
+      waitUntil(err::getLog, containsString("Passive cannot sync because the configuration change history does not match"));
     }
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows

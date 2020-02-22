@@ -5,6 +5,9 @@
 package org.terracotta.dynamic_config.server.config_provider;
 
 import com.tc.classloader.OverrideService;
+import com.tc.exception.TCServerRestartException;
+import com.tc.exception.TCShutdownServerException;
+import com.tc.exception.ZapDirtyDbServerNodeException;
 import com.terracotta.config.Configuration;
 import com.terracotta.config.ConfigurationException;
 import com.terracotta.config.ConfigurationProvider;
@@ -19,18 +22,24 @@ import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.PathResolver;
 import org.terracotta.dynamic_config.server.TerracottaNode;
 import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
+import org.terracotta.dynamic_config.server.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.sync.DynamicConfigurationPassiveSync;
+import org.terracotta.dynamic_config.server.sync.Require;
+import org.terracotta.nomad.server.NomadException;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 
 import static com.tc.util.Assert.assertNotNull;
 import static java.lang.System.lineSeparator;
 import static java.nio.file.Files.newInputStream;
 import static java.util.Collections.emptySet;
+import static org.terracotta.dynamic_config.server.sync.Require.RESTART_REQUIRED;
+import static org.terracotta.dynamic_config.server.sync.Require.ZAP_REQUIRED;
 
 @OverrideService("com.tc.config.DefaultConfigurationProvider")
 public class DynamicConfigConfigurationProvider implements ConfigurationProvider {
@@ -47,6 +56,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     assertNotNull(nomadServerManager);
 
     this.dynamicConfigurationPassiveSync = new DynamicConfigurationPassiveSync(
+        nomadServerManager.getConfiguration().orElse(null),
         nomadServerManager.getNomadServer(),
         nomadServerManager.getDynamicConfigService(),
         () -> nomadServerManager.getDynamicConfigService().getLicenseContent().orElse(null));
@@ -115,13 +125,28 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   @Override
   public byte[] getSyncData() {
-    return dynamicConfigurationPassiveSync != null ? dynamicConfigurationPassiveSync.getSyncData() : new byte[0];
+    return dynamicConfigurationPassiveSync != null ? dynamicConfigurationPassiveSync.getSyncData().encode() : new byte[0];
   }
 
   @Override
-  public void sync(byte[] configuration) {
+  public void sync(byte[] bytes) {
     if (dynamicConfigurationPassiveSync != null) {
-      dynamicConfigurationPassiveSync.sync(configuration);
+
+      Set<Require> requires;
+      try {
+        requires = dynamicConfigurationPassiveSync.sync(DynamicConfigSyncData.decode(bytes));
+      } catch (NomadException | RuntimeException e) {
+        // shutdown the server because of a unrecoverable error
+        throw new TCShutdownServerException("Shutdown because of sync failure: " + e.getMessage(), e);
+      }
+
+      if (requires.contains(RESTART_REQUIRED)) {
+        if (requires.contains(ZAP_REQUIRED)) {
+          throw new ZapDirtyDbServerNodeException("Zapping server");
+        } else {
+          throw new TCServerRestartException("Restarting server");
+        }
+      }
     }
   }
 

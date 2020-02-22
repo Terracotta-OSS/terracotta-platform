@@ -4,6 +4,7 @@
  */
 package org.terracotta.nomad.server;
 
+import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
@@ -14,6 +15,7 @@ import org.terracotta.nomad.messages.TakeoverMessage;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiFunction;
 
 /**
  * @author Mathieu Carbou
@@ -61,6 +63,11 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
   @Override
   public void reset() throws NomadException {
     delegate.reset();
+  }
+
+  @Override
+  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<T, NomadChange, T> fn) throws NomadException {
+    delegate.forceSync(changes, fn);
   }
 
   @Override

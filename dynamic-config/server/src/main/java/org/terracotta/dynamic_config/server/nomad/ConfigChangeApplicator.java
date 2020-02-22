@@ -16,7 +16,6 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.PotentialApplicationResult;
 
 import static java.util.Objects.requireNonNull;
-import static org.terracotta.nomad.server.PotentialApplicationResult.allow;
 import static org.terracotta.nomad.server.PotentialApplicationResult.reject;
 
 public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
@@ -52,7 +51,7 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
         throw new AssertionError();
       }
 
-      return allow(newConfiguration(baseConfig, updated));
+      return PotentialApplicationResult.allow(newConfiguration(baseConfig, updated));
     } catch (RuntimeException | NomadException e) {
       LOGGER.warn("Nomad change: {} rejected with error: {}", change.getSummary(), e.getMessage(), e);
       return reject(e.getMessage());

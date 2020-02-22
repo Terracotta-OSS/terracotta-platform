@@ -54,6 +54,7 @@ public class AutoActivateNewPassiveIT extends DynamicConfigIT {
     startNode(1, 1, "-f", copyConfigProperty("/config-property-files/1x2.properties").toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-repository-dir", "repository/stripe1/node1-1");
     waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
+    err.clearLog();
     try {
       startNode(1, 2,
           "-f", copyConfigProperty("/config-property-files/1x2-diff.properties").toString(),
@@ -61,7 +62,7 @@ public class AutoActivateNewPassiveIT extends DynamicConfigIT {
           "--node-repository-dir", "repository/stripe1/node1-2");
       fail();
     } catch (Exception e) {
-      assertThat(out.getLog(), containsString("Passive cannot sync because the configuration change history does not match: no match on active for this change on passive"));
+      assertThat(err.getLog(), containsString("Unable to find any change in active node matching the topology used to activate this passive node"));
     }
   }
 

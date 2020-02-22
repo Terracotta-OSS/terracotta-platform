@@ -22,6 +22,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static org.terracotta.nomad.messages.AcceptRejectResponse.accept;
@@ -50,6 +51,56 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   public void reset() throws NomadException {
     state.reset();
     init();
+  }
+
+  @Override
+  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<T, NomadChange, T> fn) throws NomadException {
+    ChangeApplicator<T> backup = this.changeApplicator;
+    try {
+      this.changeApplicator = ChangeApplicator.allow(fn);
+      for (NomadChangeInfo change : changes) {
+        switch (change.getChangeRequestState()) {
+          case PREPARED:
+            throw new NomadException("Unable to force-sync a PREPARED change: " + change.getNomadChange().getSummary());
+          case COMMITTED: {
+            long mutativeMessageCount = state.getMutativeMessageCount();
+            AcceptRejectResponse response = prepare(change.toPrepareMessage(mutativeMessageCount));
+            if (!response.isAccepted()) {
+              throw new NomadException("Prepare failure. " +
+                  "Reason: " + response + ". " +
+                  "Change:" + change.getNomadChange().getSummary());
+            }
+            response = commit(change.toCommitMessage(mutativeMessageCount + 1));
+            if (!response.isAccepted()) {
+              throw new NomadException("Unexpected commit failure. " +
+                  "Reason: " + response + ". " +
+                  "Change:" + change.getNomadChange().getSummary());
+            }
+            break;
+          }
+          case ROLLED_BACK: {
+            long mutativeMessageCount = state.getMutativeMessageCount();
+            AcceptRejectResponse response = prepare(change.toPrepareMessage(mutativeMessageCount));
+            if (!response.isAccepted()) {
+              throw new NomadException("Prepare failure. " +
+                  "Reason: " + response + ". " +
+                  "Change:" + change.getNomadChange().getSummary());
+            }
+            response = rollback(change.toRollbackMessage(mutativeMessageCount + 1));
+            if (!response.isAccepted()) {
+              throw new NomadException("Unexpected rollback failure. " +
+                  "Reason: " + response + ". " +
+                  "Change:" + change.getNomadChange().getSummary());
+            }
+            break;
+          }
+          default:
+            throw new AssertionError(change.getChangeRequestState());
+        }
+      }
+    } finally {
+      this.changeApplicator = backup;
+    }
   }
 
   @Override

@@ -4,271 +4,309 @@
  */
 package org.terracotta.dynamic_config.server.sync;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.tc.exception.TCRuntimeException;
-import com.tc.exception.TCServerRestartException;
-import com.tc.exception.TCShutdownServerException;
-import com.tc.exception.ZapDirtyDbServerNodeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
-import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
-import org.terracotta.nomad.messages.PrepareMessage;
-import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Objects.requireNonNull;
-import static org.terracotta.json.Json.parse;
-import static org.terracotta.json.Json.toJson;
+import static org.terracotta.dynamic_config.server.sync.Check.assertNonEmpty;
+import static org.terracotta.dynamic_config.server.sync.Check.assertThat;
+import static org.terracotta.dynamic_config.server.sync.Check.canRepair;
+import static org.terracotta.dynamic_config.server.sync.Check.isJointActivation;
+import static org.terracotta.dynamic_config.server.sync.Check.isPassiveMew;
+import static org.terracotta.dynamic_config.server.sync.Check.lastIndexOfSameCommittedActiveTopologyChange;
+import static org.terracotta.dynamic_config.server.sync.Check.requireEquals;
+import static org.terracotta.dynamic_config.server.sync.Require.CAN_CONTINUE;
+import static org.terracotta.dynamic_config.server.sync.Require.RESTART_REQUIRED;
+import static org.terracotta.dynamic_config.server.sync.Require.ZAP_REQUIRED;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 
 public class DynamicConfigurationPassiveSync {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigurationPassiveSync.class);
+
+  private final NodeContext nodeStartupConfiguration;
   private final UpgradableNomadServer<NodeContext> nomadServer;
   private final DynamicConfigService dynamicConfigService;
   private final Supplier<String> licenseContent;
 
-  public DynamicConfigurationPassiveSync(UpgradableNomadServer<NodeContext> nomadServer,
+  public DynamicConfigurationPassiveSync(NodeContext nodeStartupConfiguration,
+                                         UpgradableNomadServer<NodeContext> nomadServer,
                                          DynamicConfigService dynamicConfigService,
                                          Supplier<String> licenseContent) {
+    this.nodeStartupConfiguration = nodeStartupConfiguration;
     this.nomadServer = nomadServer;
     this.dynamicConfigService = dynamicConfigService;
     this.licenseContent = licenseContent;
   }
 
-  public byte[] getSyncData() {
+  public DynamicConfigSyncData getSyncData() {
     try {
-      return Codec.encode(new DynamicConfigSyncData(
-          nomadServer.getAllNomadChanges(),
-          licenseContent.get()));
+      return new DynamicConfigSyncData(nomadServer.getAllNomadChanges(), licenseContent.get());
     } catch (NomadException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public void sync(byte[] syncData) {
-    TCRuntimeException exception;
-    DynamicConfigSyncData data = Codec.decode(syncData);
-    List<NomadChangeInfo> activeNomadChanges = data.getNomadChanges();
+  /**
+   * Nomad changes:
+   * - SettingNomadChange (config change)
+   * - MultiSettingNomadChange (contains several changes at once)
+   * - TopologyNomadChange (activation, node addition, node removal)
+   * <p>
+   * Nomad processors are executed in this order:
+   * - ConfigChangeApplicator: unwrap the MultiNomadChange, returns the new config if change is allowed
+   * - ApplicabilityNomadChangeProcessor: only call following processors if stripe/node/cluster matches
+   * - RoutingNomadChangeProcessor: call the right processor depending on the message type
+   * <p>
+   * 2 Kind of processors:
+   * - SettingNomadChangeProcessor: handle config changes
+   * - TopologyNomadChangeProcessor (activation, node addition, node removal): will update the config, or create a new one
+   * <p>
+   * Sync process from active A to passive P:
+   * - Needs to sync the active append log into the passive one
+   * - We want all the nodes to have the same append log
+   * - We want to sync append log history from A that do not relate to P, without triggering the processors of P
+   * - We want to reset and re-sync P append log when:
+   * .... 1) P has been started pre-activated to join a pre-activated stripe
+   * .... 2) P has been activated and restarted as passive as part of node addition
+   */
+  public Set<Require> sync(DynamicConfigSyncData data) throws NomadException {
+    // sync the active append log in the passive append log
+    Set<Require> requires = syncNomadChanges(data.getNomadChanges());
 
-    try {
-      // sync the active append log in the passive append log
-      List<NomadChangeInfo> passiveNomadChanges = nomadServer.getAllNomadChanges();
-      exception = applyNomadChanges(activeNomadChanges, passiveNomadChanges);
-    } catch (NomadException e) {
-      // shutdown the server because of a unrecoverable error
-      throw new TCShutdownServerException("Shutdown because of sync failure: " + e.getMessage(), e);
-    }
+    // sync the license from active node
+    syncLicense(data.getLicense());
 
-    // sync the license from active server
-    String activeLicense = data.getLicense();
-    String thisNodeLicense = licenseContent.get();
-    if (!Objects.equals(activeLicense, thisNodeLicense)) {
+    return requires;
+  }
+
+  private void syncLicense(String activeLicense) {
+    String passiveLicense = licenseContent.get();
+    if (!Objects.equals(activeLicense, passiveLicense)) {
+      LOGGER.info("Syncing license");
       dynamicConfigService.upgradeLicense(activeLicense);
-      if (exception == null) {
-        exception = new TCServerRestartException("Restarting server");
-      }
-    }
-
-    // if we are asking to restart the server, then do it
-    if (exception != null) {
-      throw exception;
     }
   }
 
-  private TCRuntimeException applyNomadChanges(List<NomadChangeInfo> activeNomadChanges, List<NomadChangeInfo> passiveNomadChanges) throws NomadException {
-    int activeInd = 0, passiveInd = 0;
-    int activeChangesSize = activeNomadChanges.size();
-    int passiveChangesSize = passiveNomadChanges.size();
+  private Set<Require> syncNomadChanges(List<NomadChangeInfo> activeNomadChanges) throws NomadException {
+    List<NomadChangeInfo> passiveNomadChanges = nomadServer.getAllNomadChanges();
 
-    if (passiveChangesSize > activeChangesSize) {
-      throw new TCShutdownServerException("Passive has more configuration changes");
+    // programming errors
+    // to be able to start, there must be at least one committed activation change in the append log
+    // so that we can boot on the tc-config file version 1.
+    // DynamicConfigConfigurationProvider will catch such uncommitted changes and prevent startup (there won't be any available configuration)
+    assertNonEmpty(activeNomadChanges, passiveNomadChanges);
+    assertThat(() -> activeNomadChanges.get(0).getNomadChange() instanceof ClusterActivationNomadChange);
+    assertThat(() -> passiveNomadChanges.get(0).getNomadChange() instanceof ClusterActivationNomadChange);
+    assertThat(() -> activeNomadChanges.get(0).getChangeRequestState() == COMMITTED);
+    assertThat(() -> passiveNomadChanges.get(0).getChangeRequestState() == COMMITTED);
+
+    if (passiveNomadChanges.size() > activeNomadChanges.size()) {
+      throw new IllegalStateException("Passive has more configuration changes");
     }
 
-    boolean restartRequired = false;
-    boolean zapDbRequired = false;
+    // record what to do after the sync (restart ? zap ?)
+    Set<Require> requires = new HashSet<>(2);
 
-    if (newPreActivatedPassiveJoins(activeNomadChanges, passiveNomadChanges)) {
-      // detect the case where we have an active server on the stripe
-      // - that has just been started pre-activated or activated from CLI
-      // - or that has been activated a while ago and its append log contains some changes
-      // And we have just started a pre-activated node, that is becoming passive.
-      // We want to include the node in the stripe, but only if it has just been activated (it is new)
-      // and its topology matches exactly the one from the active
+    // is passive has just been activated ?
+    final boolean passiveNew = isPassiveMew(passiveNomadChanges); ;
+
+    // is the passive node was activated at the same time of the active node or after ?
+    final boolean jointActivation = isJointActivation(passiveNomadChanges, activeNomadChanges);
+
+    // index at which to start the normal sync
+    int activeInd;
+
+    if (passiveNew && !jointActivation) {
+      LOGGER.info("New passive is joining an activated stripe: syncing previous existing changes");
+
+      // passive cluster that was activated
+      final Cluster passiveCluster = ((ClusterActivationNomadChange) passiveNomadChanges.get(0).getNomadChange()).getCluster();
+
+      // index until which we need to force a sync
+      int pos = lastIndexOfSameCommittedActiveTopologyChange(activeNomadChanges, passiveCluster);
+
+      // Check if the passive node has been incorrectly activated with the wrong cluster.
+      // This should never happen.
+      if (pos == -1) {
+        throw new IllegalStateException("Unable to find any change in active node matching the topology used to activate this passive node: " + passiveCluster);
+      }
+
+      // reset the passive changes
       nomadServer.reset();
-      passiveChangesSize = 0;
-      passiveNomadChanges = Collections.emptyList();
+      passiveNomadChanges.clear();
 
-      restartRequired = true;
-      zapDbRequired = true;
-    }
-
-    for (; passiveInd < passiveChangesSize; passiveInd++, activeInd++) {
-      NomadChangeInfo passiveChange = passiveNomadChanges.get(passiveInd);
-      NomadChangeInfo activeChange = activeNomadChanges.get(activeInd);
-      if (!passiveChange.equals(activeChange)) {
-        // if the change is not the same, we check if this is because the latest change on the passive server is PREPARED and
-        // on the active server it has been rolled back or committed. If yes, we do not prevent the sync, because it will fix
-        // the last change on the passive server following a partial commit or rollback
-        if (passiveInd != passiveChangesSize - 1
-            || !passiveChange.getChangeUuid().equals(activeChange.getChangeUuid())
-            || passiveChange.getChangeRequestState() != ChangeRequestState.PREPARED
-            || activeChange.getChangeRequestState() == ChangeRequestState.PREPARED) {
-          throw new TCShutdownServerException("Passive cannot sync because the configuration change history does not match: no match on active for this change on passive:" + passiveChange);
-        } else {
-          restartRequired |= fixPreparedChange(activeChange);
-        }
+      // There might be some changes in the active node, before the last active topology change matching
+      // the passive cluster, which might not be related to this passive node.
+      // So we need to force sync them without triggering the change applicators and without
+      // by controlling how to save the config written on disk for all these commits
+      if (pos >= 0) {
+        LOGGER.info("Passive is force-syncing {} historical changes", pos + 1);
+        Iterable<NomadChangeInfo> iterable = () -> activeNomadChanges.stream().limit(pos + 1).iterator();
+        nomadServer.forceSync(iterable, (previousConfig, nomadChange) -> {
+          DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) nomadChange;
+          Cluster previous = previousConfig == null ? null : previousConfig.getCluster();
+          Cluster update;
+          if (dynamicConfigNomadChange instanceof TopologyNomadChange) {
+            // If the change is a topology change, we just return the target topology without doing any validation.
+            update = ((TopologyNomadChange) dynamicConfigNomadChange).getCluster();
+          } else {
+            // If the change is a setting change, we apply the setting changes to the topology
+            try {
+              update = dynamicConfigNomadChange.apply(previous);
+            } catch (RuntimeException e) {
+              // this change was not applicable probably because the topology we have
+              // currently (i.e. new node) is not related to this config change
+              update = previous;
+            }
+          }
+          // note: previous won't be null here because each append log contains at least one topology change (activation)
+          return nodeStartupConfiguration.withCluster(update);
+        });
       }
-    }
 
-    //Apply all the remaining changes from active
-    while (activeInd < activeChangesSize) {
-      restartRequired |= tryCommittingChanges(activeNomadChanges.get(activeInd++));
-    }
+      // the normal sync will start at the common topology change
+      activeInd = pos + 1;
 
-    if (restartRequired && zapDbRequired) {
-      return new ZapDirtyDbServerNodeException("Restarting server");
-    } else if (restartRequired) {
-      return new TCServerRestartException("Restarting server");
+      // if we reset the append log of a node, we need to zap it
+      requires.add(ZAP_REQUIRED);
+
     } else {
-      return null;
-    }
-  }
+      // passive is either not new or the activation was done at the same time with the active
+      // (so the beginning of the append log is the same)
+      LOGGER.info("Comparing all changes from active and passive node");
 
-  private boolean newPreActivatedPassiveJoins(List<NomadChangeInfo> activeNomadChanges, List<NomadChangeInfo> passiveNomadChanges) {
-    if (activeNomadChanges.isEmpty() || passiveNomadChanges.isEmpty()) {
-      throw new AssertionError();
-    }
+      // All the N changes of the passive node from 0 -> N-1 must be the same
+      final int last = passiveNomadChanges.size() - 1;
+      requireEquals(passiveNomadChanges, activeNomadChanges, 0, last);
 
-    NomadChangeInfo passiveNomadChangeInfo = passiveNomadChanges.get(0);
+      // Check if the last change can be repaired , otherwise, it has to match the active one.
+      if (canRepair(passiveNomadChanges, activeNomadChanges)) {
+        Require require = repairNomadChange(activeNomadChanges.get(last));
+        requires.add(require);
 
-    if (passiveNomadChanges.size() != 1
-        || activeNomadChanges.get(0).equals(passiveNomadChangeInfo)
-        || passiveNomadChangeInfo.getChangeRequestState() != COMMITTED
-        || !(passiveNomadChangeInfo.getNomadChange() instanceof ClusterActivationNomadChange)) {
-      // - if passive and active both have the exact same activated config at the append log beginning, the activation comes from the CLI
-      // - entry must be committed in case of a pre-activation
-      // - there must be 1 entry in case of a pre-activation
-      // - entry must be an activation in case of a pre-activation
-      return false;
-    }
-
-    Cluster passiveTopology = ((ClusterActivationNomadChange) passiveNomadChangeInfo.getNomadChange()).getCluster();
-
-    // lookup active changes (reverse order) to find the latest change in force
-    for (int i = activeNomadChanges.size() - 1; i >= 0; i--) {
-      NomadChangeInfo changeInfo = activeNomadChanges.get(i);
-      if (changeInfo.getChangeRequestState() == COMMITTED && changeInfo.getNomadChange() instanceof TopologyNomadChange) {
-        // we have found the last topology change in the active
-        // we check if the new passive has joined with the exact same committed config on the active
-        return ((TopologyNomadChange) changeInfo.getNomadChange()).getCluster().equals(passiveTopology);
+      } else {
+        requireEquals(passiveNomadChanges, activeNomadChanges, last, 1);
       }
+
+      activeInd = last + 1;
     }
 
-    // we were not able to find any committed changed on active... weird...
-    return false;
+    // run the normal sync phase
+    requires.addAll(normalSync(activeNomadChanges, activeInd));
+
+    return requires;
   }
 
-  private void sendPrepare(long mutativeMessageCount, UpgradableNomadServer<NodeContext> nomadServer, NomadChangeInfo nomadChangeInfo) throws NomadException {
-    PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid(),
-        nomadChangeInfo.getVersion(), nomadChangeInfo.getNomadChange());
-
-    AcceptRejectResponse response = nomadServer.prepare(prepareMessage);
-    if (!response.isAccepted()) {
-      throw new NomadException("Prepare message is rejected by Nomad. Reason for rejection is " + response.getRejectionReason().name() + ": " + nomadChangeInfo.toString());
+  private Collection<Require> normalSync(List<NomadChangeInfo> changes, int from) throws NomadException {
+    Collection<Require> requires = new HashSet<>(2);
+    if (from < changes.size()) {
+      LOGGER.info("Passive is syncing {} configuration changes", changes.size());
+      for (; from < changes.size(); from++) {
+        Require require = syncNomadChange(changes.get(from));
+        requires.add(require);
+      }
+    } else {
+      LOGGER.info("No configuration change left to sync");
     }
+    return requires;
   }
 
-  private boolean tryCommittingChanges(NomadChangeInfo nomadChangeInfo) throws NomadException {
+  private Require repairNomadChange(NomadChangeInfo nomadChangeInfo) throws NomadException {
+    LOGGER.info("Repairing prepared change version {} ({}) created at {} by {} from {}",
+        nomadChangeInfo.getVersion(),
+        nomadChangeInfo.getNomadChange().getSummary(),
+        nomadChangeInfo.getCreationTimestamp(),
+        nomadChangeInfo.getCreationUser(),
+        nomadChangeInfo.getCreationHost());
+
     DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
-    long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
 
-    switch (nomadChangeInfo.getChangeRequestState()) {
-      case PREPARED:
-        throw new TCShutdownServerException("Active has some PREPARED configuration changes that are not yet committed.");
-      case COMMITTED:
-        sendPrepare(mutativeMessageCount, nomadServer, nomadChangeInfo);
-        long nextMutativeMessageCount = mutativeMessageCount + 1;
-        CommitMessage commitMessage = new CommitMessage(nextMutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
-
-        AcceptRejectResponse commitResponse = nomadServer.commit(commitMessage);
-        if (!commitResponse.isAccepted()) {
-          throw new NomadException("Unexpected commit failure. " +
-              "Reason for failure is " + commitResponse.getRejectionReason() + ": " + commitResponse.getRejectionMessage() + ". " +
-              "Change:" + nomadChangeInfo.toString());
-        }
-        return true;
-      case ROLLED_BACK:
-        sendPrepare(mutativeMessageCount, nomadServer, nomadChangeInfo);
-        nextMutativeMessageCount = mutativeMessageCount + 1;
-        RollbackMessage rollbackMessage = new RollbackMessage(nextMutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
-
-        AcceptRejectResponse rollbackResponse = nomadServer.rollback(rollbackMessage);
-        if (!rollbackResponse.isAccepted()) {
-          throw new NomadException("Unexpected rollback failure. " +
-              "Reason for failure is " + rollbackResponse.getRejectionReason() + ": " + rollbackResponse.getRejectionMessage() + ". " +
-              "Change:" + nomadChangeInfo.toString());
-        }
-        return false;
-      default:
-        throw new TCShutdownServerException("Invalid Nomad Change State: " + nomadChangeInfo.getChangeRequestState());
-    }
-  }
-
-  private boolean fixPreparedChange(NomadChangeInfo nomadChangeInfo) throws NomadException {
-    DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
-    long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
     if (discoverResponse.getLatestChange().getState() != PREPARED) {
       throw new AssertionError("Expected PREPARED state in change " + discoverResponse.getLatestChange());
     }
 
     switch (nomadChangeInfo.getChangeRequestState()) {
-      case COMMITTED: {
-        CommitMessage message = new CommitMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
-        AcceptRejectResponse response = nomadServer.commit(message);
-        if (!response.isAccepted()) {
-          throw new NomadException("Unexpected commit failure. " +
-              "Reason for failure is " + response.getRejectionReason() + ": " + response.getRejectionMessage() + ". " +
-              "Change:" + nomadChangeInfo.toString());
-        }
-        return true;
-      }
-      case ROLLED_BACK: {
-        RollbackMessage message = new RollbackMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid());
-        AcceptRejectResponse response = nomadServer.rollback(message);
-        if (!response.isAccepted()) {
-          throw new NomadException("Unexpected rollback failure. " +
-              "Reason for failure is " + response.getRejectionReason() + ": " + response.getRejectionMessage() + ". " +
-              "Change:" + nomadChangeInfo.toString());
-        }
-        return false;
-      }
+      case COMMITTED:
+        commit(nomadChangeInfo, discoverResponse.getMutativeMessageCount());
+        return RESTART_REQUIRED;
+      case ROLLED_BACK:
+        rollback(nomadChangeInfo, discoverResponse.getMutativeMessageCount());
+        return CAN_CONTINUE;
       default:
-        throw new TCShutdownServerException("Invalid Nomad Change State: " + nomadChangeInfo.getChangeRequestState());
+        throw new AssertionError(nomadChangeInfo.getChangeRequestState());
     }
   }
 
-  static class Codec {
-    static byte[] encode(DynamicConfigSyncData data) {
-      return toJson(requireNonNull(data)).getBytes(UTF_8);
-    }
+  private Require syncNomadChange(NomadChangeInfo nomadChangeInfo) throws NomadException {
+    LOGGER.debug("Syncing change version {} ({}) created at {} by {} from {}",
+        nomadChangeInfo.getVersion(),
+        nomadChangeInfo.getNomadChange().getSummary(),
+        nomadChangeInfo.getCreationTimestamp(),
+        nomadChangeInfo.getCreationUser(),
+        nomadChangeInfo.getCreationHost());
 
-    static DynamicConfigSyncData decode(byte[] encoded) {
-      return parse(new String(encoded, UTF_8), new TypeReference<DynamicConfigSyncData>() {
-      });
+    DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
+    long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
+
+    switch (nomadChangeInfo.getChangeRequestState()) {
+      case PREPARED:
+        throw new IllegalStateException("Active has some PREPARED configuration changes that are not yet committed.");
+      case COMMITTED:
+        prepare(nomadChangeInfo, mutativeMessageCount);
+        commit(nomadChangeInfo, mutativeMessageCount + 1);
+        return RESTART_REQUIRED;
+      case ROLLED_BACK:
+        prepare(nomadChangeInfo, mutativeMessageCount);
+        rollback(nomadChangeInfo, mutativeMessageCount + 1);
+        return CAN_CONTINUE;
+      default:
+        throw new AssertionError(nomadChangeInfo.getChangeRequestState());
+    }
+  }
+
+  private void prepare(NomadChangeInfo nomadChangeInfo, long mutativeMessageCount) throws NomadException {
+    AcceptRejectResponse response = nomadServer.prepare(nomadChangeInfo.toPrepareMessage(mutativeMessageCount));
+    if (!response.isAccepted()) {
+      throw new NomadException("Prepare failure. " +
+          "Reason: " + response + ". " +
+          "Change:" + nomadChangeInfo.getNomadChange().getSummary());
+    }
+  }
+
+  private void commit(NomadChangeInfo nomadChangeInfo, long mutativeMessageCount) throws NomadException {
+    AcceptRejectResponse response = nomadServer.commit(nomadChangeInfo.toCommitMessage(mutativeMessageCount));
+    if (!response.isAccepted()) {
+      throw new NomadException("Unexpected commit failure. " +
+          "Reason: " + response + ". " +
+          "Change:" + nomadChangeInfo.getNomadChange().getSummary());
+    }
+  }
+
+  private void rollback(NomadChangeInfo nomadChangeInfo, long mutativeMessageCount) throws NomadException {
+    AcceptRejectResponse response = nomadServer.rollback(nomadChangeInfo.toRollbackMessage(mutativeMessageCount));
+    if (!response.isAccepted()) {
+      throw new NomadException("Unexpected rollback failure. " +
+          "Reason: " + response + ". " +
+          "Change:" + nomadChangeInfo.getNomadChange().getSummary());
     }
   }
 }

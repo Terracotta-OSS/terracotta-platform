@@ -131,6 +131,18 @@ public class NodeContext implements Cloneable {
     return Objects.hash(getCluster(), getStripeId(), getNodeId(), getNodeName());
   }
 
+  /**
+   * Rebase this node information onto another cluster.
+   * <p>
+   * Parameter must not be null.
+   * <p>
+   * If the new cluster contains this stripe ID / node name information,
+   * then a new node context is returned targeting the same node in the new cluster.
+   * <p>
+   * Otherwise, a new node context is created, with a new cluster with 1 stripe 1 node,
+   * being this node (stripe ID / node name) alone in its own cluster. The cluster name
+   * is kept if it ws set.
+   */
   public NodeContext withCluster(Cluster updated) {
     requireNonNull(updated);
 

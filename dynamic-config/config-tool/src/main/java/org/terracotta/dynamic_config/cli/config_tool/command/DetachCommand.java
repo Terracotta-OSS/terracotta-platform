@@ -5,6 +5,7 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameters;
+import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
@@ -12,13 +13,17 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Collection;
+
+import static java.util.Collections.singletonList;
+import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 
 /**
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f]")
+@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class DetachCommand extends TopologyCommand {
 
   @Override
@@ -75,5 +80,19 @@ public class DetachCommand extends TopologyCommand {
         throw new UnsupportedOperationException(operationType.name());
       }
     }
+  }
+
+  @Override
+  protected void afterNomadChange(Cluster result) {
+    Collection<InetSocketAddress> removedNodes = operationType == NODE ?
+        singletonList(source) :
+        sourceCluster.getStripe(source).get().getNodeAddresses();
+
+    logger.info("Restarting nodes: {}", toString(removedNodes));
+    restartNodes(
+        removedNodes,
+        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
+    logger.info("All nodes came back up");
   }
 }
