@@ -129,6 +129,10 @@ public class Cluster implements Cloneable {
     return getStripe(address).isPresent();
   }
 
+  public boolean containsNode(int StripeId, String nodeName) {
+    return getStripe(StripeId).flatMap(stripe -> stripe.getNode(nodeName)).isPresent();
+  }
+
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
