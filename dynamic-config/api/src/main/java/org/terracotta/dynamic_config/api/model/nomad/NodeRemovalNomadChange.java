@@ -40,6 +40,11 @@ public class NodeRemovalNomadChange extends NodeNomadChange {
   }
 
   @Override
+  public boolean canApplyAtRuntime() {
+    return true;
+  }
+
+  @Override
   public String getSummary() {
     return "Detaching node: " + getNodeAddress() + " from stripe ID: " + getStripeId();
   }

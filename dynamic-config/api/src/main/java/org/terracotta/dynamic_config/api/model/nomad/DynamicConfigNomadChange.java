@@ -19,4 +19,6 @@ public interface DynamicConfigNomadChange extends NomadChange {
    * @return updated cluster, must not be null
    */
   Cluster apply(Cluster original);
+
+  boolean canApplyAtRuntime();
 }

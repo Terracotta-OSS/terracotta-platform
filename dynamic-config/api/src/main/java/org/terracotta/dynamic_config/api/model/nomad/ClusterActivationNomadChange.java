@@ -36,6 +36,11 @@ public class ClusterActivationNomadChange extends TopologyNomadChange {
   }
 
   @Override
+  public boolean canApplyAtRuntime() {
+    return false;
+  }
+
+  @Override
   public String toString() {
     return "ClusterActivationNomadChange{" +
         "cluster=" + getCluster() +

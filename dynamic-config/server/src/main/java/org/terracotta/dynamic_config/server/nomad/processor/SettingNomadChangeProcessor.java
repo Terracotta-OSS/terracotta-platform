@@ -18,7 +18,6 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.server.NomadException;
 
 import static java.util.Objects.requireNonNull;
-import static org.terracotta.dynamic_config.api.model.Requirement.RESTART;
 
 /**
  * Supports the processing of {@link SettingNomadChange} for dynamic configuration.
@@ -69,27 +68,23 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   @Override
   public void apply(SettingNomadChange change) throws NomadException {
     try {
-      boolean changeAppliedAtRuntime = !change.getSetting().requires(RESTART);
-
-      if (changeAppliedAtRuntime) {
+      if (change.canApplyAtRuntime()) {
         LOGGER.debug("Applying change at runtime: {}", change.getSummary());
 
-        NodeContext nodeContext = topologyService.getRuntimeNodeContext();
-        Configuration configuration = change.toConfiguration(nodeContext.getCluster());
+        Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
+        Configuration configuration = change.toConfiguration(runtime);
 
         getConfigChangeHandlerManager(change).apply(configuration);
 
-        NodeContext updated = new NodeContext(change.apply(nodeContext.getCluster()), nodeContext.getStripeId(), nodeContext.getNodeName());
-        listener.onNewConfigurationAppliedAtRuntime(updated, configuration);
+        listener.onConfigurationChange(change, runtime);
 
       } else {
         LOGGER.debug("Change will be applied after restart: {}", change.getSummary());
 
-        NodeContext nodeContext = topologyService.getUpcomingNodeContext();
-        Configuration configuration = change.toConfiguration(nodeContext.getCluster());
+        Cluster upcoming = topologyService.getUpcomingNodeContext().getCluster();
+        Configuration configuration = change.toConfiguration(upcoming);
 
-        NodeContext updated = new NodeContext(change.apply(nodeContext.getCluster()), nodeContext.getStripeId(), nodeContext.getNodeName());
-        listener.onNewConfigurationPendingRestart(updated, configuration);
+        listener.onConfigurationChange(change, upcoming);
       }
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying setting change '" + change.getSummary() + "': " + e.getMessage(), e);

@@ -5,13 +5,15 @@
 package org.terracotta.dynamic_config.api.service;
 
 import com.tc.classloader.CommonComponent;
-import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
+import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -33,13 +35,8 @@ public class DynamicConfigListenerAdapter implements DynamicConfigListener {
   }
 
   @Override
-  public void onNewConfigurationAppliedAtRuntime(NodeContext nodeContext, Configuration configuration) {
-    getDelegate().ifPresent(listener -> listener.onNewConfigurationAppliedAtRuntime(nodeContext, configuration));
-  }
-
-  @Override
-  public void onNewConfigurationPendingRestart(NodeContext nodeContext, Configuration configuration) {
-    getDelegate().ifPresent(listener -> listener.onNewConfigurationPendingRestart(nodeContext, configuration));
+  public void onConfigurationChange(SettingNomadChange change, Cluster updated) {
+    getDelegate().ifPresent(listener -> listener.onConfigurationChange(change, updated));
   }
 
   @Override
@@ -53,8 +50,8 @@ public class DynamicConfigListenerAdapter implements DynamicConfigListener {
   }
 
   @Override
-  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response) {
-    getDelegate().ifPresent(listener -> listener.onNomadCommit(message, response));
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo<NodeContext> changeInfo) {
+    getDelegate().ifPresent(listener -> listener.onNomadCommit(message, response, changeInfo));
   }
 
   @Override

@@ -25,6 +25,7 @@ import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.ChangeApplicator;
+import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerImpl;
 import org.terracotta.nomad.server.SingleThreadedNomadServer;
@@ -85,7 +86,8 @@ public class UpgradableNomadServerFactory {
       @Override
       public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
         AcceptRejectResponse response = super.commit(message);
-        listener.onNomadCommit(message, response);
+        NomadChangeInfo<NodeContext> changeInfo = getNomadChange(message.getChangeUuid()).get();
+        listener.onNomadCommit(message, response, changeInfo);
         return response;
       }
 

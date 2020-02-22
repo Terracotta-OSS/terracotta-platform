@@ -56,6 +56,11 @@ public class MultiSettingNomadChange implements DynamicConfigNomadChange {
   }
 
   @Override
+  public boolean canApplyAtRuntime() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof MultiSettingNomadChange)) return false;

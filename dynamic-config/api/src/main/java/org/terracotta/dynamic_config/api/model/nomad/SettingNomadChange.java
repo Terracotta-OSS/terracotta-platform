@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.api.model.Requirement;
 import org.terracotta.dynamic_config.api.model.Setting;
 
 import java.util.Objects;
@@ -65,6 +66,11 @@ public class SettingNomadChange extends FilteredNomadChange {
     configuration.validate(getOperation());
     configuration.apply(updated);
     return updated;
+  }
+
+  @Override
+  public boolean canApplyAtRuntime() {
+    return !getSetting().requires(Requirement.RESTART);
   }
 
   public String getName() {

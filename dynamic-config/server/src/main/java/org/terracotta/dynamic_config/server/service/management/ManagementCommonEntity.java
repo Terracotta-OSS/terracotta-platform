@@ -7,12 +7,12 @@ package org.terracotta.dynamic_config.server.service.management;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Props;
+import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
-import org.terracotta.dynamic_config.api.service.DynamicConfigListener;
+import org.terracotta.dynamic_config.api.service.DynamicConfigListenerAdapter;
 import org.terracotta.dynamic_config.api.service.EventRegistration;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
@@ -25,6 +25,7 @@ import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
+import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -77,26 +78,16 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
 
       Context source = Context.create("consumerId", String.valueOf(monitoringService.getConsumerId())).with("type", "DynamicConfig");
 
-      eventRegistration = dynamicConfigEventService.register(new DynamicConfigListener() {
+      eventRegistration = dynamicConfigEventService.register(new DynamicConfigListenerAdapter() {
         @Override
-        public void onNewConfigurationAppliedAtRuntime(NodeContext nodeContext, Configuration configuration) {
+        public void onConfigurationChange(SettingNomadChange change, Cluster updated) {
+          boolean restartRequired = !change.canApplyAtRuntime();
           Map<String, String> data = new TreeMap<>();
-          data.put("change", configuration.toString());
-          data.put("runtimeConfig", topologyToConfig(nodeContext.getCluster()));
-          data.put("appliedAtRuntime", "true");
-          data.put("restartRequired", "false");
-          String type = configuration.getValue() == null ? "DYNAMIC_CONFIG_UNSET" : "DYNAMIC_CONFIG_SET";
-          monitoringService.pushNotification(new ContextualNotification(source, type, data));
-        }
-
-        @Override
-        public void onNewConfigurationPendingRestart(NodeContext nodeContext, Configuration configuration) {
-          Map<String, String> data = new TreeMap<>();
-          data.put("change", configuration.toString());
-          data.put("upcomingConfig", topologyToConfig(nodeContext.getCluster()));
-          data.put("appliedAtRuntime", "false");
-          data.put("restartRequired", "true");
-          String type = configuration.getValue() == null ? "DYNAMIC_CONFIG_UNSET" : "DYNAMIC_CONFIG_SET";
+          data.put("change", change.toString());
+          data.put("result", topologyToConfig(updated));
+          data.put("appliedAtRuntime", String.valueOf(!restartRequired));
+          data.put("restartRequired", String.valueOf(restartRequired));
+          String type = "DYNAMIC_CONFIG_" + change.getOperation();
           monitoringService.pushNotification(new ContextualNotification(source, type, data));
         }
 
@@ -125,7 +116,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         }
 
         @Override
-        public void onNomadCommit(CommitMessage message, AcceptRejectResponse response) {
+        public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo<NodeContext> changeInfo) {
           Map<String, String> data = new TreeMap<>();
           data.put("changeUuid", message.getChangeUuid().toString());
           data.put("host", String.valueOf(message.getMutationHost()));

@@ -94,6 +94,22 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
+  public Optional<NomadChangeInfo<T>> getNomadChange(UUID changeUuid) throws NomadException {
+    ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
+    if (changeRequest == null) {
+      return Optional.empty();
+    }
+    return Optional.of(new NomadChangeInfo<>(
+        changeUuid,
+        changeRequest.getChange(),
+        changeRequest.getState(),
+        changeRequest.getVersion(),
+        changeRequest.getCreationHost(),
+        changeRequest.getCreationUser(),
+        changeRequest.getCreationTimestamp()));
+  }
+
+  @Override
   public boolean hasIncompleteChange() {
     if (!state.isInitialized()) {
       return false;

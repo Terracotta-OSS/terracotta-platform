@@ -8,11 +8,13 @@ import com.tc.server.TCServerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
 import org.terracotta.dynamic_config.api.service.DynamicConfigListener;
@@ -37,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -111,25 +114,22 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void onNewConfigurationSaved(NodeContext nodeContext, Long version) {
-    LOGGER.info("New config repository version: {} has been saved", version);
-    synchronized (this) {
-      this.upcomingNodeContext = nodeContext.clone();
+  public void onConfigurationChange(SettingNomadChange change, Cluster updated) {
+    if (change.canApplyAtRuntime()) {
+      LOGGER.info("Configuration change: {} applied at runtime", change.getSummary());
+    } else {
+      LOGGER.info("Configuration change: {} will be applied after restart", change.getSummary());
     }
     // do not fire events within a synchronized block
-    NodeContext upcoming = getUpcomingNodeContext();
-    listeners.forEach(c -> c.onNewConfigurationSaved(upcoming, version));
+    listeners.forEach(c -> c.onConfigurationChange(change, updated));
   }
 
   @Override
-  public void onNewConfigurationAppliedAtRuntime(NodeContext nodeContext, Configuration configuration) {
-    LOGGER.info("Change: {} applied at runtime", configuration);
-    synchronized (this) {
-      configuration.apply(runtimeNodeContext.getCluster());
-    }
+  public void onNewConfigurationSaved(NodeContext nodeContext, Long version) {
+    LOGGER.info("New config repository version: {} has been saved", version);
     // do not fire events within a synchronized block
-    NodeContext runtime = getRuntimeNodeContext();
-    listeners.forEach(c -> c.onNewConfigurationAppliedAtRuntime(runtime, configuration));
+    NodeContext upcoming = getUpcomingNodeContext();
+    listeners.forEach(c -> c.onNewConfigurationSaved(upcoming, version));
   }
 
   @Override
@@ -154,14 +154,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void onNewConfigurationPendingRestart(NodeContext nodeContext, Configuration configuration) {
-    LOGGER.info("Change: {} will be applied after restart", configuration);
-    // do not fire events within a synchronized block
-    NodeContext upcoming = getUpcomingNodeContext();
-    listeners.forEach(c -> c.onNewConfigurationPendingRestart(upcoming, configuration));
-  }
-
-  @Override
   public void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response) {
     if (response.isAccepted()) {
       LOGGER.info("Nomad change {} prepared: {}", message.getChangeUuid(), message.getChange().getSummary());
@@ -171,12 +163,34 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response) {
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo<NodeContext> changeInfo) {
     if (response.isAccepted()) {
-      LOGGER.info("Nomad change {} committed", message.getChangeUuid());
+      DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) changeInfo.getNomadChange();
+      LOGGER.info("Nomad change {} committed: {}", message.getChangeUuid(), dynamicConfigNomadChange.getSummary());
+
+      // extract the changes since there can be multiple settings change
+      List<? extends DynamicConfigNomadChange> nomadChanges = extractChanges(dynamicConfigNomadChange);
+
+      // the following code will be executed on all the nodes, regardless of the applicability
+      // level to update the config
+      synchronized (this) {
+        for (DynamicConfigNomadChange nomadChange : nomadChanges) {
+          // first we update the upcoming one
+          Cluster upcomingCluster = nomadChange.apply(upcomingNodeContext.getCluster());
+          upcomingNodeContext = upcomingNodeContext.update(upcomingCluster);
+          // if the change can be applied at runtime, it was previously done in the config change handler.
+          // so update also the runtime topology there
+          if (nomadChange.canApplyAtRuntime()) {
+            Cluster runtimeCluster = nomadChange.apply(runtimeNodeContext.getCluster());
+            runtimeNodeContext = runtimeNodeContext.update(runtimeCluster);
+          }
+        }
+      }
     } else {
       LOGGER.warn("Nomad change {} failed to commit: {}", message.getChangeUuid(), response);
     }
+
+    listeners.forEach(c -> c.onNomadCommit(message, response, changeInfo));
   }
 
   @Override
@@ -400,5 +414,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     return updatedCluster.getNode(me.getNodeInternalAddress()) // important to use the internal address
         .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getNodeName())
             .orElse(null));
+  }
+
+  private static List<? extends DynamicConfigNomadChange> extractChanges(DynamicConfigNomadChange change) {
+    return change instanceof MultiSettingNomadChange ? ((MultiSettingNomadChange) change).getChanges() : Collections.singletonList(change);
   }
 }

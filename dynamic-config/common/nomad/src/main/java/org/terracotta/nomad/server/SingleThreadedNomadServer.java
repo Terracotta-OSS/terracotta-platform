@@ -13,6 +13,7 @@ import org.terracotta.nomad.messages.TakeoverMessage;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
@@ -108,6 +109,16 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
     lock.lock();
     try {
       return underlying.getAllNomadChanges();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public Optional<NomadChangeInfo<T>> getNomadChange(UUID uuid) throws NomadException {
+    lock.lock();
+    try {
+      return underlying.getNomadChange(uuid);
     } finally {
       lock.unlock();
     }

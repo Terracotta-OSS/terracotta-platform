@@ -47,6 +47,11 @@ public class NodeAdditionNomadChange extends NodeNomadChange {
   }
 
   @Override
+  public boolean canApplyAtRuntime() {
+    return true;
+  }
+
+  @Override
   public String getSummary() {
     return "Attaching node: " + getNodeAddress() + " to stripe ID: " + getStripeId();
   }

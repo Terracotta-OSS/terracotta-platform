@@ -13,6 +13,7 @@ import org.terracotta.nomad.messages.TakeoverMessage;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @author Mathieu Carbou
@@ -30,6 +31,9 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
 
   @Override
   public List<NomadChangeInfo<T>> getAllNomadChanges() throws NomadException {return delegate.getAllNomadChanges();}
+
+  @Override
+  public Optional<NomadChangeInfo<T>> getNomadChange(UUID uuid) throws NomadException {return delegate.getNomadChange(uuid);}
 
   @Override
   public DiscoverResponse<T> discover() throws NomadException {return delegate.discover();}
