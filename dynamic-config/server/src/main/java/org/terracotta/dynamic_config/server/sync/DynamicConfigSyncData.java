@@ -6,7 +6,6 @@ package org.terracotta.dynamic_config.server.sync;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.util.List;
@@ -16,17 +15,17 @@ import java.util.List;
  */
 public class DynamicConfigSyncData {
 
-  private final List<NomadChangeInfo<NodeContext>> nomadChanges;
+  private final List<NomadChangeInfo> nomadChanges;
   private final String license;
 
   @JsonCreator
-  public DynamicConfigSyncData(@JsonProperty(value = "nomadChanges", required = true) List<NomadChangeInfo<NodeContext>> nomadChanges,
+  public DynamicConfigSyncData(@JsonProperty(value = "nomadChanges", required = true) List<NomadChangeInfo> nomadChanges,
                                @JsonProperty(value = "license") String license) {
     this.nomadChanges = nomadChanges;
     this.license = license;
   }
 
-  public List<NomadChangeInfo<NodeContext>> getNomadChanges() {
+  public List<NomadChangeInfo> getNomadChanges() {
     return nomadChanges;
   }
 

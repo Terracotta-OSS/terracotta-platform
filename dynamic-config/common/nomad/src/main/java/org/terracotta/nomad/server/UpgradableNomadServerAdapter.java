@@ -30,10 +30,10 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
   public void setChangeApplicator(ChangeApplicator<T> changeApplicator) {delegate.setChangeApplicator(changeApplicator);}
 
   @Override
-  public List<NomadChangeInfo<T>> getAllNomadChanges() throws NomadException {return delegate.getAllNomadChanges();}
+  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {return delegate.getAllNomadChanges();}
 
   @Override
-  public Optional<NomadChangeInfo<T>> getNomadChange(UUID uuid) throws NomadException {return delegate.getNomadChange(uuid);}
+  public Optional<NomadChangeInfo> getNomadChange(UUID uuid) throws NomadException {return delegate.getNomadChange(uuid);}
 
   @Override
   public DiscoverResponse<T> discover() throws NomadException {return delegate.discover();}

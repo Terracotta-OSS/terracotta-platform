@@ -105,7 +105,7 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public List<NomadChangeInfo<T>> getAllNomadChanges() throws NomadException {
+  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
     lock.lock();
     try {
       return underlying.getAllNomadChanges();
@@ -115,7 +115,7 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public Optional<NomadChangeInfo<T>> getNomadChange(UUID uuid) throws NomadException {
+  public Optional<NomadChangeInfo> getNomadChange(UUID uuid) throws NomadException {
     lock.lock();
     try {
       return underlying.getNomadChange(uuid);

@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-public class NomadChangeInfo<T> {
+public class NomadChangeInfo {
   private final UUID changeUuid;
   private final NomadChange nomadChange;
   private final ChangeRequestState changeRequestState;
@@ -71,7 +71,7 @@ public class NomadChangeInfo<T> {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    NomadChangeInfo<?> that = (NomadChangeInfo<?>) o;
+    NomadChangeInfo that = (NomadChangeInfo) o;
     return version == that.version &&
         Objects.equals(changeUuid, that.changeUuid) &&
         Objects.equals(nomadChange, that.nomadChange) &&

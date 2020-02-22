@@ -116,7 +116,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         }
 
         @Override
-        public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo<NodeContext> changeInfo) {
+        public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
           Map<String, String> data = new TreeMap<>();
           data.put("changeUuid", message.getChangeUuid().toString());
           data.put("host", String.valueOf(message.getMutationHost()));

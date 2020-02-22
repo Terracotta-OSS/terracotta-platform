@@ -68,13 +68,13 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public List<NomadChangeInfo<T>> getAllNomadChanges() throws NomadException {
-    LinkedList<NomadChangeInfo<T>> allNomadChanges = new LinkedList<>();
+  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
+    LinkedList<NomadChangeInfo> allNomadChanges = new LinkedList<>();
     UUID changeUuid = state.getLatestChangeUuid();
     while (changeUuid != null) {
       ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
       allNomadChanges.addFirst(
-          new NomadChangeInfo<>(
+          new NomadChangeInfo(
               changeUuid,
               changeRequest.getChange(),
               changeRequest.getState(),
@@ -94,12 +94,12 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public Optional<NomadChangeInfo<T>> getNomadChange(UUID changeUuid) throws NomadException {
+  public Optional<NomadChangeInfo> getNomadChange(UUID changeUuid) throws NomadException {
     ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
     if (changeRequest == null) {
       return Optional.empty();
     }
-    return Optional.of(new NomadChangeInfo<>(
+    return Optional.of(new NomadChangeInfo(
         changeUuid,
         changeRequest.getChange(),
         changeRequest.getState(),
@@ -166,7 +166,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       );
     }
 
-    List<NomadChangeInfo<T>> checkpoints = getAllNomadChanges().stream()
+    List<NomadChangeInfo> checkpoints = getAllNomadChanges().stream()
         .filter(nomadChangeInfo -> nomadChangeInfo.getChangeRequestState() == COMMITTED)
         .collect(Collectors.toList());
 

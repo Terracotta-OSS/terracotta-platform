@@ -11,9 +11,9 @@ import java.util.UUID;
 public interface UpgradableNomadServer<T> extends NomadServer<T> {
   void setChangeApplicator(ChangeApplicator<T> changeApplicator);
 
-  List<NomadChangeInfo<T>> getAllNomadChanges() throws NomadException;
+  List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
 
-  Optional<NomadChangeInfo<T>> getNomadChange(UUID uuid) throws NomadException;
+  Optional<NomadChangeInfo> getNomadChange(UUID uuid) throws NomadException;
 
   /**
    * Last change has not been committed or rolled back yet.

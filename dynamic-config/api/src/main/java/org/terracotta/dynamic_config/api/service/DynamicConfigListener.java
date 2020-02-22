@@ -66,7 +66,7 @@ public interface DynamicConfigListener {
 
   void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response);
 
-  void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo<NodeContext> changeInfo);
+  void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo);
 
   void onNomadRollback(RollbackMessage message, AcceptRejectResponse response);
 }

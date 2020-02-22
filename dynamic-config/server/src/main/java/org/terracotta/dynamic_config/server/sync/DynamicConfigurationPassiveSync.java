@@ -62,11 +62,11 @@ public class DynamicConfigurationPassiveSync {
   public void sync(byte[] syncData) {
     TCRuntimeException exception;
     DynamicConfigSyncData data = Codec.decode(syncData);
-    List<NomadChangeInfo<NodeContext>> activeNomadChanges = data.getNomadChanges();
+    List<NomadChangeInfo> activeNomadChanges = data.getNomadChanges();
 
     try {
       // sync the active append log in the passive append log
-      List<NomadChangeInfo<NodeContext>> passiveNomadChanges = nomadServer.getAllNomadChanges();
+      List<NomadChangeInfo> passiveNomadChanges = nomadServer.getAllNomadChanges();
       exception = applyNomadChanges(activeNomadChanges, passiveNomadChanges);
     } catch (NomadException e) {
       // shutdown the server because of a unrecoverable error
@@ -89,7 +89,7 @@ public class DynamicConfigurationPassiveSync {
     }
   }
 
-  private TCRuntimeException applyNomadChanges(List<NomadChangeInfo<NodeContext>> activeNomadChanges, List<NomadChangeInfo<NodeContext>> passiveNomadChanges) throws NomadException {
+  private TCRuntimeException applyNomadChanges(List<NomadChangeInfo> activeNomadChanges, List<NomadChangeInfo> passiveNomadChanges) throws NomadException {
     int activeInd = 0, passiveInd = 0;
     int activeChangesSize = activeNomadChanges.size();
     int passiveChangesSize = passiveNomadChanges.size();
@@ -117,8 +117,8 @@ public class DynamicConfigurationPassiveSync {
     }
 
     for (; passiveInd < passiveChangesSize; passiveInd++, activeInd++) {
-      NomadChangeInfo<NodeContext> passiveChange = passiveNomadChanges.get(passiveInd);
-      NomadChangeInfo<NodeContext> activeChange = activeNomadChanges.get(activeInd);
+      NomadChangeInfo passiveChange = passiveNomadChanges.get(passiveInd);
+      NomadChangeInfo activeChange = activeNomadChanges.get(activeInd);
       if (!passiveChange.equals(activeChange)) {
         // if the change is not the same, we check if this is because the latest change on the passive server is PREPARED and
         // on the active server it has been rolled back or committed. If yes, we do not prevent the sync, because it will fix
@@ -148,12 +148,12 @@ public class DynamicConfigurationPassiveSync {
     }
   }
 
-  private boolean newPreActivatedPassiveJoins(List<NomadChangeInfo<NodeContext>> activeNomadChanges, List<NomadChangeInfo<NodeContext>> passiveNomadChanges) {
+  private boolean newPreActivatedPassiveJoins(List<NomadChangeInfo> activeNomadChanges, List<NomadChangeInfo> passiveNomadChanges) {
     if (activeNomadChanges.isEmpty() || passiveNomadChanges.isEmpty()) {
       throw new AssertionError();
     }
 
-    NomadChangeInfo<NodeContext> passiveNomadChangeInfo = passiveNomadChanges.get(0);
+    NomadChangeInfo passiveNomadChangeInfo = passiveNomadChanges.get(0);
 
     if (passiveNomadChanges.size() != 1
         || activeNomadChanges.get(0).equals(passiveNomadChangeInfo)
@@ -170,7 +170,7 @@ public class DynamicConfigurationPassiveSync {
 
     // lookup active changes (reverse order) to find the latest change in force
     for (int i = activeNomadChanges.size() - 1; i >= 0; i--) {
-      NomadChangeInfo<NodeContext> changeInfo = activeNomadChanges.get(i);
+      NomadChangeInfo changeInfo = activeNomadChanges.get(i);
       if (changeInfo.getChangeRequestState() == COMMITTED && changeInfo.getNomadChange() instanceof TopologyNomadChange) {
         // we have found the last topology change in the active
         // we check if the new passive has joined with the exact same committed config on the active
@@ -182,7 +182,7 @@ public class DynamicConfigurationPassiveSync {
     return false;
   }
 
-  private void sendPrepare(long mutativeMessageCount, UpgradableNomadServer<NodeContext> nomadServer, NomadChangeInfo<NodeContext> nomadChangeInfo) throws NomadException {
+  private void sendPrepare(long mutativeMessageCount, UpgradableNomadServer<NodeContext> nomadServer, NomadChangeInfo nomadChangeInfo) throws NomadException {
     PrepareMessage prepareMessage = new PrepareMessage(mutativeMessageCount, nomadChangeInfo.getCreationHost(), nomadChangeInfo.getCreationUser(), nomadChangeInfo.getCreationTimestamp(), nomadChangeInfo.getChangeUuid(),
         nomadChangeInfo.getVersion(), nomadChangeInfo.getNomadChange());
 
@@ -192,7 +192,7 @@ public class DynamicConfigurationPassiveSync {
     }
   }
 
-  private boolean tryCommittingChanges(NomadChangeInfo<NodeContext> nomadChangeInfo) throws NomadException {
+  private boolean tryCommittingChanges(NomadChangeInfo nomadChangeInfo) throws NomadException {
     DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
     long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
 
@@ -228,7 +228,7 @@ public class DynamicConfigurationPassiveSync {
     }
   }
 
-  private boolean fixPreparedChange(NomadChangeInfo<NodeContext> nomadChangeInfo) throws NomadException {
+  private boolean fixPreparedChange(NomadChangeInfo nomadChangeInfo) throws NomadException {
     DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
     long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
     if (discoverResponse.getLatestChange().getState() != PREPARED) {

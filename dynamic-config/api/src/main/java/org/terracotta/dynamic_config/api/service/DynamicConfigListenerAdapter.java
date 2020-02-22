@@ -50,7 +50,7 @@ public class DynamicConfigListenerAdapter implements DynamicConfigListener {
   }
 
   @Override
-  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo<NodeContext> changeInfo) {
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
     getDelegate().ifPresent(listener -> listener.onNomadCommit(message, response, changeInfo));
   }
 

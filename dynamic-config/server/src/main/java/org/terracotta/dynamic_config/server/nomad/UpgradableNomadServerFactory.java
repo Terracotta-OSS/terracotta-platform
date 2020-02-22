@@ -86,7 +86,7 @@ public class UpgradableNomadServerFactory {
       @Override
       public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
         AcceptRejectResponse response = super.commit(message);
-        NomadChangeInfo<NodeContext> changeInfo = getNomadChange(message.getChangeUuid()).get();
+        NomadChangeInfo changeInfo = getNomadChange(message.getChangeUuid()).get();
         listener.onNomadCommit(message, response, changeInfo);
         return response;
       }

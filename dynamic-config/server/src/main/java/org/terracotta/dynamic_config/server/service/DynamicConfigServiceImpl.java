@@ -156,7 +156,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo<NodeContext> changeInfo) {
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
     if (response.isAccepted()) {
       DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) changeInfo.getNomadChange();
       LOGGER.info("Nomad change {} committed: {}", message.getChangeUuid(), dynamicConfigNomadChange.getSummary());
@@ -304,9 +304,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public NomadChangeInfo<?>[] getChangeHistory() {
+  public NomadChangeInfo[] getChangeHistory() {
     try {
-      return nomadServerManager.getNomadServer().getAllNomadChanges().toArray(new NomadChangeInfo<?>[0]);
+      return nomadServerManager.getNomadServer().getAllNomadChanges().toArray(new NomadChangeInfo[0]);
     } catch (NomadException e) {
       throw new IllegalStateException(e);
     }
