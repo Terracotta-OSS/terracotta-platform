@@ -2,11 +2,13 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.system_tests;
+package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
+import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
+import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 import org.terracotta.dynamic_config.system_tests.util.AppendLogCapturer;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.SanskritObject;

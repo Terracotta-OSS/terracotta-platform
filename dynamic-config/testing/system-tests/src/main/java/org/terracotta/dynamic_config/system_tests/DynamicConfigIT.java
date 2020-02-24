@@ -82,7 +82,7 @@ import static org.terracotta.common.struct.Tuple2.tuple2;
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final boolean CI = System.getProperty("JOB_NAME") != null;
-  static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
+  protected static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   @Rule
   public final SystemOutRule out = new SystemOutRule().enableLog();
@@ -94,8 +94,8 @@ public class DynamicConfigIT {
 
   protected int timeout = CI ? 90 : 60;
 
-  final ClusterFactory clusterFactory;
-  final Tsa tsa;
+  protected final ClusterFactory clusterFactory;
+  protected final Tsa tsa;
   private final int stripes;
   private final boolean autoStart;
   private final int nodesPerStripe;
@@ -370,7 +370,7 @@ public class DynamicConfigIT {
     });
   }
 
-  TerracottaServer createNode(int stripeId, int nodesId) {
+  protected TerracottaServer createNode(int stripeId, int nodesId) {
     String uniqueId = combine(stripeId, nodesId);
     return server("node" + uniqueId, "localhost")
         .tsaPort(getNodePort(stripeId, nodesId))
@@ -382,11 +382,11 @@ public class DynamicConfigIT {
         .metaData("terracotta" + uniqueId + "/metadata");
   }
 
-  String combine(int stripeId, int nodesId) {
+  protected String combine(int stripeId, int nodesId) {
     return stripeId + "-" + nodesId;
   }
 
-  CustomConfigurationContext createConfigContext(int stripeCount, int nodesPerStripe) {
+  protected CustomConfigurationContext createConfigContext(int stripeCount, int nodesPerStripe) {
     Stripe[] stripes = new Stripe[stripeCount];
     for (int stripeIndex = 0; stripeIndex < stripeCount; stripeIndex++) {
       TerracottaServer[] servers = new TerracottaServer[nodesPerStripe];

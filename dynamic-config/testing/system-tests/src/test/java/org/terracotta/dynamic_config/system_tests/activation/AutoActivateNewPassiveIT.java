@@ -2,9 +2,11 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.system_tests;
+package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Test;
+import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
+import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 
 import java.nio.file.Path;
 
@@ -13,7 +15,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertThat;
 
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
-public class AutoActivateIT extends DynamicConfigIT {
+public class AutoActivateNewPassiveIT extends DynamicConfigIT {
   @Test
   public void test_auto_activation_failure_for_2x1_cluster() throws Exception {
     try {

@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.system_tests;
+package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -11,6 +11,8 @@ import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
+import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 
 import java.net.InetSocketAddress;
 
@@ -23,7 +25,7 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
 
 @ClusterDefinition
-public class SimpleActivateCommandIT extends DynamicConfigIT {
+public class ActivateCommand1x1IT extends DynamicConfigIT {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();

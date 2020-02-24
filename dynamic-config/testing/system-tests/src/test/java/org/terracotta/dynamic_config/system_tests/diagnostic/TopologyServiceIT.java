@@ -2,7 +2,7 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.system_tests;
+package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Test;
 import org.terracotta.diagnostic.client.DiagnosticService;
@@ -11,6 +11,8 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
+import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 
 import java.nio.file.Paths;
 import java.time.Duration;

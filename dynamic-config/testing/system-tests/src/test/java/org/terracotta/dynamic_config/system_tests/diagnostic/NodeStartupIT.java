@@ -2,9 +2,11 @@
  * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
  * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
  */
-package org.terracotta.dynamic_config.system_tests;
+package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Test;
+import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
+import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
 
 import java.nio.file.Path;
@@ -22,14 +24,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 @ClusterDefinition(autoStart = false)
-public class SimpleNodeStartupIT extends DynamicConfigIT {
-
-  @Test
-  public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
-    Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1Node);
-    startSingleNode("--node-repository-dir", configurationRepo.toString());
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-  }
+public class NodeStartupIT extends DynamicConfigIT {
 
   @Test
   public void testStartingWithNonExistentRepo() {
