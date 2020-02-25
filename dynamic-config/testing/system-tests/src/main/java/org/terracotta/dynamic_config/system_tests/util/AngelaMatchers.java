@@ -8,16 +8,27 @@ import org.hamcrest.CustomTypeSafeMatcher;
 import org.hamcrest.Matcher;
 import org.terracotta.angela.common.ConfigToolExecutionResult;
 
+import java.util.List;
+
 /**
  * @author Mathieu Carbou
  */
 public class AngelaMatchers {
 
-  public static Matcher<ConfigToolExecutionResult> containsOutput(String text) {
-    return new CustomTypeSafeMatcher<ConfigToolExecutionResult>(" contains " + text) {
+  public static Matcher<ConfigToolExecutionResult> successful() {
+    return new CustomTypeSafeMatcher<ConfigToolExecutionResult>("successful") {
       @Override
       protected boolean matchesSafely(ConfigToolExecutionResult result) {
-        return result.toString().contains(text);
+        return result.getExitStatus() == 0 && find(result.getOutput(), "Command successful");
+      }
+    };
+  }
+
+  public static Matcher<ConfigToolExecutionResult> containsOutput(String text) {
+    return new CustomTypeSafeMatcher<ConfigToolExecutionResult>("contains " + text) {
+      @Override
+      protected boolean matchesSafely(ConfigToolExecutionResult result) {
+        return find(result.getOutput(), text);
       }
     };
   }
@@ -31,4 +42,13 @@ public class AngelaMatchers {
     };
   }
 
+  private static boolean find(List<String> lines, String text) {
+    // reverse search because chances are that the string we are searching for is more at the end than at the beginning
+    for (int i = lines.size() - 1; i >= 0; i--) {
+      if (lines.get(i).contains(text)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

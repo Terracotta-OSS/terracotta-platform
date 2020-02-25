@@ -11,10 +11,11 @@ import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 @ClusterDefinition(autoActivate = true)
 public class SetCommand1x1IT extends DynamicConfigIT {
@@ -27,39 +28,34 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void setOffheapResource_increaseSize() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main");
-    waitUntil(out::getLog, containsString("offheap-resources.main=1GB"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
+        allOf(hasExitStatus(0), containsOutput("offheap-resources.main=1GB")));
   }
 
   @Test
   public void setOffheapResource_addResource() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=second:1GB");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=second:1GB"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second");
-    waitUntil(out::getLog, containsString("offheap-resources.second=1GB"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second"),
+        allOf(hasExitStatus(0), containsOutput("offheap-resources.second=1GB")));
   }
 
   @Test
   public void setOffheapResources_addResources() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.third=1GB");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.third=1GB"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second", "-c", "offheap-resources.third");
-    waitUntil(out::getLog, containsString("offheap-resources.second=1GB"));
-    waitUntil(out::getLog, containsString("offheap-resources.third=1GB"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second", "-c", "offheap-resources.third"),
+        allOf(hasExitStatus(0), containsOutput("offheap-resources.second=1GB"), containsOutput("offheap-resources.third=1GB")));
   }
 
   @Test
   public void setOffheapResources_addResource_increaseSize() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=main:1GB,second:1GB");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=main:1GB,second:1GB"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources");
-    waitUntil(out::getLog, containsString("offheap-resources=foo:1GB,main:1GB,second:1GB"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
+        allOf(hasExitStatus(0), containsOutput("offheap-resources=foo:1GB,main:1GB,second:1GB")));
   }
 
   @Test
@@ -99,112 +95,97 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void setDataDir_addOneNonExistentDataDir() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second"),
+        containsOutput("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
   }
 
   @Test
   public void setDataDir_addMultipleNonExistentDataDirs() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-2");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-2"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1")));
 
-    out.clearLog();
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.third");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.third"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2")));
   }
 
   @Test
   public void setDataDir_addMultipleNonExistentDataDirs_flavor2() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-2");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-2"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1")));
 
-    out.clearLog();
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.third");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.third"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2")));
   }
 
   @Test
   public void setFailover_Priority_Consistency() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2");
-    waitUntil(out::getLog, containsString("restart of the cluster is required"));
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2"),
+        allOf(hasExitStatus(0), containsOutput("restart of the cluster is required")));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority");
-    waitUntil(out::getLog, containsString("failover-priority=consistency:2"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority"),
+        allOf(hasExitStatus(0), containsOutput("failover-priority=consistency:2")));
   }
 
   @Test
   public void setNodeLogDir_postActivation() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-log-dir=logs/stripe1");
-    waitUntil(out::getLog, containsString("restart of the cluster is required"));
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-log-dir=logs/stripe1"),
+        containsOutput("restart of the cluster is required"));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-log-dir");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.node-log-dir=logs" + separator + "stripe1"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-log-dir"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.node-log-dir=logs" + separator + "stripe1")));
   }
 
   @Test
   public void setNodeBindAddress_postActivation() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-bind-address=127.0.0.1");
-    waitUntil(out::getLog, containsString("restart of the cluster is required"));
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-bind-address=127.0.0.1"),
+        containsOutput("restart of the cluster is required"));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-bind-address");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.node-bind-address=127.0.0.1"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-bind-address"),
+        containsOutput("stripe.1.node.1.node-bind-address=127.0.0.1"));
   }
 
   @Test
   public void setNodeGroupBindAddress_postActivation() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-group-bind-address=127.0.0.1");
-    waitUntil(out::getLog, containsString("restart of the cluster is required"));
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-group-bind-address=127.0.0.1"),
+        allOf(hasExitStatus(0), containsOutput("restart of the cluster is required")));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-group-bind-address");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.node-group-bind-address=127.0.0.1"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-group-bind-address"),
+        containsOutput("stripe.1.node.1.node-group-bind-address=127.0.0.1"));
   }
 
   @Test
   public void testTcProperty_postActivation() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo=bar");
-    waitUntil(out::getLog, containsString("IMPORTANT: A restart of the cluster is required to apply the changes"));
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo=bar"),
+        allOf(hasExitStatus(0), containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
 
-    configToolInvocation("get", "-r", "-s", "localhost:" + getNodePort(), "-c", "tc-properties");
-    waitUntil(out::getLog, not(containsString("tc-properties=foo:bar")));
+    assertThat(configToolInvocation("get", "-r", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        allOf(hasExitStatus(0), not(containsOutput("tc-properties=foo:bar"))));
 
-    out.clearLog();
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties");
-    waitUntil(out::getLog, containsString("tc-properties=foo:bar"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        allOf(hasExitStatus(0), containsOutput("tc-properties=foo:bar")));
 
-    out.clearLog();
-    configToolInvocation("unset", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("unset", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties");
-    waitUntil(out::getLog, not(containsString("tc-properties=foo:bar")));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        allOf(hasExitStatus(0), not(containsOutput("tc-properties=foo:bar"))));
   }
 
   @Test
   public void testSetLogger() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides=org.terracotta:TRACE,com.tc:TRACE");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides=org.terracotta:TRACE,com.tc:TRACE"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-logger-overrides");
-    waitUntil(out::getLog, containsString("node-logger-overrides=com.tc:TRACE,org.terracotta:TRACE"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-logger-overrides"),
+        allOf(hasExitStatus(0), containsOutput("node-logger-overrides=com.tc:TRACE,org.terracotta:TRACE")));
 
-    configToolInvocation("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides.com.tc");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides.com.tc"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-logger-overrides");
-    waitUntil(out::getLog, containsString("node-logger-overrides=org.terracotta:TRACE"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-logger-overrides"),
+        allOf(hasExitStatus(0), containsOutput("node-logger-overrides=org.terracotta:TRACE")));
   }
 }

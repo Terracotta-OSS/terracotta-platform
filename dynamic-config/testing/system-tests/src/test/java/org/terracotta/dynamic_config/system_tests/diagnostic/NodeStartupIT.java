@@ -4,7 +4,9 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
@@ -25,6 +27,8 @@ import static org.junit.Assert.fail;
 
 @ClusterDefinition(autoStart = false)
 public class NodeStartupIT extends DynamicConfigIT {
+
+  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
 
   @Test
   public void testStartingWithNonExistentRepo() {
@@ -204,7 +208,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
-        "--node-name", "node1-1",
+        "--node-name", "node-1-1",
         "--node-hostname", "localhost",
         "--node-log-dir", "terracotta1-1/logs",
         "--node-backup-dir", "terracotta1-1/backup",
@@ -214,7 +218,7 @@ public class NodeStartupIT extends DynamicConfigIT {
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n") || provided.contains("--node-name")) {
       defaultArgs.remove("--node-name");
-      defaultArgs.remove("node1-1");
+      defaultArgs.remove("node-1-1");
     }
     if (provided.contains("-s") || provided.contains("--node-hostname")) {
       defaultArgs.remove("--node-hostname");

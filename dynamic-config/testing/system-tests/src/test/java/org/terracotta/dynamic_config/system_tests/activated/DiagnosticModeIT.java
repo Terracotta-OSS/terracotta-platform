@@ -4,7 +4,9 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
@@ -24,6 +26,8 @@ import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.has
  */
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoActivate = true)
 public class DiagnosticModeIT extends DynamicConfigIT {
+
+  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
@@ -68,21 +72,15 @@ public class DiagnosticModeIT extends DynamicConfigIT {
     assertThat(cluster.getStripeCount(), is(equalTo(2)));
 
     // log command works, both when targeting node to repair and a normal node in the cluster
-    out.clearLog();
-    configToolInvocation("log", "-s", "localhost:" + getNodePort(1, activeNodeId));
-    waitUntil(out::getLog, containsString("Activating cluster"));
-    out.clearLog();
-    configToolInvocation("log", "-s", "localhost:" + getNodePort(2, 1));
-    waitUntil(out::getLog, containsString("Activating cluster"));
+    assertThat(configToolInvocation("log", "-s", "localhost:" + getNodePort(1, activeNodeId)), containsOutput("Activating cluster"));
+    assertThat(configToolInvocation("log", "-s", "localhost:" + getNodePort(2, 1)), containsOutput("Activating cluster"));
 
     // diag command works, both when targeting node to repair and a normal node in the cluster
-    out.clearLog();
-    configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, activeNodeId));
-    waitUntil(out::getLog, containsString("Node started in diagnostic mode for initial configuration or repair: YES"));
-    out.clearLog();
-    configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(2, 1));
-    waitUntil(out::getLog, containsString("Node started in diagnostic mode for initial configuration or repair: YES"));
+    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, activeNodeId)),
+        containsOutput("Node started in diagnostic mode for initial configuration or repair: YES"));
 
+    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(2, 1)),
+        containsOutput("Node started in diagnostic mode for initial configuration or repair: YES"));
 
     // unable to trigger a change on the cluster from the node in diagnostic mode
     assertThat(

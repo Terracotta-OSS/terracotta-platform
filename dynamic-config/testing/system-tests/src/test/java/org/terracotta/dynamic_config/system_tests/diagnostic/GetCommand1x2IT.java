@@ -12,7 +12,9 @@ import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.is;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class GetCommand1x2IT extends DynamicConfigIT {
@@ -22,7 +24,7 @@ public class GetCommand1x2IT extends DynamicConfigIT {
     super.before();
     assertThat(
         configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)),
-        containsOutput("Command successful"));
+        is(successful()));
   }
 
   @Test

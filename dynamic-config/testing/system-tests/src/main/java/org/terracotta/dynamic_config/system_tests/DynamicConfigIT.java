@@ -10,8 +10,6 @@ import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.contrib.java.lang.system.SystemErrRule;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.ClusterFactory;
@@ -66,7 +64,8 @@ import static java.nio.file.Files.walkFileTree;
 import static java.util.function.Function.identity;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.awaitility.Duration.FIVE_HUNDRED_MILLISECONDS;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
@@ -78,16 +77,12 @@ import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final boolean CI = System.getProperty("JOB_NAME") != null;
   protected static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
-
-  @Rule
-  public final SystemOutRule out = new SystemOutRule().enableLog();
-  @Rule
-  public final SystemErrRule err = new SystemErrRule().enableLog();
 
   @Rule
   public final TmpDir tmpDir = new TmpDir();
@@ -259,27 +254,20 @@ public class DynamicConfigIT {
     return getBaseDir().resolve("repository").resolve("stripe" + stripeId).resolve("node-" + nodeId);
   }
 
-  protected final void waitUntil(Callable<String> callable, Matcher<? super String> matcher) {
+  protected final void waitUntil(ConfigToolExecutionResult result, Matcher<? super ConfigToolExecutionResult> matcher) {
+    waitUntil(() -> result, matcher, timeout);
+  }
+
+  protected final <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher) {
     waitUntil(callable, matcher, timeout);
   }
 
-  protected final void waitUntil(Callable<String> callable, Matcher<? super String> matcher, int timeout) {
+  protected final <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher, int timeout) {
     Awaitility.await()
         // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
         .pollInterval(FIVE_HUNDRED_MILLISECONDS)
         .atMost(new Duration(timeout, TimeUnit.SECONDS))
         .until(callable, matcher);
-  }
-
-  protected final void assertCommandSuccessful() {
-    assertCommandSuccessful(() -> {
-    });
-  }
-
-  protected final void assertCommandSuccessful(Runnable verifications) {
-    waitUntil(out::getLog, containsString("Command successful"));
-    verifications.run();
-    out.clearLog();
   }
 
   protected final Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
@@ -315,27 +303,20 @@ public class DynamicConfigIT {
     }
   }
 
-  protected final void activateCluster() {
-    activateCluster("tc-cluster");
+  protected final ConfigToolExecutionResult activateCluster() {
+    return activateCluster("tc-cluster");
   }
 
-  protected final void activateCluster(String name) {
-    activateCluster(name, () -> {
-    });
-  }
-
-  protected final void activateCluster(Runnable verifications) {
-    activateCluster("tc-cluster", verifications);
-  }
-
-  protected final void activateCluster(String name, Runnable verifications) {
+  protected final ConfigToolExecutionResult activateCluster(String name) {
     String licensePath = licensePath();
+    ConfigToolExecutionResult result;
     if (licensePath == null) {
-      configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name);
+      result = configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name);
     } else {
-      configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath);
+      result = configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath);
     }
-    assertCommandSuccessful(verifications);
+    assertThat(result, is(successful()));
+    return result;
   }
 
   private static void copyDirectory(Path source, Path destination) throws IOException {
@@ -377,7 +358,7 @@ public class DynamicConfigIT {
 
   protected TerracottaServer createNode(int stripeId, int nodesId) {
     String uniqueId = combine(stripeId, nodesId);
-    return server("node" + uniqueId, "localhost")
+    return server("node-" + uniqueId, "localhost")
         .tsaPort(getNodePort(stripeId, nodesId))
         .tsaGroupPort(getNodeGroupPort(stripeId, nodesId))
         .configRepo("terracotta" + uniqueId + "/repository")

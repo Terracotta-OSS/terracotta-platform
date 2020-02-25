@@ -54,9 +54,9 @@ public class GetCommand2x2IT extends DynamicConfigIT {
     assertThat(
         configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-name"),
         allOf(
-            containsOutput("stripe.1.node.1.node-name=node1-1"),
-            containsOutput("stripe.1.node.2.node-name=node1-2"),
-            containsOutput("stripe.2.node.1.node-name=node2-1"),
-            containsOutput("stripe.2.node.2.node-name=node2-2")));
+            containsOutput("stripe.1.node.1.node-name=node-1-1"),
+            containsOutput("stripe.1.node.2.node-name=node-1-2"),
+            containsOutput("stripe.2.node.1.node-name=node-2-1"),
+            containsOutput("stripe.2.node.2.node-name=node-2-2")));
   }
 }

@@ -4,17 +4,23 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 
-import java.util.Arrays;
-
+import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.stringContainsInOrder;
+import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class Ipv6CliActivationIT extends DynamicConfigIT {
+
+  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
 
   @Override
   protected void startNode(int stripeId, int nodeId) {
@@ -38,20 +44,19 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
   public void testSingleNodeStartupFromCliParamsAndActivateCommand() {
     waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
 
-    configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
+    out.clearLog();
+    assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
     waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testMultiNodeStartupFromCliParamsAndActivateCommand() {
-    waitUntil(out::getLog, stringContainsInOrder(
-        Arrays.asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")
-    ));
+    waitUntil(out::getLog, stringContainsInOrder(asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")));
 
-    configToolInvocation("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2));
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2)), is(successful()));
 
-    configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
+    out.clearLog();
+    assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
     waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
   }

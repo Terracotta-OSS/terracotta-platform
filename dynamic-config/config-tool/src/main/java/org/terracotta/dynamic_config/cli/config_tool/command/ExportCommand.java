@@ -75,6 +75,7 @@ public class ExportCommand extends RemoteCommand {
         }
         Files.write(outputFile, output.getBytes(StandardCharsets.UTF_8));
         logger.info("Output saved to: {}" + lineSeparator(), outputFile);
+        logger.info("Command successful!" + lineSeparator());
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }

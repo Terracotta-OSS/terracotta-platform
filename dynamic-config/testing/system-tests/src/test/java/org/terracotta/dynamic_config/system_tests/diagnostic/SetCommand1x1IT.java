@@ -11,7 +11,12 @@ import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 
 import static java.io.File.separator;
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 @ClusterDefinition
 public class SetCommand1x1IT extends DynamicConfigIT {
@@ -22,83 +27,73 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   /*<--Single Node Tests-->*/
   @Test
   public void setOffheapResource() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=512MB");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=512MB"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main");
-    waitUntil(out::getLog, containsString("offheap-resources.main=512MB"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
+        allOf(hasExitStatus(0), containsOutput("offheap-resources.main=512MB")));
   }
 
   @Test
   public void setTcProperties() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.something=value");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.something=value"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.something");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.tc-properties.something=value"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.something"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.tc-properties.something=value")));
   }
 
   @Test
   public void setClientReconnectWindow() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window");
-    waitUntil(out::getLog, containsString("client-reconnect-window=10s"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
+        allOf(hasExitStatus(0), containsOutput("client-reconnect-window=10s")));
   }
 
   @Test
   public void setSecurityAuthc() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-authc=file");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-authc=file"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-authc");
-    waitUntil(out::getLog, containsString("security-authc=file"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-authc"),
+        allOf(hasExitStatus(0), containsOutput("security-authc=file")));
   }
 
   @Test
   public void setNodeGroupPort() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port=9630");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port=9630"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.node-group-port=9630"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.node-group-port=9630")));
   }
 
   @Test
   public void setSecurityWhitelist() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-whitelist=true");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-whitelist=true"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-whitelist");
-    waitUntil(out::getLog, containsString("security-whitelist=true"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-whitelist"),
+        allOf(hasExitStatus(0), containsOutput("security-whitelist=true")));
   }
 
   @Test
   public void setDataDir() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main=user-data/main/stripe1-node1-data-dir");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main=user-data/main/stripe1-node1-data-dir"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.main=user-data" + separator + "main" + separator + "stripe1-node1-data-dir"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.data-dirs.main=user-data" + separator + "main" + separator + "stripe1-node1-data-dir")));
   }
 
   @Test
   public void setNodeBackupDir() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-backup-dir=backup/stripe1-node1-backup");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-backup-dir=backup/stripe1-node1-backup"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-backup-dir");
-    waitUntil(out::getLog, containsString("stripe.1.node.1.node-backup-dir=backup" + separator + "stripe1-node1-backup"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-backup-dir"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.node-backup-dir=backup" + separator + "stripe1-node1-backup")));
   }
 
   @Test
   public void setTwoProperties() {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB", "-c", "stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB", "-c", "stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main");
-    waitUntil(out::getLog, containsString("offheap-resources.main=1GB"));
-    waitUntil(out::getLog, containsString("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main"),
+        allOf(hasExitStatus(0), containsOutput("offheap-resources.main=1GB"), containsOutput("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir")));
   }
 }

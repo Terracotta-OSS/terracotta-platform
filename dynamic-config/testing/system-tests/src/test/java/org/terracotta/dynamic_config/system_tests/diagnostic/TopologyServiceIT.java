@@ -54,12 +54,12 @@ public class TopologyServiceIT extends DynamicConfigIT {
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
-      assertThat(pendingCluster, is(equalTo(new Cluster(new Stripe(Node.newDefaultNode("node1-1", "localhost", getNodePort())
+      assertThat(pendingCluster, is(equalTo(new Cluster(new Stripe(Node.newDefaultNode("node-1-1", "localhost", getNodePort())
           .setNodeGroupPort(getNodeGroupPort())
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
           .setNodeMetadataDir(Paths.get("metadata", "stripe1"))
-          .setNodeLogDir(Paths.get("logs", "stripe1", "node1-1"))
+          .setNodeLogDir(Paths.get("logs", "stripe1", "node-1-1"))
           .setNodeBackupDir(Paths.get("backup", "stripe1"))
           .setClientReconnectWindow(120, SECONDS)
           .setClientLeaseDuration(20, SECONDS)

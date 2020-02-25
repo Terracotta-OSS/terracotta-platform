@@ -4,7 +4,9 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
@@ -22,6 +24,8 @@ import static org.junit.Assert.fail;
 
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
 public class PreActivatedNodeStartupIT extends DynamicConfigIT {
+
+  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
 
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
@@ -48,12 +52,12 @@ public class PreActivatedNodeStartupIT extends DynamicConfigIT {
   public void testPreventConcurrentUseOfRepository() throws Exception {
     // Angela work dirs are different for each server instance. We'd need to create a repo at a common place for this test
     String sharedRepo = Files.createDirectories(getBaseDir()).toAbsolutePath().toString();
-    startNode(1, 1, "-n", "node1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort()), "-N", "tc-cluster");
+    startNode(1, 1, "-n", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort()), "-N", "tc-cluster");
     waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     try {
       startNode(1, 2,
-          "--node-name", "node1-2",
+          "--node-name", "node-1-2",
           "--node-repository-dir", sharedRepo,
           "-p", String.valueOf(getNodePort(1, 2)),
           "-g", String.valueOf(getNodeGroupPort(1, 2)),
@@ -71,7 +75,7 @@ public class PreActivatedNodeStartupIT extends DynamicConfigIT {
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
-        "--node-name", "node1-1",
+        "--node-name", "node-1-1",
         "--node-hostname", "localhost",
         "--node-log-dir", "terracotta1-1/logs",
         "--node-backup-dir", "terracotta1-1/backup",
@@ -81,7 +85,7 @@ public class PreActivatedNodeStartupIT extends DynamicConfigIT {
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n") || provided.contains("--node-name")) {
       defaultArgs.remove("--node-name");
-      defaultArgs.remove("node1-1");
+      defaultArgs.remove("node-1-1");
     }
     if (provided.contains("-s") || provided.contains("--node-hostname")) {
       defaultArgs.remove("--node-hostname");

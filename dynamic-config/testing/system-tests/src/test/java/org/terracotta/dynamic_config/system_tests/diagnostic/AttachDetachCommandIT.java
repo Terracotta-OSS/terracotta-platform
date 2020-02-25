@@ -14,7 +14,9 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -25,7 +27,7 @@ public class AttachDetachCommandIT extends DynamicConfigIT {
 
   @Test
   public void test_attach_detach_with_unconfigured_nodes() throws Exception {
-    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     Cluster cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);
@@ -33,8 +35,8 @@ public class AttachDetachCommandIT extends DynamicConfigIT {
     assertThat(cluster.getNodeAddresses(), hasSize(1));
 
     // add a node
-    configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
-    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);
@@ -42,8 +44,8 @@ public class AttachDetachCommandIT extends DynamicConfigIT {
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // add a stripe
-    configToolInvocation("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
-    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configToolInvocation("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);
@@ -51,8 +53,8 @@ public class AttachDetachCommandIT extends DynamicConfigIT {
     assertThat(cluster.getNodeAddresses(), hasSize(3));
 
     // remove the previously added stripe
-    configToolInvocation("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
-    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configToolInvocation("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);
@@ -60,8 +62,8 @@ public class AttachDetachCommandIT extends DynamicConfigIT {
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // remove the previously added node
-    configToolInvocation("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
-    configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     cluster = Json.parse(Paths.get("build", OUTPUT_JSON_FILE), Cluster.class);

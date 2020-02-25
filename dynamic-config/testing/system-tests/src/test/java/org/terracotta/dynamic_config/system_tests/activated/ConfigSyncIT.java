@@ -5,7 +5,10 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemErrRule;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
@@ -34,9 +37,14 @@ import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskr
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
+
+  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
+
   private int activeNodeId;
   private int passiveNodeId;
 
@@ -59,8 +67,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertThat(tsa.getStopped().size(), is(1));
     out.clearLog();
 
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB"), is(successful()));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active

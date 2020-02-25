@@ -8,16 +8,20 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class SetCommand1x2IT extends DynamicConfigIT {
   @Test
   public void testCluster_setClientReconnectWindow_postActivation() throws Exception {
-    configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s");
-    assertCommandSuccessful();
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s"), is(successful()));
 
-    configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window");
-    waitUntil(out::getLog, containsString("client-reconnect-window=10s"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
+        allOf(hasExitStatus(0), containsOutput("client-reconnect-window=10s")));
   }
 }

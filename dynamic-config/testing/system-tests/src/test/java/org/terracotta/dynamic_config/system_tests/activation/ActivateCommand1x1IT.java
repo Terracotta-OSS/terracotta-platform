@@ -6,7 +6,7 @@ package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -23,22 +23,18 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 @ClusterDefinition
 public class ActivateCommand1x1IT extends DynamicConfigIT {
 
-  @Rule
-  public ExpectedException exception = ExpectedException.none();
+  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
 
   @Test
   public void testSingleNodeActivation() {
-    activateCluster(() -> {
-      waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-
-      waitUntil(out::getLog, containsString("No license installed"));
-      waitUntil(out::getLog, containsString("came back up"));
-      waitUntil(out::getLog, containsString("Command successful"));
-    });
+    assertThat(activateCluster(),
+        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
@@ -48,7 +44,7 @@ public class ActivateCommand1x1IT extends DynamicConfigIT {
         allOf(
             containsOutput("No license installed"),
             containsOutput("came back up"),
-            containsOutput("Command successful")));
+            is(successful())));
 
     waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 

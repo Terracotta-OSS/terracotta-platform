@@ -4,7 +4,9 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
@@ -16,16 +18,18 @@ import static org.hamcrest.Matchers.containsString;
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class Ipv6ConfigIT extends DynamicConfigIT {
 
+  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+
   @Test
   public void testStartupFromConfigFileAndExportCommand() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_multi-node_ipv6.properties");
-    startNode(1, 1, "-f", configurationFile.toString(), "-s", "[::1]", "-p", String.valueOf(getNodePort()), "-r", "repository/stripe1/node1-1");
+    startNode(1, 1, "-f", configurationFile.toString(), "-s", "[::1]", "-p", String.valueOf(getNodePort()), "-r", "repository/stripe1/node-1-1");
     waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
 
     configToolInvocation("export", "-s", "[::1]:" + getNodePort(), "-f", "output.json", "-t", "json");
     tsa.stop(getNode(1, 1));
 
-    startNode(1, 1, "-f", configurationFile.toString(), "-s", "::1", "-p", String.valueOf(getNodePort()), "-r", "repository/stripe1/node1-1");
+    startNode(1, 1, "-f", configurationFile.toString(), "-s", "::1", "-p", String.valueOf(getNodePort()), "-r", "repository/stripe1/node-1-1");
     waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
   }
 
