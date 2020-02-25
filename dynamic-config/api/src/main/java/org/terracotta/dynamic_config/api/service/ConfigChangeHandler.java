@@ -13,7 +13,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 public interface ConfigChangeHandler {
 
   /**
-   * Try to apply a change to the provided topology and returns the updated topology (or non updated).
+   * Validate a change a change and throw if invalid
    */
   default void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {}
 

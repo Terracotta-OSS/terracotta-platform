@@ -129,8 +129,8 @@ public class Cluster implements Cloneable {
     return getStripe(address).isPresent();
   }
 
-  public boolean containsNode(int StripeId, String nodeName) {
-    return getStripe(StripeId).flatMap(stripe -> stripe.getNode(nodeName)).isPresent();
+  public boolean containsNode(int stripeId, String nodeName) {
+    return getStripe(stripeId).flatMap(stripe -> stripe.getNode(nodeName)).isPresent();
   }
 
   @Override
