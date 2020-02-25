@@ -52,6 +52,10 @@ task copyAndUntar(type: Copy) {
   from tarTree(project(':terracotta').distTar.archivePath)
   into("build/angela/kits/$project.version")
 
+  into("terracotta-$project.version/server/lib") {
+    from "src/test/resources/logback-ext.xml"
+  }
+
   dependsOn project(':dynamic-config-test-support').jar
   into("terracotta-$project.version/server/plugins/lib") {
     from project(':dynamic-config-test-support').jar.archivePath.getPath()
@@ -73,6 +77,7 @@ test {
 
   // Angela properties
   systemProperty 'angela.rootDir', file('build/angela').absolutePath
+//  systemProperty 'angela.kitInstallationDir', "build/angela/kits/$project.version/terracotta-$project.version"
   systemProperty 'angela.skipUninstall', 'true'
   systemProperty 'angela.tsa.fullLogging', 'true'
   systemProperty 'angela.kit.version', "$project.version"
