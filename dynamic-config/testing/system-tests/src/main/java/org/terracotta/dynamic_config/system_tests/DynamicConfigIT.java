@@ -131,8 +131,13 @@ public class DynamicConfigIT {
   }
 
   @After
-  public void after() throws Exception {
-    clusterFactory.close();
+  public void after() throws IOException {
+    try {
+      clusterFactory.close();
+    } catch (IOException | RuntimeException e) {
+      LOGGER.error("Close error: " + e.getMessage(), e);
+      throw e;
+    }
   }
 
   protected final void startNodes() {
