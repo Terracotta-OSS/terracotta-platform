@@ -23,6 +23,7 @@ public class DetachCommandIT extends DynamicConfigIT {
   @Test
   public void test_detach_from_activated_cluster() throws Exception {
     // detach
+    out.clearLog();
     configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
     waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
 
@@ -51,6 +52,7 @@ public class DetachCommandIT extends DynamicConfigIT {
             "The newly added node will be restarted, but not the existing ones."));
 
     // try forcing the attach
+    out.clearLog();
     configToolInvocation("detach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2));
     assertCommandSuccessful(() -> waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]")));
 
