@@ -5,7 +5,7 @@
 
 dependencies {
   compile project(':dynamic-config-api')
-  compile project(':dynamic-config-topology')
+  compile project(':dynamic-config-xml-topology')
 
   // OSS plugins
   compile project(':data-root-config')
