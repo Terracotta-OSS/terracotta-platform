@@ -78,7 +78,7 @@ test {
   // Angela properties
   systemProperty 'angela.rootDir', file('build/angela').absolutePath
 //  systemProperty 'angela.kitInstallationDir', "build/angela/kits/$project.version/terracotta-$project.version"
-  systemProperty 'angela.skipUninstall', 'true'
+  //systemProperty 'angela.skipUninstall', 'true'
   systemProperty 'angela.tsa.fullLogging', 'true'
   systemProperty 'angela.kit.version', "$project.version"
 
