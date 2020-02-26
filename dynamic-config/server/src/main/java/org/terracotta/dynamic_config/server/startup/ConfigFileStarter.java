@@ -52,7 +52,7 @@ public class ConfigFileStarter implements NodeStarter {
 
     if (cluster.getName() != null) {
       if (cluster.getStripeCount() > 1) {
-        throw new UnsupportedOperationException("Cannot start a pre-activated multistripe cluster");
+        throw new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster");
       }
       return startupManager.startActivated(cluster, node, options.getLicenseFile(), options.getNodeRepositoryDir());
     } else {

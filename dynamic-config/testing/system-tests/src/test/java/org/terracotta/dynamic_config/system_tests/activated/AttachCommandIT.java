@@ -6,15 +6,15 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 /**
@@ -23,27 +23,24 @@ import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.suc
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AttachCommandIT extends DynamicConfigIT {
 
-  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
   public void test_attach_to_activated_cluster() throws Exception {
     // activate a 1x1 cluster
-    out.clearLog();
     startNode(1, 1);
-    waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
+    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
     activateCluster();
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start a second node
-    out.clearLog();
     startNode(1, 2);
-    waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
+    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // attach
-    out.clearLog();
     assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    waitUntil(out.getLog(1, 2), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
@@ -74,9 +71,8 @@ public class AttachCommandIT extends DynamicConfigIT {
             "The newly added node will be restarted, but not the existing ones."));
 
     // try forcing the attach
-    out.clearLog();
     assertThat(configToolInvocation("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    waitUntil(out.getLog(1, 2), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));

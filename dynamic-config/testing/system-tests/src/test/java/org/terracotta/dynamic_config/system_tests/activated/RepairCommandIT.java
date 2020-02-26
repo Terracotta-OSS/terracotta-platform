@@ -6,16 +6,15 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 
 import java.util.Arrays;
 
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
@@ -24,6 +23,7 @@ import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 import static org.slf4j.event.Level.DEBUG;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 
 /**
  * @author Mathieu Carbou
@@ -31,7 +31,7 @@ import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.con
 @ClusterDefinition(autoActivate = true)
 public class RepairCommandIT extends DynamicConfigIT {
 
-  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
@@ -79,11 +79,10 @@ public class RepairCommandIT extends DynamicConfigIT {
     tsa.stop(getNode(1, 1));
     assertThat(tsa.getStopped().size(), is(1));
 
-    // ensure the server can still start if the configuration is not committed
-    out.clearLog();
+    // ensure the server can still start if the configuration is not committedø
     startNode(1, 1);
-    waitUntil(out::getLog, containsString("INFO - Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitUntil(out::getLog, containsString("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
+    waitUntil(out.getLog(1, 1), containsLog("INFO - Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out.getLog(1, 1), containsLog("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
 
     // ensure that the server has started with the last committed config
     assertThat(getRuntimeCluster("localhost", getNodePort()), is(equalTo(initialCluster)));

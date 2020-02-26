@@ -8,11 +8,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemErrRule;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 import org.terracotta.dynamic_config.system_tests.util.AppendLogCapturer;
+import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.SanskritObject;
 
@@ -36,13 +36,16 @@ import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskr
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MODE;
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
 
-  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule public final NodeOutputRule out = new NodeOutputRule();
+
+  //TODO [DYNAMIC-CONFIG]: TDB-4863 - fix Angela to properly redirect process error streams
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
 
   private int activeNodeId;
@@ -65,7 +68,6 @@ public class ConfigSyncIT extends DynamicConfigIT {
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
     tsa.stop(getNode(1, passiveNodeId));
     assertThat(tsa.getStopped().size(), is(1));
-    out.clearLog();
 
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB"), is(successful()));
 
@@ -77,9 +79,9 @@ public class ConfigSyncIT extends DynamicConfigIT {
     tsa.start(getNode(1, activeNodeId));
     assertThat(tsa.getActives().size(), is(1));
 
-    out.clearLog();
+    out.clearLog(1, passiveNodeId);
     tsa.start(getNode(1, passiveNodeId));
-    waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    waitUntil(out.getLog(1, passiveNodeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
 
     verifyTopologies();
 
@@ -137,7 +139,6 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // Start only the former active for now (the passive startup would be done later, and should fail)
     tsa.start(getNode(1, activeNodeId));
     assertThat(tsa.getActives().size(), is(1));
-    out.clearLog();
 
     err.clearLog();
     try {
@@ -168,8 +169,9 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertContentsBeforeOrAfterSync(5, 4);
     tsa.start(getNode(1, activeNodeId));
 
+    out.clearLog(1, passiveNodeId);
     tsa.start(getNode(1, passiveNodeId));
-    waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    waitUntil(out.getLog(1, passiveNodeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
 
     verifyTopologies();
 

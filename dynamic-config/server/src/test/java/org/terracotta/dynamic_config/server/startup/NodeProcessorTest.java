@@ -150,7 +150,7 @@ public class NodeProcessorTest {
     when(cluster.getName()).thenReturn(CLUSTER_NAME);
 
     expectedException.expect(UnsupportedOperationException.class);
-    expectedException.expectMessage("Cannot start a pre-activated multistripe cluster");
+    expectedException.expectMessage("Cannot start a pre-activated multi-stripe cluster");
 
     nodeProcessor.process();
 

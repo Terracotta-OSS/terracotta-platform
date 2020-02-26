@@ -6,21 +6,19 @@ package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 
-import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class Ipv6CliActivationIT extends DynamicConfigIT {
 
-  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Override
   protected void startNode(int stripeId, int nodeId) {
@@ -42,22 +40,23 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
 
   @Test
   public void testSingleNodeStartupFromCliParamsAndActivateCommand() {
-    waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
+    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
 
-    out.clearLog();
+    out.clearLog(1, 1);
     assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void testMultiNodeStartupFromCliParamsAndActivateCommand() {
-    waitUntil(out::getLog, stringContainsInOrder(asList("Started the server in diagnostic mode", "Started the server in diagnostic mode")));
+    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitUntil(out.getLog(1, 2), containsLog("Started the server in diagnostic mode"));
 
     assertThat(configToolInvocation("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2)), is(successful()));
 
     out.clearLog();
     assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out.getLog(1, findPassives(1)[0]), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
   }
 }

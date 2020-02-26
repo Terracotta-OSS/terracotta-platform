@@ -6,15 +6,15 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
@@ -24,50 +24,69 @@ import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.suc
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DetachCommandIT extends DynamicConfigIT {
 
-  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
-  public void test_detach_from_activated_cluster() throws Exception {
-    // detach
-    out.clearLog();
-    assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+  public void test_detach_active_node() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
 
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getSingleNode().get().getNodePort(), is(equalTo(getNodePort(1, 1))));
+    out.clearLog(1, activeId);
+    assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, activeId)), is(successful()));
 
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getSingleNode().get().getNodePort(), is(equalTo(getNodePort(1, 2))));
+    // the detached node becomes active in its own cluster
+    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    // failover - existing passive becomes active
+    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    assertTopologyChanged(activeId, passiveId);
   }
 
   @Test
-  public void test_detach_from_activated_cluster_requiring_restart() throws Exception {
-    String destination = "localhost:" + getNodePort();
+  public void test_detach_passive_from_activated_cluster() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    out.clearLog(1, passiveId);
+    assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    assertTopologyChanged(activeId, passiveId);
+  }
+
+  @Test
+  public void test_detach_passive_from_activated_cluster_requiring_restart() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
 
     // do a change requiring a restart
-    assertThat(configToolInvocation("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"),
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node.1.tc-properties.foo=bar"),
         allOf(is(successful()), containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
 
     // try to detach this node
     assertThat(
-        configToolInvocation("detach", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)),
-        containsOutput("Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes. " +
+        configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        containsOutput("Impossible to do any topology change. Cluster at address: " + "localhost:" + getNodePort(1, activeId) +
+            " is waiting to be restarted to apply some pending changes. " +
             "You can run the command with -f option to force the comment but at the risk of breaking this cluster configuration consistency. " +
             "The newly added node will be restarted, but not the existing ones."));
 
     // try forcing the detach
-    out.clearLog();
-    assertThat(configToolInvocation("detach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    out.clearLog(1, passiveId);
+    assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
 
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getSingleNode().get().getNodePort(), is(equalTo(getNodePort(1, 1))));
+    assertTopologyChanged(activeId, passiveId);
+  }
 
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getSingleNode().get().getNodePort(), is(equalTo(getNodePort(1, 2))));
+  private void assertTopologyChanged(int activeId, int passiveId) throws Exception {
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getSingleNode().get().getNodePort(), is(equalTo(getNodePort(1, activeId))));
+
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getSingleNode().get().getNodePort(), is(equalTo(getNodePort(1, passiveId))));
   }
 }

@@ -6,19 +6,19 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
 
 /**
@@ -27,45 +27,44 @@ import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.has
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoActivate = true)
 public class DiagnosticModeIT extends DynamicConfigIT {
 
-  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void test_restart_active_in_diagnostic_mode() {
     int activeNodeId = findActive(1).getAsInt();
-    TerracottaServer active = getNode(activeNodeId, activeNodeId);
+    TerracottaServer active = getNode(1, activeNodeId);
     tsa.stop(active);
     assertThat(tsa.getStopped().size(), is(1));
 
     startNode(active, "--diagnostic-mode", "-n", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
-    waitUntil(out::getLog, containsString("Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node."));
-    waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
+    waitUntil(out.getLog(1, activeNodeId), containsLog("Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node."));
+    waitUntil(out.getLog(1, activeNodeId), containsLog("Started the server in diagnostic mode"));
   }
 
   @Test
   public void test_restart_passive_in_diagnostic_mode() {
     int passiveNodeId = findPassives(1)[0];
-    TerracottaServer passive = getNode(passiveNodeId, passiveNodeId);
+    TerracottaServer passive = getNode(1, passiveNodeId);
     tsa.stop(passive);
     assertThat(tsa.getStopped().size(), is(1));
 
     startNode(passive, "--diagnostic-mode", "-n", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
-    waitUntil(out::getLog, containsString("Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node."));
-    waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
+    waitUntil(out.getLog(1, passiveNodeId), containsLog("Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node."));
+    waitUntil(out.getLog(1, passiveNodeId), containsLog("Started the server in diagnostic mode"));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void test_diagnostic_port_accessible_but_nomad_change_impossible() throws Exception {
     int activeNodeId = findActive(1).getAsInt();
-    TerracottaServer active = getNode(activeNodeId, activeNodeId);
+    TerracottaServer active = getNode(1, activeNodeId);
     tsa.stop(active);
     assertThat(tsa.getStopped().size(), is(1));
 
-    out.clearLog();
     startNode(active, "--diagnostic-mode", "-n", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
-    waitUntil(out::getLog, containsString("Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node."));
-    waitUntil(out::getLog, containsString("Started the server in diagnostic mode"));
+    waitUntil(out.getLog(1, activeNodeId), containsLog("Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node."));
+    waitUntil(out.getLog(1, activeNodeId), containsLog("Started the server in diagnostic mode"));
 
     // diag port available
     Cluster cluster = getUpcomingCluster("localhost", getNodePort(1, activeNodeId));

@@ -15,6 +15,15 @@ import java.util.List;
  */
 public class AngelaMatchers {
 
+  public static Matcher<NodeOutputRule.NodeLog> containsLog(String text) {
+    return new CustomTypeSafeMatcher<NodeOutputRule.NodeLog>("contains " + text) {
+      @Override
+      protected boolean matchesSafely(NodeOutputRule.NodeLog result) {
+        return result.streamLogsDescending().anyMatch(line -> line.contains(text));
+      }
+    };
+  }
+
   public static Matcher<ConfigToolExecutionResult> successful() {
     return new CustomTypeSafeMatcher<ConfigToolExecutionResult>("successful") {
       @Override

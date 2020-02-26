@@ -7,20 +7,23 @@ package org.terracotta.dynamic_config.system_tests.activation;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemErrRule;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 
 import java.nio.file.Path;
 
 import static com.tc.util.Assert.fail;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
 public class AutoActivateNewPassiveIT extends DynamicConfigIT {
 
-  @Rule public final SystemOutRule out = new SystemOutRule().enableLog();
+  @Rule public final NodeOutputRule out = new NodeOutputRule();
+
+  //TODO [DYNAMIC-CONFIG]: TDB-4863 - fix Angela to properly redirect process error streams
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
 
   @Test
@@ -32,7 +35,7 @@ public class AutoActivateNewPassiveIT extends DynamicConfigIT {
           "--node-repository-dir", "repository/stripe1/node-1-1");
       fail();
     } catch (Exception e) {
-      assertThat(out.getLog(), containsString("Cannot start a pre-activated multistripe cluster"));
+      assertThat(out.getLog(1, 1), containsLog("Cannot start a pre-activated multi-stripe cluster"));
     }
   }
 
@@ -45,7 +48,7 @@ public class AutoActivateNewPassiveIT extends DynamicConfigIT {
           "--node-repository-dir", "repository/stripe1/node-1-1");
       fail();
     } catch (Exception e) {
-      assertThat(out.getLog(), containsString("Cannot start a pre-activated multistripe cluster"));
+      assertThat(out.getLog(1, 1), containsLog("Cannot start a pre-activated multi-stripe cluster"));
     }
   }
 
@@ -53,15 +56,14 @@ public class AutoActivateNewPassiveIT extends DynamicConfigIT {
   public void test_auto_activation_success_for_1x1_cluster() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/1x1.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort()), "--node-repository-dir", "repository/stripe1/node-1-1");
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test
   public void test_auto_activation_failure_for_different_1x2_cluster() throws Exception {
     startNode(1, 1, "-f", copyConfigProperty("/config-property-files/1x2.properties").toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-repository-dir", "repository/stripe1/node-1-1");
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
 
-    err.clearLog();
     try {
       startNode(1, 2,
           "-f", copyConfigProperty("/config-property-files/1x2-diff.properties").toString(),
@@ -77,9 +79,9 @@ public class AutoActivateNewPassiveIT extends DynamicConfigIT {
   public void test_auto_activation_success_for_1x2_cluster() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-repository-dir", "repository/stripe1/node-1-1");
-    waitUntil(out::getLog, containsString("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     startNode(1, 2, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--node-repository-dir", "repository/stripe1/node-1-2");
-    waitUntil(out::getLog, containsString("Moved to State[ PASSIVE-STANDBY ]"));
+    waitUntil(out.getLog(1, 2), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
   }
 }

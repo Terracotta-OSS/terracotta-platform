@@ -29,6 +29,7 @@ import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
+import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 import org.terracotta.dynamic_config.system_tests.util.PropertyResolver;
 import org.terracotta.port_locking.LockingPortChoosers;
 import org.terracotta.testing.TmpDir;
@@ -256,6 +257,10 @@ public class DynamicConfigIT {
   }
 
   protected final void waitUntil(ConfigToolExecutionResult result, Matcher<? super ConfigToolExecutionResult> matcher) {
+    waitUntil(() -> result, matcher, timeout);
+  }
+
+  protected final void waitUntil(NodeOutputRule.NodeLog result, Matcher<? super NodeOutputRule.NodeLog> matcher) {
     waitUntil(() -> result, matcher, timeout);
   }
 
