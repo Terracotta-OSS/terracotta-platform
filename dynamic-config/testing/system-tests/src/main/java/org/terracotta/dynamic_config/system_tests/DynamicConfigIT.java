@@ -52,7 +52,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -99,13 +98,15 @@ public class DynamicConfigIT {
   private final int[] ports;
 
   public DynamicConfigIT() {
+
+
     ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.stripes = clusterDef.stripes();
     this.autoStart = clusterDef.autoStart();
     this.autoActivate = clusterDef.autoActivate();
     this.nodesPerStripe = clusterDef.nodesPerStripe();
     this.ports = allocatePorts(clusterDef.stripes(), clusterDef.nodesPerStripe());
-    this.clusterFactory = new ClusterFactory(UUID.randomUUID().toString(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
+    this.clusterFactory = new ClusterFactory(getClass().getSimpleName(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
     this.tsa = clusterFactory.tsa();
   }
 
