@@ -6,8 +6,8 @@
 apply plugin: TcDeploy
 
 dependencies {
-  compile project(':dynamic-config-model')
-  compile project(':nomad')
+  compile project(':inet-support')
+  compile project(':common-structures')
 
   compile "com.fasterxml.jackson.core:jackson-annotations:$jacksonAnnotVersion"
 
