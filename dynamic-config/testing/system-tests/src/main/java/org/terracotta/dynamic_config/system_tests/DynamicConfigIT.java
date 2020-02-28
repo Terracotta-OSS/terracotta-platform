@@ -31,7 +31,7 @@ import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
 import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 import org.terracotta.dynamic_config.system_tests.util.PropertyResolver;
-import org.terracotta.port_locking.LockingPortChoosers;
+import org.terracotta.port_locking.PortLockingRule;
 import org.terracotta.testing.TmpDir;
 
 import java.io.IOException;
@@ -84,40 +84,33 @@ public class DynamicConfigIT {
   private static final boolean CI = System.getProperty("JOB_NAME") != null;
   protected static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
-  @Rule
-  public final TmpDir tmpDir = new TmpDir();
+  @Rule public final TmpDir tmpDir = new TmpDir();
+  @Rule public final PortLockingRule ports;
 
   protected int timeout = CI ? 90 : 60;
+  protected ClusterFactory clusterFactory;
+  protected Tsa tsa;
 
-  protected final ClusterFactory clusterFactory;
-  protected final Tsa tsa;
   private final int stripes;
   private final boolean autoStart;
   private final int nodesPerStripe;
   private final boolean autoActivate;
   private final Map<String, TerracottaServer> nodes = new ConcurrentHashMap<>();
-  private final int[] ports;
+  private final ClusterDefinition clusterDef;
 
   public DynamicConfigIT() {
-
-
-    ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
+    clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.stripes = clusterDef.stripes();
     this.autoStart = clusterDef.autoStart();
     this.autoActivate = clusterDef.autoActivate();
     this.nodesPerStripe = clusterDef.nodesPerStripe();
-    this.ports = allocatePorts(clusterDef.stripes(), clusterDef.nodesPerStripe());
-    this.clusterFactory = new ClusterFactory(getClass().getSimpleName(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
-    this.tsa = clusterFactory.tsa();
-  }
-
-  private static int[] allocatePorts(int stripes, int nodesPerStripe) {
-    int startPort = LockingPortChoosers.getFileLockingPortChooser().choosePorts(2 * stripes * nodesPerStripe).getPort();
-    return rangeClosed(startPort, startPort + 2 * stripes * nodesPerStripe).toArray();
+    this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
   }
 
   @Before
   public void before() {
+    this.clusterFactory = new ClusterFactory(getClass().getSimpleName(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
+    this.tsa = clusterFactory.tsa();
     if (autoStart) {
       startNodes();
       if (autoActivate) {
@@ -167,7 +160,13 @@ public class DynamicConfigIT {
   }
 
   protected final int getNodePort(int stripeId, int nodeId) {
-    return ports[2 * nodesPerStripe * (stripeId - 1) + nodesPerStripe * (nodeId - 1)];
+    //1-1 => 0 and 1
+    //1-2 => 2 and 3
+    //1-3 => 4 and 5
+    //2-1 => 6 and 7
+    //2-2 => 8 and 9
+    //2-3 => 10 and 11
+    return ports.getPorts()[2 * (nodeId - 1) + 2 * nodesPerStripe * (stripeId - 1)];
   }
 
   protected final int getNodeGroupPort(int stripeId, int nodeId) {
@@ -279,7 +278,7 @@ public class DynamicConfigIT {
   protected final Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
     Path nodeRepositoryDir = getNodeRepositoryDir(stripeId, nodeId);
     Path repositoriesDir = getBaseDir().resolve("repositories");
-    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, ports);
+    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, ports.getPorts());
     LOGGER.debug("Generating cluster node repositories into: {}", repositoriesDir);
     fn.accept(clusterGenerator);
     copyDirectory(repositoriesDir.resolve("stripe" + stripeId + "_node-" + nodeId), nodeRepositoryDir);
