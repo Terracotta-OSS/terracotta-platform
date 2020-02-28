@@ -17,4 +17,14 @@ public class TakeoverMessage extends MutativeMessage {
                          @JsonProperty(value = "mutationTimestamp", required = true) Instant mutationTimestamp) {
     super(expectedMutativeMessageCount, mutationHost, mutationUser, mutationTimestamp);
   }
+
+  @Override
+  public String toString() {
+    return "TakeoverMessage{" +
+        "expectedMutativeMessageCount=" + getExpectedMutativeMessageCount() +
+        ", mutationHost='" + getMutationHost() + '\'' +
+        ", mutationUser='" + getMutationUser() + '\'' +
+        ", mutationTimestamp=" + getMutationTimestamp() +
+        '}';
+  }
 }

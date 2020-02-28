@@ -31,7 +31,7 @@ public class RollbackMessage extends MutativeMessage {
 
   @Override
   public String toString() {
-    return "PrepareMessage{" +
+    return "RollbackMessage{" +
         "changeUuid=" + changeUuid +
         ", expectedMutativeMessageCount=" + getExpectedMutativeMessageCount() +
         ", mutationHost='" + getMutationHost() + '\'' +

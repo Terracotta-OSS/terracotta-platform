@@ -31,7 +31,7 @@ public class CommitMessage extends MutativeMessage {
 
   @Override
   public String toString() {
-    return "PrepareMessage{" +
+    return "CommitMessage{" +
         "changeUuid=" + changeUuid +
         ", expectedMutativeMessageCount=" + getExpectedMutativeMessageCount() +
         ", mutationHost='" + getMutationHost() + '\'' +
