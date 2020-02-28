@@ -7,6 +7,7 @@ dependencies {
   compile project(':diagnostic-server')
   compile project(':sanskrit')
   compile project(':dynamic-config-api')
+  compile project(':dynamic-topology-entity-common')
   compile project(':nomad-entity-server')
 
   compile project(':data-root-config')
