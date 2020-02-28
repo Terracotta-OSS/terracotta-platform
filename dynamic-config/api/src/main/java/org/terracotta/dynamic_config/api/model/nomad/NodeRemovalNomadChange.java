@@ -54,7 +54,7 @@ public class NodeRemovalNomadChange extends NodeNomadChange {
     return "NodeRemovalNomadChange{" + "" +
         "removedNode=" + getNodeAddress() +
         ", node=" + getNodeAddress() +
-        ", cluster=" + getCluster() +
+        ", cluster=" + getCluster().toShapeString() +
         '}';
   }
 }

@@ -108,7 +108,7 @@ public class NodeContext implements Cloneable {
 
   @Override
   public String toString() {
-    return "NodeContext{" + "cluster=" + cluster +
+    return "NodeContext{" + "cluster=" + cluster.toShapeString() +
         ", stripeId=" + stripeId +
         ", nodeId=" + nodeId +
         ", nodeName='" + nodeName + '\'' +

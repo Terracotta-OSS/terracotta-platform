@@ -62,7 +62,7 @@ public class NomadManager<T> {
   }
 
   public void runClusterActivation(Collection<InetSocketAddress> nodes, Cluster cluster, ChangeResultReceiver<T> results) {
-    LOGGER.debug("Attempting to activate cluster: {}", cluster);
+    LOGGER.debug("Attempting to activate cluster: {}", cluster.toShapeString());
     runChange(new ArrayList<>(nodes), new ClusterActivationNomadChange(cluster), results);
   }
 

@@ -77,7 +77,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (isActivated()) {
       throw new AssertionError("Already activated");
     }
-    LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster());
+    LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster().toShapeString());
     nomadServerManager.upgradeForWrite(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName());
     LOGGER.debug("Setting nomad writable successful");
 
@@ -257,12 +257,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     if (newMe != null) {
       // we have updated the topology and I am still part of this cluster
-      LOGGER.info("Set upcoming topology to: {}", updatedCluster);
+      LOGGER.info("Set upcoming topology to: {}", updatedCluster.toShapeString());
       this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getNodeAddress());
     } else {
       // We have updated the topology and I am not part anymore of the cluster
       // So we just reset the cluster object so that this node is alone
-      LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster);
+      LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster.toShapeString());
       this.upcomingNodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe.getNodeAddress());
     }
 
@@ -276,7 +276,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       throw new IllegalStateException("Node is already activated");
     }
 
-    LOGGER.info("Preparing activation of cluster: {}", maybeUpdatedCluster);
+    LOGGER.info("Preparing activation of cluster: {}", maybeUpdatedCluster.toShapeString());
 
     // validate that we are part of this cluster
     if (findMe(maybeUpdatedCluster) == null) {
@@ -315,12 +315,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public synchronized boolean validateAgainstLicense(Cluster cluster) {
     if (this.license == null) {
-      LOGGER.debug("Unable to validate cluster against license: license not installed: {}", cluster);
+      LOGGER.debug("Unable to validate cluster against license: license not installed: {}", cluster.toShapeString());
       return false;
     }
     LicenseValidator licenseValidator = new LicenseValidator(cluster, license);
     licenseValidator.validate();
-    LOGGER.debug("License is valid for cluster: {}", cluster);
+    LOGGER.debug("License is valid for cluster: {}", cluster.toShapeString());
     return true;
   }
 

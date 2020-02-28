@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 
@@ -63,6 +64,10 @@ public class Stripe implements Cloneable {
     return "Stripe{" +
         "nodes=" + nodes +
         '}';
+  }
+
+  public String toShapeString() {
+    return "( " + nodes.stream().map(node -> node.getNodeName() + "@" + node.getNodeAddress()).collect(joining(", ")) + " )";
   }
 
   @JsonIgnore

@@ -26,9 +26,9 @@ public class NodeAdditionNomadChange extends NodeNomadChange {
     super(cluster, stripeId, node);
 
     Stripe stripe = cluster.getStripe(stripeId)
-        .orElseThrow(() -> new IllegalArgumentException("Invalid stripe ID " + stripeId + " in cluster " + cluster));
+        .orElseThrow(() -> new IllegalArgumentException("Invalid stripe ID " + stripeId + " in cluster " + cluster.toShapeString()));
     if (stripe.getNodes().stream().noneMatch(node::equals)) {
-      throw new IllegalArgumentException("Node " + node.getNodeName() + " is not part of stripe ID " + stripe + " in cluster " + cluster);
+      throw new IllegalArgumentException("Node " + node.getNodeName() + " is not part of stripe ID " + stripe + " in cluster " + cluster.toShapeString());
     }
   }
 
@@ -36,7 +36,7 @@ public class NodeAdditionNomadChange extends NodeNomadChange {
   public Cluster apply(Cluster original) {
     requireNonNull(original);
     if (original.containsNode(getStripeId(), getNode().getNodeName())) {
-      throw new IllegalArgumentException("Node name: " + getNode().getNodeName() + " already exists in stripe ID: " + getStripeId() + " in cluster: " + original);
+      throw new IllegalArgumentException("Node name: " + getNode().getNodeName() + " already exists in stripe ID: " + getStripeId() + " in cluster: " + original.toShapeString());
     }
     if (original.containsNode(getNodeAddress())) {
       throw new IllegalArgumentException("Node with address: " + getNodeAddress() + " already exists in cluster: " + original);
@@ -61,7 +61,7 @@ public class NodeAdditionNomadChange extends NodeNomadChange {
     return "NodeAdditionNomadChange{" +
         "stripeId=" + getStripeId() +
         ", node=" + getNodeAddress() +
-        ", cluster=" + getCluster() +
+        ", cluster=" + getCluster().toShapeString() +
         '}';
   }
 }

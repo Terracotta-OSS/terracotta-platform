@@ -137,7 +137,7 @@ public abstract class RemoteCommand extends Command {
    * Nodes are expected to be online.
    */
   protected final void runClusterActivation(Collection<InetSocketAddress> expectedOnlineNodes, Cluster cluster) {
-    logger.trace("runClusterActivation({}, {})", expectedOnlineNodes, cluster);
+    logger.trace("runClusterActivation({}, {})", expectedOnlineNodes, cluster.toShapeString());
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runClusterActivation(expectedOnlineNodes, cluster, failures);
     failures.reThrow();

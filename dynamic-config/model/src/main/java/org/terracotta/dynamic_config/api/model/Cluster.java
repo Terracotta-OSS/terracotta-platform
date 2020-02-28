@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.terracotta.common.struct.Tuple2.tuple2;
@@ -111,7 +112,11 @@ public class Cluster implements Cloneable {
 
   @Override
   public String toString() {
-    return "Cluster{" + "name='" + name + "', stripes='" + stripes + '}';
+    return "Cluster{name='" + name + "', stripes='" + stripes + '}';
+  }
+
+  public String toShapeString() {
+    return "Cluster '" + name + "' ( " + stripes.stream().map(Stripe::toShapeString).collect(joining(", ")) + " )";
   }
 
   public Optional<Stripe> getStripe(InetSocketAddress address) {

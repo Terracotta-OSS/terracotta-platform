@@ -92,15 +92,15 @@ public class SettingNomadChangeTest {
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid stripe ID: 0")))));
     assertThat(
         () -> set(node(1, "node2"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node2 in stripe ID: 1 not found in cluster: Cluster{")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node2 in stripe ID: 1 not found in cluster: Cluster 'null' ( ( node1@localhost:9410 ) )")))));
     assertThat(
         () -> set(node(2, "node1"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node1 in stripe ID: 2 not found in cluster: Cluster{")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node1 in stripe ID: 2 not found in cluster: Cluster 'null' ( ( node1@localhost:9410 ) )")))));
     assertThat(
         () -> set(stripe(0), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Invalid stripe ID: 0")))));
     assertThat(
         () -> set(stripe(2), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Stripe ID: 2 not found in cluster: Cluster{")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Stripe ID: 2 not found in cluster: Cluster 'null' ( ( node1@localhost:9410 ) )")))));
   }
 }

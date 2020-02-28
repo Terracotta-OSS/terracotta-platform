@@ -143,7 +143,7 @@ public class SettingNomadChange extends FilteredNomadChange {
           throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
         }
         if (stripeId > cluster.getStripeCount()) {
-          throw new IllegalArgumentException("Stripe ID: " + stripeId + " not found in cluster: " + cluster);
+          throw new IllegalArgumentException("Stripe ID: " + stripeId + " not found in cluster: " + cluster.toShapeString());
         }
         return "stripe." + stripeId + ".";
       }
@@ -151,7 +151,7 @@ public class SettingNomadChange extends FilteredNomadChange {
         int stripeId = getApplicability().getStripeId().getAsInt();
         String nodeName = getApplicability().getNodeName();
         int nodeId = cluster.getNodeId(stripeId, nodeName)
-            .orElseThrow(() -> new IllegalArgumentException("Node: " + nodeName + " in stripe ID: " + stripeId + " not found in cluster: " + cluster));
+            .orElseThrow(() -> new IllegalArgumentException("Node: " + nodeName + " in stripe ID: " + stripeId + " not found in cluster: " + cluster.toShapeString()));
         return "stripe." + stripeId + ".node." + nodeId + ".";
       }
       default:
