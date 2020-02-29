@@ -11,6 +11,7 @@ import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
 import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 
+import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -172,7 +173,7 @@ public class NodeStartupIT extends DynamicConfigIT {
         "--node-hostname", "%c"
     );
     waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(PARAMETER_SUBSTITUTOR.substitute("%c")));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(InetAddress.getLocalHost().getCanonicalHostName()));
   }
 
   @Test

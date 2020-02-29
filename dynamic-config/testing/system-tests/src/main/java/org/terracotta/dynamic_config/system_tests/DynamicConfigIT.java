@@ -25,9 +25,7 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
 import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
 import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 import org.terracotta.dynamic_config.system_tests.util.PropertyResolver;
@@ -82,7 +80,6 @@ import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.suc
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final boolean CI = System.getProperty("JOB_NAME") != null;
-  protected static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   @Rule public final TmpDir tmpDir = new TmpDir();
   @Rule public final PortLockingRule ports;

@@ -4,6 +4,16 @@
  */
 package org.terracotta.dynamic_config.xml;
 
+import org.terracotta.config.Config;
+import org.terracotta.config.Consistency;
+import org.terracotta.config.ObjectFactory;
+import org.terracotta.config.Property;
+import org.terracotta.config.Servers;
+import org.terracotta.config.Service;
+import org.terracotta.config.Services;
+import org.terracotta.config.TcConfig;
+import org.terracotta.config.TcProperties;
+import org.terracotta.config.Voter;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.service.PathResolver;
@@ -15,16 +25,6 @@ import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.Logger;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.Loggers;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.TcNode;
 import org.terracotta.dynamic_config.xml.topology.config.xmlobjects.TcServerConfig;
-import org.terracotta.config.Config;
-import org.terracotta.config.Consistency;
-import org.terracotta.config.ObjectFactory;
-import org.terracotta.config.Property;
-import org.terracotta.config.Servers;
-import org.terracotta.config.Service;
-import org.terracotta.config.Services;
-import org.terracotta.config.TcConfig;
-import org.terracotta.config.TcProperties;
-import org.terracotta.config.Voter;
 import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXB;
@@ -114,7 +114,7 @@ public class ServerConfiguration {
   }
 
   private void addDataDirectories(Node node, Services services) {
-    if (node.getDataDirs() == null && node.getNodeMetadataDir() == null) {
+    if ((node.getDataDirs() == null || node.getDataDirs().isEmpty()) && node.getNodeMetadataDir() == null) {
       return;
     }
 

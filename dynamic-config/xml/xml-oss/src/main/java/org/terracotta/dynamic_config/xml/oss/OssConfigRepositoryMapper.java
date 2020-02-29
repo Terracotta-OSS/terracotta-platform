@@ -7,6 +7,7 @@ package org.terracotta.dynamic_config.xml.oss;
 import org.terracotta.config.Server;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.data.config.DataRootMapping;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -26,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
@@ -103,7 +105,7 @@ public class OssConfigRepositoryMapper implements ConfigRepositoryMapper {
         .setTcProperties(MapperUtils.toProperties(xmlTcConfig))
         .setNodeLoggerOverrides(MapperUtils.toLoggers(xmlNode))
         // plugins
-        .setNodeMetadataDir(null)
+        .setNodeMetadataDir(toNodeMetadataDir(xmlPlugins).orElse(null))
         .setDataDirs(toUserDataDirs(xmlPlugins))
         .setOffheapResources(MapperUtils.toOffheapResources(xmlPlugins))
         .setNodeBackupDir(null)
@@ -117,6 +119,17 @@ public class OssConfigRepositoryMapper implements ConfigRepositoryMapper {
   }
 
   public static Map<String, Path> toUserDataDirs(Map<Class<?>, List<Object>> plugins) {
-    return MapperUtils.toDataDirs(plugins, mapping -> !mapping.isUseForPlatform());
+    Map<String, Path> dataDirs = MapperUtils.toDataDirs(plugins, mapping -> !mapping.isUseForPlatform());
+    // If the XML defines the deprecated tag "<persistence:platform-persistence data-directory-id="root1"/>"
+    // then we get the data directory ID and remove it from the user data directory list
+    // because this ID matches the directory used for platform (node metadata)
+    toNodeMetadataDir(plugins).ifPresent(dataDirs::remove);
+    return dataDirs;
+  }
+
+  public static Optional<Path> toNodeMetadataDir(Map<Class<?>, List<Object>> plugins) {
+    // First try to find a deprecated service tag "<persistence:platform-persistence data-directory-id="root1"/>"
+    // that will give us the ID of the dataroot to use for platform persistence
+    return MapperUtils.toDataDirs(plugins, DataRootMapping::isUseForPlatform).values().stream().findFirst();
   }
 }

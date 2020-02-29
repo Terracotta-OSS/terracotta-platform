@@ -6,25 +6,17 @@
 import org.gradle.internal.jvm.Jvm
 
 dependencies {
-  compile project(':dynamic-config-config-tool')
-  compile project(':dynamic-config-server')
-  compile project(':dynamic-config-xml-ee')
   compile project(':dynamic-config-test-support')
   compile project(':diagnostic-client')
   compile project(':port-locking')
   compile project(':test-utilities')
 
+  // for config repo ConfigRepositoryGenerator
+  compile project(':dynamic-config-server')
+
   // TODO [DYNAMIC-CONFIG]: We need to use angela-ee currently because 10.x distribution is considered EE.
   // We can move to angela OSS when we change the distribution to ehcache 3.x
   compile "com.terracottatech:angela-ee:$angelaVersion"
-  compile "org.terracotta:ipc-eventbus:$ipcEventbusVersion"
-  compile "org.terracotta.management.dist:mnm-nms-agent:$terracottaPlatformVersion"
-  compile "org.terracotta.management.dist:mnm-nms:$terracottaPlatformVersion"
-  compile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
-  compile "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
-  compile "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
-  compile "org.terracotta:offheap-resource:$terracottaPlatformVersion"
-  compile "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
 
   compile("org.awaitility:awaitility:$awaitility")
   compile "ch.qos.logback:logback-classic:$logbackVersion"
@@ -34,11 +26,20 @@ dependencies {
     exclude group: 'junit'
   }
 
+  // connection
   testCompile "org.terracotta.internal:connection-loader:$terracottaCoreVersion"
   testCompile "org.terracotta:packaging-support:$terracottaApisVersion"
   testCompile "org.terracotta:connection-api:$terracottaApisVersion"
   testCompile "org.terracotta.internal:common:$terracottaCoreVersion"
   testCompile "org.terracotta:lease-api:$terracottaPlatformVersion"
+
+  // for config repo ConfigRepositoryGenerator
+  testCompile project(':dynamic-config-xml-oss')
+  testCompile "org.terracotta:tcconfig-schema:$terracottaConfigVersion"
+  testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  testCompile "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
+  testCompile "org.terracotta:offheap-resource:$terracottaPlatformVersion"
+  testCompile "org.terracotta:lease-entity-server:$terracottaPlatformVersion"
 }
 
 apply plugin: TcDistribute

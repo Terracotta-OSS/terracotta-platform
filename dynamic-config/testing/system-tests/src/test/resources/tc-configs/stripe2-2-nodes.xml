@@ -6,7 +6,6 @@
 
 <tc-config xmlns="http://www.terracotta.org/config"
            xmlns:ohr1="http://www.terracotta.org/config/offheap-resource"
-           xmlns:persistence="http://www.terracottatech.com/config/platform-persistence"
            xmlns:ohr="http://www.terracottatech.com/config/data-roots">
   <plugins>
     <config>
@@ -14,14 +13,6 @@
         <ohr:directory name="root1">%(user.dir)/metadata/stripe2</ohr:directory>
       </ohr:data-directories>
     </config>
-    <service>
-      <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
-        <backup-location path="%(user.dir)/backup/stripe2"/>
-      </backup-restore>
-    </service>
-    <service>
-      <persistence:platform-persistence data-directory-id="root1"/>
-    </service>
     <config>
       <ohr1:offheap-resources>
         <ohr1:resource name="primary-server-resource" unit="MB">64</ohr1:resource>
