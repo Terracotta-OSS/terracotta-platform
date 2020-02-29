@@ -89,7 +89,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     Path dataDirectory = rootPath.resolve(ParameterSubstitutor.substitute(path)).normalize();
 
     // with dynamic config, XML is parsed multiple times during the lifecycle of the server and these logs are triggered at each parsing
-    LOGGER.trace("Defined directory with name \"{}\" at location \"{}\"", name, dataDirectory);
+    LOGGER.debug("Defined directory with name: {} at location: {}", name, dataDirectory);
 
     dataRootMap.put(name, dataDirectory);
   }
