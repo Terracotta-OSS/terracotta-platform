@@ -56,7 +56,7 @@ public interface TopologyService {
 
   /**
    * @return true if a configuration as been prepared on this node, but it has not yet been committed or rolled back.
-   * In this state, the nodes are currently within a Nomad transaction, or, a partial commit/rollback occured and the node
+   * In this state, the nodes are currently within a Nomad transaction, or, a partial commit/rollback occurred and the node
    * needs a check/repair
    */
   boolean hasIncompleteChange();
