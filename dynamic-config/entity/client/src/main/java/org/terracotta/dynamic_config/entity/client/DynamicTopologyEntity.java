@@ -6,6 +6,7 @@ package org.terracotta.dynamic_config.entity.client;
 
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 
@@ -75,6 +76,8 @@ public interface DynamicTopologyEntity extends Entity {
     default void onNodeRemoval(int stripeId, Node removedNode) {}
 
     default void onNodeAddition(int stripeId, Node addedNode) {}
+
+    default void onSettingChange(Configuration configuration, Cluster cluster) {}
 
     default void onDisconnected() {}
   }

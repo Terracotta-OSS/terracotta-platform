@@ -7,6 +7,7 @@ package org.terracotta.dynamic_config.entity.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.entity.common.DynamicTopologyEntityMessage;
@@ -53,6 +54,11 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
           case EVENT_NODE_REMOVAL: {
             Object[] payload = (Object[]) messageFromServer.getPayload();
             listener.onNodeRemoval((int) payload[0], (Node) payload[1]);
+            break;
+          }
+          case EVENT_SETTING_CHANGED: {
+            Object[] payload = (Object[]) messageFromServer.getPayload();
+            listener.onSettingChange((Configuration) payload[0], (Cluster) payload[1]);
             break;
           }
           default:

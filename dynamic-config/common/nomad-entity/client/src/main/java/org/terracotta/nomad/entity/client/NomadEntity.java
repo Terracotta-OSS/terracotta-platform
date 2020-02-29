@@ -55,8 +55,9 @@ public interface NomadEntity<T> extends Entity, NomadServer<T> {
       return requestTimeout;
     }
 
-    public void setRequestTimeout(Duration requestTimeout) {
+    public Settings setRequestTimeout(Duration requestTimeout) {
       this.requestTimeout = requestTimeout;
+      return this;
     }
   }
 }

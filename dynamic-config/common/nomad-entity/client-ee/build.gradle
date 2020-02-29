@@ -8,5 +8,7 @@ apply plugin: TcDeploy
 dependencies {
   compile project(':nomad-entity-client')
 
-  compile project(':multi-stripe:enterprise-connection-api')
+  // provided by terracotta-common-client when building the KIT
+  // this aggregated entity is only used for config tool
+  compileOnly project(':multi-stripe:enterprise-connection-api')
 }

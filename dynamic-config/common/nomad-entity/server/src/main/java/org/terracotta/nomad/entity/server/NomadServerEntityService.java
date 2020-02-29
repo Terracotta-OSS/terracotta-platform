@@ -15,13 +15,13 @@ import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.monitoring.PlatformService;
-import org.terracotta.nomad.entity.common.Constants;
+import org.terracotta.nomad.entity.common.NomadEntityConstants;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.entity.common.NomadMessageCodec;
 import org.terracotta.nomad.server.NomadServer;
 
-@PermanentEntity(type = Constants.ENTITY_TYPE, name = Constants.ENTITY_NAME)
+@PermanentEntity(type = NomadEntityConstants.ENTITY_TYPE, name = NomadEntityConstants.ENTITY_NAME)
 public class NomadServerEntityService<T> implements EntityServerService<NomadEntityMessage, NomadEntityResponse> {
 
   private final NomadMessageCodec messageCodec = new NomadMessageCodec();
@@ -88,6 +88,6 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
 
   @Override
   public boolean handlesEntityType(String typeName) {
-    return Constants.ENTITY_TYPE.equals(typeName);
+    return NomadEntityConstants.ENTITY_TYPE.equals(typeName);
   }
 }

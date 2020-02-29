@@ -46,6 +46,9 @@ class NomadEntityImpl<T> implements NomadEntity<T> {
     try {
       InvokeFuture<NomadEntityResponse> invoke = endpoint.beginInvoke()
           .message(new NomadEntityMessage(mutativeMessage))
+          .replicate(true)
+          .ackRetired()
+          .blockGetOnRetire(true)
           .invoke();
       AcceptRejectResponse response = (requestTimeout == null ? invoke.get() : invoke.getWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS)).getResponse();
       LOGGER.trace("response({})", response);

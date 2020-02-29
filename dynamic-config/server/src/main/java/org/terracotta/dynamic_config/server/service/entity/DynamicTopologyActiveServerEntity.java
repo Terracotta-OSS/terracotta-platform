@@ -6,7 +6,10 @@ package org.terracotta.dynamic_config.server.service.entity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
 import org.terracotta.dynamic_config.api.service.DynamicConfigListenerAdapter;
 import org.terracotta.dynamic_config.api.service.EventRegistration;
@@ -27,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.entity.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_ADDITION;
 import static org.terracotta.dynamic_config.entity.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_REMOVAL;
+import static org.terracotta.dynamic_config.entity.common.DynamicTopologyEntityMessage.Type.EVENT_SETTING_CHANGED;
 
 
 public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> {
@@ -117,6 +121,12 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Dyn
         @Override
         public void onNodeRemoval(int stripeId, Node removedNode) {
           fire(new DynamicTopologyEntityMessage(EVENT_NODE_REMOVAL, new Object[]{stripeId, removedNode}));
+        }
+
+        @Override
+        public void onSettingChanged(SettingNomadChange change, Cluster updated) {
+          Configuration configuration = change.toConfiguration(updated);
+          fire(new DynamicTopologyEntityMessage(EVENT_SETTING_CHANGED, new Object[]{configuration, updated}));
         }
       });
     }

@@ -7,7 +7,7 @@ package org.terracotta.dynamic_config.entity.common;
 /**
  * @author Mathieu Carbou
  */
-public interface Constants {
+public interface DynamicTopologyEntityConstants {
   String ENTITY_TYPE = "org.terracotta.dynamic_config.entity.client.DynamicTopologyEntity";
   String ENTITY_NAME = "dynamic-topology-entity";
 }

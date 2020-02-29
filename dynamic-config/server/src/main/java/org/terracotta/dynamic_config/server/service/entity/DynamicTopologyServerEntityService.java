@@ -7,7 +7,7 @@ package org.terracotta.dynamic_config.server.service.entity;
 import com.tc.classloader.PermanentEntity;
 import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.entity.common.Constants;
+import org.terracotta.dynamic_config.entity.common.DynamicTopologyEntityConstants;
 import org.terracotta.dynamic_config.entity.common.DynamicTopologyEntityMessage;
 import org.terracotta.dynamic_config.entity.common.DynamicTopologyMessageCodec;
 import org.terracotta.entity.ActiveServerEntity;
@@ -23,7 +23,7 @@ import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 
-@PermanentEntity(type = Constants.ENTITY_TYPE, name = Constants.ENTITY_NAME)
+@PermanentEntity(type = DynamicTopologyEntityConstants.ENTITY_TYPE, name = DynamicTopologyEntityConstants.ENTITY_NAME)
 public class DynamicTopologyServerEntityService implements EntityServerService<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> {
 
   private final DynamicTopologyMessageCodec messageCodec = new DynamicTopologyMessageCodec();
@@ -86,6 +86,6 @@ public class DynamicTopologyServerEntityService implements EntityServerService<D
 
   @Override
   public boolean handlesEntityType(String typeName) {
-    return Constants.ENTITY_TYPE.equals(typeName);
+    return DynamicTopologyEntityConstants.ENTITY_TYPE.equals(typeName);
   }
 }

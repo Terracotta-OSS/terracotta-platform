@@ -4,6 +4,8 @@
  */
 package org.terracotta.nomad.entity.client.ee;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.nomad.entity.client.NomadEntity;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.MutativeMessage;
@@ -17,6 +19,7 @@ import java.util.Objects;
  * @author Mathieu Carbou
  */
 class AggregatedNomadEntity<T> implements NomadEntity<T> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AggregatedNomadEntity.class);
 
   private final List<NomadEntity<T>> entities;
 
@@ -50,12 +53,12 @@ class AggregatedNomadEntity<T> implements NomadEntity<T> {
 
   @Override
   public AcceptRejectResponse send(MutativeMessage message) throws NomadException {
+    LOGGER.trace("send({})", message);
     List<AcceptRejectResponse> responses = new ArrayList<>(entities.size());
     // ensure all stripes are called
     for (NomadEntity<T> entity : entities) {
       responses.add(entity.send(message));
     }
-    // look at teh results
     return responses.stream()
         .filter(AcceptRejectResponse::isRejected)
         .findFirst()

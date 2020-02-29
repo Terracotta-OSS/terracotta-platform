@@ -22,7 +22,8 @@ public class DynamicTopologyEntityMessage implements EntityMessage, EntityRespon
     REQ_HAS_INCOMPLETE_CHANGE,
     REQ_LICENSE,
     EVENT_NODE_ADDITION,
-    EVENT_NODE_REMOVAL
+    EVENT_NODE_REMOVAL,
+    EVENT_SETTING_CHANGED,
   }
 
   private final Type type;
