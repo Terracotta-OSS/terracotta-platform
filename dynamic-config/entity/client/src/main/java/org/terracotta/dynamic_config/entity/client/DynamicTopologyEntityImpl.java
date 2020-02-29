@@ -39,7 +39,7 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
 
   public DynamicTopologyEntityImpl(EntityClientEndpoint<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> endpoint, Settings settings) {
     this.endpoint = endpoint;
-    this.settings = settings;
+    this.settings = settings == null ? new Settings() : settings;
 
     endpoint.setDelegate(new EndpointDelegate<DynamicTopologyEntityMessage>() {
       @Override

@@ -49,7 +49,7 @@ public interface NomadEntity<T> extends Entity, NomadServer<T> {
   AcceptRejectResponse send(MutativeMessage message) throws NomadException;
 
   class Settings {
-    private Duration requestTimeout;
+    private Duration requestTimeout = Duration.ofSeconds(20);
 
     public Duration getRequestTimeout() {
       return requestTimeout;

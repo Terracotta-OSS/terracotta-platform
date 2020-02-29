@@ -31,7 +31,7 @@ class NomadEntityImpl<T> implements NomadEntity<T> {
 
   public NomadEntityImpl(EntityClientEndpoint<NomadEntityMessage, NomadEntityResponse> endpoint, Settings settings) {
     this.endpoint = endpoint;
-    this.settings = settings;
+    this.settings = settings == null ? new Settings() : settings;
   }
 
   @Override
