@@ -9,5 +9,5 @@ package org.terracotta.nomad.entity.common;
  */
 public interface NomadEntityConstants {
   String ENTITY_TYPE = "org.terracotta.nomad.entity.client.NomadEntity";
-  String ENTITY_NAME = "dynamic-config-nomad-entity";
+  String ENTITY_NAME = "nomad-entity";
 }
