@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
 package org.terracotta.dynamic_config.xml.conversion;
 
 import org.slf4j.Logger;
@@ -9,8 +13,8 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.TcConfigMapper;
 import org.terracotta.dynamic_config.xml.NonSubstitutingTCConfigurationParser;
 import org.terracotta.dynamic_config.xml.XmlUtility;
-import org.terracotta.dynamic_config.xml.exception.ErrorCode;
 import org.terracotta.dynamic_config.xml.exception.ConfigConversionException;
+import org.terracotta.dynamic_config.xml.exception.ErrorCode;
 import org.terracotta.dynamic_config.xml.exception.ErrorParamKey;
 import org.terracotta.dynamic_config.xml.exception.InvalidInputConfigurationContentException;
 import org.terracotta.dynamic_config.xml.exception.InvalidInputException;
@@ -25,15 +29,15 @@ import java.lang.reflect.Array;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
