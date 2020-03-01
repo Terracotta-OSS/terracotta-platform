@@ -52,7 +52,7 @@ public class DynamicTopologyEntityMessage implements EntityMessage, EntityRespon
 
   @Override
   public String toString() {
-    return "DynamicConfigEntityMessage{" +
+    return "DynamicTopologyEntityMessage{" +
         "type=" + type +
         ", payload=" + payload +
         '}';
