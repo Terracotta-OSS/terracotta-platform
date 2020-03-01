@@ -6,7 +6,6 @@ package org.terracotta.diagnostic.client.connection;
 
 import org.terracotta.common.struct.Tuple3;
 import org.terracotta.diagnostic.client.DiagnosticService;
-import org.terracotta.lease.connection.TimeBudget;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
