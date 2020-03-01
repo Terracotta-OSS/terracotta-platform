@@ -22,8 +22,8 @@ import java.util.List;
 import static org.junit.Assert.fail;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 
-@ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
-public class PreActivatedNodeStartupIT extends DynamicConfigIT {
+@ClusterDefinition(nodesPerStripe = 2, autoStart = false)
+public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();
 
@@ -39,13 +39,6 @@ public class PreActivatedNodeStartupIT extends DynamicConfigIT {
     Path configurationRepo = generateNodeRepositoryDir(1, 2, ConfigRepositoryGenerator::generate1Stripe2Nodes);
     startNode(1, 2, "--node-repository-dir", configurationRepo.toString());
     waitUntil(out.getLog(1, 2), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
-  }
-
-  @Test
-  public void testStartingWithMultiStripeRepo() throws Exception {
-    Path configurationRepo = generateNodeRepositoryDir(2, 1, ConfigRepositoryGenerator::generate2Stripes2Nodes);
-    startNode(2, 1, "--node-repository-dir", configurationRepo.toString());
-    waitUntil(out.getLog(2, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test

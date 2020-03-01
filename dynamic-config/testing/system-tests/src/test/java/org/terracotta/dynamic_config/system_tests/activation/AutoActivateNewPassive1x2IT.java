@@ -18,39 +18,13 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 
-@ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
-public class AutoActivateNewPassiveIT extends DynamicConfigIT {
+@ClusterDefinition(nodesPerStripe = 2, autoStart = false)
+public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   //TODO [DYNAMIC-CONFIG]: TDB-4863 - fix Angela to properly redirect process error streams
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
-
-  @Test
-  public void test_auto_activation_failure_for_2x1_cluster() throws Exception {
-    try {
-      startNode(1, 1,
-          "-f", copyConfigProperty("/config-property-files/2x1.properties").toString(),
-          "-s", "localhost", "-p", String.valueOf(getNodePort()),
-          "--node-repository-dir", "repository/stripe1/node-1-1");
-      fail();
-    } catch (Exception e) {
-      assertThat(out.getLog(1, 1), containsLog("Cannot start a pre-activated multi-stripe cluster"));
-    }
-  }
-
-  @Test
-  public void test_auto_activation_failure_for_2x2_cluster() throws Exception {
-    try {
-      startNode(1, 1,
-          "-f", copyConfigProperty("/config-property-files/2x2.properties").toString(),
-          "-s", "localhost", "-p", String.valueOf(getNodePort()),
-          "--node-repository-dir", "repository/stripe1/node-1-1");
-      fail();
-    } catch (Exception e) {
-      assertThat(out.getLog(1, 1), containsLog("Cannot start a pre-activated multi-stripe cluster"));
-    }
-  }
 
   @Test
   public void test_auto_activation_success_for_1x1_cluster() throws Exception {
