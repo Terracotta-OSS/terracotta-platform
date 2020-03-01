@@ -66,14 +66,14 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
   @Test
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
-    tsa.stop(getNode(1, passiveNodeId));
+    stopNode(1, passiveNodeId);
     assertThat(tsa.getStopped().size(), is(1));
 
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB"), is(successful()));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
-    tsa.stop(getNode(1, activeNodeId));
+    stopNode(1, activeNodeId);
     assertThat(tsa.getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(5, 3);
     tsa.start(getNode(1, activeNodeId));
@@ -92,7 +92,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
   @Test
   public void testPassiveZapsWhenActiveHasSomeUnCommittedChanges() throws Exception {
-    tsa.stop(getNode(1, passiveNodeId));
+    stopNode(1, passiveNodeId);
     assertThat(tsa.getStopped().size(), is(1));
 
     // trigger commit failure on active
@@ -103,7 +103,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
-    tsa.stop(getNode(1, activeNodeId));
+    stopNode(1, activeNodeId);
     assertThat(tsa.getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(4, 3);
     tsa.start(getNode(1, activeNodeId));
@@ -132,8 +132,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
         not(hasExitStatus(0)));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
-    tsa.stop(getNode(1, passiveNodeId));
-    tsa.stop(getNode(1, activeNodeId));
+    stopNode(1, passiveNodeId);
+    stopNode(1, activeNodeId);
     assertThat(tsa.getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(4, 5);
     // Start only the former active for now (the passive startup would be done later, and should fail)
@@ -163,8 +163,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
         not(hasExitStatus(0)));
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
-    tsa.stop(getNode(1, passiveNodeId));
-    tsa.stop(getNode(1, activeNodeId));
+    stopNode(1, passiveNodeId);
+    stopNode(1, activeNodeId);
     assertThat(tsa.getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(5, 4);
     tsa.start(getNode(1, activeNodeId));

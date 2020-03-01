@@ -22,8 +22,8 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 import static org.slf4j.event.Level.DEBUG;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
 
 /**
  * @author Mathieu Carbou
@@ -76,7 +76,7 @@ public class RepairCommandIT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort()), is(equalTo(initialCluster)));
 
     // close the server when the last change is not committed or rolled back
-    tsa.stop(getNode(1, 1));
+    stopNode(1, 1);
     assertThat(tsa.getStopped().size(), is(1));
 
     // ensure the server can still start if the configuration is not committedø

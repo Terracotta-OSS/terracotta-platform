@@ -147,6 +147,10 @@ public class DynamicConfigIT {
     tsa.start(node, cli);
   }
 
+  protected final void stopNode(int stripeId, int nodeId) {
+    tsa.stop(getNode(stripeId, nodeId));
+  }
+
   protected final TerracottaServer getNode(int stripeId, int nodeId) {
     String key = combine(stripeId, nodeId);
     TerracottaServer server = nodes.get(key);
