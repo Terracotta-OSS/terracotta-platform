@@ -13,15 +13,15 @@ import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
+import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
  */
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
-public class AttachCommandIT extends DynamicConfigIT {
+public class AttachCommand1x2IT extends DynamicConfigIT {
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();
 
@@ -47,6 +47,10 @@ public class AttachCommandIT extends DynamicConfigIT {
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
+
+    out.clearLog(1, 2);
+    stopNode(1, 1);
+    waitUntil(out.getLog(1, 2), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
   @Test

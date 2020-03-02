@@ -15,9 +15,9 @@ import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvide
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.command.CommandRepository;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
+import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.ActivateCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.AttachCommand;
-import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.DetachCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.DiagnosticCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.ExportCommand;
@@ -27,10 +27,11 @@ import org.terracotta.dynamic_config.cli.config_tool.command.LogCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.RepairCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.SetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.UnsetCommand;
-import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadClientFactory;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
 import org.terracotta.nomad.NomadEnvironment;
+import org.terracotta.nomad.entity.client.NomadEntity;
+import org.terracotta.nomad.entity.client.NomadEntityProvider;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -96,7 +97,8 @@ public class ConfigTool {
     // create services
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, MAIN.getSecurityRootDirectory());
     MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);
-    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, new NomadEnvironment()));
+    NomadEntityProvider nomadEntityProvider = new NomadEntityProvider("CONFIG-TOOL", connectionTimeout, new NomadEntity.Settings().setRequestTimeout(requestTimeout), MAIN.getSecurityRootDirectory());
+    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
 
     LOGGER.debug("Injecting services in CommandRepository");

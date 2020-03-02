@@ -84,7 +84,7 @@ public class DynamicConfigIT {
   @Rule public final TmpDir tmpDir = new TmpDir();
   @Rule public final PortLockingRule ports;
 
-  protected int timeout = CI ? 90 : 60;
+  protected int timeout = CI ? 120 : 90;
   protected ClusterFactory clusterFactory;
   protected Tsa tsa;
 

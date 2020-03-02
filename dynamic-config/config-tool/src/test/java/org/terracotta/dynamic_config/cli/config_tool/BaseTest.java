@@ -7,6 +7,7 @@ package org.terracotta.dynamic_config.cli.config_tool;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.connection.ConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
@@ -15,18 +16,24 @@ import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvide
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadClientFactory;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
 import org.terracotta.nomad.NomadEnvironment;
+import org.terracotta.nomad.entity.client.NomadEntity;
+import org.terracotta.nomad.entity.client.NomadEntityProvider;
+import org.terracotta.nomad.messages.AcceptRejectResponse;
+import org.terracotta.nomad.messages.CommitMessage;
+import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
@@ -38,6 +45,7 @@ public abstract class BaseTest {
 
   protected DiagnosticServiceProvider diagnosticServiceProvider;
   protected MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
+  protected NomadEntityProvider nomadEntityProvider;
   protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
@@ -57,6 +65,16 @@ public abstract class BaseTest {
     return diagnosticService;
   });
 
+  private final Cache<List<InetSocketAddress>, NomadEntity<?>> nomadEntities = new Cache<>(list -> {
+    final NomadEntity<?> entity = mock(NomadEntity.class, list.toString());
+    try {
+      lenient().when(entity.commit(any(CommitMessage.class))).thenReturn(AcceptRejectResponse.accept());
+    } catch (NomadException e) {
+      throw new AssertionError(e);
+    }
+    return entity;
+  });
+
   @Before
   public void setUp() throws Exception {
     Duration timeout = Duration.ofSeconds(2);
@@ -66,8 +84,15 @@ public abstract class BaseTest {
         return diagnosticServices.get(address);
       }
     };
+    nomadEntityProvider = new NomadEntityProvider(getClass().getSimpleName(), timeout, new NomadEntity.Settings().setRequestTimeout(timeout), null) {
+      @SuppressWarnings("unchecked")
+      @Override
+      public <T> NomadEntity<T> fetchNomadEntity(List<InetSocketAddress> addresses) throws ConnectionException {
+        return (NomadEntity<T>) nomadEntities.get(addresses);
+      }
+    };
     multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
-    nomadManager = new NomadManager<>(new NomadClientFactory<>(multiDiagnosticServiceProvider, new NomadEnvironment()));
+    nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
   }
 

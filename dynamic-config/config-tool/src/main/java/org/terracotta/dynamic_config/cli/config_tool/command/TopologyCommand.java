@@ -117,7 +117,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     if (destinationClusterActivated) {
       beforeNomadChange(result);
       NodeNomadChange nomadChange = buildNomadChange(result);
-      runPassiveChange(destinationOnlineNodes, nomadChange);
+      runPassiveChange(destinationCluster, destinationOnlineNodes, nomadChange);
       afterNomadChange(result);
 
     } else {

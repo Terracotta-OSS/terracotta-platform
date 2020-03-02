@@ -124,10 +124,10 @@ public abstract class RemoteCommand extends Command {
     failures.reThrow();
   }
 
-  protected final void runPassiveChange(Map<InetSocketAddress, LogicalServerState> nodes, NodeNomadChange change) {
-    logger.trace("runPassiveChange({}, {})", nodes, change);
+  protected final void runPassiveChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, NodeNomadChange change) {
+    logger.trace("runPassiveChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
-    nomadManager.runPassiveChange(nodes, change, failures);
+    nomadManager.runPassiveChange(destinationCluster, onlineNodes, change, failures);
     failures.reThrow();
   }
 
