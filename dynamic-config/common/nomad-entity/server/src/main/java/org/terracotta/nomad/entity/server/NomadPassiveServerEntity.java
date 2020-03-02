@@ -49,7 +49,7 @@ public class NomadPassiveServerEntity<T> extends NomadCommonServerEntity<T> impl
     try {
       AcceptRejectResponse response = processMessage(message.getNomadMessage());
       if (!response.isAccepted()) {
-        LOGGER.error("Node ws unable to commit Nomad message: {}. Response: {}", message, response);
+        LOGGER.error("Node was unable to commit Nomad message: {}. Response: {}", message, response);
         // Commit or rollback failed on passive: we restart it because we cannot do anything.
         // Upon restart, the passive server will sync with the active server and repair itself if needed if the active server is committed or rolled back.
         // The passive server will then restart with the wanted configuration without re-invoking the Nomad processors apply() methods of the commit phase.
