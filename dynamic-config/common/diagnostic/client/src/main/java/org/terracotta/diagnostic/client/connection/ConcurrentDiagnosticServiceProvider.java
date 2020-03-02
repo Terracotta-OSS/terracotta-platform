@@ -4,6 +4,7 @@
  */
 package org.terracotta.diagnostic.client.connection;
 
+import org.terracotta.common.struct.TimeBudget;
 import org.terracotta.common.struct.Tuple3;
 import org.terracotta.diagnostic.client.DiagnosticService;
 
