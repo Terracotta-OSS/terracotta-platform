@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.startup;
 
-import com.tc.server.TCServerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -29,6 +28,7 @@ import org.terracotta.dynamic_config.api.service.PathResolver;
 import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
 import org.terracotta.dynamic_config.server.nomad.persistence.NomadRepositoryManager;
 import org.terracotta.dynamic_config.server.service.DynamicConfigServiceImpl;
+import org.terracotta.dynamic_config.server.service.TcServer;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
@@ -63,10 +63,12 @@ public class StartupManager {
 
   private final IParameterSubstitutor parameterSubstitutor;
   private final ConfigChangeHandlerManager changeHandlerManager;
+  private final TcServer tcServer;
 
-  public StartupManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager changeHandlerManager) {
+  public StartupManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager changeHandlerManager, TcServer tcServer) {
     this.parameterSubstitutor = parameterSubstitutor;
     this.changeHandlerManager = changeHandlerManager;
+    this.tcServer = tcServer;
   }
 
   boolean startUnconfigured(Cluster cluster, Node node, String optionalNodeRepositoryFromCLI) {
@@ -189,7 +191,7 @@ public class StartupManager {
     // Nomad system must have been bootstrapped BEFORE any call to TCServerMain
     assertNotNull(NomadBootstrapper.getNomadServerManager());
 
-    TCServerMain.main(args.toArray(new String[0]));
+    tcServer.start(args.toArray(new String[0]));
 
     return true;
   }

@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.service.ConfigChangeHandlerManagerImpl;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
+import org.terracotta.dynamic_config.server.service.TcServer;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -34,7 +35,7 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 public class StartupManagerTest {
-  private static final StartupManager STARTUP_MANAGER = new StartupManager(new ParameterSubstitutor(), new ConfigChangeHandlerManagerImpl());
+  private static final StartupManager STARTUP_MANAGER = new StartupManager(new ParameterSubstitutor(), new ConfigChangeHandlerManagerImpl(), new TcServer());
   private static final String CONFIG_FILE = "/path/to/config-file";
   private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 

@@ -24,6 +24,7 @@ import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.service.ConfigChangeHandlerManagerImpl;
 import org.terracotta.dynamic_config.server.service.ParameterSubstitutor;
+import org.terracotta.dynamic_config.server.service.TcServer;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -163,12 +164,13 @@ public class Options {
 
     ParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
     ConfigChangeHandlerManager changeHandlerManager = new ConfigChangeHandlerManagerImpl();
+    TcServer tcServer = new TcServer();
 
     NodeProcessor nodeProcessor = new NodeProcessor(
         this,
         buildParamValueMap(jCommander),
         new ClusterFactory(),
-        new StartupManager(parameterSubstitutor, changeHandlerManager),
+        new StartupManager(parameterSubstitutor, changeHandlerManager, tcServer),
         parameterSubstitutor
     );
     nodeProcessor.process();

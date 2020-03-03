@@ -17,9 +17,7 @@ package org.terracotta.dynamic_config.server.nomad;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.diagnostic.common.DiagnosticConstants;
 import org.terracotta.diagnostic.server.DiagnosticServices;
-import org.terracotta.diagnostic.server.DiagnosticServicesRegistration;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -45,6 +43,7 @@ import org.terracotta.dynamic_config.server.nomad.processor.NodeRemovalNomadChan
 import org.terracotta.dynamic_config.server.nomad.processor.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.nomad.processor.SettingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.service.DynamicConfigServiceImpl;
+import org.terracotta.dynamic_config.server.service.TcServer;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
@@ -148,22 +147,21 @@ public class NomadBootstrapper {
       this.nomadServer = createServer(repositoryManager, nodeName.get(), parameterSubstitutor, listener);
 
       LicenseParser licenseParser = new LicenseParserDiscovery().find().orElseGet(LicenseParser::unsupported);
+      TcServer tcServer = new TcServer();
 
-      this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseParser, this);
+      this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseParser, this, tcServer);
       registerDiagnosticService();
 
       LOGGER.info("Successfully initialized NomadServerManager");
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private void registerDiagnosticService() {
       DiagnosticServices.register(IParameterSubstitutor.class, parameterSubstitutor);
       DiagnosticServices.register(ConfigChangeHandlerManager.class, configChangeHandlerManager);
       DiagnosticServices.register(TopologyService.class, dynamicConfigService);
       DiagnosticServices.register(DynamicConfigService.class, dynamicConfigService);
       DiagnosticServices.register(DynamicConfigEventService.class, dynamicConfigService);
-      DiagnosticServicesRegistration<NomadServer<String>> registration = (DiagnosticServicesRegistration<NomadServer<String>>) (DiagnosticServicesRegistration) DiagnosticServices.register(NomadServer.class, nomadServer);
-      registration.registerMBean(DiagnosticConstants.MBEAN_NOMAD);
+      DiagnosticServices.register(NomadServer.class, nomadServer);
     }
 
     public NomadRepositoryManager getRepositoryManager() {
