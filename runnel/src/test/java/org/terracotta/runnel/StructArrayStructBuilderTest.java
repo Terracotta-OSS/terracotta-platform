@@ -38,6 +38,7 @@ import static org.junit.Assert.fail;
 /**
  * @author Ludovic Orban
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class StructArrayStructBuilderTest {
 
   enum Type {

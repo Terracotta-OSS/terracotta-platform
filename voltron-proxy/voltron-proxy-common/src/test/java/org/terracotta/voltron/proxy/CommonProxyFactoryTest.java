@@ -54,6 +54,7 @@ public class CommonProxyFactoryTest {
     }
   }
 
+  @SuppressWarnings("rawtypes")
   interface AsyncEntity<V> {
     @Async Future<String> test1();
     @Async Future<Collection<String>> test2();
@@ -69,6 +70,7 @@ public class CommonProxyFactoryTest {
     @Async Future test12();
   }
 
+  @SuppressWarnings("rawtypes")
   interface NonAsyncEntity<V> {
     Future<String> test1();
     Future<Collection<String>> test2();

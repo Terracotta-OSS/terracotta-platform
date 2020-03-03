@@ -52,6 +52,7 @@ public abstract class AbstractHATest extends AbstractTest {
   public TestName testName = new TestName();
 
   @Before
+  @SuppressWarnings("rawtypes")
   public void setUp() throws Exception {
     System.out.println(" => [" + testName.getMethodName() + "] " + getClass().getSimpleName() + ".setUp()");
     voltron.getClusterControl().waitForActive();

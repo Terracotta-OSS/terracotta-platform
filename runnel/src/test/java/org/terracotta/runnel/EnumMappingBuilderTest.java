@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 /**
  * @author Ludovic Orban
  */
+@SuppressWarnings("rawtypes")
 public class EnumMappingBuilderTest {
 
   private enum TestEnum {

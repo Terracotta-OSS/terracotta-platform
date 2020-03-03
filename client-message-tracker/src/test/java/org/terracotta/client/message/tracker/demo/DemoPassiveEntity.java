@@ -27,7 +27,7 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 
-public class DemoPassiveEntity implements PassiveServerEntity {
+public class DemoPassiveEntity implements PassiveServerEntity<EntityMessage, EntityResponse> {
 
   private final OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
 

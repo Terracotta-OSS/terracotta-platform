@@ -51,11 +51,11 @@ public class OOOMessageHandlerProviderTest {
     OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
     OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> config =
       new OOOMessageHandlerConfiguration<>("foo", null, 1, m -> 0);
-    OOOMessageHandler messageHandler = provider.getService(1L, config);
+    OOOMessageHandler<EntityMessage, EntityResponse> messageHandler = provider.getService(1L, config);
 
     messageHandler.destroy();
 
-    OOOMessageHandler another = provider.getService(1L, config);
+    OOOMessageHandler<EntityMessage, EntityResponse> another = provider.getService(1L, config);
     assertNotSame(another, messageHandler);
   }
 

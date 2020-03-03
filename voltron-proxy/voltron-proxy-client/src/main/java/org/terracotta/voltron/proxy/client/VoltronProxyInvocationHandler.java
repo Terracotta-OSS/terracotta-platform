@@ -69,7 +69,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
   private final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> entityClientEndpoint;
   private final ExecutorService handler;
-  private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener>> listeners;
+  private final ConcurrentMap<Class<?>, CopyOnWriteArrayList<MessageListener<?>>> listeners;
 
   private volatile EndpointListener endpointListener;
 
@@ -84,7 +84,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
       entityClientEndpoint.setDelegate(new EndpointDelegate<ProxyEntityResponse>() {
 
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
         public void handleMessage(ProxyEntityResponse response) {
           try {
@@ -138,8 +138,8 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
     } else if (registerMessageListener.equals(method)) {
       final Class<?> eventType = (Class<?>) args[0];
-      final MessageListener arg = (MessageListener) args[1];
-      final CopyOnWriteArrayList<MessageListener> messageListeners = listeners.get(eventType);
+      final MessageListener<?> arg = (MessageListener<?>) args[1];
+      final CopyOnWriteArrayList<MessageListener<?>> messageListeners = listeners.get(eventType);
       if (messageListeners == null) {
         throw new IllegalArgumentException("Event type '" + eventType + "' isn't supported");
       }
@@ -166,7 +166,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
         default:
           throw new IllegalStateException(methodDescriptor.getAck().name());
       }
-      return new ProxiedInvokeFuture(builder.invoke());
+      return new ProxiedInvokeFuture<>(builder.invoke());
 
     } else {
       return getResponse(builder.invoke().get());
@@ -183,7 +183,7 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     return proxyEntityResponse.getResponse();
   }
 
-  private static class ProxiedInvokeFuture implements Future {
+  private static class ProxiedInvokeFuture<T> implements Future<T> {
 
     private final InvokeFuture<ProxyEntityResponse> future;
 
@@ -212,19 +212,21 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
       return future.isDone();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object get() throws InterruptedException, ExecutionException {
+    public T get() throws InterruptedException, ExecutionException {
       try {
-        return getResponse(future.get());
+        return (T) getResponse(future.get());
       } catch (EntityException | EntityUserException e) {
         throw new ExecutionException(e);
       }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       try {
-        return getResponse(future.getWithTimeout(timeout, unit));
+        return (T) getResponse(future.getWithTimeout(timeout, unit));
       } catch (EntityException | EntityUserException e) {
         throw new ExecutionException(e);
       }

@@ -63,6 +63,7 @@ class TrackerImpl<R> implements Tracker<R> {
     trackedValues.headMap(id).clear();
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public synchronized Map<Long, R> getTrackedValues() {
     return Collections.unmodifiableMap(new HashMap(trackedValues));

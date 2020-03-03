@@ -31,6 +31,7 @@ import static org.hamcrest.core.Is.is;
 /**
  * @author Ludovic Orban
  */
+@SuppressWarnings("rawtypes")
 public class StructStructBuilderTest {
 
   private final Struct mapEntry = StructBuilder.newStructBuilder()

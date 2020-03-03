@@ -65,8 +65,10 @@ import org.terracotta.entity.InvokeMonitor;
 /**
  * @author Alex Snaps
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class EndToEndTest {
 
+  @SuppressWarnings("rawtypes")
   @Test
   public void testBothEnds() throws ExecutionException, InterruptedException {
     final SerializationCodec codec = new SerializationCodec();
@@ -229,6 +231,7 @@ public class EndToEndTest {
     assertThat(proxy.much(12, 12), notNullValue());
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static class RecordingInvocationBuilder implements InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> {
     private final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> codec;
     private final ProxyInvoker<?> proxyInvoker;
@@ -276,6 +279,7 @@ public class EndToEndTest {
     }
 
     @Override
+    @Deprecated
     public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> asDeferredResponse() {
       return this;
     }

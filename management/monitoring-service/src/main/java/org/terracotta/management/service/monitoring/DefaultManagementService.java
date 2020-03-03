@@ -154,7 +154,7 @@ class DefaultManagementService implements ManagementService, TopologyEventListen
         ManagementCallMessage managementCallMessage = (ManagementCallMessage) message;
         String managementCallIdentifier = managementCallMessage.getManagementCallIdentifier();
         if (isTracked(managementCallIdentifier)) {
-          ContextualCall call = managementCallMessage.unwrap(ContextualCall.class).get(0);
+          ContextualCall<?> call = managementCallMessage.unwrap(ContextualCall.class).get(0);
           if (managementExecutor != null) {
             managementExecutor.executeManagementCallOnServer(managementCallIdentifier, call);
           }

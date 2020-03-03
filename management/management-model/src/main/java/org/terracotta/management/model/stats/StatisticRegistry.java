@@ -50,6 +50,7 @@ public class StatisticRegistry extends org.terracotta.statistics.registry.Statis
     return descriptors;
   }
 
+  @SuppressWarnings("rawtypes")
   public static Map<String, Statistic<? extends Serializable>> collect(StatisticRegistry registry, Collection<String> statisticNames, long since) {
     if (statisticNames == null || statisticNames.isEmpty()) {
       return registry.queryStatistics(since)

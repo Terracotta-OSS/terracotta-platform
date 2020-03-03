@@ -42,8 +42,10 @@ import static org.terracotta.voltron.proxy.CommonProxyFactory.invert;
 /**
  * @author Alex Snaps
  */
+@SuppressWarnings("rawtypes")
 public class VoltronProxyInvocationHandlerTest {
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testNullsClientIdAnnotatedParams() throws Throwable {
 

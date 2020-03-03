@@ -38,7 +38,7 @@ public class ProxyMessageCodec implements MessageCodec<ProxyEntityMessage, Proxy
   private Codec codec = new SerializationCodec();
 
   public ProxyMessageCodec(Class<?> proxyType) {
-    this(proxyType, new Class[0], null, null);
+    this(proxyType, new Class<?>[0], null, null);
   }
 
   public ProxyMessageCodec(Class<?> proxyType, Class<?>[] eventTypes) {

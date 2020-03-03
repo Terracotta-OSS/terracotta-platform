@@ -50,6 +50,7 @@ class PhysicalMemory {
     return getAttribute("getCommittedVirtualMemorySize");
   }
 
+  @SuppressWarnings("unchecked")
   private static <T> T getAttribute(String name) {
     LOGGER.trace("Bean lookup for {}", name);
     for (Class<?> s = OS_BEAN.getClass(); s != null; s = s.getSuperclass()) {

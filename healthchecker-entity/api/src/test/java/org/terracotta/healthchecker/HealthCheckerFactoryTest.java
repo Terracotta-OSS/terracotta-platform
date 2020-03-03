@@ -36,6 +36,7 @@ import org.terracotta.connection.entity.EntityRef;
 /**
  *
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class HealthCheckerFactoryTest {
   
   public HealthCheckerFactoryTest() {

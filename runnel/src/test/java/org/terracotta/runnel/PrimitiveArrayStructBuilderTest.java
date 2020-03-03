@@ -30,6 +30,7 @@ import static org.hamcrest.core.Is.is;
 /**
  * @author Ludovic Orban
  */
+@SuppressWarnings("rawtypes")
 public class PrimitiveArrayStructBuilderTest {
 
   private final Struct struct = StructBuilder.newStructBuilder()

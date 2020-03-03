@@ -34,6 +34,7 @@ import static org.junit.Assert.fail;
 
 public class SerializationCodecTest {
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testUnmatchedShadedSubstitution() {
     SerializationCodec codec = new SerializationCodec(Pattern.compile("blah"));

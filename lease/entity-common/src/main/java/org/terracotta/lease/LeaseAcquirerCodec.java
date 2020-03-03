@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 /**
  * The codec responsible for converting back and forth between bytes and lease messages.
  */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class LeaseAcquirerCodec implements MessageCodec<LeaseMessage, LeaseResponse> {
   private static Struct messageStruct = createMessageStruct();
   private static Struct responseStruct = createResponseStruct();

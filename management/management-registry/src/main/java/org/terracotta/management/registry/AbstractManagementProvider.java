@@ -129,7 +129,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
     // LinkedHashSet to keep ordering because these objects end up in an immutable
     // topology so this is easier for testing to compare with json payloads
     Collection<Descriptor> capabilities = new LinkedHashSet<Descriptor>();
-    for (ExposedObject o : exposedObjects) {
+    for (ExposedObject<?> o : exposedObjects) {
       capabilities.addAll(((ExposedObject<T>) o).getDescriptors());
     }
     return capabilities;

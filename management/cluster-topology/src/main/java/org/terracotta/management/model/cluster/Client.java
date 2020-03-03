@@ -255,6 +255,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
   }
 
   @Override
+  @SuppressWarnings("rawtypes")
   public Map<String, Object> toMap() {
     Map<String, Object> map = super.toMap();
     map.put("pid", getPid());

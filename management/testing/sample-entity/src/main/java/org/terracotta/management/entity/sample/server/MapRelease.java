@@ -24,6 +24,7 @@ import java.util.Map;
  * @author Mathieu Carbou
  */
 @CommonComponent
+@SuppressWarnings("rawtypes")
 public class MapRelease implements ServiceConfiguration<Map> {
   @Override
   public Class<Map> getServiceType() {

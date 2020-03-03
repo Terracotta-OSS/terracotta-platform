@@ -51,11 +51,11 @@ public class ClientProxyFactory {
       throw new IllegalArgumentException("We only proxy interfaces!");
     }
 
-    final Class[] interfaces;
+    final Class<?>[] interfaces;
     if (messageTypes == null || messageTypes.length == 0) {
-      interfaces = new Class[]{clientType, Entity.class};
+      interfaces = new Class<?>[]{clientType, Entity.class};
     } else {
-      interfaces = new Class[]{clientType, Entity.class, ServerMessageAware.class};
+      interfaces = new Class<?>[]{clientType, Entity.class, ServerMessageAware.class};
     }
     return clientType.cast(Proxy.newProxyInstance(
         Entity.class.getClassLoader(),

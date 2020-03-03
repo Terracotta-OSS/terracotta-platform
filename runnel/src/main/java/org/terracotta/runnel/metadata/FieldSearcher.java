@@ -31,6 +31,7 @@ public class FieldSearcher {
   }
 
   public <T extends Field, S extends Field> T findField(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
+    @SuppressWarnings("unchecked")
     T field = (T) metadata.getFieldByName(name);
     if (field == null) {
       throw new IllegalArgumentException("No such field : " + name);

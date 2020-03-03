@@ -41,7 +41,10 @@ public class DefaultCallQueryTest {
   public void execute_handles_unexpected_exceptions() throws Exception {
     final Context context = Context.create("key", "val");
     Parameter[] parameters = new Parameter[]{new Parameter("toto")};
-    Collection<Context> contexts = new ArrayList<Context>() {{
+    Collection<Context> contexts = new ArrayList<Context>() {
+      private static final long serialVersionUID = 1L;
+
+      {
       add(context);
     }};
 
@@ -57,9 +60,9 @@ public class DefaultCallQueryTest {
     when(capabilityManagementSupport.getManagementProvidersByCapability("myCapabilityName")).thenReturn(managementProviders);
 
     DefaultCallQuery<String> defaultCallQuery = new DefaultCallQuery<String>(capabilityManagementSupport, "myCapabilityName", "myMethodName", String.class, parameters, contexts);
-    ResultSet executeResults = defaultCallQuery.execute();
+    ResultSet<ContextualReturn<String>> executeResults = defaultCallQuery.execute();
 
-    ContextualReturn singleResult = (ContextualReturn) executeResults.getSingleResult();
+    ContextualReturn<String> singleResult = executeResults.getSingleResult();
     try {
       singleResult.getValue();
       fail();

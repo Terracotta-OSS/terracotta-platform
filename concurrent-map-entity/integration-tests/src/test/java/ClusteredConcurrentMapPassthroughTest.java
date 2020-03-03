@@ -40,6 +40,7 @@ import static org.junit.Assert.assertThat;
 /**
  * ClusteredConcurrentMapPassthroughTest
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class ClusteredConcurrentMapPassthroughTest {
 
   private static final String MAP_NAME = "my-map";
@@ -145,6 +146,7 @@ public class ClusteredConcurrentMapPassthroughTest {
   }
 
   public static class Person implements Serializable  {
+    private static final long serialVersionUID = 1L;
     final String name;
     final int age;
 

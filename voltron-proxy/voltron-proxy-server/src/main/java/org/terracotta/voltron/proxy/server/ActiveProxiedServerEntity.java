@@ -40,7 +40,7 @@ public abstract class ActiveProxiedServerEntity<S, R, M extends Messenger> imple
   private Class<R> reconnectDataType;
 
   @Override
-  public ProxyEntityResponse invokeActive(ActiveInvokeContext context, ProxyEntityMessage message) throws EntityUserException {
+  public ProxyEntityResponse invokeActive(ActiveInvokeContext<ProxyEntityResponse> context, ProxyEntityMessage message) throws EntityUserException {
     switch (message.getType()) {
       case MESSAGE:
       case MESSENGER:

@@ -41,6 +41,7 @@ public class PutAllOperation implements MapOperation {
     PrimitiveCodec.writeTo(output, map);
   }
 
+  @SuppressWarnings("unchecked")
   static PutAllOperation readFrom(DataInput input) throws IOException {
     return new PutAllOperation((Map<Object, Object>) PrimitiveCodec.readFrom(input));
   }

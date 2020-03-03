@@ -32,7 +32,7 @@ import org.terracotta.entity.ServiceRegistry;
 
 import java.util.Map;
 
-public class DemoActiveEntity implements ActiveServerEntity {
+public class DemoActiveEntity implements ActiveServerEntity<EntityMessage, EntityResponse> {
 
   private final OOOMessageHandler<EntityMessage, EntityResponse> messageHandler;
 
@@ -58,7 +58,7 @@ public class DemoActiveEntity implements ActiveServerEntity {
   }
 
   @Override
-  public EntityResponse invokeActive(ActiveInvokeContext context, EntityMessage message) throws EntityUserException {
+  public EntityResponse invokeActive(ActiveInvokeContext<EntityResponse> context, EntityMessage message) throws EntityUserException {
     return messageHandler.invoke(context, message, this::processMessage);
   }
 
@@ -82,7 +82,7 @@ public class DemoActiveEntity implements ActiveServerEntity {
   }
 
   @Override
-  public void synchronizeKeyToPassive(PassiveSynchronizationChannel passiveSynchronizationChannel, int concurrencyKey) {
+  public void synchronizeKeyToPassive(PassiveSynchronizationChannel<EntityMessage> passiveSynchronizationChannel, int concurrencyKey) {
     // Sync entity data for the given concurrency key
     EntityMessage entityDataSyncMessage = null;
     passiveSynchronizationChannel.synchronizeToPassive(entityDataSyncMessage);

@@ -195,6 +195,7 @@ public class OOOMessageHandlerImplTest {
     assertThat(trackedResponses2, is(trackedResponsesForSegment2));
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testLoadOnSyncWithOldServer() throws Exception {
     messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, m -> 0, () -> {});

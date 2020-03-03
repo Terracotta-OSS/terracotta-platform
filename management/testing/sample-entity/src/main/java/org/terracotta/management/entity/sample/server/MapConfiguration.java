@@ -24,6 +24,7 @@ import java.util.Map;
  * @author Mathieu Carbou
  */
 @CommonComponent
+@SuppressWarnings("rawtypes")
 public class MapConfiguration implements ServiceConfiguration<Map> {
 
   private final String name;

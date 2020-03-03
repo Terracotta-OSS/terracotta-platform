@@ -19,6 +19,8 @@ package org.terracotta.lease;
  * Indicates that a reconnection is in progress and so lease requests will not be useful.
  */
 public class LeaseReconnectingException extends LeaseException {
+  private static final long serialVersionUID = 1L;
+
   LeaseReconnectingException(String message) {
     super(message);
   }

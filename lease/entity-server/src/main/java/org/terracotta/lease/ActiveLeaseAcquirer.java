@@ -35,11 +35,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, LeaseResponse> {
   private final LeaseService leaseService;
   private final ClientCommunicator clientCommunicator;
-  private final IEntityMessenger entityMessenger;
+  private final IEntityMessenger<LeaseMessage, LeaseResponse> entityMessenger;
   private final ConcurrentHashMap<ClientDescriptor, Long> connectionSequenceNumbers = new ConcurrentHashMap<>();
   private final ConcurrentHashMap<UUID, ClientDescriptor> clientDescriptors = new ConcurrentHashMap<>();
 
-  public ActiveLeaseAcquirer(LeaseService leaseService, ClientCommunicator clientCommunicator, IEntityMessenger entityMessenger) {
+  public ActiveLeaseAcquirer(LeaseService leaseService, ClientCommunicator clientCommunicator, IEntityMessenger<LeaseMessage, LeaseResponse> entityMessenger) {
     this.leaseService = leaseService;
     this.clientCommunicator = clientCommunicator;
     this.entityMessenger = entityMessenger;
@@ -56,7 +56,7 @@ public class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, Lea
   }
 
   @Override
-  public LeaseResponse invokeActive(ActiveInvokeContext context, LeaseMessage leaseMessage) {
+  public LeaseResponse invokeActive(ActiveInvokeContext<LeaseResponse> context, LeaseMessage leaseMessage) {
     LeaseMessageType messageType = leaseMessage.getType();
     switch (messageType) {
       case LEASE_REQUEST:
@@ -68,7 +68,7 @@ public class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, Lea
     }
   }
 
-  private LeaseResponse handleLeaseRequest(ActiveInvokeContext context, LeaseRequest leaseRequest) {
+  private LeaseResponse handleLeaseRequest(ActiveInvokeContext<LeaseResponse> context, LeaseRequest leaseRequest) {
     ClientDescriptor clientDescriptor = context.getClientDescriptor();
 
     if (!isLatestConnection(clientDescriptor, leaseRequest)) {
@@ -100,10 +100,10 @@ public class ActiveLeaseAcquirer implements ActiveServerEntity<LeaseMessage, Lea
     return messageConnectionSequenceNumber == latestConnectionSequenceNumber;
   }
 
-  
+
   @Override
   public ActiveServerEntity.ReconnectHandler startReconnect() {
-    return (ClientDescriptor clientDescriptor, byte[] bytes)->{
+    return (ClientDescriptor clientDescriptor, byte[] bytes) -> {
       LeaseReconnectData reconnectData = LeaseReconnectData.decode(bytes);
 
       long connectionSequenceNumber = reconnectData.getConnectionSequenceNumber();

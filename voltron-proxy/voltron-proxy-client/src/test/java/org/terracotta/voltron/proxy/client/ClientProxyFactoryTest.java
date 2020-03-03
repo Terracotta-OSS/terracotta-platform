@@ -16,7 +16,7 @@
 package org.terracotta.voltron.proxy.client;
 
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
@@ -46,6 +46,7 @@ import static org.terracotta.voltron.proxy.ProxyEntityResponse.messageResponse;
 /**
  * @author Alex Snaps
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class ClientProxyFactoryTest {
 
   @Test
@@ -64,10 +65,10 @@ public class ClientProxyFactoryTest {
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
-    when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
+    when(builder.message(ArgumentMatchers.<EntityMessage>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
-    when(builder.withExecutor(Matchers.<Executor>any())).thenReturn(builder);
+    when(builder.withExecutor(ArgumentMatchers.<Executor>any())).thenReturn(builder);
     when(future.get()).thenReturn(messageResponse(Integer.class, 42));
 
     final PassThrough proxy = ClientProxyFactory.createProxy(PassThrough.class, PassThrough.class, endpoint, null, codec);
@@ -86,8 +87,8 @@ public class ClientProxyFactoryTest {
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
-    when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
-    when(builder.withExecutor(Matchers.<Executor>any())).thenReturn(builder);
+    when(builder.message(ArgumentMatchers.<EntityMessage>any())).thenReturn(builder);
+    when(builder.withExecutor(ArgumentMatchers.<Executor>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(messageResponse(Integer.class, 42));
@@ -111,8 +112,8 @@ public class ClientProxyFactoryTest {
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final InvocationBuilder builder = mock(InvocationBuilder.class);
     when(endpoint.beginInvoke()).thenReturn(builder);
-    when(builder.message(Matchers.<EntityMessage>any())).thenReturn(builder);
-    when(builder.withExecutor(Matchers.<Executor>any())).thenReturn(builder);
+    when(builder.message(ArgumentMatchers.<EntityMessage>any())).thenReturn(builder);
+    when(builder.withExecutor(ArgumentMatchers.<Executor>any())).thenReturn(builder);
     final InvokeFuture future = mock(InvokeFuture.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(messageResponse(Integer.class, 42));

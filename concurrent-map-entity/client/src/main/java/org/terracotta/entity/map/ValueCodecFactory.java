@@ -48,6 +48,7 @@ public class ValueCodecFactory {
       return input;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public T decode(Object input) {
       return (T) input;
@@ -76,6 +77,7 @@ public class ValueCodecFactory {
       return new ValueWrapper(input.hashCode(), baos.toByteArray());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public T decode(Object input) {
       if (input == null) {

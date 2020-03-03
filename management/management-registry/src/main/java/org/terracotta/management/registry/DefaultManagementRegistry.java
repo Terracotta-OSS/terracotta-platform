@@ -64,7 +64,7 @@ public class DefaultManagementRegistry implements ManagementRegistry, Closeable 
     managementProviders.remove(provider);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public void register(Object managedObject) {
     for (ManagementProvider managementProvider : managementProviders) {
@@ -74,7 +74,7 @@ public class DefaultManagementRegistry implements ManagementRegistry, Closeable 
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public void unregister(Object managedObject) {
     for (ManagementProvider managementProvider : managementProviders) {

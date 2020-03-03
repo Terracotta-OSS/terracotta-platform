@@ -145,7 +145,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
     return allProviders;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public CompletableFuture<Void> register(Object managedObject) {
     LOGGER.trace("[{}] register() active={}", consumerId, monitoringService.isActiveEntityService());
@@ -162,10 +162,10 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
     }
     return futures.isEmpty() ?
         CompletableFuture.completedFuture(null) :
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[futures.size()]));
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]));
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public void unregister(Object managedObject) {
     for (ManagementProvider managementProvider : managementProviders) {
@@ -184,7 +184,7 @@ class DefaultEntityManagementRegistry implements EntityManagementRegistry, Topol
     monitoringService.exposeManagementRegistry(getContextContainer(), capabilitiesArray);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public boolean pushServerEntityNotification(Object managedObjectSource, String type, Map<String, String> attrs) {
     LOGGER.trace("[{}] pushServerEntityNotification({})", consumerId, type);

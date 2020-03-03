@@ -79,6 +79,7 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     return this;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <E> StructEncoder<P> enm(String name, E value) {
     EnumField<E> field = (EnumField<E>) fieldSearcher.findField(name, EnumField.class, null);

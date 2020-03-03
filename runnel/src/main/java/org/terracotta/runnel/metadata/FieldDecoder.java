@@ -55,12 +55,13 @@ public class FieldDecoder {
     return new StructDecoder<P>(field, readBuffer, parent);
   }
 
+  @SuppressWarnings("unchecked")
   public <T, P> ArrayDecoder<T, P> decodeValueArray(String name, Class<? extends ValueField<T>> clazz, P parent) {
     ArrayField field = nextField(name, ArrayField.class, clazz);
     if (field == null) {
       return null;
     }
-    return new ArrayDecoder<T, P>((ValueField<T>) field.subField(), readBuffer, parent);
+    return new ArrayDecoder<>((ValueField<T>) field.subField(), readBuffer, parent);
   }
 
   public <T> T decodeValue(String name, Class<? extends ValueField<T>> clazz) {
@@ -71,6 +72,7 @@ public class FieldDecoder {
     return field.decode(readBuffer);
   }
 
+  @SuppressWarnings("unchecked")
   private  <T extends Field, S extends Field> T nextField(String name, Class<T> fieldClazz, Class<S> subFieldClazz) {
     Field field = findFieldWithIndex(name, fieldClazz, subFieldClazz);
     if (readBuffer.limitReached()) {
