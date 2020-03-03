@@ -1,0 +1,10 @@
+{
+  "type": "SettingNomadChange",
+  "applicability": {
+    "type": "CLUSTER"
+  },
+  "cmd": "SET",
+  "name": "offheap-resources.primary-server-resource",
+  "value": "2GB",
+  "summary": "set offheap-resources.primary-server-resource=2GB"
+}

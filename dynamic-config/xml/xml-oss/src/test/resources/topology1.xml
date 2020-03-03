@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+
+    Copyright Terracotta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<tc-config xmlns="http://www.terracotta.org/config">
+  <plugins>
+    <config>
+      <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+        <resource name="main" unit="MB">512</resource>
+        <resource name="second" unit="GB">1</resource>
+      </offheap-resources>
+    </config>
+    <service>
+      <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+        <lease-length unit="seconds">50</lease-length>
+      </connection-leasing>
+    </service>
+    <config>
+      <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+        <directory name="main" use-for-platform="false">%(user.dir)/main</directory>
+        <directory name="second" use-for-platform="false">%(user.dir)/second</directory>
+      </data-directories>
+    </config>
+    <config>
+      <cluster currentStripeId="1" xmlns="http://www.terracotta.org/config/cluster" xmlns:ns2="http://www.terracotta.org/config">
+        <name>my-cluster</name>
+        <stripe>
+          <node>
+            <name>node-1</name>
+            <publicHostname>node-1.sag</publicHostname>
+            <publicPort>1234</publicPort>
+            <server-config>
+              <ns2:tc-config>
+                <ns2:plugins>
+                  <ns2:config>
+                    <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                      <resource name="main" unit="MB">512</resource>
+                      <resource name="second" unit="GB">1</resource>
+                    </offheap-resources>
+                  </ns2:config>
+                  <ns2:service>
+                    <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+                      <lease-length unit="seconds">50</lease-length>
+                    </connection-leasing>
+                  </ns2:service>
+                  <ns2:config>
+                    <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                      <directory name="main" use-for-platform="false">main</directory>
+                      <directory name="second" use-for-platform="false">second</directory>
+                    </data-directories>
+                  </ns2:config>
+                </ns2:plugins>
+                <ns2:tc-properties/>
+                <ns2:failover-priority>
+                  <ns2:consistency>
+                    <ns2:voter count="2"/>
+                  </ns2:consistency>
+                </ns2:failover-priority>
+                <ns2:servers>
+                  <ns2:server bind="10.10.10.10" host="host1" name="node-1">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:server bind="10.10.10.10" host="host2" name="node-2">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:client-reconnect-window>100</ns2:client-reconnect-window>
+                </ns2:servers>
+              </ns2:tc-config>
+            </server-config>
+          </node>
+          <node>
+            <name>node-2</name>
+            <server-config>
+              <ns2:tc-config>
+                <ns2:plugins>
+                  <ns2:config>
+                    <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                      <resource name="main" unit="MB">512</resource>
+                      <resource name="second" unit="GB">1</resource>
+                    </offheap-resources>
+                  </ns2:config>
+                  <ns2:service>
+                    <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+                      <lease-length unit="seconds">50</lease-length>
+                    </connection-leasing>
+                  </ns2:service>
+                  <ns2:config>
+                    <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                      <directory name="main" use-for-platform="false">main</directory>
+                      <directory name="second" use-for-platform="false">second</directory>
+                    </data-directories>
+                  </ns2:config>
+                </ns2:plugins>
+                <ns2:tc-properties/>
+                <ns2:failover-priority>
+                  <ns2:consistency>
+                    <ns2:voter count="2"/>
+                  </ns2:consistency>
+                </ns2:failover-priority>
+                <ns2:servers>
+                  <ns2:server bind="10.10.10.10" host="host1" name="node-1">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:server bind="10.10.10.10" host="host2" name="node-2">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:client-reconnect-window>100</ns2:client-reconnect-window>
+                </ns2:servers>
+              </ns2:tc-config>
+            </server-config>
+          </node>
+        </stripe>
+        <stripe>
+          <node>
+            <name>node-1</name>
+            <server-config>
+              <ns2:tc-config>
+                <ns2:plugins>
+                  <ns2:config>
+                    <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                      <resource name="main" unit="MB">512</resource>
+                      <resource name="second" unit="GB">1</resource>
+                    </offheap-resources>
+                  </ns2:config>
+                  <ns2:service>
+                    <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+                      <lease-length unit="seconds">50</lease-length>
+                    </connection-leasing>
+                  </ns2:service>
+                  <ns2:config>
+                    <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                      <directory name="main" use-for-platform="false">main</directory>
+                      <directory name="second" use-for-platform="false">second</directory>
+                    </data-directories>
+                  </ns2:config>
+                </ns2:plugins>
+                <ns2:tc-properties/>
+                <ns2:failover-priority>
+                  <ns2:consistency>
+                    <ns2:voter count="2"/>
+                  </ns2:consistency>
+                </ns2:failover-priority>
+                <ns2:servers>
+                  <ns2:server bind="10.10.10.10" host="host3" name="node-1">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:server bind="10.10.10.10" host="host4" name="node-2">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:client-reconnect-window>100</ns2:client-reconnect-window>
+                </ns2:servers>
+              </ns2:tc-config>
+            </server-config>
+          </node>
+          <node>
+            <name>node-2</name>
+            <server-config>
+              <ns2:tc-config>
+                <ns2:plugins>
+                  <ns2:config>
+                    <offheap-resources xmlns="http://www.terracotta.org/config/offheap-resource">
+                      <resource name="main" unit="MB">512</resource>
+                      <resource name="second" unit="GB">1</resource>
+                    </offheap-resources>
+                  </ns2:config>
+                  <ns2:service>
+                    <connection-leasing xmlns="http://www.terracotta.org/service/lease">
+                      <lease-length unit="seconds">50</lease-length>
+                    </connection-leasing>
+                  </ns2:service>
+                  <ns2:config>
+                    <data-directories xmlns="http://www.terracottatech.com/config/data-roots">
+                      <directory name="main" use-for-platform="false">main</directory>
+                      <directory name="second" use-for-platform="false">second</directory>
+                    </data-directories>
+                  </ns2:config>
+                </ns2:plugins>
+                <ns2:tc-properties/>
+                <ns2:failover-priority>
+                  <ns2:consistency>
+                    <ns2:voter count="2"/>
+                  </ns2:consistency>
+                </ns2:failover-priority>
+                <ns2:servers>
+                  <ns2:server bind="10.10.10.10" host="host3" name="node-1">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:server bind="10.10.10.10" host="host4" name="node-2">
+                    <ns2:logs>logs</ns2:logs>
+                    <ns2:tsa-port bind="10.10.10.10">19410</ns2:tsa-port>
+                    <ns2:tsa-group-port bind="10.10.10.10">19430</ns2:tsa-group-port>
+                  </ns2:server>
+                  <ns2:client-reconnect-window>100</ns2:client-reconnect-window>
+                </ns2:servers>
+              </ns2:tc-config>
+            </server-config>
+          </node>
+        </stripe>
+      </cluster>
+    </config>
+  </plugins>
+  <tc-properties/>
+  <failover-priority>
+    <consistency>
+      <voter count="2"/>
+    </consistency>
+  </failover-priority>
+  <servers>
+    <server host="host1" name="node-1" bind="10.10.10.10">
+      <logs>%(user.dir)/logs</logs>
+      <tsa-port bind="10.10.10.10">19410</tsa-port>
+      <tsa-group-port bind="10.10.10.10">19430</tsa-group-port>
+    </server>
+    <server host="host2" name="node-2" bind="10.10.10.10">
+      <logs>%(user.dir)/logs</logs>
+      <tsa-port bind="10.10.10.10">19410</tsa-port>
+      <tsa-group-port bind="10.10.10.10">19430</tsa-group-port>
+    </server>
+    <client-reconnect-window>100</client-reconnect-window>
+  </servers>
+</tc-config>

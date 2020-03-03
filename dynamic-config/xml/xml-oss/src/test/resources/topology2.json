@@ -1,0 +1,50 @@
+{
+  "cluster": {
+    "name": "tc-cluster",
+    "stripes": [
+      {
+        "nodes": [
+          {
+            "clientLeaseDuration": {
+              "quantity": 20,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "clientReconnectWindow": {
+              "quantity": 120,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "dataDirs": {
+              "main": "%(user.dir)/user-data/main/stripe1"
+            },
+            "failoverPriority": "availability",
+            "nodeBindAddress": "0.0.0.0",
+            "nodeGroupBindAddress": "0.0.0.0",
+            "nodeGroupPort": 27914,
+            "nodeHostname": "localhost",
+            "nodeLogDir": "%(user.dir)/logs/stripe1/node-1",
+            "nodeLoggerOverrides": {
+              "stripe.1.node.1.node-logger-overrides=org.terracotta.dynamic_config": "TRACE"
+            },
+            "nodeName": "node-1",
+            "nodePort": 27904,
+            "offheapResources": {
+              "main": {
+                "quantity": 512,
+                "unit": "MB",
+                "type": "MEMORY"
+              }
+            },
+            "securitySslTls": false,
+            "securityWhitelist": false,
+            "tcProperties": {}
+          }
+        ]
+      }
+    ]
+  },
+  "nodeName": "node-1",
+  "stripeId": 1,
+  "nodeId": 1
+}

@@ -1,0 +1,93 @@
+<!--
+
+    Copyright Terracotta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<xs:schema
+    xmlns:data-roots="http://www.terracottatech.com/config/data-roots"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:tc="http://www.terracotta.org/config"
+    version="1.0" targetNamespace="http://www.terracottatech.com/config/data-roots" elementFormDefault="qualified">
+
+  <xs:import namespace="http://www.terracotta.org/config" schemaLocation="http://www.terracotta.org/terracotta.xsd"/>
+
+  <xs:element name="data-directories" substitutionGroup="tc:config-content">
+    <xs:complexType>
+      <xs:sequence maxOccurs="unbounded">
+        <xs:element name="directory" type="data-roots:DataRootMapping"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="DataRootMapping">
+    <xs:simpleContent>
+      <xs:extension base="data-roots:path">
+        <xs:attribute name="name" type="xs:string" use="required">
+          <xs:annotation>
+            <xs:documentation>
+              This indicates the name that can be referenced by its users.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="use-for-platform" type="xs:boolean" default="false">
+          <xs:annotation>
+            <xs:documentation>
+              At most one directory node can have the use-for-platform attribute defined as true.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:simpleType name="path">
+    <xs:annotation>
+      <xs:documentation>
+        Several different predefined substitutions are available
+        for your use:
+
+        %h expands to the fully-qualified host name of the
+        machine running your application
+
+        %i expands to the IP adress of the machine running
+        your application
+
+        %H refers to the home directory of the user running
+        running your application
+
+        %n refers to the username of the user running
+        running your application
+
+        %o refers to the name of the operating system
+        running your application
+
+        %a refers to the processor architecture of the
+        machine running running your application %v refers
+        to the version of the operating system running
+        running your application
+
+        %t refers to the temporary directory of the machine
+        running your application(on Linux or Solaris, e.g.,
+        /tmp)
+
+        %(property) refers to the java system property of
+        the JVM running on the machine(e.g. %(java.home) )
+      </xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:token">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

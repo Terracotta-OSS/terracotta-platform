@@ -1,0 +1,337 @@
+<!--
+
+    Copyright Terracotta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<tc-config xmlns="http://www.terracotta.org/config" xmlns:data="http://www.terracottatech.com/config/data-roots"
+           xmlns:ohr="http://www.terracotta.org/config/offheap-resource"
+           xmlns:persistence="http://www.terracottatech.com/config/platform-persistence"
+           xmlns:br="http://www.terracottatech.com/config/backup-restore"
+           xmlns:security="http://www.terracottatech.com/config/security"
+           xmlns:dr="http://www.terracottatech.com/config/data-roots">
+  <plugins>
+    <config>
+      <data:data-directories>
+        <data:directory name="root1" use-for-platform="false">test/data1</data:directory>
+      </data:data-directories>
+    </config>
+    <service>
+      <br:backup-restore>
+        <br:backup-location path="target/tmp/backup"/>
+      </br:backup-restore>
+    </service>
+    <service>
+      <persistence:platform-persistence data-directory-id="root1"/>
+    </service>
+    <service>
+      <security:security>
+        <security:security-root-directory>path/to/security-root-directory</security:security-root-directory>
+        <security:ssl-tls/>
+        <security:whitelist/>
+      </security:security>
+    </service>
+
+    <config>
+      <ohr:offheap-resources>
+        <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+        <ohr:resource name="secondary-server-resource" unit="MB">64</ohr:resource>
+      </ohr:offheap-resources>
+    </config>
+    <config>
+      <cl:cluster xmlns:cl="http://www.terracotta.org/config/cluster">
+        <cl:name>testCluster</cl:name>
+        <cl:stripe>
+          <cl:node>
+            <cl:name>testServer4</cl:name>
+            <cl:server-config>
+              <tc-config>
+                <plugins>
+                  <config>
+                    <data:data-directories>
+                      <data:directory name="root1" use-for-platform="false">test/data2</data:directory>
+                    </data:data-directories>
+                  </config>
+                  <service>
+                    <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+                      <backup-location path="target/tmp/backup2"/>
+                    </backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <service xmlns:security="http://www.terracottatech.com/config/security">
+                    <security:security>
+                      <security:security-root-directory>path/to/security-root-directory</security:security-root-directory>
+                      <security:ssl-tls/>
+                      <security:whitelist/>
+                    </security:security>
+                  </service>
+                  <config>
+                    <ohr:offheap-resources>
+                      <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+                      <ohr:resource name="secondary-server-resource" unit="MB">64</ohr:resource>
+                    </ohr:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="172.68.22.34" name="testServer3">
+                    <logs>/export3/homes/kcleerem/server/passive/logs2</logs>
+                    <tsa-port>4190</tsa-port>
+                    <tsa-group-port>4191</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="172.68.33.11" name="testServer4">
+                    <logs>/export4/homes/kcleerem/server/passive/logs2</logs>
+                    <tsa-port>9580</tsa-port>
+                    <tsa-group-port>9690</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="172.68.44.22" name="testServer5">
+                    <logs>/export5/homes/kcleerem/server/passive/logs2</logs>
+                    <tsa-port>9680</tsa-port>
+                    <tsa-group-port>9790</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+          <cl:node>
+            <cl:name>testServer5</cl:name>
+            <cl:server-config>
+              <tc-config>
+                <plugins>
+                  <config>
+                    <dr:data-directories>
+                      <dr:directory name="root1" use-for-platform="false">test/data2</dr:directory>
+                    </dr:data-directories>
+                  </config>
+                  <service>
+                    <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+                      <backup-location path="target/tmp/backup2"/>
+                    </backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <service xmlns:security="http://www.terracottatech.com/config/security">
+                    <security:security>
+                      <security:security-root-directory>path/to/security-root-directory</security:security-root-directory>
+                      <security:ssl-tls/>
+                      <security:whitelist/>
+                    </security:security>
+                  </service>
+                  <config>
+                    <ohr:offheap-resources>
+                      <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+                      <ohr:resource name="secondary-server-resource" unit="MB">64</ohr:resource>
+                    </ohr:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="172.68.22.34" name="testServer3">
+                    <logs>/export3/homes/kcleerem/server/passive/logs2</logs>
+                    <tsa-port>4190</tsa-port>
+                    <tsa-group-port>4191</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="172.68.33.11" name="testServer4">
+                    <logs>/export4/homes/kcleerem/server/passive/logs2</logs>
+                    <tsa-port>9580</tsa-port>
+                    <tsa-group-port>9690</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="172.68.44.22" name="testServer5">
+                    <logs>/export5/homes/kcleerem/server/passive/logs2</logs>
+                    <tsa-port>9680</tsa-port>
+                    <tsa-group-port>9790</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+          <cl:node>
+            <cl:name>testServer3</cl:name>
+            <cl:server-config>
+              <tc-config>
+                <plugins>
+                  <config>
+                    <dr:data-directories>
+                      <dr:directory name="root1" use-for-platform="false">test/data2</dr:directory>
+                    </dr:data-directories>
+                  </config>
+                  <service>
+                    <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+                      <backup-location path="target/tmp/backup2"/>
+                    </backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <service xmlns:security="http://www.terracottatech.com/config/security">
+                    <security:security>
+                      <security:security-root-directory>path/to/security-root-directory</security:security-root-directory>
+                      <security:ssl-tls/>
+                      <security:whitelist/>
+                    </security:security>
+                  </service>
+                  <config>
+                    <ohr:offheap-resources>
+                      <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+                      <ohr:resource name="secondary-server-resource" unit="MB">64</ohr:resource>
+                    </ohr:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="172.68.22.34" name="testServer3">
+                    <logs>/export3/homes/kcleerem/server/passive/logs2</logs>
+                    <tsa-port>4190</tsa-port>
+                    <tsa-group-port>4191</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="172.68.33.11" name="testServer4">
+                    <logs>/export4/homes/kcleerem/server/passive/logs2</logs>
+                    <tsa-port>9580</tsa-port>
+                    <tsa-group-port>9690</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="172.68.44.22" name="testServer5">
+                    <logs>/export5/homes/kcleerem/server/passive/logs2</logs>
+                    <tsa-port>9680</tsa-port>
+                    <tsa-group-port>9790</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+        </cl:stripe>
+        <cl:stripe>
+          <cl:node>
+            <cl:name>testServer2</cl:name>
+            <cl:server-config>
+              <tc-config>
+                <plugins>
+                  <config>
+                    <data:data-directories>
+                      <data:directory name="root1" use-for-platform="false">test/data1</data:directory>
+                    </data:data-directories>
+                  </config>
+                  <service>
+                    <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+                      <backup-location path="target/tmp/backup"/>
+                    </backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <service xmlns:security="http://www.terracottatech.com/config/security">
+                    <security:security>
+                      <security:security-root-directory>path/to/security-root-directory</security:security-root-directory>
+                      <security:ssl-tls/>
+                      <security:whitelist/>
+                    </security:security>
+                  </service>
+                  <config>
+                    <ohr:offheap-resources>
+                      <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+                      <ohr:resource name="secondary-server-resource" unit="MB">64</ohr:resource>
+                    </ohr:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="172.96.36.44" name="testServer1">
+                    <logs>/export1/homes/kcleerem/server/passive/logs1</logs>
+                    <tsa-port>4164</tsa-port>
+
+                    <tsa-group-port>4165</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="172.96.42.56" name="testServer2">
+                    <logs>/export2/homes/kcleerem/server/passive/logs1</logs>
+                    <tsa-port>9510</tsa-port>
+                    <tsa-group-port>9630</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+          <cl:node>
+            <cl:name>testServer1</cl:name>
+            <cl:server-config>
+              <tc-config>
+                <plugins>
+                  <config>
+                    <data:data-directories>
+                      <data:directory name="root1" use-for-platform="false">test/data1</data:directory>
+                    </data:data-directories>
+                  </config>
+                  <service>
+                    <backup-restore xmlns="http://www.terracottatech.com/config/backup-restore">
+                      <backup-location path="target/tmp/backup"/>
+                    </backup-restore>
+                  </service>
+                  <service>
+                    <persistence:platform-persistence data-directory-id="root1"/>
+                  </service>
+                  <service xmlns:security="http://www.terracottatech.com/config/security">
+                    <security:security>
+                      <security:security-root-directory>path/to/security-root-directory</security:security-root-directory>
+                      <security:ssl-tls/>
+                      <security:whitelist/>
+                    </security:security>
+                  </service>
+                  <config>
+                    <ohr:offheap-resources>
+                      <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+                      <ohr:resource name="secondary-server-resource" unit="MB">64</ohr:resource>
+                    </ohr:offheap-resources>
+                  </config>
+                </plugins>
+                <tc-properties/>
+                <servers>
+                  <server bind="0.0.0.0" host="172.96.36.44" name="testServer1">
+                    <logs>/export1/homes/kcleerem/server/passive/logs1</logs>
+                    <tsa-port>4164</tsa-port>
+                    <tsa-group-port>4165</tsa-group-port>
+                  </server>
+                  <server bind="0.0.0.0" host="172.96.42.56" name="testServer2">
+                    <logs>/export2/homes/kcleerem/server/passive/logs1</logs>
+                    <tsa-port>9510</tsa-port>
+                    <tsa-group-port>9630</tsa-group-port>
+                  </server>
+                  <client-reconnect-window>120</client-reconnect-window>
+                </servers>
+              </tc-config>
+            </cl:server-config>
+          </cl:node>
+        </cl:stripe>
+      </cl:cluster>
+    </config>
+  </plugins>
+  <tc-properties/>
+  <servers>
+    <server bind="0.0.0.0" host="172.96.36.44" name="testServer1">
+      <logs>/export1/homes/kcleerem/server/passive/logs1</logs>
+      <tsa-port>4164</tsa-port>
+      <tsa-group-port>4165</tsa-group-port>
+    </server>
+    <server bind="0.0.0.0" host="172.96.42.56" name="testServer2">
+      <logs>/export2/homes/kcleerem/server/passive/logs1</logs>
+      <tsa-port>9510</tsa-port>
+      <tsa-group-port>9630</tsa-group-port>
+    </server>
+    <client-reconnect-window>120</client-reconnect-window>
+  </servers>
+</tc-config>

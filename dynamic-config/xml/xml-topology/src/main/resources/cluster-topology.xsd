@@ -1,0 +1,99 @@
+<!--
+
+    Copyright Terracotta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<xs:schema xmlns:cl="http://www.terracotta.org/config/cluster"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tc="http://www.terracotta.org/config"
+           version="1.0" targetNamespace="http://www.terracotta.org/config/cluster"
+           elementFormDefault="qualified">
+  <xs:import namespace="http://www.terracotta.org/config" schemaLocation="http://www.terracotta.org/terracotta.xsd"/>
+
+  <xs:element name="cluster" substitutionGroup="tc:config-content" type="cl:tc-cluster"/>
+
+  <xs:complexType name="tc-cluster">
+    <xs:sequence>
+      <xs:element name="name" type="tc:non-blank-token"/>
+      <xs:sequence>
+        <xs:element name="stripe" type="cl:tc-stripe" minOccurs="1" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:sequence>
+    <xs:attribute name="currentStripeId" type="xs:int" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="tc-stripe">
+    <xs:sequence>
+      <xs:element name="node" type="cl:tc-node" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="tc-node">
+    <xs:sequence>
+      <xs:element name="name" type="tc:non-blank-token" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="publicHostname" type="tc:host" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="publicPort" type="tc:port" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="loggerOverrides" type="cl:loggers" minOccurs="0" maxOccurs="1"/>
+      <xs:element name="server-config" type="cl:tc-server-config" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="tc-server-config">
+    <xs:all>
+      <!--
+      Contains the configuration for each node of the cluster.
+      This element is already defined in terracotta.xsd, we are just reusing it.
+      When xjc runs, corresponding xml pojo objects are regenerated and we do not 
+      want this as xml pojo objects are already present in tcconfig-schema.jar. 
+      This is one of the reasons why xml pojo objects for this xsd are
+      generated once and then only the required files are committed.
+      Another reason is, QName field representing config-content is
+      again gets defined in generated ObjectFactory class. This causes error in
+      runtime. We need to remove this generated field from ObjectFactory
+      -->
+      <xs:element ref="tc:tc-config">
+        <xs:annotation>
+          <xs:documentation xml:lang="en">
+            This section defines the list of plugins which are provided to the server by the platform.
+            Each plugin provider defines their own schema and parsing responsibility is left up to the plugin provider.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="loggers">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="logger" type="cl:logger"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="logger">
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="level" type="cl:level" use="required"/>
+  </xs:complexType>
+
+  <xs:simpleType name="level">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="TRACE"/>
+      <xs:enumeration value="DEBUG"/>
+      <xs:enumeration value="INFO"/>
+      <xs:enumeration value="WARN"/>
+      <xs:enumeration value="ERROR"/>
+      <xs:minLength value="4"/>
+      <xs:maxLength value="5"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

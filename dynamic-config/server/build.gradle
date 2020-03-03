@@ -1,0 +1,36 @@
+/*
+ * Copyright (c) 2011-2019 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ * Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+ */
+
+dependencies {
+  compile project(':diagnostic-server')
+  compile project(':sanskrit')
+  compile project(':dynamic-config-api')
+  compile project(':dynamic-topology-entity-common')
+
+  compile project(':data-root-config')
+  compile "org.terracotta:offheap-resource:$terracottaPlatformVersion"
+
+  compile "com.beust:jcommander:$jcommanderVersion"
+  compile "commons-cli:commons-cli:$commonsCliVersion"
+
+  compileOnly "org.terracotta:entity-server-api:$terracottaApisVersion"
+  compileOnly "org.terracotta:packaging-support:$terracottaApisVersion"
+  compileOnly "org.terracotta.internal:dso-l2:$terracottaCoreVersion"
+  compileOnly "org.terracotta.internal:configuration-provider:$terracottaCoreVersion"
+  compileOnly "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  compileOnly "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
+
+  testCompile project(':test-utilities')
+  testCompile "org.hamcrest:hamcrest-all:$hamcrestVersion"
+  testCompile "org.mockito:mockito-core:$mockitoVersion"
+  testCompile 'org.xmlunit:xmlunit-core:2.6.0', 'org.xmlunit:xmlunit-matchers:2.6.0'
+  testCompile "org.terracotta.internal:tc-config-parser:$terracottaConfigVersion"
+  testCompile "org.terracotta.management:monitoring-service-api:$terracottaPlatformVersion"
+  testCompile("com.github.stefanbirkner:system-rules:$systemRulesVersion") {
+    exclude group: 'junit'
+  }
+}
+
+apply plugin: TcDeploy

@@ -1,0 +1,37 @@
+/*
+ * Copyright Terracotta, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.terracotta.persistence.sanskrit.change;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * A data change composed of several data changes in order.
+ */
+public class MuxSanskritChange implements SanskritChange {
+  private final List<SanskritChange> changes;
+
+  public MuxSanskritChange(List<SanskritChange> changes) {
+    this.changes = new ArrayList<>(changes);
+  }
+
+  @Override
+  public void accept(SanskritChangeVisitor visitor) {
+    for (SanskritChange change : changes) {
+      change.accept(visitor);
+    }
+  }
+}
