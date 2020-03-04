@@ -30,6 +30,7 @@ import static org.junit.Assert.fail;
 /**
  * @author Ludovic Orban
  */
+@SuppressWarnings("rawtypes")
 public class PrimitiveStructBuilderTest {
 
   private final Struct struct = StructBuilder.newStructBuilder()

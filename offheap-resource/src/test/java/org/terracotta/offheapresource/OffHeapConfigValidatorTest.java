@@ -39,6 +39,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unchecked")
 public class OffHeapConfigValidatorTest {
   @Test
   public void testValidateWithMismatchedOffHeapResourceSize() {

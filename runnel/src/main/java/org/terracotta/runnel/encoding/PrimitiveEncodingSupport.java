@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
  * Primitive types encoder interface.
  * @param <T> The actual encoder type.
  */
-public interface PrimitiveEncodingSupport<T extends PrimitiveEncodingSupport> {
+public interface PrimitiveEncodingSupport<T extends PrimitiveEncodingSupport<T>> {
 
   /**
    * Encode a boolean.

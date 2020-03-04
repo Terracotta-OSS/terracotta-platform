@@ -29,6 +29,7 @@ import static org.hamcrest.core.Is.is;
 /**
  * @author Ludovic Orban
  */
+@SuppressWarnings("rawtypes")
 public class EnumMappingTest {
 
   private enum TestEnum {

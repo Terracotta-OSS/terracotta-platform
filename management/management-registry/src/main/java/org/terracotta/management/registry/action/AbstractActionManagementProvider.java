@@ -114,7 +114,7 @@ public abstract class AbstractActionManagementProvider<T> extends AbstractManage
   }
 
   private static Class<?>[] toClasses(ClassLoader classLoader, String[] classNames) {
-    Class<?>[] classes = new Class[classNames.length];
+    Class<?>[] classes = new Class<?>[classNames.length];
     for (int i = 0; i < classNames.length; i++) {
       String argClassName = classNames[i];
       classes[i] = PRIMITIVE_MAP.get(argClassName);

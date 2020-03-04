@@ -39,6 +39,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import org.terracotta.entity.ReconnectRejectedException;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 @RunWith(MockitoJUnitRunner.class)
 public class ActiveLeaseAcquirerTest {
   @Mock

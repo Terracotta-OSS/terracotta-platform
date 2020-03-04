@@ -123,6 +123,7 @@ public class LeaseSystemTest {
     cluster.tearDown();
   }
 
+  @SuppressWarnings("unchecked")
   private static class LeaseDelayedConnection implements Connection {
     private final Connection delegate;
     private final Collection<LeaseDelayedEntityRef> entityRefs = Collections.synchronizedCollection(new ArrayList<>());

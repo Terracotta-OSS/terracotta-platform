@@ -19,6 +19,8 @@ package org.terracotta.runnel.utils;
  * @author Ludovic Orban
  */
 public class CorruptDataException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
+
   public CorruptDataException(String msg) {
     super(msg);
   }

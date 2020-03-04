@@ -30,6 +30,7 @@ public class EnumMappingBuilder<E> {
   private final Map<Integer, E> integerToEnum = new HashMap<Integer, E>();
   private final Class<E> enumClass;
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private EnumMappingBuilder(Class<E> enumClass) {
     this.enumClass = enumClass;
     if (Enum.class.isAssignableFrom(enumClass)) {
@@ -43,6 +44,7 @@ public class EnumMappingBuilder<E> {
     return new EnumMappingBuilder<E>(enumClass);
   }
 
+  @SuppressWarnings({"SuspiciousMethodCalls", "unchecked", "rawtypes"})
   public EnumMapping<E> build() {
     if (Enum.class.isAssignableFrom(enumClass)) {
       HashSet<Enum> unregisteredEnums = new HashSet<Enum>(EnumSet.allOf((Class)enumClass));

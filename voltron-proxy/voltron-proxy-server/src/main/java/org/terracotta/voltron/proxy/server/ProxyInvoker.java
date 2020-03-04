@@ -38,7 +38,7 @@ import java.util.Set;
 class ProxyInvoker<T> implements MessageFiring {
 
   private final T target;
-  private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<ClientDescriptor>());
+  private final Set<ClientDescriptor> clients = Collections.synchronizedSet(new HashSet<>());
   private final ThreadLocal<InvocationContext> invocationContext = new ThreadLocal<>();
 
   private Set<Class<?>> messageTypes;
@@ -48,7 +48,7 @@ class ProxyInvoker<T> implements MessageFiring {
     this.target = target;
   }
 
-  ProxyEntityResponse invoke(ActiveInvokeContext context, final ProxyEntityMessage message) {
+  ProxyEntityResponse invoke(ActiveInvokeContext<ProxyEntityResponse> context, final ProxyEntityMessage message) {
     ClientDescriptor clientDescriptor = context.getClientDescriptor();
     try {
       invocationContext.set(new InvocationContext(clientDescriptor));
@@ -139,17 +139,14 @@ class ProxyInvoker<T> implements MessageFiring {
 
   ProxyInvoker<T> activateEvents(ClientCommunicator clientCommunicator, Class<?>[] messageTypes) {
     if (messageTypes == null) {
-      messageTypes = new Class[0];
+      messageTypes = new Class<?>[0];
     }
     this.messageTypes = new HashSet<>(Arrays.asList(messageTypes));
     if (target instanceof MessageFiringSupport) {
       ((MessageFiringSupport) target).setMessageFiring(this);
     }
 
-    for (Class eventType : messageTypes) {
-      this.messageTypes.add(eventType);
-
-    }
+    this.messageTypes.addAll(Arrays.asList(messageTypes));
     if (messageTypes.length != 0 && clientCommunicator == null) {
       throw new IllegalArgumentException("Messages cannot be sent using a null ClientCommunicator");
     } else {

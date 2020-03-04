@@ -65,9 +65,9 @@ public class StructBuilder {
     return this;
   }
 
-  public StructBuilder enm(String name, int index, EnumMapping enumMapping) {
+  public <T> StructBuilder enm(String name, int index, EnumMapping<T> enumMapping) {
     checkParams(name, index);
-    structField.addField(new EnumField(name, index, enumMapping));
+    structField.addField(new EnumField<>(name, index, enumMapping));
     return this;
   }
 

@@ -52,6 +52,7 @@ public class OffHeapResourcesProviderTest {
     configuration = mock(OffheapResourcesType.class);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testObserverExposed() {
     when(resourceConfig.getName()).thenReturn("foo");

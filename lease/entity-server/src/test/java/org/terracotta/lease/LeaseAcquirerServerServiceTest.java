@@ -41,6 +41,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
+@SuppressWarnings("rawtypes")
 public class LeaseAcquirerServerServiceTest {
   @Test
   public void handlesEntityType() {
@@ -100,6 +101,7 @@ public class LeaseAcquirerServerServiceTest {
     return new ServiceTypeMatcher<T>(serviceType);
   }
 
+  @SuppressWarnings("rawtypes")
   private static class ServiceTypeMatcher<T> extends FeatureMatcher<ServiceConfiguration<T>, Class> {
     ServiceTypeMatcher(Class serviceType) {
       super(equalTo(serviceType), "serviceType", "serviceType");

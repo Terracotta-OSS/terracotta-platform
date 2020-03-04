@@ -32,15 +32,15 @@ import org.terracotta.entity.SyncMessageCodec;
  */
 @PermanentEntity(type="org.terracotta.healthchecker.HealthCheck", names={"staticHealthChecker"}, version=1)
 public class HealthCheckServerEntityService implements EntityServerService<HealthCheckReq, HealthCheckRsp> {
-  
-  private static final ConcurrencyStrategy CONCURRENCY = new ConcurrencyStrategy() {
+
+  private static final ConcurrencyStrategy<HealthCheckReq> CONCURRENCY = new ConcurrencyStrategy<HealthCheckReq>() {
     @Override
-    public int concurrencyKey(EntityMessage message) {
+    public int concurrencyKey(HealthCheckReq message) {
       return ConcurrencyStrategy.UNIVERSAL_KEY;
     }
 
     @Override
-    public Set getKeysForSynchronization() {
+    public Set<Integer> getKeysForSynchronization() {
       return Collections.emptySet();
     }
 

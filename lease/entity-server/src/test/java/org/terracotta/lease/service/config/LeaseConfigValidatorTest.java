@@ -29,6 +29,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+@SuppressWarnings("unchecked")
 public class LeaseConfigValidatorTest {
 
   @Test

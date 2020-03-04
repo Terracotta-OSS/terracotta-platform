@@ -18,6 +18,7 @@ package org.terracotta.voltron.proxy.shaded.org.terracotta;
 import java.io.Serializable;
 
 public class AvailableShadedClass implements Serializable {
+  private static final long serialVersionUID = 1L;
 
   public String string;
 

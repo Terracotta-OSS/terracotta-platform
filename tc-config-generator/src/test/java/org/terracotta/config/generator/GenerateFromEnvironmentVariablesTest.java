@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 
+@SuppressWarnings({"serial", "unchecked", "rawtypes"})
 public class GenerateFromEnvironmentVariablesTest {
 
   private static Configuration createTemplateConfiguration() throws IOException {

@@ -155,6 +155,7 @@ public class DefaultNmsService implements NmsService, Closeable {
     return messages;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> ManagementCall<T> call(Context context, String capabilityName, String methodName, Class<T> returnType, Parameter... parameters) throws InterruptedException, ExecutionException, TimeoutException {
     LOGGER.trace("call({}, {}, {})", context, capabilityName, methodName);

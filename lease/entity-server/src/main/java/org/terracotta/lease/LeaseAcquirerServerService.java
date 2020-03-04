@@ -59,6 +59,7 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseMess
     return "org.terracotta.lease.LeaseAcquirer".equals(typeName);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public ActiveServerEntity<LeaseMessage, LeaseResponse> createActiveEntity(ServiceRegistry serviceRegistry, byte[] bytes) throws ConfigurationException {
     ClientCommunicator clientCommunicator = getService(serviceRegistry, new BasicServiceConfiguration<>(ClientCommunicator.class));
@@ -67,7 +68,7 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseMess
     LeaseServiceConfiguration leaseServiceConfiguration = new LeaseServiceConfiguration(clientConnectionCloser);
     LeaseService leaseService = getService(serviceRegistry, leaseServiceConfiguration);
 
-    IEntityMessenger entityMessenger = getService(serviceRegistry, new BasicServiceConfiguration<>(IEntityMessenger.class));
+    IEntityMessenger<LeaseMessage, LeaseResponse> entityMessenger = getService(serviceRegistry, new BasicServiceConfiguration<>(IEntityMessenger.class));
 
     return new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
   }

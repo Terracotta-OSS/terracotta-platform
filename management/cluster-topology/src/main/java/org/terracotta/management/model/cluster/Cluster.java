@@ -220,6 +220,7 @@ public final class Cluster implements Contextual {
     return toMap().toString();
   }
 
+  @SuppressWarnings("rawtypes")
   public Map<String, Object> toMap() {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
     map.put("stripes", stripeStream().sorted(Comparator.comparing(AbstractNode::getId)).map(Stripe::toMap).collect(Collectors.toList()));

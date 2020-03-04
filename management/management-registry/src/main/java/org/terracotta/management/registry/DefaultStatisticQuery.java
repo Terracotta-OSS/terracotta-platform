@@ -95,6 +95,7 @@ public class DefaultStatisticQuery implements StatisticQuery {
     return new DefaultResultSet<>(contextualStatistics);
   }
 
+  @SuppressWarnings("rawtypes")
   private static Map<String, Statistic<? extends Serializable>> getMap(Map<String, org.terracotta.management.model.stats.Statistic<? extends Serializable>> map) {
     return map.entrySet().stream().map(x -> new Map.Entry<String, Statistic<? extends Serializable>>() {
 
@@ -109,7 +110,7 @@ public class DefaultStatisticQuery implements StatisticQuery {
       }
 
       @Override
-      public Statistic<? extends Serializable> setValue(Statistic value) {
+      public Statistic<? extends Serializable> setValue(Statistic<? extends Serializable> value) {
         throw new UnsupportedOperationException();
       }
     }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

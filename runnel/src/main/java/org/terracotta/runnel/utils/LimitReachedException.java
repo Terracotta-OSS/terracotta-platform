@@ -19,4 +19,5 @@ package org.terracotta.runnel.utils;
  * @author Ludovic Orban
  */
 public class LimitReachedException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
 }

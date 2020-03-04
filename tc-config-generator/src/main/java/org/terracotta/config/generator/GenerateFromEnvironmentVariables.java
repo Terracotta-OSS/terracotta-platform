@@ -98,6 +98,7 @@ public class GenerateFromEnvironmentVariables {
     template.process(root, output);
   }
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
   Map<String, Object> retrieveNamesWithPrefix(Map<String, String> envMap, String envVariablePrefix) {
     // make sure keys are sorted
     Map<String, String> sortedMap = new TreeMap(envMap);

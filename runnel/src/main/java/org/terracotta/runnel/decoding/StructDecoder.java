@@ -65,6 +65,7 @@ public class StructDecoder<P> implements PrimitiveDecodingSupport {
     return fieldDecoder.decodeValue(name, Int32Field.class);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <E> Enm<E> enm(String name) {
     Enm<E> enm = (Enm<E>) fieldDecoder.decodeValue(name, (Class) EnumField.class);

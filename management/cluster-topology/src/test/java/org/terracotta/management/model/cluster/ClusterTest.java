@@ -213,6 +213,7 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
+  @SuppressWarnings("rawtypes")
   public void test_toMap() throws Exception {
     String expectedJson = new String(Files.readAllBytes(new File("src/test/resources/cluster.json").toPath()), "UTF-8");
     Map actual = cluster1.toMap();

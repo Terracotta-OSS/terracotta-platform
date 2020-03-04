@@ -95,6 +95,7 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
     return syncMessageCodec;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public final ActiveProxiedServerEntity<S, R, M> createActiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     C config = decodeConfig(configuration);
@@ -120,7 +121,7 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
 
     if (messengerType != null) {
       try {
-        IEntityMessenger<ProxyEntityMessage, ?> entityMessenger = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(IEntityMessenger.class)));
+        IEntityMessenger<ProxyEntityMessage, ?> entityMessenger = Objects.requireNonNull((IEntityMessenger<ProxyEntityMessage, ?>) registry.getService(new BasicServiceConfiguration<>(IEntityMessenger.class)));
         activeEntity.setMessenger(MessengerProxyFactory.createProxy(messengerType, entityMessenger));
       } catch (ServiceException e) {
         throw new ConfigurationException("Unable to retrieve IEntityMessenger: " + e.getMessage());

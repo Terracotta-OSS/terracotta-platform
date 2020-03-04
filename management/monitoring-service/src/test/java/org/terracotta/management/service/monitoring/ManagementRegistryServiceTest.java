@@ -49,6 +49,7 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_N
  * @author Mathieu Carbou
  */
 @RunWith(JUnit4.class)
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class ManagementRegistryServiceTest {
 
   MonitoringServiceProvider provider = new MonitoringServiceProvider();

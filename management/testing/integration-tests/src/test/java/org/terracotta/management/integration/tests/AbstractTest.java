@@ -251,6 +251,7 @@ public abstract class AbstractTest {
     triggerServerStatComputation(nmsService, getClass().getSimpleName(), interval, unit);
   }
 
+  @SuppressWarnings("rawtypes")
   protected void triggerServerStatComputation(NmsService nmsService, String entityName, long interval, TimeUnit unit) throws Exception {
     logger.info("triggerServerStatComputation({}, {}, {})", entityName, interval, unit);
     // trigger stats computation and wait for all stats to have been computed at least once
@@ -276,6 +277,7 @@ public abstract class AbstractTest {
     triggerClientStatComputation(1, TimeUnit.SECONDS);
   }
 
+  @SuppressWarnings("rawtypes")
   protected void triggerClientStatComputation(long interval, TimeUnit unit) throws Exception {
     logger.info("triggerClientStatComputation({}, {})", interval, unit);
     // trigger stats computation and wait for all stats to have been computed at least once

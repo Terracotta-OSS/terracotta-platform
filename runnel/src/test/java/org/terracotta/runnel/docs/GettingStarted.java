@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 /**
  * @author Ludovic Orban
  */
+@SuppressWarnings("rawtypes")
 public class GettingStarted {
 
   @Test

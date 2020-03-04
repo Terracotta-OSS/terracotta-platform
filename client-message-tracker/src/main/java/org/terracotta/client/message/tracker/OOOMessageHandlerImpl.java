@@ -47,9 +47,9 @@ public class OOOMessageHandlerImpl<M extends EntityMessage, R extends EntityResp
     this.clientMessageTrackers = new ArrayList<>(segments);
     for (int i = 0; i < segments; i++) {
       //Passing the TRACK_ALL tracker policy here to avoid the redundant trackability test in Tracker as the real policy is used in the invoke
-      clientMessageTrackers.add(new ClientTrackerImpl(TRACK_ALL));
+      clientMessageTrackers.add(new ClientTrackerImpl<>(TRACK_ALL));
     }
-    sharedMessageTracker = new ClientTrackerImpl(TRACK_ALL);
+    sharedMessageTracker = new ClientTrackerImpl<>(TRACK_ALL);
     this.callback = callback;
   }
 

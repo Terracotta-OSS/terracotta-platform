@@ -32,6 +32,7 @@ import static org.junit.Assert.fail;
 /**
  * @author Ludovic Orban
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class VersionCompatibilityTest {
 
   private enum TestEnum_v1 {

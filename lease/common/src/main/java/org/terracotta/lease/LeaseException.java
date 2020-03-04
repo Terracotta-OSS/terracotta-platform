@@ -16,6 +16,8 @@
 package org.terracotta.lease;
 
 public class LeaseException extends Exception {
+  private static final long serialVersionUID = 1L;
+
   LeaseException(String message) {
     super(message);
   }
