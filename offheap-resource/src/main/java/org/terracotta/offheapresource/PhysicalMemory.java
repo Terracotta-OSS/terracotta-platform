@@ -15,79 +15,68 @@
  */
 package org.terracotta.offheapresource;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.lang.reflect.InvocationTargetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 /**
- *
  * @author cdennis
  */
 class PhysicalMemory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PhysicalMemory.class);
-  private static final OperatingSystemMXBean OS_BEAN = ManagementFactory.getOperatingSystemMXBean();
+  private static final Method getTotalPhysicalMemorySize = find("getTotalPhysicalMemorySize");
+  private static final Method getFreePhysicalMemorySize = find("getFreePhysicalMemorySize");
+  private static final Method getTotalSwapSpaceSize = find("getTotalSwapSpaceSize");
+  private static final Method getFreeSwapSpaceSize = find("getFreeSwapSpaceSize");
+  private static final Method getCommittedVirtualMemorySize = find("getCommittedVirtualMemorySize");
 
   public static Long totalPhysicalMemory() {
-    return getAttribute("getTotalPhysicalMemorySize");
+    return invoke(getTotalPhysicalMemorySize);
   }
 
   public static Long freePhysicalMemory() {
-    return getAttribute("getFreePhysicalMemorySize");
+    return invoke(getFreePhysicalMemorySize);
   }
 
   public static Long totalSwapSpace() {
-    return getAttribute("getTotalSwapSpaceSize");
+    return invoke(getTotalSwapSpaceSize);
   }
 
   public static Long freeSwapSpace() {
-    return getAttribute("getFreeSwapSpaceSize");
+    return invoke(getFreeSwapSpaceSize);
   }
 
   public static Long ourCommittedVirtualMemory() {
-    return getAttribute("getCommittedVirtualMemorySize");
+    return invoke(getCommittedVirtualMemorySize);
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> T getAttribute(String name) {
-    LOGGER.trace("Bean lookup for {}", name);
-    for (Class<?> s = OS_BEAN.getClass(); s != null; s = s.getSuperclass()) {
-      try {
-        T result = (T) s.getMethod(name).invoke(OS_BEAN);
-        LOGGER.trace("Bean lookup successful using {}, got {}", s, result);
-        return result;
-      } catch (SecurityException e) {
-        LOGGER.trace("Bean lookup failed on {}", s, e);
-      } catch (NoSuchMethodException e) {
-        LOGGER.trace("Bean lookup failed on {}", s, e);
-      } catch (IllegalAccessException e) {
-        LOGGER.trace("Bean lookup failed on {}", s, e);
-      } catch (IllegalArgumentException e) {
-        LOGGER.trace("Bean lookup failed on {}", s, e);
-      } catch (InvocationTargetException e) {
-        LOGGER.trace("Bean lookup failed on {}", s, e);
+  private static Method find(String methodName) {
+    try {
+      Method method = ManagementFactory.getOperatingSystemMXBean().getClass().getMethod(methodName);
+      if (!method.isAccessible()) {
+        method.setAccessible(true);
       }
+      return method;
+    } catch (NoSuchMethodException | SecurityException e) {
+      LOGGER.trace("Unable to find or access method '{}' on the {}", methodName, OperatingSystemMXBean.class.getSimpleName());
+      return null;
     }
-    for (Class<?> i : OS_BEAN.getClass().getInterfaces()) {
-      try {
-        T result = (T) i.getMethod(name).invoke(OS_BEAN);
-        LOGGER.trace("Bean lookup successful using {}, got {}", i, result);
-        return result;
-      } catch (SecurityException e) {
-        LOGGER.trace("Bean lookup failed on {}", i, e);
-      } catch (NoSuchMethodException e) {
-        LOGGER.trace("Bean lookup failed on {}", i, e);
-      } catch (IllegalAccessException e) {
-        LOGGER.trace("Bean lookup failed on {}", i, e);
-      } catch (IllegalArgumentException e) {
-        LOGGER.trace("Bean lookup failed on {}", i, e);
-      } catch (InvocationTargetException e) {
-        LOGGER.trace("Bean lookup failed on {}", i, e);
-      }
+  }
+
+  private static Long invoke(Method method) {
+    try {
+      return method == null ? null : (Long) method.invoke(ManagementFactory.getOperatingSystemMXBean());
+    } catch (IllegalAccessException e) {
+      LOGGER.trace("Error invoking method '{}': {}", method, e.getMessage(), e);
+      return null;
+    } catch (InvocationTargetException e) {
+      LOGGER.trace("Error invoking method '{}': {}", method, e.getTargetException().getMessage(), e.getTargetException());
+      return null;
     }
-    LOGGER.trace("Returning null for {}", name);
-    return null;
   }
 }
