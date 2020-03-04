@@ -138,7 +138,12 @@
       <dependency>
         <groupId>org.glassfish.jaxb</groupId>
         <artifactId>jaxb-runtime</artifactId>
-        <version>2.3.1</version>
+        <!--
+        Do not use 2.3.1
+        Jars are not correctly built (https://github.com/mojohaus/jaxb2-maven-plugin/issues/43)
+        We never saw that because we were not using -Xlint:all -Werror
+        -->
+        <version>2.3.2</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -158,6 +163,10 @@
           <configuration>
             <source>${java.version}</source>
             <target>${java.version}</target>
+            <compilerArgs>
+              <arg>-Xlint:all</arg>
+              <arg>-Werror</arg>
+            </compilerArgs>
           </configuration>
         </plugin>
         <plugin>
