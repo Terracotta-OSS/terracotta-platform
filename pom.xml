@@ -36,6 +36,7 @@
     <tripwire.version>1.0.0-pre4</tripwire.version>
     <statistics.version>2.1</statistics.version>
     <jackson-databind.version>2.9.9</jackson-databind.version>
+    <jackson-annotations.version>2.9.0</jackson-annotations.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.8</java.version>
@@ -56,6 +57,10 @@
     <module>management</module>
     <module>client-message-tracker</module>
     <module>tc-config-generator</module>
+    <module>common</module>
+    <module>data-root-resource</module>
+    <module>diagnostic</module>
+    <module>dynamic-config</module>
   </modules>
 
   <dependencyManagement>
@@ -89,6 +94,31 @@
         <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-config-parser</artifactId>
         <version>${terracotta-configuration.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>dso-l1</artifactId>
+        <version>${terracotta-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>dso-l2</artifactId>
+        <version>${terracotta-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>management</artifactId>
+        <version>${terracotta-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>client-runtime</artifactId>
+        <version>${terracotta-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>configuration-provider</artifactId>
+        <version>${terracotta-core.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -136,6 +166,21 @@
         <version>${jackson-databind.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>${jackson-annotations.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jdk8</artifactId>
+        <version>${jackson-databind.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+        <version>${jackson-databind.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.glassfish.jaxb</groupId>
         <artifactId>jaxb-runtime</artifactId>
         <!--
@@ -150,8 +195,37 @@
         <artifactId>tc-tripwire-plugin</artifactId>
         <version>${tripwire.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.xmlunit</groupId>
+        <artifactId>xmlunit-matchers</artifactId>
+        <version>2.6.3</version>
+      </dependency>
+      <dependency>
+        <groupId>com.beust</groupId>
+        <artifactId>jcommander</artifactId>
+        <version>1.72</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>1.2.3</version>
+      </dependency>
+      <dependency>
+        <groupId>net.bytebuddy</groupId>
+        <artifactId>byte-buddy</artifactId>
+        <version>1.10.2</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <version>4.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
 
   <build>
     <pluginManagement>
@@ -223,6 +297,29 @@
           <groupId>org.jvnet.jaxb2.maven2</groupId>
           <artifactId>maven-jaxb2-plugin</artifactId>
           <version>0.14.0</version>
+        </plugin>
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>3.1.12.2</version>
+          <configuration>
+            <xmlOutput>true</xmlOutput>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+          <dependencies>
+            <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
+            <dependency>
+              <groupId>com.github.spotbugs</groupId>
+              <artifactId>spotbugs</artifactId>
+              <version>4.0.0</version>
+            </dependency>
+          </dependencies>
         </plugin>
       </plugins>
     </pluginManagement>

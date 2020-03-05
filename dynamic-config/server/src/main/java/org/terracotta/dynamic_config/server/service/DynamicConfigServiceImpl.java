@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.service;
 
-import com.tc.server.TCServerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -34,7 +33,6 @@ import org.terracotta.dynamic_config.api.service.EventRegistration;
 import org.terracotta.dynamic_config.api.service.LicenseParser;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
-import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
@@ -64,6 +62,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   private final LicenseParser licenseParser;
   private final NomadBootstrapper.NomadServerManager nomadServerManager;
+  private final TcServer tcServer;
   private final List<DynamicConfigListener> listeners = new CopyOnWriteArrayList<>();
 
   private volatile NodeContext upcomingNodeContext;
@@ -71,11 +70,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private volatile License license;
   private volatile boolean clusterActivated;
 
-  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseParser licenseParser, NomadBootstrapper.NomadServerManager nomadServerManager) {
+  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseParser licenseParser, NomadBootstrapper.NomadServerManager nomadServerManager, TcServer tcServer) {
     this.upcomingNodeContext = requireNonNull(nodeContext);
     this.runtimeNodeContext = requireNonNull(nodeContext);
     this.licenseParser = requireNonNull(licenseParser);
     this.nomadServerManager = requireNonNull(nomadServerManager);
+    this.tcServer = tcServer;
     if (loadLicense()) {
       validateAgainstLicense();
     }
@@ -233,7 +233,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
           // do nothing, still try to kill server
         }
         LOGGER.info("Restarting node");
-        TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
+        tcServer.restart();
       }
     }.start();
   }

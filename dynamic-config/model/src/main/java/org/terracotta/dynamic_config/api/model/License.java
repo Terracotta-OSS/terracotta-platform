@@ -17,14 +17,12 @@ package org.terracotta.dynamic_config.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.tc.classloader.CommonComponent;
 
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@CommonComponent
 public final class License {
 
   // Mapping between capability name and corresponding limit value

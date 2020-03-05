@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+
+    Copyright Terracotta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<tc-config xmlns="http://www.terracotta.org/config"
+           xmlns:ohr1="http://www.terracotta.org/config/offheap-resource"
+           xmlns:ohr="http://www.terracottatech.com/config/data-roots">
+  <plugins>
+    <config>
+      <ohr:data-directories>
+        <ohr:directory name="root1">%(user.dir)/user-data/main/stripe2</ohr:directory>
+      </ohr:data-directories>
+    </config>
+    <config>
+      <ohr1:offheap-resources>
+        <ohr1:resource name="primary-server-resource" unit="MB">64</ohr1:resource>
+      </ohr1:offheap-resources>
+    </config>
+  </plugins>
+  <tc-properties/>
+  <servers>
+    <server host="localhost" name="node-3">
+      <logs>%(user.dir)/logs/stripe2/node-3</logs>
+      <tsa-port>9610</tsa-port>
+      <tsa-group-port>9630</tsa-group-port>
+    </server>
+    <server host="localhost" name="node-4">
+      <logs>%(user.dir)/logs/stripe2/node-4</logs>
+      <tsa-port>9710</tsa-port>
+      <tsa-group-port>9730</tsa-group-port>
+    </server>
+    <client-reconnect-window>120</client-reconnect-window>
+  </servers>
+  <failover-priority>
+    <availability/>
+  </failover-priority>
+</tc-config>
