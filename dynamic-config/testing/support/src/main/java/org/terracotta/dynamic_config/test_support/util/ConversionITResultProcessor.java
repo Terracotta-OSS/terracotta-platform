@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.system_tests.util;
+package org.terracotta.dynamic_config.test_support.util;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.server.conversion.ConfigRepoProcessor;

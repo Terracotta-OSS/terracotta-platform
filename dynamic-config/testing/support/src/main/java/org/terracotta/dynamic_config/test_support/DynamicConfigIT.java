@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.system_tests;
+package org.terracotta.dynamic_config.test_support;
 
 import org.awaitility.Awaitility;
-import org.awaitility.Duration;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
@@ -37,9 +36,9 @@ import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
-import org.terracotta.dynamic_config.system_tests.util.PropertyResolver;
+import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
+import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.port_locking.PortLockingRule;
 import org.terracotta.testing.TmpDir;
 
@@ -59,6 +58,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Properties;
@@ -72,7 +72,6 @@ import java.util.stream.Stream;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.function.Function.identity;
 import static java.util.stream.IntStream.rangeClosed;
-import static org.awaitility.Duration.FIVE_HUNDRED_MILLISECONDS;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
@@ -86,7 +85,7 @@ import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
@@ -282,8 +281,8 @@ public class DynamicConfigIT {
   protected final <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher, int timeout) {
     Awaitility.await()
         // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
-        .pollInterval(FIVE_HUNDRED_MILLISECONDS)
-        .atMost(new Duration(timeout, TimeUnit.SECONDS))
+        .pollInterval(Duration.ofMillis(500))
+        .atMost(timeout, TimeUnit.SECONDS)
         .until(callable, matcher);
   }
 
@@ -302,8 +301,8 @@ public class DynamicConfigIT {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
-        java.time.Duration.ofSeconds(5),
-        java.time.Duration.ofSeconds(5),
+        Duration.ofSeconds(30),
+        Duration.ofSeconds(30),
         null)) {
       return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
     }
@@ -313,8 +312,8 @@ public class DynamicConfigIT {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
-        java.time.Duration.ofSeconds(5),
-        java.time.Duration.ofSeconds(5),
+        Duration.ofSeconds(30),
+        Duration.ofSeconds(30),
         null)) {
       return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
     }
