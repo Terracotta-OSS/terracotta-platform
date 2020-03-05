@@ -215,6 +215,16 @@
         <artifactId>byte-buddy</artifactId>
         <version>1.10.2</version>
       </dependency>
+      <dependency>
+        <groupId>io.github.classgraph</groupId>
+        <artifactId>classgraph</artifactId>
+        <version>4.8.54</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.stefanbirkner</groupId>
+        <artifactId>system-rules</artifactId>
+        <version>1.19.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
