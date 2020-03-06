@@ -26,48 +26,25 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>dynamic-config-testing-support</artifactId>
-  <name>Dynamic Config :: Testing :: Support</name>
+  <artifactId>dynamic-config-testing-entity</artifactId>
+  <name>Dynamic Config :: Testing :: Entity</name>
 
   <dependencies>
     <dependency>
       <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.diagnostic</groupId>
-      <artifactId>diagnostic-client</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>test-utilities</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>port-locking</artifactId>
+      <artifactId>dynamic-config-api</artifactId>
       <version>${project.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.awaitility</groupId>
-      <artifactId>awaitility</artifactId>
-    </dependency>
-
-    <!-- provided libs because of EE/OSS diff -->
+    <!-- server provided apis -->
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>angela</artifactId>
+      <artifactId>entity-server-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>packaging-support</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>

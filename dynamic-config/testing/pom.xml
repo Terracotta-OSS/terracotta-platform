@@ -33,6 +33,7 @@
 
   <modules>
     <module>support</module>
+    <module>entity</module>
   </modules>
 
 </project>

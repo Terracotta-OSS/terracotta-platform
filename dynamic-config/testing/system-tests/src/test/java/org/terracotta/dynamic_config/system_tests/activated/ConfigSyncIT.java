@@ -22,7 +22,6 @@ import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
 import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
-import org.terracotta.dynamic_config.system_tests.util.AppendLogCapturer;
 import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.SanskritObject;
@@ -203,8 +202,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     tsa.browse(active, Paths.get(active.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(activePath.toFile());
     tsa.browse(passive, Paths.get(passive.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(passivePath.toFile());
 
-    List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
-    List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
+    List<SanskritObject> activeChanges = getChanges(activePath);
+    List<SanskritObject> passiveChanges = getChanges(passivePath);
 
     assertThat(activeChanges.size(), is(activeChangesSize));
     assertThat(passiveChanges.size(), is(passiveChangesSize));
@@ -236,6 +235,20 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(equalTo(getRuntimeCluster("localhost", getNodePort(1, 2)))));
     // runtime topology should be the same as upcoming one
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
+  }
+
+  private static List<SanskritObject> getChanges(Path pathToAppendLog) throws SanskritException {
+    List<SanskritObject> res = new ArrayList<>();
+    ObjectMapper objectMapper = Json.copyObjectMapper();
+    new SanskritImpl(new FileBasedFilesystemDirectory(pathToAppendLog), objectMapper) {
+      @Override
+      public void onNewRecord(String timeStamp, String json) throws SanskritException {
+        MutableSanskritObject mutableSanskritObject = new SanskritObjectImpl(objectMapper);
+        JsonUtils.parse(objectMapper, json, mutableSanskritObject);
+        res.add(mutableSanskritObject);
+      }
+    };
+    return res;
   }
 }
 
