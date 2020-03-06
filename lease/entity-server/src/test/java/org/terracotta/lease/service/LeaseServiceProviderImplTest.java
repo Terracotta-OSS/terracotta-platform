@@ -40,10 +40,10 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-public class LeaseServiceProviderTest {
+public class LeaseServiceProviderImplTest {
   @Test
   public void serviceTypes() {
-    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
+    LeaseServiceProviderImpl serviceProvider = new LeaseServiceProviderImpl();
     Collection<Class<?>> serviceTypes = serviceProvider.getProvidedServiceTypes();
     assertEquals(2, serviceTypes.size());
     assertEquals(LeaseService.class, serviceTypes.iterator().next());
@@ -56,7 +56,7 @@ public class LeaseServiceProviderTest {
 
   @Test
   public void noLeaseConfigured() throws Exception {
-    testLeaseLengths(150_000L, () -> LeaseServiceProvider.class);
+    testLeaseLengths(150_000L, () -> LeaseServiceProviderImpl.class);
   }
 
   private void testLeaseLengths(long expectedLeaseLength, ServiceProviderConfiguration configuredLease) throws Exception {
@@ -67,7 +67,7 @@ public class LeaseServiceProviderTest {
     ServiceConfiguration<LeaseService> serviceConfiguration = new LeaseServiceConfiguration(closer);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
 
-    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
+    LeaseServiceProviderImpl serviceProvider = new LeaseServiceProviderImpl();
     serviceProvider.initialize(configuredLease, platformConfiguration);
     LeaseService service = serviceProvider.getService(1L, serviceConfiguration);
 
@@ -84,7 +84,7 @@ public class LeaseServiceProviderTest {
 
   @Test
   public void isBuiltinService() {
-    assertNotNull(LeaseServiceProvider.class.getAnnotation(BuiltinService.class));
+    assertNotNull(LeaseServiceProviderImpl.class.getAnnotation(BuiltinService.class));
   }
 
   @Test
@@ -94,7 +94,7 @@ public class LeaseServiceProviderTest {
     PlatformConfiguration platformConfiguration = mock(PlatformConfiguration.class);
 
     LeaseConfiguration providerConfig = new LeaseConfiguration(1500L);
-    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
+    LeaseServiceProviderImpl serviceProvider = new LeaseServiceProviderImpl();
     serviceProvider.initialize(providerConfig, platformConfiguration);
 
     MockStateDumpCollector dumper = new MockStateDumpCollector();

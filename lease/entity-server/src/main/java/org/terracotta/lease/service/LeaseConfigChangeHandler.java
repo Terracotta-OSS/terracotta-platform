@@ -26,8 +26,8 @@ import org.terracotta.dynamic_config.api.service.InvalidConfigChangeException;
 
 import java.time.Duration;
 
-import static org.terracotta.lease.service.LeaseConstants.DEFAULT_LEASE_LENGTH;
-import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
+import static org.terracotta.lease.service.config.LeaseConstants.DEFAULT_LEASE_LENGTH;
+import static org.terracotta.lease.service.config.LeaseConstants.MAX_LEASE_LENGTH;
 
 public class LeaseConfigChangeHandler implements ConfigChangeHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(LeaseConfigChangeHandler.class);

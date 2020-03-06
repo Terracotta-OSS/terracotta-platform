@@ -17,7 +17,6 @@ package org.terracotta.lease.service.config;
 
 import org.junit.Test;
 import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.lease.service.LeaseServiceProvider;
 
 import static org.junit.Assert.assertEquals;
 

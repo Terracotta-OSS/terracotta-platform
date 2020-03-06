@@ -27,7 +27,7 @@ import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
+import static org.terracotta.lease.service.config.LeaseConstants.MAX_LEASE_LENGTH;
 
 public class LeaseConfigurationParserTest {
   private static final String LEASE_NAMESPACE = "http://www.terracotta.org/service/lease";

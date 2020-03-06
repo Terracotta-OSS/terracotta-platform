@@ -20,60 +20,67 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.terracotta.dynamic-config.cli</groupId>
-    <artifactId>dynamic-config-cli</artifactId>
+    <groupId>org.terracotta</groupId>
+    <artifactId>lease</artifactId>
     <version>5.7-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
+    <relativePath>..</relativePath>
   </parent>
 
-  <artifactId>dynamic-config-cli-config-convertor</artifactId>
-  <name>Dynamic Config :: CLI :: Config Convertor</name>
+  <artifactId>lease-config</artifactId>
+
+  <properties>
+    <java.version>1.8</java.version>
+  </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>dynamic-config-cli-support</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!-- server apis -->
+    <!-- server provided lib and apis -->
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-config-parser</artifactId>
-    </dependency>
-
-    <!-- server plugins -->
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service-api</artifactId>
-      <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>data-root-resource</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>offheap-resource</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>lease-config</artifactId>
-      <version>${project.version}</version>
+      <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>test-utilities</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>2.23.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-core</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>lease-entity-api</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-client-api</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
 </project>

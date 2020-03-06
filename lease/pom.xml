@@ -35,6 +35,7 @@
     <module>entity-api</module>
     <module>entity-client</module>
     <module>entity-common</module>
+    <module>config</module>
     <module>entity-server</module>
     <module>system-test</module>
     <module>passthrough-leased-connection-api</module>

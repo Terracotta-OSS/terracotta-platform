@@ -15,10 +15,8 @@
  */
 package org.terracotta.lease.service.config;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
-import org.terracotta.lease.service.LeaseServiceProvider;
 
 /**
  * Represents the connection leasing configuration from the server's XML config
