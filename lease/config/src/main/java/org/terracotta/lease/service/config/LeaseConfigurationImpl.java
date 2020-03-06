@@ -62,7 +62,7 @@ public class LeaseConfigurationImpl implements ServiceProviderConfiguration, Lea
   }
 
   private static long use(long leaseLength) {
-    LOGGER.info("Using lease length of " + leaseLength + "ms");
+    LOGGER.info("Using lease length of " + leaseLength + " ms");
     return leaseLength;
   }
 }

@@ -60,7 +60,6 @@ public class LeaseServiceProviderImpl implements LeaseServiceProvider, Closeable
     leaseState = new LeaseState(timeSource, proxyClientConnectionCloser);
     leaseMonitorThread = new LeaseMonitorThread(timeSource, leaseState);
     leaseMonitorThread.start();
-    LOGGER.info("LeaseServiceProvider initialized");
     return true;
   }
 
