@@ -56,9 +56,18 @@ public class LeaseConfigurationImpl implements ServiceProviderConfiguration, Lea
     this.leaseLength = leaseLength;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Class<? extends ServiceProvider> getServiceProviderType() {
-    return LeaseServiceProvider.class;
+    // this is a hack that allows us to split the config module from server entity code
+    // platform configuration system os not correctly decoupled and force the configuration
+    // to know the implementation of the service to instantiate.
+    // We cannot use an interface here....
+    try {
+      return (Class<? extends ServiceProvider>) getClass().getClassLoader().loadClass("org.terracotta.lease.service.LeaseServiceProvider");
+    } catch (ClassNotFoundException e) {
+      throw new AssertionError(e);
+    }
   }
 
   private static long use(long leaseLength) {

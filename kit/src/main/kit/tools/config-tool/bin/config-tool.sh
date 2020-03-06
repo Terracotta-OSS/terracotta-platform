@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Copyright Terracotta, Inc.
 #
@@ -14,4 +15,21 @@
 # limitations under the License.
 #
 
-org.terracotta.lease.service.LeaseServiceProvider
+CONFIG_TOOL_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
+
+# this will only happen if using sag installer
+if [ -r "${CONFIG_TOOL_DIR}/bin/setenv.sh" ] ; then
+  . "${CONFIG_TOOL_DIR}/bin/setenv.sh"
+fi
+
+java_opts="$JAVA_OPTS"
+
+if [ ! -d "$JAVA_HOME" ]; then
+   echo "ERROR: JAVA_HOME must point to Java installation."
+   echo "    $JAVA_HOME"
+   exit 2
+fi
+
+JAVA="$JAVA_HOME/bin/java"
+
+"$JAVA" $java_opts -cp "$CONFIG_TOOL_DIR/lib/*:$CONFIG_TOOL_DIR/../common/lib/*" org.terracotta.dynamic_config.cli.config_tool.ConfigTool "$@"

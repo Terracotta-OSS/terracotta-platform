@@ -47,7 +47,7 @@ public class TmpDir implements TestRule {
   }
 
   public TmpDir() {
-    this(Paths.get(System.getProperty("user.dir"), "build", "test-data").toAbsolutePath(), true);
+    this(Paths.get(System.getProperty("user.dir"), "target", "test-data").toAbsolutePath(), true);
   }
 
   public TmpDir(Path parent) {
@@ -55,7 +55,7 @@ public class TmpDir implements TestRule {
   }
 
   public TmpDir(boolean autoClean) {
-    this(Paths.get(System.getProperty("user.dir"), "build", "test-data").toAbsolutePath(), autoClean);
+    this(Paths.get(System.getProperty("user.dir"), "target", "test-data").toAbsolutePath(), autoClean);
   }
 
   @Override

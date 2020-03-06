@@ -105,12 +105,15 @@
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <id>voltron-kit</id>
+            <id>unpack-kit</id>
             <phase>prepare-package</phase>
             <goals>
               <goal>unpack</goal>
             </goals>
             <configuration>
+              <outputDirectory>${project.build.directory}/voltronKit</outputDirectory>
+              <overWriteReleases>true</overWriteReleases>
+              <overWriteSnapshots>true</overWriteSnapshots>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.terracotta.internal</groupId>
@@ -119,11 +122,10 @@
                   <type>tar.gz</type>
                 </artifactItem>
               </artifactItems>
-              <outputDirectory>${project.build.directory}/voltronKit</outputDirectory>
             </configuration>
           </execution>
           <execution>
-            <id>unpack-sample-entity</id>
+            <id>copy-test-entity</id>
             <phase>prepare-package</phase>
             <goals>
               <goal>copy</goal>

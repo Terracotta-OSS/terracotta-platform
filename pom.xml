@@ -60,6 +60,7 @@
     <module>data-root-resource</module>
     <module>diagnostic</module>
     <module>dynamic-config</module>
+    <module>kit</module>
   </modules>
 
   <dependencyManagement>
@@ -343,6 +344,22 @@
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.1.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.1.0</version>
+          <configuration>
+            <encoding>UTF-8</encoding>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

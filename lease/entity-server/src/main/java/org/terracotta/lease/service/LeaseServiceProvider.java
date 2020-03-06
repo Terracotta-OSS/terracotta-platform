@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
@@ -30,7 +31,6 @@ import org.terracotta.lease.service.closer.ProxyClientConnectionCloser;
 import org.terracotta.lease.service.config.LeaseConfiguration;
 import org.terracotta.lease.service.config.LeaseConfigurationImpl;
 import org.terracotta.lease.service.config.LeaseConstants;
-import org.terracotta.lease.service.config.LeaseServiceProvider;
 import org.terracotta.lease.service.monitor.LeaseMonitorThread;
 import org.terracotta.lease.service.monitor.LeaseState;
 
@@ -43,8 +43,8 @@ import java.util.Collection;
  * connection leasing components, such as LeaseState and LeaseMonitorThread.
  */
 @BuiltinService
-public class LeaseServiceProviderImpl implements LeaseServiceProvider, Closeable {
-  private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceProviderImpl.class);
+public class LeaseServiceProvider implements ServiceProvider, Closeable {
+  private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceProvider.class);
 
   private LeaseConfiguration leaseConfiguration;
   private LeaseState leaseState;

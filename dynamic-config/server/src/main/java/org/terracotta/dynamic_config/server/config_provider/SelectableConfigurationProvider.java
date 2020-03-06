@@ -15,6 +15,8 @@
  */
 package org.terracotta.dynamic_config.server.config_provider;
 
+import com.tc.classloader.OverrideService;
+import com.tc.config.DefaultConfigurationProvider;
 import com.terracotta.config.Configuration;
 import com.terracotta.config.ConfigurationException;
 import com.terracotta.config.ConfigurationProvider;
@@ -24,6 +26,7 @@ import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
 
 import java.util.List;
 
+@OverrideService("com.tc.config.DefaultConfigurationProvider")
 public class SelectableConfigurationProvider implements ConfigurationProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(SelectableConfigurationProvider.class);
 
@@ -61,10 +64,8 @@ public class SelectableConfigurationProvider implements ConfigurationProvider {
 
   private ConfigurationProvider getDelegate() {
     if (delegate == null) {
-      if(NomadBootstrapper.getNomadServerManager() == null) {
-        throw new AssertionError("Server started without dynamic config");
-      }
-      delegate = new DynamicConfigConfigurationProvider();
+      boolean nodeStartedWithNewScript = NomadBootstrapper.getNomadServerManager() == null;
+      delegate = nodeStartedWithNewScript ? new DefaultConfigurationProvider() : new DynamicConfigConfigurationProvider();
       LOGGER.info("Selected " + ConfigurationProvider.class.getSimpleName() + ": " + delegate.getClass().getName());
     }
     return delegate;
