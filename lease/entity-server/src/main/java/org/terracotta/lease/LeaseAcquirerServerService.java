@@ -18,6 +18,7 @@ package org.terracotta.lease;
 import com.tc.classloader.PermanentEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
@@ -31,14 +32,17 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
+import org.terracotta.lease.service.LeaseConfigChangeHandler;
 import org.terracotta.lease.service.LeaseService;
 import org.terracotta.lease.service.LeaseServiceConfiguration;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 import org.terracotta.lease.service.closer.ClientConnectionCloserImpl;
+import org.terracotta.lease.service.config.LeaseConfiguration;
 
 import java.util.Collections;
 import java.util.Set;
 
+import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
 import static org.terracotta.lease.LeaseEntityConstants.ENTITY_NAME;
 import static org.terracotta.lease.LeaseEntityConstants.ENTITY_VERSION;
 
@@ -62,6 +66,8 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseMess
   @SuppressWarnings("unchecked")
   @Override
   public ActiveServerEntity<LeaseMessage, LeaseResponse> createActiveEntity(ServiceRegistry serviceRegistry, byte[] bytes) throws ConfigurationException {
+    wireChangeHandler(serviceRegistry);
+
     ClientCommunicator clientCommunicator = getService(serviceRegistry, new BasicServiceConfiguration<>(ClientCommunicator.class));
 
     ClientConnectionCloser clientConnectionCloser = new ClientConnectionCloserImpl(clientCommunicator);
@@ -73,7 +79,7 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseMess
     return new ActiveLeaseAcquirer(leaseService, clientCommunicator, entityMessenger);
   }
 
-  protected  <T> T getService(ServiceRegistry serviceRegistry, ServiceConfiguration<T> serviceConfiguration) throws ConfigurationException {
+  protected <T> T getService(ServiceRegistry serviceRegistry, ServiceConfiguration<T> serviceConfiguration) throws ConfigurationException {
     try {
       T service = serviceRegistry.getService(serviceConfiguration);
 
@@ -91,6 +97,7 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseMess
 
   @Override
   public PassiveServerEntity<LeaseMessage, LeaseResponse> createPassiveEntity(ServiceRegistry serviceRegistry, byte[] bytes) throws ConfigurationException {
+    wireChangeHandler(serviceRegistry);
     return new PassiveLeaseAcquirer();
   }
 
@@ -125,5 +132,17 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseMess
   @Override
   public SyncMessageCodec<LeaseMessage> getSyncMessageCodec() {
     return null;
+  }
+
+  private void wireChangeHandler(ServiceRegistry serviceRegistry) throws ConfigurationException {
+    try {
+      LeaseConfiguration leaseConfiguration = serviceRegistry.getService(new BasicServiceConfiguration<>(LeaseConfiguration.class));
+      ConfigChangeHandlerManager configChangeHandlerManager = serviceRegistry.getService(new BasicServiceConfiguration<>(ConfigChangeHandlerManager.class));
+      if (configChangeHandlerManager != null) {
+        configChangeHandlerManager.compute(CLIENT_LEASE_DURATION, () -> new LeaseConfigChangeHandler(leaseConfiguration));
+      }
+    } catch (ServiceException e) {
+      throw new ConfigurationException(e.getMessage(), e);
+    }
   }
 }

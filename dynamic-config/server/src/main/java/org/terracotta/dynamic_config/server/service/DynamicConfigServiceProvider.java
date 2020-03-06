@@ -182,25 +182,27 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     // no-op
   }
 
+  // note: if any of the get() calls below fail, it means the servers have not been started with dynamic config code
+
   private IParameterSubstitutor getSubstitutor() {
-    return DiagnosticServices.findService(IParameterSubstitutor.class).orElse(null);
+    return DiagnosticServices.findService(IParameterSubstitutor.class).get();
   }
 
   private ConfigChangeHandlerManager getManager() {
-    return DiagnosticServices.findService(ConfigChangeHandlerManager.class).orElse(null);
+    return DiagnosticServices.findService(ConfigChangeHandlerManager.class).get();
   }
 
   private DynamicConfigEventService getEventingSupport() {
-    return DiagnosticServices.findService(DynamicConfigEventService.class).orElse(null);
+    return DiagnosticServices.findService(DynamicConfigEventService.class).get();
   }
 
   private TopologyService getTopologyService() {
-    return DiagnosticServices.findService(TopologyService.class).orElse(null);
+    return DiagnosticServices.findService(TopologyService.class).get();
   }
 
   @SuppressWarnings("unchecked")
   private NomadServer<NodeContext> getNomadServer() {
-    return DiagnosticServices.findService(NomadServer.class).orElse(null);
+    return DiagnosticServices.findService(NomadServer.class).get();
   }
 
   private void addToManager(ConfigChangeHandlerManager manager, ConfigChangeHandler configChangeHandler, Setting setting) {

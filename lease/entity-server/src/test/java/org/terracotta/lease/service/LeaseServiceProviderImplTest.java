@@ -25,7 +25,7 @@ import org.terracotta.lease.MockStateDumpCollector;
 import org.terracotta.lease.TestTimeSource;
 import org.terracotta.lease.TimeSourceProvider;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
-import org.terracotta.lease.service.config.LeaseConfiguration;
+import org.terracotta.lease.service.config.LeaseConfigurationImpl;
 
 import java.util.Collection;
 
@@ -40,23 +40,23 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-public class LeaseServiceProviderTest {
+public class LeaseServiceProviderImplTest {
   @Test
   public void serviceTypes() {
-    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
+    LeaseServiceProviderImpl serviceProvider = new LeaseServiceProviderImpl();
     Collection<Class<?>> serviceTypes = serviceProvider.getProvidedServiceTypes();
-    assertEquals(1, serviceTypes.size());
+    assertEquals(2, serviceTypes.size());
     assertEquals(LeaseService.class, serviceTypes.iterator().next());
   }
 
   @Test
   public void singleLeaseConfigured() throws Exception {
-    testLeaseLengths(1500L, new LeaseConfiguration(1500L));
+    testLeaseLengths(1500L, new LeaseConfigurationImpl(1500L));
   }
 
   @Test
   public void noLeaseConfigured() throws Exception {
-    testLeaseLengths(150_000L, () -> LeaseServiceProvider.class);
+    testLeaseLengths(150_000L, () -> LeaseServiceProviderImpl.class);
   }
 
   private void testLeaseLengths(long expectedLeaseLength, ServiceProviderConfiguration configuredLease) throws Exception {
@@ -67,7 +67,7 @@ public class LeaseServiceProviderTest {
     ServiceConfiguration<LeaseService> serviceConfiguration = new LeaseServiceConfiguration(closer);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
 
-    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
+    LeaseServiceProviderImpl serviceProvider = new LeaseServiceProviderImpl();
     serviceProvider.initialize(configuredLease, platformConfiguration);
     LeaseService service = serviceProvider.getService(1L, serviceConfiguration);
 
@@ -84,7 +84,7 @@ public class LeaseServiceProviderTest {
 
   @Test
   public void isBuiltinService() {
-    assertNotNull(LeaseServiceProvider.class.getAnnotation(BuiltinService.class));
+    assertNotNull(LeaseServiceProviderImpl.class.getAnnotation(BuiltinService.class));
   }
 
   @Test
@@ -93,8 +93,8 @@ public class LeaseServiceProviderTest {
     TimeSourceProvider.setTimeSource(timeSource);
     PlatformConfiguration platformConfiguration = mock(PlatformConfiguration.class);
 
-    LeaseConfiguration providerConfig = new LeaseConfiguration(1500L);
-    LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
+    LeaseConfigurationImpl providerConfig = new LeaseConfigurationImpl(1500L);
+    LeaseServiceProviderImpl serviceProvider = new LeaseServiceProviderImpl();
     serviceProvider.initialize(providerConfig, platformConfiguration);
 
     MockStateDumpCollector dumper = new MockStateDumpCollector();

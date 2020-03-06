@@ -51,6 +51,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.dynamic-config</groupId>
+      <artifactId>dynamic-config-api</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>

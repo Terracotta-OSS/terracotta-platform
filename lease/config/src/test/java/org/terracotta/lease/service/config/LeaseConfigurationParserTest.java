@@ -27,7 +27,7 @@ import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
+import static org.terracotta.lease.service.config.LeaseConstants.MAX_LEASE_LENGTH;
 
 public class LeaseConfigurationParserTest {
   private static final String LEASE_NAMESPACE = "http://www.terracotta.org/service/lease";
@@ -64,7 +64,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("5000", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
+    LeaseConfigurationImpl configuration = parser.parse(connectionLeasingElement, "source");
 
     assertEquals(5000L, configuration.getLeaseLength());
   }
@@ -82,7 +82,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("1000000000000", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
+    LeaseConfigurationImpl configuration = parser.parse(connectionLeasingElement, "source");
 
     assertEquals(1000000000000L, configuration.getLeaseLength());
   }
@@ -132,7 +132,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("MAX", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
+    LeaseConfigurationImpl configuration = parser.parse(connectionLeasingElement, "source");
 
     assertEquals(MAX_LEASE_LENGTH, configuration.getLeaseLength());
   }

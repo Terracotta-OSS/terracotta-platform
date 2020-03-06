@@ -18,6 +18,7 @@ package org.terracotta.lease.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.lease.service.config.LeaseConfiguration;
 import org.terracotta.lease.service.monitor.LeaseState;
 
 /**
@@ -27,11 +28,11 @@ import org.terracotta.lease.service.monitor.LeaseState;
 public class LeaseServiceImpl implements LeaseService {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceImpl.class);
 
-  private final long leaseLength;
+  private final LeaseConfiguration leaseConfiguration;
   private final LeaseState leaseState;
 
-  public LeaseServiceImpl(long leaseLength, LeaseState leaseState) {
-    this.leaseLength = leaseLength;
+  public LeaseServiceImpl(LeaseConfiguration leaseConfiguration, LeaseState leaseState) {
+    this.leaseConfiguration = leaseConfiguration;
     this.leaseState = leaseState;
   }
 
@@ -66,6 +67,6 @@ public class LeaseServiceImpl implements LeaseService {
   }
 
   protected long getLeaseLength() {
-    return leaseLength;
+    return leaseConfiguration.getLeaseLength();
   }
 }

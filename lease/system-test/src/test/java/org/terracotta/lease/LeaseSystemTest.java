@@ -29,8 +29,8 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
 import org.terracotta.exception.PermanentEntityException;
-import org.terracotta.lease.service.LeaseServiceProvider;
-import org.terracotta.lease.service.config.LeaseConfiguration;
+import org.terracotta.lease.service.LeaseServiceProviderImpl;
+import org.terracotta.lease.service.config.LeaseConfigurationImpl;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughTestHelpers;
 
@@ -54,7 +54,7 @@ public class LeaseSystemTest {
             server -> {
               server.registerClientEntityService(new LeaseAcquirerClientService());
               server.registerServerEntityService(new LeaseAcquirerServerService());
-              server.registerOverrideServiceProvider(new LeaseServiceProvider(), new LeaseConfiguration(500L));
+              server.registerOverrideServiceProvider(new LeaseServiceProviderImpl(), new LeaseConfigurationImpl(500L));
             });
 
     cluster.startAllServers();
