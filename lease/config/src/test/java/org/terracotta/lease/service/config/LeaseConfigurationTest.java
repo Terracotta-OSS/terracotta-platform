@@ -23,23 +23,23 @@ import static org.junit.Assert.assertEquals;
 public class LeaseConfigurationTest {
   @Test
   public void hasCorrectServiceProviderType() {
-    ServiceProviderConfiguration configuration = new LeaseConfiguration(1000L);
+    ServiceProviderConfiguration configuration = new LeaseConfigurationImpl(1000L);
     assertEquals(LeaseServiceProvider.class, configuration.getServiceProviderType());
   }
 
   @Test
   public void givesCorrectLeaseLength() {
-    LeaseConfiguration configuration = new LeaseConfiguration(4L);
+    LeaseConfigurationImpl configuration = new LeaseConfigurationImpl(4L);
     assertEquals(4L, configuration.getLeaseLength());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void zeroLeaseLength() {
-    new LeaseConfiguration(0L);
+    new LeaseConfigurationImpl(0L);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void negativeLeaseLength() {
-    new LeaseConfiguration(-1L);
+    new LeaseConfigurationImpl(-1L);
   }
 }

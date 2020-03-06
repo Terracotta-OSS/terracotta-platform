@@ -18,9 +18,8 @@ package org.terracotta.lease.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.lease.service.config.LeaseConfiguration;
 import org.terracotta.lease.service.monitor.LeaseState;
-
-import java.util.function.LongSupplier;
 
 /**
  * The implementation of LeaseService. It uses the LeaseState object to carry out the hard work of correctly issuing
@@ -29,11 +28,11 @@ import java.util.function.LongSupplier;
 public class LeaseServiceImpl implements LeaseService {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceImpl.class);
 
-  private final LeaseDuration leaseDuration;
+  private final LeaseConfiguration leaseConfiguration;
   private final LeaseState leaseState;
 
-  public LeaseServiceImpl(LeaseDuration leaseDuration, LeaseState leaseState) {
-    this.leaseDuration = leaseDuration;
+  public LeaseServiceImpl(LeaseConfiguration leaseConfiguration, LeaseState leaseState) {
+    this.leaseConfiguration = leaseConfiguration;
     this.leaseState = leaseState;
   }
 
@@ -68,6 +67,6 @@ public class LeaseServiceImpl implements LeaseService {
   }
 
   protected long getLeaseLength() {
-    return leaseDuration.get().toMillis();
+    return leaseConfiguration.getLeaseLength();
   }
 }

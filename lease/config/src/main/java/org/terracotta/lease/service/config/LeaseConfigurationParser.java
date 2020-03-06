@@ -65,13 +65,13 @@ public class LeaseConfigurationParser implements ServiceConfigParser {
   }
 
   @Override
-  public LeaseConfiguration parse(Element element, String source) {
+  public LeaseConfigurationImpl parse(Element element, String source) {
     LeaseElement leaseElement = parser().apply(element);
 
     String leaseLengthString = leaseElement.getLeaseValue();
 
     if (leaseLengthString.compareToIgnoreCase(MAX) == 0) {
-      return new LeaseConfiguration(MAX_LEASE_LENGTH);
+      return new LeaseConfigurationImpl(MAX_LEASE_LENGTH);
     }
 
     String timeUnitString = leaseElement.getTimeUnit();
@@ -94,7 +94,7 @@ public class LeaseConfigurationParser implements ServiceConfigParser {
       throw new NumberFormatException("Lease length in " + timeUnitString + " must be less than or equal to: " + maxLeaseLengthInMatchingUnits);
     }
 
-    return new LeaseConfiguration(TimeUnit.MILLISECONDS.convert(leaseLength, timeUnit));
+    return new LeaseConfigurationImpl(TimeUnit.MILLISECONDS.convert(leaseLength, timeUnit));
   }
 
   public Function<Element, LeaseElement> parser() {

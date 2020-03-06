@@ -64,7 +64,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("5000", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
+    LeaseConfigurationImpl configuration = parser.parse(connectionLeasingElement, "source");
 
     assertEquals(5000L, configuration.getLeaseLength());
   }
@@ -82,7 +82,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("1000000000000", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
+    LeaseConfigurationImpl configuration = parser.parse(connectionLeasingElement, "source");
 
     assertEquals(1000000000000L, configuration.getLeaseLength());
   }
@@ -132,7 +132,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("MAX", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
+    LeaseConfigurationImpl configuration = parser.parse(connectionLeasingElement, "source");
 
     assertEquals(MAX_LEASE_LENGTH, configuration.getLeaseLength());
   }

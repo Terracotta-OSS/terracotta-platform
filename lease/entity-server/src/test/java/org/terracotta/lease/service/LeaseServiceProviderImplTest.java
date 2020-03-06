@@ -25,7 +25,7 @@ import org.terracotta.lease.MockStateDumpCollector;
 import org.terracotta.lease.TestTimeSource;
 import org.terracotta.lease.TimeSourceProvider;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
-import org.terracotta.lease.service.config.LeaseConfiguration;
+import org.terracotta.lease.service.config.LeaseConfigurationImpl;
 
 import java.util.Collection;
 
@@ -51,7 +51,7 @@ public class LeaseServiceProviderImplTest {
 
   @Test
   public void singleLeaseConfigured() throws Exception {
-    testLeaseLengths(1500L, new LeaseConfiguration(1500L));
+    testLeaseLengths(1500L, new LeaseConfigurationImpl(1500L));
   }
 
   @Test
@@ -93,7 +93,7 @@ public class LeaseServiceProviderImplTest {
     TimeSourceProvider.setTimeSource(timeSource);
     PlatformConfiguration platformConfiguration = mock(PlatformConfiguration.class);
 
-    LeaseConfiguration providerConfig = new LeaseConfiguration(1500L);
+    LeaseConfigurationImpl providerConfig = new LeaseConfigurationImpl(1500L);
     LeaseServiceProviderImpl serviceProvider = new LeaseServiceProviderImpl();
     serviceProvider.initialize(providerConfig, platformConfiguration);
 

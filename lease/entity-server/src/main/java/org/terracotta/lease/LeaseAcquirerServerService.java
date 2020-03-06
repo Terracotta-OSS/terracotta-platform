@@ -33,11 +33,11 @@ import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.lease.service.LeaseConfigChangeHandler;
-import org.terracotta.lease.service.LeaseDuration;
 import org.terracotta.lease.service.LeaseService;
 import org.terracotta.lease.service.LeaseServiceConfiguration;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 import org.terracotta.lease.service.closer.ClientConnectionCloserImpl;
+import org.terracotta.lease.service.config.LeaseConfiguration;
 
 import java.util.Collections;
 import java.util.Set;
@@ -136,13 +136,13 @@ public class LeaseAcquirerServerService implements EntityServerService<LeaseMess
 
   private void wireChangeHandler(ServiceRegistry serviceRegistry) throws ConfigurationException {
     try {
-      LeaseDuration leaseDuration = getService(serviceRegistry, new BasicServiceConfiguration<>(LeaseDuration.class));
+      LeaseConfiguration leaseConfiguration = serviceRegistry.getService(new BasicServiceConfiguration<>(LeaseConfiguration.class));
       ConfigChangeHandlerManager configChangeHandlerManager = serviceRegistry.getService(new BasicServiceConfiguration<>(ConfigChangeHandlerManager.class));
       if (configChangeHandlerManager != null) {
-        configChangeHandlerManager.compute(CLIENT_LEASE_DURATION, () -> new LeaseConfigChangeHandler(leaseDuration));
+        configChangeHandlerManager.compute(CLIENT_LEASE_DURATION, () -> new LeaseConfigChangeHandler(leaseConfiguration));
       }
     } catch (ServiceException e) {
-      throw new IllegalStateException("Failed to obtain Backup and Restore Service Instance. Ex: " + e);
+      throw new ConfigurationException(e.getMessage(), e);
     }
   }
 }

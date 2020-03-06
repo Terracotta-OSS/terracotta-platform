@@ -15,27 +15,19 @@
  */
 package org.terracotta.lease.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ConfigChangeHandler;
 import org.terracotta.dynamic_config.api.service.InvalidConfigChangeException;
-
-import java.time.Duration;
-
-import static org.terracotta.lease.service.config.LeaseConstants.DEFAULT_LEASE_LENGTH;
-import static org.terracotta.lease.service.config.LeaseConstants.MAX_LEASE_LENGTH;
+import org.terracotta.lease.service.config.LeaseConfiguration;
 
 public class LeaseConfigChangeHandler implements ConfigChangeHandler {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseConfigChangeHandler.class);
+  private final LeaseConfiguration leaseConfiguration;
 
-  private final LeaseDuration leaseDuration;
-
-  public LeaseConfigChangeHandler(LeaseDuration leaseDuration) {
-    this.leaseDuration = leaseDuration;
+  public LeaseConfigChangeHandler(LeaseConfiguration leaseConfiguration) {
+    this.leaseConfiguration = leaseConfiguration;
   }
 
   @Override
@@ -51,15 +43,6 @@ public class LeaseConfigChangeHandler implements ConfigChangeHandler {
   public void apply(Configuration change) {
     Measure<TimeUnit> measure = Measure.parse(change.getValue(), TimeUnit.class);
     long quantity = measure.to(TimeUnit.MILLISECONDS).getQuantity();
-    if (quantity <= 0) {
-      LOGGER.warn("Non-positive lease length: {}, ignoring it", quantity);
-      quantity = DEFAULT_LEASE_LENGTH;
-    }
-    if (quantity > MAX_LEASE_LENGTH) {
-      LOGGER.warn("Excessive lease length: {}, using smaller value: {}", quantity, MAX_LEASE_LENGTH);
-      quantity = MAX_LEASE_LENGTH;
-    }
-    LOGGER.info("Updating lease length of {} ms", quantity);
-    leaseDuration.set(Duration.ofMillis(quantity));
+    leaseConfiguration.setLeaseLength(quantity);
   }
 }

@@ -28,22 +28,21 @@ import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
-import org.terracotta.lease.service.LeaseDuration;
-import org.terracotta.lease.service.LeaseDurationImpl;
 import org.terracotta.lease.service.LeaseService;
 import org.terracotta.lease.service.LeaseServiceConfiguration;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
+import org.terracotta.lease.service.config.LeaseConfiguration;
+import org.terracotta.lease.service.config.LeaseConfigurationImpl;
 
-import java.time.Duration;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("rawtypes")
 public class LeaseAcquirerServerServiceTest {
@@ -84,13 +83,13 @@ public class LeaseAcquirerServerServiceTest {
     LeaseService leaseService = mock(LeaseService.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
     ConfigChangeHandlerManager configChangeHandlerManager = mock(ConfigChangeHandlerManager.class);
-    LeaseDuration leaseDuration = new LeaseDurationImpl(Duration.ofMillis(100));
+    LeaseConfiguration leaseConfiguration = new LeaseConfigurationImpl(100);
 
     ArgumentCaptor<LeaseServiceConfiguration> configurationCaptor = ArgumentCaptor.forClass(LeaseServiceConfiguration.class);
     when(serviceRegistry.getService(configurationCaptor.capture())).thenReturn(leaseService);
     doReturn(clientCommunicator).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(ClientCommunicator.class)));
     doReturn(entityMessenger).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(IEntityMessenger.class)));
-    doReturn(leaseDuration).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(LeaseDuration.class)));
+    doReturn(leaseConfiguration).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(LeaseConfiguration.class)));
     doReturn(configChangeHandlerManager).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(ConfigChangeHandlerManager.class)));
 
     LeaseAcquirerServerService serverService = new LeaseAcquirerServerService();

@@ -28,17 +28,15 @@ import org.terracotta.lease.TimeSourceProvider;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 import org.terracotta.lease.service.closer.ProxyClientConnectionCloser;
 import org.terracotta.lease.service.config.LeaseConfiguration;
+import org.terracotta.lease.service.config.LeaseConfigurationImpl;
+import org.terracotta.lease.service.config.LeaseConstants;
 import org.terracotta.lease.service.config.LeaseServiceProvider;
 import org.terracotta.lease.service.monitor.LeaseMonitorThread;
 import org.terracotta.lease.service.monitor.LeaseState;
 
 import java.io.Closeable;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
-
-import static org.terracotta.lease.service.config.LeaseConstants.DEFAULT_LEASE_LENGTH;
-import static org.terracotta.lease.service.config.LeaseConstants.MAX_LEASE_LENGTH;
 
 /**
  * LeaseServiceProvider consumes the LeaseConfiguration objects (generated from XML parsing) and then creates the
@@ -48,7 +46,7 @@ import static org.terracotta.lease.service.config.LeaseConstants.MAX_LEASE_LENGT
 public class LeaseServiceProviderImpl implements LeaseServiceProvider, Closeable {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceProviderImpl.class);
 
-  private LeaseDuration leaseDuration;
+  private LeaseConfiguration leaseConfiguration;
   private LeaseState leaseState;
   private LeaseMonitorThread leaseMonitorThread;
   private ProxyClientConnectionCloser proxyClientConnectionCloser;
@@ -56,24 +54,20 @@ public class LeaseServiceProviderImpl implements LeaseServiceProvider, Closeable
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     LOGGER.info("Initializing LeaseServiceProvider");
-
-    leaseDuration = new LeaseDurationImpl(Duration.ofMillis(getLeaseLength(configuration)));
-
+    leaseConfiguration = configuration instanceof LeaseConfiguration ? (LeaseConfiguration) configuration: new LeaseConfigurationImpl(LeaseConstants.DEFAULT_LEASE_LENGTH);
     TimeSource timeSource = TimeSourceProvider.getTimeSource();
     proxyClientConnectionCloser = new ProxyClientConnectionCloser();
     leaseState = new LeaseState(timeSource, proxyClientConnectionCloser);
     leaseMonitorThread = new LeaseMonitorThread(timeSource, leaseState);
     leaseMonitorThread.start();
-
     LOGGER.info("LeaseServiceProvider initialized");
-
     return true;
   }
 
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> serviceConfiguration) {
-    if (serviceConfiguration.getServiceType() == LeaseDuration.class) {
-      return serviceConfiguration.getServiceType().cast(leaseDuration);
+    if (serviceConfiguration.getServiceType() == LeaseConfiguration.class) {
+      return serviceConfiguration.getServiceType().cast(leaseConfiguration);
     }
 
     if (serviceConfiguration instanceof LeaseServiceConfiguration) {
@@ -94,12 +88,12 @@ public class LeaseServiceProviderImpl implements LeaseServiceProvider, Closeable
     // This ugly proxy nonsense is only here because services have no way to directly depend on other services.
     // Ideally, when LeaseState gets created, we would be able to get a ClientCommunicator directly.
     proxyClientConnectionCloser.setClientConnectionCloser(clientConnectionCloser);
-    return new LeaseServiceImpl(leaseDuration, leaseState);
+    return new LeaseServiceImpl(leaseConfiguration, leaseState);
   }
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Arrays.asList(LeaseService.class, LeaseDuration.class);
+    return Arrays.asList(LeaseService.class, LeaseConfiguration.class);
   }
 
   @Override
@@ -111,40 +105,9 @@ public class LeaseServiceProviderImpl implements LeaseServiceProvider, Closeable
     leaseMonitorThread.interrupt();
   }
 
-  private static long getLeaseLength(ServiceProviderConfiguration configuration) {
-    if (!(configuration instanceof LeaseConfiguration)) {
-      LOGGER.info("No lease configuration provided. Instead configuration was: " + configuration);
-      return withLeaseLengthLog(DEFAULT_LEASE_LENGTH);
-    }
-
-    LeaseConfiguration leaseConfiguration = (LeaseConfiguration) configuration;
-    long leaseLength = leaseConfiguration.getLeaseLength();
-
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Found lease configuration with lease length: " + leaseLength);
-    }
-
-    if (leaseLength <= 0) {
-      LOGGER.warn("Non-positive lease length: " + leaseLength + ", ignoring it");
-      return withLeaseLengthLog(DEFAULT_LEASE_LENGTH);
-    }
-
-    if (leaseLength > MAX_LEASE_LENGTH) {
-      LOGGER.warn("Excessive lease length: " + leaseLength + ", using smaller value: " + MAX_LEASE_LENGTH);
-      return withLeaseLengthLog(MAX_LEASE_LENGTH);
-    }
-
-    return withLeaseLengthLog(leaseLength);
-  }
-
-  private static long withLeaseLengthLog(long leaseLength) {
-    LOGGER.info("Using lease length of " + leaseLength + "ms");
-    return leaseLength;
-  }
-
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    stateDumper.addState("LeaseLength", Long.toString(leaseDuration.get().toMillis()));
+    stateDumper.addState("LeaseLength", Long.toString(leaseConfiguration.getLeaseLength()));
     leaseState.addStateTo(stateDumper.subStateDumpCollector("LeaseState"));
   }
 }

@@ -17,9 +17,8 @@ package org.terracotta.lease.service;
 
 import org.junit.Test;
 import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.lease.service.config.LeaseConfigurationImpl;
 import org.terracotta.lease.service.monitor.LeaseState;
-
-import java.time.Duration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,7 +35,7 @@ public class LeaseServiceImplTest {
 
     when(leaseState.acquireLease(clientDescriptor, 1000L)).thenReturn(true);
 
-    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseDurationImpl(Duration.ofMillis(1000)), leaseState);
+    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseConfigurationImpl(1000), leaseState);
     LeaseResult leaseResult = leaseService.acquireLease(clientDescriptor);
 
     assertTrue(leaseResult.isLeaseGranted());
@@ -50,7 +49,7 @@ public class LeaseServiceImplTest {
 
     when(leaseState.acquireLease(clientDescriptor, 1000L)).thenReturn(false);
 
-    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseDurationImpl(Duration.ofMillis(1000)), leaseState);
+    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseConfigurationImpl(1000), leaseState);
     LeaseResult leaseResult = leaseService.acquireLease(clientDescriptor);
 
     assertFalse(leaseResult.isLeaseGranted());
@@ -61,7 +60,7 @@ public class LeaseServiceImplTest {
     LeaseState leaseState = mock(LeaseState.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
 
-    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseDurationImpl(Duration.ofMillis(1000)), leaseState);
+    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseConfigurationImpl(1000), leaseState);
     leaseService.disconnected(clientDescriptor);
 
     verify(leaseState).disconnected(clientDescriptor);
@@ -72,7 +71,7 @@ public class LeaseServiceImplTest {
     LeaseState leaseState = mock(LeaseState.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
 
-    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseDurationImpl(Duration.ofMillis(1000)), leaseState);
+    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseConfigurationImpl(1000), leaseState);
     leaseService.reconnecting(clientDescriptor);
 
     verify(leaseState).reconnecting(clientDescriptor);
@@ -83,7 +82,7 @@ public class LeaseServiceImplTest {
     LeaseState leaseState = mock(LeaseState.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
 
-    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseDurationImpl(Duration.ofMillis(1000)), leaseState);
+    LeaseServiceImpl leaseService = new LeaseServiceImpl(new LeaseConfigurationImpl(1000), leaseState);
     leaseService.reconnected(clientDescriptor);
 
     verify(leaseState).reconnected(clientDescriptor, 1000L);

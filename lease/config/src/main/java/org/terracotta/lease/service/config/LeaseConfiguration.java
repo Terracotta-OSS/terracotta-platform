@@ -13,30 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.terracotta.lease.service.config;
 
-import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceProviderConfiguration;
+import com.tc.classloader.CommonComponent;
 
 /**
- * Represents the connection leasing configuration from the server's XML config
+ * @author Mathieu Carbou
  */
-public class LeaseConfiguration implements ServiceProviderConfiguration {
-  private final long leaseLength;
+@CommonComponent
+public interface LeaseConfiguration {
+  void setLeaseLength(long leaseLength);
 
-  public LeaseConfiguration(long leaseLength) {
-    if (leaseLength <= 0) {
-      throw new IllegalArgumentException("Only positive lease lengths are acceptable");
-    }
-    this.leaseLength = leaseLength;
-  }
-
-  public long getLeaseLength() {
-    return leaseLength;
-  }
-
-  @Override
-  public Class<? extends ServiceProvider> getServiceProviderType() {
-    return LeaseServiceProvider.class;
-  }
+  long getLeaseLength();
 }
