@@ -45,7 +45,7 @@ public class LeaseServiceProviderTest {
   public void serviceTypes() {
     LeaseServiceProvider serviceProvider = new LeaseServiceProvider();
     Collection<Class<?>> serviceTypes = serviceProvider.getProvidedServiceTypes();
-    assertEquals(1, serviceTypes.size());
+    assertEquals(2, serviceTypes.size());
     assertEquals(LeaseService.class, serviceTypes.iterator().next());
   }
 

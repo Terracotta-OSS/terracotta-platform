@@ -33,8 +33,9 @@ import org.terracotta.lease.service.monitor.LeaseMonitorThread;
 import org.terracotta.lease.service.monitor.LeaseState;
 
 import java.io.Closeable;
+import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import static org.terracotta.lease.service.LeaseConstants.DEFAULT_LEASE_LENGTH;
 import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
@@ -47,7 +48,7 @@ import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
 public class LeaseServiceProvider implements ServiceProvider, Closeable {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceProvider.class);
 
-  private long leaseLength;
+  private LeaseDuration leaseDuration;
   private LeaseState leaseState;
   private LeaseMonitorThread leaseMonitorThread;
   private ProxyClientConnectionCloser proxyClientConnectionCloser;
@@ -56,7 +57,7 @@ public class LeaseServiceProvider implements ServiceProvider, Closeable {
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     LOGGER.info("Initializing LeaseServiceProvider");
 
-    leaseLength = getLeaseLength(configuration);
+    leaseDuration = new LeaseDurationImpl(Duration.ofMillis(getLeaseLength(configuration)));
 
     TimeSource timeSource = TimeSourceProvider.getTimeSource();
     proxyClientConnectionCloser = new ProxyClientConnectionCloser();
@@ -71,30 +72,34 @@ public class LeaseServiceProvider implements ServiceProvider, Closeable {
 
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> serviceConfiguration) {
-    if (!(serviceConfiguration instanceof LeaseServiceConfiguration)) {
-      throw new IllegalArgumentException("LeaseServiceProvider expected a LeaseServiceConfiguration, but a " + serviceConfiguration.getClass() + " was used by " + consumerID);
+    if (serviceConfiguration.getServiceType() == LeaseDuration.class) {
+      return serviceConfiguration.getServiceType().cast(leaseDuration);
     }
 
-    LOGGER.info("Creating LeaseService");
+    if (serviceConfiguration instanceof LeaseServiceConfiguration) {
+      LOGGER.info("Creating LeaseService");
 
-    LeaseServiceConfiguration leaseServiceConfiguration = (LeaseServiceConfiguration) serviceConfiguration;
+      LeaseServiceConfiguration leaseServiceConfiguration = (LeaseServiceConfiguration) serviceConfiguration;
 
-    ClientConnectionCloser clientConnectionCloser = leaseServiceConfiguration.getClientConnectionCloser();
-    LeaseService leaseService = createLeaseService(clientConnectionCloser);
+      ClientConnectionCloser clientConnectionCloser = leaseServiceConfiguration.getClientConnectionCloser();
+      LeaseService leaseService = createLeaseService(clientConnectionCloser);
 
-    return serviceConfiguration.getServiceType().cast(leaseService);
+      return serviceConfiguration.getServiceType().cast(leaseService);
+    }
+
+    throw new IllegalArgumentException("Unsupported service configuration: " + serviceConfiguration);
   }
 
   private LeaseService createLeaseService(ClientConnectionCloser clientConnectionCloser) {
     // This ugly proxy nonsense is only here because services have no way to directly depend on other services.
     // Ideally, when LeaseState gets created, we would be able to get a ClientCommunicator directly.
     proxyClientConnectionCloser.setClientConnectionCloser(clientConnectionCloser);
-    return new LeaseServiceImpl(leaseLength, leaseState);
+    return new LeaseServiceImpl(leaseDuration, leaseState);
   }
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Collections.singletonList(LeaseService.class);
+    return Arrays.asList(LeaseService.class, LeaseDuration.class);
   }
 
   @Override
@@ -139,7 +144,7 @@ public class LeaseServiceProvider implements ServiceProvider, Closeable {
 
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
-    stateDumper.addState("LeaseLength", Long.toString(leaseLength));
+    stateDumper.addState("LeaseLength", Long.toString(leaseDuration.get().toMillis()));
     leaseState.addStateTo(stateDumper.subStateDumpCollector("LeaseState"));
   }
 }

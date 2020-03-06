@@ -21,16 +21,20 @@ import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.hamcrest.MockitoHamcrest;
+import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.IEntityMessenger;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.lease.service.LeaseDuration;
+import org.terracotta.lease.service.LeaseDurationImpl;
 import org.terracotta.lease.service.LeaseService;
 import org.terracotta.lease.service.LeaseServiceConfiguration;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 
+import java.time.Duration;
 import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -79,11 +83,15 @@ public class LeaseAcquirerServerServiceTest {
     IEntityMessenger entityMessenger = mock(IEntityMessenger.class);
     LeaseService leaseService = mock(LeaseService.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
+    ConfigChangeHandlerManager configChangeHandlerManager = mock(ConfigChangeHandlerManager.class);
+    LeaseDuration leaseDuration = new LeaseDurationImpl(Duration.ofMillis(100));
 
     ArgumentCaptor<LeaseServiceConfiguration> configurationCaptor = ArgumentCaptor.forClass(LeaseServiceConfiguration.class);
     when(serviceRegistry.getService(configurationCaptor.capture())).thenReturn(leaseService);
     doReturn(clientCommunicator).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(ClientCommunicator.class)));
     doReturn(entityMessenger).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(IEntityMessenger.class)));
+    doReturn(leaseDuration).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(LeaseDuration.class)));
+    doReturn(configChangeHandlerManager).when(serviceRegistry).getService(MockitoHamcrest.argThat(serviceType(ConfigChangeHandlerManager.class)));
 
     LeaseAcquirerServerService serverService = new LeaseAcquirerServerService();
     ActiveLeaseAcquirer activeEntity = (ActiveLeaseAcquirer) serverService.createActiveEntity(serviceRegistry, new byte[0]);

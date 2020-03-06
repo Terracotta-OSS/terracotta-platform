@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.lease.service.monitor.LeaseState;
 
+import java.util.function.LongSupplier;
+
 /**
  * The implementation of LeaseService. It uses the LeaseState object to carry out the hard work of correctly issuing
  * leases.
@@ -27,11 +29,11 @@ import org.terracotta.lease.service.monitor.LeaseState;
 public class LeaseServiceImpl implements LeaseService {
   private static Logger LOGGER = LoggerFactory.getLogger(LeaseServiceImpl.class);
 
-  private final long leaseLength;
+  private final LeaseDuration leaseDuration;
   private final LeaseState leaseState;
 
-  public LeaseServiceImpl(long leaseLength, LeaseState leaseState) {
-    this.leaseLength = leaseLength;
+  public LeaseServiceImpl(LeaseDuration leaseDuration, LeaseState leaseState) {
+    this.leaseDuration = leaseDuration;
     this.leaseState = leaseState;
   }
 
@@ -66,6 +68,6 @@ public class LeaseServiceImpl implements LeaseService {
   }
 
   protected long getLeaseLength() {
-    return leaseLength;
+    return leaseDuration.get().toMillis();
   }
 }

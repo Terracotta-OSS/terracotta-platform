@@ -43,6 +43,14 @@
       <artifactId>lease-entity-common</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <!-- server provided lib and apis -->
+    <dependency>
+      <groupId>org.terracotta.dynamic-config</groupId>
+      <artifactId>dynamic-config-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
@@ -59,16 +67,18 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>tc-config-parser</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>tc-config-parser</artifactId>
-      <scope>provided</scope>
-    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
