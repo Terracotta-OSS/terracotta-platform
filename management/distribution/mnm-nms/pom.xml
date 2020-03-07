@@ -20,14 +20,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>terracotta-management</artifactId>
-    <groupId>org.terracotta.management</groupId>
+    <groupId>org.terracotta.management.dist</groupId>
+    <artifactId>distribution</artifactId>
     <version>5.7-SNAPSHOT</version>
-    <relativePath>../../pom.xml</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.terracotta.management.dist</groupId>
   <artifactId>mnm-nms</artifactId>
   <name>Terracotta Management :: Distribution :: NMS</name>
 
@@ -43,6 +42,17 @@
       <groupId>org.terracotta.management</groupId>
       <artifactId>nms-entity-client</artifactId>
       <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>statistics</artifactId>
+      <version>${statistics.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
     </dependency>
   </dependencies>
 
