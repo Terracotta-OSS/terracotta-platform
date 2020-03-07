@@ -44,15 +44,17 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>management</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>test-utilities</artifactId>
+      <artifactId>common-test-utilities</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

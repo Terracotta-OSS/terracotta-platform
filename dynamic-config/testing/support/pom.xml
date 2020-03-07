@@ -42,12 +42,12 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>test-utilities</artifactId>
+      <artifactId>common-test-utilities</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>port-locking</artifactId>
+      <artifactId>common-port-locking</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -68,6 +68,11 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>angela</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-client-api</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>

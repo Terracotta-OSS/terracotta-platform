@@ -26,7 +26,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>port-locking</artifactId>
+  <artifactId>common-port-locking</artifactId>
   <name>Common :: Port Locking</name>
 
   <dependencies>
