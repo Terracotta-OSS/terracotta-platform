@@ -27,34 +27,19 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>mnm-server</artifactId>
-  <name>Terracotta Management :: Distribution :: Server</name>
+  <artifactId>mnm-server-api</artifactId>
+  <name>Terracotta Management :: Distribution :: Server API</name>
 
   <dependencies>
-    <!-- NMS Agent Entity: bridges client-side management registry with server monitoring services -->
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>nms-agent-entity-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <!-- NMS Entity that access topology and reads messages (JDK 8) -->
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>nms-entity-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <!-- monitoring service -->
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-server-api</artifactId>
+      <artifactId>mnm-common</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-api</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -97,7 +82,7 @@
                   <exclude>org.terracotta.management:cluster-topology</exclude>
                   <exclude>org.terracotta.management:management-registry</exclude>
                   <exclude>org.terracotta:statistics</exclude>
-                  <exclude>org.terracotta.management.dist:mnm-server-api</exclude>
+                  <exclude>org.terracotta.management.dist:mnm-common</exclude>
                   <exclude>org.terracotta:offheap-resource</exclude>
                 </excludes>
               </artifactSet>

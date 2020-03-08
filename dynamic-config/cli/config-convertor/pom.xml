@@ -49,8 +49,8 @@
 
     <!-- server plugins -->
     <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service-api</artifactId>
+      <groupId>org.terracotta.management.dist</groupId>
+      <artifactId>mnm-server-api</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

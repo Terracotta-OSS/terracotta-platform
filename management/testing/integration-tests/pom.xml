@@ -36,6 +36,18 @@
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.terracotta.management.dist</groupId>
+      <artifactId>mnm-common</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.management.dist</groupId>
+      <artifactId>mnm-nms-agent</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <!-- entity under test -->
     <dependency>
       <groupId>org.terracotta.management.testing</groupId>
@@ -132,6 +144,11 @@
                 <artifactItem>
                   <groupId>org.terracotta.management.dist</groupId>
                   <artifactId>mnm-server</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.management.dist</groupId>
+                  <artifactId>mnm-server-api</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
                 <artifactItem>

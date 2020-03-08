@@ -62,10 +62,18 @@
       <artifactId>cluster-topology</artifactId>
       <version>${project.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>statistics</artifactId>
       <version>${statistics.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided by voltron (server) -->
