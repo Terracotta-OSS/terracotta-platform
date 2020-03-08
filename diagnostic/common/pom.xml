@@ -32,13 +32,13 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>json-support</artifactId>
+      <artifactId>common-json-support</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>structures</artifactId>
+      <artifactId>common-structures</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

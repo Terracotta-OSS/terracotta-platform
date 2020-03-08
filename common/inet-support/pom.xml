@@ -26,7 +26,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>inet-support</artifactId>
+  <artifactId>common-inet-support</artifactId>
   <name>Common :: Inet Support</name>
 
 </project>

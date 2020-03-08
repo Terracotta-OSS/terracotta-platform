@@ -37,12 +37,12 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>sanskrit</artifactId>
+      <artifactId>common-sanskrit</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>nomad</artifactId>
+      <artifactId>common-nomad</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -103,7 +103,7 @@
 
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>test-utilities</artifactId>
+      <artifactId>common-test-utilities</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

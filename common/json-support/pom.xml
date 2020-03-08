@@ -26,13 +26,13 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>json-support</artifactId>
+  <artifactId>common-json-support</artifactId>
   <name>Common :: Json Support</name>
 
   <dependencies>
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>inet-support</artifactId>
+      <artifactId>common-inet-support</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
