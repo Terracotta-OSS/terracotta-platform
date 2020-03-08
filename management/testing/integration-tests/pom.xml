@@ -116,12 +116,13 @@
               <overWriteSnapshots>true</overWriteSnapshots>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.terracotta.internal</groupId>
-                  <artifactId>terracotta-kit</artifactId>
-                  <version>${terracotta-core.version}</version>
+                  <groupId>org.terracotta</groupId>
+                  <artifactId>vanilla-kit</artifactId>
+                  <version>${project.version}</version>
                   <type>tar.gz</type>
                 </artifactItem>
               </artifactItems>
+              <outputDirectory>${project.build.directory}</outputDirectory>
             </configuration>
           </execution>
           <execution>
@@ -131,6 +132,7 @@
               <goal>copy</goal>
             </goals>
             <configuration>
+              <outputDirectory>${project.build.directory}/vanilla-kit-${project.version}/server/plugins/lib</outputDirectory>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.terracotta.management.testing</groupId>
@@ -138,33 +140,7 @@
                   <version>${project.version}</version>
                   <classifier>plugin</classifier>
                 </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-common</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-server</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-server-api</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta</groupId>
-                  <artifactId>statistics</artifactId>
-                  <version>${statistics.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta</groupId>
-                  <artifactId>offheap-resource</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
               </artifactItems>
-              <outputDirectory>${project.build.directory}/voltronKit/terracotta-${terracotta-core.version}/server/plugins/lib</outputDirectory>
             </configuration>
           </execution>
         </executions>
@@ -175,7 +151,7 @@
         <version>2.19.1</version>
         <configuration>
           <systemPropertyVariables>
-            <kitInstallationPath>${project.build.directory}/voltronKit/terracotta-${terracotta-core.version}/</kitInstallationPath>
+            <kitInstallationPath>${project.build.directory}/vanilla-kit-${project.version}</kitInstallationPath>
           </systemPropertyVariables>
         </configuration>
         <executions>
