@@ -17,10 +17,10 @@ package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
-import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
+import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -35,7 +35,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 
 @ClusterDefinition(autoStart = false)
 public class NodeStartupIT extends DynamicConfigIT {

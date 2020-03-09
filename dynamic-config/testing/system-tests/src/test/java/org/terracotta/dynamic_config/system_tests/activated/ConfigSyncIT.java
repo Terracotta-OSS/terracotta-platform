@@ -15,21 +15,29 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
-import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
+import org.terracotta.json.Json;
+import org.terracotta.persistence.sanskrit.JsonUtils;
+import org.terracotta.persistence.sanskrit.MutableSanskritObject;
 import org.terracotta.persistence.sanskrit.SanskritException;
+import org.terracotta.persistence.sanskrit.SanskritImpl;
 import org.terracotta.persistence.sanskrit.SanskritObject;
+import org.terracotta.persistence.sanskrit.SanskritObjectImpl;
+import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -46,9 +54,9 @@ import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskr
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MODE;
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {

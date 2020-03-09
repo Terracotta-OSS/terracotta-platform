@@ -27,10 +27,12 @@ import org.terracotta.angela.client.Tsa;
 import org.terracotta.angela.client.config.custom.CustomConfigurationContext;
 import org.terracotta.angela.client.config.custom.CustomTsaConfigurationContext;
 import org.terracotta.angela.common.ConfigToolExecutionResult;
+import org.terracotta.angela.common.distribution.Distribution;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.angela.common.topology.Topology;
+import org.terracotta.angela.common.topology.Version;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
@@ -81,9 +83,8 @@ import static org.terracotta.angela.common.distribution.Distribution.distributio
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
 import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
-import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA;
+import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
-import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
@@ -405,11 +406,15 @@ public class DynamicConfigIT {
         .tsa(tsa -> {
           CustomTsaConfigurationContext topology = tsa
               .clusterName("tc-cluster")
-              .topology(new Topology(distribution(version(System.getProperty("angela.kit.version")), KIT, TERRACOTTA), dynamicCluster(stripes)));
+              .topology(new Topology(getDistribution(), dynamicCluster(stripes)));
           if (licenseUrl() != null) {
             topology.license(new License(licenseUrl()));
           }
         });
+  }
+
+  protected Distribution getDistribution() {
+    return distribution(Version.rawVersion(System.getProperty("angela.kitVersion")), KIT, TERRACOTTA_OS);
   }
 
   protected final ConfigToolExecutionResult configToolInvocation(String... cli) {
