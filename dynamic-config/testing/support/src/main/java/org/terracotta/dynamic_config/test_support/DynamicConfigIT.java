@@ -32,7 +32,6 @@ import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.angela.common.topology.Topology;
-import org.terracotta.angela.common.topology.Version;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
@@ -77,6 +76,7 @@ import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
+import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
@@ -85,6 +85,7 @@ import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamic
 import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
+import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
@@ -414,7 +415,7 @@ public class DynamicConfigIT {
   }
 
   protected Distribution getDistribution() {
-    return distribution(Version.rawVersion(System.getProperty("angela.kitVersion")), KIT, TERRACOTTA_OS);
+    return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
   }
 
   protected final ConfigToolExecutionResult configToolInvocation(String... cli) {

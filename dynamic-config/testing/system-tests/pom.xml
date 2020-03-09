@@ -157,9 +157,11 @@
             <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
             <angela.skipUninstall>false</angela.skipUninstall>
             <angela.tsa.fullLogging>true</angela.tsa.fullLogging>
-            <angela.kitVersion>${project.version}</angela.kitVersion>
+            <angela.distribution>${project.version}</angela.distribution>
             <angela.kitInstallationDir>${project.build.directory}/vanilla-kit-${project.version}</angela.kitInstallationDir>
+            <!--empty to allow any values-->
             <angela.java.vendor/>
+            <angela.java.version/>
           </systemPropertyVariables>
         </configuration>
         <executions>
