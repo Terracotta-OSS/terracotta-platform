@@ -125,7 +125,34 @@
             </configuration>
           </execution>
           <execution>
-            <id>copy-test-entity</id>
+            <id>copy-test-entity-api</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.terracotta.management.dist</groupId>
+                  <artifactId>mnm-common</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.management.dist</groupId>
+                  <artifactId>mnm-server-api</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta</groupId>
+                  <artifactId>statistics</artifactId>
+                  <version>${statistics.version}</version>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/voltronKit/terracotta-${terracotta-core.version}/server/plugins/api</outputDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-test-entity-lib</id>
             <phase>prepare-package</phase>
             <goals>
               <goal>copy</goal>
@@ -140,23 +167,8 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-common</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
                   <artifactId>mnm-server</artifactId>
                   <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-server-api</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta</groupId>
-                  <artifactId>statistics</artifactId>
-                  <version>${statistics.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.terracotta</groupId>

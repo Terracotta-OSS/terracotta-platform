@@ -19,9 +19,9 @@ import com.tc.classloader.OverrideService;
 import com.tc.exception.TCServerRestartException;
 import com.tc.exception.TCShutdownServerException;
 import com.tc.exception.ZapDirtyDbServerNodeException;
-import com.terracotta.config.Configuration;
-import com.terracotta.config.ConfigurationException;
-import com.terracotta.config.ConfigurationProvider;
+import org.terracotta.configuration.Configuration;
+import org.terracotta.configuration.ConfigurationException;
+import org.terracotta.configuration.ConfigurationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.TCConfigurationParser;
@@ -57,7 +57,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigConfigurationProvider.class);
 
   private volatile DynamicConfigurationPassiveSync dynamicConfigurationPassiveSync;
-  private volatile Configuration configuration;
+  private volatile DynamicConfigConfiguration configuration;
 
   @SuppressWarnings("ConstantConditions")
   @Override

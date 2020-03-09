@@ -77,6 +77,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>default-configuration</artifactId>
+      <classifier>jar-with-dependencies</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-config-parser</artifactId>
       <scope>provided</scope>

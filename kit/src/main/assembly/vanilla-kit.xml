@@ -50,7 +50,7 @@
 
   <dependencySets>
     <dependencySet>
-      <outputDirectory>server/plugins/lib</outputDirectory>
+      <outputDirectory>server/plugins/api</outputDirectory>
       <includes>
         <include>org.terracotta.common:common-inet-support</include>
         <include>org.terracotta.common:common-nomad</include>
