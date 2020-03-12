@@ -32,6 +32,21 @@
   <name>Terracotta Management :: Testing :: Integration Tests</name>
 
   <dependencies>
+    <!-- declare the kit so that maven knows it has to build it before -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>platform-kit</artifactId>
+      <version>${project.version}</version>
+      <type>tar.gz</type>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>nms-agent-entity-client</artifactId>
@@ -102,24 +117,25 @@
               <goal>unpack</goal>
             </goals>
             <configuration>
+              <outputDirectory>${project.build.directory}</outputDirectory>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.terracotta.internal</groupId>
-                  <artifactId>terracotta-kit</artifactId>
-                  <version>${terracotta-core.version}</version>
+                  <groupId>org.terracotta</groupId>
+                  <artifactId>platform-kit</artifactId>
+                  <version>${project.version}</version>
                   <type>tar.gz</type>
                 </artifactItem>
               </artifactItems>
-              <outputDirectory>${project.build.directory}/voltronKit</outputDirectory>
             </configuration>
           </execution>
           <execution>
-            <id>unpack-sample-entity</id>
+            <id>copy-test-entity</id>
             <phase>prepare-package</phase>
             <goals>
               <goal>copy</goal>
             </goals>
             <configuration>
+              <outputDirectory>${project.build.directory}/platform-kit-${project.version}/server/plugins/lib</outputDirectory>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.terracotta.management.testing</groupId>
@@ -127,86 +143,30 @@
                   <version>${project.version}</version>
                   <classifier>plugin</classifier>
                 </artifactItem>
-
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>management-model</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>management-registry</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>sequence-generator</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>cluster-topology</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>nms-agent-entity-common</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>nms-agent-entity-server</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>nms-entity-common</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>nms-entity-server</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>monitoring-service</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management</groupId>
-                  <artifactId>monitoring-service-api</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.voltron.proxy</groupId>
-                  <artifactId>voltron-proxy-common</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.voltron.proxy</groupId>
-                  <artifactId>voltron-proxy-server</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-
-                <artifactItem>
-                  <groupId>org.terracotta</groupId>
-                  <artifactId>statistics</artifactId>
-                  <version>${statistics.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta</groupId>
-                  <artifactId>offheap-resource</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.common</groupId>
-                  <artifactId>common-structures</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
               </artifactItems>
-              <outputDirectory>${project.build.directory}/voltronKit/terracotta-${terracotta-core.version}/server/plugins/lib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-logging-config</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/platform-kit-${project.version}/server/lib</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/src/test/resources</directory>
+                  <includes>
+                    <include>logback-ext.xml</include>
+                  </includes>
+                </resource>
+              </resources>
             </configuration>
           </execution>
         </executions>
@@ -217,7 +177,8 @@
         <version>2.19.1</version>
         <configuration>
           <systemPropertyVariables>
-            <kitInstallationPath>${project.build.directory}/voltronKit/terracotta-${terracotta-core.version}/</kitInstallationPath>
+            <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
+<!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
           </systemPropertyVariables>
         </configuration>
         <executions>

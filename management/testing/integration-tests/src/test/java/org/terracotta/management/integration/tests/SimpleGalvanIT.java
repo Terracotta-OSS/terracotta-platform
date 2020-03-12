@@ -25,8 +25,8 @@ import org.junit.rules.Timeout;
 import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.testing.rules.Cluster;
 
-import java.io.File;
 import java.net.URI;
+import java.nio.file.Paths;
 
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
@@ -42,13 +42,13 @@ public class SimpleGalvanIT {
           "</config>\n";
 
   @ClassRule
-  public static Cluster CLUSTER =
-      newCluster()
-          .in(new File("target/galvan"))
-          .withSystemProperty("terracotta.management.assert", "true")
-          .withTcProperty("terracotta.management.assert", "true")
-          .withServiceFragment(RESOURCE_CONFIG)
-          .build();
+  public static Cluster CLUSTER = newCluster()
+      .in(Paths.get("target", "galvan"))
+      .withSystemProperty("terracotta.management.assert", "true")
+      .withTcProperty("terracotta.management.assert", "true")
+      .withServiceFragment(RESOURCE_CONFIG)
+      .startupBuilder(DynamicConfigStartupBuilder::new)
+      .build();
 
   @BeforeClass
   public static void waitForActive() throws Exception {

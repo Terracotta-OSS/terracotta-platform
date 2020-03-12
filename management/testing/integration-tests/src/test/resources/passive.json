@@ -5,20 +5,56 @@
       "id": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
       "type": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
       "name": "NmsAgent",
-      "consumerId": 1,
+      "consumerId": 3,
       "managementRegistry": null
     },
     {
       "id": "PassiveTopologyIT:org.terracotta.management.entity.nms.client.NmsEntity",
       "type": "org.terracotta.management.entity.nms.client.NmsEntity",
       "name": "PassiveTopologyIT",
-      "consumerId": 2,
+      "consumerId": 6,
       "managementRegistry": {
         "contextContainer": {
-          "consumerId": "2",
+          "consumerId": "6",
           "subContexts": []
         },
         "capabilities": [
+          {
+            "name": "DataRootSettings",
+            "context": [
+              {
+                "name": "consumerId",
+                "required": true
+              },
+              {
+                "name": "type",
+                "required": true
+              },
+              {
+                "name": "alias",
+                "required": true
+              }
+            ],
+            "descriptors": []
+          },
+          {
+            "name": "DataRootStatistics",
+            "context": [
+              {
+                "name": "consumerId",
+                "required": true
+              },
+              {
+                "name": "type",
+                "required": true
+              },
+              {
+                "name": "alias",
+                "required": true
+              }
+            ],
+            "descriptors": []
+          },
           {
             "name": "OffHeapResourceSettings",
             "context": [
@@ -37,7 +73,7 @@
             ],
             "descriptors": [
               {
-                "consumerId": "2",
+                "consumerId": "6",
                 "alias": "primary-server-resource",
                 "type": "OffHeapResource",
                 "capacity": 67108864,
@@ -111,13 +147,47 @@
       }
     },
     {
-      "id": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
-      "type": "org.terracotta.management.entity.sample.client.CacheEntity",
-      "name": "pet-clinic/clients",
+      "id": "SystemLeaseAcquirer:org.terracotta.lease.LeaseAcquirer",
+      "type": "org.terracotta.lease.LeaseAcquirer",
+      "name": "SystemLeaseAcquirer",
+      "consumerId": 1,
+      "managementRegistry": null
+    },
+    {
+      "id": "dynamic-config-management-entity:org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
+      "type": "org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
+      "name": "dynamic-config-management-entity",
       "consumerId": 4,
       "managementRegistry": {
         "contextContainer": {
           "consumerId": "4",
+          "subContexts": []
+        },
+        "capabilities": []
+      }
+    },
+    {
+      "id": "dynamic-config-topology-entity:org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity",
+      "type": "org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity",
+      "name": "dynamic-config-topology-entity",
+      "consumerId": 2,
+      "managementRegistry": null
+    },
+    {
+      "id": "nomad-entity:org.terracotta.nomad.entity.client.NomadEntity",
+      "type": "org.terracotta.nomad.entity.client.NomadEntity",
+      "name": "nomad-entity",
+      "consumerId": 5,
+      "managementRegistry": null
+    },
+    {
+      "id": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
+      "type": "org.terracotta.management.entity.sample.client.CacheEntity",
+      "name": "pet-clinic/clients",
+      "consumerId": 8,
+      "managementRegistry": {
+        "contextContainer": {
+          "consumerId": "8",
           "subContexts": []
         },
         "capabilities": [
@@ -188,7 +258,7 @@
             ],
             "descriptors": [
               {
-                "consumerId": "4",
+                "consumerId": "8",
                 "alias": "pet-clinic/clients",
                 "type": "ServerCache",
                 "size": 0
@@ -253,10 +323,10 @@
       "id": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
       "type": "org.terracotta.management.entity.sample.client.CacheEntity",
       "name": "pet-clinic/pets",
-      "consumerId": 3,
+      "consumerId": 7,
       "managementRegistry": {
         "contextContainer": {
-          "consumerId": "3",
+          "consumerId": "7",
           "subContexts": []
         },
         "capabilities": [
@@ -327,7 +397,7 @@
             ],
             "descriptors": [
               {
-                "consumerId": "3",
+                "consumerId": "7",
                 "alias": "pet-clinic/pets",
                 "type": "ServerCache",
                 "size": 0

@@ -23,7 +23,7 @@ import org.terracotta.management.model.cluster.AbstractManageableNode;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.testing.rules.Cluster;
 
-import java.io.File;
+import java.nio.file.Paths;
 
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
@@ -42,10 +42,11 @@ public abstract class AbstractHATest extends AbstractTest {
 
   @Rule
   public Cluster voltron = newCluster(2)
-      .in(new File("target/galvan"))
+      .in(Paths.get("target" ,"galvan"))
       .withServiceFragment(resourceConfig)
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
+      .startupBuilder(DynamicConfigStartupBuilder::new)
       .build();
 
   @Rule
@@ -66,7 +67,7 @@ public abstract class AbstractHATest extends AbstractTest {
         .filter(server -> !server.isActive())
         .flatMap(Server::serverEntityStream)
         .filter(AbstractManageableNode::isManageable)
-        .count() != 3) {
+        .count() != 4) {
       Thread.sleep(1_000);
     }
   }

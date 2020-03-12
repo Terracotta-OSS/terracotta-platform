@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Copyright Terracotta, Inc.
 #
@@ -14,14 +15,21 @@
 # limitations under the License.
 #
 
-# See shared code location for steps and parameters:
-# https://dev.azure.com/TerracottaCI/_git/terracotta
+CONFIG_TOOL_DIR=$(dirname "$(cd "$(dirname "$0")";pwd)")
 
-resources:
-  repositories:
-    - repository: templates
-      type: git
-      name: terracotta/terracotta
+# this will only happen if using sag installer
+if [ -r "${CONFIG_TOOL_DIR}/bin/setenv.sh" ] ; then
+  . "${CONFIG_TOOL_DIR}/bin/setenv.sh"
+fi
 
-jobs:
-- template: build-templates/maven-common.yml@templates
+java_opts="$JAVA_OPTS"
+
+if [ ! -d "$JAVA_HOME" ]; then
+   echo "Environment variable JAVA_HOME needs to be set"
+   echo "    $JAVA_HOME"
+   exit 2
+fi
+
+JAVA="$JAVA_HOME/bin/java"
+
+"$JAVA" $java_opts -cp "$CONFIG_TOOL_DIR/lib/*:$CONFIG_TOOL_DIR/../common/lib/*" org.terracotta.dynamic_config.cli.config_tool.ConfigTool "$@"

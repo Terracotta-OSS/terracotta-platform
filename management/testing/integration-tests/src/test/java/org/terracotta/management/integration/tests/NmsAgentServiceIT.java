@@ -40,7 +40,7 @@ import org.terracotta.management.registry.DefaultManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.testing.rules.Cluster;
 
-import java.io.File;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -68,10 +68,11 @@ public class NmsAgentServiceIT {
 
   @Rule
   public Cluster voltron = newCluster()
-      .in(new File("target/galvan"))
+      .in(Paths.get("target", "galvan"))
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(resourceConfig)
+      .startupBuilder(DynamicConfigStartupBuilder::new)
       .build();
 
   Connection managementConnection;

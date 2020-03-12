@@ -18,13 +18,13 @@
     },
     "descriptors": [
       {
-        "consumerId": "4",
+        "consumerId": "8",
         "alias": "0@127.0.0.1:pet-clinic:<uuid>",
         "type": "ClientState",
         "attached": true
       },
       {
-        "consumerId": "4",
+        "consumerId": "8",
         "alias": "0@127.0.0.1:pet-clinic:<uuid>",
         "type": "ClientState",
         "attached": true
@@ -102,7 +102,7 @@
     },
     "descriptors": [
       {
-        "consumerId": "4",
+        "consumerId": "8",
         "alias": "pet-clinic/clients",
         "type": "ServerCache",
         "size": 0
