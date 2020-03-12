@@ -39,7 +39,7 @@ import static org.terracotta.management.sequence.Defaults.SEQ_BITMASK;
  * </pre>
  * Where:
  * <ul>
- * <li>TIMESTAMP: 46 bits - enough for next >200 years</li>
+ * <li>TIMESTAMP: 46 bits - enough for next &gt;200 years</li>
  * <li>MAC: 48 bits - full mac address</li>
  * <li>PID: 16 bits - latest bits of the PID / VMID</li>
  * <li>CLASSLOADER_ID: 32 bits - classloader hashcode</li>
