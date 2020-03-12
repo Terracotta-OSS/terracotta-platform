@@ -15,6 +15,7 @@
  */
 package org.terracotta.voltron.proxy.client;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
@@ -32,6 +33,7 @@ public abstract class ProxyEntityClientService<T extends Entity & ServerMessageA
   private final Class<?>[] messageTypes;
   private final ProxyMessageCodec messageCodec;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public ProxyEntityClientService(Class<T> clientType, Class<? super T> type, Class<C> configType, Class<?>[] messageTypes) {
     this.clientType = clientType;
     this.type = type;

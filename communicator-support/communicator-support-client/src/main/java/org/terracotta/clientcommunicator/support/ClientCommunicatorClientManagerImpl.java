@@ -15,6 +15,7 @@
  */
 package org.terracotta.clientcommunicator.support;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -24,10 +25,6 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.terracotta.clientcommunicator.support.ClientCommunicatorRequestType.ACK;
-import static org.terracotta.clientcommunicator.support.ClientCommunicatorRequestType.NO_ACK;
-import static org.terracotta.clientcommunicator.support.ClientCommunicatorRequestType.REQUEST_COMPLETE;
 
 /**
  * @author vmad
@@ -43,6 +40,8 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
         this.clientCommunicatorMessageFactory = clientCommunicatorMessageFactory;
     }
 
+    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+    @SuppressFBWarnings({"JLM_JSR166_UTILCONCURRENT_MONITORENTER", "UW_UNCOND_WAIT"})
     @Override
     public void handleInvokeResponse(R response) {
         try {
@@ -62,13 +61,13 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
                 }
             }
             monitors.remove(requestSequenceNumber);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (MessageCodecException e) {
+        } catch (InterruptedException | MessageCodecException e) {
             throw new RuntimeException(e);
         }
     }
 
+    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+    @SuppressFBWarnings("JLM_JSR166_UTILCONCURRENT_MONITORENTER")
     @Override
     public void handleClientCommunicatorMessage(R message, ClientCommunicatorMessageHandler clientCommunicatorMessageHandler) {
       try {

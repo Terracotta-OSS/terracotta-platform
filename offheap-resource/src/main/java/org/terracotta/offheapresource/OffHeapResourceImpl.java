@@ -18,6 +18,8 @@ package org.terracotta.offheapresource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.offheapresource.management.OffHeapResourceBinding;
+import org.terracotta.tripwire.MemoryMonitor;
+import org.terracotta.tripwire.TripwireFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,8 +27,6 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import org.terracotta.tripwire.MemoryMonitor;
-import org.terracotta.tripwire.TripwireFactory;
 
 /**
  * An implementation of {@link OffHeapResource}.
@@ -47,8 +47,7 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
     defaults.setProperty(OFFHEAP_WARN_KEY, DEFAULT_MESSAGE);
     MESSAGE_PROPERTIES = new Properties(defaults);
     boolean loaded = false;
-    try {
-      InputStream resource = OffHeapResourceImpl.class.getResourceAsStream(MESSAGE_PROPERTIES_RESOURCE_NAME);
+    try (InputStream resource = OffHeapResourceImpl.class.getResourceAsStream(MESSAGE_PROPERTIES_RESOURCE_NAME)) {
       if (resource != null) {
         MESSAGE_PROPERTIES.load(resource);
         loaded = true;

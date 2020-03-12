@@ -15,6 +15,8 @@
  */
 package org.terracotta.entity.map.common;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.Serializable;
 import java.util.Arrays;
 
@@ -28,11 +30,13 @@ public class ValueWrapper implements Serializable {
   private final int hashCode;
   private final byte[] value;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public ValueWrapper(int hashCode, byte[] value) {
     this.hashCode = hashCode;
     this.value = value;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public byte[] getValue() {
     return value;
   }

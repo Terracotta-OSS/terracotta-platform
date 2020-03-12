@@ -15,6 +15,7 @@
  */
 package org.terracotta.voltron.proxy.server;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
@@ -68,6 +69,7 @@ public abstract class ProxyServerEntityService<C, S, R, M extends Messenger> imp
     }
   };
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public ProxyServerEntityService(Class<?> proxyType, Class<C> configType, Class<?>[] eventTypes, Class<S> synchronizerType, Class<R> reconnectDataType, Class<M> messengerType) {
     this.configType = Objects.requireNonNull(configType);
 
