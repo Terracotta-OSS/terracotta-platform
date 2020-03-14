@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.dynamic_config.api.model.Cluster;
 
 import java.time.Duration;
@@ -23,7 +22,6 @@ import java.time.Duration;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface DynamicConfigService {
 
   /**

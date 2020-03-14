@@ -22,7 +22,7 @@ import com.beust.jcommander.converters.PathConverter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Props;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OutputFormat;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;

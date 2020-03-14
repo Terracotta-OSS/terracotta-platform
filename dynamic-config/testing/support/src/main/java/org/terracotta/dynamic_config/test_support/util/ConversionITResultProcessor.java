@@ -16,7 +16,7 @@
 package org.terracotta.dynamic_config.test_support.util;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.server.conversion.ConfigRepoProcessor;
+import org.terracotta.dynamic_config.cli.config_convertor.ConfigRepoProcessor;
 import org.terracotta.nomad.server.NomadServer;
 
 import java.nio.file.Path;

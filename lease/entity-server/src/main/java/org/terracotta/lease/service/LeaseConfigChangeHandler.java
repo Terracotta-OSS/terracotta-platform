@@ -19,8 +19,8 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.service.ConfigChangeHandler;
-import org.terracotta.dynamic_config.api.service.InvalidConfigChangeException;
+import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
+import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 import org.terracotta.lease.service.config.LeaseConfiguration;
 
 public class LeaseConfigChangeHandler implements ConfigChangeHandler {

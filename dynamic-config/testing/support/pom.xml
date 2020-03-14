@@ -31,8 +31,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-server</artifactId>
+      <groupId>org.terracotta.dynamic-config.cli</groupId>
+      <artifactId>dynamic-config-cli-config-convertor</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

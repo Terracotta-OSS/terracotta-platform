@@ -15,9 +15,8 @@
  */
 package org.terracotta.dynamic_config.test_support.util;
 
-import org.terracotta.dynamic_config.server.conversion.ConfigConvertor;
-import org.terracotta.dynamic_config.server.conversion.PostConversionProcessor;
-import org.terracotta.dynamic_config.server.conversion.ConfigRepoProcessor;
+import org.terracotta.dynamic_config.cli.config_convertor.ConfigConvertor;
+import org.terracotta.dynamic_config.cli.config_convertor.ConfigRepoProcessor;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -105,8 +104,8 @@ public class ConfigRepositoryGenerator {
     try {
       assertFalse("Directory already exists: " + root, Files.exists(root));
       createDirectories(root);
-      PostConversionProcessor resultProcessor = skipCommit ? new CommitSkippingConfigRepoProcessor(root) : new ConfigRepoProcessor(root);
-      ConfigConvertor convertor = new ConfigConvertor(resultProcessor);
+      ConfigRepoProcessor resultProcessor = skipCommit ? new CommitSkippingConfigRepoProcessor(root) : new ConfigRepoProcessor(root);
+      ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
       convertor.processInput("testCluster", tcConfigPaths);
 
       URL licenseUrl = ConfigRepositoryGenerator.class.getResource("/license.xml");
@@ -130,8 +129,8 @@ public class ConfigRepositoryGenerator {
   }
 
   public static void main(String[] args) {
-    new ConfigRepositoryGenerator(Paths.get("build/test-data/repos/single-stripe-single-node"), 9410, 9430).generate1Stripe1Node();
-    new ConfigRepositoryGenerator(Paths.get("build/test-data/repos/single-stripe-multi-node"), 9410, 9430, 9510, 9530).generate1Stripe2Nodes();
-    new ConfigRepositoryGenerator(Paths.get("build/test-data/repos/multi-stripe"), 9410, 9430, 9510, 9530, 9610, 9630, 9710, 9730).generate2Stripes2Nodes();
+    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/single-stripe-single-node"), 9410, 9430).generate1Stripe1Node();
+    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/single-stripe-multi-node"), 9410, 9430, 9510, 9530).generate1Stripe2Nodes();
+    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/multi-stripe"), 9410, 9430, 9510, 9530, 9610, 9630, 9710, 9730).generate2Stripes2Nodes();
   }
 }

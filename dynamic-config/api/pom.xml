@@ -31,8 +31,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-model</artifactId>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-inet-support</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-structures</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -40,12 +45,9 @@
       <artifactId>common-nomad</artifactId>
       <version>${project.version}</version>
     </dependency>
-
-    <!-- server-provided -->
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>packaging-support</artifactId>
-      <scope>provided</scope>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
     </dependency>
 
     <dependency>

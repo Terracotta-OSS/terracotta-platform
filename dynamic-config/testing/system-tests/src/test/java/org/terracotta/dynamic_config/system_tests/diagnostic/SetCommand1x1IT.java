@@ -18,16 +18,16 @@ package org.terracotta.dynamic_config.system_tests.diagnostic;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
 @ClusterDefinition
 public class SetCommand1x1IT extends DynamicConfigIT {

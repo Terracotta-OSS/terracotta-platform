@@ -21,7 +21,7 @@ import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.hamcrest.MockitoHamcrest;
-import org.terracotta.dynamic_config.api.service.ConfigChangeHandlerManager;
+import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ConcurrencyStrategy;

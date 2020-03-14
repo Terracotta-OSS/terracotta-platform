@@ -50,6 +50,14 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- dynamic config support -->
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-server-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- server provided apis-->
     <dependency>
       <groupId>org.terracotta.internal</groupId>

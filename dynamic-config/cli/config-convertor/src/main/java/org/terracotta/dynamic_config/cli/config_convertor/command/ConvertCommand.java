@@ -21,11 +21,10 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.config_convertor.ConfigConvertor;
+import org.terracotta.dynamic_config.cli.config_convertor.ConfigPropertiesProcessor;
+import org.terracotta.dynamic_config.cli.config_convertor.ConfigRepoProcessor;
 import org.terracotta.dynamic_config.cli.config_convertor.ConversionFormat;
-import org.terracotta.dynamic_config.server.conversion.ConfigConvertor;
-import org.terracotta.dynamic_config.server.conversion.ConfigPropertiesProcessor;
-import org.terracotta.dynamic_config.server.conversion.ConfigRepoProcessor;
-import org.terracotta.dynamic_config.server.conversion.PostConversionProcessor;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -84,8 +83,8 @@ public class ConvertCommand extends Command {
   @Override
   public final void run() {
     if (conversionFormat == REPOSITORY) {
-      PostConversionProcessor resultProcessor = new ConfigRepoProcessor(destinationDir);
-      ConfigConvertor convertor = new ConfigConvertor(resultProcessor, force);
+      ConfigRepoProcessor resultProcessor = new ConfigRepoProcessor(destinationDir);
+      ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process, force);
       convertor.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
       if (licensePath != null) {
         try (Stream<Path> pathList = Files.list(destinationDir)) {
@@ -103,8 +102,8 @@ public class ConvertCommand extends Command {
       }
       logger.info("Configuration repositories saved under: {}", destinationDir.toAbsolutePath().normalize());
     } else if (conversionFormat == PROPERTIES) {
-      PostConversionProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, newClusterName);
-      ConfigConvertor convertor = new ConfigConvertor(resultProcessor, force);
+      ConfigPropertiesProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, newClusterName);
+      ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process, force);
       convertor.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
       logger.info("Configuration properties file saved under: {}", destinationDir.toAbsolutePath().normalize());
     } else {

@@ -27,16 +27,27 @@
   </parent>
 
   <artifactId>offheap-resource</artifactId>
+  <name>Plugin :: Off-Heap</name>
 
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>statistics</artifactId>
       <version>${statistics.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- dynamic config support -->
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-server-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- activate management provider support -->
@@ -54,6 +65,11 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>

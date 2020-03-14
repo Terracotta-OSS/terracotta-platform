@@ -35,6 +35,7 @@
     <module>cli-support</module>
     <module>config-tool</module>
     <module>config-convertor</module>
+    <module>config-convertor-oss</module>
   </modules>
 
 </project>

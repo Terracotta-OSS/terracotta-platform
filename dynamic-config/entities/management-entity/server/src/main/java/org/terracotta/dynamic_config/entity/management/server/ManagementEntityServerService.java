@@ -16,7 +16,7 @@
 package org.terracotta.dynamic_config.entity.management.server;
 
 import com.tc.classloader.PermanentEntity;
-import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ConcurrencyStrategy;

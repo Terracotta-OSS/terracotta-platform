@@ -36,11 +36,9 @@
   </description>
 
   <modules>
-    <module>model</module>
     <module>api</module>
-    <module>xml</module>
-    <module>entities</module>
     <module>server</module>
+    <module>entities</module>
     <module>cli</module>
     <module>testing</module>
   </modules>

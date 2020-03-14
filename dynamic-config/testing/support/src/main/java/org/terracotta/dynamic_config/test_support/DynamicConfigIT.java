@@ -27,6 +27,7 @@ import org.terracotta.angela.client.Tsa;
 import org.terracotta.angela.client.config.custom.CustomConfigurationContext;
 import org.terracotta.angela.client.config.custom.CustomTsaConfigurationContext;
 import org.terracotta.angela.common.ConfigToolExecutionResult;
+import org.terracotta.angela.common.distribution.Distribution;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
@@ -75,13 +76,14 @@ import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
+import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
 import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
-import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA;
+import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
@@ -292,7 +294,7 @@ public class DynamicConfigIT {
     ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, ports.getPorts());
     LOGGER.debug("Generating cluster node repositories into: {}", repositoriesDir);
     fn.accept(clusterGenerator);
-    copyDirectory(repositoriesDir.resolve("stripe" + stripeId + "_node-" + nodeId), nodeRepositoryDir);
+    copyDirectory(repositoriesDir.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeRepositoryDir);
     LOGGER.debug("Created node repository into: {}", nodeRepositoryDir);
     return nodeRepositoryDir;
   }
@@ -405,11 +407,15 @@ public class DynamicConfigIT {
         .tsa(tsa -> {
           CustomTsaConfigurationContext topology = tsa
               .clusterName("tc-cluster")
-              .topology(new Topology(distribution(version(System.getProperty("angela.kit.version")), KIT, TERRACOTTA), dynamicCluster(stripes)));
+              .topology(new Topology(getDistribution(), dynamicCluster(stripes)));
           if (licenseUrl() != null) {
             topology.license(new License(licenseUrl()));
           }
         });
+  }
+
+  protected Distribution getDistribution() {
+    return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
   }
 
   protected final ConfigToolExecutionResult configToolInvocation(String... cli) {

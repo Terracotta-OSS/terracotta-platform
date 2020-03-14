@@ -36,8 +36,8 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-server</artifactId>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-configuration-repository</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -45,6 +45,14 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>tc-config-parser</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-server-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tc-tripwire-plugin</artifactId>
     </dependency>
 
     <!-- server plugins -->

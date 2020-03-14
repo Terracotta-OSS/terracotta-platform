@@ -26,102 +26,16 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
+  <groupId>org.terracotta.dynamic-config.server</groupId>
   <artifactId>dynamic-config-server</artifactId>
-  <name>Dynamic Config :: Server</name>
+  <packaging>pom</packaging>
+  <name>Dynamic Config :: Server :: POM</name>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.terracotta.diagnostic</groupId>
-      <artifactId>diagnostic-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.diagnostic</groupId>
-      <artifactId>diagnostic-service-api</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-sanskrit</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-nomad</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
+  <modules>
+    <module>server-api</module>
+    <module>services</module>
+    <module>configuration-repository</module>
+    <module>configuration-provider</module>
+  </modules>
 
-    <dependency>
-      <groupId>com.beust</groupId>
-      <artifactId>jcommander</artifactId>
-    </dependency>
-
-    <!-- plugins installed on server -->
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>data-root-resource</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>offheap-resource</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- provided server api -->
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>configuration-provider</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>tc-config-parser</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>standard-cluster-services</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- provided by server -->
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- Access TcServerMain from TcServer -->
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-l2</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-test-utilities</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.xmlunit</groupId>
-      <artifactId>xmlunit-matchers</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.github.stefanbirkner</groupId>
-      <artifactId>system-rules</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
 </project>

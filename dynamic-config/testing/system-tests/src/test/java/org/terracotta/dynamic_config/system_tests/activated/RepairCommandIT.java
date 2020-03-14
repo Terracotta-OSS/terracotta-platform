@@ -18,9 +18,9 @@ package org.terracotta.dynamic_config.system_tests.activated;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
-import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.util.Arrays;
 
@@ -33,8 +33,8 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 import static org.slf4j.event.Level.DEBUG;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 
 /**
  * @author Mathieu Carbou
