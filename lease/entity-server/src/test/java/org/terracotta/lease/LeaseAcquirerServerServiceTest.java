@@ -32,7 +32,6 @@ import org.terracotta.lease.service.LeaseService;
 import org.terracotta.lease.service.LeaseServiceConfiguration;
 import org.terracotta.lease.service.closer.ClientConnectionCloser;
 import org.terracotta.lease.service.config.LeaseConfiguration;
-import org.terracotta.lease.service.config.LeaseConfigurationImpl;
 
 import java.util.UUID;
 
@@ -83,7 +82,7 @@ public class LeaseAcquirerServerServiceTest {
     LeaseService leaseService = mock(LeaseService.class);
     ClientDescriptor clientDescriptor = mock(ClientDescriptor.class);
     ConfigChangeHandlerManager configChangeHandlerManager = mock(ConfigChangeHandlerManager.class);
-    LeaseConfiguration leaseConfiguration = new LeaseConfigurationImpl(100);
+    LeaseConfiguration leaseConfiguration = new LeaseConfiguration(100);
 
     ArgumentCaptor<LeaseServiceConfiguration> configurationCaptor = ArgumentCaptor.forClass(LeaseServiceConfiguration.class);
     when(serviceRegistry.getService(configurationCaptor.capture())).thenReturn(leaseService);

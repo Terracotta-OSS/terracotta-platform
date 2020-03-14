@@ -19,31 +19,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.lease.service.LeaseServiceProvider;
 
-import static org.terracotta.lease.service.config.LeaseConstants.DEFAULT_LEASE_LENGTH;
-import static org.terracotta.lease.service.config.LeaseConstants.MAX_LEASE_LENGTH;
+import static org.terracotta.lease.service.LeaseConstants.DEFAULT_LEASE_LENGTH;
+import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
 
 /**
  * Represents the connection leasing configuration from the server's XML config
  */
-public class LeaseConfigurationImpl implements ServiceProviderConfiguration, LeaseConfiguration {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseConfigurationImpl.class);
+public class LeaseConfiguration implements ServiceProviderConfiguration {
+  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseConfiguration.class);
 
   private volatile long leaseLength;
 
-  public LeaseConfigurationImpl(long initialLength) {
+  public LeaseConfiguration(long initialLength) {
     if (initialLength <= 0) {
       throw new IllegalArgumentException("Only positive lease lengths are acceptable");
     }
     setLeaseLength(initialLength);
   }
 
-  @Override
   public long getLeaseLength() {
     return leaseLength;
   }
 
-  @Override
   public void setLeaseLength(long leaseLength) {
     if (leaseLength <= 0) {
       LOGGER.warn("Non-positive lease length: " + leaseLength + ", ignoring it");

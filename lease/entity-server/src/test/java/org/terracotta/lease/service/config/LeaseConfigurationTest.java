@@ -17,29 +17,30 @@ package org.terracotta.lease.service.config;
 
 import org.junit.Test;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.lease.service.LeaseServiceProvider;
 
 import static org.junit.Assert.assertEquals;
 
 public class LeaseConfigurationTest {
   @Test
   public void hasCorrectServiceProviderType() {
-    ServiceProviderConfiguration configuration = new LeaseConfigurationImpl(1000L);
+    ServiceProviderConfiguration configuration = new LeaseConfiguration(1000L);
     assertEquals(LeaseServiceProvider.class, configuration.getServiceProviderType());
   }
 
   @Test
   public void givesCorrectLeaseLength() {
-    LeaseConfigurationImpl configuration = new LeaseConfigurationImpl(4L);
+    LeaseConfiguration configuration = new LeaseConfiguration(4L);
     assertEquals(4L, configuration.getLeaseLength());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void zeroLeaseLength() {
-    new LeaseConfigurationImpl(0L);
+    new LeaseConfiguration(0L);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void negativeLeaseLength() {
-    new LeaseConfigurationImpl(-1L);
+    new LeaseConfiguration(-1L);
   }
 }

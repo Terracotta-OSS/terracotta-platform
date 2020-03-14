@@ -65,7 +65,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>lease-config</artifactId>
+      <artifactId>lease-entity-server</artifactId>
       <version>${project.version}</version>
     </dependency>
 

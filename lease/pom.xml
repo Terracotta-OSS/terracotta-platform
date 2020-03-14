@@ -35,21 +35,10 @@
     <module>entity-api</module>
     <module>entity-client</module>
     <module>entity-common</module>
-    <module>config</module>
     <module>entity-server</module>
     <module>system-test</module>
     <module>passthrough-leased-connection-api</module>
   </modules>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>packaging-support</artifactId>
-        <version>${terracotta-apis.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <build>
     <plugins>

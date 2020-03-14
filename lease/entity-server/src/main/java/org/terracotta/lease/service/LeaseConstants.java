@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.lease.service.config;
+package org.terracotta.lease.service;
 
 import java.util.concurrent.TimeUnit;
 
 public class LeaseConstants {
-  public static long MAX_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-  public static long DEFAULT_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
+  public static final long MAX_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+  public static final long DEFAULT_LEASE_LENGTH = TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
 }

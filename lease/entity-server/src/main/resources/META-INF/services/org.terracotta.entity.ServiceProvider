@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-org.terracotta.lease.service.LeaseServiceProviderImpl
+org.terracotta.lease.service.LeaseServiceProvider
