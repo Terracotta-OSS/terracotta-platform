@@ -19,7 +19,6 @@ import com.tc.classloader.BuiltinService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.data_roots.DataDirectoriesConfig;
-import org.terracotta.diagnostic.server.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -29,6 +28,7 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.server.nomad.NomadBootstrapper;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.DataDirectoryConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
@@ -185,24 +185,24 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   // note: if any of the get() calls below fail, it means the servers have not been started with dynamic config code
 
   private IParameterSubstitutor getSubstitutor() {
-    return DiagnosticServices.findService(IParameterSubstitutor.class).get();
+    return NomadBootstrapper.getNomadServerManager().getDiagnosticServices().findService(IParameterSubstitutor.class).get();
   }
 
   private ConfigChangeHandlerManager getManager() {
-    return DiagnosticServices.findService(ConfigChangeHandlerManager.class).get();
+    return NomadBootstrapper.getNomadServerManager().getDiagnosticServices().findService(ConfigChangeHandlerManager.class).get();
   }
 
   private DynamicConfigEventService getEventingSupport() {
-    return DiagnosticServices.findService(DynamicConfigEventService.class).get();
+    return NomadBootstrapper.getNomadServerManager().getDiagnosticServices().findService(DynamicConfigEventService.class).get();
   }
 
   private TopologyService getTopologyService() {
-    return DiagnosticServices.findService(TopologyService.class).get();
+    return NomadBootstrapper.getNomadServerManager().getDiagnosticServices().findService(TopologyService.class).get();
   }
 
   @SuppressWarnings("unchecked")
   private NomadServer<NodeContext> getNomadServer() {
-    return DiagnosticServices.findService(NomadServer.class).get();
+    return NomadBootstrapper.getNomadServerManager().getDiagnosticServices().findService(NomadServer.class).get();
   }
 
   private void addToManager(ConfigChangeHandlerManager manager, ConfigChangeHandler configChangeHandler, Setting setting) {

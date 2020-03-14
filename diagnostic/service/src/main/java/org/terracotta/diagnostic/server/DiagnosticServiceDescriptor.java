@@ -18,6 +18,7 @@ package org.terracotta.diagnostic.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
+import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,6 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,20 +43,32 @@ class DiagnosticServiceDescriptor<T> implements DiagnosticServicesRegistration<T
   private final Class<T> serviceInterface;
   private final T serviceImplementation;
   private final Set<String> mBeans = ConcurrentHashMap.newKeySet();
+  private final Runnable onClose;
+  private final Function<String, Boolean> jmxExpose;
 
-  DiagnosticServiceDescriptor(Class<T> serviceInterface, T serviceImplementation) {
-    requireNonNull(serviceInterface);
-    requireNonNull(serviceImplementation);
+  DiagnosticServiceDescriptor(Class<T> serviceInterface, T serviceImplementation, Runnable onClose, Function<String, Boolean> jmxExpose) {
     if (!serviceInterface.isInterface()) {
       throw new IllegalArgumentException("Not an interface: " + serviceInterface.getName());
     }
-    this.serviceInterface = serviceInterface;
-    this.serviceImplementation = serviceImplementation;
+    this.serviceInterface = requireNonNull(serviceInterface);
+    this.serviceImplementation = requireNonNull(serviceImplementation);
+    this.onClose = requireNonNull(onClose);
+    this.jmxExpose = requireNonNull(jmxExpose);
   }
 
   @Override
   public Class<T> getServiceInterface() {
     return serviceInterface;
+  }
+
+  @Override
+  public boolean exposeMBean(String name) {
+    return jmxExpose.apply(name);
+  }
+
+  @Override
+  public void close() {
+    onClose.run();
   }
 
   T getServiceImplementation() {

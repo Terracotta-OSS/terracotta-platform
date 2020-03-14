@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.diagnostic.server;
+package org.terracotta.diagnostic.server.api;
 
 import java.io.Closeable;
 
@@ -22,15 +22,16 @@ import java.io.Closeable;
  */
 public interface DiagnosticServicesRegistration<T> extends Closeable {
 
-  default boolean registerMBean(String name) {
-    return DiagnosticServices.registerMBean(name, getServiceInterface());
-  }
+  /**
+   * Exposes the service through JMX
+   */
+  boolean exposeMBean(String name);
 
   Class<T> getServiceInterface();
 
+  /**
+   * Similar to {@link DiagnosticServices#unregister(Class)}
+   */
   @Override
-  default void close() {
-    DiagnosticServices.unregister(getServiceInterface());
-  }
-
+  void close();
 }

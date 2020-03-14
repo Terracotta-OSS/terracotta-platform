@@ -15,13 +15,14 @@
  */
 package org.terracotta.diagnostic.server;
 
-import com.tc.classloader.CommonComponent;
 import com.tc.management.TerracottaMBean;
 import com.tc.management.TerracottaManagement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodec;
+import org.terracotta.diagnostic.server.api.DiagnosticServices;
+import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -29,6 +30,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import java.io.Closeable;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,63 +49,88 @@ import static java.util.stream.Collectors.toList;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
-public class DiagnosticServices {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticServices.class);
-  private static final DiagnosticCodec<String> CODEC = new JsonDiagnosticCodec(false);
-  private static final DiagnosticRequestHandler HANDLER = DiagnosticRequestHandler.withCodec(CODEC);
-  private static final TerracottaMBeanGenerator GENERATOR = new TerracottaMBeanGenerator();
-  private static final Map<Class<?>, CompletableFuture<?>> LISTENERS = new ConcurrentHashMap<>();
+public class DefaultDiagnosticServices implements DiagnosticServices, Closeable {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDiagnosticServices.class);
 
-  static {
-    registerMBean("DiagnosticRequestHandler", HANDLER);
+  private final Map<Class<?>, CompletableFuture<?>> listeners = new ConcurrentHashMap<>();
+  private final TerracottaMBeanGenerator generator = new TerracottaMBeanGenerator();
+
+  private final DiagnosticRequestHandler handler;
+
+  public DefaultDiagnosticServices() {
+    this(new JsonDiagnosticCodec(false));
   }
 
-  public static <T> DiagnosticServicesRegistration<T> register(Class<T> serviceInterface, T serviceImplementation) {
-    DiagnosticServiceDescriptor<T> added = HANDLER.add(serviceInterface, serviceImplementation);
+  public DefaultDiagnosticServices(DiagnosticCodec<String> codec) {
+    this.handler = DiagnosticRequestHandler.withCodec(codec);
+  }
+
+  public void init() {
+    registerMBean("DiagnosticRequestHandler", handler);
+  }
+
+  @Override
+  public void close() {
+    unregisterMBean("DiagnosticRequestHandler");
+    clear();
+  }
+
+  @Override
+  public <T> DiagnosticServicesRegistration<T> register(Class<T> serviceInterface, T serviceImplementation) {
+    DiagnosticServiceDescriptor<T> added = handler.add(
+        serviceInterface,
+        serviceImplementation,
+        () -> unregister(serviceInterface),
+        name -> registerMBean(name, serviceInterface));
     LOGGER.info("Registered Diagnostic Service: {}", serviceInterface.getName());
     added.discoverMBeanName().ifPresent(name -> registerMBean(name, added));
     fireOnService(serviceInterface, serviceImplementation);
     return added;
   }
 
-  public static Collection<Class<?>> listServices() {
-    return HANDLER.getServices().stream().map(DiagnosticServiceDescriptor::getServiceInterface).collect(toList());
+  @Override
+  public Collection<Class<?>> listServices() {
+    return handler.getServices().stream().map(DiagnosticServiceDescriptor::getServiceInterface).collect(toList());
   }
 
-  public static <T> Optional<T> findService(Class<T> serviceInterface) {
+  @Override
+  public <T> Optional<T> findService(Class<T> serviceInterface) {
     requireNonNull(serviceInterface);
-    return HANDLER.findService(serviceInterface).map(DiagnosticServiceDescriptor::getServiceImplementation);
+    return handler.findService(serviceInterface).map(DiagnosticServiceDescriptor::getServiceImplementation);
   }
 
-  public static <T> CompletionStage<T> onService(Class<T> serviceInterface) {
+  @Override
+  public <T> CompletionStage<T> onService(Class<T> serviceInterface) {
     return getCompletableFuture(serviceInterface);
   }
 
-  public static <T> void onService(Class<T> serviceInterface, Consumer<T> action) {
+  @Override
+  public <T> void onService(Class<T> serviceInterface, Consumer<T> action) {
     onService(serviceInterface).thenAccept(action);
   }
 
-  public static void clear() {
-    while (!HANDLER.getServices().isEmpty()) {
-      for (DiagnosticServiceDescriptor<?> descriptor : new ArrayList<>(HANDLER.getServices())) {
+  @Override
+  public void clear() {
+    while (!handler.getServices().isEmpty()) {
+      for (DiagnosticServiceDescriptor<?> descriptor : new ArrayList<>(handler.getServices())) {
         unregister(descriptor.getServiceInterface());
       }
     }
-    LISTENERS.clear();
+    listeners.clear();
   }
 
-  public static <T> void unregister(Class<T> serviceInterface) {
+  @Override
+  public <T> void unregister(Class<T> serviceInterface) {
     requireNonNull(serviceInterface);
-    DiagnosticServiceDescriptor<?> descriptor = HANDLER.remove(serviceInterface);
+    DiagnosticServiceDescriptor<?> descriptor = handler.remove(serviceInterface);
     if (descriptor != null) {
-      descriptor.getRegisteredMBeans().forEach(DiagnosticServices::unregisterMBean);
+      descriptor.getRegisteredMBeans().forEach(DefaultDiagnosticServices::unregisterMBean);
     }
-    LISTENERS.remove(serviceInterface);
+    listeners.remove(serviceInterface);
   }
 
-  static <T> boolean registerMBean(String name, Class<T> serviceInterface) {
-    DiagnosticServiceDescriptor<T> serviceDescriptor = HANDLER.findService(serviceInterface).orElse(null);
+  <T> boolean registerMBean(String name, Class<T> serviceInterface) {
+    DiagnosticServiceDescriptor<T> serviceDescriptor = handler.findService(serviceInterface).orElse(null);
     if (serviceDescriptor == null) {
       return false;
     } else {
@@ -112,8 +139,8 @@ public class DiagnosticServices {
     }
   }
 
-  private static <T> void registerMBean(String name, DiagnosticServiceDescriptor<T> descriptor) {
-    registerMBean(name, GENERATOR.generateMBean(descriptor));
+  private <T> void registerMBean(String name, DiagnosticServiceDescriptor<T> descriptor) {
+    registerMBean(name, generator.generateMBean(descriptor));
     descriptor.addMBean(name);
   }
 
@@ -138,13 +165,13 @@ public class DiagnosticServices {
     }
   }
 
-  private static <T> void fireOnService(Class<T> serviceInterface, T serviceImplementation) {
+  private <T> void fireOnService(Class<T> serviceInterface, T serviceImplementation) {
     CompletableFuture<T> future = getCompletableFuture(serviceInterface);
     future.complete(serviceImplementation);
   }
 
   @SuppressWarnings("unchecked")
-  private static <T> CompletableFuture<T> getCompletableFuture(Class<T> serviceInterface) {
-    return (CompletableFuture<T>) LISTENERS.computeIfAbsent(serviceInterface, aClass -> new CompletableFuture<>());
+  private <T> CompletableFuture<T> getCompletableFuture(Class<T> serviceInterface) {
+    return (CompletableFuture<T>) listeners.computeIfAbsent(serviceInterface, aClass -> new CompletableFuture<>());
   }
 }

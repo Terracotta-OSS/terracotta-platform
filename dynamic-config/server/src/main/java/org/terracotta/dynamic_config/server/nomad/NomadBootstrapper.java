@@ -17,7 +17,8 @@ package org.terracotta.dynamic_config.server.nomad;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.diagnostic.server.DiagnosticServices;
+import org.terracotta.diagnostic.server.DefaultDiagnosticServices;
+import org.terracotta.diagnostic.server.api.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -105,6 +106,7 @@ public class NomadBootstrapper {
     private volatile IParameterSubstitutor parameterSubstitutor;
     private volatile DynamicConfigServiceImpl dynamicConfigService;
     private volatile DynamicConfigListener listener;
+    private volatile DiagnosticServices diagnosticServices;
 
     public UpgradableNomadServer<NodeContext> getNomadServer() {
       return nomadServer;
@@ -112,6 +114,10 @@ public class NomadBootstrapper {
 
     public IParameterSubstitutor getParameterSubstitutor() {
       return parameterSubstitutor;
+    }
+
+    public DiagnosticServices getDiagnosticServices() {
+      return diagnosticServices;
     }
 
     private final NomadEnvironment nomadEnvironment = new NomadEnvironment();
@@ -139,6 +145,7 @@ public class NomadBootstrapper {
     }
 
     private void init(Path repositoryPath, IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager manager, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws UncheckedNomadException {
+      this.diagnosticServices = new DefaultDiagnosticServices();
       this.parameterSubstitutor = parameterSubstitutor;
       this.configChangeHandlerManager = manager;
       this.repositoryManager = createNomadRepositoryManager(repositoryPath, parameterSubstitutor);
@@ -156,12 +163,13 @@ public class NomadBootstrapper {
     }
 
     private void registerDiagnosticService() {
-      DiagnosticServices.register(IParameterSubstitutor.class, parameterSubstitutor);
-      DiagnosticServices.register(ConfigChangeHandlerManager.class, configChangeHandlerManager);
-      DiagnosticServices.register(TopologyService.class, dynamicConfigService);
-      DiagnosticServices.register(DynamicConfigService.class, dynamicConfigService);
-      DiagnosticServices.register(DynamicConfigEventService.class, dynamicConfigService);
-      DiagnosticServices.register(NomadServer.class, nomadServer);
+
+      diagnosticServices.register(IParameterSubstitutor.class, parameterSubstitutor);
+      diagnosticServices.register(ConfigChangeHandlerManager.class, configChangeHandlerManager);
+      diagnosticServices.register(TopologyService.class, dynamicConfigService);
+      diagnosticServices.register(DynamicConfigService.class, dynamicConfigService);
+      diagnosticServices.register(DynamicConfigEventService.class, dynamicConfigService);
+      diagnosticServices.register(NomadServer.class, nomadServer);
     }
 
     public NomadRepositoryManager getRepositoryManager() {

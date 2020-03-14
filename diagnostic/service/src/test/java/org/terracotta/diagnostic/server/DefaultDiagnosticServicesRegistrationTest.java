@@ -15,7 +15,10 @@
  */
 package org.terracotta.diagnostic.server;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 
 import javax.management.InstanceNotFoundException;
 
@@ -33,24 +36,36 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 /**
  * @author Mathieu Carbou
  */
-public class DiagnosticServicesRegistrationTest {
+public class DefaultDiagnosticServicesRegistrationTest {
+
+  DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices();
+
+  @Before
+  public void setUp() throws Exception {
+    diagnosticServices.init();
+  }
+
+  @After
+  public void tearDown() {
+    diagnosticServices.close();
+  }
 
   @Test
   public void test_close() throws Throwable {
-    assertThat(DiagnosticServices.findService(MyService2.class).isPresent(), is(false));
+    assertThat(diagnosticServices.findService(MyService2.class).isPresent(), is(false));
 
-    DiagnosticServicesRegistration<MyService2> registration = DiagnosticServices.register(MyService2.class, new MyServiceImpl());
+    DiagnosticServicesRegistration<MyService2> registration = diagnosticServices.register(MyService2.class, new MyServiceImpl());
 
-    assertThat(DiagnosticServices.findService(MyService2.class).isPresent(), is(true));
+    assertThat(diagnosticServices.findService(MyService2.class).isPresent(), is(true));
     assertThat(getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "s2", PUBLIC)), is(not(nullValue())));
 
-    assertThat(registration.registerMBean("AnotherName"), is(true));
+    assertThat(registration.exposeMBean("AnotherName"), is(true));
 
     assertThat(getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "AnotherName", PUBLIC)), is(not(nullValue())));
 
     registration.close();
 
-    assertThat(DiagnosticServices.findService(MyService2.class).isPresent(), is(false));
+    assertThat(diagnosticServices.findService(MyService2.class).isPresent(), is(false));
     assertThat(
         () -> getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "s2", PUBLIC)),
         is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=s2")))));
@@ -59,14 +74,14 @@ public class DiagnosticServicesRegistrationTest {
         is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=AnotherName")))));
 
     // subsequent init is not failing
-    DiagnosticServices.register(MyService2.class, new MyServiceImpl()).close();
+    diagnosticServices.register(MyService2.class, new MyServiceImpl()).close();
   }
 
   @Test
   public void test_registerMBean() throws Throwable {
-    DiagnosticServicesRegistration<MyService2> registration = DiagnosticServices.register(MyService2.class, new MyServiceImpl());
-    assertThat(registration.registerMBean("foo"), is(true));
-    assertThat(registration.registerMBean("bar"), is(true));
+    DiagnosticServicesRegistration<MyService2> registration = diagnosticServices.register(MyService2.class, new MyServiceImpl());
+    assertThat(registration.exposeMBean("foo"), is(true));
+    assertThat(registration.exposeMBean("bar"), is(true));
 
     assertThat(getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "s2", PUBLIC)), is(not(nullValue())));
     assertThat(getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "foo", PUBLIC)), is(not(nullValue())));
@@ -74,8 +89,8 @@ public class DiagnosticServicesRegistrationTest {
 
     registration.close();
 
-    assertThat(registration.registerMBean("foo"), is(false));
-    assertThat(registration.registerMBean("baz"), is(false));
+    assertThat(registration.exposeMBean("foo"), is(false));
+    assertThat(registration.exposeMBean("baz"), is(false));
 
     assertThat(
         () -> getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "s2", PUBLIC)),

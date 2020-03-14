@@ -20,38 +20,43 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.terracotta</groupId>
-    <artifactId>platform-root</artifactId>
+    <groupId>org.terracotta.diagnostic</groupId>
+    <artifactId>diagnostic</artifactId>
     <version>5.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <groupId>org.terracotta.diagnostic</groupId>
-  <artifactId>diagnostic</artifactId>
-  <packaging>pom</packaging>
-  <name>Diagnostic :: POM</name>
-
-  <modules>
-    <module>common</module>
-    <module>client</module>
-    <module>service-api</module>
-    <module>service</module>
-  </modules>
+  <artifactId>diagnostic-service</artifactId>
+  <name>Diagnostic :: Service</name>
 
   <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
+      <groupId>org.terracotta.diagnostic</groupId>
+      <artifactId>diagnostic-common</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+    </dependency>
+
+    <!-- provided on server -->
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>management</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
+      <groupId>org.terracotta.diagnostic</groupId>
+      <artifactId>diagnostic-service-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-test-utilities</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

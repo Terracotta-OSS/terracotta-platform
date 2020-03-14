@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_UNKNOWN_COMMAND;
@@ -81,8 +82,8 @@ public class DiagnosticRequestHandler extends AbstractTerracottaMBean implements
         });
   }
 
-  <T> DiagnosticServiceDescriptor<T> add(Class<T> serviceInterface, T serviceImplementation) {
-    DiagnosticServiceDescriptor<T> service = new DiagnosticServiceDescriptor<>(serviceInterface, serviceImplementation);
+  <T> DiagnosticServiceDescriptor<T> add(Class<T> serviceInterface, T serviceImplementation, Runnable onClose, Function<String, Boolean> jmxExpose) {
+    DiagnosticServiceDescriptor<T> service = new DiagnosticServiceDescriptor<>(serviceInterface, serviceImplementation, onClose, jmxExpose);
     DiagnosticServiceDescriptor<?> previous = services.putIfAbsent(serviceInterface.getName(), service);
     if (previous == null) {
       return service;

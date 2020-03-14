@@ -26,37 +26,7 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>diagnostic-server</artifactId>
-  <name>Diagnostic :: Server</name>
+  <artifactId>diagnostic-service-api</artifactId>
+  <name>Diagnostic :: Service API</name>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.terracotta.diagnostic</groupId>
-      <artifactId>diagnostic-common</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>net.bytebuddy</groupId>
-      <artifactId>byte-buddy</artifactId>
-    </dependency>
-
-    <!-- provided on server -->
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>packaging-support</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>management</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-test-utilities</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
 </project>

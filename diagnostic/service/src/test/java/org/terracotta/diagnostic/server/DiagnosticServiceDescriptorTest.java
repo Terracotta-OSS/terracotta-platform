@@ -22,6 +22,7 @@ import org.terracotta.json.Json;
 
 import java.io.Closeable;
 import java.io.Serializable;
+import java.util.function.Function;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -36,23 +37,26 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class DiagnosticServiceDescriptorTest {
 
+  private final Runnable noop = () -> {};
+  private final Function<String, Boolean> mbean = name -> true;
+
   @Test
   public void test_ctor_params_validation() {
     // param validation
     assertThat(
-        () -> new DiagnosticServiceDescriptor<>(null, Json.copyObjectMapper()),
+        () -> new DiagnosticServiceDescriptor<>(null, Json.copyObjectMapper(), noop, mbean),
         is(throwing(instanceOf(NullPointerException.class))));
     assertThat(
-        () -> new DiagnosticServiceDescriptor<>(Serializable.class, null),
+        () -> new DiagnosticServiceDescriptor<>(Serializable.class, null, noop, mbean),
         is(throwing(instanceOf(NullPointerException.class))));
     assertThat(
-        () -> new DiagnosticServiceDescriptor<>(ObjectCodec.class, Json.copyObjectMapper()),
+        () -> new DiagnosticServiceDescriptor<>(ObjectCodec.class, Json.copyObjectMapper(), noop, mbean),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Not an interface: " + ObjectCodec.class.getName())))));
   }
 
   @Test
   public void test_matches() {
-    DiagnosticServiceDescriptor<Serializable> descriptor = new DiagnosticServiceDescriptor<>(Serializable.class, Json.copyObjectMapper());
+    DiagnosticServiceDescriptor<Serializable> descriptor = new DiagnosticServiceDescriptor<>(Serializable.class, Json.copyObjectMapper(), noop, mbean);
     assertThat(() -> descriptor.matches(null), is(throwing(instanceOf(NullPointerException.class))));
     assertThat(descriptor.matches(Serializable.class), is(true));
     assertThat(descriptor.matches(Closeable.class), is(false));
@@ -60,16 +64,16 @@ public class DiagnosticServiceDescriptorTest {
 
   @Test
   public void test_mustBeExposed() {
-    DiagnosticServiceDescriptor<Serializable> descriptor1 = new DiagnosticServiceDescriptor<>(Serializable.class, Json.copyObjectMapper());
+    DiagnosticServiceDescriptor<Serializable> descriptor1 = new DiagnosticServiceDescriptor<>(Serializable.class, Json.copyObjectMapper(), noop, mbean);
     assertThat(descriptor1.discoverMBeanName().isPresent(), is(false));
 
-    DiagnosticServiceDescriptor<MyService> descriptor2 = new DiagnosticServiceDescriptor<>(MyService.class, new MyServiceImpl());
+    DiagnosticServiceDescriptor<MyService> descriptor2 = new DiagnosticServiceDescriptor<>(MyService.class, new MyServiceImpl(), noop, mbean);
     assertThat(descriptor2.discoverMBeanName().isPresent(), is(true));
   }
 
   @Test
   public void test_invoke() {
-    DiagnosticServiceDescriptor<MyService> descriptor = new DiagnosticServiceDescriptor<>(MyService.class, new MyService() {});
+    DiagnosticServiceDescriptor<MyService> descriptor = new DiagnosticServiceDescriptor<>(MyService.class, new MyService() {}, noop, mbean);
     // OK
     {
       DiagnosticResponse<?> response = descriptor.invoke("bar").get();
