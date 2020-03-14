@@ -55,7 +55,6 @@
     <module>runnel</module>
     <module>management</module>
     <module>client-message-tracker</module>
-    <module>tc-config-generator</module>
     <module>common</module>
     <module>data-root-resource</module>
     <module>diagnostic</module>
