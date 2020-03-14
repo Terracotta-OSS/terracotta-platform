@@ -15,6 +15,8 @@
  */
 package org.terracotta.common.struct;
 
+import java.math.BigInteger;
+
 public enum MemoryUnit implements Unit<MemoryUnit> {
   B(0),
   KB(10),
@@ -24,11 +26,9 @@ public enum MemoryUnit implements Unit<MemoryUnit> {
   PB(50);
 
   private final int bitShift;
-  private final long mask;
 
   MemoryUnit(int bitShift) {
     this.bitShift = bitShift;
-    this.mask = -1L << (63 - bitShift);
   }
 
   @Override
@@ -37,11 +37,8 @@ public enum MemoryUnit implements Unit<MemoryUnit> {
   }
 
   @Override
-  public long convert(long quantity, MemoryUnit unit) {
-    if (this == unit) {
-      return quantity;
-    }
-    return unit.toBytes(quantity) / this.toBytes(1);
+  public BigInteger convert(BigInteger quantity, MemoryUnit unit) {
+    return this == unit ? quantity : unit.toBytes(quantity).divide(this.toBytes(BigInteger.ONE));
   }
 
   @Override
@@ -55,27 +52,24 @@ public enum MemoryUnit implements Unit<MemoryUnit> {
   }
 
   public long toBytes(long quantity) {
+    return toBytes(BigInteger.valueOf(quantity)).longValueExact();
+  }
+
+  public BigInteger toBytes(BigInteger quantity) {
     if (bitShift == 0) {
       return quantity;
     }
 
-    if (quantity == Long.MIN_VALUE) {
-      throw new IllegalArgumentException("Byte count is too large: " + quantity + this);
+    if (quantity.signum() == -1) {
+      final BigInteger minusOne = BigInteger.ONE.negate();
+      return minusOne.multiply(toBytes(minusOne.multiply(quantity)));
     }
 
-    if (quantity < 0) {
-      return -1 * toBytes(-1 * quantity);
+    if (quantity.equals(BigInteger.ZERO)) {
+      return BigInteger.ZERO;
     }
 
-    if (quantity == 0) {
-      return 0;
-    }
-
-    if ((quantity & mask) != 0) {
-      throw new IllegalArgumentException("Byte count is too large: " + quantity + this);
-    }
-
-    return quantity << bitShift;
+    return quantity.shiftLeft(bitShift);
   }
 
   public static MemoryUnit parse(String s) {

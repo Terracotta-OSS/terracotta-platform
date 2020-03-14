@@ -15,23 +15,22 @@
  */
 package org.terracotta.common.struct;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static java.lang.Math.multiplyExact;
-
 public enum TimeUnit implements Unit<TimeUnit> {
-  MILLISECONDS("ms", 1),
-  SECONDS("s", 1000),
-  MINUTES("m", 60 * 1000),
-  HOURS("h", 60 * 60 * 1000),
+  MILLISECONDS("ms", BigInteger.ONE),
+  SECONDS("s", BigInteger.valueOf(1000)),
+  MINUTES("m", BigInteger.valueOf(60 * 1000)),
+  HOURS("h", BigInteger.valueOf(60 * 60 * 1000)),
   ;
 
   private final String shortName;
-  private final long factor;
+  private final BigInteger factor;
 
-  TimeUnit(String shortName, long factor) {
+  TimeUnit(String shortName, BigInteger factor) {
     this.shortName = shortName;
     this.factor = factor;
   }
@@ -42,11 +41,11 @@ public enum TimeUnit implements Unit<TimeUnit> {
   }
 
   @Override
-  public long convert(long quantity, TimeUnit unit) {
+  public BigInteger convert(BigInteger quantity, TimeUnit unit) {
     if (this == unit) {
       return quantity;
     }
-    return multiplyExact(quantity, unit.factor) / this.factor;
+    return quantity.multiply(unit.factor).divide(this.factor);
   }
 
   @Override
