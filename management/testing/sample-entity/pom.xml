@@ -38,19 +38,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-common</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-nms-agent</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.terracotta.voltron.proxy</groupId>
       <artifactId>voltron-proxy-client</artifactId>
       <version>${project.version}</version>
@@ -59,6 +46,13 @@
       <groupId>org.terracotta.voltron.proxy</groupId>
       <artifactId>voltron-proxy-server</artifactId>
       <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>nms-agent-entity-client</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided by voltron (client) -->
@@ -75,14 +69,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-server</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-server-api</artifactId>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-api</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
@@ -121,8 +109,29 @@
     </dependency>
     <!-- management client for testing to read the monitoring service-->
     <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-nms</artifactId>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>nms-entity-client</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- client agent server entity -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>nms-agent-entity-server</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- NMS Entity that access topology and reads messages (JDK 8) -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>nms-entity-server</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- monitoring service -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -133,24 +142,27 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4.3</version>
+        <configuration>
+          <shadedArtifactAttached>true</shadedArtifactAttached>
+          <shadedClassifierName>plugin</shadedClassifierName>
+          <createDependencyReducedPom>false</createDependencyReducedPom>
+          <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+          <createSourcesJar>true</createSourcesJar>
+          <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+          </transformers>
+          <artifactSet>
+            <includes>
+              <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
+              <include>org.terracotta.voltron.proxy:voltron-proxy-server</include>
+            </includes>
+          </artifactSet>
+        </configuration>
         <executions>
           <execution>
-            <phase>package</phase>
             <goals>
               <goal>shade</goal>
             </goals>
-            <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <shadedClassifierName>plugin</shadedClassifierName>
-              <!-- we have to make sure no voltron api comes in the shaded jar -->
-              <artifactSet>
-                <includes>
-                  <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
-                  <include>org.terracotta.voltron.proxy:voltron-proxy-server</include>
-                </includes>
-              </artifactSet>
-            </configuration>
           </execution>
         </executions>
       </plugin>

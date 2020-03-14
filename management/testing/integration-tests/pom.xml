@@ -37,14 +37,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-common</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-nms-agent</artifactId>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>nms-agent-entity-client</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -53,12 +47,13 @@
       <groupId>org.terracotta.management.testing</groupId>
       <artifactId>sample-entity</artifactId>
       <version>${project.version}</version>
+      <classifier>plugin</classifier>
       <scope>test</scope>
     </dependency>
     <!-- management client to read the monitoring service-->
     <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-nms</artifactId>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>nms-entity-client</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -105,7 +100,7 @@
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <id>voltron-kit</id>
+            <id>unpack-kit</id>
             <phase>prepare-package</phase>
             <goals>
               <goal>unpack</goal>
@@ -136,21 +131,69 @@
                   <version>${project.version}</version>
                   <classifier>plugin</classifier>
                 </artifactItem>
+
                 <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-common</artifactId>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>management-model</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-server</artifactId>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>management-registry</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-server-api</artifactId>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>sequence-generator</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>cluster-topology</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>nms-agent-entity-common</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>nms-agent-entity-server</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>nms-entity-common</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>nms-entity-server</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>monitoring-service</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.management</groupId>
+                  <artifactId>monitoring-service-api</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.voltron.proxy</groupId>
+                  <artifactId>voltron-proxy-common</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.voltron.proxy</groupId>
+                  <artifactId>voltron-proxy-server</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
                 <artifactItem>
                   <groupId>org.terracotta</groupId>
                   <artifactId>statistics</artifactId>
