@@ -31,10 +31,6 @@
   <artifactId>doc</artifactId>
   <name>Terracotta Management :: Testing :: Doc Use Case</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
   <dependencies>
     <!-- management client to read the monitoring service-->
     <dependency>

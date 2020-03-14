@@ -32,10 +32,6 @@
   <packaging>jar</packaging>
   <name>Terracotta Management :: Testing :: Sample Entity</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.terracotta.voltron.proxy</groupId>

@@ -29,10 +29,6 @@
   <artifactId>nms-agent-entity-server</artifactId>
   <name>Terracotta Management :: NMS Agent Entity :: Server</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
   <dependencies>
     <!-- in common server classpath -->
     <dependency>

@@ -31,10 +31,6 @@
   <artifactId>integration-tests</artifactId>
   <name>Terracotta Management :: Testing :: Integration Tests</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.terracotta.management</groupId>
