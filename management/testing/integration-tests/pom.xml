@@ -200,6 +200,11 @@
                   <artifactId>offheap-resource</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.terracotta.common</groupId>
+                  <artifactId>common-structures</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
               </artifactItems>
               <outputDirectory>${project.build.directory}/voltronKit/terracotta-${terracotta-core.version}/server/plugins/lib</outputDirectory>
             </configuration>

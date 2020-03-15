@@ -31,7 +31,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluster;
-import static org.terracotta.dynamic_config.api.service.IParameterSubstitutor.identity;
 
 public class DataDirectoryConfigChangeHandlerTest {
 
@@ -41,7 +40,7 @@ public class DataDirectoryConfigChangeHandlerTest {
   @Test
   public void testGetConfigWithChange() throws Exception {
     DataDirectoriesConfig dataDirectoriesConfig = mock(DataDirectoriesConfig.class);
-    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, identity());
+    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig);
     dataDirectoryConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
 
     assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().entrySet(), Matchers.hasSize(1));
@@ -51,7 +50,7 @@ public class DataDirectoryConfigChangeHandlerTest {
   @Test
   public void testApplyChange() {
     DataDirectoriesConfig dataDirectoriesConfig = mock(DataDirectoriesConfig.class);
-    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, identity());
+    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig);
 
     dataDirectoryConfigChangeHandler.apply(set.toConfiguration(topology.getCluster()));
 

@@ -131,6 +131,12 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-server-api</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
