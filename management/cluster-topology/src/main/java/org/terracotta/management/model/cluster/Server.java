@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 
 import java.time.Clock;
@@ -28,6 +29,7 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public final class Server extends AbstractNode<Stripe> {
 
   private static final long serialVersionUID = 2;

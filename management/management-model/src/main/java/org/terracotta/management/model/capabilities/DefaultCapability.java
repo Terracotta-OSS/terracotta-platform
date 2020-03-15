@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.model.capabilities;
 
-import java.util.Objects;
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 
@@ -23,11 +23,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
+@CommonComponent
 public final class DefaultCapability implements Capability, Serializable {
 
   private static final long serialVersionUID = 1;

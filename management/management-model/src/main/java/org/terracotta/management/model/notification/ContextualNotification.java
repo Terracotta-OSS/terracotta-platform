@@ -15,17 +15,19 @@
  */
 package org.terracotta.management.model.notification;
 
-import java.util.Objects;
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public final class ContextualNotification implements Contextual {
 
   private static final long serialVersionUID = 1;

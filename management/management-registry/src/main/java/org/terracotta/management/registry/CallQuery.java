@@ -15,12 +15,14 @@
  */
 package org.terracotta.management.registry;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public interface CallQuery<T> extends Query<ContextualReturn<T>> {
 
   Class<T> getReturnType();
@@ -29,6 +31,7 @@ public interface CallQuery<T> extends Query<ContextualReturn<T>> {
 
   Parameter[] getParameters();
 
+  @CommonComponent
   interface Builder<T> extends QueryBuilder<Builder<T>, CallQuery<T>> {
 
   }

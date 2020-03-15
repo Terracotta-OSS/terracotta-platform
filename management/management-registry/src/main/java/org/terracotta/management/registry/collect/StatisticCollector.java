@@ -33,7 +33,7 @@ public interface StatisticCollector {
   void stopStatisticCollector();
 
   boolean isRunning();
-  
+
   interface Collector {
     void onStatistics(Collection<ContextualStatistics> statistics);
   }

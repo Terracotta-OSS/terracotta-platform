@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.model.cluster;
 
+import com.tc.classloader.CommonComponent;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,6 +26,7 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public final class Connection extends AbstractNode<Client> {
 
   private static final long serialVersionUID = 3;

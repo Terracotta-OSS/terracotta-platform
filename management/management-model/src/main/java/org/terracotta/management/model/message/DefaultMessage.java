@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.model.message;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.sequence.Sequence;
 
@@ -25,6 +26,7 @@ import java.util.List;
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public class DefaultMessage implements Message, Serializable {
 
   private static final long serialVersionUID = 1;

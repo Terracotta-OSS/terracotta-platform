@@ -15,10 +15,12 @@
  */
 package org.terracotta.management.model.stats;
 
+import com.tc.classloader.CommonComponent;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.Serializable;
 
+@CommonComponent
 public class DelegatingSample<T extends Serializable> implements Sample<T> {
 
   private static final long serialVersionUID = 1L;

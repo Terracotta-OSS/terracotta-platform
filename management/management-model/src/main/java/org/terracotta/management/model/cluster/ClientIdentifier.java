@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
-import java.util.Objects;
+import com.tc.classloader.CommonComponent;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,6 +40,7 @@ import java.util.logging.Logger;
  *
  * @author Mathieu Carbou
  */
+@CommonComponent
 public final class ClientIdentifier implements Serializable {
 
   private static final long serialVersionUID = 1;

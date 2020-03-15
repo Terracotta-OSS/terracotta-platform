@@ -66,6 +66,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>

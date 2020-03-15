@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Contextual;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.List;
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public interface Node extends Contextual {
   String getId();
 

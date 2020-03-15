@@ -15,15 +15,17 @@
  */
 package org.terracotta.management.model.message;
 
-import java.util.Objects;
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.sequence.Sequence;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public class DefaultManagementCallMessage extends DefaultMessage implements ManagementCallMessage, Serializable {
 
   private static final long serialVersionUID = 2L;

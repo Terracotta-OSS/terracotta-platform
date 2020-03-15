@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.registry;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
@@ -32,6 +33,7 @@ import java.util.concurrent.ExecutionException;
  *
  * @author Ludovic Orban
  */
+@CommonComponent
 public interface ManagementProvider<T> {
 
   /**

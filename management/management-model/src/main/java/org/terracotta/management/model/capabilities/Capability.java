@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.model.capabilities;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 
@@ -23,6 +24,7 @@ import java.util.Collection;
 /**
  * @author Ludovic Orban
  */
+@CommonComponent
 public interface Capability {
 
   String getName();

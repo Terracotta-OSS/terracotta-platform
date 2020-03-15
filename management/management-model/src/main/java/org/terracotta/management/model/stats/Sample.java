@@ -15,8 +15,11 @@
  */
 package org.terracotta.management.model.stats;
 
+import com.tc.classloader.CommonComponent;
+
 import java.io.Serializable;
 
+@CommonComponent
 public interface Sample<T extends Serializable> extends Serializable {
   T getSample();
 
