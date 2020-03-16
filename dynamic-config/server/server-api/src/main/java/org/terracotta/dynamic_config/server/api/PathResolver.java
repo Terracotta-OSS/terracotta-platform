@@ -27,8 +27,6 @@ import static java.util.function.Function.identity;
  */
 public class PathResolver {
 
-  public static PathResolver NOOP = new PathResolver();
-
   private final Path baseDir;
   private final Function<Path, Path> transform;
 

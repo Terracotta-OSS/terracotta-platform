@@ -53,7 +53,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 
-public class DynamicConfigConfiguration implements Configuration, PrettyPrintable, PlatformConfiguration, DynamicConfigExtension.Registrar {
+public class StartupConfiguration implements Configuration, PrettyPrintable, PlatformConfiguration, DynamicConfigExtension.Registrar {
 
   private final Collection<Tuple2<Class<?>, Object>> extendedConfigurations = new CopyOnWriteArrayList<>();
   private final Collection<ServiceProviderConfiguration> serviceProviderConfigurations = new CopyOnWriteArrayList<>();
@@ -64,7 +64,7 @@ public class DynamicConfigConfiguration implements Configuration, PrettyPrintabl
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
 
-  DynamicConfigConfiguration(NodeContext nodeContext, boolean partialConfig, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor) {
+  StartupConfiguration(NodeContext nodeContext, boolean partialConfig, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor) {
     this.nodeContext = requireNonNull(nodeContext);
     this.partialConfig = partialConfig;
     this.classLoader = requireNonNull(classLoader);
@@ -246,7 +246,7 @@ public class DynamicConfigConfiguration implements Configuration, PrettyPrintabl
 
       @Override
       public File getLogsLocation() {
-        return pathResolver.resolve(substitutor.substitute(node.getNodeLogDir())).toFile();
+        return substitutor.substitute(pathResolver.resolve(node.getNodeLogDir())).toFile();
       }
 
       @Override

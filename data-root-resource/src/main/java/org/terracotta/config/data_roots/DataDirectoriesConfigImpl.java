@@ -64,7 +64,8 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, NodeContext nodeContext) {
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
-    this.platform = nodeContext.getNode().getNodeMetadataDir();
+
+    this.platform = compute(nodeContext.getNode().getNodeMetadataDir());
     nodeContext.getNode().getDataDirs().forEach((name, path) -> addDataDirectory(name, path.toString()));
     this.platformRootIdentifier = platform == null ? null : "__platform__";
   }
@@ -94,7 +95,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
       if (mapping.isUseForPlatform()) {
         if (tempPlatformRootIdentifier == null) {
           tempPlatformRootIdentifier = mapping.getName();
-          tempPlatformPath = pathResolver.resolve(Paths.get(mapping.getValue()));
+          tempPlatformPath = parameterSubstitutor.substitute(pathResolver.resolve(Paths.get(mapping.getValue())));
         } else {
           throw new DataDirectoriesConfigurationException("More than one data directory is configured to be used by platform");
         }
@@ -114,7 +115,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   public void addDataDirectory(String name, String path) {
     validateDataDirectory(name, path);
 
-    Path dataDirectory = pathResolver.resolve(Paths.get(parameterSubstitutor.substitute(path))).normalize();
+    Path dataDirectory = compute(Paths.get(path));
 
     // with dynamic config, XML is parsed multiple times during the lifecycle of the server and these logs are triggered at each parsing
     LOGGER.debug("Defined directory with name: {} at location: {}", name, dataDirectory);
@@ -124,7 +125,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
 
   @Override
   public void validateDataDirectory(String name, String path) {
-    Path dataDirectory = pathResolver.resolve(Paths.get(parameterSubstitutor.substitute(path))).normalize();
+    Path dataDirectory = compute(Paths.get(path));
 
     if (dataRootMap.containsKey(name)) {
       throw new DataDirectoriesConfigurationException("A data directory with name: " + name + " already exists");
@@ -146,11 +147,6 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     } catch (IOException e) {
       throw new RuntimeException("Unable to create data directory: " + dataDirectory, e);
     }
-  }
-
-  private DataDirectories getDataRootsForServer(String serverName) {
-    return serverToDataRoots.computeIfAbsent(serverName,
-        name -> new DataDirectoriesWithServerName(this, DataDirectoriesConfig.cleanStringForPath(name)));
   }
 
   @Override
@@ -224,6 +220,15 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
         throw new RuntimeException("A file with configured data directory: " + directory + " already exists!");
       }
     }
+  }
+
+  private DataDirectories getDataRootsForServer(String serverName) {
+    return serverToDataRoots.computeIfAbsent(serverName,
+        name -> new DataDirectoriesWithServerName(this, DataDirectoriesConfig.cleanStringForPath(name)));
+  }
+
+  private Path compute(Path path) {
+    return parameterSubstitutor.substitute(pathResolver.resolve(path)).normalize();
   }
 
   private Path overLapsWith(Path newDataDirectoryPath) {

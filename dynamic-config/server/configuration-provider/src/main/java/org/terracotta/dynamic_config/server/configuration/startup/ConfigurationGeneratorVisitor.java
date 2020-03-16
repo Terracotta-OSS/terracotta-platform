@@ -78,26 +78,27 @@ public class ConfigurationGeneratorVisitor {
     return diagnosticMode;
   }
 
-  public DynamicConfigConfiguration generateConfiguration() {
+  public StartupConfiguration generateConfiguration() {
     requireNonNull(nomadServerManager);
     requireNonNull(nodeContext);
 
     if (unConfiguredMode) {
-      return new DynamicConfigConfiguration(nodeContext, true, classLoader, pathResolver, parameterSubstitutor);
+      // in diagnostic / unconfigured node mode, make sure we make platform think that the node is alone...
+      return new StartupConfiguration(nodeContext.alone(), true, classLoader, pathResolver, parameterSubstitutor);
     }
 
     NodeContext nodeContext = nomadServerManager.getConfiguration()
         .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the repository folder and try again."));
 
     if (diagnosticMode) {
-      // If diagnostic mode is ON:
+      // If diagnostic mode is ON: , make sure we make platform think that the node is alone...
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the config created will be stripped to make platform think this node is alone;
       nodeContext = nodeContext.alone();
     }
 
-    return new DynamicConfigConfiguration(nodeContext, diagnosticMode, classLoader, pathResolver, parameterSubstitutor);
+    return new StartupConfiguration(nodeContext, diagnosticMode, classLoader, pathResolver, parameterSubstitutor);
   }
 
   void startUnconfigured(NodeContext nodeContext, String optionalNodeRepositoryFromCLI) {

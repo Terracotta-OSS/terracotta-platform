@@ -42,9 +42,9 @@ import org.terracotta.dynamic_config.server.configuration.service.ParameterSubst
 import org.terracotta.dynamic_config.server.configuration.startup.CommandLineProcessor;
 import org.terracotta.dynamic_config.server.configuration.startup.ConfigurationGeneratorVisitor;
 import org.terracotta.dynamic_config.server.configuration.startup.CustomJCommander;
-import org.terracotta.dynamic_config.server.configuration.startup.DynamicConfigConfiguration;
 import org.terracotta.dynamic_config.server.configuration.startup.MainCommandLineProcessor;
 import org.terracotta.dynamic_config.server.configuration.startup.Options;
+import org.terracotta.dynamic_config.server.configuration.startup.StartupConfiguration;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
 import org.terracotta.dynamic_config.server.configuration.sync.Require;
@@ -52,6 +52,7 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
@@ -64,7 +65,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigConfigurationProvider.class);
 
   private volatile DynamicConfigurationPassiveSync dynamicConfigurationPassiveSync;
-  private volatile DynamicConfigConfiguration configuration;
+  private volatile StartupConfiguration configuration;
 
   @Override
   public void initialize(List<String> args) {
@@ -91,7 +92,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // the config repository: repository/config.
       // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
       // That is why we need to force the resolving within the XML relatively to the user directory.
-      PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute);
+      Path baseDir = parameterSubstitutor.substitute(Paths.get("%(user.dir)"));
+      PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
 
       // optional service enabling license parsing
       LicenseParser licenseParser = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseParser::unsupported);
@@ -149,7 +151,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   }
 
   @Override
-  public DynamicConfigConfiguration getConfiguration() {
+  public StartupConfiguration getConfiguration() {
     return configuration;
   }
 

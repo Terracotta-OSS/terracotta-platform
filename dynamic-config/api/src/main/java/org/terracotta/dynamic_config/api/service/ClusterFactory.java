@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
@@ -53,7 +54,7 @@ public class ClusterFactory {
 
   public Cluster create(Properties properties) {
     Collection<Configuration> defaultsAdded = new TreeSet<>(Comparator.comparing(Configuration::toString));
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(properties, defaultsAdded::add);
+    Cluster cluster = create(properties, defaultsAdded::add);
 
     LOGGER.info(
         String.format(
@@ -66,6 +67,10 @@ public class ClusterFactory {
     );
 
     return validated(cluster);
+  }
+
+  public Cluster create(Properties properties, Consumer<Configuration> added) {
+    return ConfigurationParser.parsePropertyConfiguration(properties, added);
   }
 
   /**
