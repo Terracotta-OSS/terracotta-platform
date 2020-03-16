@@ -132,9 +132,6 @@ public class Options {
   @Parameter(names = {"-T", "--" + TC_PROPERTIES})
   private String tcProperties;
 
-  @Parameter(names = {"-h", "--help"}, help = true)
-  private boolean help;
-
   @Parameter(names = {"-N", "--" + CLUSTER_NAME})
   private String clusterName;
 
@@ -143,10 +140,6 @@ public class Options {
 
   @Parameter(names = {"-D", "--" + DIAGNOSTIC_MODE})
   private boolean wantsDiagnosticMode;
-
-  public boolean isHelp() {
-    return help;
-  }
 
   private final Map<Setting, String> paramValueMap = new HashMap<>();
 
