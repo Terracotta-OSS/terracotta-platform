@@ -48,8 +48,8 @@ public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-f"}, description = "Output configuration file", converter = PathConverter.class)
   private Path outputFile;
 
-  @Parameter(names = {"-x"}, description = "Exclude default values. Default: false", converter = BooleanConverter.class)
-  private boolean excludeDefaultValues;
+  @Parameter(names = {"-i"}, description = "Include default values. Default: false", converter = BooleanConverter.class)
+  private boolean includeDefaultValues;
 
   @Parameter(names = {"-r"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
@@ -109,7 +109,7 @@ public class ExportCommand extends RemoteCommand {
         Properties nonDefaults = cluster.toProperties(false, false);
         try (StringWriter out = new StringWriter()) {
           Props.store(out, nonDefaults, "Non-default configurations:");
-          if (!this.excludeDefaultValues) {
+          if (includeDefaultValues) {
             Properties defaults = cluster.toProperties(false, true);
             defaults.keySet().removeAll(nonDefaults.keySet());
             out.write(System.lineSeparator());
