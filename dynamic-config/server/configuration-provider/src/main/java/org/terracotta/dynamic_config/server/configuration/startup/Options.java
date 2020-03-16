@@ -227,88 +227,12 @@ public class Options {
     return nodeHostname;
   }
 
-  public String getNodePublicHostname() {
-    return nodePublicHostname;
-  }
-
   public String getNodePort() {
     return nodePort;
   }
 
-  public String getNodePublicPort() {
-    return nodePublicPort;
-  }
-
-  public String getNodeGroupPort() {
-    return nodeGroupPort;
-  }
-
-  public String getNodeName() {
-    return nodeName;
-  }
-
-  public String getNodeBindAddress() {
-    return nodeBindAddress;
-  }
-
-  public String getNodeGroupBindAddress() {
-    return nodeGroupBindAddress;
-  }
-
   public String getNodeRepositoryDir() {
     return nodeRepositoryDir;
-  }
-
-  public String getNodeMetadataDir() {
-    return nodeMetadataDir;
-  }
-
-  public String getNodeLogDir() {
-    return nodeLogDir;
-  }
-
-  public String getNodeBackupDir() {
-    return nodeBackupDir;
-  }
-
-  public String getSecurityDir() {
-    return securityDir;
-  }
-
-  public String getSecurityAuditLogDir() {
-    return securityAuditLogDir;
-  }
-
-  public String getSecurityAuthc() {
-    return securityAuthc;
-  }
-
-  public String getSecuritySslTls() {
-    return securitySslTls;
-  }
-
-  public String getSecurityWhitelist() {
-    return securityWhitelist;
-  }
-
-  public String getFailoverPriority() {
-    return failoverPriority;
-  }
-
-  public String getClientReconnectWindow() {
-    return clientReconnectWindow;
-  }
-
-  public String getClientLeaseDuration() {
-    return clientLeaseDuration;
-  }
-
-  public String getOffheapResources() {
-    return offheapResources;
-  }
-
-  public String getDataDirs() {
-    return dataDirs;
   }
 
   public String getClusterName() {
@@ -321,10 +245,6 @@ public class Options {
 
   public String getLicenseFile() {
     return licenseFile;
-  }
-
-  public String getTcProperties() {
-    return tcProperties;
   }
 
   public boolean wantsDiagnosticMode() {
