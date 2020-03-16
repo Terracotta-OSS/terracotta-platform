@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -49,9 +47,6 @@ public class ConfigurationGeneratorVisitorTest {
 
   private static final String CONFIG_FILE = "/path/to/config-file";
 
-  @Rule
-  public final SystemOutRule systemOutRule = new SystemOutRule().enableLog().muteForSuccessfulTests();
-
   @Test
   public void testConfigFileContainsOneNode_noNodeHostPortSpecified() {
     Node node = Node.newDefaultNode("localhost");
@@ -59,7 +54,6 @@ public class ConfigurationGeneratorVisitorTest {
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(null, null, CONFIG_FILE, cluster);
 
     assertThat(matchingNode, equalTo(node));
-    assertThat(systemOutRule.getLog(), containsString("Found only one node information in config file"));
   }
 
   @Test
@@ -69,7 +63,6 @@ public class ConfigurationGeneratorVisitorTest {
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(node.getNodeHostname(), String.valueOf(node.getNodePort()), CONFIG_FILE, cluster);
 
     assertThat(matchingNode, equalTo(node));
-    assertThat(systemOutRule.getLog(), containsString("Found matching node entry in config file"));
   }
 
   @Test
@@ -91,7 +84,6 @@ public class ConfigurationGeneratorVisitorTest {
 
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(null, null, CONFIG_FILE, cluster);
     assertThat(matchingNode, equalTo(node1));
-    assertThat(systemOutRule.getLog(), containsString("Found matching node entry in config file"));
   }
 
   @Test
@@ -114,7 +106,6 @@ public class ConfigurationGeneratorVisitorTest {
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(node2.getNodeHostname(), String.valueOf(node2.getNodePort()), CONFIG_FILE, cluster);
 
     assertThat(matchingNode, equalTo(node2));
-    assertThat(systemOutRule.getLog(), containsString("Found matching node entry in config file"));
   }
 
   @Test

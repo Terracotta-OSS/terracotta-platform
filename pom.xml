@@ -33,8 +33,8 @@
     <terracotta-configuration.version>10.7.0-pre1</terracotta-configuration.version>
     <passthrough-testing.version>1.7.0-pre4</passthrough-testing.version>
     <terracotta-core.version>5.7.0-pre8</terracotta-core.version>
-    <tripwire.version>1.0.0-pre4</tripwire.version>
-    <angela.version>3.0.13</angela.version>
+    <tripwire.version>1.0.0-pre7</tripwire.version>
+    <angela.version>3.0.14</angela.version>
     <statistics.version>2.1</statistics.version>
     <jackson.version>2.10.1</jackson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
