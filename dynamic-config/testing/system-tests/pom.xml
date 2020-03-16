@@ -52,6 +52,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.dynamic-config.cli</groupId>
+      <artifactId>config-convertor-oss</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>angela</artifactId>
       <scope>test</scope>
