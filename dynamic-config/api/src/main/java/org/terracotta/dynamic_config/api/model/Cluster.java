@@ -271,13 +271,6 @@ public class Cluster implements Cloneable {
   }
 
   /**
-   * Transform this model into a config file
-   */
-  public Properties toProperties() {
-    return toProperties(false, true);
-  }
-
-  /**
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
   public Properties toProperties(boolean expanded, boolean includeDefaultValues) {

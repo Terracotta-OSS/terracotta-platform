@@ -286,7 +286,6 @@ public class ClusterTest {
     ));
 
     Stream.of(
-        tuple2(cluster.toProperties(), "config_with_defaults.properties"),
         tuple2(cluster.toProperties(false, true), "config_with_defaults.properties"),
         tuple2(cluster.toProperties(false, false), "config_without_defaults.properties"),
         tuple2(cluster.toProperties(true, true), "config_expanded_default.properties"),
