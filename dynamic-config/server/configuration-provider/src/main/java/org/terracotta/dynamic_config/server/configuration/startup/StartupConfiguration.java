@@ -20,7 +20,6 @@ import com.tc.text.PrettyPrintable;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
-import org.terracotta.configuration.ConfigurationException;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.configuration.ServerConfiguration;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -99,11 +98,8 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Pla
   }
 
   @Override
-  public ServerConfiguration getDefaultServerConfiguration(String serverName) throws ConfigurationException {
-    return nodeContext.getStripe()
-        .getNode(serverName == null ? nodeContext.getNodeName() : serverName)
-        .map(this::toServerConfiguration)
-        .orElseThrow(() -> new IllegalArgumentException("Platform is asking for node: " + serverName + " but it was started with the following topology: " + nodeContext));
+  public ServerConfiguration getServerConfiguration() {
+    return toServerConfiguration(nodeContext.getNode());
   }
 
   @Override
