@@ -33,12 +33,10 @@ import java.util.TreeMap;
 import static java.lang.System.lineSeparator;
 
 public class CustomJCommander extends JCommander {
-  private final String programName;
   private final Collection<String> userSpecifiedOptions = new HashSet<>();
 
-  public CustomJCommander(String programName, Object object) {
+  public CustomJCommander(Options object) {
     super(object);
-    this.programName = programName;
 
     // Hacky way to get the specified options, since JCommander doesn't provide this functionality out-of-the-box
     addConverterInstanceFactory((parameter, forType, optionName) -> {
@@ -53,8 +51,6 @@ public class CustomJCommander extends JCommander {
 
   @Override
   public void usage(StringBuilder out, String indent) {
-    out.append(indent).append("Usage: ").append(programName).append(" [options]");
-    out.append(lineSeparator());
     appendOptions(this, out, indent);
   }
 
@@ -71,7 +67,7 @@ public class CustomJCommander extends JCommander {
 
     // Display all the names and descriptions
     if (sorted.size() > 0) {
-      out.append(indent).append("Options:").append(lineSeparator());
+      out.append(indent).append("Dynamic Configuration Options:").append(lineSeparator());
       for (ParameterDescription pd : sorted) {
         if (pd.getParameter().hidden()) continue;
 

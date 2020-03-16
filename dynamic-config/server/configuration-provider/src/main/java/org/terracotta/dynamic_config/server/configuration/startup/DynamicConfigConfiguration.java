@@ -100,10 +100,10 @@ public class DynamicConfigConfiguration implements Configuration, PrettyPrintabl
 
   @Override
   public ServerConfiguration getDefaultServerConfiguration(String serverName) throws ConfigurationException {
-    if (serverName == null) {
-      serverName = nodeContext.getNodeName();
-    }
-    return nodeContext.getStripe().getNode(serverName).map(this::toServerConfiguration).get();
+    return nodeContext.getStripe()
+        .getNode(serverName == null ? nodeContext.getNodeName() : serverName)
+        .map(this::toServerConfiguration)
+        .orElseThrow(() -> new IllegalArgumentException("Platform is asking for node: " + serverName + " but it was started with the following topology: " + nodeContext));
   }
 
   @Override

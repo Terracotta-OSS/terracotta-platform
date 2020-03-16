@@ -155,7 +155,10 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   @Override
   public String getConfigurationParamsDescription() {
-    throw new UnsupportedOperationException("Please start the node by using the new script start-node.sh or start-node.bat");
+    StringBuilder out = new StringBuilder(System.lineSeparator());
+    CustomJCommander jCommander = new CustomJCommander(new Options());
+    jCommander.usage(out);
+    return out.toString();
   }
 
   @Override
@@ -210,12 +213,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   private static Options parseCommandLineOrExit(List<String> args) {
     Options options = new Options();
-    CustomJCommander jCommander = new CustomJCommander("start-tc-server", options);
+    CustomJCommander jCommander = new CustomJCommander(options);
     jCommander.parse(args.toArray(new String[0]));
-    if (options.isHelp()) {
-      jCommander.usage();
-      System.exit(0);
-    }
     options.process(jCommander);
     return options;
   }
