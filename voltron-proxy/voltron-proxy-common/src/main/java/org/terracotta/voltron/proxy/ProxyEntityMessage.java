@@ -15,6 +15,7 @@
  */
 package org.terracotta.voltron.proxy;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.entity.EntityMessage;
 
 import java.lang.annotation.Annotation;
@@ -30,6 +31,7 @@ public class ProxyEntityMessage implements EntityMessage {
 
   private final MessageType type;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public ProxyEntityMessage(final MethodDescriptor method, final Object[] args, MessageType type) {
     this.method = method;
     this.args = args;
@@ -40,6 +42,7 @@ public class ProxyEntityMessage implements EntityMessage {
     return method;
   }
 
+  @SuppressFBWarnings("EI_EXPOSE_REP")
   public Object[] getArguments() {
     return args;
   }

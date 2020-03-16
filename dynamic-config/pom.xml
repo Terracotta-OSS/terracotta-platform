@@ -36,23 +36,12 @@
   </description>
 
   <modules>
-    <module>model</module>
     <module>api</module>
-    <module>xml</module>
-    <module>entities</module>
     <module>server</module>
+    <module>entities</module>
     <module>cli</module>
     <module>testing</module>
   </modules>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>com.github.spotbugs</groupId>
-        <artifactId>spotbugs-maven-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 
   <dependencies>
     <dependency>

@@ -15,16 +15,18 @@
  */
 package org.terracotta.management.model.call;
 
-import java.util.Objects;
+import com.tc.classloader.CommonComponent;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public class ContextualCall<T> implements Contextual {
 
   private static final long serialVersionUID = 1;
@@ -35,6 +37,7 @@ public class ContextualCall<T> implements Contextual {
   private final Class<T> returnType;
   private final Parameter[] parameters;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public ContextualCall(Context context, String capability, String methodName, Class<T> returnType, Parameter... parameters) {
     this.context = Objects.requireNonNull(context);
     this.capability = Objects.requireNonNull(capability);

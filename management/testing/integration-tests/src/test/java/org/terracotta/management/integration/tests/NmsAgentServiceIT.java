@@ -32,7 +32,6 @@ import org.terracotta.management.entity.nms.client.DefaultNmsService;
 import org.terracotta.management.entity.nms.client.NmsEntity;
 import org.terracotta.management.entity.nms.client.NmsEntityFactory;
 import org.terracotta.management.entity.nms.client.NmsService;
-import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.Message;
@@ -46,7 +45,6 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;

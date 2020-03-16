@@ -15,9 +15,12 @@
  */
 package org.terracotta.management.model.message;
 
+import com.tc.classloader.CommonComponent;
+
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public interface ManagementCallMessage extends Message {
 
   String getManagementCallIdentifier();

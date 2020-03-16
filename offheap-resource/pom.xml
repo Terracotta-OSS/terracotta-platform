@@ -27,26 +27,33 @@
   </parent>
 
   <artifactId>offheap-resource</artifactId>
-
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
+  <name>Plugin :: Off-Heap</name>
 
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>statistics</artifactId>
       <version>${statistics.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- dynamic config support -->
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-server-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- activate management provider support -->
     <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-server-api</artifactId>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-api</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
@@ -58,6 +65,11 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -95,6 +107,7 @@
         <artifactId>maven-jaxb2-plugin</artifactId>
         <executions>
           <execution>
+            <phase>generate-sources</phase>
             <goals>
               <goal>generate</goal>
             </goals>

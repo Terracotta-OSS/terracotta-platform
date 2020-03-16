@@ -17,6 +17,7 @@ package org.terracotta.offheapresource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
@@ -62,6 +63,13 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
       long size = longValueExact(convert(r.getValue(), r.getUnit()));
       addToResources(identifier(r.getName()), size);
     }
+  }
+
+  public OffHeapResourcesProvider(NodeContext nodeContext) {
+    nodeContext.getNode().getOffheapResources().forEach((name, measure) -> {
+      long size = measure.getQuantity(org.terracotta.common.struct.MemoryUnit.B);
+      addToResources(identifier(name), size);
+    });
   }
 
   @Override
@@ -199,9 +207,9 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
 
   @Override
   public void close() {
-    this.resources.values().forEach(oh->oh.close());
-  }  
-  
+    this.resources.values().forEach(OffHeapResourceImpl::close);
+  }
+
   private void warnIfOffheapExceedsPhysicalMemory(long totalConfiguredOffheap) {
     Long physicalMemory = PhysicalMemory.totalPhysicalMemory();
     if (physicalMemory != null && totalConfiguredOffheap > physicalMemory) {

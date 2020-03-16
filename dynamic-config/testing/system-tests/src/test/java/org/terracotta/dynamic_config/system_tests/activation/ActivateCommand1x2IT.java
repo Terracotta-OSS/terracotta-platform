@@ -22,9 +22,9 @@ import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
-import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.net.InetSocketAddress;
 
@@ -33,9 +33,9 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class ActivateCommand1x2IT extends DynamicConfigIT {

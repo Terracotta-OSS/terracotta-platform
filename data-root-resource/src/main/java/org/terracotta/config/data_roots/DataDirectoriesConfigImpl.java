@@ -22,6 +22,9 @@ import org.terracotta.config.data_roots.management.DataRootSettingsManagementPro
 import org.terracotta.config.data_roots.management.DataRootStatisticsManagementProvider;
 import org.terracotta.config.util.ParameterSubstitutor;
 import org.terracotta.data.config.DataRootMapping;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
@@ -51,10 +54,20 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, ManageableServerComponent, StateDumpable {
   private static final Logger LOGGER = LoggerFactory.getLogger(DataDirectoriesConfigImpl.class);
 
+  private final Path platform;
   private final ConcurrentMap<String, Path> dataRootMap = new ConcurrentHashMap<>();
   private final String platformRootIdentifier;
   private final ConcurrentMap<String, DataDirectories> serverToDataRoots = new ConcurrentHashMap<>();
-  private final Path rootPath;
+  private final IParameterSubstitutor parameterSubstitutor;
+  private final PathResolver pathResolver;
+
+  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, NodeContext nodeContext) {
+    this.parameterSubstitutor = parameterSubstitutor;
+    this.pathResolver = pathResolver;
+    this.platform = nodeContext.getNode().getNodeMetadataDir();
+    nodeContext.getNode().getDataDirs().forEach((name, path) -> addDataDirectory(name, path.toString()));
+    this.platformRootIdentifier = platform == null ? null : "__platform__";
+  }
 
   public DataDirectoriesConfigImpl(String source, org.terracotta.data.config.DataDirectories dataDirectories) {
     Path tempRootPath = Paths.get(".").toAbsolutePath();
@@ -68,9 +81,12 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
         // Ignore, we keep the root as . then
       }
     }
-    rootPath = tempRootPath;
+
+    this.parameterSubstitutor = ParameterSubstitutor::substitute;
+    this.pathResolver = new PathResolver(tempRootPath, parameterSubstitutor::substitute);
 
     String tempPlatformRootIdentifier = null;
+    Path tempPlatformPath = null;
     for (DataRootMapping mapping : dataDirectories.getDirectory()) {
 
       addDataDirectory(mapping.getName(), mapping.getValue());
@@ -78,12 +94,14 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
       if (mapping.isUseForPlatform()) {
         if (tempPlatformRootIdentifier == null) {
           tempPlatformRootIdentifier = mapping.getName();
+          tempPlatformPath = pathResolver.resolve(Paths.get(mapping.getValue()));
         } else {
           throw new DataDirectoriesConfigurationException("More than one data directory is configured to be used by platform");
         }
       }
     }
     platformRootIdentifier = tempPlatformRootIdentifier;
+    platform = tempPlatformPath;
   }
 
 
@@ -96,7 +114,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   public void addDataDirectory(String name, String path) {
     validateDataDirectory(name, path);
 
-    Path dataDirectory = rootPath.resolve(ParameterSubstitutor.substitute(path)).normalize();
+    Path dataDirectory = pathResolver.resolve(Paths.get(parameterSubstitutor.substitute(path))).normalize();
 
     // with dynamic config, XML is parsed multiple times during the lifecycle of the server and these logs are triggered at each parsing
     LOGGER.debug("Defined directory with name: {} at location: {}", name, dataDirectory);
@@ -106,7 +124,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
 
   @Override
   public void validateDataDirectory(String name, String path) {
-    Path dataDirectory = rootPath.resolve(ParameterSubstitutor.substitute(path)).normalize();
+    Path dataDirectory = pathResolver.resolve(Paths.get(parameterSubstitutor.substitute(path))).normalize();
 
     if (dataRootMap.containsKey(name)) {
       throw new DataDirectoriesConfigurationException("A data directory with name: " + name + " already exists");

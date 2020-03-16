@@ -15,15 +15,17 @@
  */
 package org.terracotta.management.model.call;
 
-import java.util.Objects;
+import com.tc.classloader.CommonComponent;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Represents a method parameter
  *
  * @author Mathieu Carbou
  */
+@CommonComponent
 public final class Parameter implements Serializable {
 
   private static final long serialVersionUID = 1;

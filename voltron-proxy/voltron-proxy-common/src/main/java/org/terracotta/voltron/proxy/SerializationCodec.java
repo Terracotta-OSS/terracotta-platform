@@ -66,7 +66,7 @@ public class SerializationCodec implements Codec {
 
   @Override
   public byte[] encode(Class<?>[] types, Object[] values) {
-    if (values == null && types.length == 0) {
+    if (values == null) {
       values = new Object[0];
     }
     if (types.length != values.length) {
@@ -107,7 +107,7 @@ public class SerializationCodec implements Codec {
   }
 
   private Object deserialize(byte[] buffer, int offset, int len) {
-    if(len == 0 || buffer.length == 0) {
+    if (len == 0 || buffer.length == 0) {
       return null;
     }
     ByteArrayInputStream bin = new ByteArrayInputStream(buffer, offset, len);
@@ -155,9 +155,9 @@ public class SerializationCodec implements Codec {
   private static ObjectStreamClass checkForCompatibility(ObjectStreamClass descriptor, ObjectStreamClass substitution) throws InvalidClassException {
     if (descriptor.getSerialVersionUID() != substitution.getSerialVersionUID()) {
       throw new InvalidClassException(substitution.getName(),
-              "substitute class incompatible: " +
-                      "stream classdesc serialVersionUID = " + descriptor.getSerialVersionUID() +
-                      ", substitute class serialVersionUID = " + substitution.getSerialVersionUID());
+          "substitute class incompatible: " +
+              "stream classdesc serialVersionUID = " + descriptor.getSerialVersionUID() +
+              ", substitute class serialVersionUID = " + substitution.getSerialVersionUID());
     } else {
       LOGGER.debug("Shading Auto-Substitution: {} -> {}", descriptor, substitution);
       return substitution;

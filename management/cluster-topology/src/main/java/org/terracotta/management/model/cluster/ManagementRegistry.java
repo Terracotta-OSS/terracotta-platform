@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.model.cluster;
 
+import com.tc.classloader.CommonComponent;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
@@ -37,6 +39,8 @@ import java.util.stream.Collectors;
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
+@SuppressFBWarnings("SE_BAD_FIELD")
 public final class ManagementRegistry implements Serializable {
 
   private static final long serialVersionUID = 2;

@@ -16,11 +16,11 @@
 package org.terracotta.dynamic_config.entity.topology.server;
 
 import com.tc.classloader.PermanentEntity;
-import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityConstants;
 import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage;
 import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyMessageCodec;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;

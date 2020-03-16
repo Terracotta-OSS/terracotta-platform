@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
- * Batches up a Stream<String> into Stream<Deque<String>>. An empty string is the batch separator.
+ * Batches up a {@code Stream<String>} into {@code Stream<Deque<String>>}. An empty string is the batch separator.
  * This is useful for parsing the append.log file because empty lines delimit the records.
  * Note that the final batch will be the last one terminated by a batch separator - any lines after that are ignored.
  */

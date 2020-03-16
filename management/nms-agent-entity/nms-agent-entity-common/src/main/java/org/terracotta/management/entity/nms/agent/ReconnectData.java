@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.entity.nms.agent;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
@@ -24,6 +25,7 @@ import java.io.Serializable;
 /**
  * @author Mathieu Carbou
  */
+@SuppressFBWarnings("SE_BAD_FIELD")
 public class ReconnectData implements Serializable {
 
   private static final long serialVersionUID = 1L;

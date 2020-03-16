@@ -15,16 +15,18 @@
  */
 package org.terracotta.management.model.capabilities.descriptors;
 
-import java.util.Objects;
+import com.tc.classloader.CommonComponent;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
+@CommonComponent
 public final class CallDescriptor implements Descriptor, Serializable {
 
   private static final long serialVersionUID = 1;

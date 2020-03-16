@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
-import org.terracotta.dynamic_config.api.model.Props;
 import org.terracotta.dynamic_config.api.model.Setting;
 
 import java.nio.file.Path;

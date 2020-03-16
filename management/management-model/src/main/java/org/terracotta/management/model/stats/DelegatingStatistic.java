@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.model.stats;
 
+import com.tc.classloader.CommonComponent;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 import static org.terracotta.management.model.stats.StatisticType.convert;
 
+@CommonComponent
 public class DelegatingStatistic<T extends Serializable> implements Statistic<T> {
   private static final long serialVersionUID = 1L;
 

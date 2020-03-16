@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.Map;
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public final class ServerEntity extends AbstractManageableNode<Server> {
 
   private static final long serialVersionUID = 3;

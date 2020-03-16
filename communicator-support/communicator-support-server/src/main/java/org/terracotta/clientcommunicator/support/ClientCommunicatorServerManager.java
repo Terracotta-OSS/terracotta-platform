@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  *
  * ClientCommunicatorServerManager and ClientCommunicatorClientManager provides support for sending messages from server to
- * client with acks (with client-side waiting). Note that the current api ({@link org.terracotta.entity.ClientCommunicator#send(ClientDescriptor, EntityResponse)}
+ * client with acks (with client-side waiting). Note that the current api ({@link org.terracotta.entity.ClientCommunicator#sendNoResponse(ClientDescriptor, EntityResponse)}
  * for achieving this (with server-side waiting) is deprecated
  *
  *
@@ -37,7 +37,7 @@ public interface ClientCommunicatorServerManager<M extends EntityMessage, R exte
      * Sends a message to given set of clients and expects client acks on request invoke path
      *
      * Note that Entity should send returned {@link EntityResponse} to the source client and client-side entity should call
-     * {@link ClientCommunicatorClientManager#handleInvokeResponse(EntityResponse)} with this response so that client-side
+     * ClientCommunicatorClientManager#handleInvokeResponse(EntityResponse) with this response so that client-side
      * waiting can be achieved
      *
      * Note that Entity should call {@link #handleClientAck} with client ack when it receives
@@ -48,7 +48,7 @@ public interface ClientCommunicatorServerManager<M extends EntityMessage, R exte
      * @return a {@link EntityResponse}
      * @throws MessageCodecException
      *
-     * @see ClientCommunicatorClientManager
+     * See ClientCommunicatorClientManager
      */
     R sendWithAck(Set<ClientDescriptor> toClients, byte[] message, ClientDescriptor source) throws MessageCodecException;
 

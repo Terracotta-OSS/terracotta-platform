@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.registry;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.stats.ContextualStatistics;
 
 import java.util.Collection;
@@ -22,6 +23,7 @@ import java.util.Collection;
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public interface StatisticQuery extends Query<ContextualStatistics> {
 
   /**
@@ -36,6 +38,7 @@ public interface StatisticQuery extends Query<ContextualStatistics> {
    */
   long getSince();
 
+  @CommonComponent
   interface Builder extends QueryBuilder<Builder, StatisticQuery> {
 
     /**

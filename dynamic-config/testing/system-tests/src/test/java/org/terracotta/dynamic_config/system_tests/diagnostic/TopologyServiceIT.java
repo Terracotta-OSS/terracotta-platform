@@ -22,8 +22,8 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Paths;
 import java.time.Duration;

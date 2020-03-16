@@ -39,7 +39,6 @@
     <module>monitoring-service</module>
     <module>nms-agent-entity</module>
     <module>nms-entity</module>
-    <module>distribution</module>
     <module>testing/sample-entity</module>
     <module>testing/integration-tests</module>
     <module>testing/doc</module>

@@ -34,17 +34,9 @@
   <modules>
     <module>common</module>
     <module>client</module>
-    <module>server</module>
+    <module>service-api</module>
+    <module>service</module>
   </modules>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>com.github.spotbugs</groupId>
-        <artifactId>spotbugs-maven-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 
   <dependencies>
     <dependency>

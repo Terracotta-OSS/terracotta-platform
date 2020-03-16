@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Contextual;
 
 import java.util.Optional;
@@ -24,6 +25,7 @@ import java.util.Optional;
  *
  * @author Mathieu Carbou
  */
+@CommonComponent
 public abstract class AbstractManageableNode<P extends Contextual> extends AbstractNode<P> {
 
   private static final long serialVersionUID = 1;

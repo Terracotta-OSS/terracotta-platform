@@ -92,10 +92,6 @@ public class MeasureTest {
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: 's'. <quantity> is missing. Measure should be specified in <quantity><unit> format.")))));
 
     assertThat(
-        () -> Measure.parse(Long.MAX_VALUE + "1s", TimeUnit.class),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '92233720368547758071s'. <quantity> is not a valid number.")))));
-
-    assertThat(
         () -> Measure.parse("1", TimeUnit.class),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1'. <unit> is missing. Measure should be specified in <quantity><unit> format.")))));
 
@@ -110,6 +106,7 @@ public class MeasureTest {
     assertThat(Measure.parse("1", TimeUnit.class, SECONDS).toString(), is(equalTo("1s")));
     assertThat(Measure.parse("1s", TimeUnit.class, null).toString(), is(equalTo("1s")));
     assertThat(Measure.parse("1s", TimeUnit.class).toString(), is(equalTo("1s")));
+    assertThat(Measure.parse(Long.MAX_VALUE + "1s", TimeUnit.class).toString(), is(equalTo("92233720368547758071s")));
   }
 
   @Test

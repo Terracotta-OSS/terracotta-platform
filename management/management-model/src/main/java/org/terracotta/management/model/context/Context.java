@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.model.context;
 
+import com.tc.classloader.CommonComponent;
+
 import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Collections;
@@ -26,6 +28,7 @@ import java.util.Set;
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
+@CommonComponent
 public class Context extends AbstractMap<String, String> implements Serializable {
 
   private static final long serialVersionUID = 1;

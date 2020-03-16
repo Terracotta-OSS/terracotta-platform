@@ -15,7 +15,7 @@
  */
 package org.terracotta.dynamic_config.entity.management.server;
 
-import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.PassiveServerEntity;

@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.model.cluster;
 
+import com.tc.classloader.CommonComponent;
+
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
+@CommonComponent
 public final class Endpoint implements Serializable {
 
   private static final long serialVersionUID = 1;

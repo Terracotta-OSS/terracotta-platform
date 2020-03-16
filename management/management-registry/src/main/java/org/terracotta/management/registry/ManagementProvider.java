@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.registry;
 
+import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
@@ -32,6 +33,7 @@ import java.util.concurrent.ExecutionException;
  *
  * @author Ludovic Orban
  */
+@CommonComponent
 public interface ManagementProvider<T> {
 
   /**
@@ -45,7 +47,6 @@ public interface ManagementProvider<T> {
    * Register an object for management in the current provider.
    *
    * @param managedObject the object to manage.
-   * @return true if the object has been registered
    */
   void register(T managedObject);
 
@@ -53,7 +54,6 @@ public interface ManagementProvider<T> {
    * Unregister a managed object from the current provider.
    *
    * @param managedObject the managed object.
-   * @return true if the object has been registered
    */
   void unregister(T managedObject);
 
@@ -86,6 +86,7 @@ public interface ManagementProvider<T> {
    *
    * @param context        the context.
    * @param statisticNames the statistic names to collect. If empty, collect ALL statistics
+   * @param since          timestamp from when to get the statistics
    * @return the statistic map, the key being the statistic names.
    */
   Map<String, Statistic<? extends Serializable>> collectStatistics(Context context, Collection<String> statisticNames, long since);
