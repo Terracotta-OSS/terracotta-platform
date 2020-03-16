@@ -935,10 +935,15 @@ public class ConfigurationTest {
   public void test_apply() {
     Cluster cluster = new Cluster(new Stripe(Node.newDefaultNode("node1", "localhost")));
 
-    // cluster wide
+    // cluster wide override
     assertThat(cluster.getSingleNode().get().getOffheapResources().size(), is(equalTo(1)));
     assertThat(cluster.getSingleNode().get().getOffheapResources(), hasKey("main"));
     Configuration.valueOf("offheap-resources=second:1GB").apply(cluster);
+    assertThat(cluster.getSingleNode().get().getOffheapResources().size(), is(equalTo(1)));
+    assertThat(cluster.getSingleNode().get().getOffheapResources(), hasKey("second"));
+
+    // cluster wide addition
+    Configuration.valueOf("offheap-resources.main=1GB").apply(cluster);
     assertThat(cluster.getSingleNode().get().getOffheapResources().size(), is(equalTo(2)));
     assertThat(cluster.getSingleNode().get().getOffheapResources(), hasKey("main"));
     assertThat(cluster.getSingleNode().get().getOffheapResources(), hasKey("second"));

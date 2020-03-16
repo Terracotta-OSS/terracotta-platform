@@ -246,6 +246,7 @@ public enum Setting {
           node.removeTcProperty(tuple.t1);
         } else if (tuple.t1 == null) {
           // tuple.t2 != null
+          node.clearTcProperties();
           Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setTcProperty(kv[0], kv[1]));
         } else {
           // tuple.t1 != null && tuple.t2 != null
@@ -270,6 +271,7 @@ public enum Setting {
           node.removeNodeLoggerOverride(tuple.t1);
         } else if (tuple.t1 == null) {
           // tuple.t2 != null
+          node.clearNodeLoggerOverrides();
           Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setNodeLoggerOverride(kv[0], Level.valueOf(kv[1].toUpperCase())));
         } else {
           // tuple.t1 != null && tuple.t2 != null
@@ -410,6 +412,7 @@ public enum Setting {
           node.removeOffheapResource(tuple.t1);
         } else if (tuple.t1 == null) {
           // tuple.t2 != null
+          node.clearOffheapResources();
           Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setOffheapResource(kv[0], Measure.parse(kv[1], MemoryUnit.class)));
         } else {
           // tuple.t1 != null && tuple.t2 != null
@@ -434,6 +437,7 @@ public enum Setting {
           node.removeDataDir(tuple.t1);
         } else if (tuple.t1 == null) {
           // tuple.t2 != null
+          node.clearDataDirs();
           Stream.of(tuple.t2.split(",")).forEach(kv -> {
             int firstColon = kv.indexOf(":");
             node.setDataDir(kv.substring(0, firstColon), Paths.get(kv.substring(firstColon + 1)));
