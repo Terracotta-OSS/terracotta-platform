@@ -246,7 +246,7 @@ public class DynamicConfigConfiguration implements Configuration, PrettyPrintabl
 
       @Override
       public File getLogsLocation() {
-        return pathResolver.resolve(substitutor.substitute(node.getNodeLogDir())).toFile();
+        return substitutor.substitute(pathResolver.resolve(node.getNodeLogDir())).toFile();
       }
 
       @Override

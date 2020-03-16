@@ -52,6 +52,7 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
@@ -91,7 +92,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // the config repository: repository/config.
       // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
       // That is why we need to force the resolving within the XML relatively to the user directory.
-      PathResolver userDirResolver = new PathResolver(Paths.get("%(user.dir)"), parameterSubstitutor::substitute);
+      Path baseDir = parameterSubstitutor.substitute(Paths.get("%(user.dir)"));
+      PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
 
       // optional service enabling license parsing
       LicenseParser licenseParser = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseParser::unsupported);
