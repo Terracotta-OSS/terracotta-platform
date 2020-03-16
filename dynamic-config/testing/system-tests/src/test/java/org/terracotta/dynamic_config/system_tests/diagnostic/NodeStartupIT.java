@@ -228,7 +228,10 @@ public class NodeStartupIT extends DynamicConfigIT {
         "--data-dirs", "main:terracotta1-1/data-dir"
     ));
     List<String> provided = Arrays.asList(args);
-    if (provided.contains("-n") || provided.contains("--node-name")) {
+    if(provided.contains("-n")) {
+      throw new AssertionError("Do not use -n. use --node-name instead");
+    }
+    if (provided.contains("--node-name")) {
       defaultArgs.remove("--node-name");
       defaultArgs.remove("node-1-1");
     }

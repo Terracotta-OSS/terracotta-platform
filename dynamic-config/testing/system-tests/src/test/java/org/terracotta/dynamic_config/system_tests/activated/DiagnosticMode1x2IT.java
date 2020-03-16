@@ -42,7 +42,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     tsa.stop(active);
     assertThat(tsa.getStopped().size(), is(1));
 
-    startNode(active, "--diagnostic-mode", "-n", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
+    startNode(active, "--diagnostic-mode", "--node-name", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
     waitUntil(out.getLog(1, activeNodeId), containsLog("Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node."));
     waitUntil(out.getLog(1, activeNodeId), containsLog("Started the server in diagnostic mode"));
   }
@@ -54,7 +54,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     tsa.stop(passive);
     assertThat(tsa.getStopped().size(), is(1));
 
-    startNode(passive, "--diagnostic-mode", "-n", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
+    startNode(passive, "--diagnostic-mode", "--node-name", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
     waitUntil(out.getLog(1, passiveNodeId), containsLog("Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node."));
     waitUntil(out.getLog(1, passiveNodeId), containsLog("Started the server in diagnostic mode"));
   }

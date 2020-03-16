@@ -56,7 +56,7 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
   public void testPreventConcurrentUseOfRepository() throws Exception {
     // Angela work dirs are different for each server instance. We'd need to create a repo at a common place for this test
     String sharedRepo = Files.createDirectories(getBaseDir()).toAbsolutePath().toString();
-    startNode(1, 1, "-n", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort()), "-N", "tc-cluster");
+    startNode(1, 1, "--node-name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort()), "-N", "tc-cluster");
     waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
 
     try {
@@ -87,7 +87,10 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
         "--data-dirs", "main:terracotta1-1/data-dir"
     ));
     List<String> provided = Arrays.asList(args);
-    if (provided.contains("-n") || provided.contains("--node-name")) {
+    if(provided.contains("-n")) {
+      throw new AssertionError("Do not use -n. use --node-name instead");
+    }
+    if (provided.contains("--node-name")) {
       defaultArgs.remove("--node-name");
       defaultArgs.remove("node-1-1");
     }
