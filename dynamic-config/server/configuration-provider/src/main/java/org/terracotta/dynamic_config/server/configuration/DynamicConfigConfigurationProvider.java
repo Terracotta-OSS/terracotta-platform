@@ -42,9 +42,9 @@ import org.terracotta.dynamic_config.server.configuration.service.ParameterSubst
 import org.terracotta.dynamic_config.server.configuration.startup.CommandLineProcessor;
 import org.terracotta.dynamic_config.server.configuration.startup.ConfigurationGeneratorVisitor;
 import org.terracotta.dynamic_config.server.configuration.startup.CustomJCommander;
-import org.terracotta.dynamic_config.server.configuration.startup.DynamicConfigConfiguration;
 import org.terracotta.dynamic_config.server.configuration.startup.MainCommandLineProcessor;
 import org.terracotta.dynamic_config.server.configuration.startup.Options;
+import org.terracotta.dynamic_config.server.configuration.startup.StartupConfiguration;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
 import org.terracotta.dynamic_config.server.configuration.sync.Require;
@@ -65,7 +65,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigConfigurationProvider.class);
 
   private volatile DynamicConfigurationPassiveSync dynamicConfigurationPassiveSync;
-  private volatile DynamicConfigConfiguration configuration;
+  private volatile StartupConfiguration configuration;
 
   @Override
   public void initialize(List<String> args) {
@@ -151,7 +151,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   }
 
   @Override
-  public DynamicConfigConfiguration getConfiguration() {
+  public StartupConfiguration getConfiguration() {
     return configuration;
   }
 
