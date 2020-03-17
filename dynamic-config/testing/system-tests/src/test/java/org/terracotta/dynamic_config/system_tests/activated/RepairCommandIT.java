@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
+import java.time.Duration;
 import java.util.Arrays;
 
 import static java.util.Collections.emptyMap;
@@ -32,6 +33,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.slf4j.event.Level.DEBUG;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
@@ -41,6 +43,10 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.con
  */
 @ClusterDefinition(autoActivate = true)
 public class RepairCommandIT extends DynamicConfigIT {
+
+  public RepairCommandIT() {
+    super(Duration.ofSeconds(120));
+  }
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();
 
@@ -93,7 +99,7 @@ public class RepairCommandIT extends DynamicConfigIT {
     // ensure the server can still start if the configuration is not committedø
     startNode(1, 1);
     waitUntil(out.getLog(1, 1), containsLog("INFO - Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitUntil(out.getLog(1, 1), containsLog("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
+    withTopologyService("localhost", getNodePort(), topologyService -> assertTrue(topologyService.hasIncompleteChange()));
 
     // ensure that the server has started with the last committed config
     assertThat(getRuntimeCluster("localhost", getNodePort()), is(equalTo(initialCluster)));

@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -41,6 +43,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.con
 public class NodeStartupIT extends DynamicConfigIT {
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();
+  @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
 
   @Test
   public void testStartingWithNonExistentRepo() {
@@ -79,7 +82,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("Failed to read config file"));
+      waitUntil(err::getLog, containsString("Failed to read config file"));
     }
   }
 
@@ -91,7 +94,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-repository-dir", "repository/stripe1/node-1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("<port> specified in node-port=<port> must be an integer between 1 and 65535"));
+      waitUntil(err::getLog, containsString("<port> specified in node-port=<port> must be an integer between 1 and 65535"));
     }
   }
 
@@ -103,7 +106,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-repository-dir", "repository/stripe1/node-1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("security-dir is mandatory for any of the security configuration"));
+      waitUntil(err::getLog, containsString("security-dir is mandatory for any of the security configuration"));
     }
   }
 
@@ -114,7 +117,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
     }
   }
 
@@ -125,7 +128,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeRepositoryDir().toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
     }
   }
 
@@ -135,7 +138,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--security-authc=blah", "-r", getNodeRepositoryDir().toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("security-authc should be one of: [file, ldap, certificate]"));
+      waitUntil(err::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
     }
   }
 
@@ -145,7 +148,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "--node-hostname=:::", "-r", getNodeRepositoryDir().toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
+      waitUntil(err::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
     }
   }
 
@@ -155,7 +158,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--failover-priority=blah", "-r", getNodeRepositoryDir().toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)"));
+      waitUntil(err::getLog, containsString("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)"));
     }
   }
 
@@ -165,7 +168,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--security-audit-log-dir", "audit-dir", "-r", getNodeRepositoryDir().toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("security-dir is mandatory for any of the security configuration"));
+      waitUntil(err::getLog, containsString("security-dir is mandatory for any of the security configuration"));
     }
   }
 
@@ -200,7 +203,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       );
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--diagnostic-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
     }
   }
 
@@ -211,9 +214,8 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--node-repository-dir", configurationRepo.toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state."));
-      waitUntil(out.getLog(1, 1), containsLog("java.lang.IllegalStateException: Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the repository folder and try again."));
-      waitUntil(out.getLog(1, 1), not(containsLog("Moved to State[ ACTIVE-COORDINATOR ]")));
+      waitUntil(err::getLog, containsString("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the repository folder and try again."));
+      waitUntil(err::getLog, not(containsString("Moved to State[ ACTIVE-COORDINATOR ]")));
     }
   }
 
@@ -228,7 +230,7 @@ public class NodeStartupIT extends DynamicConfigIT {
         "--data-dirs", "main:terracotta1-1/data-dir"
     ));
     List<String> provided = Arrays.asList(args);
-    if(provided.contains("-n")) {
+    if (provided.contains("-n")) {
       throw new AssertionError("Do not use -n. use --node-name instead");
     }
     if (provided.contains("--node-name")) {
