@@ -529,6 +529,17 @@ public class Node implements Cloneable {
     return thisCopy;
   }
 
+  public Node fillRequiredDefaults() {
+    Stream.of(Setting.values())
+        .filter(isEqual(NODE_HOSTNAME).negate())
+        .filter(isEqual(NODE_REPOSITORY_DIR).negate())
+        .filter(isEqual(CLUSTER_NAME).negate())
+        .filter(isEqual(LICENSE_FILE).negate())
+        .filter(Setting::isRequired)
+        .forEach(setting -> setting.fillDefault(this));
+    return this;
+  }
+
   private Node fillDefaults() {
     Stream.of(Setting.values())
         .filter(isEqual(NODE_HOSTNAME).negate())

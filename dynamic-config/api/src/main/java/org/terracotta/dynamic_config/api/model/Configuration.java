@@ -459,6 +459,14 @@ public class Configuration {
     }
   }
 
+  public void apply(Node node) {
+    if (value == null) {
+      setting.getProperty(node).ifPresent(value -> setting.setProperty(node, key, null));
+    } else {
+      setting.setProperty(node, key, value);
+    }
+  }
+
   @Override
   public int hashCode() {
     return rawInput.hashCode();

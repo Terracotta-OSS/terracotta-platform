@@ -19,7 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.SettingName;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.cli.config_convertor.xml.TcConfigMapper;
 import org.terracotta.dynamic_config.cli.config_convertor.xml.TcConfigMapperDiscovery;
@@ -61,6 +63,10 @@ public class ConfigConvertor {
 
     Cluster cluster = mapper.parseConfig(clusterName, tcConfigPaths);
     validateAgainstRelativePath(cluster);
+
+    cluster.getNodes().forEach(Node::fillRequiredDefaults);
+    new ClusterValidator(cluster).validate();
+
     postConversionProcessor.accept(cluster);
   }
 

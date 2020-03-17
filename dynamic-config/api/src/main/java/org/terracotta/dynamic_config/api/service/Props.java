@@ -56,6 +56,16 @@ public class Props {
     return props;
   }
 
+  public static String toString(Properties properties) {
+    return toString(properties, null);
+  }
+
+  public static String toString(Properties properties, String comment) {
+    StringWriter out = new StringWriter();
+    store(out, properties, comment);
+    return out.toString();
+  }
+
   public static void store(Writer out, Properties properties, String comment) {
     try {
       StringWriter tmp = new StringWriter();
