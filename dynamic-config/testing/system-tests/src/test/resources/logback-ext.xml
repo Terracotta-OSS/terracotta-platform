@@ -24,8 +24,8 @@
   <!-- except some -->
   <logger name="com.tc.server.TCServerMain" level="INFO"/>
   <!-- project logging -->
-  <logger name="org.terracotta.dynamic_config" level="TRACE"/>
-  <logger name="org.terracotta.persistence.sanskrit" level="TRACE"/>
-  <logger name="org.terracotta.nomad" level="TRACE"/>
-  <logger name="org.terracotta.diagnostic" level="TRACE"/>
+<!--  <logger name="org.terracotta.dynamic_config" level="TRACE"/>-->
+<!--  <logger name="org.terracotta.persistence.sanskrit" level="TRACE"/>-->
+<!--  <logger name="org.terracotta.nomad" level="TRACE"/>-->
+<!--  <logger name="org.terracotta.diagnostic" level="TRACE"/>-->
 </included>
