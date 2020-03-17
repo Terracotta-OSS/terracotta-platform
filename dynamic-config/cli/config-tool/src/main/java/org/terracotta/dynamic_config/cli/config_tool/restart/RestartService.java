@@ -99,6 +99,15 @@ public class RestartService {
 
     ExecutorService executorService = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(addresses.size()), r -> new Thread(r, getClass().getName()));
     restartRequested.forEach(address -> executorService.submit(() -> {
+
+      // wait for the restart delay to end so that servers gets restarted
+      try {
+        Thread.sleep(restartDelay.toMillis() + 5_000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return;
+      }
+
       LogicalServerState state = null;
       while (state == null && continuePolling.get() && !Thread.currentThread().isInterrupted()) {
         try {
