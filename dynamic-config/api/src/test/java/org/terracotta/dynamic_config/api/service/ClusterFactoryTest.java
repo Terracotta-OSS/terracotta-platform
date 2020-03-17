@@ -139,6 +139,32 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
         new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+
+    assertConfigEquals(
+        config(
+            "stripe.1.node.1.node-name=node1",
+            "stripe.1.node.1.node-hostname=localhost",
+            "cluster-name=foo",
+            "client-reconnect-window=120s",
+            "failover-priority=availability",
+            "client-lease-duration=150s",
+            "security-authc=",
+            "security-ssl-tls=false",
+            "security-whitelist=false",
+            "offheap-resources=main:512MB",
+            "stripe.1.node.1.node-port=9410",
+            "stripe.1.node.1.node-group-port=9430",
+            "stripe.1.node.1.node-bind-address=0.0.0.0",
+            "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.node-backup-dir=",
+            "stripe.1.node.1.tc-properties=",
+            "stripe.1.node.1.security-dir=",
+            "stripe.1.node.1.security-audit-log-dir=",
+            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+        ),
+        new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
   }
 
   @Test

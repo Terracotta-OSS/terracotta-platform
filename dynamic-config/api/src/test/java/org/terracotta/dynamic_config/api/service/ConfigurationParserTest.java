@@ -37,8 +37,10 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
@@ -414,6 +416,72 @@ public class ConfigurationParserTest {
         ),
         new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
     verifyNoMoreInteractions(substitutor);
+  }
+
+  @Test
+  public void test_setting_with_default_can_be_ommitted() {
+    final Properties properties = new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost")
+        .setClientLeaseDuration(null)))
+        .toProperties(false, false);
+    assertThat(properties, not(hasKey("client-lease-duration")));
+
+    assertConfigEquals(
+        config(
+            "stripe.1.node.1.node-name=node1",
+            "stripe.1.node.1.node-hostname=localhost",
+            "cluster-name=foo",
+            "client-reconnect-window=120s",
+            "failover-priority=availability",
+            "security-authc=",
+            "security-ssl-tls=false",
+            "security-whitelist=false",
+            "offheap-resources=main:512MB",
+            "stripe.1.node.1.node-port=9410",
+            "stripe.1.node.1.node-public-port=",
+            "stripe.1.node.1.node-public-hostname=",
+            "stripe.1.node.1.node-group-port=9430",
+            "stripe.1.node.1.node-bind-address=0.0.0.0",
+            "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.node-logger-overrides=",
+            "stripe.1.node.1.node-backup-dir=",
+            "stripe.1.node.1.tc-properties=",
+            "stripe.1.node.1.security-dir=",
+            "stripe.1.node.1.security-audit-log-dir=",
+            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+        ),
+        new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))),
+        "client-lease-duration=150s");
+
+    assertConfigEquals(
+        config(
+            "stripe.1.node.1.node-name=node1",
+            "stripe.1.node.1.node-hostname=localhost",
+            "cluster-name=foo",
+            "client-reconnect-window=120s",
+            "client-lease-duration=150s",
+            "failover-priority=availability",
+            "security-authc=",
+            "security-ssl-tls=false",
+            "security-whitelist=false",
+            "offheap-resources=main:512MB",
+            "stripe.1.node.1.node-port=9410",
+            "stripe.1.node.1.node-public-port=",
+            "stripe.1.node.1.node-public-hostname=",
+            "stripe.1.node.1.node-group-port=9430",
+            "stripe.1.node.1.node-bind-address=0.0.0.0",
+            "stripe.1.node.1.node-group-bind-address=0.0.0.0",
+            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
+            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.node-logger-overrides=",
+            "stripe.1.node.1.node-backup-dir=",
+            "stripe.1.node.1.tc-properties=",
+            "stripe.1.node.1.security-dir=",
+            "stripe.1.node.1.security-audit-log-dir=",
+            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+        ),
+        new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

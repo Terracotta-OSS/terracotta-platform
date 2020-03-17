@@ -21,11 +21,13 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.json.Json;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.function.BiConsumer;
@@ -292,8 +294,50 @@ public class ClusterTest {
         tuple2(cluster.toProperties(true, false), "config_expanded_without_default.properties")
     ).forEach(rethrow(tuple -> {
       Properties expected = fixPaths(Props.load(Paths.get(getClass().getResource("/config-property-files/" + tuple.t2).toURI())));
-      assertThat("File: " + tuple.t2, tuple.t1, is(equalTo(expected)));
+      assertThat("File: " + tuple.t2 + " should perhaps be:\n" + Props.toString(tuple.t1), tuple.t1, is(equalTo(expected)));
     }));
+  }
+
+  @Test
+  public void test_mapping_props_json_without_defaults() throws URISyntaxException {
+    Properties props = Props.load(Paths.get(getClass().getResource("/config1_without_defaults.properties").toURI()));
+    Cluster fromJson = Json.parse(getClass().getResource("/config1.json"), Cluster.class);
+    Cluster fromProps = new ClusterFactory().create(props);
+
+    assertThat(fromJson, is(equalTo(fromProps)));
+    assertThat(
+        Props.toString(fromJson.toProperties(false, false)),
+        fromJson.toProperties(false, false),
+        is(equalTo(props)));
+    assertThat(
+        Props.toString(fromJson.toProperties(false, false)),
+        fromJson.toProperties(false, false),
+        is(equalTo(fromProps.toProperties(false, false))));
+    assertThat(
+        Json.toPrettyJson(fromProps),
+        fromProps,
+        is(equalTo(fromJson)));
+  }
+
+  @Test
+  public void test_mapping_props_json_with_defaults() throws URISyntaxException {
+    Properties props = Props.load(Paths.get(getClass().getResource("/config1_with_defaults.properties").toURI()));
+    Cluster fromJson = Json.parse(getClass().getResource("/config1.json"), Cluster.class);
+    Cluster fromProps = new ClusterFactory().create(props);
+
+    assertThat(fromJson, is(equalTo(fromProps)));
+    assertThat(
+        Props.toString(fromJson.toProperties(false, true)),
+        fromJson.toProperties(false, true),
+        is(equalTo(props)));
+    assertThat(
+        Props.toString(fromJson.toProperties(false, true)),
+        fromJson.toProperties(false, true),
+        is(equalTo(fromProps.toProperties(false, true))));
+    assertThat(
+        Json.toPrettyJson(fromProps),
+        fromProps,
+        is(equalTo(fromJson)));
   }
 
   private Properties fixPaths(Properties props) {
