@@ -152,7 +152,7 @@ public class RestartServiceTest extends BaseTest {
     RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(2));
+    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(8));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(5)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -176,7 +176,7 @@ public class RestartServiceTest extends BaseTest {
     RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(2));
+    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(8));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {

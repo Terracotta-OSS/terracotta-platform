@@ -20,6 +20,7 @@ import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.ClusterFactory;
@@ -91,12 +92,13 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
-  private static final boolean CI = System.getProperty("JOB_NAME") != null;
 
   @Rule public final TmpDir tmpDir = new TmpDir();
   @Rule public final PortLockingRule ports;
+  @Rule public Timeout timeoutRule;
 
-  protected int timeout = CI ? 120 : 90;
+  protected final long timeout;
+
   protected ClusterFactory clusterFactory;
   protected Tsa tsa;
 
@@ -108,7 +110,13 @@ public class DynamicConfigIT {
   private final ClusterDefinition clusterDef;
 
   public DynamicConfigIT() {
-    clusterDef = getClass().getAnnotation(ClusterDefinition.class);
+    this(Duration.ofSeconds(60));
+  }
+
+  public DynamicConfigIT(Duration testTimeout) {
+    this.timeout = testTimeout.toMillis();
+    this.timeoutRule = Timeout.millis(testTimeout.toMillis());
+    this.clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.stripes = clusterDef.stripes();
     this.autoStart = clusterDef.autoStart();
     this.autoActivate = clusterDef.autoActivate();
@@ -280,7 +288,7 @@ public class DynamicConfigIT {
     waitUntil(callable, matcher, timeout);
   }
 
-  protected final <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher, int timeout) {
+  protected final <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher, long timeout) {
     Awaitility.await()
         // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
         .pollInterval(Duration.ofMillis(500))
@@ -318,6 +326,17 @@ public class DynamicConfigIT {
         Duration.ofSeconds(30),
         null)) {
       return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
+    }
+  }
+
+  protected final void withTopologyService(String host, int port, Consumer<TopologyService> consumer) throws Exception {
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
+        InetSocketAddress.createUnresolved(host, port),
+        getClass().getSimpleName(),
+        Duration.ofSeconds(30),
+        Duration.ofSeconds(30),
+        null)) {
+      consumer.accept(diagnosticService.getProxy(TopologyService.class));
     }
   }
 

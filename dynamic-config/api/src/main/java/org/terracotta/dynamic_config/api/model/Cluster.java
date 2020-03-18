@@ -292,7 +292,7 @@ public class Cluster implements Cloneable {
             .flatMap(setting -> {
               final String currentValue = setting.getProperty(nodeContext).orElse(null);
               final String defaultValue = setting.getDefaultValue();
-              return currentValue == null && defaultValue == null // property is optional and has no default - we exclude
+              return !includeDefaultValues && currentValue == null && defaultValue == null // property is optional and has no default - we exclude
                   || !includeDefaultValues && defaultValue != null && Objects.equals(defaultValue, currentValue) // property has a default which is equal to the current value and we want to hide defaults
                   || !includeDefaultValues && currentValue == null && setting.isRequired() // current value is not set for a property that is required and has a default, and we want to exclude default
                   ?

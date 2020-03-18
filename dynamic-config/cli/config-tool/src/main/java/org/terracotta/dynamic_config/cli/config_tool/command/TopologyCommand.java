@@ -123,7 +123,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     // push the updated topology to all the addresses
     // If a node has been removed, then it will make itself alone on its own cluster and will have no more links to the previous nodes
     // This is done in the DynamicConfigService#setUpcomingCluster() method
-    logger.info("Sending the topology change to all the nodes");
+    logger.info("Sending the topology change");
 
     if (destinationClusterActivated) {
       beforeNomadChange(result);

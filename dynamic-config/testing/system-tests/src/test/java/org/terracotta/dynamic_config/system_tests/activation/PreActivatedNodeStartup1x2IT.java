@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.fail;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 
@@ -37,6 +39,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.con
 public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();
+  @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
 
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
@@ -72,7 +75,7 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
           "--data-dirs", "main:terracotta1-2/data-dir");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 2), containsLog("Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "sanskrit")));
+      waitUntil(err::getLog, containsString("Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "sanskrit")));
     }
   }
 
