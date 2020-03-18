@@ -28,7 +28,7 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 
-@ClusterDefinition(nodesPerStripe = 2, autoStart = false)
+@ClusterDefinition(autoStart = false)
 public class Ipv6ConfigActivationIT extends DynamicConfigIT {
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();
