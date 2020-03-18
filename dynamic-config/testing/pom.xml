@@ -34,7 +34,7 @@
   <modules>
     <module>support</module>
     <module>entity</module>
-<!--    <module>system-tests</module>-->
+    <module>system-tests</module>
   </modules>
 
 </project>

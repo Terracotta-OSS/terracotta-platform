@@ -29,12 +29,6 @@
   <artifactId>dynamic-config-configuration-provider</artifactId>
   <name>Dynamic Config :: Server :: Configuration Provider</name>
 
-  <properties>
-    <terracotta-configuration.version>10.7.0-pre2</terracotta-configuration.version>
-    <passthrough-testing.version>1.7.0-pre8</passthrough-testing.version>
-    <terracotta-core.version>5.7.0-pre18</terracotta-core.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.terracotta.dynamic-config.server</groupId>

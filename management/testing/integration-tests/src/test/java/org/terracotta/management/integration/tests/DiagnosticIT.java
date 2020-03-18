@@ -27,7 +27,6 @@ import java.util.Properties;
 
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 /**
  * @author Mathieu Carbou
@@ -42,7 +41,7 @@ public class DiagnosticIT extends AbstractSingleTest {
     put(0, "pets", "pet1", "Cubitus");
 
     Properties properties = new Properties();
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, String.valueOf("5000"));
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, "diagnostic");
     properties.setProperty(PROP_REQUEST_TIMEOUT, "5000");
     properties.setProperty(PROP_REQUEST_TIMEOUTMESSAGE, "5000");
@@ -55,25 +54,25 @@ public class DiagnosticIT extends AbstractSingleTest {
       // once https://github.com/Terracotta-OSS/terracotta-core/issues/613 and https://github.com/Terracotta-OSS/terracotta-core/pull/601 will be fixed 
       // and once the state dump format will be improved.
       String dump = diagnostics.getClusterState();
-      
+
       // monitoring service provider
       assertThat(dump, containsString("cluster="));
 
       // ActiveNmsServerEntity / PassiveNmsServerEntity
       assertThat(dump, containsString("consumerId="));
       assertThat(dump, containsString("stripeName="));
-      
+
       // OffHeapResourcesProvider
       assertThat(dump, containsString("capacity="));
-      assertThat(dump, containsString("available="));
-      
+      assertThat(dump, containsString("availableAtTime="));
+
       // ActiveCacheServerEntity / ActiveCacheServerEntity
       assertThat(dump, containsString("cacheName="));
       assertThat(dump, containsString("cacheSize="));
-      
+
       // MapProvider
       assertThat(dump, containsString("caches="));
-      
+
       // Common on all active entities
       assertThat(dump, containsString("instance="));
       assertThat(dump, containsString("clientCount="));

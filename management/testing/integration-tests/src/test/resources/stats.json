@@ -2,10 +2,10 @@
   {
     "capability": "OffHeapResourceStatistics",
     "context": {
-      "consumerId": "2",
+      "consumerId": "6",
       "alias": "primary-server-resource",
       "type": "OffHeapResource",
-      "collectorId": "2",
+      "collectorId": "6",
       "stripeId": "SINGLE",
       "serverId": "testServer0",
       "serverName": "testServer0",
@@ -28,10 +28,10 @@
   {
     "capability": "ServerCacheStatistics",
     "context": {
-      "consumerId": "3",
+      "consumerId": "7",
       "alias": "pet-clinic/pets",
       "type": "ServerCache",
-      "collectorId": "2",
+      "collectorId": "6",
       "stripeId": "SINGLE",
       "serverId": "testServer0",
       "serverName": "testServer0",
@@ -122,10 +122,10 @@
   {
     "capability": "ServerCacheStatistics",
     "context": {
-      "consumerId": "4",
+      "consumerId": "8",
       "alias": "pet-clinic/clients",
       "type": "ServerCache",
-      "collectorId": "2",
+      "collectorId": "6",
       "stripeId": "SINGLE",
       "serverId": "testServer0",
       "serverName": "testServer0",
