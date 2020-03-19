@@ -15,7 +15,11 @@
  */
 package org.terracotta.common.struct;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.math.BigInteger;
+
+import static java.lang.Math.rint;
 
 public enum MemoryUnit implements Unit<MemoryUnit> {
   B(0),
@@ -79,5 +83,23 @@ public enum MemoryUnit implements Unit<MemoryUnit> {
       }
     }
     throw new IllegalArgumentException(s);
+  }
+
+  @SuppressFBWarnings("FE_FLOATING_POINT_EQUALITY")
+  public String toString(long quantity) {
+    MemoryUnit[] units = MemoryUnit.values();
+    for (int i = units.length - 1; units[i] != this; i--) {
+      MemoryUnit unit = units[i];
+      long base = 1L << (unit.bitShift - this.bitShift);
+      if (quantity > base) {
+        double value = ((double) quantity) / base;
+        if (value == rint(value)) {
+          return String.format("%d%s", (long) value, unit);
+        } else {
+          return String.format("%3.1f%s", value, unit);
+        }
+      }
+    }
+    return Long.toString(quantity) + this;
   }
 }
