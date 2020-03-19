@@ -154,16 +154,7 @@ public class AttachCommand extends TopologyCommand {
     // we are running a cluster activation only on the new nodes
     runClusterActivation(newNodes, result);
     logger.debug("Configuration repositories have been created for nodes: {}", toString(newNodes));
-
-    //TODO [DYNAMIC-CONFIG]: TDB-4835: remove this code
-    // [[=====================================================================================
-    logger.info("Restarting nodes: {}", toString(destinationCluster.getNodeAddresses()));
-    restartNodes(
-        destinationCluster.getNodeAddresses(),
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
-    // =======================================================================================]]
-
+    
     logger.info("Restarting nodes: {}", toString(newNodes));
     restartNodes(
         newNodes,
