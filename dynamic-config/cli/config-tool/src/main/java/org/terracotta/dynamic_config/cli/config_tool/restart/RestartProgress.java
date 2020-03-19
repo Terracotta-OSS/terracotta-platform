@@ -15,7 +15,7 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.restart;
 
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;

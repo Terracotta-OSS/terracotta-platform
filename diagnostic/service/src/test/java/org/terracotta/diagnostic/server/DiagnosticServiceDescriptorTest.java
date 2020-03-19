@@ -18,6 +18,7 @@ package org.terracotta.diagnostic.server;
 import com.fasterxml.jackson.core.ObjectCodec;
 import org.junit.Test;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
+import org.terracotta.diagnostic.server.api.Expose;
 import org.terracotta.json.Json;
 
 import java.io.Closeable;

@@ -15,7 +15,7 @@
  */
 package org.terracotta.diagnostic.client;
 
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 
 import java.io.Closeable;
 

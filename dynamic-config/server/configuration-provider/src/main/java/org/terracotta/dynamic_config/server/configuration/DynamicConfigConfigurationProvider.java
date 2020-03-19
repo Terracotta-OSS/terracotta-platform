@@ -22,8 +22,7 @@ import com.tc.server.ServiceClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationProvider;
-import org.terracotta.diagnostic.server.DefaultDiagnosticServices;
-import org.terracotta.diagnostic.server.api.DiagnosticServices;
+import org.terracotta.diagnostic.server.api.DiagnosticServicesHolder;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
@@ -71,10 +70,6 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   public void initialize(List<String> args) {
     withMyClassLoader(() -> {
       ClassLoader serviceClassLoader = getServiceClassLoader();
-
-      // initialize the enhanced communication layer on top of diagnostic port
-      DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices();
-      diagnosticServices.init();
 
       // substitution service from placeholders
       ParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
@@ -129,7 +124,6 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration = configurationGeneratorVisitor.generateConfiguration();
 
       //  exposes services through org.terracotta.entity.PlatformConfiguration
-      configuration.registerExtendedConfiguration(DiagnosticServices.class, diagnosticServices);
       configuration.registerExtendedConfiguration(IParameterSubstitutor.class, parameterSubstitutor);
       configuration.registerExtendedConfiguration(ConfigChangeHandlerManager.class, configChangeHandlerManager);
       configuration.registerExtendedConfiguration(DynamicConfigEventService.class, dynamicConfigService);
@@ -142,9 +136,9 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration.discoverExtensions();
 
       // Expose some services through diagnostic port
-      diagnosticServices.register(TopologyService.class, dynamicConfigService);
-      diagnosticServices.register(DynamicConfigService.class, dynamicConfigService);
-      diagnosticServices.register(NomadServer.class, nomadServer);
+      DiagnosticServicesHolder.willRegister(TopologyService.class, dynamicConfigService);
+      DiagnosticServicesHolder.willRegister(DynamicConfigService.class, dynamicConfigService);
+      DiagnosticServicesHolder.willRegister(NomadServer.class, nomadServer);
 
       LOGGER.info("Startup configuration of the node: {}{}{}", lineSeparator(), lineSeparator(), configuration);
     });

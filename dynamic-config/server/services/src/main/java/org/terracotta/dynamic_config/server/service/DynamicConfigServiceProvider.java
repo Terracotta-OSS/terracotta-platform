@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
@@ -71,6 +72,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   private volatile DynamicConfigEventService dynamicConfigEventService;
   private volatile TopologyService topologyService;
   private volatile NomadServer<NodeContext> nomadServer;
+  private volatile DynamicConfigService dynamicConfigService;
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
@@ -79,6 +81,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     configChangeHandlerManager = find(platformConfiguration, ConfigChangeHandlerManager.class);
     dynamicConfigEventService = find(platformConfiguration, DynamicConfigEventService.class);
     topologyService = find(platformConfiguration, TopologyService.class);
+    dynamicConfigService = find(platformConfiguration, DynamicConfigService.class);
     nomadServer = find(platformConfiguration, (Class<NomadServer<NodeContext>>) (Class) NomadServer.class);
 
     // If the server is started without the startup manager, with the old script but not with not start-node.sh, then the diagnostic services won't be there.
@@ -145,6 +148,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     if (configuration.getServiceType() == NomadServer.class) {
       return configuration.getServiceType().cast(nomadServer);
     }
+    if (configuration.getServiceType() == DynamicConfigService.class) {
+      return configuration.getServiceType().cast(dynamicConfigService);
+    }
     throw new UnsupportedOperationException(configuration.getServiceType().getName());
   }
 
@@ -155,7 +161,8 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         ConfigChangeHandlerManager.class,
         DynamicConfigEventService.class,
         TopologyService.class,
-        NomadServer.class
+        NomadServer.class,
+        DynamicConfigService.class
     );
   }
 

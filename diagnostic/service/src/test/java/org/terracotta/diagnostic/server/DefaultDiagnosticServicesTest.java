@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
+import org.terracotta.diagnostic.server.api.Expose;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanInfo;

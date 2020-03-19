@@ -51,7 +51,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
 import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 import static org.terracotta.dynamic_config.cli.command.Injector.inject;
 import static org.terracotta.nomad.messages.AcceptRejectResponse.accept;

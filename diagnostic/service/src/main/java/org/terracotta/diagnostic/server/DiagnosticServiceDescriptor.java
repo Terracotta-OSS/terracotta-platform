@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
+import org.terracotta.diagnostic.server.api.Expose;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

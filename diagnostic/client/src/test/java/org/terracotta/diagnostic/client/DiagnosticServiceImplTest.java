@@ -68,11 +68,11 @@ import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_P
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NULL_RETURN;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_REQUEST_TIMEOUT;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_UNKNOWN_COMMAND;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.START_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.UNKNOWN;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.START_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**

@@ -32,6 +32,11 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.diagnostic</groupId>
+      <artifactId>diagnostic-model</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.diagnostic</groupId>
       <artifactId>diagnostic-common</artifactId>
       <version>${project.version}</version>
     </dependency>
