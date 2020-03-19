@@ -54,24 +54,17 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.terracotta.common.struct.Tuple3.tuple3;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_PERMITTED;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NULL_RETURN;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_REQUEST_TIMEOUT;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_UNKNOWN_COMMAND;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.START_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.UNKNOWN;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -170,60 +163,6 @@ public class DiagnosticServiceImplTest {
 
     when(diagnostics.forceTerminateServer()).thenReturn(null);
     assertThat(() -> service.forceTerminateServer(), is(not(throwing())));
-  }
-
-  @Test
-  public void test_getLogicalServerState() {
-    {
-      Stream.of(MESSAGE_UNKNOWN_COMMAND, MESSAGE_INVALID_JMX)
-          .flatMap(mainCall -> Stream.of(MESSAGE_UNKNOWN_COMMAND, MESSAGE_INVALID_JMX)
-              .flatMap(stateCall -> Stream.of(MESSAGE_UNKNOWN_COMMAND, MESSAGE_INVALID_JMX)
-                  .map(blockedCall -> tuple3(mainCall, stateCall, blockedCall))))
-          .forEach(input -> {
-            reset(diagnostics);
-            when(diagnostics.invoke("Server", "isReconnectWindow")).thenReturn("false");
-            when(diagnostics.invoke("DetailedServerState", "getDetailedServerState")).thenReturn(input.t1);
-            when(diagnostics.getState()).thenReturn(input.t2);
-            when(diagnostics.invoke("ConsistencyManager", "isBlocked")).thenReturn(input.t3);
-            assertThat(input.toString(), service.getLogicalServerState(), is(UNKNOWN));
-            verify(diagnostics, times(1)).getState();
-            verify(diagnostics, times(1)).invoke("ConsistencyManager", "isBlocked");
-          });
-    }
-
-    {
-      Stream.of(MESSAGE_UNKNOWN_COMMAND, MESSAGE_INVALID_JMX).forEach(mainCall -> {
-        reset(diagnostics);
-        when(diagnostics.invoke("Server", "isReconnectWindow")).thenReturn("false");
-        when(diagnostics.invoke("DetailedServerState", "getDetailedServerState")).thenReturn(mainCall);
-        when(diagnostics.getState()).thenReturn("ACTIVE");
-        when(diagnostics.invoke("ConsistencyManager", "isBlocked")).thenReturn("true");
-        assertThat(service.getLogicalServerState(), is(ACTIVE_SUSPENDED));
-        verify(diagnostics, times(1)).getState();
-        verify(diagnostics, times(1)).invoke("ConsistencyManager", "isBlocked");
-      });
-    }
-
-    reset(diagnostics);
-    when(diagnostics.invoke("DetailedServerState", "getDetailedServerState")).thenReturn("ACTIVE_SUSPENDED");
-    assertThat(service.getLogicalServerState(), equalTo(ACTIVE_SUSPENDED));
-    verify(diagnostics, never()).getState();
-    verify(diagnostics, never()).invoke("ConsistencyManager", "isBlocked");
-
-    reset(diagnostics);
-
-    when(diagnostics.invoke("DetailedServerState", "getDetailedServerState")).thenReturn(MESSAGE_INVALID_JMX);
-    when(diagnostics.getState()).thenReturn("PASSIVE");
-
-    when(diagnostics.invoke("ConsistencyManager", "isBlocked")).thenReturn(MESSAGE_INVALID_JMX);
-    when(diagnostics.invoke("Server", "isReconnectWindow")).thenReturn("false");
-    assertThat(service.getLogicalServerState(), equalTo(PASSIVE));
-
-    when(diagnostics.invoke("ConsistencyManager", "isBlocked")).thenReturn("true");
-    assertThat(service.getLogicalServerState(), equalTo(PASSIVE_SUSPENDED));
-
-    when(diagnostics.getState()).thenReturn("START-STATE");
-    assertThat(service.getLogicalServerState(), equalTo(START_SUSPENDED));
   }
 
   @Test

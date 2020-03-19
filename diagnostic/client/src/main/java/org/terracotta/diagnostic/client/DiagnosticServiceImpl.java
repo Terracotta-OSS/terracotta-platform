@@ -31,6 +31,7 @@ import java.util.function.Supplier;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DETAILED_SERVER_STATE;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_PERMITTED;
@@ -141,28 +142,7 @@ class DiagnosticServiceImpl implements DiagnosticService {
 
   @Override
   public LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
-    try {
-      return LogicalServerState.parse(invoke("DetailedServerState", "getDetailedServerState"));
-    } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException ignored) {
-      // maybe we connect to an old version, 10.2 for example, that does not have this MBean
-      // in this case, let's try the original Server state Mbean
-    }
-
-    String state = LogicalServerState.UNKNOWN.name();
-    try {
-      state = getState();
-    } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException ignored) {
-      // should never occur for getState()
-    }
-
-    boolean blocked = false;
-    try {
-      blocked = isBlocked();
-    } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException e2) {
-      // in case ConsistencyManager is not there
-    }
-
-    return LogicalServerState.from(state, isReconnectWindow(), blocked);
+    return LogicalServerState.parse(invoke(MBEAN_DETAILED_SERVER_STATE, "getLogicalServerState"));
   }
 
   // DiagnosticsHandler
