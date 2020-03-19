@@ -30,8 +30,5 @@ public interface DiagnosticConstants {
   String MBEAN_CONSISTENCY_MANAGER = "ConsistencyManager";
   String MBEAN_SHUTDOWN = "Shutdown";
   String MBEAN_L2_DUMPER = "L2Dumper";
-  String MBEAN_IP_WHITELIST = "IPWhitelist";
-  String MBEAN_BACKUP = "Backup";
   String MBEAN_SERVER = "Server";
-  String MBEAN_NOMAD = "Nomad";
 }

@@ -60,6 +60,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_PERMITTED;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NULL_RETURN;
@@ -124,35 +125,35 @@ public class DiagnosticServiceImplTest {
 
   @Test
   public void test_general_exceptions() {
-    when(diagnostics.invoke("IPWhitelist", "reload")).thenReturn(MESSAGE_REQUEST_TIMEOUT);
+    when(diagnostics.invoke(MBEAN_SERVER, "getTCProperties")).thenReturn(MESSAGE_REQUEST_TIMEOUT);
     assertThat(
-        () -> service.reloadIPWhitelist(),
+        () -> service.getTCProperties(),
         is(throwing(instanceOf(DiagnosticOperationTimeoutException.class)).andMessage(is(equalTo(MESSAGE_REQUEST_TIMEOUT)))));
 
-    when(diagnostics.invoke("IPWhitelist", "reload")).thenReturn(MESSAGE_INVALID_JMX);
+    when(diagnostics.invoke(MBEAN_SERVER, "getTCProperties")).thenReturn(MESSAGE_INVALID_JMX);
     assertThat(
-        () -> service.reloadIPWhitelist(),
+        () -> service.getTCProperties(),
         is(throwing(instanceOf(DiagnosticOperationExecutionException.class)).andMessage(is(equalTo(MESSAGE_INVALID_JMX)))));
 
-    when(diagnostics.invoke("IPWhitelist", "reload")).thenReturn(MESSAGE_UNKNOWN_COMMAND);
+    when(diagnostics.invoke(MBEAN_SERVER, "getTCProperties")).thenReturn(MESSAGE_UNKNOWN_COMMAND);
     assertThat(
-        () -> service.reloadIPWhitelist(),
+        () -> service.getTCProperties(),
         is(throwing(instanceOf(DiagnosticOperationUnsupportedException.class)).andMessage(is(equalTo(MESSAGE_UNKNOWN_COMMAND)))));
 
-    when(diagnostics.invoke("IPWhitelist", "reload")).thenReturn(MESSAGE_NOT_PERMITTED);
+    when(diagnostics.invoke(MBEAN_SERVER, "getTCProperties")).thenReturn(MESSAGE_NOT_PERMITTED);
     assertThat(
-        () -> service.reloadIPWhitelist(),
+        () -> service.getTCProperties(),
         is(throwing(instanceOf(DiagnosticOperationNotAllowedException.class)).andMessage(is(equalTo(MESSAGE_NOT_PERMITTED)))));
 
-    when(diagnostics.invoke("IPWhitelist", "reload")).thenReturn(null);
+    when(diagnostics.invoke(MBEAN_SERVER, "getTCProperties")).thenReturn(null);
     assertThat(
-        () -> service.reloadIPWhitelist(),
+        () -> service.getTCProperties(),
         is(throwing(instanceOf(DiagnosticConnectionException.class)).andMessage(is(nullValue(String.class)))));
   }
 
   @Test
   public void test_null_return_supported() {
-    when(diagnostics.invoke("Server", "getEnvironment")).thenReturn("");
+    when(diagnostics.invoke(MBEAN_SERVER, "getEnvironment")).thenReturn("");
     assertThat(service.getEnvironment(), is(nullValue()));
   }
 

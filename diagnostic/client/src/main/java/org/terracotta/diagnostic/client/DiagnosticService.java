@@ -19,9 +19,7 @@ import org.terracotta.diagnostic.common.LogicalServerState;
 
 import java.io.Closeable;
 
-import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_BACKUP;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_CONSISTENCY_MANAGER;
-import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_IP_WHITELIST;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_L2_DUMPER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SHUTDOWN;
@@ -70,12 +68,6 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
     }
   }
 
-  // IPWhitelist
-
-  default void reloadIPWhitelist() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    invoke(MBEAN_IP_WHITELIST, "reload");
-  }
-
   // Shutdown
 
   default String safeToShutdown() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
@@ -104,36 +96,6 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
 
   default String hardStop() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
     return invoke(MBEAN_SHUTDOWN, "hardStop");
-  }
-
-  // Backup
-
-  default String prepareForBackup() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "prepareForBackup");
-  }
-
-  default String enterOnlineBackupMode() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "enterOnlineBackupMode");
-  }
-
-  default String prepareAndEnterOnlineBackupMode() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "prepareAndEnterOnlineBackupMode");
-  }
-
-  default String startBackup() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "doBackup");
-  }
-
-  default String exitOnlineBackupMode() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "exitOnlineBackupMode");
-  }
-
-  default String abortBackup() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "abortBackup");
-  }
-
-  default void setUniqueBackupName(String uniqueBackupName) throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    set(MBEAN_BACKUP, "UniqueBackupName", uniqueBackupName);
   }
 
   // TCServerInfoMBean
