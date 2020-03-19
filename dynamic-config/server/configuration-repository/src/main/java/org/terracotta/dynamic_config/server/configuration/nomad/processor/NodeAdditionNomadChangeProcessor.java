@@ -25,6 +25,12 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.nomad.server.NomadException;
 
+import javax.management.MBeanServer;
+import javax.management.JMException;
+import java.lang.management.ManagementFactory;
+import java.util.stream.Stream;
+
+import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -32,9 +38,11 @@ import static java.util.Objects.requireNonNull;
  */
 public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<NodeAdditionNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NodeAdditionNomadChangeProcessor.class);
-
+  private static final String PLATFORM_MBEAN_OPERATION_NAME = "addPassive";
+  
   private final TopologyService topologyService;
   private final DynamicConfigListener listener;
+  private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
   public NodeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigListener listener) {
     this.topologyService = requireNonNull(topologyService);
@@ -66,20 +74,29 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
     try {
       LOGGER.info("Adding node: {} to stripe ID: {}", change.getNodeAddress(), change.getStripeId());
 
-      //TODO [DYNAMIC-CONFIG]: TDB-4835 - call MBean
-
+      mbeanServer.invoke(
+          TOPOLOGY_MBEAN,
+          PLATFORM_MBEAN_OPERATION_NAME,
+          new Object[]{change.getNodeAddress().toString()},
+          new String[]{String.class.getName()}
+      );
+      
       listener.onNodeAddition(change.getStripeId(), change.getNode());
-    } catch (RuntimeException e) {
+    } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
   }
 
   private void checkMBeanOperation() {
-    boolean canCall = true;
-    //TODO [DYNAMIC-CONFIG]: TDB-4835 - check if MBean can be called
-//    boolean canCall = Stream
-//        .of(mbeanServer.getMBeanInfo(TC_SERVER_INFO).getOperations())
-//        .anyMatch(attr -> "AddNode".equals(attr.getName()));
+    boolean canCall;
+    try {
+      canCall = Stream
+          .of(mbeanServer.getMBeanInfo(TOPOLOGY_MBEAN).getOperations())
+          .anyMatch(attr -> PLATFORM_MBEAN_OPERATION_NAME.equals(attr.getName()));
+    } catch (JMException e) {
+      LOGGER.error("MBeanServer::getMBeanInfo resulted in:", e);
+      canCall = false;
+    }
     if (!canCall) {
       throw new IllegalStateException("Unable to invoke MBean operation to attach a node");
     }
