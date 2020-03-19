@@ -20,6 +20,7 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import java.io.Closeable;
 
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_CONSISTENCY_MANAGER;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_L2_DUMPER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SHUTDOWN;
@@ -47,6 +48,12 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
 
   @Override
   void close();
+
+  // LogicalServerState
+
+  default LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
+    return LogicalServerState.parse(invoke(MBEAN_LOGICAL_SERVER_STATE, "getLogicalServerState"));
+  }
 
   // ConsistencyManager
 
@@ -111,10 +118,6 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
   default boolean isReconnectWindow() {
     return Boolean.parseBoolean(invoke(MBEAN_SERVER, "isReconnectWindow"));
   }
-
-
-  // DetailedServerState
-  LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException;
 
   // DiagnosticsHandler
 

@@ -47,6 +47,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>dso-l2</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
