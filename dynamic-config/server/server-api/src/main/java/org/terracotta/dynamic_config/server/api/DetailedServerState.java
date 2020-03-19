@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.diagnostic.server;
-
-import org.terracotta.diagnostic.common.LogicalServerState;
+package org.terracotta.dynamic_config.server.api;
 
 public interface DetailedServerState {
   LogicalServerState getLogicalServerState();

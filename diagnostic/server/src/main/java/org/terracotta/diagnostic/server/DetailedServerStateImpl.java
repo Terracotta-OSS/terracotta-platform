@@ -20,7 +20,8 @@ import com.tc.management.TerracottaManagement;
 import com.tc.objectserver.impl.JMXSubsystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.dynamic_config.server.api.DetailedServerState;
+import org.terracotta.dynamic_config.server.api.LogicalServerState;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;

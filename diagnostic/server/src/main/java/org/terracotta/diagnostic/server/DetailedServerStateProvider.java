@@ -16,6 +16,7 @@
 package org.terracotta.diagnostic.server;
 
 import com.tc.classloader.BuiltinService;
+import org.terracotta.dynamic_config.server.api.DetailedServerState;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -37,12 +38,12 @@ public class DetailedServerStateProvider implements ServiceProvider {
   @Override
   public <T> T getService(long l, ServiceConfiguration<T> serviceConfiguration) {
     Class<T> serviceType = serviceConfiguration.getServiceType();
-    return !serviceType.equals(DetailedServerStateImpl.class) ? null : serviceType.cast(detailedServerState);
+    return !serviceType.equals(DetailedServerState.class) ? null : serviceType.cast(detailedServerState);
   }
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Collections.singletonList(DetailedServerStateImpl.class);
+    return Collections.singletonList(DetailedServerState.class);
   }
 
   @Override
