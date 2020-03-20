@@ -134,6 +134,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration.registerExtendedConfiguration(DynamicConfigListener.class, nomadServerManager.getDynamicConfigListener());
       configuration.registerExtendedConfiguration(NomadServer.class, nomadServer);
       configuration.registerExtendedConfiguration(UpgradableNomadServer.class, nomadServer);
+      configuration.registerExtendedConfiguration(LicenseParser.class, licenseParser);
       configuration.registerExtendedConfiguration(PathResolver.class, userDirResolver);
       nomadServerManager.getRoutingNomadChangeProcessor()
           .ifPresent(routingNomadChangeProcessor -> configuration.registerExtendedConfiguration(RoutingNomadChangeProcessor.class, routingNomadChangeProcessor));

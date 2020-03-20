@@ -28,6 +28,7 @@ import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.LicenseParser;
 import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
@@ -78,6 +79,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   private volatile DynamicConfigService dynamicConfigService;
   private volatile RoutingNomadChangeProcessor routingNomadChangeProcessor;
   private volatile DynamicConfigListener dynamicConfigListener;
+  private volatile LicenseParser licenseParser;
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
@@ -90,6 +92,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     nomadServer = find(platformConfiguration, (Class<UpgradableNomadServer<NodeContext>>) (Class) UpgradableNomadServer.class);
     routingNomadChangeProcessor = find(platformConfiguration, RoutingNomadChangeProcessor.class);
     dynamicConfigListener = find(platformConfiguration, DynamicConfigListener.class);
+    licenseParser = find(platformConfiguration, LicenseParser.class);
 
     // If the server is started without the startup manager, with the old script but not with not start-node.sh, then the diagnostic services won't be there.
     if (configChangeHandlerManager != null) {
@@ -167,6 +170,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     if (configuration.getServiceType() == DynamicConfigListener.class) {
       return configuration.getServiceType().cast(dynamicConfigListener);
     }
+    if (configuration.getServiceType() == LicenseParser.class) {
+      return configuration.getServiceType().cast(licenseParser);
+    }
     throw new UnsupportedOperationException(configuration.getServiceType().getName());
   }
 
@@ -181,7 +187,8 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         DynamicConfigListener.class,
         NomadServer.class,
         UpgradableNomadServer.class,
-        RoutingNomadChangeProcessor.class
+        RoutingNomadChangeProcessor.class,
+        LicenseParser.class
     );
   }
 
