@@ -20,40 +20,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.terracotta</groupId>
-    <artifactId>platform-root</artifactId>
+    <groupId>org.terracotta.diagnostic</groupId>
+    <artifactId>diagnostic</artifactId>
     <version>5.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <groupId>org.terracotta.diagnostic</groupId>
-  <artifactId>diagnostic</artifactId>
-  <packaging>pom</packaging>
-  <name>Diagnostic :: POM</name>
-
-  <modules>
-    <module>model</module>
-    <module>common</module>
-    <module>client</module>
-    <module>service-api</module>
-    <module>service</module>
-  </modules>
-
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+  <artifactId>diagnostic-model</artifactId>
+  <name>Diagnostic :: Model</name>
 </project>

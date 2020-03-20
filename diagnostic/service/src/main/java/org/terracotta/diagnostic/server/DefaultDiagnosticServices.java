@@ -43,6 +43,7 @@ import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
 
 /**
  * Common manager holding all diagnostic services registered on a server
@@ -66,12 +67,12 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
   }
 
   public void init() {
-    registerMBean("DiagnosticRequestHandler", handler);
+    registerMBean(MBEAN_DIAGNOSTIC_REQUEST_HANDLER, handler);
   }
 
   @Override
   public void close() {
-    unregisterMBean("DiagnosticRequestHandler");
+    unregisterMBean(MBEAN_DIAGNOSTIC_REQUEST_HANDLER);
     clear();
   }
 

@@ -15,13 +15,12 @@
  */
 package org.terracotta.diagnostic.client;
 
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 
 import java.io.Closeable;
 
-import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_BACKUP;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_CONSISTENCY_MANAGER;
-import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_IP_WHITELIST;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_L2_DUMPER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SHUTDOWN;
@@ -50,6 +49,12 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
   @Override
   void close();
 
+  // LogicalServerState
+
+  default LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
+    return LogicalServerState.parse(invoke(MBEAN_LOGICAL_SERVER_STATE, "getLogicalServerState"));
+  }
+
   // ConsistencyManager
 
   default boolean isBlocked() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
@@ -68,12 +73,6 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
     } catch (DiagnosticOperationTimeoutException e) {
       // do nothing: this is a client timeout. The dump might take longer on server.
     }
-  }
-
-  // IPWhitelist
-
-  default void reloadIPWhitelist() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    invoke(MBEAN_IP_WHITELIST, "reload");
   }
 
   // Shutdown
@@ -106,36 +105,6 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
     return invoke(MBEAN_SHUTDOWN, "hardStop");
   }
 
-  // Backup
-
-  default String prepareForBackup() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "prepareForBackup");
-  }
-
-  default String enterOnlineBackupMode() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "enterOnlineBackupMode");
-  }
-
-  default String prepareAndEnterOnlineBackupMode() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "prepareAndEnterOnlineBackupMode");
-  }
-
-  default String startBackup() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "doBackup");
-  }
-
-  default String exitOnlineBackupMode() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "exitOnlineBackupMode");
-  }
-
-  default String abortBackup() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    return invoke(MBEAN_BACKUP, "abortBackup");
-  }
-
-  default void setUniqueBackupName(String uniqueBackupName) throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    set(MBEAN_BACKUP, "UniqueBackupName", uniqueBackupName);
-  }
-
   // TCServerInfoMBean
 
   default String getTCProperties() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
@@ -149,10 +118,6 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
   default boolean isReconnectWindow() {
     return Boolean.parseBoolean(invoke(MBEAN_SERVER, "isReconnectWindow"));
   }
-
-
-  // DetailedServerState
-  LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException;
 
   // DiagnosticsHandler
 

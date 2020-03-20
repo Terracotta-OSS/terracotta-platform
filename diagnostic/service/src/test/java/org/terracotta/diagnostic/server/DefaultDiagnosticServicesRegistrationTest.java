@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
+import org.terracotta.diagnostic.server.api.Expose;
 
 import javax.management.InstanceNotFoundException;
 

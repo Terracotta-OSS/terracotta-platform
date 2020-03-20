@@ -18,7 +18,7 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;

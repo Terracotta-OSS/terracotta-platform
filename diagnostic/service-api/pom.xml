@@ -29,4 +29,12 @@
   <artifactId>diagnostic-service-api</artifactId>
   <name>Diagnostic :: Service API</name>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta.diagnostic</groupId>
+      <artifactId>diagnostic-model</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
 </project>

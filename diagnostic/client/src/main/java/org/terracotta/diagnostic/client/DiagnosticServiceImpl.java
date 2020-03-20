@@ -24,7 +24,6 @@ import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
-import org.terracotta.diagnostic.common.LogicalServerState;
 
 import java.lang.reflect.Proxy;
 import java.util.function.Supplier;
@@ -135,34 +134,6 @@ class DiagnosticServiceImpl implements DiagnosticService {
   @Override
   public String invokeWithArg(String name, String cmd, String arg) throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
     return execute(() -> delegate.invokeWithArg(name, cmd, arg));
-  }
-
-  // DetailedServerState
-
-  @Override
-  public LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
-    try {
-      return LogicalServerState.parse(invoke("DetailedServerState", "getDetailedServerState"));
-    } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException ignored) {
-      // maybe we connect to an old version, 10.2 for example, that does not have this MBean
-      // in this case, let's try the original Server state Mbean
-    }
-
-    String state = LogicalServerState.UNKNOWN.name();
-    try {
-      state = getState();
-    } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException ignored) {
-      // should never occur for getState()
-    }
-
-    boolean blocked = false;
-    try {
-      blocked = isBlocked();
-    } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException e2) {
-      // in case ConsistencyManager is not there
-    }
-
-    return LogicalServerState.from(state, isReconnectWindow(), blocked);
   }
 
   // DiagnosticsHandler

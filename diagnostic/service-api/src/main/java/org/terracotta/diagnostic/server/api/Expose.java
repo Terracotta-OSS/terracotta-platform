@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.diagnostic.server;
+package org.terracotta.diagnostic.server.api;
 
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 

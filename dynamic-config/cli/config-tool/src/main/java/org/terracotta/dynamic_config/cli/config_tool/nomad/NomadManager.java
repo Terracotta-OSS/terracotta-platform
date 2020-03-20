@@ -22,7 +22,7 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
@@ -59,10 +59,10 @@ import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE_RECONNECTING;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 
 public class NomadManager<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadManager.class);

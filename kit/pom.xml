@@ -81,6 +81,11 @@
       <artifactId>lease-entity-server</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.diagnostic</groupId>
+      <artifactId>diagnostic-service</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <!-- management -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
@@ -212,14 +217,14 @@
           <shadedArtifactAttached>false</shadedArtifactAttached>
           <createDependencyReducedPom>false</createDependencyReducedPom>
           <createSourcesJar>false</createSourcesJar>
-          <transformers>
-            <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-          </transformers>
-          <artifactSet>
-            <excludes>
-              <exclude>org.terracotta:platform-kit</exclude>
-            </excludes>
-          </artifactSet>
+          <filters>
+            <filter>
+              <artifact>*:*</artifact>
+              <excludes>
+                <exclude>META-INF/MANIFEST.MF</exclude>
+              </excludes>
+            </filter>
+          </filters>
         </configuration>
         <executions>
           <!-- api -->
@@ -240,7 +245,20 @@
                   <include>org.terracotta.management:management-registry</include>
                   <include>org.terracotta.management:sequence-generator</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../management/monitoring-service-api/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
           <execution>
@@ -255,8 +273,22 @@
               <artifactSet>
                 <includes>
                   <include>org.terracotta.diagnostic:diagnostic-service-api</include>
+                  <include>org.terracotta.diagnostic:diagnostic-model</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../diagnostic/service-api/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
           <execution>
@@ -270,13 +302,26 @@
               <finalName>terracotta-api-dynamic-config-${project.version}</finalName>
               <artifactSet>
                 <includes>
-                  <include>org.terracotta.dynamic-config:dynamic-config-api</include>
                   <include>org.terracotta.dynamic-config.server:dynamic-config-server-api</include>
+                  <include>org.terracotta.dynamic-config:dynamic-config-api</include>
                   <include>org.terracotta.common:common-inet-support</include>
                   <include>org.terracotta.common:common-nomad</include>
                   <include>org.terracotta.common:common-structures</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../dynamic-config/server/server-api/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
           <!-- lib -->
@@ -293,7 +338,20 @@
                 <includes>
                   <include>org.terracotta:offheap-resource</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../offheap-resource/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
           <execution>
@@ -309,7 +367,20 @@
                 <includes>
                   <include>org.terracotta:data-root-resource</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../data-root-resource/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
           <execution>
@@ -328,7 +399,20 @@
                   <include>org.terracotta:lease-common</include>
                   <include>org.terracotta:runnel</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../lease/entity-server/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
           <execution>
@@ -350,7 +434,51 @@
                   <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
                   <include>org.terracotta.voltron.proxy:voltron-proxy-server</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../management/monitoring-service/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
+            <id>terracotta-plugin-diagnostic</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/packages/server/plugins/lib</outputDirectory>
+              <finalName>terracotta-plugin-diagnostic-${project.version}</finalName>
+              <artifactSet>
+                <includes>
+                  <include>org.terracotta.diagnostic:diagnostic-service</include>
+                  <include>org.terracotta.diagnostic:diagnostic-common</include>
+                  <include>org.terracotta.common:common-json-support</include>
+                </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
+              </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../diagnostic/service/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
           <execution>
@@ -372,12 +500,23 @@
                   <include>org.terracotta.dynamic-config.entities:dynamic-config-nomad-entity-server</include>
                   <include>org.terracotta.dynamic-config.entities:dynamic-config-topology-entity-common</include>
                   <include>org.terracotta.dynamic-config.entities:dynamic-config-topology-entity-server</include>
-                  <include>org.terracotta.diagnostic:diagnostic-service</include>
-                  <include>org.terracotta.diagnostic:diagnostic-common</include>
                   <include>org.terracotta.common:common-json-support</include>
                   <include>org.terracotta.common:common-sanskrit</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../dynamic-config/server/configuration-provider/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
           <execution>
@@ -396,10 +535,22 @@
                   <include>org.terracotta.internal:tc-config-parser</include>
                   <include>org.terracotta:tcconfig-schema</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../dynamic-config/cli/config-convertor/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
-
           <execution>
             <id>config-tool</id>
             <phase>prepare-package</phase>
@@ -418,12 +569,26 @@
                   <include>org.terracotta.dynamic-config.entities:dynamic-config-nomad-entity-client</include>
                   <include>org.terracotta.diagnostic:diagnostic-client</include>
                   <include>org.terracotta.diagnostic:diagnostic-common</include>
+                  <include>org.terracotta.diagnostic:diagnostic-model</include>
                   <include>org.terracotta.common:common-inet-support</include>
                   <include>org.terracotta.common:common-json-support</include>
                   <include>org.terracotta.common:common-nomad</include>
                   <include>org.terracotta.common:common-structures</include>
                 </includes>
+                <excludes>
+                  <exclude>org.terracotta:platform-kit</exclude>
+                </excludes>
               </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                </transformer>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <resource>META-INF/MANIFEST.MF</resource>
+                  <file>../dynamic-config/cli/config-tool/target/classes/META-INF/MANIFEST.MF</file>
+                </transformer>
+              </transformers>
             </configuration>
           </execution>
         </executions>

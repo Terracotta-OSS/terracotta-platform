@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.tools.detailed.state;
+package org.terracotta.diagnostic.model;
 
 import org.junit.Test;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE_RECONNECTING;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.START_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.SYNCHRONIZING;
-import static org.terracotta.diagnostic.common.LogicalServerState.UNKNOWN;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.START_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
+import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
 
 public class LogicalServerStateTest {
 
