@@ -46,22 +46,28 @@ public class DynamicConfigStartupBuilder extends DefaultStartupCommandBuilder {
     if (builtCommand == null) {
       try {
         installServer();
-        Path basePath = getKitDir().resolve("server").resolve("bin").resolve("start-tc-server");
-        String startScript = isWindows() ? basePath + ".bat" : basePath + ".sh";
-        if (isConsistentStartup()) {
-          throw new UnsupportedOperationException("Consistent startup is not supported with start-node script");
-        } else {
-          Path generatedRepositories = convertConfigFiles();
-          // moves the generated files onto the server folder, but only for this server we are building
-          Files.move(generatedRepositories.resolve("stripe-" + stripeId).resolve(getServerName()), getServerWorkingDir().resolve("repository"));
-          builtCommand = new String[]{startScript, "-r", "repository"};
-        }
+        Path generatedRepositories = convertConfigFiles();
+        // moves the generated files onto the server folder, but only for this server we are building
+        Files.move(generatedRepositories.resolve("stripe-" + stripeId).resolve(getServerName()), getServerWorkingDir().resolve("repository"));
+        buildStartupCommand();
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
     }
-
     return builtCommand;
+  }
+
+  private void buildStartupCommand() {
+    List<String> command = new ArrayList<>();
+    Path basePath = getKitDir().resolve("server").resolve("bin").resolve("start-tc-server");
+    String startScript = isWindows() ? basePath + ".bat" : basePath + ".sh";
+    command.add(startScript);
+    if (isConsistentStartup()) {
+      command.add("-c");
+    }
+    command.add("-r");
+    command.add("repository");
+    builtCommand = command.toArray(new String[0]);
   }
 
   private Path convertConfigFiles() {
