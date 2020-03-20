@@ -36,6 +36,11 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>management</artifactId>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- server provided apis -->
     <dependency>

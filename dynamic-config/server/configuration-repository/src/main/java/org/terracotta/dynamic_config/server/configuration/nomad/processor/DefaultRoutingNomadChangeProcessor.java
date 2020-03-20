@@ -17,6 +17,8 @@ package org.terracotta.dynamic_config.server.configuration.nomad.processor;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
+import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.NomadException;
 
@@ -26,14 +28,14 @@ import java.util.Map;
 /**
  * Routes the incoming Nomad change to the right processor based on the Nomad change type
  */
-public class RoutingNomadChangeProcessor implements NomadChangeProcessor<DynamicConfigNomadChange> {
+public class DefaultRoutingNomadChangeProcessor implements NomadChangeProcessor<DynamicConfigNomadChange>, RoutingNomadChangeProcessor {
 
   private final Map<Class<? extends NomadChange>, NomadChangeProcessor<DynamicConfigNomadChange>> processors = new HashMap<>();
 
+  @Override
   @SuppressWarnings("unchecked")
-  public <T extends DynamicConfigNomadChange> RoutingNomadChangeProcessor register(Class<? extends T> changeType, NomadChangeProcessor<T> processor) {
+  public <T extends DynamicConfigNomadChange> void register(Class<? extends T> changeType, NomadChangeProcessor<T> processor) {
     this.processors.put(changeType, (NomadChangeProcessor<DynamicConfigNomadChange>) processor);
-    return this;
   }
 
   @Override

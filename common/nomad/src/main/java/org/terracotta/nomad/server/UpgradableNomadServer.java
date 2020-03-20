@@ -25,6 +25,8 @@ import java.util.function.BiFunction;
 public interface UpgradableNomadServer<T> extends NomadServer<T> {
   void setChangeApplicator(ChangeApplicator<T> changeApplicator);
 
+  ChangeApplicator<T> getChangeApplicator();
+
   List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
 
   Optional<NomadChangeInfo> getNomadChange(UUID uuid) throws NomadException;

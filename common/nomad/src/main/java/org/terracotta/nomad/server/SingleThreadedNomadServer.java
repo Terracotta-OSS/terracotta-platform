@@ -128,6 +128,16 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
+  public ChangeApplicator<T> getChangeApplicator() {
+    lock.lock();
+    try {
+      return underlying.getChangeApplicator();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
   public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
     lock.lock();
     try {

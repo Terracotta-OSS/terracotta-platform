@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
-import org.terracotta.dynamic_config.server.configuration.nomad.processor.NomadChangeProcessor;
+import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadException;

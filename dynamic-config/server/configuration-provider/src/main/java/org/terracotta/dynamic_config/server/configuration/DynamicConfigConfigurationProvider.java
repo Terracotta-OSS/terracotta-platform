@@ -31,9 +31,11 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
+import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.LicenseParser;
 import org.terracotta.dynamic_config.server.api.LicenseParserDiscovery;
 import org.terracotta.dynamic_config.server.api.PathResolver;
+import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.ConfigChangeHandlerManagerImpl;
 import org.terracotta.dynamic_config.server.configuration.service.DynamicConfigServiceImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
@@ -129,8 +131,12 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration.registerExtendedConfiguration(DynamicConfigEventService.class, dynamicConfigService);
       configuration.registerExtendedConfiguration(TopologyService.class, dynamicConfigService);
       configuration.registerExtendedConfiguration(DynamicConfigService.class, dynamicConfigService);
+      configuration.registerExtendedConfiguration(DynamicConfigListener.class, nomadServerManager.getDynamicConfigListener());
       configuration.registerExtendedConfiguration(NomadServer.class, nomadServer);
+      configuration.registerExtendedConfiguration(UpgradableNomadServer.class, nomadServer);
       configuration.registerExtendedConfiguration(PathResolver.class, userDirResolver);
+      nomadServerManager.getRoutingNomadChangeProcessor()
+          .ifPresent(routingNomadChangeProcessor -> configuration.registerExtendedConfiguration(RoutingNomadChangeProcessor.class, routingNomadChangeProcessor));
 
       // discover the dynamic config extensions (offheap, dataroot, lease, etc)
       configuration.discoverExtensions();
