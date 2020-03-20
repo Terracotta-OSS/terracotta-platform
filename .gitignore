@@ -1,20 +1,35 @@
-target/
+# IntelliJ exclusions
+.idea/
+*.iml
+out/
 
-build/
-*/src/generated/
-/.gradle/
-
+# Eclipse exclusions
 .project
+.classpath/
 .classpath
-.settings/org.eclipse.m2e.core.prefs
-*/.classpath
+.settings/
 *.prefs
 
-*.iml
-.idea
-
-.nb-gradle
+# Netbeans exclusions
+nb-configuration.xml
+nbactions.xml
+.nb-gradle/
 .nb-gradle-properties
+
+# MacOS exclusions
+.DS_Store
+
+# Maven exclusions
+target/
+dependency-reduced-pom.xml
+.fbExcludeFilterFile
+
+.checkstyle
+*~
+
+/.gradletasknamecache
+/classes
 /healthchecker-entity/api/nbproject/
 
-dependency-reduced-pom.xml
+# vim
+*.swp
