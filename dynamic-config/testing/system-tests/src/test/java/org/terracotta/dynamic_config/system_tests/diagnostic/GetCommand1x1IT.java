@@ -75,13 +75,6 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testNode_getSecurityAuthc() {
-    assertThat(
-        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-authc"),
-        containsOutput("security-authc="));
-  }
-
-  @Test
   public void testNode_getNodePort() {
     assertThat(
         configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-port"),

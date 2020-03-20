@@ -61,27 +61,11 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setSecurityAuthc() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-authc=file"), is(successful()));
-
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-authc"),
-        allOf(hasExitStatus(0), containsOutput("security-authc=file")));
-  }
-
-  @Test
   public void setNodeGroupPort() {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port=9630"), is(successful()));
 
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port"),
         allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.node-group-port=9630")));
-  }
-
-  @Test
-  public void setSecurityWhitelist() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-whitelist=true"), is(successful()));
-
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-whitelist"),
-        allOf(hasExitStatus(0), containsOutput("security-whitelist=true")));
   }
 
   @Test
