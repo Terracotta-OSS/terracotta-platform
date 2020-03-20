@@ -18,8 +18,11 @@ package org.terracotta.dynamic_config.test_support.entity;
 import com.tc.classloader.PermanentEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
+import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.test_support.handler.GroupPortSimulateHandler;
 import org.terracotta.dynamic_config.test_support.handler.SimulationHandler;
@@ -36,8 +39,7 @@ import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 
-import java.util.Optional;
-
+import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 
 
@@ -85,27 +87,35 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
     return null;
   }
 
+  @SuppressWarnings("unchecked")
   protected void wireChangeHandler(ServiceRegistry serviceRegistry) {
     try {
-      Optional.ofNullable(
-          serviceRegistry.getService(new BasicServiceConfiguration<>(ConfigChangeHandlerManager.class)))
-          .ifPresent(manager -> {
-            LOGGER.info("Installing: " + SimulationHandler.class.getName());
-            ConfigChangeHandler handler = manager.findConfigChangeHandler(NODE_LOGGER_OVERRIDES).get();
-            // override the logging handler by hooking into some special properties
-            SelectingConfigChangeHandler<String> selectingConfigChangeHandler = new SelectingConfigChangeHandler<String>()
-                .add("org.terracotta.dynamic-config.simulate", new SimulationHandler())
-                .add("org.terracotta.group-port.simulate", new GroupPortSimulateHandler())
-                .fallback(handler)
-                .selector(configuration -> {
-                  String key = configuration.getKey();
-                  LOGGER.info("Selecting handler for key: {}", key);
-                  return key;
-                });
-            // install our new handler
-            manager.remove(NODE_LOGGER_OVERRIDES);
-            manager.add(NODE_LOGGER_OVERRIDES, selectingConfigChangeHandler);
+      ConfigChangeHandlerManager manager = serviceRegistry.getService(new BasicServiceConfiguration<>(ConfigChangeHandlerManager.class));
+      RoutingNomadChangeProcessor routingNomadChangeProcessor = serviceRegistry.getService(new BasicServiceConfiguration<>(RoutingNomadChangeProcessor.class));
+      TopologyService topologyService = serviceRegistry.getService(new BasicServiceConfiguration<>(TopologyService.class));
+      DynamicConfigListener dynamicConfigListener = serviceRegistry.getService(new BasicServiceConfiguration<>(DynamicConfigListener.class));
+
+      requireNonNull(routingNomadChangeProcessor);
+      requireNonNull(topologyService);
+      requireNonNull(dynamicConfigListener);
+
+      //routingNomadChangeProcessor.register(...);
+
+      LOGGER.info("Installing: " + SimulationHandler.class.getName());
+      ConfigChangeHandler handler = manager.findConfigChangeHandler(NODE_LOGGER_OVERRIDES).get();
+      // override the logging handler by hooking into some special properties
+      SelectingConfigChangeHandler<String> selectingConfigChangeHandler = new SelectingConfigChangeHandler<String>()
+          .add("org.terracotta.dynamic-config.simulate", new SimulationHandler())
+          .add("org.terracotta.group-port.simulate", new GroupPortSimulateHandler())
+          .fallback(handler)
+          .selector(configuration -> {
+            String key = configuration.getKey();
+            LOGGER.info("Selecting handler for key: {}", key);
+            return key;
           });
+      // install our new handler
+      manager.remove(NODE_LOGGER_OVERRIDES);
+      manager.add(NODE_LOGGER_OVERRIDES, selectingConfigChangeHandler);
     } catch (ServiceException e) {
       throw new IllegalStateException("Failed to obtain status " + e);
     }

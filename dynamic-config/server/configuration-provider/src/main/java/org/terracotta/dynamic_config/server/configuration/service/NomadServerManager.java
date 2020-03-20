@@ -29,16 +29,17 @@ import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
 import org.terracotta.dynamic_config.server.api.LicenseParser;
+import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.ConfigChangeApplicator;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.UncheckedNomadException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadRepositoryManager;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.ApplicabilityNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.ClusterActivationNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.nomad.processor.DefaultRoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.MultiSettingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.NodeAdditionNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.NodeRemovalNomadChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.nomad.processor.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.SettingNomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.UpgradableNomadServer;
@@ -61,9 +62,10 @@ public class NomadServerManager {
   private final LicenseParser licenseParser;
   private final DynamicConfigListener dynamicConfigListener;
 
-  private UpgradableNomadServer<NodeContext> nomadServer;
-  private NomadRepositoryManager repositoryManager;
-  private DynamicConfigServiceImpl dynamicConfigService;
+  private volatile UpgradableNomadServer<NodeContext> nomadServer;
+  private volatile NomadRepositoryManager repositoryManager;
+  private volatile DynamicConfigServiceImpl dynamicConfigService;
+  private volatile RoutingNomadChangeProcessor routingNomadChangeProcessor;
 
   public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseParser licenseParser) {
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
@@ -82,6 +84,14 @@ public class NomadServerManager {
 
   public NomadRepositoryManager getRepositoryManager() {
     return repositoryManager;
+  }
+
+  public Optional<RoutingNomadChangeProcessor> getRoutingNomadChangeProcessor() {
+    return Optional.ofNullable(routingNomadChangeProcessor);
+  }
+
+  public DynamicConfigListener getDynamicConfigListener() {
+    return dynamicConfigListener;
   }
 
   public void init(Path repositoryPath, String nodeName) throws UncheckedNomadException {
@@ -129,11 +139,13 @@ public class NomadServerManager {
       throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
     }
 
-    RoutingNomadChangeProcessor router = new RoutingNomadChangeProcessor()
-        .register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, dynamicConfigListener))
-        .register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, dynamicConfigListener))
-        .register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener))
-        .register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
+    DefaultRoutingNomadChangeProcessor router = new DefaultRoutingNomadChangeProcessor();
+    router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, dynamicConfigListener));
+    router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
+    router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
+    router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
+
+    this.routingNomadChangeProcessor = router;
 
     nomadServer.setChangeApplicator(
         new ConfigChangeApplicator(stripeId, nodeName,  // receives the change and return the allow() or reject() result depending on processors, with the config to write on disk

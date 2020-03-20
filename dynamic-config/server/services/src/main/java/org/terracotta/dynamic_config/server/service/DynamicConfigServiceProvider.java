@@ -27,6 +27,8 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
@@ -36,6 +38,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.nomad.server.UpgradableNomadServer;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,8 +74,10 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   private volatile ConfigChangeHandlerManager configChangeHandlerManager;
   private volatile DynamicConfigEventService dynamicConfigEventService;
   private volatile TopologyService topologyService;
-  private volatile NomadServer<NodeContext> nomadServer;
+  private volatile UpgradableNomadServer<NodeContext> nomadServer;
   private volatile DynamicConfigService dynamicConfigService;
+  private volatile RoutingNomadChangeProcessor routingNomadChangeProcessor;
+  private volatile DynamicConfigListener dynamicConfigListener;
 
   @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
@@ -82,7 +87,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     dynamicConfigEventService = find(platformConfiguration, DynamicConfigEventService.class);
     topologyService = find(platformConfiguration, TopologyService.class);
     dynamicConfigService = find(platformConfiguration, DynamicConfigService.class);
-    nomadServer = find(platformConfiguration, (Class<NomadServer<NodeContext>>) (Class) NomadServer.class);
+    nomadServer = find(platformConfiguration, (Class<UpgradableNomadServer<NodeContext>>) (Class) UpgradableNomadServer.class);
+    routingNomadChangeProcessor = find(platformConfiguration, RoutingNomadChangeProcessor.class);
+    dynamicConfigListener = find(platformConfiguration, DynamicConfigListener.class);
 
     // If the server is started without the startup manager, with the old script but not with not start-node.sh, then the diagnostic services won't be there.
     if (configChangeHandlerManager != null) {
@@ -148,8 +155,17 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     if (configuration.getServiceType() == NomadServer.class) {
       return configuration.getServiceType().cast(nomadServer);
     }
+    if (configuration.getServiceType() == UpgradableNomadServer.class) {
+      return configuration.getServiceType().cast(nomadServer);
+    }
+    if (configuration.getServiceType() == RoutingNomadChangeProcessor.class) {
+      return configuration.getServiceType().cast(routingNomadChangeProcessor);
+    }
     if (configuration.getServiceType() == DynamicConfigService.class) {
       return configuration.getServiceType().cast(dynamicConfigService);
+    }
+    if (configuration.getServiceType() == DynamicConfigListener.class) {
+      return configuration.getServiceType().cast(dynamicConfigListener);
     }
     throw new UnsupportedOperationException(configuration.getServiceType().getName());
   }
@@ -161,8 +177,11 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         ConfigChangeHandlerManager.class,
         DynamicConfigEventService.class,
         TopologyService.class,
+        DynamicConfigService.class,
+        DynamicConfigListener.class,
         NomadServer.class,
-        DynamicConfigService.class
+        UpgradableNomadServer.class,
+        RoutingNomadChangeProcessor.class
     );
   }
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.server.configuration.nomad.processor;
+package org.terracotta.dynamic_config.server.api;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
