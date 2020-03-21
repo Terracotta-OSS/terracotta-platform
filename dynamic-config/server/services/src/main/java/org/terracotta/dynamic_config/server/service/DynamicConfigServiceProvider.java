@@ -57,11 +57,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.server.api.ConfigChangeHandler.accept;
 import static org.terracotta.dynamic_config.server.api.ConfigChangeHandler.reject;
@@ -110,11 +105,6 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       // settings applied directly without any config handler but which require a restart
       addToManager(configChangeHandlerManager, accept(), FAILOVER_PRIORITY);
       addToManager(configChangeHandlerManager, accept(), NODE_GROUP_PORT);
-      addToManager(configChangeHandlerManager, accept(), SECURITY_DIR);
-      addToManager(configChangeHandlerManager, accept(), SECURITY_AUDIT_LOG_DIR);
-      addToManager(configChangeHandlerManager, accept(), SECURITY_AUTHC);
-      addToManager(configChangeHandlerManager, accept(), SECURITY_SSL_TLS);
-      addToManager(configChangeHandlerManager, accept(), SECURITY_WHITELIST);
 
       // public hostname/port
       addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);

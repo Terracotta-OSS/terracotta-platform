@@ -74,7 +74,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       ClassLoader serviceClassLoader = getServiceClassLoader();
 
       // substitution service from placeholders
-      ParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
+      IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
 
       // service containing the list of dynamic change handlers per settings
       ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
