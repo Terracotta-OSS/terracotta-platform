@@ -15,8 +15,6 @@
  */
 package org.terracotta.nomad.entity.server;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveServerEntity;
@@ -29,8 +27,6 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
 public class NomadPassiveServerEntity<T> extends NomadCommonServerEntity<T> implements PassiveServerEntity<NomadEntityMessage, NomadEntityResponse> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(NomadPassiveServerEntity.class);
-
   private final PlatformService platformService;
 
   public NomadPassiveServerEntity(NomadServer<T> nomadServer, PlatformService platformService) {
@@ -56,21 +52,33 @@ public class NomadPassiveServerEntity<T> extends NomadCommonServerEntity<T> impl
 
   @Override
   public void invokePassive(InvokeContext context, NomadEntityMessage message) throws EntityUserException {
-    LOGGER.trace("invokePassive({})", message.getNomadMessage());
+    logger.trace("invokePassive({})", message);
     try {
-      AcceptRejectResponse response = processMessage(message.getNomadMessage());
-      if (!response.isAccepted()) {
-        LOGGER.error("Node was unable to commit Nomad message: {}. Response: {}", message, response);
-        // Commit or rollback failed on passive: we restart it because we cannot do anything.
-        // Upon restart, the passive server will sync with the active server and repair itself if needed if the active server is committed or rolled back.
-        // The passive server will then restart with the wanted configuration without re-invoking the Nomad processors apply() methods of the commit phase.
-        // But if the commit failed on teh active server too and the active server is in prepared state,
-        // the passive server won't be able to repair itself and restart, it will be shutdown.
-        // The active server will need to be repaired with the CLI repair command first.
-        // This behavior is defined in DynamicConfigurationPassiveSync.
+      try {
+        AcceptRejectResponse response = processMessage(message.getNomadMessage());
+        if (!response.isAccepted()) {
+          // if message is not accepted, we just log (error) but we do not crash the passive:
+          switch (response.getRejectionReason()) {
+            case DEAD:
+              logger.warn("Node was unable to process Nomad message: {}. Response: {}. This can happen when the same message is received more than once and the first one was already processed.", message, response);
+              break;
+            case BAD:
+              logger.error("RESTARTING: Node was unable to process Nomad message: {}. Response: {}. This can happen when the Nomad system is not accepting changes or when the change does not exist.", message, response);
+              platformService.stopPlatformIfPassive(PlatformService.RestartMode.STOP_AND_RESTART);
+              break;
+            case UNACCEPTABLE:
+              logger.error("RESTARTING: Node was unable to process Nomad message: {}. Response: {}. This can happen when the Nomad system is not able to execute the requested change", message, response);
+              platformService.stopPlatformIfPassive(PlatformService.RestartMode.STOP_AND_RESTART);
+              break;
+          }
+        }
+      } catch (NomadException | RuntimeException e) {
+        logger.error("RESTARTING: Failure happened while processing Nomad message: {}: {}", message, e.getMessage(), e);
         platformService.stopPlatformIfPassive(PlatformService.RestartMode.STOP_AND_RESTART);
+        throw new EntityUserException(e.getMessage(), e);
       }
-    } catch (NomadException | RuntimeException | PlatformStopException e) {
+    } catch (PlatformStopException e) {
+      logger.error("Failed restarting node: {}", e.getMessage(), e);
       throw new EntityUserException(e.getMessage(), e);
     }
   }

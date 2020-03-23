@@ -71,8 +71,16 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       this.changeApplicator = ChangeApplicator.allow(fn);
       for (NomadChangeInfo change : changes) {
         switch (change.getChangeRequestState()) {
-          case PREPARED:
-            throw new NomadException("Unable to force-sync a PREPARED change: " + change.getNomadChange().getSummary());
+          case PREPARED: {
+            long mutativeMessageCount = state.getMutativeMessageCount();
+            AcceptRejectResponse response = prepare(change.toPrepareMessage(mutativeMessageCount));
+            if (!response.isAccepted()) {
+              throw new NomadException("Prepare failure. " +
+                  "Reason: " + response + ". " +
+                  "Change:" + change.getNomadChange().getSummary());
+            }
+            break;
+          }
           case COMMITTED: {
             long mutativeMessageCount = state.getMutativeMessageCount();
             AcceptRejectResponse response = prepare(change.toPrepareMessage(mutativeMessageCount));

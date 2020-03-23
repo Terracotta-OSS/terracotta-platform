@@ -53,6 +53,10 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -191,23 +195,47 @@ public class NomadManager<T> {
     }
 
     // override the diagnostic endpoints to go over the entity channel for the nomad commit phase
-    AcceptRejectResponse[] commitResponses = new AcceptRejectResponse[stripeEndpoints.size()];
+    ConcurrentMap<Integer, CompletableFuture<AcceptRejectResponse>> cache = new ConcurrentHashMap<>(stripeEndpoints.size());
     nomadEndpoints = nomadEndpoints.stream().map(e -> new NomadEndpoint<T>(e.getAddress(), e) {
+      @SuppressWarnings("OptionalGetWithoutIsPresent")
       @Override
       public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
         // This method is called for each online node.
         // But for a stripe, we only need to do 1 call, to the active, which will be replicated to the passive servers.
         // So we cache the first response we got from a stripe, to return it immediately after for the other calls.
         // We consider that the commit response on the passive servers will be the same on the active servers.
-        // If the commit response on a passive server is not accept(), the passive will restart itself.
-        final InetSocketAddress address = getAddress();
-        final int stripeId = destinationCluster.getStripeId(address).getAsInt();
-        final int idx = stripeId - 1;
-        synchronized (commitResponses) {
-          if (commitResponses[idx] == null) {
-            commitResponses[idx] = stripeEndpoints.get(idx).commit(message);
+        InetSocketAddress address = getAddress();
+        int stripeId = destinationCluster.getStripeId(address).getAsInt();
+        CompletableFuture<AcceptRejectResponse> result = cache.computeIfAbsent(stripeId, sid -> {
+          LOGGER.trace("Sending commit message: {} to stripe ID: {}", message, stripeId);
+          CompletableFuture<AcceptRejectResponse> c = new CompletableFuture<>();
+          try {
+            AcceptRejectResponse acceptRejectResponse = stripeEndpoints.get(stripeId - 1).commit(message);
+            LOGGER.trace("Received commit response: {} from stripe ID: {}", message, stripeId);
+            c.complete(acceptRejectResponse);
+          } catch (NomadException | RuntimeException e) {
+            LOGGER.trace("Received commit failure: '{}' from stripe ID: {}", e.getMessage(), stripeId, e);
+            c.completeExceptionally(e);
           }
-          return commitResponses[idx];
+          return c;
+        });
+        try {
+          return result.get();
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          throw new NomadException(ie);
+        } catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof Error) {
+            throw (Error) cause;
+          }
+          if (cause instanceof NomadException) {
+            throw (NomadException) cause;
+          }
+          if (cause instanceof RuntimeException) {
+            throw (RuntimeException) cause;
+          }
+          throw new NomadException(e.getMessage(), e);
         }
       }
     }).collect(toList());

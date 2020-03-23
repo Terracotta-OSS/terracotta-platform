@@ -66,6 +66,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigConfigurationProvider.class);
 
   private volatile DynamicConfigurationPassiveSync dynamicConfigurationPassiveSync;
+  private volatile NomadServerManager nomadServerManager;
   private volatile StartupConfiguration configuration;
 
   @Override
@@ -96,7 +97,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       LicenseParser licenseParser = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseParser::unsupported);
 
       // Service used to manage and initialize the Nomad 2PC system
-      NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseParser);
+      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseParser);
 
       // Configuration generator class
       // Initialized when processing the CLI depending oin the user input, and called to generate a configuration
@@ -148,6 +149,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       DiagnosticServicesHolder.willRegister(NomadServer.class, nomadServer);
 
       LOGGER.info("Startup configuration of the node: {}{}{}", lineSeparator(), lineSeparator(), configuration);
+
+      warnIfPreparedChange();
     });
   }
 
@@ -188,6 +191,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
           throw new TCServerRestartException("Restarting server");
         }
       }
+
+      warnIfPreparedChange();
     }
   }
 
@@ -204,6 +209,16 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       runnable.run();
     } finally {
       Thread.currentThread().setContextClassLoader(oldloader);
+    }
+  }
+
+  private void warnIfPreparedChange() {
+    if (nomadServerManager.getNomadServer().hasIncompleteChange()) {
+      LOGGER.warn(lineSeparator() + lineSeparator()
+          + "==============================================================================================================================================" + lineSeparator()
+          + "The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state." + lineSeparator()
+          + "==============================================================================================================================================" + lineSeparator()
+      );
     }
   }
 
