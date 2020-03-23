@@ -552,14 +552,26 @@
 
   <developers>
     <developer>
-      <name>Ludovic Orban</name>
-      <email>ludovic.orban@terracottatech.com</email>
+      <name>Myron Scott</name>
+      <email>Myron.Scott@terracottatech.com</email>
       <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
       <organizationUrl>https://terracotta.org</organizationUrl>
     </developer>
     <developer>
-      <name>Anthony Dahanne</name>
-      <email>anthony.dahanne@softwareag.com</email>
+      <name>Venkata Sairam Madduri</name>
+      <email>venkatasairam.madduri@softwareag.com</email>
+      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
+      <organizationUrl>https://terracotta.org</organizationUrl>
+    </developer>
+    <developer>
+      <name>Mobasherul Haque</name>
+      <email>mdmobasherul.haque@softwareag.com</email>
+      <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
+      <organizationUrl>https://terracotta.org</organizationUrl>
+    </developer>
+    <developer>
+      <name>Saurabh Agarwal</name>
+      <email>saurabh.agarwal@softwareag.com</email>
       <organization>Terracotta Inc., a wholly-owned subsidiary of Software AG USA, Inc.</organization>
       <organizationUrl>https://terracotta.org</organizationUrl>
     </developer>
