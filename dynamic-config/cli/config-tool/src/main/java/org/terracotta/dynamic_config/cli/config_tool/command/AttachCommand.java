@@ -30,7 +30,6 @@ import org.terracotta.inet.InetSocketAddressUtils;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collection;
-import java.util.Collections;
 
 import static java.util.Collections.singletonList;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
@@ -132,20 +131,14 @@ public class AttachCommand extends TopologyCommand {
 
   @Override
   protected void beforeNomadChange(Cluster result) {
-    setUpcomingCluster(Collections.singletonList(source), result);
-  }
+    Collection<InetSocketAddress> newNodes = getNewNodes();
 
-  @Override
-  protected void afterNomadChange(Cluster result) {
-    Collection<InetSocketAddress> newNodes = operationType == NODE ?
-        singletonList(source) :
-        sourceCluster.getStripe(source).get().getNodeAddresses();
+    setUpcomingCluster(newNodes, result);
 
-    logger.info("Activating nodes: {}", toString(newNodes));
-
-    // we activate the passive node without any license: the license will be synced from active and installed
+    logger.info("Activating nodes to attach: {}", toString(newNodes));
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
       // we are preparing the Nomad system only on the new nodes
+      // we activate the passive node without any license: the license will be synced from active and installed
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
           .forEach(service -> service.activate(result, null));
@@ -154,12 +147,21 @@ public class AttachCommand extends TopologyCommand {
     // we are running a cluster activation only on the new nodes
     runClusterActivation(newNodes, result);
     logger.debug("Configuration repositories have been created for nodes: {}", toString(newNodes));
-    
+  }
+
+  @Override
+  protected void afterNomadChange(Cluster result) {
+    Collection<InetSocketAddress> newNodes = getNewNodes();
+
     logger.info("Restarting nodes: {}", toString(newNodes));
     restartNodes(
         newNodes,
         Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
         Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
     logger.info("All nodes came back up");
+  }
+
+  private Collection<InetSocketAddress> getNewNodes() {
+    return operationType == NODE ? singletonList(source) : sourceCluster.getStripe(source).get().getNodeAddresses();
   }
 }
