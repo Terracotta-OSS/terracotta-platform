@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.model.call;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
@@ -33,7 +32,6 @@ import java.util.concurrent.ExecutionException;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public final class ContextualReturn<T> implements Contextual {
 
   private static final long serialVersionUID = 1;

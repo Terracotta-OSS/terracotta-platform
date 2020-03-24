@@ -15,11 +15,8 @@
  */
 package org.terracotta.management.service.monitoring.registry.provider;
 
-import com.tc.classloader.CommonComponent;
-
 import java.util.Objects;
 
-@CommonComponent
 public class AliasBinding {
 
   private final String alias;

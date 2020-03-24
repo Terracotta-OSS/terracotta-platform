@@ -15,11 +15,8 @@
  */
 package org.terracotta.management.model.capabilities.descriptors;
 
-import com.tc.classloader.CommonComponent;
-
 /**
  * @author Ludovic Orban
  */
-@CommonComponent
 public interface Descriptor {
 }

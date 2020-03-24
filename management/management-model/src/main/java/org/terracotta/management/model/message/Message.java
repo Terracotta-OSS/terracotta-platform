@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.model.message;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.sequence.Sequence;
 
@@ -25,7 +24,6 @@ import java.util.List;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface Message extends Serializable {
 
   <T extends Contextual> List<T> unwrap(Class<T> type);

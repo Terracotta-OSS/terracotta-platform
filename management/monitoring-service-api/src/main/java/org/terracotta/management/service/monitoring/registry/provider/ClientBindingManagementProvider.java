@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring.registry.provider;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.cluster.ClientIdentifier;
@@ -27,7 +26,6 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-@CommonComponent
 public class ClientBindingManagementProvider<T extends ClientBinding> extends AbstractEntityManagementProvider<T> {
 
   public ClientBindingManagementProvider(Class<? extends T> type) {
@@ -60,7 +58,6 @@ public class ClientBindingManagementProvider<T extends ClientBinding> extends Ab
     return new ExposedClientBinding<>(context, managedObject);
   }
 
-  @CommonComponent
   public static class ExposedClientBinding<T extends ClientBinding> implements ExposedObject<T> {
 
     private final T clientBinding;

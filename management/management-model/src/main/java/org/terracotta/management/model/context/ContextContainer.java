@@ -15,8 +15,6 @@
  */
 package org.terracotta.management.model.context;
 
-import com.tc.classloader.CommonComponent;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,7 +25,6 @@ import java.util.Objects;
  * @author Ludovic Orban
  * @author Mathieu Carbou
  */
-@CommonComponent
 public final class ContextContainer implements Serializable {
 
   private static final long serialVersionUID = 1;

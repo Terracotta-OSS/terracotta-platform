@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.entity.sample.server;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceConfiguration;
 
 import java.util.Map;
@@ -23,7 +22,6 @@ import java.util.Map;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 @SuppressWarnings("rawtypes")
 public class MapRelease implements ServiceConfiguration<Map> {
   @Override

@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.management.model.call.ContextualReturn;
@@ -31,7 +30,6 @@ import java.io.Closeable;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface ClientMonitoringService extends Closeable {
 
   /**

@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.model.cluster;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 
 import java.util.Collection;
@@ -33,7 +32,6 @@ import java.util.stream.Stream;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public final class Client extends AbstractManageableNode<Cluster> {
 
   private static final long serialVersionUID = 2;

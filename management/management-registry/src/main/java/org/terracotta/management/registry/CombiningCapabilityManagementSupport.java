@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.registry;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.Capability;
 
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public class CombiningCapabilityManagementSupport implements CapabilityManagementSupport {
 
   private final CapabilityManagementSupport[] capabilityManagementSupports;

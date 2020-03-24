@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ClientCommunicator;
 import org.terracotta.entity.ServiceConfiguration;
@@ -27,7 +26,6 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public class ClientMonitoringServiceConfiguration implements ServiceConfiguration<ClientMonitoringService> {
   
   private final ServiceRegistry registry;

@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.registry;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 
 import java.util.Map;
@@ -26,7 +25,6 @@ import java.util.NoSuchElementException;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface ResultSet<T> extends Iterable<T> {
 
   /**

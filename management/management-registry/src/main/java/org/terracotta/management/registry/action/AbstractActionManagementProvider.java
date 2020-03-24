@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.registry.action;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
@@ -41,7 +40,6 @@ import java.util.concurrent.ExecutionException;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public abstract class AbstractActionManagementProvider<T> extends AbstractManagementProvider<T> {
 
   private static final Map<String, Class<?>> PRIMITIVE_MAP = new HashMap<String, Class<?>>();

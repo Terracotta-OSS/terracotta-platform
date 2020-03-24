@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.model.stats;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 import org.terracotta.statistics.Sample;
@@ -34,7 +33,6 @@ import static java.util.stream.Collectors.toMap;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public final class ContextualStatistics implements Contextual {
 
   private static final long serialVersionUID = 1;

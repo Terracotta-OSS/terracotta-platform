@@ -15,8 +15,6 @@
  */
 package org.terracotta.management.model.cluster;
 
-import com.tc.classloader.CommonComponent;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -40,7 +38,6 @@ import java.util.logging.Logger;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public final class ClientIdentifier implements Serializable {
 
   private static final long serialVersionUID = 1;
