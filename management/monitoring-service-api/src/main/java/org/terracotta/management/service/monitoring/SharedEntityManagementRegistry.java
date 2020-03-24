@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagementSupport;
 
@@ -28,7 +27,6 @@ import java.util.Collection;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface SharedEntityManagementRegistry extends CapabilityManagementSupport {
 
   Collection<ContextContainer> getContextContainers();

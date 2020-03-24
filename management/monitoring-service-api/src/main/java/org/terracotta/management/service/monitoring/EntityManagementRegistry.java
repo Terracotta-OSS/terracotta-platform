@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagementSupport;
@@ -34,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface EntityManagementRegistry extends CapabilityManagementSupport, Closeable {
 
   /**

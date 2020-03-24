@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.model.stats;
 
-import com.tc.classloader.CommonComponent;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.statistics.StatisticType;
@@ -36,7 +35,6 @@ import static java.util.stream.Collectors.toMap;
 /***
  * @author Mathieu Carbou
  */
-@CommonComponent
 @SuppressFBWarnings("NM_SAME_SIMPLE_NAME_AS_SUPERCLASS")
 public class StatisticRegistry extends org.terracotta.statistics.registry.StatisticRegistry {
 

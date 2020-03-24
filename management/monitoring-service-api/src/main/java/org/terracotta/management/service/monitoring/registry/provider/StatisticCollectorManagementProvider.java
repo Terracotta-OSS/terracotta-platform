@@ -15,14 +15,12 @@
  */
 package org.terracotta.management.service.monitoring.registry.provider;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.collect.StatisticCollectorProvider;
 
 @RequiredContext({@Named("consumerId")})
-@CommonComponent
 public class StatisticCollectorManagementProvider extends StatisticCollectorProvider {
   public StatisticCollectorManagementProvider(Context context) {
     super(context);

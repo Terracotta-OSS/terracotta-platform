@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceRegistry;
 
@@ -24,7 +23,6 @@ import java.util.Collection;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public class ServerManagementRegistryConfiguration extends AbstractManagementRegistryConfiguration {
 
   public ServerManagementRegistryConfiguration(ServiceRegistry registry, boolean active) {

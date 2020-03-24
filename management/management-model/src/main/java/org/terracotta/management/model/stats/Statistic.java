@@ -15,13 +15,10 @@
  */
 package org.terracotta.management.model.stats;
 
-import com.tc.classloader.CommonComponent;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
 
-@CommonComponent
 public interface Statistic<T extends Serializable> extends Serializable {
   StatisticType getType();
 

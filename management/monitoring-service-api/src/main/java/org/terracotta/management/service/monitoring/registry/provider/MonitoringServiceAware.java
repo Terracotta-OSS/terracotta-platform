@@ -15,11 +15,9 @@
  */
 package org.terracotta.management.service.monitoring.registry.provider;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.sequence.TimeSource;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
 
-@CommonComponent
 public interface MonitoringServiceAware {
   default void setMonitoringService(EntityMonitoringService monitoringService) {}
 

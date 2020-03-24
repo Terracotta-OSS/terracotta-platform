@@ -15,14 +15,11 @@
  */
 package org.terracotta.management.model.context;
 
-import com.tc.classloader.CommonComponent;
-
 import java.io.Serializable;
 
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface Contextual extends Serializable {
   Context getContext();
 

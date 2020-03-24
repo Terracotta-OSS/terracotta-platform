@@ -15,12 +15,9 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
-
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface ManageableServerComponent {
 
   /**

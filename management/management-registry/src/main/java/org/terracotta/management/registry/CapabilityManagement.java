@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.registry;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.call.Parameter;
 
 import java.util.Collection;
@@ -23,7 +22,6 @@ import java.util.Collection;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface CapabilityManagement {
 
   /**

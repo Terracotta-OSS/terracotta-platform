@@ -15,12 +15,9 @@
  */
 package org.terracotta.management.model.stats;
 
-import com.tc.classloader.CommonComponent;
-
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public enum StatisticType {
 
   COUNTER,

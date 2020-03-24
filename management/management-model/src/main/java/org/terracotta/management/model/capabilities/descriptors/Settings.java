@@ -15,8 +15,6 @@
  */
 package org.terracotta.management.model.capabilities.descriptors;
 
-import com.tc.classloader.CommonComponent;
-
 import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -27,7 +25,6 @@ import java.util.Set;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public class Settings extends AbstractMap<String, Object> implements Descriptor, Serializable {
 
   private static final long serialVersionUID = 1;

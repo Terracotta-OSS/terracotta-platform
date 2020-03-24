@@ -15,13 +15,11 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceConfiguration;
 
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public class ManagementServiceConfiguration implements ServiceConfiguration<ManagementService> {
 
   @Override

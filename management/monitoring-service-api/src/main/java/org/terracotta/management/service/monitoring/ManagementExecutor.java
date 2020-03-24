@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.call.ContextualCall;
 import org.terracotta.management.model.call.ContextualReturn;
@@ -34,7 +33,6 @@ import org.terracotta.management.model.message.Message;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface ManagementExecutor {
   void executeManagementCallOnServer(String managementCallIdentifier, ContextualCall<?> call);
 

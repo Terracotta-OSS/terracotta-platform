@@ -15,13 +15,11 @@
  */
 package org.terracotta.management.service.monitoring.registry.provider;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 
 import java.util.Objects;
 
-@CommonComponent
 public class ClientBinding {
 
   private final ClientDescriptor clientDescriptor;
