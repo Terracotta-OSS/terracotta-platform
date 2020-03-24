@@ -114,7 +114,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testPassiveZapsWhenActiveHasSomeUnCommittedChanges() throws Exception {
+  public void testPassiveSyncWhenActiveHasSomeUnCommittedChanges() throws Exception {
     stopNode(1, passiveNodeId);
     assertThat(tsa.getStopped().size(), is(1));
 
@@ -132,17 +132,13 @@ public class ConfigSyncIT extends DynamicConfigIT {
     tsa.start(getNode(1, activeNodeId));
     assertThat(tsa.getActives().size(), is(1));
 
-    err.clearLog();
-    try {
-      tsa.start(getNode(1, passiveNodeId));
-      fail();
-    } catch (Exception e) {
-      waitUntil(err::getLog, containsString("Active has some PREPARED configuration changes that are not yet committed."));
-    }
+    out.clearLog(1, passiveNodeId);
+    tsa.start(getNode(1, passiveNodeId));
+    waitUntil(out.getLog(1, passiveNodeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     tsa.stopAll();
-    assertContentsBeforeOrAfterSync(4, 3);
+    assertContentsBeforeOrAfterSync(4, 4);
   }
 
   @Test

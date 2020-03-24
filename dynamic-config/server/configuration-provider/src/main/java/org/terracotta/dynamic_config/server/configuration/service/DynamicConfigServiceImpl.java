@@ -53,7 +53,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 
 public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventService, DynamicConfigListener {
@@ -93,14 +92,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     clusterActivated = true;
     LOGGER.info("Node activation successful");
-
-    if (nomadServerManager.getNomadServer().hasIncompleteChange()) {
-      LOGGER.error(lineSeparator() + lineSeparator()
-          + "==============================================================================================================================================" + lineSeparator()
-          + "The configuration of this node has not been committed or rolled back. Please run the 'diagnostic' command to diagnose the configuration state." + lineSeparator()
-          + "==============================================================================================================================================" + lineSeparator()
-      );
-    }
   }
 
   // do not move this method up in the interface otherwise any client could access the license content through diagnostic port

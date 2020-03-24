@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.nomad.messages.MutativeMessage;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @author Mathieu Carbou
  */
@@ -29,10 +31,15 @@ public class NomadEntityMessage implements EntityMessage {
 
   @JsonCreator
   public NomadEntityMessage(@JsonProperty(value = "nomadMessage", required = true) MutativeMessage nomadMessage) {
-    this.nomadMessage = nomadMessage;
+    this.nomadMessage = requireNonNull(nomadMessage);
   }
 
   public MutativeMessage getNomadMessage() {
     return nomadMessage;
+  }
+
+  @Override
+  public String toString() {
+    return nomadMessage.toString();
   }
 }

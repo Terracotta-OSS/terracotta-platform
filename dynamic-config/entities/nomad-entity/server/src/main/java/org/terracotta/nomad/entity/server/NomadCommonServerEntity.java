@@ -15,6 +15,8 @@
  */
 package org.terracotta.nomad.entity.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
@@ -28,6 +30,8 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
 public class NomadCommonServerEntity<T> implements CommonServerEntity<NomadEntityMessage, NomadEntityResponse> {
+
+  protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   private final NomadServer<T> nomadServer;
 
@@ -44,6 +48,7 @@ public class NomadCommonServerEntity<T> implements CommonServerEntity<NomadEntit
   }
 
   protected AcceptRejectResponse processMessage(MutativeMessage nomadMessage) throws NomadException {
+    logger.trace("Processing Nomad message: {}", nomadMessage);
     AcceptRejectResponse response;
     if (nomadMessage instanceof CommitMessage) {
       response = nomadServer.commit((CommitMessage) nomadMessage);
@@ -56,6 +61,7 @@ public class NomadCommonServerEntity<T> implements CommonServerEntity<NomadEntit
     } else {
       throw new IllegalArgumentException("Unsupported Nomad message: " + nomadMessage.getClass().getName());
     }
+    logger.trace("Result: {}", response);
     return response;
   }
 }

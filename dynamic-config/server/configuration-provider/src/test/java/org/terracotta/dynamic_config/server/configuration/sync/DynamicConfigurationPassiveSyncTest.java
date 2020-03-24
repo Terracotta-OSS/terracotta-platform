@@ -50,6 +50,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluster;
+import static org.terracotta.dynamic_config.server.configuration.sync.Require.CAN_CONTINUE;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
 
 public class DynamicConfigurationPassiveSyncTest {
@@ -166,13 +167,16 @@ public class DynamicConfigurationPassiveSyncTest {
 
     UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
     DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
+    AcceptRejectResponse acceptRejectResponse = mock(AcceptRejectResponse.class);
     when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
     when(nomadServer.discover()).thenReturn(discoverResponse);
+    when(nomadServer.prepare(any(PrepareMessage.class))).thenReturn(acceptRejectResponse);
+    when(acceptRejectResponse.isAccepted()).thenReturn(true);
 
     DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(startupTopology, nomadServer, mock(DynamicConfigService.class), () -> null);
-    exceptionRule.expect(IllegalStateException.class);
-    exceptionRule.expectMessage("Active has some PREPARED configuration changes that are not yet committed.");
-    syncManager.sync(DynamicConfigSyncData.decode(active));
+    Set<Require> requires = syncManager.sync(DynamicConfigSyncData.decode(active));
+    assertThat(requires.size(), is(equalTo(1)));
+    assertThat(requires, hasItem(CAN_CONTINUE));
   }
 
   @SuppressWarnings("unchecked")

@@ -270,7 +270,8 @@ public class DynamicConfigurationPassiveSync {
 
     switch (nomadChangeInfo.getChangeRequestState()) {
       case PREPARED:
-        throw new IllegalStateException("Active has some PREPARED configuration changes that are not yet committed.");
+        prepare(nomadChangeInfo, mutativeMessageCount);
+        return Require.CAN_CONTINUE;
       case COMMITTED:
         prepare(nomadChangeInfo, mutativeMessageCount);
         commit(nomadChangeInfo, mutativeMessageCount + 1);
