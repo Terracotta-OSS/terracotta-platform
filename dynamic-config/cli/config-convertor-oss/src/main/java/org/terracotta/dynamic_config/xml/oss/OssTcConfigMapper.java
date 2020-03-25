@@ -69,7 +69,7 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
               .setClientReconnectWindow(tcConfig.getServers().getClientReconnectWindow(), SECONDS)
               .setTcProperties(commonMapper.toProperties(tcConfig))
               // plugins
-              .setNodeMetadataDir(commonMapper.toNodeMetadataDir(xmlPlugins).map(Map.Entry::getValue).orElse(null))
+              .setNodeMetadataDir(null)
               .setDataDirs(commonMapper.toUserDataDirs(xmlPlugins))
               .setOffheapResources(commonMapper.toOffheapResources(xmlPlugins))
               .setNodeBackupDir(null)
