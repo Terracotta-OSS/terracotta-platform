@@ -143,6 +143,20 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
+  public Optional<NomadChangeInfo> getNomadChangeInfo(UUID uuid) throws NomadException {
+    return Optional.ofNullable(state.getChangeRequest(uuid))
+        .map(changeRequest -> new NomadChangeInfo(
+            uuid,
+            changeRequest.getChange(),
+            changeRequest.getState(),
+            changeRequest.getVersion(),
+            changeRequest.getCreationHost(),
+            changeRequest.getCreationUser(),
+            changeRequest.getCreationTimestamp()
+        ));
+  }
+
+  @Override
   public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
     LinkedList<NomadChangeInfo> allNomadChanges = new LinkedList<>();
     UUID changeUuid = state.getLatestChangeUuid();
