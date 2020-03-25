@@ -29,6 +29,7 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 import java.time.Duration;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -122,6 +123,11 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
   @Override
   public License getLicense() throws TimeoutException, InterruptedException {
     return request(REQ_LICENSE, License.class);
+  }
+
+  @Override
+  public Future<Void> releaseEntity() {
+    return endpoint.release();
   }
 
   public <T> T request(DynamicTopologyEntityMessage.Type messageType, Class<T> type) throws TimeoutException, InterruptedException {

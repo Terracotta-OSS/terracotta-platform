@@ -36,6 +36,7 @@ import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -118,6 +119,11 @@ public class DynamicTopologyEntityFactory {
       public boolean hasIncompleteChange() throws TimeoutException, InterruptedException {return entity.hasIncompleteChange();}
 
       public License getLicense() throws TimeoutException, InterruptedException {return entity.getLicense();}
+
+      @Override
+      public Future<Void> releaseEntity() {
+        return entity.releaseEntity();
+      }
 
       @Override
       public void close() {

@@ -46,7 +46,7 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
 
     // start a second node
     startNode(1, 2);
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitUntil(out.getLog(1, 2), containsLog("Started the server in diagnostic mode"));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // attach

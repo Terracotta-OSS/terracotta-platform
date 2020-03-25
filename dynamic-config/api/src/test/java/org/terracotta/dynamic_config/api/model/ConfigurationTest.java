@@ -301,7 +301,6 @@ public class ConfigurationTest {
           tuple2(NODE_GROUP_PORT, "9410"),
           tuple2(NODE_BIND_ADDRESS, "0.0.0.0"),
           tuple2(NODE_GROUP_BIND_ADDRESS, "0.0.0.0"),
-          tuple2(NODE_METADATA_DIR, "foo/bar"),
           tuple2(NODE_LOG_DIR, "foo/bar")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
@@ -322,6 +321,7 @@ public class ConfigurationTest {
       // set allowed for all scopes
       Stream.of(
           tuple2(NODE_BACKUP_DIR, "foo/bar"),
+          tuple2(NODE_METADATA_DIR, "foo/bar"),
           tuple2(SECURITY_DIR, "foo/bar"),
           tuple2(SECURITY_AUDIT_LOG_DIR, "foo/bar")
       ).forEach(tuple -> {
@@ -578,7 +578,6 @@ public class ConfigurationTest {
         tuple2(NODE_GROUP_PORT, "9410"),
         tuple2(NODE_BIND_ADDRESS, "0.0.0.0"),
         tuple2(NODE_GROUP_BIND_ADDRESS, "0.0.0.0"),
-        tuple2(NODE_METADATA_DIR, "foo/bar"),
         tuple2(NODE_LOG_DIR, "foo/bar")
     ).forEach(tuple -> {
       allow(GET, tuple.t1.toString());
@@ -610,7 +609,8 @@ public class ConfigurationTest {
     Stream.of(
         tuple2(NODE_BACKUP_DIR, "foo/bar"),
         tuple2(SECURITY_DIR, "foo/bar"),
-        tuple2(SECURITY_AUDIT_LOG_DIR, "foo/bar")
+        tuple2(SECURITY_AUDIT_LOG_DIR, "foo/bar"),
+        tuple2(NODE_METADATA_DIR, "foo/bar")
     ).forEach(tuple -> {
       allow(GET, tuple.t1.toString());
       allow(UNSET, tuple.t1.toString());

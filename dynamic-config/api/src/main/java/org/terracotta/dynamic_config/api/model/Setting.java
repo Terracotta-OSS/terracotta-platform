@@ -204,7 +204,7 @@ public enum Setting {
       NODE,
       extractor(Node::getNodeMetadataDir),
       setter((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
-      of(GET, SET, CONFIG),
+      of(GET, SET, UNSET, CONFIG),
       of(ACTIVES_ONLINE, RESTART),
       emptyList(),
       emptyList(),

@@ -52,7 +52,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
@@ -120,7 +119,6 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
           .fallback(accept()));
 
       // ensure to reject these changes
-      addToManager(configChangeHandlerManager, reject(), NODE_METADATA_DIR);
       addToManager(configChangeHandlerManager, reject(), NODE_NAME);
       addToManager(configChangeHandlerManager, reject(), NODE_HOSTNAME);
       addToManager(configChangeHandlerManager, reject(), NODE_PORT);
