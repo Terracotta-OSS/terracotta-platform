@@ -65,9 +65,18 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
 
-    this.platform = compute(nodeContext.getNode().getNodeMetadataDir());
+    // add platform metadata dir first
+    if (nodeContext.getNode().getNodeMetadataDir() != null) {
+      addDataDirectory("platform", nodeContext.getNode().getNodeMetadataDir().toString());
+      this.platform = dataRootMap.get("platform");
+      this.platformRootIdentifier = "platform";
+    } else {
+      this.platform = null;
+      this.platformRootIdentifier = null;
+    }
+
+    // then add user ones
     nodeContext.getNode().getDataDirs().forEach((name, path) -> addDataDirectory(name, path.toString()));
-    this.platformRootIdentifier = platform == null ? null : "__platform__";
   }
 
   public DataDirectoriesConfigImpl(String source, org.terracotta.data.config.DataDirectories dataDirectories) {
