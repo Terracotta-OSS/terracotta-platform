@@ -193,7 +193,7 @@ public final class Cluster implements Contextual {
 
   @Override
   public void setContext(Context context) {
-    // do nothing: we do not change teh context of a cluster object
+    // do nothing: we do not change the context of a cluster object
   }
 
   @Override
