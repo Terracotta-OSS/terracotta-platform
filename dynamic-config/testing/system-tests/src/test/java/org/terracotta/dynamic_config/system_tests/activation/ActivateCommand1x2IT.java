@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
-import org.hamcrest.MatcherAssert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.diagnostic.client.DiagnosticService;
@@ -32,7 +31,9 @@ import static java.time.Duration.ofSeconds;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
@@ -51,11 +52,11 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void testMultiNodeSingleStripeActivation() {
-    MatcherAssert.assertThat(
+    assertThat(
         configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)),
         is(successful()));
 
-    MatcherAssert.assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
     waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitUntil(out.getLog(1, findPassives(1)[0]), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
   }
@@ -80,7 +81,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void testMultiNodeSingleStripeActivationWithConfigFile() {
-    MatcherAssert.assertThat(
+    assertThat(
         configToolInvocation(
             "-r", timeout + "s",
             "activate",
@@ -89,5 +90,33 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
     waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitUntil(out.getLog(1, findPassives(1)[0]), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+  }
+
+  @Test
+  public void testRestrictedActivation() throws Exception {
+    String config = copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString();
+
+    // import the cluster config to node 1 and node 2
+    assertThat(configToolInvocation("import", "-f", config), is(successful()));
+
+    // restrict activation to only node 1
+    assertThat(configToolInvocation("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 1)),
+        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+
+    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
+    withTopologyService(1, 2, topologyService -> assertFalse(topologyService.isActivated()));
+
+    // restrict activation to only node 2, which will become passive as node 1
+    assertThat(configToolInvocation("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 2)),
+        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+
+    waitUntil(out.getLog(1, 2), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+
+    withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
+    withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
+
+    assertThat(getRuntimeCluster(1, 1), is(equalTo(getRuntimeCluster(1, 2))));
   }
 }
