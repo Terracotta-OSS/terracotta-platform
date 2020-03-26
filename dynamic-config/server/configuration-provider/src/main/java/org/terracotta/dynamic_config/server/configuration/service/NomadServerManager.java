@@ -127,6 +127,10 @@ public class NomadServerManager {
     LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(repositoryPath.toString()));
   }
 
+  public void downgradeForRead() {
+    nomadServer.setChangeApplicator(null);
+  }
+
   /**
    * Makes Nomad server capable of write operations.
    *
@@ -137,6 +141,9 @@ public class NomadServerManager {
     requireNonNull(nodeName);
     if (stripeId < 1) {
       throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
+    }
+    if (nomadServer.getChangeApplicator() != null) {
+      throw new IllegalStateException("Nomad is already upgraded");
     }
 
     DefaultRoutingNomadChangeProcessor router = new DefaultRoutingNomadChangeProcessor();

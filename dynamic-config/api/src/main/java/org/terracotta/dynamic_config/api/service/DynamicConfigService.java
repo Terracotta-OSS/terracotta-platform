@@ -53,4 +53,14 @@ public interface DynamicConfigService {
    * @param licenseContent license file content
    */
   void upgradeLicense(String licenseContent);
+
+  /**
+   * Reset and restart an activated node.
+   * <p>
+   * This method will backup and reset the configurations and Nomad append log,
+   * and will restart the node as if it was alone in its own cluster.
+   * <p>
+   * The node will restart in diagnostic mode.
+   */
+  void resetAndRestart();
 }

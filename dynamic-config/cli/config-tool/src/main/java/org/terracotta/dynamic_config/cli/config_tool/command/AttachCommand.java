@@ -15,13 +15,17 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.terracotta.common.struct.Measure;
+import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
@@ -41,6 +45,12 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
 @Parameters(commandNames = "attach", commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
 @Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class AttachCommand extends TopologyCommand {
+
+  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
+
+  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   // list of new nodes to add with their backup topology
   private final Map<InetSocketAddress, Cluster> newNodes = new LinkedHashMap<>();
