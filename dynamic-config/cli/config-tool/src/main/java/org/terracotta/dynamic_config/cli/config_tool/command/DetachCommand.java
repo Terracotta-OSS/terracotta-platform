@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collection;
 
+import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 
@@ -109,9 +110,9 @@ public class DetachCommand extends TopologyCommand {
 
   @Override
   protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
-    logger.warn("An error occurred during the detach transaction. The node to detach will still be restarted, but you will need to run the diagnostic command to make sure the configuration change is OK.");
-    // even if there has been a failure during the Nomad 2PC process, we still restart the node so that is gets detached by the sync process
-    onNomadChangeSuccess(nomadChange);
+    logger.error("An error occurred during the detach transaction." + lineSeparator() +
+        "The node to detach will not be restarted." + lineSeparator() +
+        "You you will need to run the diagnostic command to check the configuration state and restart the node to detach manually.");
     throw error;
   }
 }
