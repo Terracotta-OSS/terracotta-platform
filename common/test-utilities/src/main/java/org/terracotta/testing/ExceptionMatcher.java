@@ -59,7 +59,8 @@ public class ExceptionMatcher extends TypeSafeMatcher<ExceptionMatcher.Closure> 
     if (messageMatcher != ANY_MESSAGE) {
       description.appendText(" with message ");
       messageMatcher.describeTo(description);
-    } if (causeMatcher != ANY_CAUSE) {
+    }
+    if (causeMatcher != ANY_CAUSE) {
       description.appendText(" with cause ");
       causeMatcher.describeTo(description);
     }

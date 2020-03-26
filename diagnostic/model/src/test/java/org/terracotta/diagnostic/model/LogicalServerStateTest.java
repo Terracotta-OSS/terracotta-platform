@@ -16,7 +16,6 @@
 package org.terracotta.diagnostic.model;
 
 import org.junit.Test;
-import org.terracotta.diagnostic.model.LogicalServerState;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;

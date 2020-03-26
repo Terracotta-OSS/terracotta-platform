@@ -39,7 +39,7 @@ import static java.util.Spliterator.ORDERED;
  * This Junit rule can be used to split the Angela logging sent to System.out in different log buckets per node.
  * <p>
  * This is a temporary hack and this feature should be in Angela itself.
- *
+ * <p>
  * TODO [DYNAMIC-CONFIG]: TDB-4862 - have the logs per process in Angela (https://github.com/Terracotta-OSS/angela/issues/16)
  *
  * @author Mathieu Carbou

@@ -27,7 +27,7 @@ public class InetSocketAddressConvertorTest {
   @Test
   public void validateHostPortList_ok_hostname() {
     List<InetSocketAddress> validHosts = InetSocketAddressConvertor.getInetSocketAddresses(
-        new String[] {
+        new String[]{
             "some-host:9510", //Hostname containing '-' and port
             "some-host", //Hostname containing '-' only
             "pif:9610", //Simple hostname and port
@@ -43,7 +43,7 @@ public class InetSocketAddressConvertorTest {
   @Test
   public void validateHostPortList_ok_ipv4_lookalike_hostname() {
     List<InetSocketAddress> validHosts = InetSocketAddressConvertor.getInetSocketAddresses(
-        new String[] {
+        new String[]{
             "10.10.10",
             "10.10.10.10.10",
             "999.10.10.400",
@@ -69,7 +69,7 @@ public class InetSocketAddressConvertorTest {
   @Test
   public void validateHostPortList_ok_ipv4() {
     List<InetSocketAddress> validServers = InetSocketAddressConvertor.getInetSocketAddresses(
-        new String[] {
+        new String[]{
             "10.12.14.43:9610", //Address and port
             "10.12.14.43", //Address only
             "127.0.0.1:9510", //Loopback address and port
@@ -100,7 +100,7 @@ public class InetSocketAddressConvertorTest {
   @Test
   public void validateHostPortList_ok_ipv6() {
     List<InetSocketAddress> validServers = InetSocketAddressConvertor.getInetSocketAddresses(
-        new String[] {
+        new String[]{
             "[2001:db8:a0b:12f0:0:0:0:1]:9510", //Full address and port
             "2001:db8:a0b:12f0:0:0:0:1", //Full address only
             "[2001:db8:a0b:12f0:0:0:0:1]", //Full address enclosed in brackets

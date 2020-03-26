@@ -128,7 +128,7 @@ public class DynamicConfigurationPassiveSync {
     Set<Require> requires = new HashSet<>(2);
 
     // is passive has just been activated ?
-    final boolean passiveNew = Check.isPassiveMew(passiveNomadChanges); ;
+    final boolean passiveNew = Check.isPassiveMew(passiveNomadChanges);
 
     // is the passive node was activated at the same time of the active node or after ?
     final boolean jointActivation = Check.isJointActivation(passiveNomadChanges, activeNomadChanges);

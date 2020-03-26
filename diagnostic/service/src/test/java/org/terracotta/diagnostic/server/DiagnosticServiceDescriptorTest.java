@@ -38,7 +38,8 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class DiagnosticServiceDescriptorTest {
 
-  private final Runnable noop = () -> {};
+  private final Runnable noop = () -> {
+  };
   private final Function<String, Boolean> mbean = name -> true;
 
   @Test

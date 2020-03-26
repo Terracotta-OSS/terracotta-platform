@@ -23,6 +23,7 @@ package org.terracotta.persistence.sanskrit;
  * try-with-resources block without being closed. This is useful when AutoCloseable objects are being built: if there
  * is an error during construction we want the resources to be closed correctly, but on success we do not want to close
  * those resources.
+ *
  * @param <T> the type of AutoCloseable object that may be allowed to escape the try-with-resources block
  * @param <E> the type of Exception that is thrown by the close() method on the AutoCloseable object.
  */

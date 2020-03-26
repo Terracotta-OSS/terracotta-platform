@@ -40,7 +40,8 @@ public class DiagnosticRequestHandlerTest {
   private final JsonDiagnosticCodec codec = new JsonDiagnosticCodec();
   private final DiagnosticRequestHandler handler = DiagnosticRequestHandler.withCodec(codec);
 
-  private final Runnable noop = () -> {};
+  private final Runnable noop = () -> {
+  };
   private final Function<String, Boolean> mbean = name -> true;
 
   @Test
