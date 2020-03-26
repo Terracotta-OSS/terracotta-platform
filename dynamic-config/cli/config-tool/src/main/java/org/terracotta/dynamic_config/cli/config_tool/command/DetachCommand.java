@@ -94,7 +94,7 @@ public class DetachCommand extends TopologyCommand {
   }
 
   @Override
-  protected void afterNomadChange(Cluster result) {
+  protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
     Collection<InetSocketAddress> removedNodes = operationType == NODE ?
         singletonList(source) :
         sourceCluster.getStripe(source).get().getNodeAddresses();
@@ -105,5 +105,13 @@ public class DetachCommand extends TopologyCommand {
         Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
         Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
     logger.info("All nodes came back up");
+  }
+
+  @Override
+  protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
+    logger.warn("An error occurred during the detach transaction. The node to detach will still be restarted, but you will need to run the diagnostic command to make sure the configuration change is OK.");
+    // even if there has been a failure during the Nomad 2PC process, we still restart the node so that is gets detached by the sync process
+    onNomadChangeSuccess(nomadChange);
+    throw error;
   }
 }

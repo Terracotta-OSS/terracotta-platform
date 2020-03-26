@@ -16,9 +16,6 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameters;
-import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.common.struct.Tuple2;
-import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
@@ -28,10 +25,10 @@ import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 
+import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
@@ -131,35 +128,27 @@ public class AttachCommand extends TopologyCommand {
   }
 
   @Override
-  protected void beforeNomadChange(Cluster result) {
-    setUpcomingCluster(Collections.singletonList(source), result);
+  protected void onNomadChangeReady(NodeNomadChange nomadChange) {
+    setUpcomingCluster(Collections.singletonList(source), nomadChange.getCluster());
   }
 
   @Override
-  protected void afterNomadChange(Cluster result) {
+  protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
+    Cluster result = nomadChange.getCluster();
+
     Collection<InetSocketAddress> newNodes = operationType == NODE ?
         singletonList(source) :
         sourceCluster.getStripe(source).get().getNodeAddresses();
 
-    logger.info("Activating nodes: {}", toString(newNodes));
+    activate(newNodes, result, null, restartDelay, restartWaitTime);
+  }
 
-    // we activate the passive node without any license: the license will be synced from active and installed
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
-      // we are preparing the Nomad system only on the new nodes
-      dynamicConfigServices(diagnosticServices)
-          .map(Tuple2::getT2)
-          .forEach(service -> service.activate(result, null));
-    }
-
-    // we are running a cluster activation only on the new nodes
-    runClusterActivation(newNodes, result);
-    logger.debug("Configuration repositories have been created for nodes: {}", toString(newNodes));
-    
-    logger.info("Restarting nodes: {}", toString(newNodes));
-    restartNodes(
-        newNodes,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
-    logger.info("All nodes came back up");
+  @Override
+  protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
+    logger.error("An error occurred during the attach transaction." + lineSeparator() +
+        "The node information might still be added to the destination cluster: you will need to run the diagnostic / export command to make sure the configuration change is OK." + lineSeparator() +
+        "To prevent any error, the nodes to attach won't be activated and restarted"
+    );
+    throw error;
   }
 }

@@ -247,7 +247,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public synchronized void setUpcomingCluster(Cluster updatedCluster) {
     if (isActivated()) {
-      throw new IllegalStateException("Use Nomad instead to change teh topology of activated node: " + runtimeNodeContext.getNode().getNodeAddress());
+      throw new IllegalStateException("Use Nomad instead to change the topology of activated node: " + runtimeNodeContext.getNode().getNodeAddress());
     }
 
     requireNonNull(updatedCluster);

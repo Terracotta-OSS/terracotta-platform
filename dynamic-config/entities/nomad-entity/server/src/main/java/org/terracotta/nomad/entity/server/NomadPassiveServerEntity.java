@@ -24,12 +24,12 @@ import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.nomad.server.UpgradableNomadServer;
 
 public class NomadPassiveServerEntity<T> extends NomadCommonServerEntity<T> implements PassiveServerEntity<NomadEntityMessage, NomadEntityResponse> {
   private final PlatformService platformService;
 
-  public NomadPassiveServerEntity(NomadServer<T> nomadServer, PlatformService platformService) {
+  public NomadPassiveServerEntity(UpgradableNomadServer<T> nomadServer, PlatformService platformService) {
     super(nomadServer);
     this.platformService = platformService;
   }

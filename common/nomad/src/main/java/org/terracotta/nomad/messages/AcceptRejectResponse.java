@@ -78,6 +78,6 @@ public class AcceptRejectResponse {
 
   @Override
   public String toString() {
-    return accepted ? "accepted" : (rejectionReason.name().toLowerCase() + (rejectionMessage == null ? "" : (" ( " + rejectionMessage + ")")));
+    return accepted ? "accepted" : (rejectionReason.name().toLowerCase() + (rejectionMessage == null ? "" : (" ( " + rejectionMessage + ")")) + " by " + lastMutationUser + " from " + lastMutationHost);
   }
 }

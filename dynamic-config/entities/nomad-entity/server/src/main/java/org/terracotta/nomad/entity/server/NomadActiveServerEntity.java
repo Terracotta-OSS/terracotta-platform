@@ -25,11 +25,11 @@ import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.MutativeMessage;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.nomad.server.UpgradableNomadServer;
 
 
 public class NomadActiveServerEntity<T> extends NomadCommonServerEntity<T> implements ActiveServerEntity<NomadEntityMessage, NomadEntityResponse> {
-  public NomadActiveServerEntity(NomadServer<T> nomadServer) {
+  public NomadActiveServerEntity(UpgradableNomadServer<T> nomadServer) {
     super(nomadServer);
   }
 

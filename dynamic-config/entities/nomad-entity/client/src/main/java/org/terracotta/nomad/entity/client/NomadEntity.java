@@ -38,7 +38,7 @@ public interface NomadEntity<T> extends Entity, NomadServer<T> {
   }
 
   @Override
-  default AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
+  default AcceptRejectResponse prepare(PrepareMessage message) {
     throw new UnsupportedOperationException();
   }
 
@@ -53,8 +53,8 @@ public interface NomadEntity<T> extends Entity, NomadServer<T> {
   }
 
   @Override
-  default AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException {
-    return send(message);
+  default AcceptRejectResponse takeover(TakeoverMessage message) {
+    throw new UnsupportedOperationException();
   }
 
   AcceptRejectResponse send(MutativeMessage message) throws NomadException;

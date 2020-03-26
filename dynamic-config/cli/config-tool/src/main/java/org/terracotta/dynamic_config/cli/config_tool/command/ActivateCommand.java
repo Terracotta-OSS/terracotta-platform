@@ -21,8 +21,6 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.common.struct.Tuple2;
-import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -30,19 +28,16 @@ import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Collection;
 
 import static java.lang.System.lineSeparator;
+import static java.util.Collections.singletonList;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
-@Usage("activate ( -s <hostname[:port]> -n <cluster-name> | -f <config-file> [-n <cluster-name>] ) [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
+@Usage("activate ( -s <hostname[:port]> -n <cluster-name> | -f <config-file> [-n <cluster-name>] ) [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>] [-R]")
 public class ActivateCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
@@ -62,6 +57,9 @@ public class ActivateCommand extends RemoteCommand {
 
   @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
+
+  @Parameter(names = {"-R"}, description = "Restrict the activation process to the node only")
+  protected boolean nodeOnly = false;
 
   private Cluster cluster;
   private Collection<InetSocketAddress> runtimePeers;
@@ -89,7 +87,7 @@ public class ActivateCommand extends RemoteCommand {
     }
 
     cluster = loadCluster();
-    runtimePeers = node == null ? cluster.getNodeAddresses() : findRuntimePeers(node);
+    runtimePeers = nodeOnly ? singletonList(node) : node == null ? cluster.getNodeAddresses() : findRuntimePeers(node);
 
     // check if we want to override the cluster name
     if (clusterName != null) {
@@ -111,29 +109,7 @@ public class ActivateCommand extends RemoteCommand {
 
   @Override
   public final void run() {
-    logger.info("Activating cluster: {} formed with nodes: {}", cluster.getName(), toString(runtimePeers));
-
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
-      dynamicConfigServices(diagnosticServices)
-          .map(Tuple2::getT2)
-          .forEach(service -> service.activate(cluster, read(licenseFile)));
-      if (licenseFile == null) {
-        logger.info("No license installed");
-      } else {
-        logger.info("License installation successful");
-      }
-    }
-
-    runClusterActivation(runtimePeers, cluster);
-    logger.debug("Configuration repositories have been created for all nodes");
-
-    logger.info("Restarting nodes: {}", toString(runtimePeers));
-    restartNodes(
-        runtimePeers,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
-    logger.info("All nodes came back up");
-
+    activate(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
     logger.info("Command successful!" + lineSeparator());
   }
 
@@ -173,16 +149,5 @@ public class ActivateCommand extends RemoteCommand {
       logger.debug("Config property file parsed and cluster topology validation successful");
     }
     return cluster;
-  }
-
-  private static String read(Path path) {
-    if (path == null) {
-      return null;
-    }
-    try {
-      return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
   }
 }

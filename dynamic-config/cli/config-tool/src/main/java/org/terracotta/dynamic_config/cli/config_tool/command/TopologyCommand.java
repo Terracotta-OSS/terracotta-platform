@@ -126,10 +126,14 @@ public abstract class TopologyCommand extends RemoteCommand {
     logger.info("Sending the topology change");
 
     if (destinationClusterActivated) {
-      beforeNomadChange(result);
       NodeNomadChange nomadChange = buildNomadChange(result);
-      runPassiveChange(destinationCluster, destinationOnlineNodes, nomadChange);
-      afterNomadChange(result);
+      onNomadChangeReady(nomadChange);
+      try {
+        runPassiveChange(destinationCluster, destinationOnlineNodes, nomadChange);
+      } catch (RuntimeException e) {
+        onNomadChangeFailure(nomadChange, e);
+      }
+      onNomadChangeSuccess(nomadChange);
 
     } else {
       setUpcomingCluster(Collections.singletonList(source), result);
@@ -182,10 +186,14 @@ public abstract class TopologyCommand extends RemoteCommand {
     }
   }
 
-  protected void beforeNomadChange(Cluster result) {
+  protected void onNomadChangeReady(NodeNomadChange nomadChange) {
   }
 
-  protected void afterNomadChange(Cluster result) {
+  protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
+  }
+
+  protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
+    throw error;
   }
 
   protected abstract Cluster updateTopology();

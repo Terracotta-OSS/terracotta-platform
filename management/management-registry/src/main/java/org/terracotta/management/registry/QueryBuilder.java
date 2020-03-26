@@ -34,7 +34,7 @@ public interface QueryBuilder<B, T> {
 
   /**
    * Adds some contexts to run this query against.
-   * The order is important and kept: if teh query is ran on several contexts, then the order of results will match the order of the contexts
+   * The order is important and kept: if the query is ran on several contexts, then the order of results will match the order of the contexts
    *
    * @param contexts The management registry contexts
    * @return this builder

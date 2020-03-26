@@ -16,6 +16,8 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 
+import org.terracotta.common.struct.Measure;
+import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
@@ -76,6 +78,31 @@ public abstract class RemoteCommand extends Command {
   @Resource public DiagnosticServiceProvider diagnosticServiceProvider;
   @Resource public NomadManager<NodeContext> nomadManager;
   @Resource public RestartService restartService;
+
+  protected final void activate(Collection<InetSocketAddress> newNodes, Cluster cluster, Path licenseFile, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+    logger.info("Activating nodes: {}", toString(newNodes));
+
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
+      dynamicConfigServices(diagnosticServices)
+          .map(Tuple2::getT2)
+          .forEach(service -> service.activate(cluster, read(licenseFile)));
+      if (licenseFile == null) {
+        logger.info("No license installed. If you are attaching a node, the license will be synced.");
+      } else {
+        logger.info("License installation successful");
+      }
+    }
+
+    runClusterActivation(newNodes, cluster);
+    logger.debug("Configuration repositories have been created for all nodes");
+
+    logger.info("Restarting nodes: {}", toString(newNodes));
+    restartNodes(
+        newNodes,
+        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
+    logger.info("All nodes came back up");
+  }
 
   /**
    * Ensure that the input address is really an address that can be used to connect to a node of a cluster
@@ -356,5 +383,16 @@ public abstract class RemoteCommand extends Command {
 
   protected static String toString(Collection<InetSocketAddress> addresses) {
     return addresses.stream().map(InetSocketAddress::toString).sorted().collect(Collectors.joining(", "));
+  }
+
+  private static String read(Path path) {
+    if (path == null) {
+      return null;
+    }
+    try {
+      return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }

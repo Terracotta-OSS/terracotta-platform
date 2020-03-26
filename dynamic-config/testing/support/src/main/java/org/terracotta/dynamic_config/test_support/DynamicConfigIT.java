@@ -91,23 +91,23 @@ import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
 public class DynamicConfigIT {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
 
-  @Rule public final TmpDir tmpDir = new TmpDir();
-  @Rule public final PortLockingRule ports;
+  @Rule public TmpDir tmpDir = new TmpDir();
+  @Rule public PortLockingRule ports;
   @Rule public Timeout timeoutRule;
 
-  protected final long timeout;
+  protected long timeout;
 
   protected ClusterFactory clusterFactory;
   protected Tsa tsa;
 
-  private final int stripes;
-  private final boolean autoStart;
-  private final int nodesPerStripe;
-  private final boolean autoActivate;
-  private final Map<String, TerracottaServer> nodes = new ConcurrentHashMap<>();
-  private final ClusterDefinition clusterDef;
+  private int stripes;
+  private boolean autoStart;
+  private int nodesPerStripe;
+  private boolean autoActivate;
+  private Map<String, TerracottaServer> nodes = new ConcurrentHashMap<>();
+  private ClusterDefinition clusterDef;
 
   public DynamicConfigIT() {
     this(Duration.ofSeconds(60));
@@ -147,7 +147,7 @@ public class DynamicConfigIT {
     }
   }
 
-  protected final void startNodes() {
+  protected void startNodes() {
     for (int stripeId = 1; stripeId <= stripes; stripeId++) {
       for (int nodeId = 1; nodeId <= nodesPerStripe; nodeId++) {
         startNode(stripeId, nodeId);
@@ -159,19 +159,19 @@ public class DynamicConfigIT {
     startNode(getNode(stripeId, nodeId));
   }
 
-  protected final void startNode(int stripeId, int nodeId, String... cli) {
+  protected void startNode(int stripeId, int nodeId, String... cli) {
     startNode(getNode(stripeId, nodeId), cli);
   }
 
-  protected final void startNode(TerracottaServer node, String... cli) {
+  protected void startNode(TerracottaServer node, String... cli) {
     tsa.start(node, cli);
   }
 
-  protected final void stopNode(int stripeId, int nodeId) {
+  protected void stopNode(int stripeId, int nodeId) {
     tsa.stop(getNode(stripeId, nodeId));
   }
 
-  protected final TerracottaServer getNode(int stripeId, int nodeId) {
+  protected TerracottaServer getNode(int stripeId, int nodeId) {
     String key = combine(stripeId, nodeId);
     TerracottaServer server = nodes.get(key);
     if (server == null) {
@@ -180,7 +180,7 @@ public class DynamicConfigIT {
     return server;
   }
 
-  protected final int getNodePort(int stripeId, int nodeId) {
+  protected int getNodePort(int stripeId, int nodeId) {
     //1-1 => 0 and 1
     //1-2 => 2 and 3
     //1-3 => 4 and 5
@@ -190,39 +190,39 @@ public class DynamicConfigIT {
     return ports.getPorts()[2 * (nodeId - 1) + 2 * nodesPerStripe * (stripeId - 1)];
   }
 
-  protected final int getNodeGroupPort(int stripeId, int nodeId) {
+  protected int getNodeGroupPort(int stripeId, int nodeId) {
     return getNodePort(stripeId, nodeId) + 1;
   }
 
-  protected final OptionalInt findActive(int stripeId) {
+  protected OptionalInt findActive(int stripeId) {
     return IntStream.rangeClosed(1, nodesPerStripe)
         .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_ACTIVE)
         .findFirst();
   }
 
-  protected final int[] findPassives(int stripeId) {
+  protected int[] findPassives(int stripeId) {
     return IntStream.rangeClosed(1, nodesPerStripe)
         .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_PASSIVE)
         .toArray();
   }
 
-  protected final int getNodePort() {
+  protected int getNodePort() {
     return getNodePort(1, 1);
   }
 
-  protected final int getNodeGroupPort() {
+  protected int getNodeGroupPort() {
     return getNodePort(1, 1) + 1;
   }
 
-  protected final Path getBaseDir() {
+  protected Path getBaseDir() {
     return tmpDir.getRoot();
   }
 
-  protected final InetSocketAddress getNodeAddress() {
+  protected InetSocketAddress getNodeAddress() {
     return InetSocketAddress.createUnresolved("localhost", getNodePort());
   }
 
-  protected final Path copyConfigProperty(String configFile) {
+  protected Path copyConfigProperty(String configFile) {
     Path src;
     try {
       src = Paths.get(getClass().getResource(configFile).toURI());
@@ -268,27 +268,27 @@ public class DynamicConfigIT {
     return getClass().getResource("/license.xml");
   }
 
-  protected final Path getNodeRepositoryDir() {
+  protected Path getNodeRepositoryDir() {
     return getNodeRepositoryDir(1, 1);
   }
 
-  protected final Path getNodeRepositoryDir(int stripeId, int nodeId) {
+  protected Path getNodeRepositoryDir(int stripeId, int nodeId) {
     return getBaseDir().resolve("repository").resolve("stripe" + stripeId).resolve("node-" + nodeId);
   }
 
-  protected final void waitUntil(ConfigToolExecutionResult result, Matcher<? super ConfigToolExecutionResult> matcher) {
+  protected void waitUntil(ConfigToolExecutionResult result, Matcher<? super ConfigToolExecutionResult> matcher) {
     waitUntil(() -> result, matcher, timeout);
   }
 
-  protected final void waitUntil(NodeOutputRule.NodeLog result, Matcher<? super NodeOutputRule.NodeLog> matcher) {
+  protected void waitUntil(NodeOutputRule.NodeLog result, Matcher<? super NodeOutputRule.NodeLog> matcher) {
     waitUntil(() -> result, matcher, timeout);
   }
 
-  protected final <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher) {
+  protected <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher) {
     waitUntil(callable, matcher, timeout);
   }
 
-  protected final <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher, long timeout) {
+  protected <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher, long timeout) {
     Awaitility.await()
         // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
         .pollInterval(Duration.ofMillis(500))
@@ -296,7 +296,7 @@ public class DynamicConfigIT {
         .until(callable, matcher);
   }
 
-  protected final Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
+  protected Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
     Path nodeRepositoryDir = getNodeRepositoryDir(stripeId, nodeId);
     Path repositoriesDir = getBaseDir().resolve("repositories");
     ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, ports.getPorts());
@@ -307,7 +307,11 @@ public class DynamicConfigIT {
     return nodeRepositoryDir;
   }
 
-  protected final Cluster getUpcomingCluster(String host, int port) throws Exception {
+  protected Cluster getUpcomingCluster(int stripeId, int nodeId) throws Exception {
+    return getUpcomingCluster("localhost", getNodePort(stripeId, nodeId));
+  }
+
+  protected Cluster getUpcomingCluster(String host, int port) throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
@@ -318,7 +322,11 @@ public class DynamicConfigIT {
     }
   }
 
-  protected final Cluster getRuntimeCluster(String host, int port) throws Exception {
+  protected Cluster getRuntimeCluster(int stripeId, int nodeId) throws Exception {
+    return getUpcomingCluster("localhost", getNodePort(stripeId, nodeId));
+  }
+
+  protected Cluster getRuntimeCluster(String host, int port) throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
@@ -329,7 +337,11 @@ public class DynamicConfigIT {
     }
   }
 
-  protected final void withTopologyService(String host, int port, Consumer<TopologyService> consumer) throws Exception {
+  protected void withTopologyService(int stripeId, int nodeId, Consumer<TopologyService> consumer) throws Exception {
+    withTopologyService("localhost", getNodePort(stripeId, nodeId), consumer);
+  }
+
+  protected void withTopologyService(String host, int port, Consumer<TopologyService> consumer) throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
@@ -340,11 +352,11 @@ public class DynamicConfigIT {
     }
   }
 
-  protected final ConfigToolExecutionResult activateCluster() {
+  protected ConfigToolExecutionResult activateCluster() {
     return activateCluster("tc-cluster");
   }
 
-  protected final ConfigToolExecutionResult activateCluster(String name) {
+  protected ConfigToolExecutionResult activateCluster(String name) {
     String licensePath = licensePath();
     ConfigToolExecutionResult result;
     if (licensePath == null) {
@@ -437,7 +449,7 @@ public class DynamicConfigIT {
     return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
   }
 
-  protected final ConfigToolExecutionResult configToolInvocation(String... cli) {
+  protected ConfigToolExecutionResult configToolInvocation(String... cli) {
     return tsa.configTool(getNode(1, 1)).executeCommand(cli);
   }
 

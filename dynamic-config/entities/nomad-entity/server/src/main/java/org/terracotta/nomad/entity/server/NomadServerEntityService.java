@@ -30,7 +30,7 @@ import org.terracotta.nomad.entity.common.NomadEntityConstants;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.entity.common.NomadMessageCodec;
-import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.nomad.server.UpgradableNomadServer;
 
 @PermanentEntity(type = NomadEntityConstants.ENTITY_TYPE, name = NomadEntityConstants.ENTITY_NAME)
 public class NomadServerEntityService<T> implements EntityServerService<NomadEntityMessage, NomadEntityResponse> {
@@ -41,7 +41,7 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
   public NomadActiveServerEntity<T> createActiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     try {
       @SuppressWarnings("unchecked")
-      NomadServer<T> nomadServer = registry.getService(new BasicServiceConfiguration<>(NomadServer.class));
+      UpgradableNomadServer<T> nomadServer = registry.getService(new BasicServiceConfiguration<>(UpgradableNomadServer.class));
       return new NomadActiveServerEntity<>(nomadServer);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
@@ -52,7 +52,7 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
   public NomadPassiveServerEntity<T> createPassiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     try {
       @SuppressWarnings("unchecked")
-      NomadServer<T> nomadServer = registry.getService(new BasicServiceConfiguration<>(NomadServer.class));
+      UpgradableNomadServer<T> nomadServer = registry.getService(new BasicServiceConfiguration<>(UpgradableNomadServer.class));
       PlatformService platformService = registry.getService(new BasicServiceConfiguration<>(PlatformService.class));
       return new NomadPassiveServerEntity<>(nomadServer, platformService);
     } catch (ServiceException e) {

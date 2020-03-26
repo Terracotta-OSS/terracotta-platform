@@ -33,11 +33,13 @@
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
       <version>${terracotta-apis.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>packaging-support</artifactId>
       <version>${terracotta-apis.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>

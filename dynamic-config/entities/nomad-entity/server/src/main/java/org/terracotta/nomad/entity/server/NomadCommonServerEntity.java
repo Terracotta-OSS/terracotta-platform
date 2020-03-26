@@ -26,16 +26,24 @@ import org.terracotta.nomad.messages.MutativeMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
+import org.terracotta.nomad.server.ChangeRequestState;
+import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.nomad.server.UpgradableNomadServer;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.terracotta.nomad.messages.RejectionReason.BAD;
+import static org.terracotta.nomad.messages.RejectionReason.DEAD;
 
 public class NomadCommonServerEntity<T> implements CommonServerEntity<NomadEntityMessage, NomadEntityResponse> {
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  private final NomadServer<T> nomadServer;
+  private final UpgradableNomadServer<T> nomadServer;
 
-  public NomadCommonServerEntity(NomadServer<T> nomadServer) {
+  public NomadCommonServerEntity(UpgradableNomadServer<T> nomadServer) {
     this.nomadServer = nomadServer;
   }
 
@@ -51,17 +59,88 @@ public class NomadCommonServerEntity<T> implements CommonServerEntity<NomadEntit
     logger.trace("Processing Nomad message: {}", nomadMessage);
     AcceptRejectResponse response;
     if (nomadMessage instanceof CommitMessage) {
-      response = nomadServer.commit((CommitMessage) nomadMessage);
+      response = commit((CommitMessage) nomadMessage);
     } else if (nomadMessage instanceof RollbackMessage) {
-      response = nomadServer.rollback((RollbackMessage) nomadMessage);
+      response = rollback((RollbackMessage) nomadMessage);
     } else if (nomadMessage instanceof TakeoverMessage) {
-      response = nomadServer.takeover((TakeoverMessage) nomadMessage);
+      throw new UnsupportedOperationException();
     } else if (nomadMessage instanceof PrepareMessage) {
-      response = nomadServer.prepare((PrepareMessage) nomadMessage);
+      response = prepare((PrepareMessage) nomadMessage);
     } else {
       throw new IllegalArgumentException("Unsupported Nomad message: " + nomadMessage.getClass().getName());
     }
     logger.trace("Result: {}", response);
     return response;
+  }
+
+  private AcceptRejectResponse prepare(PrepareMessage nomadMessage) throws NomadException {
+    final UUID uuid = nomadMessage.getChangeUuid();
+    final Optional<NomadChangeInfo> info = nomadServer.getNomadChangeInfo(uuid);
+    if (!info.isPresent()) {
+      // the change UUId is not yet in Nomad - first call probably
+      return nomadServer.prepare(nomadMessage);
+    } else {
+      // the change UUID is already in Nomad : this entity is called again (i.e. failover or any other client resend)
+      NomadChangeInfo changeInfo = info.get();
+      if (changeInfo.getChangeRequestState() == ChangeRequestState.PREPARED) {
+        // this change has already been prepared previously
+        return AcceptRejectResponse.accept();
+      } else {
+        // this change has already been committed or rolled back previously
+        return AcceptRejectResponse.reject(DEAD, "Change: " + uuid + " is already in state: " + changeInfo.getChangeRequestState(), changeInfo.getCreationHost(), changeInfo.getCreationUser());
+      }
+    }
+  }
+
+  private AcceptRejectResponse rollback(RollbackMessage nomadMessage) throws NomadException {
+    final UUID uuid = nomadMessage.getChangeUuid();
+    final Optional<NomadChangeInfo> info = nomadServer.getNomadChangeInfo(uuid);
+    if (!info.isPresent()) {
+      // oups! we miss an entry!
+      return AcceptRejectResponse.reject(BAD, "Change: " + uuid + " is missing", nomadMessage.getMutationHost(), nomadMessage.getMutationUser());
+    } else {
+      // the change UUID is already in Nomad: we check its state
+      NomadChangeInfo changeInfo = info.get();
+      switch (changeInfo.getChangeRequestState()) {
+        case PREPARED:
+          // first call
+          return nomadServer.rollback(nomadMessage);
+        case ROLLED_BACK:
+          // duplicate call
+          return AcceptRejectResponse.accept();
+        case COMMITTED:
+          // oups, very bad! server has committed, but we received a message to rollback ???
+          // this should never happen, but just in case, the passive would restart
+          return AcceptRejectResponse.reject(BAD, "Change: " + uuid + " is already committed", changeInfo.getCreationHost(), changeInfo.getCreationUser());
+        default:
+          throw new AssertionError(changeInfo.getChangeRequestState());
+      }
+    }
+  }
+
+  private AcceptRejectResponse commit(CommitMessage nomadMessage) throws NomadException {
+    final UUID uuid = nomadMessage.getChangeUuid();
+    final Optional<NomadChangeInfo> info = nomadServer.getNomadChangeInfo(uuid);
+    if (!info.isPresent()) {
+      // oups! we miss an entry!
+      return AcceptRejectResponse.reject(BAD, "Change: " + uuid + " is missing", nomadMessage.getMutationHost(), nomadMessage.getMutationUser());
+    } else {
+      // the change UUID is already in Nomad: we check its state
+      NomadChangeInfo changeInfo = info.get();
+      switch (changeInfo.getChangeRequestState()) {
+        case PREPARED:
+          // first call
+          return nomadServer.commit(nomadMessage);
+        case ROLLED_BACK:
+          // oups, very bad! server has rolled back, but we received a message to commit ???
+          // this should never happen, but just in case, the passive would restart
+          return AcceptRejectResponse.reject(BAD, "Change: " + uuid + " is already rolled back", changeInfo.getCreationHost(), changeInfo.getCreationUser());
+        case COMMITTED:
+          // duplicate call
+          return AcceptRejectResponse.accept();
+        default:
+          throw new AssertionError(changeInfo.getChangeRequestState());
+      }
+    }
   }
 }
