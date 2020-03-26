@@ -90,7 +90,7 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
         "--data-dirs", "main:terracotta1-1/data-dir"
     ));
     List<String> provided = Arrays.asList(args);
-    if(provided.contains("-n")) {
+    if (provided.contains("-n")) {
       throw new AssertionError("Do not use -n. use --node-name instead");
     }
     if (provided.contains("--node-name")) {

@@ -88,13 +88,13 @@ public class FileBasedFilesystemDirectoryTest {
   @Test
   public void readPresent() throws Exception {
     try (FileData fileData = filesystemDirectory.create("abc", true)) {
-      fileData.write(ByteBuffer.wrap(new byte[] { 1 }));
+      fileData.write(ByteBuffer.wrap(new byte[]{1}));
     }
     try (FileData fileData = filesystemDirectory.getFileData("abc")) {
       assertEquals(1, fileData.size());
       ByteBuffer read = ByteBuffer.allocate(1);
       fileData.read(read);
-      assertThat(read.array(), is(new byte[] { 1 }));
+      assertThat(read.array(), is(new byte[]{1}));
     }
   }
 

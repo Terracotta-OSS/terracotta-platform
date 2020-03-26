@@ -18,6 +18,7 @@ package org.terracotta.port_locking;
 public interface PortAllocator {
   /**
    * Get portCount consecutive ports
+   *
    * @param portCount the number of ports to allocate
    * @return the lowest port
    */

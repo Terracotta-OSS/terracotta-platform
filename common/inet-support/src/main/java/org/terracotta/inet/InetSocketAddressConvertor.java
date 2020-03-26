@@ -44,7 +44,7 @@ public class InetSocketAddressConvertor {
    * Takes a string of the form {@code host:port}, or {@code host}, checks the parsed host for validity, and returns an
    * {@code InetSocketAddress}.
    *
-   * @param hostPort      a {@code String} representing the server address, followed by its port, separated by :
+   * @param hostPort    a {@code String} representing the server address, followed by its port, separated by :
    * @param defaultPort the default port to be used if a port is not found
    * @return an {@code InetSocketAddress} from the input server
    */

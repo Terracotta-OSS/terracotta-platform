@@ -26,8 +26,8 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
-import javax.management.MBeanServer;
 import javax.management.JMException;
+import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.util.stream.Stream;
 
@@ -40,7 +40,7 @@ import static java.util.Objects.requireNonNull;
 public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<NodeRemovalNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NodeRemovalNomadChangeProcessor.class);
   private static final String PLATFORM_MBEAN_OPERATION_NAME = "removePassive";
-  
+
   private final TopologyService topologyService;
   private final DynamicConfigListener listener;
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
@@ -80,7 +80,7 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
           PLATFORM_MBEAN_OPERATION_NAME,
           new Object[]{change.getNodeAddress().toString()},
           new String[]{String.class.getName()}
-      ); 
+      );
 
       listener.onNodeRemoval(change.getStripeId(), change.getNode());
     } catch (RuntimeException | JMException e) {

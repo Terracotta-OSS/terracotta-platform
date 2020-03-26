@@ -61,7 +61,8 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
       int nodeId = Integer.parseInt(properties.remove("this.node-id").toString());
       String nodeName = properties.remove("this.node-name").toString();
 
-      Cluster cluster = new ClusterFactory().create(properties, configuration -> {}); // do not over-log added configs
+      Cluster cluster = new ClusterFactory().create(properties, configuration -> {
+      }); // do not over-log added configs
       return new NodeContext(cluster, stripeId, nodeName);
     } catch (RuntimeException e) {
       throw new ConfigStorageException(e);
