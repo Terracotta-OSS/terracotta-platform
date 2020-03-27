@@ -69,7 +69,7 @@ public class RepairCommandIT extends DynamicConfigIT {
     assertThat(
         configToolInvocation("repair", "-s", "localhost:" + getNodePort()),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration..."),
+            containsOutput("Attempting an automatic repair of the configuration"),
             containsOutput("Configuration is repaired")));
 
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getNodeLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", DEBUG));
@@ -111,13 +111,13 @@ public class RepairCommandIT extends DynamicConfigIT {
         allOf(
             containsOutput("Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set node-logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (stripe ID: 1, node: node-1-1)': Simulate temporary commit failure"),
             containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command."),
-            containsOutput("Attempting an automatic repair of the configuration..."),
+            containsOutput("Attempting an automatic repair of the configuration"),
             not(containsOutput("Configuration is repaired."))));
 
     assertThat(
         configToolInvocation("repair", "-s", "localhost:" + getNodePort()),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration..."),
+            containsOutput("Attempting an automatic repair of the configuration"),
             containsOutput("Configuration is repaired")));
 
     // ensure that the server has started with the last committed config

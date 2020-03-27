@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -265,9 +266,13 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final LinkedHashMap<InetSocketAddress, LogicalServerState> filterOnlineNodes(Map<InetSocketAddress, LogicalServerState> nodes) {
+    return filter(nodes, (addr, state) -> !state.isUnknown() && !state.isUnreacheable());
+  }
+
+  protected final LinkedHashMap<InetSocketAddress, LogicalServerState> filter(Map<InetSocketAddress, LogicalServerState> nodes, BiPredicate<InetSocketAddress, LogicalServerState> predicate) {
     return nodes.entrySet()
         .stream()
-        .filter(e -> !e.getValue().isUnknown() && !e.getValue().isUnreacheable())
+        .filter(e -> predicate.test(e.getKey(), e.getValue()))
         .collect(toMap(
             Map.Entry::getKey,
             Map.Entry::getValue,
