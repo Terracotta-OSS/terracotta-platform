@@ -16,15 +16,12 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.json.Json;
 
@@ -51,12 +48,6 @@ public abstract class TopologyCommand extends RemoteCommand {
 
   @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
-
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
-  protected Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
-
-  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
-  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   protected Map<InetSocketAddress, LogicalServerState> destinationOnlineNodes;
   protected boolean destinationClusterActivated;

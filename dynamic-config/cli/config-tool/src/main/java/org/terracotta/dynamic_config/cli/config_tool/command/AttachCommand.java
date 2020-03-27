@@ -15,21 +15,27 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.terracotta.common.struct.Measure;
+import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import static java.lang.System.lineSeparator;
-import static java.util.Collections.singletonList;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
@@ -39,6 +45,15 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
 @Parameters(commandNames = "attach", commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
 @Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class AttachCommand extends TopologyCommand {
+
+  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
+
+  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
+
+  // list of new nodes to add with their backup topology
+  private final Map<InetSocketAddress, Cluster> newNodes = new LinkedHashMap<>();
 
   @Override
   public void validate() {
@@ -129,26 +144,26 @@ public class AttachCommand extends TopologyCommand {
 
   @Override
   protected void onNomadChangeReady(NodeNomadChange nomadChange) {
-    setUpcomingCluster(Collections.singletonList(source), nomadChange.getCluster());
+    (operationType == NODE ? Stream.of(source) : sourceCluster.getStripe(source).get().getNodeAddresses().stream()).forEach(addr -> newNodes.put(addr, getUpcomingCluster(addr)));
+    setUpcomingCluster(newNodes.keySet(), nomadChange.getCluster());
   }
 
   @Override
   protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
     Cluster result = nomadChange.getCluster();
-
-    Collection<InetSocketAddress> newNodes = operationType == NODE ?
-        singletonList(source) :
-        sourceCluster.getStripe(source).get().getNodeAddresses();
-
-    activate(newNodes, result, null, restartDelay, restartWaitTime);
+    activate(newNodes.keySet(), result, null, restartDelay, restartWaitTime);
   }
 
   @Override
   protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
     logger.error("An error occurred during the attach transaction." + lineSeparator() +
-        "The node information might still be added to the destination cluster: you will need to run the diagnostic / export command to make sure the configuration change is OK." + lineSeparator() +
-        "To prevent any error, the nodes to attach won't be activated and restarted"
+        "The node information may still be added to the destination cluster: you will need to run the diagnostic / export command to check the state of the transaction." + lineSeparator() +
+        "The nodes to attach won't be activated and restarted, and their topology will be rolled back to their initial value."
     );
+    newNodes.forEach((addr, cluster) -> {
+      logger.info("Rollback topology of node: {} to: {}", addr, cluster);
+      setUpcomingCluster(Collections.singletonList(addr), cluster);
+    });
     throw error;
   }
 }

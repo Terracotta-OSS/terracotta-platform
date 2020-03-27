@@ -21,10 +21,14 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
+import java.time.Duration;
+
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
@@ -33,9 +37,13 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
  * @author Mathieu Carbou
  */
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
-public class DetachCommandIT extends DynamicConfigIT {
+public class DetachCommand1x2IT extends DynamicConfigIT {
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();
+
+  public DetachCommand1x2IT() {
+    super(Duration.ofSeconds(120));
+  }
 
   @Test
   public void test_detach_active_node() throws Exception {
@@ -45,11 +53,13 @@ public class DetachCommandIT extends DynamicConfigIT {
     out.clearLog(1, activeId);
     assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, activeId)), is(successful()));
 
-    // the detached node becomes active in its own cluster
-    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    // the detached node is cleared and restarts in diagnostic mode
+    waitUntil(out.getLog(1, activeId), containsLog("Started the server in diagnostic mode"));
+    withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.isActivated()));
 
     // failover - existing passive becomes active
     waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
 
     assertTopologyChanged(activeId, passiveId);
   }
@@ -61,7 +71,8 @@ public class DetachCommandIT extends DynamicConfigIT {
 
     out.clearLog(1, passiveId);
     assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
+    withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
 
     assertTopologyChanged(activeId, passiveId);
   }
@@ -86,7 +97,8 @@ public class DetachCommandIT extends DynamicConfigIT {
     // try forcing the detach
     out.clearLog(1, passiveId);
     assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
+    withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
 
     assertTopologyChanged(activeId, passiveId);
   }

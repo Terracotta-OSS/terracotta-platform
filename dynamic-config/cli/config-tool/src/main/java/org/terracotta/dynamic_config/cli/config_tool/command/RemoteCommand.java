@@ -319,9 +319,16 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final boolean isActivated(InetSocketAddress expectedOnlineNode) {
-    logger.trace("getRuntimeCluster({})", expectedOnlineNode);
+    logger.trace("isActivated({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       return diagnosticService.getProxy(TopologyService.class).isActivated();
+    }
+  }
+
+  protected final void resetAndRestart(InetSocketAddress expectedOnlineNode) {
+    logger.trace("resetAndRestart({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+      diagnosticService.getProxy(DynamicConfigService.class).resetAndRestart();
     }
   }
 

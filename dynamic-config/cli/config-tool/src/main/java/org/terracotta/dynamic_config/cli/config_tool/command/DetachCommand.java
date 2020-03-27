@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameters;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
@@ -24,9 +23,9 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.util.Collection;
 
+import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 
@@ -34,7 +33,7 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
+@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f]ø")
 public class DetachCommand extends TopologyCommand {
 
   @Override
@@ -99,19 +98,30 @@ public class DetachCommand extends TopologyCommand {
         singletonList(source) :
         sourceCluster.getStripe(source).get().getNodeAddresses();
 
-    logger.info("Restarting nodes: {}", toString(removedNodes));
-    restartNodes(
-        removedNodes,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
-    logger.info("All nodes came back up");
+    RuntimeException all = null;
+    for (InetSocketAddress removedNode : removedNodes) {
+      try {
+        logger.info("Node: {} will reset and restart in 5 seconds", removedNode);
+        resetAndRestart(removedNode);
+      } catch (RuntimeException e) {
+        logger.error("Failed to reset and restart node {}: {}", removedNode, e.getMessage());
+        if (all == null) {
+          all = e;
+        } else {
+          all.addSuppressed(e);
+        }
+      }
+    }
+    if (all != null) {
+      throw all;
+    }
   }
 
   @Override
   protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
-    logger.warn("An error occurred during the detach transaction. The node to detach will still be restarted, but you will need to run the diagnostic command to make sure the configuration change is OK.");
-    // even if there has been a failure during the Nomad 2PC process, we still restart the node so that is gets detached by the sync process
-    onNomadChangeSuccess(nomadChange);
+    logger.error("An error occurred during the detach transaction." + lineSeparator() +
+        "The node to detach will not be restarted." + lineSeparator() +
+        "You you will need to run the diagnostic command to check the configuration state and restart the node to detach manually.");
     throw error;
   }
 }
