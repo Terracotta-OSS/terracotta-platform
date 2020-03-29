@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -101,6 +102,36 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
 
     assertTopologyChanged(activeId, passiveId);
+  }
+
+  @Test
+  @Ignore
+  public void test_detach_offine_node() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    stopNode(1, passiveId);
+
+    // detaching an offline node needs to be forced
+    assertThat(
+        configToolInvocation("-t", "5s", "detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        containsOutput("Node to detach: localhost:" + getNodePort(1, passiveId) + " is not reachable."));
+
+    configToolInvocation("-t", "5s", "detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId), "-f");
+
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
+
+    // restart the detached node : it should be removed
+    out.clearLog(1, passiveId);
+    startNode(1, passiveId);
+
+    // this is what we could like, but now, server is starting ACTIVE
+    waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
+    withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
   }
 
   private void assertTopologyChanged(int activeId, int passiveId) throws Exception {

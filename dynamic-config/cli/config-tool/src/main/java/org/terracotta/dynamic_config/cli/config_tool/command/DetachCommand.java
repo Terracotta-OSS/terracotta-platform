@@ -23,10 +23,10 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 
 import static java.lang.System.lineSeparator;
-import static java.util.Collections.singletonList;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 
 /**
@@ -36,19 +36,25 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
 @Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f]ø")
 public class DetachCommand extends TopologyCommand {
 
+  boolean sourceNodeUnreachable;
+
   @Override
   public void validate() {
     super.validate();
 
-    Collection<InetSocketAddress> destinationPeers = destinationCluster.getNodeAddresses();
-
-    if (destinationPeers.size() == 1) {
+    if (destinationCluster.getNodeCount() == 1) {
       throw new IllegalStateException("Unable to detach since destination cluster contains only 1 node");
     }
 
     if (!destinationCluster.containsNode(source)) {
       throw new IllegalStateException("Source node: " + source + " is not part of cluster at: " + destination);
     }
+
+    sourceNodeUnreachable = !destinationOnlineNodes.containsKey(source);
+
+    validateLogOrFail(() -> !sourceNodeUnreachable, "Node to detach: " + source + " is not reachable. " +
+        "Use -f to force the node removal in destination cluster. " +
+        "The detached node will reset when it will restart.");
   }
 
   @Override
@@ -82,7 +88,7 @@ public class DetachCommand extends TopologyCommand {
   protected NodeNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
-        return new NodeRemovalNomadChange(result, sourceCluster.getStripeId(source).getAsInt(), sourceCluster.getNode(source).get());
+        return new NodeRemovalNomadChange(result, destinationCluster.getStripeId(source).getAsInt(), destinationCluster.getNode(source).get());
       case STRIPE: {
         throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }
@@ -94,9 +100,7 @@ public class DetachCommand extends TopologyCommand {
 
   @Override
   protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
-    Collection<InetSocketAddress> removedNodes = operationType == NODE ?
-        singletonList(source) :
-        sourceCluster.getStripe(source).get().getNodeAddresses();
+    Collection<InetSocketAddress> removedNodes = getNodesToResetAndRestart();
 
     RuntimeException all = null;
     for (InetSocketAddress removedNode : removedNodes) {
@@ -104,7 +108,7 @@ public class DetachCommand extends TopologyCommand {
         logger.info("Node: {} will reset and restart in 5 seconds", removedNode);
         resetAndRestart(removedNode);
       } catch (RuntimeException e) {
-        logger.error("Failed to reset and restart node {}: {}", removedNode, e.getMessage());
+        logger.warn("Failed to reset and restart node {}: {}", removedNode, e.getMessage());
         if (all == null) {
           all = e;
         } else {
@@ -123,5 +127,21 @@ public class DetachCommand extends TopologyCommand {
         "The node to detach will not be restarted." + lineSeparator() +
         "You you will need to run the diagnostic command to check the configuration state and restart the node to detach manually.");
     throw error;
+  }
+
+  private Collection<InetSocketAddress> getNodesToResetAndRestart() {
+    Collection<InetSocketAddress> nodes = new ArrayList<>();
+    if (operationType == NODE) {
+      // when we want to detach a node
+      if (sourceNodeUnreachable) {
+        logger.warn("Node: {} is not reachable. It will be removed from the cluster when it will be restarted", source);
+      } else {
+        nodes.add(source);
+      }
+    } else {
+      // when we want tp detach a stripe
+      nodes.addAll(destinationCluster.getStripe(source).get().getNodeAddresses());
+    }
+    return nodes;
   }
 }

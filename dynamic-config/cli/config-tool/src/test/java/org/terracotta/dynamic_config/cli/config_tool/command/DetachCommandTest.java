@@ -70,10 +70,8 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
     super.setUp();
 
     when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
-    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(node1));
 
     when(topologyServiceMock("localhost", 9410).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
-    when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(node1));
 
     when(topologyServiceMock("localhost", 9410).isActivated()).thenReturn(false);
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(false);

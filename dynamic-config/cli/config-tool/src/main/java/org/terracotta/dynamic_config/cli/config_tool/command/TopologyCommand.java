@@ -52,7 +52,6 @@ public abstract class TopologyCommand extends RemoteCommand {
   protected Map<InetSocketAddress, LogicalServerState> destinationOnlineNodes;
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
-  protected Cluster sourceCluster;
 
   @Override
   public void validate() {
@@ -71,7 +70,6 @@ public abstract class TopologyCommand extends RemoteCommand {
 
     logger.debug("Validating the parameters");
     validateAddress(destination);
-    validateAddress(source);
 
     // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
     validateLogOrFail(
@@ -95,8 +93,6 @@ public abstract class TopologyCommand extends RemoteCommand {
         throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }
     }
-
-    sourceCluster = getUpcomingCluster(source);
   }
 
   @Override

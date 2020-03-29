@@ -55,9 +55,15 @@ public class AttachCommand extends TopologyCommand {
   // list of new nodes to add with their backup topology
   private final Map<InetSocketAddress, Cluster> newNodes = new LinkedHashMap<>();
 
+  private Cluster sourceCluster;
+
   @Override
   public void validate() {
     super.validate();
+
+    validateAddress(source);
+
+    sourceCluster = getUpcomingCluster(source);
 
     Collection<InetSocketAddress> destinationPeers = destinationCluster.getNodeAddresses();
     if (InetSocketAddressUtils.contains(destinationPeers, source)) {
