@@ -21,7 +21,6 @@ import org.terracotta.config.data_roots.management.DataRootBinding;
 import org.terracotta.config.data_roots.management.DataRootSettingsManagementProvider;
 import org.terracotta.config.data_roots.management.DataRootStatisticsManagementProvider;
 import org.terracotta.data.config.DataRootMapping;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.PlatformConfiguration;
@@ -58,20 +57,20 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
 
-  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, NodeContext nodeContext) {
+  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, Path metadataDir, Map<String, Path> userDataDirectories) {
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
 
     // add platform metadata dir first
-    if (nodeContext.getNode().getNodeMetadataDir() != null) {
-      addDataDirectory("platform", nodeContext.getNode().getNodeMetadataDir().toString());
+    if (metadataDir != null) {
+      addDataDirectory("platform", metadataDir.toString());
       this.platformRootIdentifier = "platform";
     } else {
       this.platformRootIdentifier = null;
     }
 
     // then add user ones
-    nodeContext.getNode().getDataDirs().forEach((name, path) -> addDataDirectory(name, path.toString()));
+    userDataDirectories.forEach((name, path) -> addDataDirectory(name, path.toString()));
   }
 
   public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories) {
