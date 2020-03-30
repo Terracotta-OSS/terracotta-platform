@@ -90,13 +90,6 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("log", "-s", "localhost:" + getNodePort(1, activeNodeId)), containsOutput("Activating cluster"));
     assertThat(configToolInvocation("log", "-s", "localhost:" + getNodePort(1, passiveId)), containsOutput("Activating cluster"));
 
-    // diag command works, both when targeting node to repair and a normal node in the cluster
-    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, activeNodeId)),
-        containsOutput("Node started in diagnostic mode for initial configuration or repair: YES"));
-
-    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, passiveId)),
-        containsOutput("Node started in diagnostic mode for initial configuration or repair: YES"));
-
     // unable to trigger a change on the cluster from the node in diagnostic mode
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.something=value"),

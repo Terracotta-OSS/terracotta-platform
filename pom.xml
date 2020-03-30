@@ -302,8 +302,7 @@
             </mapping>
             <excludes>
               <exclude>**/README</exclude>
-              <exclude>src/test/resources/**</exclude>
-              <exclude>src/main/resources/**</exclude>
+              <exclude>**/src/test/resources/**</exclude>
               <!-- if you only import management in your ide, it will generate its metadata under management/ -->
               <exclude>**/.idea/**</exclude>
               <exclude>**/nbproject/**</exclude>
