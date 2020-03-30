@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -105,8 +104,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  @Ignore
-  public void test_detach_offine_node() throws Exception {
+  public void test_detach_offline_node_in_availability_mode() throws Exception {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
 
@@ -127,11 +125,11 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     out.clearLog(1, passiveId);
     startNode(1, passiveId);
 
-    // this is what we could like, but now, server is starting ACTIVE
-    waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
-    withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
+    // in availability mode, the server will restart ACTIVE with the topology it knows
+    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
   }
 
   private void assertTopologyChanged(int activeId, int passiveId) throws Exception {
