@@ -18,6 +18,8 @@ package org.terracotta.dynamic_config.test_support.entity;
 import com.tc.classloader.PermanentEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
@@ -26,6 +28,8 @@ import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.test_support.handler.GroupPortSimulateHandler;
 import org.terracotta.dynamic_config.test_support.handler.SimulationHandler;
+import org.terracotta.dynamic_config.test_support.processor.MyDummyNomadAdditionChangeProcessor;
+import org.terracotta.dynamic_config.test_support.processor.MyDummyNomadRemovalChangeProcessor;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ConcurrencyStrategy;
@@ -38,6 +42,7 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
+import org.terracotta.monitoring.PlatformService;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
@@ -94,13 +99,19 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
       RoutingNomadChangeProcessor routingNomadChangeProcessor = serviceRegistry.getService(new BasicServiceConfiguration<>(RoutingNomadChangeProcessor.class));
       TopologyService topologyService = serviceRegistry.getService(new BasicServiceConfiguration<>(TopologyService.class));
       DynamicConfigListener dynamicConfigListener = serviceRegistry.getService(new BasicServiceConfiguration<>(DynamicConfigListener.class));
-
+      PlatformService platformService = serviceRegistry.getService(new BasicServiceConfiguration<>(PlatformService.class));
       requireNonNull(routingNomadChangeProcessor);
       requireNonNull(topologyService);
       requireNonNull(dynamicConfigListener);
 
-      //routingNomadChangeProcessor.register(...);
+      routingNomadChangeProcessor.register(
+          NodeAdditionNomadChange.class,
+          new MyDummyNomadAdditionChangeProcessor(topologyService, dynamicConfigListener, platformService));
 
+      routingNomadChangeProcessor.register(
+          NodeRemovalNomadChange.class,
+          new MyDummyNomadRemovalChangeProcessor(topologyService, dynamicConfigListener, platformService));
+      
       LOGGER.info("Installing: " + SimulationHandler.class.getName());
       ConfigChangeHandler handler = manager.findConfigChangeHandler(NODE_LOGGER_OVERRIDES).get();
       // override the logging handler by hooking into some special properties

@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.nomad.client.results;
+package org.terracotta.dynamic_config.cli.config_tool.nomad;
 
+import org.terracotta.diagnostic.model.LogicalServerState;
+import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadChangeInfo;
@@ -23,7 +25,7 @@ import org.terracotta.nomad.server.NomadServerMode;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,17 +35,19 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.ACCEPTING;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.CONCURRENT_ACCESS;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.DISCOVERY_FAILURE;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.INCONSISTENT;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_COMMITTED;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_ROLLED_BACK;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.MAYBE_UNKNOWN;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.PARTIALLY_COMMITTED;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.PARTIALLY_PREPARED;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.PARTIALLY_ROLLED_BACK;
-import static org.terracotta.nomad.client.results.ConsistencyAnalyzer.GlobalState.UNKNOWN;
+import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.ACCEPTING;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.CONCURRENT_ACCESS;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.DISCOVERY_FAILURE;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.INCONSISTENT;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_COMMITTED;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_ROLLED_BACK;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.MAYBE_UNKNOWN;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.PARTIALLY_COMMITTED;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.PARTIALLY_PREPARED;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.PARTIALLY_ROLLED_BACK;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.UNKNOWN;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -74,8 +78,8 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     MAYBE_UNKNOWN
   }
 
-  private final Map<InetSocketAddress, DiscoverResponse<T>> responses = new HashMap<>(0);
-  private final int nodeCount;
+  private final Map<InetSocketAddress, DiscoverResponse<T>> responses;
+  private final Map<InetSocketAddress, LogicalServerState> allNodes;
 
   private volatile String discoverFailure;
   private volatile boolean discoveredInconsistentCluster;
@@ -89,12 +93,9 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   private volatile String otherClientHost;
   private volatile String otherClientUser;
 
-  public ConsistencyAnalyzer(int nodeCount) {
-    this.nodeCount = nodeCount;
-  }
-
-  public int getNodeCount() {
-    return nodeCount;
+  public ConsistencyAnalyzer(Map<InetSocketAddress, LogicalServerState> allNodes) {
+    this.allNodes = allNodes;
+    this.responses = new LinkedHashMap<>(allNodes.size());
   }
 
   @Override
@@ -121,6 +122,14 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     this.otherClientHost = lastMutationHost;
     this.otherClientUser = lastMutationUser;
     this.discoveredOtherClient = true;
+  }
+
+  public int getNodeCount() {
+    return allNodes.size();
+  }
+
+  public LogicalServerState getState(InetSocketAddress nodeAddress) {
+    return allNodes.getOrDefault(nodeAddress, UNREACHABLE);
   }
 
   public Optional<DiscoverResponse<T>> getDiscoveryResponse(InetSocketAddress node) {
@@ -162,19 +171,75 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   // others
 
   public boolean hasUnreachableNodes() {
-    return nodeCount > responses.size();
+    return getNodeCount() > responses.size();
   }
 
   public Optional<NomadChangeInfo> getCheckpoint() {
-    int nodeCount = responses.size();
+    int configuredNodeCount = getOnlineConfiguredNodes();
     return responses.values()
         .stream()
         .flatMap(response -> response.getCheckpoints().stream())
         .collect(groupingBy(NomadChangeInfo::getChangeUuid, toList())) // Map<UUID, List<NomadChangeInfo>>
         .entrySet().stream()
-        .filter(e -> e.getValue().size() == nodeCount) // only consider entries having the change UUID on all the nodes
+        .filter(e -> e.getValue().size() == configuredNodeCount) // only consider entries having the change UUID on all the nodes
         .max(Comparator.comparing(e -> e.getValue().get(0).getVersion())) // select the UUID having the maximum version ID
         .map(e -> e.getValue().get(0));
+  }
+
+  /**
+   * The number of nodes having some Nomad configuration changes.
+   * <p>
+   * A ndoe can have some Nomad configuration changes but be activated and running, or in diagnostic mode for repair (not activated)
+   */
+  public int getOnlineConfiguredNodes() {
+    return Math.toIntExact(responses.entrySet().stream().filter(e -> e.getValue().getLatestChange() != null).count());
+  }
+
+  public Collection<InetSocketAddress> getOnlineNodes() {
+    return responses.keySet();
+  }
+
+  public Collection<InetSocketAddress> getOnlineActivatedNodes() {
+    // activated nodes are passive / actives that have some nomad changes
+    return responses.entrySet()
+        .stream()
+        .filter(e -> allNodes.get(e.getKey()) != STARTING && e.getValue().getLatestChange() != null)
+        .map(Map.Entry::getKey)
+        .collect(toList());
+  }
+
+  public Collection<InetSocketAddress> getOnlineInRepairNodes() {
+    // nodes in repair are started in diagnostic mode and have nomad changes
+    return responses.entrySet()
+        .stream()
+        .filter(e -> allNodes.get(e.getKey()) == STARTING && e.getValue().getLatestChange() != null)
+        .map(Map.Entry::getKey)
+        .collect(toList());
+  }
+
+  public Collection<InetSocketAddress> getOnlineInConfigurationNodes() {
+    // new nodes in configuration are started in diagnostic mode and have no nomad change yet
+    return responses.entrySet()
+        .stream()
+        .filter(e -> allNodes.get(e.getKey()) == STARTING && e.getValue().getLatestChange() == null)
+        .map(Map.Entry::getKey)
+        .collect(toList());
+  }
+
+  public boolean isOnlineAndActivated(InetSocketAddress nodeAddress) {
+    return responses.containsKey(nodeAddress) && responses.get(nodeAddress).getLatestChange() != null && allNodes.get(nodeAddress) != STARTING;
+  }
+
+  public boolean isOnlineAndInRepair(InetSocketAddress nodeAddress) {
+    return responses.containsKey(nodeAddress) && responses.get(nodeAddress).getLatestChange() != null && allNodes.get(nodeAddress) == STARTING;
+  }
+
+  public boolean isOnlineAndInConfiguration(InetSocketAddress nodeAddress) {
+    return responses.containsKey(nodeAddress) && responses.get(nodeAddress).getLatestChange() == null && allNodes.get(nodeAddress) == STARTING;
+  }
+
+  public boolean hasNomadChanges(InetSocketAddress nodeAddress) {
+    return responses.containsKey(nodeAddress) && responses.get(nodeAddress).getLatestChange() != null;
   }
 
   public GlobalState getGlobalState() {
@@ -195,12 +260,24 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
       return ACCEPTING;
     }
 
+    // we are only looking at configured nodes
+    final int nodeCount = getOnlineConfiguredNodes();
 
     // number of different UUIDs seen for the latest changes
-    final long uuids = responses.values().stream().map(r -> r.getLatestChange().getChangeUuid()).distinct().count();
+    final long uuids = responses.values()
+        .stream()
+        .filter(r -> r.getLatestChange() != null)
+        .map(r -> r.getLatestChange().getChangeUuid())
+        .distinct()
+        .count();
 
     // number of occurrences for each state
-    final Map<ChangeRequestState, Long> states = responses.values().stream().map(r -> r.getLatestChange().getState()).collect(groupingBy(identity(), counting()));
+    final Map<ChangeRequestState, Long> states = responses.values()
+        .stream()
+        .filter(r -> r.getLatestChange() != null)
+        .map(r -> r.getLatestChange().getState())
+        .collect(groupingBy(identity(), counting()));
+
     final long rolledBack = states.getOrDefault(ROLLED_BACK, 0L);
     final long prepared = states.getOrDefault(PREPARED, 0L);
     final long committed = states.getOrDefault(COMMITTED, 0L);

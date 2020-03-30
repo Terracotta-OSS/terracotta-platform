@@ -15,21 +15,24 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLinesStartingWith;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
@@ -40,10 +43,11 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DetachCommand1x2IT extends DynamicConfigIT {
 
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
+  @Rule
+  public final NodeOutputRule out = new NodeOutputRule();
 
   public DetachCommand1x2IT() {
-    super(Duration.ofSeconds(120));
+    super(Duration.ofSeconds(180));
   }
 
   @Test
@@ -105,8 +109,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  @Ignore
-  public void test_detach_offine_node() throws Exception {
+  public void test_detach_offline_node_in_availability_mode() throws Exception {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
 
@@ -127,11 +130,110 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     out.clearLog(1, passiveId);
     startNode(1, passiveId);
 
-    // this is what we could like, but now, server is starting ACTIVE
+    // in availability mode, the server will restart ACTIVE with the topology it knows
+    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+  }
+
+  @Test
+  public void detachNodeFailInActiveAtPrepare() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.detachStatus=prepareDeletion-failure";
+
+    //create prepare failure on active
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+
+    // detach failure (forcing detach otherwise we have to restart cluster)
+    assertThat(
+        configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+            "-s", "localhost:" + getNodePort(1, passiveId)),
+        containsOutput("Two-Phase commit failed"));
+
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
+    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
+  }
+
+  @Test
+  public void detachNodeFailInPassiveAtPrepare() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    String propertySettingString = "stripe.1.node." + passiveId + ".tc-properties.detachStatus=prepareDeletion-failure";
+
+    //create prepare failure on passive
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+
+    // detach failure (forcing detach otherwise we have to restart cluster)
+    assertThat(
+        configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+            "-s", "localhost:" + getNodePort(1, passiveId)),
+        containsOutput("Two-Phase commit failed"));
+
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
+    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
+  }
+
+  @Test
+  public void testFailoverDuringNomadCommitForPassiveRemoval() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
+
+    //setup for failover in commit phase on active
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+
+    out.clearLog(1, activeId);
+    out.clearLog(1, passiveId);
+
+    assertThat(
+        configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+            "-s", "localhost:" + getNodePort(1, passiveId)),
+        is(successful()));
+
     waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
+
+    // Stripe is lost no active
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
+
+    out.clearLog(1, activeId);
+    startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
+    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    // Active has prepare changes for node removal
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
+    assertThat(getUpcomingCluster(1, activeId).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster(1, activeId).getNodeCount(), is(equalTo(2)));
+
+    assertThat(configToolInvocation("-r", "5s", "diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
+        containsLinesStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic5.txt").toURI())).collect(toList())));
+
+    assertThat(
+        configToolInvocation("-r", "5s", "repair", "-s", "localhost:" + getNodePort(1, activeId)),
+        allOf(
+            containsOutput("Attempting an automatic repair of the configuration on nodes"),
+            containsOutput("Configuration is repaired")));
+
+    withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
   }
 
   private void assertTopologyChanged(int activeId, int passiveId) throws Exception {

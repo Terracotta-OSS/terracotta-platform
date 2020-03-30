@@ -37,6 +37,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.diagnostic</groupId>
+      <artifactId>diagnostic-service-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>management</artifactId>
       <scope>provided</scope>
@@ -51,6 +57,11 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>

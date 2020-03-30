@@ -16,9 +16,12 @@
 package org.terracotta.dynamic_config.test_support.util;
 
 import org.hamcrest.CustomTypeSafeMatcher;
+import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.terracotta.angela.common.ConfigToolExecutionResult;
 
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -49,6 +52,62 @@ public class AngelaMatchers {
       @Override
       protected boolean matchesSafely(ConfigToolExecutionResult result) {
         return find(result.getOutput(), text);
+      }
+    };
+  }
+
+  public static Matcher<ConfigToolExecutionResult> containsLinesInOrderStartingWith(Collection<String> expectedLines) {
+    return new CustomTypeSafeMatcher<ConfigToolExecutionResult>("contains lines in order starting with:\n" + String.join("\n", expectedLines)) {
+      @Override
+      protected boolean matchesSafely(ConfigToolExecutionResult result) {
+        LinkedList<String> lines = new LinkedList<>(expectedLines);
+        for (String out : result.getOutput()) {
+          if (out.startsWith(lines.getFirst())) {
+            lines.removeFirst();
+          }
+        }
+        return lines.isEmpty();
+      }
+
+      @Override
+      protected void describeMismatchSafely(ConfigToolExecutionResult result, Description mismatchDescription) {
+        LinkedList<String> lines = new LinkedList<>(expectedLines);
+        for (String out : result.getOutput()) {
+          if (out.startsWith(lines.getFirst())) {
+            lines.removeFirst();
+          }
+        }
+        mismatchDescription.appendText("these lines were not found:\n" + String.join("\n", lines) + "\n in output:\n" + String.join("\n", result.getOutput()));
+      }
+    };
+  }
+
+  public static Matcher<ConfigToolExecutionResult> containsLinesStartingWith(Collection<String> expectedLines) {
+    return new CustomTypeSafeMatcher<ConfigToolExecutionResult>("contains lines starting with:\n" + String.join("\n", expectedLines)) {
+      @Override
+      protected boolean matchesSafely(ConfigToolExecutionResult result) {
+        LinkedList<String> lines = new LinkedList<>(expectedLines);
+        for (String out : result.getOutput()) {
+          if (lines.isEmpty()) {
+            break;
+          } else {
+            lines.removeIf(out::startsWith);
+          }
+        }
+        return lines.isEmpty();
+      }
+
+      @Override
+      protected void describeMismatchSafely(ConfigToolExecutionResult result, Description mismatchDescription) {
+        LinkedList<String> lines = new LinkedList<>(expectedLines);
+        for (String out : result.getOutput()) {
+          if (lines.isEmpty()) {
+            break;
+          } else {
+            lines.removeIf(out::startsWith);
+          }
+        }
+        mismatchDescription.appendText("these lines were not found:\n" + String.join("\n", lines) + "\n in output:\n" + String.join("\n", result.getOutput()));
       }
     };
   }
