@@ -174,15 +174,6 @@ public class CommonMapper {
     }
   }
 
-  public Map<String, Path> toUserDataDirs(Map<Class<?>, List<Object>> plugins) {
-    Map<String, Path> dataDirs = toDataDirs(plugins, mapping -> !mapping.isUseForPlatform());
-    // If the XML defines the deprecated tag "<persistence:platform-persistence data-directory-id="root1"/>"
-    // then we get the data directory ID and remove it from the user data directory list
-    // because this ID matches the directory used for platform (node metadata)
-    toNodeMetadataDir(plugins).ifPresent(e -> dataDirs.remove(e.getKey()));
-    return dataDirs;
-  }
-
   public Optional<Map.Entry<String, Path>> toNodeMetadataDir(Map<Class<?>, List<Object>> plugins) {
     // First try to find a deprecated service tag "<persistence:platform-persistence data-directory-id="root1"/>"
     // that will give us the ID of the dataroot to use for platform persistence
