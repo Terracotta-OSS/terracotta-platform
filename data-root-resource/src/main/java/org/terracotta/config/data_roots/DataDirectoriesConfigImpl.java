@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.config.data_roots.management.DataRootBinding;
 import org.terracotta.config.data_roots.management.DataRootSettingsManagementProvider;
 import org.terracotta.config.data_roots.management.DataRootStatisticsManagementProvider;
-import org.terracotta.config.util.ParameterSubstitutor;
 import org.terracotta.data.config.DataRootMapping;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
@@ -34,7 +33,6 @@ import org.terracotta.management.service.monitoring.ManageableServerComponent;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
@@ -54,7 +52,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, ManageableServerComponent, StateDumpable {
   private static final Logger LOGGER = LoggerFactory.getLogger(DataDirectoriesConfigImpl.class);
 
-  private final Path platform;
   private final ConcurrentMap<String, Path> dataRootMap = new ConcurrentHashMap<>();
   private final String platformRootIdentifier;
   private final ConcurrentMap<String, DataDirectories> serverToDataRoots = new ConcurrentHashMap<>();
@@ -68,10 +65,8 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     // add platform metadata dir first
     if (nodeContext.getNode().getNodeMetadataDir() != null) {
       addDataDirectory("platform", nodeContext.getNode().getNodeMetadataDir().toString());
-      this.platform = dataRootMap.get("platform");
       this.platformRootIdentifier = "platform";
     } else {
-      this.platform = null;
       this.platformRootIdentifier = null;
     }
 
@@ -79,39 +74,22 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     nodeContext.getNode().getDataDirs().forEach((name, path) -> addDataDirectory(name, path.toString()));
   }
 
-  public DataDirectoriesConfigImpl(String source, org.terracotta.data.config.DataDirectories dataDirectories) {
-    Path tempRootPath = Paths.get(".").toAbsolutePath();
-    if (source != null) {
-      try {
-        Path sourcePath = Paths.get(source);
-        if (sourcePath.isAbsolute()) {
-          tempRootPath = sourcePath;
-        }
-      } catch (InvalidPathException e) {
-        // Ignore, we keep the root as . then
-      }
-    }
-
-    this.parameterSubstitutor = ParameterSubstitutor::substitute;
-    this.pathResolver = new PathResolver(tempRootPath, parameterSubstitutor::substitute);
+  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories) {
+    this.parameterSubstitutor = parameterSubstitutor;
+    this.pathResolver = pathResolver;
 
     String tempPlatformRootIdentifier = null;
-    Path tempPlatformPath = null;
     for (DataRootMapping mapping : dataDirectories.getDirectory()) {
-
       addDataDirectory(mapping.getName(), mapping.getValue());
-
       if (mapping.isUseForPlatform()) {
         if (tempPlatformRootIdentifier == null) {
           tempPlatformRootIdentifier = mapping.getName();
-          tempPlatformPath = parameterSubstitutor.substitute(pathResolver.resolve(Paths.get(mapping.getValue())));
         } else {
           throw new DataDirectoriesConfigurationException("More than one data directory is configured to be used by platform");
         }
       }
     }
     platformRootIdentifier = tempPlatformRootIdentifier;
-    platform = tempPlatformPath;
   }
 
 
