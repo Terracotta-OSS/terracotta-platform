@@ -21,14 +21,18 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLinesStartingWith;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
@@ -193,19 +197,20 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     //setup for failover in commit phase on active
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
+    out.clearLog(1, activeId);
+    out.clearLog(1, passiveId);
+
     assertThat(
         configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         is(successful()));
-    
-    out.clearLog(1, passiveId);
+
     waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
+    withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
 
     // Stripe is lost no active
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
-
-    withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
 
     out.clearLog(1, activeId);
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
@@ -213,14 +218,20 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
 
     // Active has prepare changes for node removal
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
-    withTopologyService("localhost", getNodePort(1, 1), topologyService -> assertTrue(topologyService.hasIncompleteChange()));
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
+    assertThat(getUpcomingCluster(1, activeId).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster(1, activeId).getNodeCount(), is(equalTo(2)));
+
+    assertThat(configToolInvocation("-r", "5s", "diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
+        containsLinesStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic5.txt").toURI())).collect(toList())));
 
     assertThat(
-        configToolInvocation("repair", "-s", "localhost:" + getNodePort()),
+        configToolInvocation("-r", "5s", "repair", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration..."),
+            containsOutput("Attempting an automatic repair of the configuration on nodes"),
             containsOutput("Configuration is repaired")));
 
+    withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
   }

@@ -29,7 +29,9 @@ import org.terracotta.nomad.server.NomadException;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
 import java.util.stream.Stream;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
@@ -96,8 +98,17 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
       if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
         String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
         if (killAtCommit.equals(value)) {
-          System.out.println("Hitting commit");
-          platformService.stopPlatform();
+          try {
+            // We crate a marker on disk to know that we have triggered the failover once.
+            // When the node will be restarted, and the repair command triggered again to re-execute the commit,
+            // the file will be there, so 'createFile()' will fail and the node won't be killed.
+            // This hack is so only trigger the commit failure once
+            Files.createFile(topologyService.getUpcomingNodeContext().getNode().getDataDirs().get("main").resolve("killed"));
+            System.out.println("Hitting commit");
+            platformService.stopPlatform();
+          } catch (IOException ignored) {
+            // ignored
+          }
         }
       }
 
