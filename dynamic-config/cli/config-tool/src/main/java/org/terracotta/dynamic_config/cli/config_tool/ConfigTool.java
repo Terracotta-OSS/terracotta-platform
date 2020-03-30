@@ -60,11 +60,10 @@ public class ConfigTool {
     } catch (Exception e) {
       String message = e.getMessage();
       if (message != null && !message.isEmpty()) {
-        String errorMessage = String.format("%sError:%s%s%s", lineSeparator(), lineSeparator(), message, lineSeparator());
         if (LOGGER.isDebugEnabled()) {
           LOGGER.error("{}Error:", lineSeparator(), e); // do not output e.getMassage() because it duplicates the output
         } else {
-          LOGGER.error(errorMessage);
+          LOGGER.error("{}Error:{}{}{}", lineSeparator(), lineSeparator(), message, lineSeparator());
         }
       } else {
         LOGGER.error("{}Internal error:", lineSeparator(), e);

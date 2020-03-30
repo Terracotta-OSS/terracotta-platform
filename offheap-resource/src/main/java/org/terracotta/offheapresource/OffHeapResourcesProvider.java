@@ -17,7 +17,7 @@ package org.terracotta.offheapresource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.common.struct.Measure;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
@@ -65,8 +65,8 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     }
   }
 
-  public OffHeapResourcesProvider(NodeContext nodeContext) {
-    nodeContext.getNode().getOffheapResources().forEach((name, measure) -> {
+  public OffHeapResourcesProvider(Map<String, Measure<org.terracotta.common.struct.MemoryUnit>> resources) {
+    resources.forEach((name, measure) -> {
       long size = measure.getQuantity(org.terracotta.common.struct.MemoryUnit.B);
       addToResources(identifier(name), size);
     });

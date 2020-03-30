@@ -18,7 +18,10 @@ package org.terracotta.config.data_roots;
 import org.terracotta.config.service.ConfigValidator;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.util.DefaultSubstitutor;
+import org.terracotta.config.util.ParameterSubstitutor;
 import org.terracotta.data.config.DataDirectories;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.w3c.dom.Element;
 
 import javax.xml.bind.JAXBContext;
@@ -29,6 +32,9 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.function.Function;
 
 /**
@@ -53,7 +59,10 @@ public class DataRootConfigParser implements ExtendedConfigParser {
   public DataDirectoriesConfigImpl parse(Element element, String source) {
     DataDirectories dataDirectories = parser().apply(element);
     DefaultSubstitutor.applyDefaults(dataDirectories);
-    return new DataDirectoriesConfigImpl(source, dataDirectories);
+
+    PathResolver pathResolver = getPathResolver(source);
+
+    return new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, pathResolver, dataDirectories);
   }
 
   public Function<Element, DataDirectories> parser() {
@@ -73,5 +82,22 @@ public class DataRootConfigParser implements ExtendedConfigParser {
 
   public ConfigValidator getConfigValidator() {
     return new DataRootValidator(parser());
+  }
+
+  static PathResolver getPathResolver(String source) {
+    Path tempRootPath = Paths.get(".").toAbsolutePath();
+    if (source != null) {
+      try {
+        Path sourcePath = Paths.get(source);
+        if (sourcePath.isAbsolute()) {
+          tempRootPath = sourcePath;
+        }
+      } catch (InvalidPathException e) {
+        // Ignore, we keep the root as . then
+      }
+    }
+
+    final IParameterSubstitutor substitutor = ParameterSubstitutor::substitute;
+    return new PathResolver(tempRootPath, substitutor::substitute);
   }
 }

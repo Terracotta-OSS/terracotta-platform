@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -108,7 +109,7 @@ public abstract class RemoteCommand extends Command {
    * Ensure that the input address is really an address that can be used to connect to a node of a cluster
    */
   protected final void validateAddress(InetSocketAddress expectedOnlineNode) {
-    logger.trace("ensureAddressWithinCluster({})", expectedOnlineNode);
+    logger.info("Validating node address: {} (this can take time if the node is not reachable)", expectedOnlineNode);
     getRuntimeCluster(expectedOnlineNode).getNode(expectedOnlineNode)
         .orElseGet(() -> getUpcomingCluster(expectedOnlineNode).getNode(expectedOnlineNode)
             .orElseThrow(() -> new IllegalArgumentException("Targeted cluster does not contain any node with this address: " + expectedOnlineNode + ". Is it a mistake ? Are you connecting to the wrong cluster ? If not, please use the configured node hostname and port to connect.")));
@@ -122,7 +123,7 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final boolean hasIncompleteChange(InetSocketAddress expectedOnlineNode) {
-    logger.trace("hasPreparedConfigurationChange({})", expectedOnlineNode);
+    logger.trace("hasIncompleteChange({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       return diagnosticService.getProxy(TopologyService.class).hasIncompleteChange();
     }
@@ -265,9 +266,13 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final LinkedHashMap<InetSocketAddress, LogicalServerState> filterOnlineNodes(Map<InetSocketAddress, LogicalServerState> nodes) {
+    return filter(nodes, (addr, state) -> !state.isUnknown() && !state.isUnreacheable());
+  }
+
+  protected final LinkedHashMap<InetSocketAddress, LogicalServerState> filter(Map<InetSocketAddress, LogicalServerState> nodes, BiPredicate<InetSocketAddress, LogicalServerState> predicate) {
     return nodes.entrySet()
         .stream()
-        .filter(e -> !e.getValue().isUnknown() && !e.getValue().isUnreacheable())
+        .filter(e -> predicate.test(e.getKey(), e.getValue()))
         .collect(toMap(
             Map.Entry::getKey,
             Map.Entry::getValue,
