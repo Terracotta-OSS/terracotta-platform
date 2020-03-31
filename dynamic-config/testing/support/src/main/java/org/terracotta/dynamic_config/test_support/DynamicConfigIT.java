@@ -37,6 +37,7 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
@@ -108,6 +109,7 @@ public class DynamicConfigIT {
   private boolean autoActivate;
   private Map<String, TerracottaServer> nodes = new ConcurrentHashMap<>();
   private ClusterDefinition clusterDef;
+  protected FailoverPriority failoverPriority = FailoverPriority.availability();
 
   public DynamicConfigIT() {
     this(Duration.ofSeconds(60));
@@ -123,7 +125,7 @@ public class DynamicConfigIT {
     this.nodesPerStripe = clusterDef.nodesPerStripe();
     this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
   }
-
+  
   @Before
   public void before() {
     this.clusterFactory = new ClusterFactory(getClass().getSimpleName(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
@@ -414,7 +416,8 @@ public class DynamicConfigIT {
         .logs("terracotta" + uniqueId + "/logs")
         .dataDir("main:terracotta" + uniqueId + "/data-dir")
         .offheap("main:512MB,foo:1GB")
-        .metaData("terracotta" + uniqueId + "/metadata");
+        .metaData("terracotta" + uniqueId + "/metadata")
+        .failoverPriority(failoverPriority.toString());
   }
 
   protected String combine(int stripeId, int nodesId) {
