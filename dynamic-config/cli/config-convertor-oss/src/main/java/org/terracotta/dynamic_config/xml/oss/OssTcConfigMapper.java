@@ -70,7 +70,7 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
               .setTcProperties(commonMapper.toProperties(tcConfig))
               // plugins
               .setNodeMetadataDir(null)
-              .setDataDirs(commonMapper.toUserDataDirs(xmlPlugins))
+              .setDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true))
               .setOffheapResources(commonMapper.toOffheapResources(xmlPlugins))
               .setNodeBackupDir(null)
               .setClientLeaseDuration(commonMapper.toClientLeaseDuration(xmlPlugins))
