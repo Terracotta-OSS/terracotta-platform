@@ -35,11 +35,12 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static java.lang.System.lineSeparator;
+import static java.nio.file.Files.isDirectory;
 import static org.terracotta.dynamic_config.cli.config_convertor.ConversionFormat.PROPERTIES;
 import static org.terracotta.dynamic_config.cli.config_convertor.ConversionFormat.REPOSITORY;
 
 @Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration repository format")
-@Usage("convert -c <tc-config>,<tc-config>... -n <new-cluster-name> ( -t repository [-l <license-file>] | -t properties ) [-d <destination-dir>] [-f]")
+@Usage("convert -c <tc-config>,<tc-config>... ( -t repository [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
 public class ConvertCommand extends Command {
   @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
   private List<Path> tcConfigFiles;
@@ -50,7 +51,7 @@ public class ConvertCommand extends Command {
   @Parameter(names = {"-d"}, description = "Destination directory to store converted config. Should not exist. Default: ${current-directory}/converted-configs", converter = PathConverter.class)
   private Path destinationDir = Paths.get(".").resolve("converted-configs");
 
-  @Parameter(names = {"-n"}, required = true, description = "New cluster name")
+  @Parameter(names = {"-n"}, description = "New cluster name")
   private String newClusterName;
 
   @Parameter(names = {"-t"}, description = "Conversion type (repository|properties). Default: repository", converter = ConversionFormat.FormatConverter.class)
@@ -75,6 +76,10 @@ public class ConvertCommand extends Command {
       throw new ParameterException("Path to license file can only be provided for conversion to a config repository");
     }
 
+    if (newClusterName == null && conversionFormat == REPOSITORY) {
+      throw new ParameterException("Cluster name is required for conversion to a config repository");
+    }
+
     if (licensePath != null && !Files.exists(licensePath)) {
       throw new ParameterException("License file: " + licensePath + " not found");
     }
@@ -86,12 +91,13 @@ public class ConvertCommand extends Command {
       ConfigRepoProcessor resultProcessor = new ConfigRepoProcessor(destinationDir);
       ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process, force);
       convertor.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
+
       if (licensePath != null) {
-        try (Stream<Path> pathList = Files.list(destinationDir)) {
-          pathList.forEach(repoPath -> {
+        try (Stream<Path> allLicenseDirs = Files.find(destinationDir, 3, (path, attrs) -> path.getFileName().toString().equals("license") && isDirectory(path))) {
+          allLicenseDirs.forEach(licenseDir -> {
             try {
-              Path destLicenseDir = Files.createDirectories(repoPath.resolve("license")).resolve(licensePath.getFileName());
-              Files.copy(licensePath, destLicenseDir);
+              Path destLicenseFile = licenseDir.resolve(licensePath.getFileName());
+              Files.copy(licensePath, destLicenseFile);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }
@@ -101,11 +107,13 @@ public class ConvertCommand extends Command {
         }
       }
       logger.info("Configuration repositories saved under: {}", destinationDir.toAbsolutePath().normalize());
+
     } else if (conversionFormat == PROPERTIES) {
       ConfigPropertiesProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, newClusterName);
       ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process, force);
       convertor.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
       logger.info("Configuration properties file saved under: {}", destinationDir.toAbsolutePath().normalize());
+
     } else {
       throw new AssertionError("Unexpected conversion format: " + conversionFormat);
     }
