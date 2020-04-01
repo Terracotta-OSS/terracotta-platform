@@ -32,8 +32,8 @@ import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
-import org.terracotta.dynamic_config.server.api.LicenseParser;
 import org.terracotta.dynamic_config.server.api.LicenseParserDiscovery;
+import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.ConfigChangeHandlerManagerImpl;
@@ -94,10 +94,10 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
 
       // optional service enabling license parsing
-      LicenseParser licenseParser = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseParser::unsupported);
+      LicenseService licenseService = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseService::unsupported);
 
       // Service used to manage and initialize the Nomad 2PC system
-      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseParser);
+      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService);
 
       // Configuration generator class
       // Initialized when processing the CLI depending oin the user input, and called to generate a configuration
@@ -135,7 +135,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration.registerExtendedConfiguration(DynamicConfigListener.class, nomadServerManager.getDynamicConfigListener());
       configuration.registerExtendedConfiguration(NomadServer.class, nomadServer);
       configuration.registerExtendedConfiguration(UpgradableNomadServer.class, nomadServer);
-      configuration.registerExtendedConfiguration(LicenseParser.class, licenseParser);
+      configuration.registerExtendedConfiguration(LicenseService.class, licenseService);
       configuration.registerExtendedConfiguration(PathResolver.class, userDirResolver);
       nomadServerManager.getRoutingNomadChangeProcessor()
           .ifPresent(routingNomadChangeProcessor -> configuration.registerExtendedConfiguration(RoutingNomadChangeProcessor.class, routingNomadChangeProcessor));
@@ -226,7 +226,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   private ClassLoader getServiceClassLoader() {
     return new ServiceClassLoader(getClass().getClassLoader(),
         DynamicConfigExtension.class,
-        LicenseParser.class);
+        LicenseService.class);
   }
 
   private static Options parseCommandLineOrExit(List<String> args) {

@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.server.configuration.service;
+package org.terracotta.dynamic_config.server.api;
 
 public class InvalidLicenseException extends RuntimeException {
   private static final long serialVersionUID = 1L;
 
   public InvalidLicenseException(String message) {
     super(message);
+  }
+
+  public InvalidLicenseException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public InvalidLicenseException(Throwable cause) {
+    super(cause);
   }
 }
