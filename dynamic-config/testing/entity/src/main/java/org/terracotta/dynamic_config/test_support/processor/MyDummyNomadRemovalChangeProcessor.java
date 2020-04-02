@@ -104,7 +104,6 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
             // the file will be there, so 'createFile()' will fail and the node won't be killed.
             // This hack is so only trigger the commit failure once
             Files.createFile(topologyService.getUpcomingNodeContext().getNode().getDataDirs().get("main").resolve("killed"));
-            System.out.println("Hitting commit");
             platformService.stopPlatform();
           } catch (IOException ignored) {
             // ignored

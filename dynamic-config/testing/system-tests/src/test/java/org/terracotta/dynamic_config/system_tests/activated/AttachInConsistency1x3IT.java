@@ -16,8 +16,10 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
@@ -33,17 +35,14 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.con
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
-/**
- * @author Mathieu Carbou
- */
 @ClusterDefinition(nodesPerStripe = 3, autoStart = false)
-public class AttachCommand1x3IT extends DynamicConfigIT {
-
+public class AttachInConsistency1x3IT extends DynamicConfigIT {
   @Rule
   public final NodeOutputRule out = new NodeOutputRule();
 
-  public AttachCommand1x3IT() {
+  public AttachInConsistency1x3IT() {
     super(Duration.ofSeconds(120));
+    this.failoverPriority = FailoverPriority.consistency();
   }
 
   @Before
@@ -56,54 +55,17 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     startNode(1, 2);
     waitUntil(out.getLog(1, 2), containsLog("Started the server in diagnostic mode"));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
-    
+
     //attach the second node
     assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     //Activate cluster
-    activateCluster();  
-  }
-  
-  @Test
-  public void test_attach_to_activated_cluster_with_offline_node() throws Exception {
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
-
-    int activeId = findActive(1).getAsInt(); // either 1 or 2
-    int passiveId = findPassives(1)[0]; // either 1 or 2
-
-    stopNode(1, passiveId);
-
-    // start a third node
-    startNode(1, 3);
-    waitUntil(out.getLog(1, 3), containsLog("Started the server in diagnostic mode"));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
-
-    // attach
-    assertThat(configToolInvocation("-v", "attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
-    waitUntil(out.getLog(1, 3), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
-
-    // verify that the active node topology has 3 nodes
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(3)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(3)));
-
-    // verify that the added node topology has 3 nodes
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(3)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(3)));
-
-    // then try to start the passive that was down
-    out.clearLog(1, passiveId);
-    startNode(1, passiveId);
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
-
-    // verify that the restarted passive topology has 3 nodes
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
+    activateCluster();
   }
 
   @Test
-  public void attachNodeFailAtPrepare() throws Exception {
-    //create prepare failure 
+  public void testAttachNodeFailAtPrepare() throws Exception {
+    //create prepare failure on active
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
 
     startNode(1, 3);
@@ -148,32 +110,46 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
 
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, 3, topologyService -> assertFalse(topologyService.isActivated()));
+
+
+    // Ensure that earlier stopped active now restarts as passive and sync the config from current active
+    out.clearLog(1, activeId);
+    startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
+    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
   @Test
   public void testFailoverDuringNomadCommitForPassiveAddition() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
-    String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
-
     startNode(1, 3);
     waitUntil(out.getLog(1, 3), containsLog("Started the server in diagnostic mode"));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     //setup for failover in commit phase on active
+    String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
+    // active died and passive can't become active 
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, 3)),
-        is(successful()));
+        containsOutput("Two-Phase commit failed"));
 
-    waitUntil(out.getLog(1, 3), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(3)));
+
+    //start the old active and verify it is in passive state
+    startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
+    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
 
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
-    withTopologyService(1, 3, topologyService -> assertTrue(topologyService.isActivated()));
-  }
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
 
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(3)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(3)));
+  }
 }

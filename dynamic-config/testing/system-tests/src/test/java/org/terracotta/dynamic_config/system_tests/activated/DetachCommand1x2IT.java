@@ -236,6 +236,78 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
   }
 
+  @Test
+  public void test_detach_passive_offline_prepare_fail_at_active() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    //create prepare failure on active
+    String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.detachStatus=prepareDeletion-failure";
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+
+    stopNode(1, passiveId);
+
+    // detach failure (forcing detach otherwise we have to restart cluster)
+    assertThat(
+        configToolInvocation("-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+            "-s", "localhost:" + getNodePort(1, passiveId)),
+        containsOutput("Two-Phase commit failed"));
+
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
+
+    out.clearLog(1, passiveId);
+    startNode(1, passiveId);
+
+    // in availability mode, the server will restart ACTIVE with the topology it knows
+    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+  }
+
+  @Test
+  public void test_detach_passive_offline_commit_fail_at_active() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    //create failover while committing
+    String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+
+    stopNode(1, passiveId);
+
+    //Both active and passive is down.
+    assertThat(
+        configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+            "-s", "localhost:" + getNodePort(1, passiveId)),
+        containsOutput("Two-Phase commit failed"));
+
+    out.clearLog(1, activeId);
+    startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
+    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    assertThat(
+        configToolInvocation("-r", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        allOf(
+            containsOutput("Attempting an automatic repair of the configuration on nodes"),
+            containsOutput("Forcing a commit"),
+            containsOutput("Configuration is repaired")));
+
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
+
+    out.clearLog(1, passiveId);
+    startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo());
+    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+
+    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+  }
+  
   private void assertTopologyChanged(int activeId, int passiveId) throws Exception {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
