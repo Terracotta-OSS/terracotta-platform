@@ -37,7 +37,7 @@ public class LeaseDynamicConfigExtension implements DynamicConfigExtension {
 
     LeaseConfiguration leaseConfiguration = new LeaseConfiguration(nodeContext.getNode().getClientLeaseDuration().getQuantity(TimeUnit.MILLISECONDS));
 
-    configChangeHandlerManager.add(Setting.CLIENT_LEASE_DURATION, new LeaseConfigChangeHandler(leaseConfiguration));
+    configChangeHandlerManager.set(Setting.CLIENT_LEASE_DURATION, new LeaseConfigChangeHandler(leaseConfiguration));
 
     registrar.registerServiceProviderConfiguration(leaseConfiguration);
   }
