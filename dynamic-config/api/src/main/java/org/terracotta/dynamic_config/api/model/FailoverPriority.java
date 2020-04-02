@@ -28,6 +28,8 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONS
  * @author Mathieu Carbou
  */
 public class FailoverPriority {
+  static final String ERR_MSG = Setting.FAILOVER_PRIORITY + " should be either 'availability', 'consistency'," +
+      " or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)";
 
   private final Type type;
   private final int voters;
@@ -78,8 +80,8 @@ public class FailoverPriority {
   }
 
   public static FailoverPriority consistency(int voters) {
-    if (voters <= 0) {
-      throw new IllegalArgumentException(Setting.FAILOVER_PRIORITY + " should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)");
+    if (voters < 0) {
+      throw new IllegalArgumentException(ERR_MSG);
     }
     return new FailoverPriority(Type.CONSISTENCY, voters);
   }
@@ -97,9 +99,10 @@ public class FailoverPriority {
       try {
         return consistency(Integer.parseInt(str.substring(12)));
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException(Setting.FAILOVER_PRIORITY + " should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)");
+        throw new IllegalArgumentException(ERR_MSG);
       }
     }
-    throw new IllegalArgumentException(Setting.FAILOVER_PRIORITY + " should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)");
+    throw new IllegalArgumentException(ERR_MSG);
+
   }
 }
