@@ -125,8 +125,8 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
             return key;
           });
       // install our new handler
-      manager.remove(NODE_LOGGER_OVERRIDES);
-      manager.add(NODE_LOGGER_OVERRIDES, selectingConfigChangeHandler);
+      manager.clear(NODE_LOGGER_OVERRIDES);
+      manager.set(NODE_LOGGER_OVERRIDES, selectingConfigChangeHandler);
     } catch (ServiceException e) {
       throw new IllegalStateException("Failed to obtain status " + e);
     }
