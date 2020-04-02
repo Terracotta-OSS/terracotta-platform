@@ -33,6 +33,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
+import org.terracotta.dynamic_config.server.api.InvalidLicenseException;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
@@ -375,7 +376,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public synchronized boolean validateAgainstLicense(Cluster cluster) {
+  public synchronized boolean validateAgainstLicense(Cluster cluster) throws InvalidLicenseException {
     if (!hasLicenseFile()) {
       LOGGER.warn("Unable to validate cluster against license: license not installed: {}", cluster.toShapeString());
       return false;
