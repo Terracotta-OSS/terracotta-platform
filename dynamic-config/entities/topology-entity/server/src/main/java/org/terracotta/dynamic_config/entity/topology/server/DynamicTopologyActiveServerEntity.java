@@ -34,11 +34,13 @@ import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.PassiveSynchronizationChannel;
+import org.terracotta.entity.StateDumpCollector;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_ADDITION;
 import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_SETTING_CHANGED;
@@ -119,6 +121,11 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Dyn
       default:
         throw new AssertionError(message);
     }
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("clients", clients.stream().map(Object::toString).collect(toList()));
   }
 
   private void listen() {

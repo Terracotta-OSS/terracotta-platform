@@ -28,6 +28,7 @@ import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
@@ -81,6 +82,11 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
       }
       managementRegistry.close();
     }
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("active", active);
   }
 
   final void listen() {

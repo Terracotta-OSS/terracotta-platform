@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.tc.server.TCServerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +34,14 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.dynamic_config.server.api.LicenseService;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
+import org.terracotta.json.Json;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
+import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.CommitMessage;
+import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadChangeInfo;
@@ -50,12 +56,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.Objects.requireNonNull;
 
-public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventService, DynamicConfigListener {
+public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventService, DynamicConfigListener, StateDumpable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
@@ -106,6 +113,41 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       }
     }
     return Optional.empty();
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("licensePath", licensePath.toString());
+    stateDumpCollector.addState("hasLicenseFile", hasLicenseFile());
+    stateDumpCollector.addState("configRepositoryDir", nomadServerManager.getRepositoryManager().getConfigRepositoryDir().toString());
+    stateDumpCollector.addState("activated", isActivated());
+    stateDumpCollector.addState("mustBeRestarted", mustBeRestarted());
+    stateDumpCollector.addState("runtimeNodeContext", Json.parse(Json.toJson(getRuntimeNodeContext()), new TypeReference<Map<String, ?>>() {}));
+    stateDumpCollector.addState("upcomingNodeContext", Json.parse(Json.toJson(getUpcomingNodeContext()), new TypeReference<Map<String, ?>>() {}));
+    StateDumpCollector nomad = stateDumpCollector.subStateDumpCollector("Nomad");
+    try {
+      DiscoverResponse<NodeContext> discoverResponse = nomadServerManager.getNomadServer().discover();
+      nomad.addState("mode", discoverResponse.getMode().name());
+      nomad.addState("currentVersion", discoverResponse.getCurrentVersion());
+      nomad.addState("highestVersion", discoverResponse.getHighestVersion());
+      nomad.addState("mutativeMessageCount", discoverResponse.getMutativeMessageCount());
+      nomad.addState("lastMutationUser", discoverResponse.getLastMutationUser());
+      nomad.addState("lastMutationHost", discoverResponse.getLastMutationHost());
+      nomad.addState("lastMutationTimestamp", discoverResponse.getLastMutationTimestamp());
+      ChangeDetails<NodeContext> changeDetails = discoverResponse.getLatestChange();
+      if (changeDetails != null) {
+        StateDumpCollector latestChange = stateDumpCollector.subStateDumpCollector("latestChange");
+        latestChange.addState("uuid", changeDetails.getChangeUuid().toString());
+        latestChange.addState("state", changeDetails.getState().name());
+        latestChange.addState("creationUser", changeDetails.getCreationUser());
+        latestChange.addState("creationHost", changeDetails.getCreationHost());
+        latestChange.addState("creationTimestamp", changeDetails.getCreationTimestamp());
+        latestChange.addState("version", changeDetails.getVersion());
+        latestChange.addState("summary", changeDetails.getOperation().getSummary());
+      }
+    } catch (NomadException e) {
+      nomad.addState("error", e.getMessage());
+    }
   }
 
   @Override

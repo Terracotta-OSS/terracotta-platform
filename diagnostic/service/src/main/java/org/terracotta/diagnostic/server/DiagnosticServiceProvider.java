@@ -22,10 +22,13 @@ import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.StateDumpCollector;
 
 import java.io.Closeable;
 import java.util.Collection;
 import java.util.Collections;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Mathieu Carbou
@@ -64,5 +67,10 @@ public class DiagnosticServiceProvider implements ServiceProvider, Closeable {
   @Override
   public void prepareForSynchronization() {
     // no-op
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("services", diagnosticServices.listServices().stream().map(Class::getName).sorted().collect(toList()));
   }
 }

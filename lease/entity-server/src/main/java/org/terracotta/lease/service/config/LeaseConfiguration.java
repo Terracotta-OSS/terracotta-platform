@@ -19,6 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.lease.service.LeaseServiceProvider;
 
 import static org.terracotta.lease.service.LeaseConstants.DEFAULT_LEASE_LENGTH;
@@ -27,7 +29,7 @@ import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
 /**
  * Represents the connection leasing configuration from the server's XML config
  */
-public class LeaseConfiguration implements ServiceProviderConfiguration {
+public class LeaseConfiguration implements ServiceProviderConfiguration, StateDumpable {
   private static final Logger LOGGER = LoggerFactory.getLogger(LeaseConfiguration.class);
 
   private volatile long leaseLength;
@@ -58,6 +60,11 @@ public class LeaseConfiguration implements ServiceProviderConfiguration {
   @Override
   public Class<? extends ServiceProvider> getServiceProviderType() {
     return LeaseServiceProvider.class;
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("leaseLength", leaseLength);
   }
 
   private static long use(long leaseLength) {

@@ -23,7 +23,10 @@ import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.entity.EntityRef;
 
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertThat;
@@ -54,29 +57,14 @@ public class DiagnosticIT extends AbstractSingleTest {
       // once https://github.com/Terracotta-OSS/terracotta-core/issues/613 and https://github.com/Terracotta-OSS/terracotta-core/pull/601 will be fixed 
       // and once the state dump format will be improved.
       String dump = diagnostics.getClusterState();
+      System.out.println(dump);
 
-      // monitoring service provider
-      assertThat(dump, containsString("cluster="));
-
-      // ActiveNmsServerEntity / PassiveNmsServerEntity
-      assertThat(dump, containsString("consumerId="));
-      assertThat(dump, containsString("stripeName="));
-
-      // OffHeapResourcesProvider
-      assertThat(dump, containsString("capacity="));
-      assertThat(dump, containsString("availableAtTime="));
-
-      // ActiveCacheServerEntity / ActiveCacheServerEntity
-      assertThat(dump, containsString("cacheName="));
-      assertThat(dump, containsString("cacheSize="));
-
-      // MapProvider
-      assertThat(dump, containsString("caches="));
-
-      // Common on all active entities
-      assertThat(dump, containsString("instance="));
-      assertThat(dump, containsString("clientCount="));
-      assertThat(dump, containsString("clients="));
+      try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
+        lines.forEach(line -> {
+          //System.out.println(line);
+          assertThat(dump, dump, containsString(line));
+        });
+      }
     }
   }
 

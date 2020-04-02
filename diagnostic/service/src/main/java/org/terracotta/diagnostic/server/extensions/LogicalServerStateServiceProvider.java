@@ -21,6 +21,7 @@ import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.StateDumpCollector;
 
 import javax.management.NotCompliantMBeanException;
 import java.util.Collection;
@@ -54,5 +55,10 @@ public class LogicalServerStateServiceProvider implements ServiceProvider {
 
   @Override
   public void prepareForSynchronization() {
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("logicalServerState", logicalServerStateMBean.getLogicalServerState());
   }
 }

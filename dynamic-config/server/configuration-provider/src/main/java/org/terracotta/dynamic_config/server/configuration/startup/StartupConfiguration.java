@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.server.configuration.startup;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.tc.services.MappedStateCollector;
 import com.tc.text.PrettyPrintable;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
@@ -32,6 +33,8 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.Json;
 import org.terracotta.monitoring.PlatformService;
 
@@ -52,7 +55,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 
-public class StartupConfiguration implements Configuration, PrettyPrintable, PlatformConfiguration, DynamicConfigExtension.Registrar {
+public class StartupConfiguration implements Configuration, PrettyPrintable, StateDumpable, PlatformConfiguration, DynamicConfigExtension.Registrar {
 
   private final Collection<Tuple2<Class<?>, Object>> extendedConfigurations = new CopyOnWriteArrayList<>();
   private final Collection<ServiceProviderConfiguration> serviceProviderConfigurations = new CopyOnWriteArrayList<>();
@@ -157,7 +160,35 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Pla
 
   @Override
   public Map<String, ?> getStateMap() {
-    return Json.parse(Json.toJson(nodeContext), new TypeReference<Map<String, ?>>() {});
+    MappedStateCollector collector = new MappedStateCollector("collector");
+
+    StateDumpCollector startupConfig = collector.subStateDumpCollector(getClass().getName());
+    startupConfig.addState("partialConfig", partialConfig);
+    startupConfig.addState("startupNodeContext", Json.parse(Json.toJson(nodeContext), new TypeReference<Map<String, ?>>() {}));
+
+    StateDumpCollector platformConfig = collector.subStateDumpCollector(PlatformConfiguration.class.getName());
+    addStateTo(platformConfig);
+
+    StateDumpCollector serviceProviderConfigurations = collector.subStateDumpCollector("ServiceProviderConfigurations");
+    this.serviceProviderConfigurations.stream()
+        .filter(StateDumpable.class::isInstance)
+        .map(StateDumpable.class::cast)
+        .forEach(sd -> sd.addStateTo(serviceProviderConfigurations.subStateDumpCollector(sd.getClass().getName())));
+
+    return collector.getMap();
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("serverName", getServerName());
+    stateDumpCollector.addState("host", getHost());
+    stateDumpCollector.addState("tsaPort", getTsaPort());
+    StateDumpCollector extendedConfigurations = stateDumpCollector.subStateDumpCollector("ExtendedConfigs");
+    this.extendedConfigurations.stream()
+        .map(Tuple2::getT2)
+        .filter(StateDumpable.class::isInstance)
+        .map(StateDumpable.class::cast)
+        .forEach(sd -> sd.addStateTo(extendedConfigurations.subStateDumpCollector(sd.getClass().getName())));
   }
 
   @Override

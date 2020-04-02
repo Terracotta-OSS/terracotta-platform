@@ -20,7 +20,10 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Mathieu Carbou
  */
-public class ConfigChangeHandlerManagerImpl implements ConfigChangeHandlerManager {
+public class ConfigChangeHandlerManagerImpl implements ConfigChangeHandlerManager, StateDumpable {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigChangeHandlerManagerImpl.class);
 
   private final Map<Setting, ConfigChangeHandler> changeHandlers = new ConcurrentHashMap<>();
@@ -48,5 +51,20 @@ public class ConfigChangeHandlerManagerImpl implements ConfigChangeHandlerManage
   @Override
   public Optional<ConfigChangeHandler> findConfigChangeHandler(Setting setting) {
     return Optional.ofNullable(changeHandlers.get(setting));
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    StateDumpCollector configChangeHandlers = stateDumpCollector.subStateDumpCollector("configChangeHandlers");
+    this.changeHandlers.entrySet()
+        .stream()
+        .sorted(Comparator.comparing(e -> e.getKey().getName()))
+        .forEach(e -> {
+          if (e.getValue() instanceof StateDumpable) {
+            ((StateDumpable) e.getValue()).addStateTo(configChangeHandlers.subStateDumpCollector(e.getKey().getName()));
+          } else {
+            configChangeHandlers.addState(e.getKey().getName(), e.getValue().toString());
+          }
+        });
   }
 }
