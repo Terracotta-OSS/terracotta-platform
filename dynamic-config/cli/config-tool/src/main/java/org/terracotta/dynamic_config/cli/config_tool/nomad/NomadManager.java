@@ -122,10 +122,10 @@ public class NomadManager<T> {
     }
   }
 
-  public void runPassiveChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, NodeNomadChange change, ChangeResultReceiver<T> results) {
+  public void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, NodeNomadChange change, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to apply topology change: {} on cluster {}", change, destinationCluster);
     checkServerStates(onlineNodes);
-    try (NomadClient<T> client = createPassiveChangeNomadClient(destinationCluster, onlineNodes)) {
+    try (NomadClient<T> client = createTopologyChangeNomadClient(destinationCluster, onlineNodes)) {
       client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), change);
     }
   }
@@ -141,7 +141,7 @@ public class NomadManager<T> {
     return new NomadClient<>(nomadEndpoints, host, user, clock);
   }
 
-  private NomadClient<T> createPassiveChangeNomadClient(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+  private NomadClient<T> createTopologyChangeNomadClient(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
     LOGGER.trace("createPassiveChangeNomadClient({}, {})", destinationCluster, onlineNodes);
 
     checkServerStates(onlineNodes);

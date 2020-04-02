@@ -116,7 +116,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       NodeNomadChange nomadChange = buildNomadChange(result);
       onNomadChangeReady(nomadChange);
       try {
-        runPassiveChange(destinationCluster, destinationOnlineNodes, nomadChange);
+        runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
       } catch (RuntimeException e) {
         onNomadChangeFailure(nomadChange, e);
       }
