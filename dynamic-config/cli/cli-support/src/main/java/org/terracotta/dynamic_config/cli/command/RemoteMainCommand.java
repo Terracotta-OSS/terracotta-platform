@@ -27,6 +27,9 @@ import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 @Parameters(commandNames = LocalMainCommand.NAME)
 public class RemoteMainCommand extends LocalMainCommand {
 
+  @Parameter(names = {"-e", "--entity-timeout"}, description = "Entity operation timeout. Default: 120s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> entityOperationTimeout = Measure.of(120, TimeUnit.SECONDS);
+
   @Parameter(names = {"-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> requestTimeout = Measure.of(10, TimeUnit.SECONDS);
 
@@ -42,6 +45,10 @@ public class RemoteMainCommand extends LocalMainCommand {
 
   public Measure<TimeUnit> getConnectionTimeout() {
     return connectionTimeout;
+  }
+
+  public Measure<TimeUnit> getEntityOperationTimeout() {
+    return entityOperationTimeout;
   }
 
   public String getSecurityRootDirectory() {
