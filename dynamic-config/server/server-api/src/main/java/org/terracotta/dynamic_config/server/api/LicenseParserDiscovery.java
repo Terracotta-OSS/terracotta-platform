@@ -32,14 +32,14 @@ public class LicenseParserDiscovery {
     this.classLoader = classLoader;
   }
 
-  public Optional<LicenseParser> find() {
-    List<LicenseParser> services = StreamSupport.stream(ServiceLoader.load(LicenseParser.class, classLoader).spliterator(), false).collect(Collectors.toList());
+  public Optional<LicenseService> find() {
+    List<LicenseService> services = StreamSupport.stream(ServiceLoader.load(LicenseService.class, classLoader).spliterator(), false).collect(Collectors.toList());
     if (services.isEmpty()) {
       return Optional.empty();
     }
     if (services.size() == 1) {
       return Optional.of(services.get(0));
     }
-    throw new IllegalStateException("Found several implementations of " + LicenseParser.class.getName() + " on classpath");
+    throw new IllegalStateException("Found several implementations of " + LicenseService.class.getName() + " on classpath");
   }
 }

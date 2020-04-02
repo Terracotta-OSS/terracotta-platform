@@ -33,7 +33,7 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f]ø")
+@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f]")
 public class DetachCommand extends TopologyCommand {
 
   boolean sourceNodeUnreachable;

@@ -32,7 +32,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
-import org.terracotta.dynamic_config.server.api.LicenseParser;
+import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -60,22 +60,23 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
 
-  private final LicenseParser licenseParser;
+  private final LicenseService licenseService;
   private final NomadServerManager nomadServerManager;
   private final List<DynamicConfigListener> listeners = new CopyOnWriteArrayList<>();
+  private final Path licensePath;
 
   private volatile NodeContext upcomingNodeContext;
   private volatile NodeContext runtimeNodeContext;
-  private volatile License license;
   private volatile boolean clusterActivated;
 
-  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseParser licenseParser, NomadServerManager nomadServerManager) {
+  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager) {
     this.upcomingNodeContext = requireNonNull(nodeContext);
     this.runtimeNodeContext = requireNonNull(nodeContext);
-    this.licenseParser = requireNonNull(licenseParser);
+    this.licenseService = requireNonNull(licenseService);
     this.nomadServerManager = requireNonNull(nomadServerManager);
-    if (loadLicense()) {
-      validateAgainstLicense();
+    this.licensePath = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
+    if (hasLicenseFile()) {
+      validateAgainstLicense(upcomingNodeContext.getCluster());
     }
   }
 
@@ -319,7 +320,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public synchronized Optional<License> getLicense() {
-    return Optional.ofNullable(license);
+    return hasLicenseFile() ? Optional.of(licenseService.parse(licensePath)) : Optional.empty();
   }
 
   @Override
@@ -333,45 +334,28 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public synchronized boolean validateAgainstLicense(Cluster cluster) {
-    if (this.license == null) {
-      LOGGER.debug("Unable to validate cluster against license: license not installed: {}", cluster.toShapeString());
+    if (!hasLicenseFile()) {
+      LOGGER.warn("Unable to validate cluster against license: license not installed: {}", cluster.toShapeString());
       return false;
     }
-    LicenseValidator licenseValidator = new LicenseValidator(cluster, license);
-    licenseValidator.validate();
+    licenseService.validate(licensePath, cluster);
     LOGGER.debug("License is valid for cluster: {}", cluster.toShapeString());
     return true;
   }
 
-  private synchronized void validateAgainstLicense() {
-    validateAgainstLicense(upcomingNodeContext.getCluster());
-  }
-
   private synchronized void installLicense(String licenseContent) {
-    Path targetLicensePath = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
-
     if (licenseContent != null) {
-      License backup = this.license;
       Path tempFile = null;
-
       try {
         tempFile = Files.createTempFile("terracotta-license-", ".xml");
         Files.write(tempFile, licenseContent.getBytes(StandardCharsets.UTF_8));
-        this.license = licenseParser.parse(tempFile);
-
-        validateAgainstLicense();
+        licenseService.validate(tempFile, upcomingNodeContext.getCluster());
         LOGGER.info("License validated");
-        moveLicense(targetLicensePath, tempFile);
+        LOGGER.debug("Moving license file: {} to: {}", tempFile, licensePath);
+        Files.move(tempFile, licensePath, StandardCopyOption.REPLACE_EXISTING);
         LOGGER.info("License installed");
       } catch (IOException e) {
-        // rollback to previous license (or null) on IO error
-        this.license = backup;
         throw new UncheckedIOException(e);
-      } catch (RuntimeException e) {
-        // rollback to previous license (or null) on validation error
-        this.license = backup;
-        throw e;
-
       } finally {
         if (tempFile != null) {
           try {
@@ -380,37 +364,20 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
           }
         }
       }
-
       LOGGER.info("License installation successful");
 
     } else {
       LOGGER.info("No license installed");
-      this.license = null;
       try {
-        Files.deleteIfExists(targetLicensePath);
+        Files.deleteIfExists(licensePath);
       } catch (IOException e) {
         LOGGER.warn("Error deleting existing license: " + e.getMessage(), e);
       }
     }
   }
 
-  private void moveLicense(Path destination, Path tempFile) {
-    LOGGER.debug("Moving license file: {} to: {}", tempFile, destination);
-    try {
-      Files.move(tempFile, destination, StandardCopyOption.REPLACE_EXISTING);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  private boolean loadLicense() {
-    Path licenseFile = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
-    if (Files.exists(licenseFile)) {
-      LOGGER.info("Reloading license");
-      this.license = licenseParser.parse(licenseFile);
-      return true;
-    }
-    return false;
+  private boolean hasLicenseFile() {
+    return Files.exists(licensePath) && Files.isRegularFile(licensePath) && Files.isReadable(licensePath);
   }
 
   /**

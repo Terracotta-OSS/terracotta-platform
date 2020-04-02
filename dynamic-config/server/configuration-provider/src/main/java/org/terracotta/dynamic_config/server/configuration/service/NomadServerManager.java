@@ -28,7 +28,7 @@ import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
-import org.terracotta.dynamic_config.server.api.LicenseParser;
+import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.ConfigChangeApplicator;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
@@ -59,7 +59,7 @@ public class NomadServerManager {
 
   private final IParameterSubstitutor parameterSubstitutor;
   private final ConfigChangeHandlerManager configChangeHandlerManager;
-  private final LicenseParser licenseParser;
+  private final LicenseService licenseService;
   private final DynamicConfigListener dynamicConfigListener;
 
   private volatile UpgradableNomadServer<NodeContext> nomadServer;
@@ -67,10 +67,10 @@ public class NomadServerManager {
   private volatile DynamicConfigServiceImpl dynamicConfigService;
   private volatile RoutingNomadChangeProcessor routingNomadChangeProcessor;
 
-  public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseParser licenseParser) {
+  public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseService licenseService) {
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.configChangeHandlerManager = requireNonNull(configChangeHandlerManager);
-    this.licenseParser = requireNonNull(licenseParser);
+    this.licenseService = requireNonNull(licenseService);
     this.dynamicConfigListener = new DynamicConfigListenerAdapter(this::getDynamicConfigService);
   }
 
@@ -122,7 +122,7 @@ public class NomadServerManager {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
-    this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseParser, this);
+    this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this);
 
     LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(repositoryPath.toString()));
   }

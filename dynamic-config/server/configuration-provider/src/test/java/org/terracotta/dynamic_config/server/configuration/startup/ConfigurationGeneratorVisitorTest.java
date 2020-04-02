@@ -20,7 +20,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.server.api.LicenseParser;
+import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.configuration.service.ConfigChangeHandlerManagerImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
@@ -41,7 +41,7 @@ public class ConfigurationGeneratorVisitorTest {
   private static final ParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
   private static final ConfigurationGeneratorVisitor STARTUP_MANAGER = new ConfigurationGeneratorVisitor(
       PARAMETER_SUBSTITUTOR,
-      new NomadServerManager(PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl(), mock(LicenseParser.class)),
+      new NomadServerManager(PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl(), mock(LicenseService.class)),
       ConfigurationGeneratorVisitorTest.class.getClassLoader(),
       new PathResolver(Paths.get("%(user.dir)")));
 

@@ -37,7 +37,7 @@ import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
-@Usage("activate ( -s <hostname[:port]> -n <cluster-name> | -f <config-file> [-n <cluster-name>] ) [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>] [-R]")
+@Usage("activate ( -s <hostname[:port]> -n <cluster-name> [-R] | -f <config-file> [-n <cluster-name>] ) [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class ActivateCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
