@@ -335,7 +335,7 @@ public enum Setting {
       },
       unsupported(),
       of(SET),
-      of(ALL_NODES_ONLINE),
+      of(ACTIVES_ONLINE),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.LICENSE_FILE, tuple2(key, value))

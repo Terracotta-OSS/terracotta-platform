@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
+import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
@@ -52,6 +53,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
@@ -109,6 +111,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);
       addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_PORT);
 
+      // cluster name
+      addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);
+
       // tc-logging
       LoggerOverrideConfigChangeHandler loggerOverrideConfigChangeHandler = new LoggerOverrideConfigChangeHandler(topologyService);
       addToManager(configChangeHandlerManager, loggerOverrideConfigChangeHandler, NODE_LOGGER_OVERRIDES);
@@ -122,6 +127,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       addToManager(configChangeHandlerManager, reject(), NODE_NAME);
       addToManager(configChangeHandlerManager, reject(), NODE_HOSTNAME);
       addToManager(configChangeHandlerManager, reject(), NODE_PORT);
+      addToManager(configChangeHandlerManager, reject(), NODE_METADATA_DIR);
 
       // initialize the config handlers that need do to something at startup
       loggerOverrideConfigChangeHandler.init();

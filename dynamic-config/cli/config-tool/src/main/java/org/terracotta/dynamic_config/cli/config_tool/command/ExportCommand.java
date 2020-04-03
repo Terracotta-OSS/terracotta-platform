@@ -40,7 +40,7 @@ import java.util.Properties;
 import static java.lang.System.lineSeparator;
 
 @Parameters(commandNames = "export", commandDescription = "Export a cluster configuration")
-@Usage("export -s <hostname[:port]> [-f <config-file>] [-x] [-r]")
+@Usage("export -s <hostname[:port]> [-f <config-file>] [-i] [-r]")
 public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-s"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;

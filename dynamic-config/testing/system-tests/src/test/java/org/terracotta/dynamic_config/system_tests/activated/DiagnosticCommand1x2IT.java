@@ -69,7 +69,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_diagnostic_on_cluster_with_activated_and_diagnostic_noded() throws Exception {
+  public void test_diagnostic_on_cluster_with_activated_and_diagnostic_node() throws Exception {
     // NOTE: this situation can happen when:
     // - starting a stripe config pre-configured, and then starting other nodes (the first active node started would contain a topology where other nodes could still be unconfigured)
     // - failover during nomad commit when detaching a node: upon restart, the node will be PREPARED, will have a topology pointing to a node that has been restarted in diagnostic mode
