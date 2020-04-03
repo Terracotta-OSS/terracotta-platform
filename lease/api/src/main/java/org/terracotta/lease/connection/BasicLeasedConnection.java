@@ -17,6 +17,7 @@ package org.terracotta.lease.connection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.common.struct.TimeBudget;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.entity.Entity;

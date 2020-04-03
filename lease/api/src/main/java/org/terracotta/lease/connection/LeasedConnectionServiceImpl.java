@@ -15,6 +15,7 @@
  */
 package org.terracotta.lease.connection;
 
+import org.terracotta.common.struct.TimeBudget;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
