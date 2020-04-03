@@ -28,8 +28,8 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import static java.lang.System.lineSeparator;
 
@@ -57,7 +57,7 @@ public class ImportCommand extends RemoteCommand {
     // validate the topology
     new ClusterValidator(cluster).validate();
 
-    if (node == null) {
+    if (node != null) {
       // verify the activated state of the nodes
       if (areAllNodesActivated(runtimePeers)) {
         throw new IllegalStateException("Cluster is already activated");
@@ -69,14 +69,14 @@ public class ImportCommand extends RemoteCommand {
         if (isActivated(node)) {
           throw new IllegalStateException("Node is already activated");
         }
-        runtimePeers = Arrays.asList(node);
+        runtimePeers = Collections.singletonList(node);
       }
     }
   }
 
   @Override
   public final void run() {
-    logger.info("Importing cluster configuration from: {} to: {}", configPropertiesFile, toString(runtimePeers));
+    logger.info("Importing cluster configuration from config file: {} to nodes: {}", configPropertiesFile, toString(runtimePeers));
 
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
       dynamicConfigServices(diagnosticServices)
