@@ -15,6 +15,9 @@
  */
 package org.terracotta.dynamic_config.server.api;
 
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Function;
@@ -25,7 +28,7 @@ import static java.util.function.Function.identity;
 /**
  * @author Mathieu Carbou
  */
-public class PathResolver {
+public class PathResolver implements StateDumpable {
 
   private final Path baseDir;
   private final Function<Path, Path> transform;
@@ -61,5 +64,10 @@ public class PathResolver {
   @Override
   public String toString() {
     return baseDir.toAbsolutePath().toString();
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("baseDir", baseDir.toAbsolutePath().toString());
   }
 }

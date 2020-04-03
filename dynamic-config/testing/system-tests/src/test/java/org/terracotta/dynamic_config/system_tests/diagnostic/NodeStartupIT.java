@@ -158,7 +158,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--failover-priority=blah", "-r", getNodeRepositoryDir().toString());
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)"));
+      waitUntil(err::getLog, containsString("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)"));
     }
   }
 

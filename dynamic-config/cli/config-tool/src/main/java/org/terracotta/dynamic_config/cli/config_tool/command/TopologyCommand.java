@@ -114,6 +114,7 @@ public abstract class TopologyCommand extends RemoteCommand {
 
     if (destinationClusterActivated) {
       NodeNomadChange nomadChange = buildNomadChange(result);
+      licenseValidation(destination, nomadChange.getCluster());
       onNomadChangeReady(nomadChange);
       try {
         runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);

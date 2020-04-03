@@ -80,6 +80,18 @@ public abstract class RemoteCommand extends Command {
   @Resource public NomadManager<NodeContext> nomadManager;
   @Resource public RestartService restartService;
 
+  protected void licenseValidation(InetSocketAddress node, Cluster cluster) {
+    logger.trace("licenseValidation({}, {})", node, cluster);
+    logger.info("Validating the new configuration change(s) against the license");
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
+      if (diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(cluster)) {
+        logger.info("License validation passed: configuration change(s) can be applied");
+      } else {
+        logger.warn("License validation skipped: no license installed");
+      }
+    }
+  }
+
   protected final void activate(Collection<InetSocketAddress> newNodes, Cluster cluster, Path licenseFile, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
     logger.info("Activating nodes: {}", toString(newNodes));
 
@@ -156,10 +168,10 @@ public abstract class RemoteCommand extends Command {
    * <p>
    * Nodes are expected to be online.
    */
-  protected final void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> nodes, MultiSettingNomadChange change) {
-    logger.trace("runConfigurationChange({}, {})", nodes, change);
+  protected final void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange change) {
+    logger.trace("runConfigurationChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
-    nomadManager.runConfigurationChange(nodes, change, failures);
+    nomadManager.runConfigurationChange(onlineNodes, change, failures);
     failures.reThrow();
   }
 

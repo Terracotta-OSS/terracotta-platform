@@ -15,29 +15,36 @@
  */
 package org.terracotta.dynamic_config.server.configuration.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 /**
  * @author Mathieu Carbou
  */
-public class ConfigChangeHandlerManagerImpl implements ConfigChangeHandlerManager {
+public class ConfigChangeHandlerManagerImpl implements ConfigChangeHandlerManager, StateDumpable {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigChangeHandlerManagerImpl.class);
 
   private final Map<Setting, ConfigChangeHandler> changeHandlers = new ConcurrentHashMap<>();
 
   @Override
-  public boolean add(Setting setting, ConfigChangeHandler configChangeHandler) {
-    return changeHandlers.putIfAbsent(setting, configChangeHandler) == null;
+  public ConfigChangeHandler set(Setting setting, ConfigChangeHandler configChangeHandler) {
+    LOGGER.info("Registered dynamic configuration change handler for setting {}: {}", setting, configChangeHandler);
+    return changeHandlers.put(setting, configChangeHandler);
   }
 
   @Override
-  public void remove(Setting setting) {
+  public void clear(Setting setting) {
+    LOGGER.info("Removing dynamic configuration change handler for setting {}", setting);
     changeHandlers.remove(setting);
   }
 
@@ -47,7 +54,17 @@ public class ConfigChangeHandlerManagerImpl implements ConfigChangeHandlerManage
   }
 
   @Override
-  public boolean compute(Setting setting, Supplier<ConfigChangeHandler> supplier) {
-    return changeHandlers.computeIfAbsent(setting, setting1 -> supplier.get()) == null;
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    StateDumpCollector configChangeHandlers = stateDumpCollector.subStateDumpCollector("configChangeHandlers");
+    this.changeHandlers.entrySet()
+        .stream()
+        .sorted(Comparator.comparing(e -> e.getKey().getName()))
+        .forEach(e -> {
+          if (e.getValue() instanceof StateDumpable) {
+            ((StateDumpable) e.getValue()).addStateTo(configChangeHandlers.subStateDumpCollector(e.getKey().getName()));
+          } else {
+            configChangeHandlers.addState(e.getKey().getName(), e.getValue().toString());
+          }
+        });
   }
 }

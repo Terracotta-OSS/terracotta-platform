@@ -549,6 +549,10 @@ public enum Setting {
     return name;
   }
 
+  public String getName() {
+    return name;
+  }
+
   public boolean isMap() {
     return map;
   }

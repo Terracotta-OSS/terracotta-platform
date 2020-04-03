@@ -42,13 +42,13 @@ public class NomadRepositoryManager {
   private final Path sanskritPath;
   private final IParameterSubstitutor parameterSubstitutor;
 
-  public NomadRepositoryManager(Path nomadRoot, IParameterSubstitutor parameterSubstitutor) {
+  public NomadRepositoryManager(Path configRepositoryDir, IParameterSubstitutor parameterSubstitutor) {
     this.parameterSubstitutor = parameterSubstitutor;
-    requireNonNull(nomadRoot);
+    requireNonNull(configRepositoryDir);
     requireNonNull(parameterSubstitutor);
 
     // substitute path eagerly as this class needs to interact with the file system for all its functionalities
-    this.rootPath = parameterSubstitutor.substitute(nomadRoot).toAbsolutePath();
+    this.rootPath = parameterSubstitutor.substitute(configRepositoryDir).toAbsolutePath();
     this.configPath = rootPath.resolve(CONFIG);
     this.licensePath = rootPath.resolve(LICENSE);
     this.sanskritPath = rootPath.resolve(SANSKRIT);
@@ -69,7 +69,7 @@ public class NomadRepositoryManager {
     }
   }
 
-  public Path getNomadRoot() {
+  public Path getConfigRepositoryDir() {
     return rootPath;
   }
 

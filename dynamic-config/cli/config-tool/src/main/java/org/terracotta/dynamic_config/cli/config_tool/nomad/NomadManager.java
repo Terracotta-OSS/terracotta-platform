@@ -91,7 +91,6 @@ public class NomadManager<T> {
   public void runConfigurationDiscovery(Map<InetSocketAddress, LogicalServerState> nodes, DiscoverResultsReceiver<T> results) {
     LOGGER.debug("Attempting to discover nodes: {}", nodes);
     List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
-    checkServerStates(nodes);
     try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
       client.tryDiscovery(new MultiDiscoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)));
     }
@@ -104,10 +103,10 @@ public class NomadManager<T> {
     }
   }
 
-  public void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> nodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
-    LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, nodes);
-    checkServerStates(nodes);
-    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
+  public void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
+    LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, onlineNodes);
+    checkServerStates(onlineNodes);
+    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(onlineNodes);
     try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
       client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), changes);
     }
@@ -115,7 +114,6 @@ public class NomadManager<T> {
 
   public void runConfigurationRepair(Map<InetSocketAddress, LogicalServerState> nodes, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
     LOGGER.debug("Attempting to repair configuration on nodes: {}", nodes);
-    checkServerStates(nodes);
     List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
     try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
       client.tryRecovery(new MultiRecoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), nodes.size(), forcedState);

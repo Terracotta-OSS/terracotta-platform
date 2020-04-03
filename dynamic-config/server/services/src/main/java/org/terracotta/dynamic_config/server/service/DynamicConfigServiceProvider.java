@@ -114,7 +114,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       addToManager(configChangeHandlerManager, loggerOverrideConfigChangeHandler, NODE_LOGGER_OVERRIDES);
 
       // tc-properties
-      configChangeHandlerManager.add(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
+      configChangeHandlerManager.set(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
           .selector(Configuration::getKey)
           .fallback(accept()));
 
@@ -186,10 +186,10 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   }
 
   private void addToManager(ConfigChangeHandlerManager manager, ConfigChangeHandler configChangeHandler, Setting setting) {
-    if (!manager.add(setting, configChangeHandler)) {
-      throw new AssertionError("Duplicate " + ConfigChangeHandler.class.getSimpleName() + " for " + setting);
+    ConfigChangeHandler old = manager.set(setting, configChangeHandler);
+    if (old != null) {
+      LOGGER.warn("Default dynamic configuration change handler {} for setting {} has been override by {}", configChangeHandler, setting, old);
     }
-    LOGGER.debug("Registered dynamic configuration change handler for setting {}: {}", setting, configChangeHandler);
   }
 
   private <T> T find(PlatformConfiguration platformConfiguration, Class<T> type) {

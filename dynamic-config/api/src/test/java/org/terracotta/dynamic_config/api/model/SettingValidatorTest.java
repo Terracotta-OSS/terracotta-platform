@@ -171,7 +171,6 @@ public class SettingValidatorTest {
   public void test_FAILOVER_PRIORITY() {
     validateDefaults(FAILOVER_PRIORITY);
     Stream.of(
-        "consistency:0",
         "foo",
         "availability:8",
         "availability:foo",
@@ -187,7 +186,7 @@ public class SettingValidatorTest {
     ).forEach(value -> assertThat(
         value,
         () -> FAILOVER_PRIORITY.validate(value),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a positive integer)")))))
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)")))))
     );
   }
 

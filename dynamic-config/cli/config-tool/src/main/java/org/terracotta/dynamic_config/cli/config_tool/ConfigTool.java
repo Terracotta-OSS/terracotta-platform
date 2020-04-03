@@ -103,6 +103,7 @@ public class ConfigTool {
     ConcurrencySizing concurrencySizing = new ConcurrencySizing();
     Duration connectionTimeout = Duration.ofMillis(MAIN.getConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
     Duration requestTimeout = Duration.ofMillis(MAIN.getRequestTimeout().getQuantity(TimeUnit.MILLISECONDS));
+    Duration entityOperationTimeout = Duration.ofMillis(MAIN.getEntityOperationTimeout().getQuantity(TimeUnit.MILLISECONDS));
 
     // create services
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, MAIN.getSecurityRootDirectory());
@@ -110,7 +111,10 @@ public class ConfigTool {
     NomadEntityProvider nomadEntityProvider = new NomadEntityProvider(
         "CONFIG-TOOL",
         connectionTimeout,
-        new NomadEntity.Settings().setRequestTimeout(null), // a null timeout is important here. We need to block the call and wait for any return. We cannot timeout otherwise we won't know the outcome of the 2PC Nomad transaction
+        // A long timeout is important here.
+        // We need to block the call and wait for any return.
+        // We cannot timeout shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
+        new NomadEntity.Settings().setRequestTimeout(entityOperationTimeout),
         MAIN.getSecurityRootDirectory());
     NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
