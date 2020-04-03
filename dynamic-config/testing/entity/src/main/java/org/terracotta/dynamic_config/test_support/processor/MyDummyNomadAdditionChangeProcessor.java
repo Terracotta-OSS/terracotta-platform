@@ -98,7 +98,6 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
       if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
         String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
         if (killAtCommit.equals(value)) {
-          System.out.println("Hitting commit");
           platformService.stopPlatform();
         }
       }
