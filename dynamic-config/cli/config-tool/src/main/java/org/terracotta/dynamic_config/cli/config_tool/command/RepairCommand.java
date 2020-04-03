@@ -67,6 +67,10 @@ public class RepairCommand extends RemoteCommand {
     // the automatic repair command can only work on activated nodes
     Map<InetSocketAddress, LogicalServerState> activatedNodes = filter(onlineNodes, (addr, state) -> isActivated(addr));
 
+    if (activatedNodes.isEmpty()) {
+      throw new IllegalStateException("No activated node found. Repair command only works with activated nodes.");
+    }
+
     if (activatedNodes.size() != onlineNodes.size()) {
       Collection<InetSocketAddress> unconfigured = new ArrayList<>(onlineNodes.keySet());
       unconfigured.removeAll(activatedNodes.keySet());
