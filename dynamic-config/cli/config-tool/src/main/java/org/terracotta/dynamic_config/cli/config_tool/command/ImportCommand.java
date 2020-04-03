@@ -24,9 +24,11 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 
 import static java.lang.System.lineSeparator;
@@ -35,8 +37,11 @@ import static java.lang.System.lineSeparator;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "import", commandDescription = "Import a cluster configuration")
-@Usage("import -f <config-file>")
+@Usage("import -f <config-file> [-s <hostname[:port]>]")
 public class ImportCommand extends RemoteCommand {
+
+  @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
+  private InetSocketAddress node;
 
   @Parameter(names = {"-f"}, description = "Configuration file", required = true, converter = PathConverter.class)
   private Path configPropertiesFile;
@@ -52,16 +57,26 @@ public class ImportCommand extends RemoteCommand {
     // validate the topology
     new ClusterValidator(cluster).validate();
 
-    // verify the activated state of the nodes
-    boolean isClusterActive = areAllNodesActivated(runtimePeers);
-    if (isClusterActive) {
-      throw new IllegalStateException("Cluster is already activated");
+    if (node == null) {
+      // verify the activated state of the nodes
+      if (areAllNodesActivated(runtimePeers)) {
+        throw new IllegalStateException("Cluster is already activated");
+
+      } else {
+        if (!runtimePeers.contains(node)) {
+          throw new IllegalStateException("Node: " + node + " is not in cluster: " + cluster.toShapeString());
+        }
+        if (isActivated(node)) {
+          throw new IllegalStateException("Node is already activated");
+        }
+        runtimePeers = Arrays.asList(node);
+      }
     }
   }
 
   @Override
   public final void run() {
-    logger.info("Importing cluster configuration from: {}", configPropertiesFile);
+    logger.info("Importing cluster configuration from: {} to: {}", configPropertiesFile, toString(runtimePeers));
 
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
       dynamicConfigServices(diagnosticServices)
