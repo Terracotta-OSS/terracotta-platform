@@ -19,6 +19,7 @@ package org.terracotta.offheapresource;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Mathieu Carbou
@@ -26,10 +27,29 @@ import static org.junit.Assert.assertNotNull;
 public class PhysicalMemoryTest {
   @Test
   public void invocations_do_not_fail() {
-    assertNotNull(PhysicalMemory.totalPhysicalMemory());
-    assertNotNull(PhysicalMemory.freePhysicalMemory());
-    assertNotNull(PhysicalMemory.totalSwapSpace());
-    assertNotNull(PhysicalMemory.freeSwapSpace());
-    assertNotNull(PhysicalMemory.ourCommittedVirtualMemory());
+    if (getVersion() < 9) {
+      assertNotNull(PhysicalMemory.totalPhysicalMemory());
+      assertNotNull(PhysicalMemory.freePhysicalMemory());
+      assertNotNull(PhysicalMemory.totalSwapSpace());
+      assertNotNull(PhysicalMemory.freeSwapSpace());
+      assertNotNull(PhysicalMemory.ourCommittedVirtualMemory());
+
+    } else {
+      assertNull(PhysicalMemory.totalPhysicalMemory());
+      assertNull(PhysicalMemory.freePhysicalMemory());
+      assertNull(PhysicalMemory.totalSwapSpace());
+      assertNull(PhysicalMemory.freeSwapSpace());
+      assertNull(PhysicalMemory.ourCommittedVirtualMemory());
+    }
+  }
+
+  private static int getVersion() {
+    String version = System.getProperty("java.version");
+    if (version.startsWith("1.")) {
+      version = version.substring(2, 3);
+    } else {
+      int dot = version.indexOf(".");
+      if (dot != -1) { version = version.substring(0, dot); }
+    } return Integer.parseInt(version);
   }
 }

@@ -15,7 +15,7 @@
  */
 package org.terracotta.diagnostic.common;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
@@ -37,7 +37,7 @@ public class Base64DiagnosticCodec extends DiagnosticCodecSkeleton<String> {
   @Override
   public String serialize(Object o) throws DiagnosticCodecException {
     requireNonNull(o);
-    return DatatypeConverter.printBase64Binary(o instanceof byte[] ? (byte[]) o : o.toString().getBytes(UTF_8));
+    return Base64.getEncoder().encodeToString(o instanceof byte[] ? (byte[]) o : o.toString().getBytes(UTF_8));
   }
 
   @Override
@@ -45,10 +45,10 @@ public class Base64DiagnosticCodec extends DiagnosticCodecSkeleton<String> {
     requireNonNull(response);
     requireNonNull(target);
     if (target.isAssignableFrom(String.class)) {
-      return target.cast(new String(DatatypeConverter.parseBase64Binary(requireNonNull(response)), UTF_8));
+      return target.cast(new String(Base64.getDecoder().decode(requireNonNull(response)), UTF_8));
     }
     if (target.isAssignableFrom(byte[].class)) {
-      return target.cast(DatatypeConverter.parseBase64Binary(requireNonNull(response)));
+      return target.cast(Base64.getDecoder().decode(requireNonNull(response)));
     }
     throw new IllegalArgumentException("Target type must be assignable from String or byte[]");
   }

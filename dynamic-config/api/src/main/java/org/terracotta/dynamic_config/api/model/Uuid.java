@@ -15,7 +15,7 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.Base64;
 import java.util.UUID;
 
 /**
@@ -36,7 +36,7 @@ class Uuid {
       data[i] = (byte) (lsb & 0xff);
       lsb >>>= 8;
     }
-    return DatatypeConverter.printBase64Binary(data)
+    return Base64.getEncoder().encodeToString(data)
         // java-8 and other - compatible B64 url decoder use - and _ instead of + and /
         // padding can be ignored to shorten the UUID
         .replace('+', '-')
