@@ -53,16 +53,13 @@ public class DiagnosticIT extends AbstractSingleTest {
       EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
       Diagnostics diagnostics = ref.fetchEntity(null);
 
-      //TODO: improve these assertions
-      // once https://github.com/Terracotta-OSS/terracotta-core/issues/613 and https://github.com/Terracotta-OSS/terracotta-core/pull/601 will be fixed 
-      // and once the state dump format will be improved.
       String dump = diagnostics.getClusterState();
-      System.out.println(dump);
+//      System.out.println(dump);
 
       try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
         lines.forEach(line -> {
           //System.out.println(line);
-          assertThat(dump, dump, containsString(line));
+          assertThat("Did not find line '" + line + "' in the dump", dump, containsString(line));
         });
       }
     }
