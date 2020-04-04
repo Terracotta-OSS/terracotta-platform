@@ -24,11 +24,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLUSTER_NAME;
-import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
 public class DynamicConfigStartupBuilder extends DefaultStartupCommandBuilder {
   private int stripeId;
@@ -59,9 +59,8 @@ public class DynamicConfigStartupBuilder extends DefaultStartupCommandBuilder {
 
   private void buildStartupCommand() {
     List<String> command = new ArrayList<>();
-    Path basePath = getServerWorkingDir().resolve(getKitDir()).resolve("server").resolve("bin").resolve("start-tc-server").toAbsolutePath().normalize();
-    String startScript = isWindows() ? "\"" + basePath + ".bat\"" : basePath + ".sh";
-    command.add(startScript);
+    String scriptPath = getAbsolutePath(Paths.get("server", "bin", "start-tc-server"));
+    command.add(scriptPath);
     if (isConsistentStartup()) {
       command.add("-c");
     }
@@ -79,8 +78,8 @@ public class DynamicConfigStartupBuilder extends DefaultStartupCommandBuilder {
     }
 
     List<String> command = new ArrayList<>();
-    String script = getKitDir().resolve("tools").resolve("config-convertor").resolve("bin").resolve("config-convertor") + (isWindows() ? ".bat" : ".sh");
-    command.add(script);
+    String scriptPath = getAbsolutePath(Paths.get("tools", "config-convertor", "bin", "config-convertor"));
+    command.add(scriptPath);
     command.add("convert");
 
     command.add("-c");
