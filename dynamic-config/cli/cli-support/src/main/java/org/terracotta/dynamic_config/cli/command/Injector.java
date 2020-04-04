@@ -15,7 +15,10 @@
  */
 package org.terracotta.dynamic_config.cli.command;
 
-import javax.annotation.Resource;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.stream.Stream;
 
 /**
@@ -24,7 +27,7 @@ import java.util.stream.Stream;
 public class Injector {
   public static <T> T inject(T target, Object... services) {
     Stream.of(target.getClass().getFields())
-        .filter(field -> field.isAnnotationPresent(Resource.class))
+        .filter(field -> field.isAnnotationPresent(Inject.class))
         .forEach(field -> {
           Object found = Stream.of(services)
               .filter(service -> field.getType().isInstance(service))
@@ -38,4 +41,8 @@ public class Injector {
         });
     return target;
   }
+
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target({ElementType.FIELD})
+  public @interface Inject {}
 }

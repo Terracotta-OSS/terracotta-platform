@@ -58,11 +58,10 @@ class PhysicalMemory {
   private static Method find(String methodName) {
     try {
       Method method = ManagementFactory.getOperatingSystemMXBean().getClass().getMethod(methodName);
-      if (!method.isAccessible()) {
-        method.setAccessible(true);
-      }
+      method.setAccessible(true);
       return method;
-    } catch (NoSuchMethodException | SecurityException e) {
+    } catch (NoSuchMethodException | RuntimeException e) {
+      // Note: RuntimeException will catch InaccessibleObjectException for Java 9
       LOGGER.trace("Unable to find or access method '{}' on the {}", methodName, OperatingSystemMXBean.class.getSimpleName());
       return null;
     }
