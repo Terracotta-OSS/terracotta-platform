@@ -26,5 +26,15 @@ resources:
 jobs:
 - template: build-templates/maven-common.yml@templates
   parameters:
-    vmImage: 'windows-latest'
+    jdkVersion: '1.8'
+    jobName: 'Java8'
     timeoutInMinutes: 90
+    vmImage: 'windows-latest'
+    options: '-B'
+- template: build-templates/maven-common.yml@templates
+  parameters:
+    jdkVersion: '1.8'
+    jobName: 'Java11'
+    timeoutInMinutes: 90
+    vmImage: 'windows-latest'
+    options: '-B -DtestJVM=???'
