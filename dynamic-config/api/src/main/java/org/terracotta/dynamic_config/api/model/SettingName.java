@@ -47,5 +47,5 @@ public class SettingName {
   public static final String DATA_DIRS = "data-dirs";
   public static final String LICENSE_FILE = "license-file";
   public static final String CONFIG_FILE = "config-file";
-  public static final String DIAGNOSTIC_MODE = "diagnostic-mode";
+  public static final String REPAIR_MODE = "repair-mode";
 }

@@ -63,7 +63,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
 
     stopNode(1, 1);
 
-    startNode(1, 1, "--diagnostic-mode", "--node-name", nodeName, "-r", repo);
+    startNode(1, 1, "--repair-mode", "--node-name", nodeName, "-r", repo);
     assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic3.txt").toURI())).collect(toList())));
   }

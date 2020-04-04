@@ -60,15 +60,17 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   private final Collection<Tuple2<Class<?>, Object>> extendedConfigurations = new CopyOnWriteArrayList<>();
   private final Collection<ServiceProviderConfiguration> serviceProviderConfigurations = new CopyOnWriteArrayList<>();
 
-  private final boolean partialConfig;
   private final NodeContext nodeContext;
+  private final boolean unConfigured;
+  private final boolean repairMode;
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
 
-  StartupConfiguration(NodeContext nodeContext, boolean partialConfig, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor) {
+  StartupConfiguration(NodeContext nodeContext, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor) {
     this.nodeContext = requireNonNull(nodeContext);
-    this.partialConfig = partialConfig;
+    this.unConfigured = unConfigured;
+    this.repairMode = repairMode;
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = pathResolver;
     this.substitutor = substitutor;
@@ -97,7 +99,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public boolean isPartialConfiguration() {
-    return partialConfig;
+    return unConfigured || repairMode;
   }
 
   @Override
@@ -163,7 +165,9 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     MappedStateCollector collector = new MappedStateCollector("collector");
 
     StateDumpCollector startupConfig = collector.subStateDumpCollector(getClass().getName());
-    startupConfig.addState("partialConfig", partialConfig);
+    startupConfig.addState("unConfigured", unConfigured);
+    startupConfig.addState("repairMode", repairMode);
+    startupConfig.addState("partialConfig", isPartialConfiguration());
     startupConfig.addState("startupNodeContext", Json.parse(Json.toJson(nodeContext), new TypeReference<Map<String, ?>>() {}));
 
     StateDumpCollector platformConfig = collector.subStateDumpCollector(PlatformConfiguration.class.getName());

@@ -54,7 +54,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     tsa.stop(active);
     assertThat(tsa.getStopped().size(), is(1));
 
-    startNode(active, "--diagnostic-mode", "--node-name", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
+    startNode(active, "--repair-mode", "--node-name", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
     waitUntil(out.getLog(1, activeNodeId), containsLog("Started the server in diagnostic mode"));
   }
 
@@ -65,7 +65,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     tsa.stop(passive);
     assertThat(tsa.getStopped().size(), is(1));
 
-    startNode(passive, "--diagnostic-mode", "--node-name", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
+    startNode(passive, "--repair-mode", "--node-name", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
     waitUntil(out.getLog(1, passiveNodeId), containsLog("Started the server in diagnostic mode"));
   }
 
@@ -79,7 +79,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     assertThat(tsa.getStopped().size(), is(1));
 
     out.clearLog(1, 1);
-    startNode(active, "--diagnostic-mode", "-n", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
+    startNode(active, "--repair-mode", "-n", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
     waitUntil(out.getLog(1, activeNodeId), containsLog("Started the server in diagnostic mode"));
 
     // diag port available

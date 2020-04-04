@@ -34,7 +34,6 @@ import static org.terracotta.dynamic_config.api.model.SettingName.CLIENT_RECONNE
 import static org.terracotta.dynamic_config.api.model.SettingName.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.CONFIG_FILE;
 import static org.terracotta.dynamic_config.api.model.SettingName.DATA_DIRS;
-import static org.terracotta.dynamic_config.api.model.SettingName.DIAGNOSTIC_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.SettingName.LICENSE_FILE;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_BACKUP_DIR;
@@ -50,6 +49,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_HO
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_REPOSITORY_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_DIR;
@@ -138,8 +138,8 @@ public class Options {
   @Parameter(names = {"-l", "--" + LICENSE_FILE})
   private String licenseFile;
 
-  @Parameter(names = {"-D", "--" + DIAGNOSTIC_MODE})
-  private boolean wantsDiagnosticMode;
+  @Parameter(names = {"-D", "--" + REPAIR_MODE})
+  private boolean wantsRepairMode;
 
   private final Map<Setting, String> paramValueMap = new HashMap<>();
 
@@ -173,7 +173,7 @@ public class Options {
           String longestName = pd.getLongestName();
           return !longestName.equals(addDashDash(LICENSE_FILE))
               && !longestName.equals(addDashDash(CONFIG_FILE))
-              && !longestName.equals(addDashDash(DIAGNOSTIC_MODE))
+              && !longestName.equals(addDashDash(REPAIR_MODE))
               && !longestName.equals(addDashDash(NODE_REPOSITORY_DIR));
         })
         .forEach(pd -> paramValueMap.put(Setting.fromName(ConsoleParamsUtils.stripDashDash(pd.getLongestName())), pd.getParameterized().get(this).toString()));
@@ -198,7 +198,7 @@ public class Options {
       filteredOptions.remove("-p");
       filteredOptions.remove("-r");
 
-      filteredOptions.remove(addDashDash(DIAGNOSTIC_MODE));
+      filteredOptions.remove(addDashDash(REPAIR_MODE));
       filteredOptions.remove(addDashDash(CONFIG_FILE));
       filteredOptions.remove(addDashDash(LICENSE_FILE));
       filteredOptions.remove(addDashDash(CLUSTER_NAME));
@@ -211,7 +211,7 @@ public class Options {
             String.format(
                 "'%s' parameter can only be used with '%s', '%s', '%s', '%s', '%s' and '%s' parameters",
                 addDashDash(CONFIG_FILE),
-                addDashDash(DIAGNOSTIC_MODE),
+                addDashDash(REPAIR_MODE),
                 addDashDash(LICENSE_FILE),
                 addDashDash(CLUSTER_NAME),
                 addDashDash(NODE_HOSTNAME),
@@ -247,7 +247,7 @@ public class Options {
     return licenseFile;
   }
 
-  public boolean wantsDiagnosticMode() {
-    return wantsDiagnosticMode;
+  public boolean wantsRepairMode() {
+    return wantsRepairMode;
   }
 }

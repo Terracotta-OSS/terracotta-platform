@@ -205,7 +205,7 @@ public class NomadManager<T> {
         InetSocketAddress address = getAddress();
         int stripeId = destinationCluster.getStripeId(address).getAsInt();
         CompletableFuture<AcceptRejectResponse> result = cache.computeIfAbsent(stripeId, sid -> {
-          LOGGER.info("Committing topology change to stripe ID: {}... (this operation is blocking and can take time in case a failover happens)", stripeId);
+          LOGGER.info("Committing topology change to stripe ID: {}...", stripeId);
 
           LOGGER.trace("Sending commit message: {} to stripe ID: {}", message, stripeId);
           CompletableFuture<AcceptRejectResponse> c = new CompletableFuture<>();

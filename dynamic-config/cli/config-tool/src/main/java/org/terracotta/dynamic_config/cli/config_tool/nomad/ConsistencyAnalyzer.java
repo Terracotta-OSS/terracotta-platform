@@ -189,7 +189,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   /**
    * The number of nodes having some Nomad configuration changes.
    * <p>
-   * A ndoe can have some Nomad configuration changes but be activated and running, or in diagnostic mode for repair (not activated)
+   * A node can have some Nomad configuration changes but be activated and running, or in diagnostic mode for repair (not activated)
    */
   public int getOnlineConfiguredNodes() {
     return Math.toIntExact(responses.entrySet().stream().filter(e -> e.getValue().getLatestChange() != null).count());

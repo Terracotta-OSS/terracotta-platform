@@ -93,7 +93,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testRestrictedActivation() throws Exception {
+  public void testRestrictedActivationToAttachANewActivatedNode() throws Exception {
     String config = copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString();
 
     // import the cluster config to node 1 and node 2

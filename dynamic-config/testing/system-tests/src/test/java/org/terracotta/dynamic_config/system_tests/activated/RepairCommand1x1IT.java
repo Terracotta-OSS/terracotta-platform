@@ -42,9 +42,9 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.con
  * @author Mathieu Carbou
  */
 @ClusterDefinition(autoActivate = true)
-public class RepairCommandIT extends DynamicConfigIT {
+public class RepairCommand1x1IT extends DynamicConfigIT {
 
-  public RepairCommandIT() {
+  public RepairCommand1x1IT() {
     super(Duration.ofSeconds(120));
   }
 
@@ -52,7 +52,7 @@ public class RepairCommandIT extends DynamicConfigIT {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
-  public void test_automatic_commit_after_commit_failure() throws Exception {
+  public void test_auto_repair_commit_failure() throws Exception {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         allOf(
@@ -78,7 +78,7 @@ public class RepairCommandIT extends DynamicConfigIT {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
-  public void test_node_starts_with_previous_config_when_not_committed_or_rollback() throws Exception {
+  public void test_auto_repair_uncommitted_node() throws Exception {
     Cluster initialCluster = getRuntimeCluster("localhost", getNodePort());
     assertThat(initialCluster, is(equalTo(getUpcomingCluster("localhost", getNodePort()))));
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
@@ -96,7 +96,7 @@ public class RepairCommandIT extends DynamicConfigIT {
     stopNode(1, 1);
     assertThat(tsa.getStopped().size(), is(1));
 
-    // ensure the server can still start if the configuration is not committedø
+    // ensure the server can still start if the configuration is not committed
     startNode(1, 1);
     waitUntil(out.getLog(1, 1), containsLog("INFO - Moved to State[ ACTIVE-COORDINATOR ]"));
     withTopologyService("localhost", getNodePort(), topologyService -> assertTrue(topologyService.hasIncompleteChange()));
@@ -105,7 +105,7 @@ public class RepairCommandIT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort()), is(equalTo(initialCluster)));
     assertThat(getUpcomingCluster("localhost", getNodePort()), is(equalTo(initialCluster)));
 
-    // repair the newly started server once (the simulated handler needs to repair after a restart - first one will fail)
+    // intermediary call just to set a state in the SimulationHandler so that it can recover
     assertThat(
         configToolInvocation("repair", "-s", "localhost:" + getNodePort()),
         allOf(
@@ -114,6 +114,7 @@ public class RepairCommandIT extends DynamicConfigIT {
             containsOutput("Attempting an automatic repair of the configuration"),
             not(containsOutput("Configuration is repaired."))));
 
+    // repair the newly started server
     assertThat(
         configToolInvocation("repair", "-s", "localhost:" + getNodePort()),
         allOf(
