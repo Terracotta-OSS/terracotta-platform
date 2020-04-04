@@ -26,4 +26,15 @@ resources:
 jobs:
 - template: build-templates/maven-common.yml@templates
   parameters:
+    jdkVersion: '1.8'
+    jobName: 'Java8'
     timeoutInMinutes: 90
+    vmImage: 'ubuntu-latest'
+    options: '-B'
+- template: build-templates/maven-common.yml@templates
+  parameters:
+    jdkVersion: '1.8'
+    jobName: 'Java11'
+    timeoutInMinutes: 90
+    vmImage: 'ubuntu-latest'
+    options: '-B -DtestJVM=/usr/lib/jvm/zulu-11-azure-amd64/bin/java'

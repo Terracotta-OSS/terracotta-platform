@@ -157,7 +157,7 @@
             <angela.distribution>${project.version}</angela.distribution>
             <angela.kitInstallationDir>${project.build.directory}/platform-kit-${project.version}</angela.kitInstallationDir>
             <angela.java.vendor/> <!--empty to allow any vendor-->
-            <angela.java.version>${java.version}</angela.java.version>
+            <angela.java.version>${toolchain.provider.version}</angela.java.version>
             <!--<angela.java.opts>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</angela.java.opts>-->
           </systemPropertyVariables>
         </configuration>

@@ -40,6 +40,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.8</java.version>
+    <toolchain.provider.version>1.8</toolchain.provider.version>
   </properties>
 
   <modules>
@@ -297,7 +298,7 @@
           <configuration>
             <toolchains>
               <jdk>
-                <version>${java.version}</version>
+                <version>${toolchain.provider.version}</version>
               </jdk>
             </toolchains>
           </configuration>
@@ -439,9 +440,11 @@
   </build>
 
   <profiles>
+    <!-- fast profile for local use which will disable the default activated profiles and speed up the build -->
     <profile>
       <id>fast</id>
     </profile>
+    <!-- default profile including toolchain, javadoc, findbugs, license check, enforcer, etc -->
     <profile>
       <id>slow</id>
       <activation>
@@ -527,6 +530,40 @@
                 </goals>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <!-- profile handling support for java versions >=9  -->
+    <profile>
+      <id>testJVM</id>
+      <activation>
+        <property>
+          <name>testJVM</name>
+        </property>
+      </activation>
+      <properties>
+        <toolchain.provider.version>1.11</toolchain.provider.version>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <trimStackTrace>false</trimStackTrace>
+              <jvm>${testJVM}</jvm>
+              <argLine>--illegal-access=permit</argLine>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <trimStackTrace>false</trimStackTrace>
+              <jvm>${testJVM}</jvm>
+              <argLine>--illegal-access=permit</argLine>
+            </configuration>
           </plugin>
         </plugins>
       </build>
