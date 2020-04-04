@@ -59,8 +59,8 @@ public class DynamicConfigStartupBuilder extends DefaultStartupCommandBuilder {
 
   private void buildStartupCommand() {
     List<String> command = new ArrayList<>();
-    Path basePath = getKitDir().resolve("server").resolve("bin").resolve("start-tc-server");
-    String startScript = isWindows() ? basePath + ".bat" : basePath + ".sh";
+    Path basePath = getServerWorkingDir().resolve(getKitDir()).resolve("server").resolve("bin").resolve("start-tc-server").toAbsolutePath().normalize();
+    String startScript = isWindows() ? "\"" + basePath + ".bat\"" : basePath + ".sh";
     command.add(startScript);
     if (isConsistentStartup()) {
       command.add("-c");
