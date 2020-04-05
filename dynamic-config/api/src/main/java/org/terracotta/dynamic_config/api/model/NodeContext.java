@@ -176,7 +176,7 @@ public class NodeContext implements Cloneable {
   /**
    * Return a node context where the current node will be alone in a new cluster.
    * This can be useful to clear out all other nodes in case we need to simulate
-   * starting a cluster in diagnostic mode
+   * starting a cluster in repair mode
    */
   public NodeContext alone() {
     return new NodeContext(new Cluster(getCluster().getName(), new Stripe(getNode())), getNode().getNodeAddress());

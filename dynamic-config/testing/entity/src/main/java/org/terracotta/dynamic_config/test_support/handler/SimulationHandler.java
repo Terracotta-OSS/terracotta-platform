@@ -63,7 +63,7 @@ public class SimulationHandler implements ConfigChangeHandler {
     switch (change.getValue()) {
 
       case "DEBUG":
-        if (state.equals("failed")) {
+        if (state.equals("failed") || state.equals("recovered")) {
           state = "recovered";
         } else {
           state = "failed";

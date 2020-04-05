@@ -39,7 +39,7 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
   public void validate(NodeContext baseConfig, ClusterActivationNomadChange change) throws NomadException {
     LOGGER.info("Validating change: {}", change.getSummary());
     if (baseConfig != null) {
-      throw new NomadException("Existing config must be null. Found: " + baseConfig);
+      throw new NomadException("Found an existing configuration: " + baseConfig);
     }
     if (!change.getCluster().containsNode(stripeId, nodeName)) {
       throw new NomadException("Node: " + nodeName + " in stripe ID: " + stripeId + " not found in cluster: " + change.getCluster());

@@ -24,6 +24,7 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
@@ -112,11 +113,12 @@ public class NomadManager<T> {
     }
   }
 
-  public void runConfigurationRepair(Map<InetSocketAddress, LogicalServerState> nodes, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
-    LOGGER.debug("Attempting to repair configuration on nodes: {}", nodes);
-    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
+  public void runConfigurationRepair(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
+    LOGGER.debug("Attempting to repair configuration on nodes: {}", consistencyAnalyzer.getAllNodes().keySet());
+    Map<InetSocketAddress, LogicalServerState> onlineActivatedNodes = consistencyAnalyzer.getOnlineActivatedNodes();
+    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(onlineActivatedNodes);
     try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
-      client.tryRecovery(new MultiRecoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), nodes.size(), forcedState);
+      client.tryRecovery(new MultiRecoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), consistencyAnalyzer.getNodeCount(), forcedState);
     }
   }
 
@@ -205,7 +207,7 @@ public class NomadManager<T> {
         InetSocketAddress address = getAddress();
         int stripeId = destinationCluster.getStripeId(address).getAsInt();
         CompletableFuture<AcceptRejectResponse> result = cache.computeIfAbsent(stripeId, sid -> {
-          LOGGER.info("Committing topology change to stripe ID: {}... (this operation is blocking and can take time in case a failover happens)", stripeId);
+          LOGGER.info("Committing topology change to stripe ID: {}...", stripeId);
 
           LOGGER.trace("Sending commit message: {} to stripe ID: {}", message, stripeId);
           CompletableFuture<AcceptRejectResponse> c = new CompletableFuture<>();

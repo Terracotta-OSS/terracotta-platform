@@ -21,18 +21,14 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.Duration;
 
-import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLinesStartingWith;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
@@ -221,19 +217,6 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
     assertThat(getUpcomingCluster(1, activeId).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster(1, activeId).getNodeCount(), is(equalTo(2)));
-
-    assertThat(configToolInvocation("-r", "5s", "diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
-        containsLinesStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic5.txt").toURI())).collect(toList())));
-
-    assertThat(
-        configToolInvocation("-r", "5s", "repair", "-s", "localhost:" + getNodePort(1, activeId)),
-        allOf(
-            containsOutput("Attempting an automatic repair of the configuration on nodes"),
-            containsOutput("Configuration is repaired")));
-
-    withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
   }
 
   @Test
@@ -288,24 +271,10 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
 
-    assertThat(
-        configToolInvocation("-r", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
-        allOf(
-            containsOutput("Attempting an automatic repair of the configuration on nodes"),
-            containsOutput("Forcing a commit"),
-            containsOutput("Configuration is repaired")));
-
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
-
-    out.clearLog(1, passiveId);
-    startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo());
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
-
-    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
   }
   
   private void assertTopologyChanged(int activeId, int passiveId) throws Exception {

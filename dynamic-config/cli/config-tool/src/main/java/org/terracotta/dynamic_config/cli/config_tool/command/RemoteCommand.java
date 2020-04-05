@@ -155,10 +155,10 @@ public abstract class RemoteCommand extends Command {
    * Runs a Nomad recovery by providing a map of activated nodes plus their state.
    * This method will create an ordered list of nodes to contact by moving the passives first and actives last.
    */
-  protected final void runConfigurationRepair(Map<InetSocketAddress, LogicalServerState> nodes, ChangeRequestState forcedState) {
-    logger.trace("runConfigurationRepair({}, {})", nodes, forcedState);
+  protected final void runConfigurationRepair(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer, ChangeRequestState forcedState) {
+    logger.trace("runConfigurationRepair({}, {})", toString(consistencyAnalyzer.getAllNodes().keySet()), forcedState);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
-    nomadManager.runConfigurationRepair(nodes, failures, forcedState);
+    nomadManager.runConfigurationRepair(consistencyAnalyzer, failures, forcedState);
     failures.reThrow();
   }
 
@@ -343,7 +343,7 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final void resetAndRestart(InetSocketAddress expectedOnlineNode) {
-    logger.trace("resetAndRestart({})", expectedOnlineNode);
+    logger.info("Node: {} will reset and restart in 5 seconds", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       diagnosticService.getProxy(DynamicConfigService.class).resetAndRestart();
     }

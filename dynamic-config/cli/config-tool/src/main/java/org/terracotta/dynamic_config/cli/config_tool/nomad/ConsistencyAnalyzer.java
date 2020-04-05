@@ -30,12 +30,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.ACCEPTING;
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.CONCURRENT_ACCESS;
@@ -47,7 +50,6 @@ import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAna
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.PARTIALLY_COMMITTED;
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.PARTIALLY_PREPARED;
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.PARTIALLY_ROLLED_BACK;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.UNKNOWN;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -128,6 +130,10 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     return allNodes.size();
   }
 
+  public Map<InetSocketAddress, LogicalServerState> getAllNodes() {
+    return allNodes;
+  }
+
   public LogicalServerState getState(InetSocketAddress nodeAddress) {
     return allNodes.getOrDefault(nodeAddress, UNREACHABLE);
   }
@@ -189,41 +195,40 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   /**
    * The number of nodes having some Nomad configuration changes.
    * <p>
-   * A ndoe can have some Nomad configuration changes but be activated and running, or in diagnostic mode for repair (not activated)
+   * A node can have some Nomad configuration changes but be activated and running, or in diagnostic mode for repair (not activated)
    */
   public int getOnlineConfiguredNodes() {
     return Math.toIntExact(responses.entrySet().stream().filter(e -> e.getValue().getLatestChange() != null).count());
   }
 
-  public Collection<InetSocketAddress> getOnlineNodes() {
-    return responses.keySet();
+  public Map<InetSocketAddress, LogicalServerState> getOnlineNodes() {
+    return responses.entrySet()
+        .stream()
+        .collect(responseEntryToMap());
   }
 
-  public Collection<InetSocketAddress> getOnlineActivatedNodes() {
+  public Map<InetSocketAddress, LogicalServerState> getOnlineActivatedNodes() {
     // activated nodes are passive / actives that have some nomad changes
     return responses.entrySet()
         .stream()
         .filter(e -> allNodes.get(e.getKey()) != STARTING && e.getValue().getLatestChange() != null)
-        .map(Map.Entry::getKey)
-        .collect(toList());
+        .collect(responseEntryToMap());
   }
 
-  public Collection<InetSocketAddress> getOnlineInRepairNodes() {
+  public Map<InetSocketAddress, LogicalServerState> getOnlineInRepairNodes() {
     // nodes in repair are started in diagnostic mode and have nomad changes
     return responses.entrySet()
         .stream()
         .filter(e -> allNodes.get(e.getKey()) == STARTING && e.getValue().getLatestChange() != null)
-        .map(Map.Entry::getKey)
-        .collect(toList());
+        .collect(responseEntryToMap());
   }
 
-  public Collection<InetSocketAddress> getOnlineInConfigurationNodes() {
+  public Map<InetSocketAddress, LogicalServerState> getOnlineInConfigurationNodes() {
     // new nodes in configuration are started in diagnostic mode and have no nomad change yet
     return responses.entrySet()
         .stream()
         .filter(e -> allNodes.get(e.getKey()) == STARTING && e.getValue().getLatestChange() == null)
-        .map(Map.Entry::getKey)
-        .collect(toList());
+        .collect(responseEntryToMap());
   }
 
   public boolean isOnlineAndActivated(InetSocketAddress nodeAddress) {
@@ -320,7 +325,17 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     }
 
     return responses.size() >= nodeCount ?
-        UNKNOWN : // all nodes are up, but we were not able to determine the state
+        GlobalState.UNKNOWN : // all nodes are up, but we were not able to determine the state
         MAYBE_UNKNOWN; // some nodes are not reachable and we were not able to determine the state
+  }
+
+  private Collector<Map.Entry<InetSocketAddress, DiscoverResponse<T>>, ?, LinkedHashMap<InetSocketAddress, LogicalServerState>> responseEntryToMap() {
+    return toMap(
+        Map.Entry::getKey,
+        e -> allNodes.getOrDefault(e.getKey(), UNKNOWN),
+        (logicalServerState, logicalServerState2) -> {
+          throw new UnsupportedOperationException();
+        },
+        LinkedHashMap::new);
   }
 }

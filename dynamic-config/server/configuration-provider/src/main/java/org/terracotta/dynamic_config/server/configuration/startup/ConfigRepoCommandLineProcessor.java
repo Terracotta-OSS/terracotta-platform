@@ -42,7 +42,7 @@ public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
     Path repositoryDir = configurationGeneratorVisitor.getOrDefaultRepositoryDir(options.getNodeRepositoryDir());
     Optional<String> nodeName = configurationGeneratorVisitor.findNodeName(repositoryDir, parameterSubstitutor);
     if (nodeName.isPresent()) {
-      configurationGeneratorVisitor.startUsingConfigRepo(repositoryDir, nodeName.get(), options.wantsDiagnosticMode());
+      configurationGeneratorVisitor.startUsingConfigRepo(repositoryDir, nodeName.get(), options.wantsRepairMode());
       return;
     }
 

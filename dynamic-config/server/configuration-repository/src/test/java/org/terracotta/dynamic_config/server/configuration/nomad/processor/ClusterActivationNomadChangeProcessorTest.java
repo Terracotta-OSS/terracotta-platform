@@ -64,7 +64,7 @@ public class ClusterActivationNomadChangeProcessorTest {
     NodeContext topology = new NodeContext(new Cluster(new Stripe(Node.newDefaultNode("foo", "localhost"))), 1, "foo");
 
     expectedException.expect(NomadException.class);
-    expectedException.expectMessage("Existing config must be null. Found: " + topology);
+    expectedException.expectMessage("Found an existing configuration: " + topology);
 
     processor.validate(topology, change);
   }

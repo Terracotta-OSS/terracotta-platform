@@ -57,7 +57,7 @@ public class ConfigurationGeneratorVisitor {
   private final PathResolver pathResolver;
 
   private NodeContext nodeContext;
-  private boolean diagnosticMode;
+  private boolean repairMode;
   private boolean unConfiguredMode;
 
   public ConfigurationGeneratorVisitor(IParameterSubstitutor parameterSubstitutor,
@@ -74,8 +74,8 @@ public class ConfigurationGeneratorVisitor {
     return unConfiguredMode;
   }
 
-  public boolean isDiagnosticMode() {
-    return diagnosticMode;
+  public boolean isRepairMode() {
+    return repairMode;
   }
 
   public StartupConfiguration generateConfiguration() {
@@ -84,21 +84,21 @@ public class ConfigurationGeneratorVisitor {
 
     if (unConfiguredMode) {
       // in diagnostic / unconfigured node mode, make sure we make platform think that the node is alone...
-      return new StartupConfiguration(nodeContext.alone(), true, classLoader, pathResolver, parameterSubstitutor);
+      return new StartupConfiguration(nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor);
     }
 
     NodeContext nodeContext = nomadServerManager.getConfiguration()
         .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the repository folder and try again."));
 
-    if (diagnosticMode) {
-      // If diagnostic mode is ON: , make sure we make platform think that the node is alone...
+    if (repairMode) {
+      // If repair mode is ON: , make sure we make platform think that the node is alone...
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the config created will be stripped to make platform think this node is alone;
       nodeContext = nodeContext.alone();
     }
 
-    return new StartupConfiguration(nodeContext, diagnosticMode, classLoader, pathResolver, parameterSubstitutor);
+    return new StartupConfiguration(nodeContext, unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor);
   }
 
   void startUnconfigured(NodeContext nodeContext, String optionalNodeRepositoryFromCLI) {
@@ -108,7 +108,7 @@ public class ConfigurationGeneratorVisitor {
     nomadServerManager.init(nodeRepositoryDir, nodeContext);
 
     this.nodeContext = nodeContext;
-    this.diagnosticMode = false;
+    this.repairMode = false;
     this.unConfiguredMode = true;
   }
 
@@ -124,32 +124,32 @@ public class ConfigurationGeneratorVisitor {
     runNomadActivation(nodeContext.getCluster(), nodeContext.getNode(), nomadServerManager, nodeRepositoryDir);
 
     this.nodeContext = nodeContext;
-    this.diagnosticMode = false;
+    this.repairMode = false;
     this.unConfiguredMode = false;
   }
 
-  void startUsingConfigRepo(Path nodeRepositoryDir, String nodeName, boolean diagnosticMode) {
+  void startUsingConfigRepo(Path nodeRepositoryDir, String nodeName, boolean repairMode) {
     logger.info("Starting node: {} from config repository: {}", nodeName, parameterSubstitutor.substitute(nodeRepositoryDir));
     nomadServerManager.init(nodeRepositoryDir, nodeName);
 
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
-    if (!diagnosticMode) {
+    if (!repairMode) {
       dynamicConfigService.activate();
     } else {
-      // If diagnostic mode is ON:
+      // If repair mode mode is ON:
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the TcConfig created will be stripped to make platform think this node is alone
       logger.warn(lineSeparator() + lineSeparator()
           + "=================================================================================================================" + lineSeparator()
-          + "Node is starting in diagnostic mode. This mode is used to manually repair a broken configuration on a node.      " + lineSeparator()
-          + "No further configuration change can happen on the cluster while this node is in diagnostic mode and not repaired." + lineSeparator()
+          + "Node is starting in repair mode. This mode is used to manually repair a broken configuration on a node.      " + lineSeparator()
+          + "No further configuration change can happen on the cluster while this node is in repair mode and not repaired." + lineSeparator()
           + "=================================================================================================================" + lineSeparator()
       );
     }
 
     this.nodeContext = dynamicConfigService.getRuntimeNodeContext();
-    this.diagnosticMode = diagnosticMode;
+    this.repairMode = repairMode;
     this.unConfiguredMode = false;
 
   }

@@ -92,7 +92,9 @@ public class FileBasedFilesystemDirectory implements FilesystemDirectory {
   public void backup(String filename) throws IOException {
     String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
     Path path = directory.resolve(filename);
-    Path dest = path.resolveSibling("backup-" + filename + "-" + time);
-    Files.move(path, dest);
+    if (Files.exists(path)) {
+      Path dest = path.resolveSibling("backup-" + filename + "-" + time);
+      Files.move(path, dest);
+    }
   }
 }
