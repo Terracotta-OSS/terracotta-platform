@@ -126,7 +126,7 @@ class SettingValidator {
       // we have a value, we want to set:
       // - set data-dirs=main:foo/bar
       // - set data-dirs.main=foo/bar
-      validateMappings(kv, setting + " should be specified in the format <resource-name>:<path>,<resource-name>:<path>...", (k, v) -> {
+      validatePathMappings(kv, setting + " should be specified in the format <resource-name>:<path>,<resource-name>:<path>...", (k, v) -> {
         try {
           Paths.get(v);
         } catch (RuntimeException e) {
@@ -162,12 +162,26 @@ class SettingValidator {
   };
 
   private static void validateMappings(Tuple2<String, String> kv, String err, BiConsumer<String, String> valueValidator) {
-    // normalize to something like: main:foo/bar
+    // normalize to something like: main:128MB
     String value = kv.t1 == null ? kv.t2 : (kv.t1 + ":" + kv.t2);
     final String[] mappings = value.split(MULTI_VALUE_SEP);
     for (String mapping : mappings) {
       String[] split = mapping.split(PARAM_INTERNAL_SEP);
       if (split.length != 2 || split[0] == null || split[1] == null || split[0].trim().isEmpty() || split[1].trim().isEmpty()) {
+        throw new IllegalArgumentException(err);
+      }
+      valueValidator.accept(split[0], split[1]);
+    }
+  }
+
+  private static void validatePathMappings(Tuple2<String, String> kv, String err, BiConsumer<String, String> valueValidator) {
+    // normalize to something like: main:foo/bar
+    String value = kv.t1 == null ? kv.t2 : (kv.t1 + ":" + kv.t2);
+    final String[] mappings = value.split(MULTI_VALUE_SEP);
+    for (String mapping : mappings) {
+      String[] split = mapping.split(PARAM_INTERNAL_SEP);
+      // Split should contain at least two tokens. Paths can contain multiple colons both on Windows and *nixes
+      if (split.length < 2 || split[0] == null || split[1] == null || split[0].trim().isEmpty() || split[1].trim().isEmpty()) {
         throw new IllegalArgumentException(err);
       }
       valueValidator.accept(split[0], split[1]);
