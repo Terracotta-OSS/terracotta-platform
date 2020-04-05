@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.api.model;
 
 import org.junit.Test;
 
+import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -257,10 +258,20 @@ public class SettingValidatorTest {
     DATA_DIRS.validate(null);
     DATA_DIRS.validate(null, null);
     DATA_DIRS.validate("main", null);
+
+    // Valid Relative paths
     DATA_DIRS.validate("main", "foo/bar");
     DATA_DIRS.validate(null, "main:foo/bar");
     DATA_DIRS.validate(null, "main:foo/bar,second:foo/baz");
 
+    // Valid Absolute paths
+    String absPath1 = Paths.get("/foo/bar").toAbsolutePath().toString(); // resolves to C:\foo\bar on Windows
+    String absPath2 = Paths.get("/foo/baz").toAbsolutePath().toString();
+    DATA_DIRS.validate("main", absPath1);
+    DATA_DIRS.validate(null, "main:" + absPath1);
+    DATA_DIRS.validate(null, "main:" + absPath1 + ",second:" + absPath2);
+
+    // Invalid paths
     assertThat(
         () -> DATA_DIRS.validate(null, "main:"),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("data-dirs should be specified in the format <resource-name>:<path>,<resource-name>:<path>...")))));
