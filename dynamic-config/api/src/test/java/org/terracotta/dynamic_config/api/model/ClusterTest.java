@@ -36,11 +36,9 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -61,35 +59,32 @@ public class ClusterTest {
   @Mock BiConsumer<Integer, Node> consumer;
 
   private final Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
-      .setClientLeaseDuration(1, TimeUnit.SECONDS)
-      .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
-      .setFailoverPriority(availability())
       .setNodeBackupDir(Paths.get("backup"))
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeGroupPort(9430)
       .setNodeLogDir(Paths.get("log"))
       .setNodeMetadataDir(Paths.get("metadata"))
-      .setOffheapResource("off", 2, MemoryUnit.GB)
-      .setSecurityAuditLogDir(Paths.get("audit"))
+      .setSecurityAuditLogDir(Paths.get("audit"));
+
+  Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
+      .setDataDir("data", Paths.get("/data/cache2"));
+
+  Stripe stripe1 = new Stripe(node1);
+  Cluster cluster = Cluster.newDefaultCluster("c", stripe1)
+      .setClientLeaseDuration(1, TimeUnit.SECONDS)
+      .setClientReconnectWindow(2, TimeUnit.MINUTES)
+      .setFailoverPriority(availability())
       .setSecurityAuthc("ldap")
       .setSecuritySslTls(true)
       .setSecurityWhitelist(true);
 
-  Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
-      .setOffheapResource("bar", 1, MemoryUnit.GB)
-      .setDataDir("data", Paths.get("/data/cache2"));
-
-  Stripe stripe1 = new Stripe(node1);
-  Cluster cluster = new Cluster("c", stripe1);
-
   @Test
   public void test_isEmpty() {
     assertFalse(cluster.isEmpty());
-    assertTrue(new Cluster().isEmpty());
-    assertTrue(new Cluster(new Stripe()).isEmpty());
+    assertTrue(Cluster.newCluster().isEmpty());
+    assertTrue(Cluster.newCluster(new Stripe()).isEmpty());
   }
 
   @Test
@@ -160,11 +155,11 @@ public class ClusterTest {
   @Test
   public void test_attach() {
     assertThat(
-        () -> new Cluster().attachStripe(new Stripe(Node.newDefaultNode("localhost", 9410))),
+        () -> Cluster.newDefaultCluster().attachStripe(new Stripe(Node.newDefaultNode("localhost", 9410))),
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Empty cluster.")))));
 
     assertThat(
-        () -> new Cluster(new Stripe()).attachStripe(new Stripe(Node.newDefaultNode("localhost", 9410))),
+        () -> Cluster.newDefaultCluster(new Stripe()).attachStripe(new Stripe(Node.newDefaultNode("localhost", 9410))),
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Empty cluster.")))));
 
     assertThat(
@@ -176,9 +171,6 @@ public class ClusterTest {
     assertThat(cluster.getStripes(), hasSize(2));
     assertTrue(cluster.containsNode(InetSocketAddress.createUnresolved("localhost", 9411)));
     Node node2 = cluster.getNode(InetSocketAddress.createUnresolved("localhost", 9411)).get();
-    assertThat(node2.getOffheapResources(), hasKey("off"));
-    assertThat(node2.getOffheapResources(), not(hasKey("foo")));
-    assertThat(node2.getOffheapResources(), not(hasKey("bar")));
   }
 
   @Test
@@ -270,22 +262,18 @@ public class ClusterTest {
 
   @Test
   public void test_toProperties() {
-    Cluster cluster = new Cluster("my-cluster", new Stripe(
+    Cluster cluster = Cluster.newDefaultCluster("my-cluster", new Stripe(
         newDefaultNode("node-1", "localhost")
-            .setFailoverPriority(consistency(2))
-            .setOffheapResource("foo", 1, MemoryUnit.GB)
-            .setOffheapResource("bar", 2, MemoryUnit.GB)
             .setDataDir("foo", Paths.get("%H/tc1/foo"))
             .setDataDir("bar", Paths.get("%H/tc1/bar")),
         newDefaultNode("node-2", "localhost")
-            .setFailoverPriority(consistency(2))
-            .setOffheapResource("foo", 1, MemoryUnit.GB)
-            .setOffheapResource("bar", 2, MemoryUnit.GB)
             .setDataDir("foo", Paths.get("%H/tc2/foo"))
             .setDataDir("bar", Paths.get("%H/tc2/bar"))
             .setTcProperty("server.entity.processor.threads", "64")
-            .setTcProperty("topology.validate", "true")
-    ));
+            .setTcProperty("topology.validate", "true")))
+        .setFailoverPriority(consistency(2))
+        .setOffheapResource("foo", 1, MemoryUnit.GB)
+        .setOffheapResource("bar", 2, MemoryUnit.GB);
 
     Stream.of(
         tuple2(cluster.toProperties(false, true), "config_with_defaults.properties"),

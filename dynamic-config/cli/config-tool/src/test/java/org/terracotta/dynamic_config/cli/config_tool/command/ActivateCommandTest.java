@@ -67,7 +67,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class ActivateCommandTest extends BaseTest {
 
   private Path config;
-  private final Cluster cluster = new Cluster(
+  private final Cluster cluster = Cluster.newDefaultCluster(
       "my-cluster",
       new Stripe(
           newDefaultNode("node1", "localhost", 9411)

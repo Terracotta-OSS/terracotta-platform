@@ -40,7 +40,7 @@ public class MultiSettingNomadChangeProcessor implements NomadChangeProcessor<Dy
     for (DynamicConfigNomadChange dynamicConfigNomadChange : changes) {
       next.validate(baseConfig, dynamicConfigNomadChange);
       if (baseConfig != null) {
-        baseConfig = baseConfig.withCluster(dynamicConfigNomadChange.apply(baseConfig.getCluster()));
+        baseConfig = baseConfig.withCluster(dynamicConfigNomadChange.apply(baseConfig.getCluster())).orElseGet(baseConfig::alone);
       }
     }
   }

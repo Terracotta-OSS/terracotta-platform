@@ -22,6 +22,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.net.InetSocketAddress;
 import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -70,21 +71,6 @@ public class NodeContext implements Cloneable {
     this.node = cluster.getNode(stripeId, nodeId)
         .orElseThrow(() -> new IllegalArgumentException("Node ID " + nodeId + " in stripe ID " + stripeId + " not found"));
     this.nodeName = requireNonNull(node.getNodeName());
-  }
-
-  /**
-   * Special flavor that is creating a node context of a single node cluster
-   */
-  public NodeContext(Node node) {
-    this.node = requireNonNull(node);
-    this.cluster = new Cluster(new Stripe(node));
-    this.stripeId = 1;
-    this.nodeId = 1;
-    this.nodeName = requireNonNull(node.getNodeName());
-  }
-
-  public NodeContext(Cluster cluster, Node node) {
-    this(cluster, node.getNodeAddress());
   }
 
   public Cluster getCluster() {
@@ -154,11 +140,9 @@ public class NodeContext implements Cloneable {
    * If the new cluster contains this stripe ID / node name information,
    * then a new node context is returned targeting the same node in the new cluster.
    * <p>
-   * Otherwise, a new node context is created, with a new cluster with 1 stripe 1 node,
-   * being this node (stripe ID / node name) alone in its own cluster. The cluster name
-   * is kept if it ws set.
+   * Otherwise, an empty optional is returned
    */
-  public NodeContext withCluster(Cluster updated) {
+  public Optional<NodeContext> withCluster(Cluster updated) {
     requireNonNull(updated);
 
     // The base config comes from a loaded config xml file.
@@ -169,8 +153,8 @@ public class NodeContext implements Cloneable {
     // then we isolate the node in its own cluster
 
     return updated.containsNode(stripeId, nodeName) ?
-        new NodeContext(updated, stripeId, nodeName) :
-        new NodeContext(new Cluster(getCluster().getName(), new Stripe(getNode())), stripeId, nodeName);
+        Optional.of(new NodeContext(updated, stripeId, nodeName)) :
+        Optional.empty();
   }
 
   /**
@@ -179,6 +163,15 @@ public class NodeContext implements Cloneable {
    * starting a cluster in repair mode
    */
   public NodeContext alone() {
-    return new NodeContext(new Cluster(getCluster().getName(), new Stripe(getNode())), getNode().getNodeAddress());
+    return withOnlyNode(getNode());
+  }
+
+  /**
+   * Returns this cluster with this node only
+   */
+  public NodeContext withOnlyNode(Node node) {
+    Cluster cluster = getCluster().clone().removeStripes();
+    cluster.addStripe(new Stripe(node));
+    return new NodeContext(cluster, node.getNodeAddress());
   }
 }

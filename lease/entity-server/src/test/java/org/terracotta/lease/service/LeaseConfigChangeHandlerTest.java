@@ -32,7 +32,7 @@ import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluste
 
 public class LeaseConfigChangeHandlerTest {
 
-  private NodeContext topology = new NodeContext(new Cluster("foo", new Stripe(Node.newDefaultNode("bar", "localhost"))), 1, "bar");
+  private NodeContext topology = new NodeContext(Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("bar", "localhost"))), 1, "bar");
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.CLIENT_LEASE_DURATION, "20s");
 
   @Test
@@ -40,7 +40,7 @@ public class LeaseConfigChangeHandlerTest {
     LeaseConfiguration leaseConfiguration = new LeaseConfiguration(1000L);
     LeaseConfigChangeHandler leaseConfigChangeHandler = new LeaseConfigChangeHandler(leaseConfiguration);
     leaseConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
-    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getClientLeaseDuration().getQuantity(TimeUnit.SECONDS), is(20L));
+    assertThat(set.apply(topology.getCluster()).getClientLeaseDuration().getQuantity(TimeUnit.SECONDS), is(20L));
   }
 
   @Test

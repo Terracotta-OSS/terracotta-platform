@@ -35,5 +35,12 @@
       <artifactId>dynamic-config-cli-config-convertor</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-test-utilities</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

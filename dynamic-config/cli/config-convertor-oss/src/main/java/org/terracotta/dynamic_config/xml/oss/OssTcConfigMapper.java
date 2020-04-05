@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.xml.oss;
 import org.terracotta.config.Server;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.cli.config_convertor.conversion.AbstractTcConfigMapper;
 import org.terracotta.dynamic_config.cli.config_convertor.xml.CommonMapper;
@@ -48,7 +49,7 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
   }
 
   @Override
-  public Stripe getStripe(String xml) {
+  public Cluster getStripe(String xml) {
     try {
       TcConfiguration tcConfiguration = NonSubstitutingTCConfigurationParser.parse(xml, classLoader);
       TcConfig tcConfig = tcConfiguration.getPlatformConfiguration();
@@ -65,17 +66,16 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
               .setNodeGroupPort(server.getTsaGroupPort().getValue())
               .setNodeGroupBindAddress(commonMapper.moreRestrictive(server.getTsaGroupPort().getBind(), server.getBind()))
               .setNodeLogDir(Paths.get(server.getLogs()))
-              .setFailoverPriority(commonMapper.toFailoverPriority(tcConfig.getFailoverPriority()))
-              .setClientReconnectWindow(tcConfig.getServers().getClientReconnectWindow(), SECONDS)
               .setTcProperties(commonMapper.toProperties(tcConfig))
-              // plugins
               .setNodeMetadataDir(null)
               .setDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true))
-              .setOffheapResources(commonMapper.toOffheapResources(xmlPlugins))
               .setNodeBackupDir(null)
-              .setClientLeaseDuration(commonMapper.toClientLeaseDuration(xmlPlugins))
       ));
-      return new Stripe(nodes);
+      return Cluster.newCluster(new Stripe(nodes))
+          .setClientLeaseDuration(commonMapper.toClientLeaseDuration(xmlPlugins))
+          .setOffheapResources(commonMapper.toOffheapResources(xmlPlugins))
+          .setClientReconnectWindow(tcConfig.getServers().getClientReconnectWindow(), SECONDS)
+          .setFailoverPriority(commonMapper.toFailoverPriority(tcConfig.getFailoverPriority()));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     } catch (SAXException e) {

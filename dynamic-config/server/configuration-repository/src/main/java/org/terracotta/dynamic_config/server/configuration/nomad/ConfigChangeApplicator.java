@@ -83,6 +83,6 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
     // - If we are activating this node, there is not yet any existing configuration, so we create one.
     // - If we have updated the topology and our current node is still there, then return a context to be written on disk for the node.
     // - If the updated topology does not contain the node anymore (removal ?) and a base config was there (topology change) then we isolate the node in its own cluster
-    return baseConfig == null ? new NodeContext(updated, stripeId, nodeName) : baseConfig.withCluster(updated);
+    return baseConfig == null ? new NodeContext(updated, stripeId, nodeName) : baseConfig.withCluster(updated).orElseGet(baseConfig::alone);
   }
 }

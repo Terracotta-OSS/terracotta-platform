@@ -60,7 +60,7 @@ public class CommandLineProcessorChainTest {
 
   private final Node node1 = Node.newDefaultNode("node-1", "localhost", 19410);
   private final Node node2 = Node.newDefaultNode("node-2", "localhost", 9411);
-  private Cluster cluster = new Cluster((String) null, new Stripe(node1));
+  private Cluster cluster = Cluster.newDefaultCluster((String) null, new Stripe(node1));
   private NodeContext nodeContext = new NodeContext(cluster, 1, "node-1");
   private Options options;
   private Map<Setting, String> paramValueMap;

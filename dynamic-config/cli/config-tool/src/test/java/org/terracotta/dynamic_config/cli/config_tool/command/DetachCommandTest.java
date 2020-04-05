@@ -47,14 +47,13 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
 public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
   Node node0 = Node.newDefaultNode("node0", "localhost", 9410)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache0"));
 
   Node node1 = Node.newDefaultNode("node1", "localhost", 9411)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache1"));
 
-  Cluster cluster = new Cluster(new Stripe(node0), new Stripe(node1));
+  Cluster cluster = Cluster.newDefaultCluster(new Stripe(node0), new Stripe(node1))
+      .setOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Captor
   ArgumentCaptor<Cluster> newCluster;

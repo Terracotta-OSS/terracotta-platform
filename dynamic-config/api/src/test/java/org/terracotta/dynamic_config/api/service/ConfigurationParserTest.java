@@ -71,7 +71,7 @@ public class ConfigurationParserTest {
     // node name should be resolved from default value (%h) if not given
     assertCliEquals(
         cli(),
-        new Cluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))),
+        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))),
         "stripe.1.node.1.node-hostname=localhost",
         "cluster-name=",
         "client-reconnect-window=120s",
@@ -106,7 +106,7 @@ public class ConfigurationParserTest {
     // placeholder in node name should be resolved eagerly
     assertCliEquals(
         cli("node-hostname=%c"),
-        new Cluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))),
+        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "failover-priority=availability",
@@ -140,7 +140,7 @@ public class ConfigurationParserTest {
     // node name without placeholder triggers no resolve
     assertCliEquals(
         cli("node-hostname=foo"),
-        new Cluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))),
+        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "failover-priority=availability",
@@ -233,7 +233,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.node-hostname=localhost",
             "stripe.1.node.1.node-hostname=foo"
         ),
-        new Cluster(new Stripe(Node.newDefaultNode("real", "foo"))),
+        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("real", "foo"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "failover-priority=availability",
@@ -268,7 +268,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.node-name=node1",
             "stripe.1.node.1.node-hostname=localhost"
         ),
-        new Cluster(new Stripe(Node.newDefaultNode("node1", "localhost"))),
+        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "failover-priority=availability",
@@ -308,7 +308,7 @@ public class ConfigurationParserTest {
             "stripe.2.node.2.node-name=node2",
             "stripe.2.node.2.node-hostname=localhost"
         ),
-        new Cluster(
+        Cluster.newDefaultCluster(
             new Stripe(
                 Node.newDefaultNode("node1", "localhost"),
                 Node.newDefaultNode("node2", "localhost")),
@@ -414,14 +414,14 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.security-audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
     verifyNoMoreInteractions(substitutor);
   }
 
   @Test
   public void test_setting_with_default_can_be_ommitted() {
-    final Properties properties = new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost")
-        .setClientLeaseDuration(null)))
+    final Properties properties = Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost")))
+        .setClientLeaseDuration(null)
         .toProperties(false, false);
     assertThat(properties, not(hasKey("client-lease-duration")));
 
@@ -451,7 +451,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.security-audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))),
+        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))),
         "client-lease-duration=150s");
 
     assertConfigEquals(
@@ -481,7 +481,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.security-audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

@@ -149,7 +149,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public FailoverBehavior getFailoverPriority() {
-    final FailoverPriority failoverPriority = nodeContext.getNode().getFailoverPriority();
+    final FailoverPriority failoverPriority = nodeContext.getCluster().getFailoverPriority();
     switch (failoverPriority.getType()) {
       case CONSISTENCY:
         return new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, failoverPriority.getVoters());
@@ -267,12 +267,12 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
       @Override
       public int getClientReconnectWindow() {
-        return node.getClientReconnectWindow().getExactQuantity(TimeUnit.SECONDS).intValueExact();
+        return nodeContext.getCluster().getClientReconnectWindow().getExactQuantity(TimeUnit.SECONDS).intValueExact();
       }
 
       @Override
       public void setClientReconnectWindow(int value) {
-        node.setClientReconnectWindow(value, TimeUnit.SECONDS);
+        nodeContext.getCluster().setClientReconnectWindow(value, TimeUnit.SECONDS);
       }
 
       @Override

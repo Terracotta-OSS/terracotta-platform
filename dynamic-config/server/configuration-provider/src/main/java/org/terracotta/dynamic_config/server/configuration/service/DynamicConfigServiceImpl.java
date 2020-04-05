@@ -23,7 +23,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
@@ -215,12 +214,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
         for (DynamicConfigNomadChange nomadChange : nomadChanges) {
           // first we update the upcoming one
           Cluster upcomingCluster = nomadChange.apply(upcomingNodeContext.getCluster());
-          upcomingNodeContext = upcomingNodeContext.withCluster(upcomingCluster);
+          upcomingNodeContext = upcomingNodeContext.withCluster(upcomingCluster).orElseGet(upcomingNodeContext::alone);
           // if the change can be applied at runtime, it was previously done in the config change handler.
           // so update also the runtime topology there
           if (nomadChange.canApplyAtRuntime()) {
             Cluster runtimeCluster = nomadChange.apply(runtimeNodeContext.getCluster());
-            runtimeNodeContext = runtimeNodeContext.withCluster(runtimeCluster);
+            runtimeNodeContext = runtimeNodeContext.withCluster(runtimeCluster).orElseGet(runtimeNodeContext::alone);
           }
         }
       }
@@ -309,7 +308,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       // We have updated the topology and I am not part anymore of the cluster
       // So we just reset the cluster object so that this node is alone
       LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster.toShapeString());
-      this.upcomingNodeContext = new NodeContext(new Cluster(new Stripe(oldMe)), oldMe.getNodeAddress());
+      this.upcomingNodeContext = this.upcomingNodeContext.withOnlyNode(oldMe);
     }
 
     // When node is not yet activated, runtimeNodeContext == upcomingNodeContext

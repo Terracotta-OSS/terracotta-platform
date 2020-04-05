@@ -36,22 +36,19 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class NodeContextTest {
 
   Node node1 = newDefaultNode("node1", "localhost", 9410)
-      .setFailoverPriority(consistency(2))
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
-      .setOffheapResource("bar", 2, MemoryUnit.GB)
       .setDataDir("foo", Paths.get("%H/tc1/foo"))
       .setDataDir("bar", Paths.get("%H/tc1/bar"));
 
   Node node2 = newDefaultNode("node2", "localhost", 9411)
-      .setFailoverPriority(consistency(2))
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
-      .setOffheapResource("bar", 2, MemoryUnit.GB)
       .setDataDir("foo", Paths.get("%H/tc2/foo"))
       .setDataDir("bar", Paths.get("%H/tc2/bar"))
       .setTcProperty("server.entity.processor.threads", "64")
       .setTcProperty("topology.validate", "true");
 
-  Cluster cluster = new Cluster("my-cluster", new Stripe(node1), new Stripe(node2));
+  Cluster cluster = Cluster.newDefaultCluster("my-cluster", new Stripe(node1), new Stripe(node2))
+      .setFailoverPriority(consistency(2))
+      .setOffheapResource("foo", 1, MemoryUnit.GB)
+      .setOffheapResource("bar", 2, MemoryUnit.GB);
 
   @Test
   public void test_ctors() {
@@ -97,7 +94,7 @@ public class NodeContextTest {
     assertThat(new NodeContext(cluster, 1, "node1").getCluster(), is(equalTo(cluster)));
     assertThat(new NodeContext(cluster, 1, 1).getCluster(), is(equalTo(cluster)));
     assertThat(new NodeContext(cluster, node1.getNodeAddress()).getCluster(), is(equalTo(cluster)));
-    assertThat(new NodeContext(node1).getCluster().getSingleNode().get(), is(equalTo(node1)));
+    assertThat(nodeContext(node1).getCluster().getSingleNode().get(), is(equalTo(node1)));
   }
 
   @Test
@@ -105,7 +102,7 @@ public class NodeContextTest {
     assertThat(new NodeContext(cluster, 1, "node1").getStripeId(), is(equalTo(1)));
     assertThat(new NodeContext(cluster, 1, 1).getStripeId(), is(equalTo(1)));
     assertThat(new NodeContext(cluster, node2.getNodeAddress()).getStripeId(), is(equalTo(2)));
-    assertThat(new NodeContext(node2).getStripeId(), is(equalTo(1)));
+    assertThat(nodeContext(node2).getStripeId(), is(equalTo(1)));
   }
 
   @Test
@@ -113,7 +110,7 @@ public class NodeContextTest {
     assertThat(new NodeContext(cluster, 1, "node1").getStripeId(), is(equalTo(1)));
     assertThat(new NodeContext(cluster, 1, 1).getStripeId(), is(equalTo(1)));
     assertThat(new NodeContext(cluster, node2.getNodeAddress()).getStripeId(), is(equalTo(2)));
-    assertThat(new NodeContext(node2).getStripeId(), is(equalTo(1)));
+    assertThat(nodeContext(node2).getStripeId(), is(equalTo(1)));
   }
 
   @Test
@@ -121,7 +118,7 @@ public class NodeContextTest {
     assertThat(new NodeContext(cluster, 1, "node1").getNodeName(), is(equalTo("node1")));
     assertThat(new NodeContext(cluster, 1, 1).getNodeName(), is(equalTo("node1")));
     assertThat(new NodeContext(cluster, node2.getNodeAddress()).getNodeName(), is(equalTo("node2")));
-    assertThat(new NodeContext(node2).getNodeName(), is(equalTo("node2")));
+    assertThat(nodeContext(node2).getNodeName(), is(equalTo("node2")));
   }
 
   @Test
@@ -129,7 +126,7 @@ public class NodeContextTest {
     assertThat(new NodeContext(cluster, 1, "node1").getNode(), is(equalTo(node1)));
     assertThat(new NodeContext(cluster, 1, 1).getNode(), is(equalTo(node1)));
     assertThat(new NodeContext(cluster, node2.getNodeAddress()).getNode(), is(equalTo(node2)));
-    assertThat(new NodeContext(node2).getNode(), is(equalTo(node2)));
+    assertThat(nodeContext(node2).getNode(), is(equalTo(node2)));
   }
 
   @Test
@@ -138,7 +135,7 @@ public class NodeContextTest {
         new NodeContext(cluster, 1, "node1"),
         new NodeContext(cluster, 1, 1),
         new NodeContext(cluster, node2.getNodeAddress()),
-        new NodeContext(node2)
+        nodeContext(node2)
     ).forEach(ctx -> assertThat(ctx.clone(), is(equalTo(ctx))));
   }
 
@@ -148,7 +145,11 @@ public class NodeContextTest {
         new NodeContext(cluster, 1, "node1"),
         new NodeContext(cluster, 1, 1),
         new NodeContext(cluster, node2.getNodeAddress()),
-        new NodeContext(node2)
+        nodeContext(node2)
     ).forEach(ctx -> assertThat(ctx.clone().hashCode(), is(equalTo(ctx.hashCode()))));
+  }
+
+  private static NodeContext nodeContext(Node node) {
+    return new NodeContext(Cluster.newDefaultCluster(new Stripe(node)), 1, node.getNodeName());
   }
 }

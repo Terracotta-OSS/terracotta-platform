@@ -34,7 +34,7 @@ import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluste
 
 public class DataDirectoryConfigChangeHandlerTest {
 
-  private NodeContext topology = new NodeContext(new Cluster("foo", new Stripe(Node.newDefaultNode("bar", "localhost").clearDataDirs())), 1, "bar");
+  private NodeContext topology = new NodeContext(Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("bar", "localhost").clearDataDirs())), 1, "bar");
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.DATA_DIRS, "new-root", "/path/to/data/root");
 
   @Test

@@ -180,7 +180,7 @@ public class DynamicConfigurationPassiveSync {
             }
           }
           // note: previous won't be null here because each append log contains at least one topology change (activation)
-          return nodeStartupConfiguration.withCluster(update);
+          return nodeStartupConfiguration.withCluster(update).orElseGet(nodeStartupConfiguration::alone);
         });
       }
 

@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -46,6 +47,22 @@ public class Props {
     return props;
   }
 
+  /**
+   * Warning: caller whi created the stream is also responsible for closing it
+   */
+  public static Properties load(InputStream inputStream) {
+    Properties props = new Properties();
+    try {
+      props.load(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return props;
+  }
+
+  /**
+   * Warning: caller whi created the stream is also responsible for closing it
+   */
   public static Properties load(Reader reader) {
     Properties props = new Properties();
     try {

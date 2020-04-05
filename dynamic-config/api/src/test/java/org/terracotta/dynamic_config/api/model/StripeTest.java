@@ -16,23 +16,18 @@
 package org.terracotta.dynamic_config.api.model;
 
 import org.junit.Test;
-import org.terracotta.common.struct.MemoryUnit;
-import org.terracotta.common.struct.TimeUnit;
 
 import java.nio.file.Paths;
 
 import static java.net.InetSocketAddress.createUnresolved;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -41,25 +36,16 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class StripeTest {
 
   Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
-      .setClientLeaseDuration(1, TimeUnit.SECONDS)
-      .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
-      .setFailoverPriority(availability())
       .setNodeBackupDir(Paths.get("backup"))
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeGroupPort(9430)
       .setNodeLogDir(Paths.get("log"))
       .setNodeMetadataDir(Paths.get("metadata"))
-      .setOffheapResource("off", 2, MemoryUnit.GB)
-      .setSecurityAuditLogDir(Paths.get("audit"))
-      .setSecurityAuthc("ldap")
-      .setSecuritySslTls(true)
-      .setSecurityWhitelist(true);
+      .setSecurityAuditLogDir(Paths.get("audit"));
 
   Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
-      .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("data", Paths.get("/data/cache2"));
 
   Stripe stripe = new Stripe(node1);
@@ -129,22 +115,16 @@ public class StripeTest {
     node1.setSecurityDir(Paths.get("Sec1"));
     node2.setSecurityDir(Paths.get("Sec2"));
     stripe.attachNode(node2);
-
-    assertThat(node2.getOffheapResources(), hasKey("foo"));
-    assertThat(node2.getOffheapResources(), hasKey("bar"));
-    assertThat(node2.getOffheapResources(), not(hasKey("off")));
-    assertThat(stripe.getNode(node2.getNodeAddress()).get().getOffheapResources(), hasKey("off"));
-    assertThat(stripe.getNode(node2.getNodeAddress()).get().getOffheapResources(), not(hasKey("foo")));
-    assertThat(stripe.getNode(node2.getNodeAddress()).get().getOffheapResources(), not(hasKey("bar")));
+    assertThat(stripe.getNodeCount(), is(2));
+    assertThat(stripe.getNode("node1").get().getSecurityDir(), is(Paths.get("Sec1")));
+    assertThat(stripe.getNode("node2").get().getSecurityDir(), is(Paths.get("Sec2")));
   }
 
   @Test
   public void test_cloneForAttachment() {
-    Stripe newStripe = new Stripe(node2).cloneForAttachment(node1);
+    Stripe newStripe = new Stripe(node2.setSecurityDir(Paths.get("Sec1"))).cloneForAttachment(node1.setSecurityDir(null));
     Node newNode = newStripe.getNodes().iterator().next();
-    assertThat(newNode.getOffheapResources(), hasKey("off"));
-    assertThat(newNode.getOffheapResources(), not(hasKey("foo")));
-    assertThat(newNode.getOffheapResources(), not(hasKey("bar")));
+    assertThat(newNode.getSecurityDir(), is(equalTo(null)));
   }
 
   @Test

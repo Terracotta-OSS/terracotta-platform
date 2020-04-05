@@ -40,7 +40,7 @@ public class DefaultHashComputerTest {
     HashComputer<NodeContext> hashComputer = new DefaultHashComputer(Json.copyObjectMapper(true));
 
     Node node = newDefaultNode("foo", "localhost");
-    NodeContext nodeContext = new NodeContext(new Cluster(new Stripe(node)), 1, "foo");
+    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node)), 1, "foo");
 
     String hash = hashComputer.computeHash(nodeContext);
     String json = om.writeValueAsString(nodeContext);

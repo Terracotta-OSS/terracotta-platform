@@ -37,7 +37,6 @@ import static org.terracotta.dynamic_config.api.model.Operation.UNSET;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
-import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
 
 public class Configuration {
 
@@ -450,12 +449,7 @@ public class Configuration {
         return;
       }
 
-      if (setting == CLUSTER_NAME) {
-        cluster.setName(value);
-        return;
-      }
-
-      targetContexts.forEach(ctx -> setting.setProperty(ctx.getNode(), key, value));
+      targetContexts.forEach(ctx -> setting.setProperty(ctx, key, value));
     }
   }
 
