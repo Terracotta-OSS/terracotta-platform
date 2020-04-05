@@ -17,13 +17,14 @@ package org.terracotta.dynamic_config.cli.config_tool.converter;
 
 import com.beust.jcommander.converters.EnumConverter;
 
-public enum ChangeState {
+public enum RepairAction {
   COMMIT,
-  ROLLBACK;
+  ROLLBACK,
+  RESET;
 
-  public static class StateConverter extends EnumConverter<ChangeState> {
-    public StateConverter() {
-      super("-f", ChangeState.class);
+  public static class RepairActionConverter extends EnumConverter<RepairAction> {
+    public RepairActionConverter() {
+      super("-f", RepairAction.class);
     }
   }
 }

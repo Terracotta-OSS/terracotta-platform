@@ -57,10 +57,10 @@ public class DiagnosticCommand extends RemoteCommand {
     Map<InetSocketAddress, LogicalServerState> allNodes = findRuntimePeersStatus(node);
 
     ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = analyzeNomadConsistency(allNodes);
-    Collection<InetSocketAddress> onlineNodes = consistencyAnalyzer.getOnlineNodes();
-    Collection<InetSocketAddress> onlineActivatedNodes = consistencyAnalyzer.getOnlineActivatedNodes();
-    Collection<InetSocketAddress> onlineInConfigurationNodes = consistencyAnalyzer.getOnlineInConfigurationNodes();
-    Collection<InetSocketAddress> onlineInRepairNodes = consistencyAnalyzer.getOnlineInRepairNodes();
+    Collection<InetSocketAddress> onlineNodes = consistencyAnalyzer.getOnlineNodes().keySet();
+    Collection<InetSocketAddress> onlineActivatedNodes = consistencyAnalyzer.getOnlineActivatedNodes().keySet();
+    Collection<InetSocketAddress> onlineInConfigurationNodes = consistencyAnalyzer.getOnlineInConfigurationNodes().keySet();
+    Collection<InetSocketAddress> onlineInRepairNodes = consistencyAnalyzer.getOnlineInRepairNodes().keySet();
 
     Clock clock = Clock.systemDefaultZone();
     ZoneId zoneId = clock.getZone();

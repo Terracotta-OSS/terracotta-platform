@@ -341,11 +341,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public void resetAndRestart() {
-    if (!isActivated()) {
-      throw new IllegalStateException("Node is not activated");
-    }
     LOGGER.info("Resetting and restarting...");
-
     try {
       nomadServerManager.getNomadServer().reset();
       clusterActivated = false;

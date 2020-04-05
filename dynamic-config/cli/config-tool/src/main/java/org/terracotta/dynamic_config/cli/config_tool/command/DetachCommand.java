@@ -105,7 +105,6 @@ public class DetachCommand extends TopologyCommand {
     RuntimeException all = null;
     for (InetSocketAddress removedNode : removedNodes) {
       try {
-        logger.info("Node: {} will reset and restart in 5 seconds", removedNode);
         resetAndRestart(removedNode);
       } catch (RuntimeException e) {
         logger.warn("Failed to reset and restart node {}: {}", removedNode, e.getMessage());
