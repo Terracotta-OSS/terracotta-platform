@@ -26,8 +26,12 @@ import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.json.Json;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.function.BiConsumer;
@@ -287,9 +291,9 @@ public class ClusterTest {
   }
 
   @Test
-  public void test_mapping_props_json_without_defaults() throws URISyntaxException {
-    Properties props = Props.load(Paths.get(getClass().getResource("/config1_without_defaults.properties").toURI()));
-    Cluster fromJson = Json.parse(getClass().getResource("/config1.json"), Cluster.class);
+  public void test_mapping_props_json_without_defaults() throws URISyntaxException, IOException {
+    Properties props = Props.load(read("/config1_without_defaults.properties"));
+    Cluster fromJson = Json.parse(read("/config1.json"), Cluster.class);
     Cluster fromProps = new ClusterFactory().create(props);
 
     assertThat(fromJson, is(equalTo(fromProps)));
@@ -308,9 +312,9 @@ public class ClusterTest {
   }
 
   @Test
-  public void test_mapping_props_json_with_defaults() throws URISyntaxException {
-    Properties props = Props.load(Paths.get(getClass().getResource("/config1_with_defaults.properties").toURI()));
-    Cluster fromJson = Json.parse(getClass().getResource("/config1.json"), Cluster.class);
+  public void test_mapping_props_json_with_defaults() throws URISyntaxException, IOException {
+    Properties props = Props.load(read("/config1_with_defaults.properties"));
+    Cluster fromJson = Json.parse(read("/config1.json"), Cluster.class);
     Cluster fromProps = new ClusterFactory().create(props);
 
     assertThat(fromJson, is(equalTo(fromProps)));
@@ -351,5 +355,15 @@ public class ClusterTest {
   @FunctionalInterface
   public interface EConsumer<T> {
     void accept(T t) throws Exception;
+  }
+
+  private String read(String resource) throws URISyntaxException, IOException {
+    Path path = Paths.get(getClass().getResource(resource).toURI());
+    String data = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    return isWindows() ? data.replace("\r\n", "\n").replace("\n", "\r\n").replace("/", "\\\\") : data;
+  }
+
+  private static boolean isWindows() {
+    return System.getProperty("os.name").toLowerCase().startsWith("windows");
   }
 }

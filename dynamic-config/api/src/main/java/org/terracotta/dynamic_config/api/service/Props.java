@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
@@ -36,6 +37,10 @@ import java.util.TreeSet;
  * @author Mathieu Carbou
  */
 public class Props {
+
+  public static Properties load(String content) {
+    return load(new StringReader(content));
+  }
 
   public static Properties load(Path propertiesFile) {
     Properties props = new Properties();
