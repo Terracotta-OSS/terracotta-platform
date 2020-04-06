@@ -64,7 +64,8 @@ public class ConfigConvertor {
     Cluster cluster = mapper.parseConfig(clusterName, tcConfigPaths);
     validateAgainstRelativePath(cluster);
 
-    cluster.getNodes().forEach(Node::fillRequiredDefaults);
+    cluster.fillRequiredSettings();
+    cluster.getNodes().forEach(Node::fillRequiredSettings);
     new ClusterValidator(cluster).validate();
 
     postConversionProcessor.accept(cluster);

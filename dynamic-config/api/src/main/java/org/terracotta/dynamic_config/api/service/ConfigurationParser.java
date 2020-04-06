@@ -221,7 +221,7 @@ class ConfigurationParser {
     }
 
     // build the cluster
-    Cluster cluster = new Cluster();
+    Cluster cluster = Cluster.newCluster();
     configurationMap.forEach((stripeId, nodeCounts) -> {
       Stripe stripe = new Stripe();
       nodeCounts.keySet().forEach(nodeId -> {

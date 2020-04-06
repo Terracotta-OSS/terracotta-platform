@@ -1,21 +1,30 @@
 {
   "name": "tc-cluster",
+  "clientLeaseDuration": {
+    "quantity": 150,
+    "unit": "SECONDS",
+    "type": "TIME"
+  },
+  "clientReconnectWindow": {
+    "quantity": 120,
+    "unit": "SECONDS",
+    "type": "TIME"
+  },
+  "offheapResources": {
+    "primary-server-resource": {
+      "quantity": 64,
+      "unit": "MB",
+      "type": "MEMORY"
+    }
+  },
+  "securitySslTls": false,
+  "securityWhitelist": false,
+  "failoverPriority": "availability",
   "stripes": [
     {
       "nodes": [
         {
-          "clientLeaseDuration": {
-            "quantity": 150,
-            "unit": "SECONDS",
-            "type": "TIME"
-          },
-          "clientReconnectWindow": {
-            "quantity": 120,
-            "unit": "SECONDS",
-            "type": "TIME"
-          },
           "dataDirs": {},
-          "failoverPriority": "availability",
           "nodeBindAddress": "0.0.0.0",
           "nodeGroupBindAddress": "0.0.0.0",
           "nodeGroupPort": 23634,
@@ -25,15 +34,6 @@
           "nodeMetadataDir": "%H/terracotta/metadata",
           "nodeName": "testServer0",
           "nodePort": 23633,
-          "offheapResources": {
-            "primary-server-resource": {
-              "quantity": 64,
-              "unit": "MB",
-              "type": "MEMORY"
-            }
-          },
-          "securitySslTls": false,
-          "securityWhitelist": false,
           "tcProperties": {
             "terracotta.management.assert": "true"
           }

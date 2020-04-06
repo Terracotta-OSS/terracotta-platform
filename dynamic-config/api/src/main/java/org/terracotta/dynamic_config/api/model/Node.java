@@ -18,9 +18,6 @@ package org.terracotta.dynamic_config.api.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.event.Level;
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.MemoryUnit;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.inet.InetSocketAddressUtils;
 
@@ -33,15 +30,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
-import static java.util.function.Predicate.isEqual;
-import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
-import static org.terracotta.dynamic_config.api.model.Setting.LICENSE_FILE;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_REPOSITORY_DIR;
+import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 
-public class Node implements Cloneable {
+public class Node implements Cloneable, PropertyHolder {
 
   // Note: primitive fields need to be initialized with their default value,
   // otherwise we will wrongly detect that they have been initialized (Setting.getPropertyValue will return 0 for a port for example)
@@ -59,18 +51,16 @@ public class Node implements Cloneable {
   private Path nodeBackupDir;
   private Path securityDir;
   private Path securityAuditLogDir;
-  private String securityAuthc;
-  private boolean securitySslTls = Boolean.parseBoolean(Setting.SECURITY_SSL_TLS.getDefaultValue());
-  private boolean securityWhitelist = Boolean.parseBoolean(Setting.SECURITY_WHITELIST.getDefaultValue());
-  private FailoverPriority failoverPriority;
   private Map<String, String> tcProperties = new ConcurrentHashMap<>();
   private Map<String, Level> nodeLoggerOverrides = new ConcurrentHashMap<>();
-  private Measure<TimeUnit> clientReconnectWindow;
-  private Measure<TimeUnit> clientLeaseDuration;
-  private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
   private Map<String, Path> dataDirs = new ConcurrentHashMap<>();
 
   Node() {
+  }
+
+  @Override
+  public Scope getScope() {
+    return NODE;
   }
 
   public String getNodeName() {
@@ -123,34 +113,6 @@ public class Node implements Cloneable {
 
   public Path getSecurityAuditLogDir() {
     return securityAuditLogDir;
-  }
-
-  public String getSecurityAuthc() {
-    return securityAuthc;
-  }
-
-  public boolean isSecuritySslTls() {
-    return securitySslTls;
-  }
-
-  public boolean isSecurityWhitelist() {
-    return securityWhitelist;
-  }
-
-  public FailoverPriority getFailoverPriority() {
-    return failoverPriority;
-  }
-
-  public Measure<TimeUnit> getClientReconnectWindow() {
-    return clientReconnectWindow;
-  }
-
-  public Measure<TimeUnit> getClientLeaseDuration() {
-    return clientLeaseDuration;
-  }
-
-  public Map<String, Measure<MemoryUnit>> getOffheapResources() {
-    return Collections.unmodifiableMap(offheapResources);
   }
 
   public Map<String, Path> getDataDirs() {
@@ -265,76 +227,6 @@ public class Node implements Cloneable {
     return this;
   }
 
-  public Node setSecurityAuthc(String securityAuthc) {
-    this.securityAuthc = securityAuthc;
-    return this;
-  }
-
-  public Node setSecuritySslTls(boolean securitySslTls) {
-    this.securitySslTls = securitySslTls;
-    return this;
-  }
-
-  public Node setSecurityWhitelist(boolean securityWhitelist) {
-    this.securityWhitelist = securityWhitelist;
-    return this;
-  }
-
-  public Node setFailoverPriority(FailoverPriority failoverPriority) {
-    this.failoverPriority = failoverPriority;
-    return this;
-  }
-
-  public Node setClientReconnectWindow(long clientReconnectWindow, TimeUnit timeUnit) {
-    return setClientReconnectWindow(Measure.of(clientReconnectWindow, timeUnit));
-  }
-
-  public Node setClientReconnectWindow(long clientReconnectWindow, java.util.concurrent.TimeUnit jdkUnit) {
-    return setClientReconnectWindow(Measure.of(clientReconnectWindow, TimeUnit.from(jdkUnit).orElseThrow(() -> new IllegalArgumentException(jdkUnit.name()))));
-  }
-
-  public Node setClientReconnectWindow(Measure<TimeUnit> measure) {
-    this.clientReconnectWindow = measure;
-    return this;
-  }
-
-  public Node setClientLeaseDuration(long clientLeaseDuration, TimeUnit timeUnit) {
-    return setClientLeaseDuration(Measure.of(clientLeaseDuration, timeUnit));
-  }
-
-  public Node setClientLeaseDuration(long clientLeaseDuration, java.util.concurrent.TimeUnit jdkUnit) {
-    return setClientLeaseDuration(Measure.of(clientLeaseDuration, TimeUnit.from(jdkUnit).orElseThrow(() -> new IllegalArgumentException(jdkUnit.name()))));
-  }
-
-  public Node setClientLeaseDuration(Measure<TimeUnit> measure) {
-    this.clientLeaseDuration = measure;
-    return this;
-  }
-
-  public Node setOffheapResource(String name, long quantity, MemoryUnit memoryUnit) {
-    return setOffheapResource(name, Measure.of(quantity, memoryUnit));
-  }
-
-  public Node setOffheapResource(String name, Measure<MemoryUnit> measure) {
-    this.offheapResources.put(name, measure);
-    return this;
-  }
-
-  public Node setOffheapResources(Map<String, Measure<MemoryUnit>> offheapResources) {
-    this.offheapResources.putAll(offheapResources);
-    return this;
-  }
-
-  public Node removeOffheapResource(String key) {
-    this.offheapResources.remove(key);
-    return this;
-  }
-
-  public Node clearOffheapResources() {
-    this.offheapResources.clear();
-    return this;
-  }
-
   public Node clearTcProperties() {
     this.tcProperties.clear();
     return this;
@@ -397,10 +289,7 @@ public class Node implements Cloneable {
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Node clone() {
     return new Node()
-        .setClientLeaseDuration(clientLeaseDuration)
-        .setClientReconnectWindow(clientReconnectWindow)
         .setDataDirs(dataDirs)
-        .setFailoverPriority(failoverPriority)
         .setNodeBackupDir(nodeBackupDir)
         .setNodeBindAddress(nodeBindAddress)
         .setNodeGroupBindAddress(nodeGroupBindAddress)
@@ -414,12 +303,8 @@ public class Node implements Cloneable {
         .setNodePublicPort(nodePublicPort)
         .setTcProperties(tcProperties)
         .setNodeLoggerOverrides(nodeLoggerOverrides)
-        .setOffheapResources(offheapResources)
         .setSecurityAuditLogDir(securityAuditLogDir)
-        .setSecurityAuthc(securityAuthc)
-        .setSecurityDir(securityDir)
-        .setSecuritySslTls(securitySslTls)
-        .setSecurityWhitelist(securityWhitelist);
+        .setSecurityDir(securityDir);
   }
 
   @Override
@@ -429,8 +314,6 @@ public class Node implements Cloneable {
     Node node = (Node) o;
     return nodePort == node.nodePort &&
         nodeGroupPort == node.nodeGroupPort &&
-        securitySslTls == node.securitySslTls &&
-        securityWhitelist == node.securityWhitelist &&
         Objects.equals(nodeName, node.nodeName) &&
         Objects.equals(nodeHostname, node.nodeHostname) &&
         Objects.equals(nodePublicHostname, node.nodePublicHostname) &&
@@ -444,11 +327,6 @@ public class Node implements Cloneable {
         Objects.equals(tcProperties, node.tcProperties) &&
         Objects.equals(securityDir, node.securityDir) &&
         Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
-        Objects.equals(securityAuthc, node.securityAuthc) &&
-        Objects.equals(failoverPriority, node.failoverPriority) &&
-        Objects.equals(clientReconnectWindow, node.clientReconnectWindow) &&
-        Objects.equals(clientLeaseDuration, node.clientLeaseDuration) &&
-        Objects.equals(offheapResources, node.offheapResources) &&
         Objects.equals(dataDirs, node.dataDirs);
   }
 
@@ -456,8 +334,7 @@ public class Node implements Cloneable {
   public int hashCode() {
     return Objects.hash(nodeName, nodeHostname, nodePublicHostname, nodePort, nodePublicPort, nodeGroupPort,
         nodeBindAddress, nodeGroupBindAddress, tcProperties, nodeLoggerOverrides, nodeMetadataDir, nodeLogDir, nodeBackupDir,
-        securityDir, securityAuditLogDir, securityAuthc, securitySslTls, securityWhitelist,
-        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, dataDirs);
+        securityDir, securityAuditLogDir, dataDirs);
   }
 
   @Override
@@ -478,13 +355,6 @@ public class Node implements Cloneable {
         ", tcProperties='" + tcProperties + '\'' +
         ", securityDir='" + securityDir + '\'' +
         ", securityAuditLogDir='" + securityAuditLogDir + '\'' +
-        ", securityAuthc='" + securityAuthc + '\'' +
-        ", securitySslTls=" + securitySslTls +
-        ", securityWhitelist=" + securityWhitelist +
-        ", failoverPriority='" + failoverPriority + '\'' +
-        ", clientReconnectWindow=" + clientReconnectWindow +
-        ", clientLeaseDuration=" + clientLeaseDuration +
-        ", offheapResources=" + offheapResources +
         ", dataDirs=" + dataDirs +
         '}';
   }
@@ -510,16 +380,8 @@ public class Node implements Cloneable {
       throw new IllegalArgumentException("Node " + getNodeAddress() + " must not declare the following data directories: " + String.join(", ", dataDirs) + ".");
     }
 
-    // override all the cluster-wide parameters of the node to be attached
-    Node thisCopy = clone()
-        .setSecurityAuthc(aNodeFromTargetCluster.getSecurityAuthc())
-        .setSecuritySslTls(aNodeFromTargetCluster.isSecuritySslTls())
-        .setSecurityWhitelist(aNodeFromTargetCluster.isSecurityWhitelist())
-        .setFailoverPriority(aNodeFromTargetCluster.getFailoverPriority())
-        .setClientReconnectWindow(aNodeFromTargetCluster.getClientReconnectWindow())
-        .setClientLeaseDuration(aNodeFromTargetCluster.getClientLeaseDuration())
-        .clearOffheapResources()
-        .setOffheapResources(aNodeFromTargetCluster.getOffheapResources());
+    // create a copy of the node
+    Node thisCopy = clone();
 
     if (aNodeFromTargetCluster.getSecurityDir() == null && securityDir != null) {
       // node was started with a security directory but destination cluster is not secured so we do not need one
@@ -529,50 +391,37 @@ public class Node implements Cloneable {
     return thisCopy;
   }
 
-  public Node fillRequiredDefaults() {
-    Stream.of(Setting.values())
-        .filter(isEqual(NODE_HOSTNAME).negate())
-        .filter(isEqual(NODE_REPOSITORY_DIR).negate())
-        .filter(isEqual(CLUSTER_NAME).negate())
-        .filter(isEqual(LICENSE_FILE).negate())
-        .filter(Setting::isRequired)
-        .forEach(setting -> setting.fillDefault(this));
-    return this;
+  public Node fillRequiredSettings() {
+    return Setting.fillRequiredSettings(this);
   }
 
-  private Node fillDefaults() {
-    Stream.of(Setting.values())
-        .filter(isEqual(NODE_HOSTNAME).negate())
-        .filter(isEqual(NODE_REPOSITORY_DIR).negate())
-        .filter(isEqual(CLUSTER_NAME).negate())
-        .filter(isEqual(LICENSE_FILE).negate())
-        .forEach(setting -> setting.fillDefault(this));
-    return this;
+  private Node fillSettings() {
+    return Setting.fillSettings(this);
   }
 
   public static Node newDefaultNode(String hostname) {
     return new Node()
-        .fillDefaults()
+        .fillSettings()
         .setNodeHostname(hostname);
   }
 
   public static Node newDefaultNode(String name, String hostname) {
     return new Node()
-        .fillDefaults()
+        .fillSettings()
         .setNodeName(name)
         .setNodeHostname(hostname);
   }
 
   public static Node newDefaultNode(String hostname, int port) {
     return new Node()
-        .fillDefaults()
+        .fillSettings()
         .setNodePort(port)
         .setNodeHostname(hostname);
   }
 
   public static Node newDefaultNode(String name, String hostname, int port) {
     return new Node()
-        .fillDefaults()
+        .fillSettings()
         .setNodeName(name)
         .setNodePort(port)
         .setNodeHostname(hostname);

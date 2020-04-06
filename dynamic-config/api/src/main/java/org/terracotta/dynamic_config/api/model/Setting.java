@@ -38,6 +38,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.EnumSet.noneOf;
 import static java.util.EnumSet.of;
+import static java.util.function.Predicate.isEqual;
 import static org.terracotta.common.struct.TimeUnit.HOURS;
 import static org.terracotta.common.struct.TimeUnit.MILLISECONDS;
 import static org.terracotta.common.struct.TimeUnit.MINUTES;
@@ -78,8 +79,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      extractor(Node::getNodeName),
-      setter(Node::setNodeName),
+      fromNode(Node::getNodeName),
+      intoNode(Node::setNodeName),
       of(GET, CONFIG),
       noneOf(Requirement.class),
       emptyList(),
@@ -90,8 +91,8 @@ public enum Setting {
       false,
       "%h",
       NODE,
-      extractor(Node::getNodeHostname),
-      setter(Node::setNodeHostname),
+      fromNode(Node::getNodeHostname),
+      intoNode(Node::setNodeHostname),
       of(GET, CONFIG),
       noneOf(Requirement.class),
       emptyList(),
@@ -102,8 +103,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      extractor(Node::getNodePublicHostname),
-      setter(Node::setNodePublicHostname),
+      fromNode(Node::getNodePublicHostname),
+      intoNode(Node::setNodePublicHostname),
       of(GET, SET, UNSET, CONFIG),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -114,8 +115,8 @@ public enum Setting {
       false,
       "9410",
       NODE,
-      extractor(Node::getNodePort),
-      setter((node, value) -> node.setNodePort(Integer.parseInt(value))),
+      fromNode(Node::getNodePort),
+      intoNode((node, value) -> node.setNodePort(Integer.parseInt(value))),
       of(GET, CONFIG),
       noneOf(Requirement.class),
       emptyList(),
@@ -126,8 +127,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      extractor(Node::getNodePublicPort),
-      setter((node, value) -> node.setNodePublicPort(value == null ? null : Integer.parseInt(value))),
+      fromNode(Node::getNodePublicPort),
+      intoNode((node, value) -> node.setNodePublicPort(value == null ? null : Integer.parseInt(value))),
       of(GET, SET, UNSET, CONFIG),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -138,8 +139,8 @@ public enum Setting {
       false,
       "9430",
       NODE,
-      extractor(Node::getNodeGroupPort),
-      setter((node, value) -> node.setNodeGroupPort(Integer.parseInt(value))),
+      fromNode(Node::getNodeGroupPort),
+      intoNode((node, value) -> node.setNodeGroupPort(Integer.parseInt(value))),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       emptyList(),
@@ -150,8 +151,8 @@ public enum Setting {
       false,
       "0.0.0.0",
       NODE,
-      extractor(Node::getNodeBindAddress),
-      setter(Node::setNodeBindAddress),
+      fromNode(Node::getNodeBindAddress),
+      intoNode(Node::setNodeBindAddress),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE, RESTART),
       emptyList(),
@@ -162,8 +163,8 @@ public enum Setting {
       false,
       "0.0.0.0",
       NODE,
-      extractor(Node::getNodeGroupBindAddress),
-      setter(Node::setNodeGroupBindAddress),
+      fromNode(Node::getNodeGroupBindAddress),
+      intoNode(Node::setNodeGroupBindAddress),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       emptyList(),
@@ -177,10 +178,8 @@ public enum Setting {
       false,
       null,
       CLUSTER,
-      node -> {
-        throw new UnsupportedOperationException("Unable to get the cluster name from a node");
-      },
-      unsupported(),
+      fromCluster(Cluster::getName),
+      intoCluster(Cluster::setName),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART)
   ),
@@ -202,8 +201,8 @@ public enum Setting {
       false,
       "%H" + separator + "terracotta" + separator + "metadata",
       NODE,
-      extractor(Node::getNodeMetadataDir),
-      setter((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
+      fromNode(Node::getNodeMetadataDir),
+      intoNode((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
       of(GET, SET, UNSET, CONFIG),
       of(ACTIVES_ONLINE, RESTART),
       emptyList(),
@@ -214,8 +213,8 @@ public enum Setting {
       false,
       "%H" + separator + "terracotta" + separator + "logs",
       NODE,
-      extractor(Node::getNodeLogDir),
-      setter((node, value) -> node.setNodeLogDir(Paths.get(value))),
+      fromNode(Node::getNodeLogDir),
+      intoNode((node, value) -> node.setNodeLogDir(Paths.get(value))),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE, RESTART),
       emptyList(),
@@ -226,8 +225,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      extractor(Node::getNodeBackupDir),
-      setter((node, value) -> node.setNodeBackupDir(value == null ? null : Paths.get(value))),
+      fromNode(Node::getNodeBackupDir),
+      intoNode((node, value) -> node.setNodeBackupDir(value == null ? null : Paths.get(value))),
       of(GET, SET, UNSET, CONFIG),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -238,14 +237,15 @@ public enum Setting {
       true,
       null,
       NODE,
-      extractor(Node::getTcProperties),
-      mapSetter((node, tuple) -> {
+      fromNode(Node::getTcProperties),
+      intoNodeMap((node, tuple) -> {
         if (tuple.allNulls()) {
           node.clearTcProperties();
         } else if (tuple.t1 != null && tuple.t2 == null) {
           node.removeTcProperty(tuple.t1);
         } else if (tuple.t1 == null) {
           // tuple.t2 != null
+          // complete reset of all entries
           node.clearTcProperties();
           Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setTcProperty(kv[0], kv[1]));
         } else {
@@ -263,14 +263,15 @@ public enum Setting {
       true,
       null,
       NODE,
-      extractor(Node::getNodeLoggerOverrides),
-      mapSetter((node, tuple) -> {
+      fromNode(Node::getNodeLoggerOverrides),
+      intoNodeMap((node, tuple) -> {
         if (tuple.allNulls()) {
           node.clearNodeLoggerOverrides();
         } else if (tuple.t1 != null && tuple.t2 == null) {
           node.removeNodeLoggerOverride(tuple.t1);
         } else if (tuple.t1 == null) {
           // tuple.t2 != null
+          // complete reset of all entries
           node.clearNodeLoggerOverrides();
           Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setNodeLoggerOverride(kv[0], Level.valueOf(kv[1].toUpperCase())));
         } else {
@@ -288,8 +289,8 @@ public enum Setting {
       false,
       "120s",
       CLUSTER,
-      extractor(Node::getClientReconnectWindow),
-      setter((node, value) -> node.setClientReconnectWindow(Measure.parse(value, TimeUnit.class))),
+      fromCluster(Cluster::getClientReconnectWindow),
+      intoCluster((cluster, value) -> cluster.setClientReconnectWindow(Measure.parse(value, TimeUnit.class))),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -300,8 +301,8 @@ public enum Setting {
       false,
       "availability",
       CLUSTER,
-      extractor(Node::getFailoverPriority),
-      setter((node, value) -> node.setFailoverPriority(FailoverPriority.valueOf(value))),
+      fromCluster(Cluster::getFailoverPriority),
+      intoCluster((cluster, value) -> cluster.setFailoverPriority(FailoverPriority.valueOf(value))),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       emptyList(),
@@ -315,8 +316,8 @@ public enum Setting {
       false,
       "150s",
       CLUSTER,
-      extractor(Node::getClientLeaseDuration),
-      setter((node, value) -> node.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
+      fromCluster(Cluster::getClientLeaseDuration),
+      intoCluster((cluster, value) -> cluster.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
       of(GET, SET, CONFIG),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -330,8 +331,8 @@ public enum Setting {
       false,
       null,
       CLUSTER,
-      node -> {
-        throw new UnsupportedOperationException("Unable to get a license file from a node");
+      o -> {
+        throw new UnsupportedOperationException("Unable to get a license file");
       },
       unsupported(),
       of(SET),
@@ -347,8 +348,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      extractor(Node::getSecurityDir),
-      setter((node, value) -> node.setSecurityDir(value == null ? null : Paths.get(value))),
+      fromNode(Node::getSecurityDir),
+      intoNode((node, value) -> node.setSecurityDir(value == null ? null : Paths.get(value))),
       of(GET, SET, UNSET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       emptyList(),
@@ -359,8 +360,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      extractor(Node::getSecurityAuditLogDir),
-      setter((node, value) -> node.setSecurityAuditLogDir(value == null ? null : Paths.get(value))),
+      fromNode(Node::getSecurityAuditLogDir),
+      intoNode((node, value) -> node.setSecurityAuditLogDir(value == null ? null : Paths.get(value))),
       of(GET, SET, UNSET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       emptyList(),
@@ -371,8 +372,8 @@ public enum Setting {
       false,
       null,
       CLUSTER,
-      extractor(Node::getSecurityAuthc),
-      setter(Node::setSecurityAuthc),
+      fromCluster(Cluster::getSecurityAuthc),
+      intoCluster(Cluster::setSecurityAuthc),
       of(GET, SET, UNSET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       asList("file", "ldap", "certificate")
@@ -381,8 +382,8 @@ public enum Setting {
       false,
       "false",
       CLUSTER,
-      extractor(Node::isSecuritySslTls),
-      setter((node, value) -> node.setSecuritySslTls(Boolean.parseBoolean(value))),
+      fromCluster(Cluster::isSecuritySslTls),
+      intoCluster((cluster, value) -> cluster.setSecuritySslTls(Boolean.parseBoolean(value))),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       asList("true", "false")
@@ -391,8 +392,8 @@ public enum Setting {
       false,
       "false",
       CLUSTER,
-      extractor(Node::isSecurityWhitelist),
-      setter((node, value) -> node.setSecurityWhitelist(Boolean.parseBoolean(value))),
+      fromCluster(Cluster::isSecurityWhitelist),
+      intoCluster((cluster, value) -> cluster.setSecurityWhitelist(Boolean.parseBoolean(value))),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       asList("true", "false")
@@ -404,19 +405,20 @@ public enum Setting {
       true,
       "main:512MB",
       CLUSTER,
-      extractor(Node::getOffheapResources),
-      mapSetter((node, tuple) -> {
+      fromCluster(Cluster::getOffheapResources),
+      intoClusterMap((cluster, tuple) -> {
         if (tuple.allNulls()) {
-          node.clearOffheapResources();
+          cluster.clearOffheapResources();
         } else if (tuple.t1 != null && tuple.t2 == null) {
-          node.removeOffheapResource(tuple.t1);
+          cluster.removeOffheapResource(tuple.t1);
         } else if (tuple.t1 == null) {
           // tuple.t2 != null
-          node.clearOffheapResources();
-          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setOffheapResource(kv[0], Measure.parse(kv[1], MemoryUnit.class)));
+          // complete reset of all entries
+          cluster.clearOffheapResources();
+          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> cluster.setOffheapResource(kv[0], Measure.parse(kv[1], MemoryUnit.class)));
         } else {
           // tuple.t1 != null && tuple.t2 != null
-          node.setOffheapResource(tuple.t1, Measure.parse(tuple.t2, MemoryUnit.class));
+          cluster.setOffheapResource(tuple.t1, Measure.parse(tuple.t2, MemoryUnit.class));
         }
       }),
       of(GET, SET, UNSET, CONFIG),
@@ -429,14 +431,15 @@ public enum Setting {
       true,
       "main:%H" + separator + "terracotta" + separator + "user-data" + separator + "main",
       NODE,
-      extractor(Node::getDataDirs),
-      mapSetter((node, tuple) -> {
+      fromNode(Node::getDataDirs),
+      intoNodeMap((node, tuple) -> {
         if (tuple.allNulls()) {
           node.clearDataDirs();
         } else if (tuple.t1 != null && tuple.t2 == null) {
           node.removeDataDir(tuple.t1);
         } else if (tuple.t1 == null) {
           // tuple.t2 != null
+          // complete reset of all entries
           node.clearDataDirs();
           Stream.of(tuple.t2.split(",")).forEach(kv -> {
             int firstColon = kv.indexOf(":");
@@ -458,20 +461,20 @@ public enum Setting {
   private final boolean map;
   private final String defaultValue;
   private final Scope scope;
-  private final Function<Node, Stream<Tuple2<String, String>>> extractor;
+  private final Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor;
   private final Collection<Operation> operations;
   private final Collection<Requirement> requirements;
   private final Collection<String> allowedValues;
   private final Collection<? extends Enum<?>> allowedUnits;
   private final BiConsumer<String, String> validator;
-  private final BiConsumer<Node, Tuple2<String, String>> setter;
+  private final BiConsumer<PropertyHolder, Tuple2<String, String>> setter;
 
   Setting(String name,
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<Node, Stream<Tuple2<String, String>>> extractor,
-          BiConsumer<Node, Tuple2<String, String>> setter,
+          Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
           EnumSet<Operation> operations) {
     this(name, map, defaultValue, scope, extractor, setter, operations, noneOf(Requirement.class));
   }
@@ -480,8 +483,8 @@ public enum Setting {
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<Node, Stream<Tuple2<String, String>>> extractor,
-          BiConsumer<Node, Tuple2<String, String>> setter,
+          Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
           EnumSet<Operation> operations,
           EnumSet<Requirement> requirements) {
     this(name, map, defaultValue, scope, extractor, setter, operations, requirements, emptyList(), emptyList());
@@ -491,8 +494,8 @@ public enum Setting {
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<Node, Stream<Tuple2<String, String>>> extractor,
-          BiConsumer<Node, Tuple2<String, String>> setter,
+          Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
           EnumSet<Operation> operations,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues) {
@@ -503,8 +506,8 @@ public enum Setting {
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<Node, Stream<Tuple2<String, String>>> extractor,
-          BiConsumer<Node, Tuple2<String, String>> setter,
+          Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
           EnumSet<Operation> operations,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues,
@@ -516,8 +519,8 @@ public enum Setting {
           boolean map,
           String defaultValue,
           Scope scope,
-          Function<Node, Stream<Tuple2<String, String>>> extractor,
-          BiConsumer<Node, Tuple2<String, String>> setter,
+          Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
+          BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
           EnumSet<Operation> operations,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues,
@@ -561,10 +564,10 @@ public enum Setting {
     return scope;
   }
 
-  public void fillDefault(Node node) {
+  public void fillDefault(PropertyHolder o) {
     String v = getDefaultValue();
-    if (v != null && !getProperty(node).isPresent()) {
-      setProperty(node, v);
+    if (v != null && !getProperty(o).isPresent()) {
+      setProperty(o, v);
     }
   }
 
@@ -646,7 +649,7 @@ public enum Setting {
     return this.scope == scope;
   }
 
-  public String getConfigPrefix(int stripeId, int nodeId) {
+  public String getNamespace(int stripeId, int nodeId) {
     return (isScope(NODE) ? "stripe." + stripeId + ".node." + nodeId + "." : "") + this;
   }
 
@@ -662,32 +665,33 @@ public enum Setting {
     validate(null, value);
   }
 
-  public Optional<String> getProperty(Node node) {
-    return extractor.apply(node)
+  public Optional<String> getProperty(PropertyHolder o) {
+    return extractor.apply(o)
         .filter(tuple -> !tuple.allNulls())
         .map(tuple -> tuple.t1 == null ? tuple.t2 : (tuple.t1 + ":" + tuple.t2))
         .reduce((result, element) -> result + "," + element);
   }
 
   public Optional<String> getProperty(NodeContext nodeContext) {
-    if (this == CLUSTER_NAME) {
-      return Optional.ofNullable(nodeContext.getCluster().getName());
-    }
-    return getProperty(nodeContext.getNode());
+    return getProperty(getTarget(nodeContext));
   }
 
   public Stream<Tuple2<String, String>> getExpandedProperties(NodeContext nodeContext) {
     if (!isMap()) {
       throw new UnsupportedOperationException();
     }
-    return extractor.apply(nodeContext.getNode()).filter(tuple -> tuple.t1 != null);
+    return extractor.apply(getTarget(nodeContext)).filter(tuple -> tuple.t1 != null);
   }
 
-  public void setProperty(Node node, String value) {
+  public void setProperty(PropertyHolder node, String value) {
     setProperty(node, null, value);
   }
 
-  public void setProperty(Node node, String key, String value) {
+  public void setProperty(NodeContext nodeContext, String key, String value) {
+    setProperty(scope == CLUSTER ? nodeContext.getCluster() : nodeContext.getNode(), key, value);
+  }
+
+  public void setProperty(PropertyHolder node, String key, String value) {
     if (isReadOnly()) {
       throw new IllegalArgumentException("Setting: " + this + " is read-only");
     }
@@ -703,6 +707,10 @@ public enum Setting {
     return this == NODE_HOSTNAME;
   }
 
+  private PropertyHolder getTarget(NodeContext nodeContext) {
+    return scope == CLUSTER ? nodeContext.getCluster() : nodeContext.getNode();
+  }
+
   public static Setting fromName(String name) {
     return findSetting(name).orElseThrow(() -> new IllegalArgumentException("Illegal setting name: " + name));
   }
@@ -711,10 +719,33 @@ public enum Setting {
     return Stream.of(values()).filter(setting -> setting.name.equals(name)).findFirst();
   }
 
+  public static <T extends PropertyHolder> T fillRequiredSettings(T o) {
+    Stream.of(Setting.values())
+        .filter(isEqual(NODE_HOSTNAME).negate())
+        .filter(isEqual(NODE_REPOSITORY_DIR).negate())
+        .filter(isEqual(CLUSTER_NAME).negate())
+        .filter(isEqual(LICENSE_FILE).negate())
+        .filter(s -> s.isScope(o.getScope()))
+        .filter(Setting::isRequired)
+        .forEach(setting -> setting.fillDefault(o));
+    return o;
+  }
+
+  public static <T extends PropertyHolder> T fillSettings(T o) {
+    Stream.of(Setting.values())
+        .filter(isEqual(NODE_HOSTNAME).negate())
+        .filter(isEqual(NODE_REPOSITORY_DIR).negate())
+        .filter(isEqual(CLUSTER_NAME).negate())
+        .filter(isEqual(LICENSE_FILE).negate())
+        .filter(s -> s.isScope(o.getScope()))
+        .forEach(setting -> setting.fillDefault(o));
+    return o;
+  }
+
   @SuppressWarnings("unchecked")
-  private static Function<Node, Stream<Tuple2<String, String>>> extractor(Function<Node, Object> extractor) {
+  private static Function<PropertyHolder, Stream<Tuple2<String, String>>> fromNode(Function<Node, Object> extractor) {
     return node -> {
-      Object o = extractor.apply(node);
+      Object o = extractor.apply((Node) node);
       if (o == null) {
         return Stream.empty();
       }
@@ -729,17 +760,48 @@ public enum Setting {
     };
   }
 
-  private static BiConsumer<Node, Tuple2<String, String>> setter(BiConsumer<Node, String> setter) {
+  @SuppressWarnings("unchecked")
+  private static Function<PropertyHolder, Stream<Tuple2<String, String>>> fromCluster(Function<Cluster, Object> extractor) {
+    return cluster -> {
+      Object o = extractor.apply((Cluster) cluster);
+      if (o == null) {
+        return Stream.empty();
+      }
+      if (o instanceof Map) {
+        return ((Map<String, ?>) o).entrySet()
+            .stream()
+            .filter(e -> e.getValue() != null)
+            .sorted(Map.Entry.comparingByKey())
+            .map(e -> tuple2(e.getKey(), e.getValue().toString()));
+      }
+      return Stream.of(tuple2(null, String.valueOf(o)));
+    };
+  }
+
+  private static BiConsumer<PropertyHolder, Tuple2<String, String>> intoNode(BiConsumer<Node, String> setter) {
     return (node, tuple) -> {
       if (tuple.t1 != null) {
         throw new IllegalArgumentException("Key must be null: parameter is not a map");
       }
-      setter.accept(node, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim());
+      setter.accept((Node) node, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim());
     };
   }
 
-  private static BiConsumer<Node, Tuple2<String, String>> mapSetter(BiConsumer<Node, Tuple2<String, String>> setter) {
-    return (node, tuple) -> setter.accept(node, tuple2(tuple.t1, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim()));
+  private static BiConsumer<PropertyHolder, Tuple2<String, String>> intoCluster(BiConsumer<Cluster, String> setter) {
+    return (cluster, tuple) -> {
+      if (tuple.t1 != null) {
+        throw new IllegalArgumentException("Key must be null: parameter is not a map");
+      }
+      setter.accept((Cluster) cluster, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim());
+    };
+  }
+
+  private static BiConsumer<PropertyHolder, Tuple2<String, String>> intoNodeMap(BiConsumer<Node, Tuple2<String, String>> setter) {
+    return (node, tuple) -> setter.accept((Node) node, tuple2(tuple.t1, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim()));
+  }
+
+  private static BiConsumer<PropertyHolder, Tuple2<String, String>> intoClusterMap(BiConsumer<Cluster, Tuple2<String, String>> setter) {
+    return (cluster, tuple) -> setter.accept((Cluster) cluster, tuple2(tuple.t1, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim()));
   }
 
   private static <U, V> BiConsumer<U, V> unsupported() {

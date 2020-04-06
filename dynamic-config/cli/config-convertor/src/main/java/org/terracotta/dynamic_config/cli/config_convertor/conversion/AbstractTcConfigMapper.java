@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.cli.config_convertor.exception.ConfigConversionException;
 import org.terracotta.dynamic_config.cli.config_convertor.exception.ErrorCode;
 import org.terracotta.dynamic_config.cli.config_convertor.exception.ErrorParamKey;
@@ -86,7 +85,10 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
 
   protected ClassLoader classLoader;
 
-  public abstract Stripe getStripe(String xml);
+  /**
+   * Returns a cluster formed of 1 stripe N nodes representing an old tc-config XML file
+   */
+  public abstract Cluster getStripe(String xml);
 
   @Override
   public void init(ClassLoader classLoader) {
@@ -449,7 +451,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
       }
     }
 
-    List<Stripe> stripes = new ArrayList<>();
+    List<Cluster> stripes = new ArrayList<>();
     for (Map.Entry<Integer, Node> entry : oneConfigPerStripe.entrySet()) {
       Node doc = entry.getValue();
       try {
@@ -459,6 +461,9 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
         throw new RuntimeException(e);
       }
     }
-    return new Cluster(clusterName, stripes);
+    return stripes.stream().reduce((result, stripe) -> result
+        .addStripe(stripe.getSingleStripe().get())) // getSingleStripe() because conversion of xml -> model is for 1 stripe only
+        .get() // works because we have at least 1 xml file top arse
+        .setName(clusterName);
   }
 }

@@ -89,36 +89,36 @@ public class SetSettingTest {
 
   @Test
   public void test_setProperty_OFFHEAP_RESOURCES() {
-    Node node = Node.newDefaultNode("localhost");
-    assertThat(node.getOffheapResources().size(), is(equalTo(1)));
-    assertThat(node.getOffheapResources().get("main"), is(equalTo(Measure.of(512, MB))));
+    Cluster cluster = Cluster.newDefaultCluster();
+    assertThat(cluster.getOffheapResources().size(), is(equalTo(1)));
+    assertThat(cluster.getOffheapResources().get("main"), is(equalTo(Measure.of(512, MB))));
 
-    OFFHEAP_RESOURCES.setProperty(node, null);
-    assertThat(node.getOffheapResources().size(), is(equalTo(0)));
+    OFFHEAP_RESOURCES.setProperty(cluster, null);
+    assertThat(cluster.getOffheapResources().size(), is(equalTo(0)));
 
-    node = Node.newDefaultNode("localhost");
-    OFFHEAP_RESOURCES.setProperty(node, null, null);
-    assertThat(node.getOffheapResources().size(), is(equalTo(0)));
+    cluster = Cluster.newDefaultCluster("localhost");
+    OFFHEAP_RESOURCES.setProperty(cluster, null, null);
+    assertThat(cluster.getOffheapResources().size(), is(equalTo(0)));
 
-    node = Node.newDefaultNode("localhost");
-    OFFHEAP_RESOURCES.setProperty(node, "main", null);
-    assertThat(node.getOffheapResources().size(), is(equalTo(0)));
+    cluster = Cluster.newDefaultCluster("localhost");
+    OFFHEAP_RESOURCES.setProperty(cluster, "main", null);
+    assertThat(cluster.getOffheapResources().size(), is(equalTo(0)));
 
-    node = Node.newDefaultNode("localhost");
-    OFFHEAP_RESOURCES.setProperty(node, "main", "1GB");
-    assertThat(node.getOffheapResources().size(), is(equalTo(1)));
-    assertThat(node.getOffheapResources().get("main"), is(equalTo(Measure.of(1, GB))));
+    cluster = Cluster.newDefaultCluster("localhost");
+    OFFHEAP_RESOURCES.setProperty(cluster, "main", "1GB");
+    assertThat(cluster.getOffheapResources().size(), is(equalTo(1)));
+    assertThat(cluster.getOffheapResources().get("main"), is(equalTo(Measure.of(1, GB))));
 
-    node = Node.newDefaultNode("localhost");
-    OFFHEAP_RESOURCES.setProperty(node, null, "main:1GB");
-    assertThat(node.getOffheapResources().size(), is(equalTo(1)));
-    assertThat(node.getOffheapResources().get("main"), is(equalTo(Measure.of(1, GB))));
+    cluster = Cluster.newDefaultCluster("localhost");
+    OFFHEAP_RESOURCES.setProperty(cluster, null, "main:1GB");
+    assertThat(cluster.getOffheapResources().size(), is(equalTo(1)));
+    assertThat(cluster.getOffheapResources().get("main"), is(equalTo(Measure.of(1, GB))));
 
-    node = Node.newDefaultNode("localhost");
-    OFFHEAP_RESOURCES.setProperty(node, null, "main:1GB,second:2GB");
-    assertThat(node.getOffheapResources().size(), is(equalTo(2)));
-    assertThat(node.getOffheapResources().get("main"), is(equalTo(Measure.of(1, GB))));
-    assertThat(node.getOffheapResources().get("second"), is(equalTo(Measure.of(2, GB))));
+    cluster = Cluster.newDefaultCluster("localhost");
+    OFFHEAP_RESOURCES.setProperty(cluster, null, "main:1GB,second:2GB");
+    assertThat(cluster.getOffheapResources().size(), is(equalTo(2)));
+    assertThat(cluster.getOffheapResources().get("main"), is(equalTo(Measure.of(1, GB))));
+    assertThat(cluster.getOffheapResources().get("second"), is(equalTo(Measure.of(2, GB))));
   }
 
   @Test

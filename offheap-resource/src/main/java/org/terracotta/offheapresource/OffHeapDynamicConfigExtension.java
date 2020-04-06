@@ -33,7 +33,7 @@ public class OffHeapDynamicConfigExtension implements DynamicConfigExtension {
 
     NodeContext nodeContext = topologyService.getRuntimeNodeContext();
 
-    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(nodeContext.getNode().getOffheapResources());
+    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(nodeContext.getCluster().getOffheapResources());
 
     configChangeHandlerManager.set(Setting.OFFHEAP_RESOURCES, new OffheapResourceConfigChangeHandler(topologyService, offHeapResourcesProvider));
 

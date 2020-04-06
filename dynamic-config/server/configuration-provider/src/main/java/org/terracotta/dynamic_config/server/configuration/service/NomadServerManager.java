@@ -17,9 +17,11 @@ package org.terracotta.dynamic_config.server.configuration.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
@@ -101,7 +103,7 @@ public class NomadServerManager {
     init(repositoryPath,
         () -> nodeName,
         () -> getConfiguration().orElseGet(
-            () -> new NodeContext(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue())))));
+            () -> new NodeContext(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue())))), 1, nodeName)));
   }
 
   public void init(Path repositoryPath, NodeContext nodeContext) throws UncheckedNomadException {

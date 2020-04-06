@@ -35,7 +35,7 @@ public class LeaseDynamicConfigExtension implements DynamicConfigExtension {
 
     NodeContext nodeContext = topologyService.getRuntimeNodeContext();
 
-    LeaseConfiguration leaseConfiguration = new LeaseConfiguration(nodeContext.getNode().getClientLeaseDuration().getQuantity(TimeUnit.MILLISECONDS));
+    LeaseConfiguration leaseConfiguration = new LeaseConfiguration(nodeContext.getCluster().getClientLeaseDuration().getQuantity(TimeUnit.MILLISECONDS));
 
     configChangeHandlerManager.set(Setting.CLIENT_LEASE_DURATION, new LeaseConfigChangeHandler(leaseConfiguration));
 

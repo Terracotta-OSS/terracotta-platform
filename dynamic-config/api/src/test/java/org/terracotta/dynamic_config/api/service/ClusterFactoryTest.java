@@ -59,9 +59,9 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_create_cli() {
-    assertCliEquals(cli(), new Cluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))));
-    assertCliEquals(cli("node-hostname=%c"), new Cluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))));
-    assertCliEquals(cli("node-hostname=foo"), new Cluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))));
+    assertCliEquals(cli(), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))));
+    assertCliEquals(cli("node-hostname=%c"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))));
+    assertCliEquals(cli("node-hostname=foo"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))));
   }
 
   @Test
@@ -85,14 +85,14 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.node-hostname=localhost",
             "stripe.1.node.1.node-hostname=foo"
         ),
-        new Cluster(new Stripe(Node.newDefaultNode("real", "foo"))));
+        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("real", "foo"))));
 
     assertConfigEquals(
         config(
             "stripe.1.node.1.node-name=node1",
             "stripe.1.node.1.node-hostname=localhost"
         ),
-        new Cluster(new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))));
 
     assertConfigEquals(
         config(
@@ -105,7 +105,7 @@ public class ClusterFactoryTest {
             "stripe.2.node.2.node-name=node2",
             "stripe.2.node.2.node-hostname=localhost"
         ),
-        new Cluster(
+        Cluster.newDefaultCluster(
             new Stripe(
                 Node.newDefaultNode("node1", "localhost"),
                 Node.newDefaultNode("node2", "localhost")),
@@ -138,7 +138,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.security-audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
 
     assertConfigEquals(
         config(
@@ -164,7 +164,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.security-audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        new Cluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
   }
 
   @Test

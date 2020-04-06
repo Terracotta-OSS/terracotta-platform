@@ -72,7 +72,7 @@ public class RestartServiceTest extends BaseTest {
   public void setUp() throws Exception {
     super.setUp();
     restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing());
-    cluster = new Cluster(
+    cluster = Cluster.newDefaultCluster(
         "my-cluster",
         new Stripe(
             newDefaultNode("node1", "localhost", PORTS[0]),

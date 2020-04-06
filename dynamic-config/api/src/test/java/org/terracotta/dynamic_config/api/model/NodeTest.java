@@ -16,8 +16,6 @@
 package org.terracotta.dynamic_config.api.model;
 
 import org.junit.Test;
-import org.terracotta.common.struct.MemoryUnit;
-import org.terracotta.common.struct.TimeUnit;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Paths;
@@ -25,13 +23,11 @@ import java.nio.file.Paths;
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -41,10 +37,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class NodeTest {
 
   Node node = Node.newDefaultNode("node1", "localhost", 9410)
-      .setClientLeaseDuration(1, TimeUnit.SECONDS)
-      .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
-      .setFailoverPriority(FailoverPriority.valueOf("availability"))
       .setNodeBackupDir(Paths.get("backup"))
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
@@ -52,33 +45,20 @@ public class NodeTest {
       .setNodeLogDir(Paths.get("log"))
       .setNodeMetadataDir(Paths.get("metadata"))
       .setTcProperty("key", "val")
-      .setOffheapResource("off", 2, MemoryUnit.GB)
       .setSecurityAuditLogDir(Paths.get("audit"))
-      .setSecurityAuthc("ldap")
-      .setSecurityDir(Paths.get("sec"))
-      .setSecuritySslTls(true)
-      .setSecurityWhitelist(true);
+      .setSecurityDir(Paths.get("sec"));
 
   Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
-      .setClientLeaseDuration(1, TimeUnit.SECONDS)
-      .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setDataDir("data", Paths.get("data"))
-      .setFailoverPriority(FailoverPriority.valueOf("availability"))
       .setNodeBackupDir(Paths.get("backup"))
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeGroupPort(9430)
       .setNodeLogDir(Paths.get("log"))
       .setNodeMetadataDir(Paths.get("metadata"))
-      .setOffheapResource("off", 2, MemoryUnit.GB)
-      .setSecurityAuditLogDir(Paths.get("audit"))
-      .setSecurityAuthc("ldap")
-      .setSecuritySslTls(true)
-      .setSecurityWhitelist(true);
+      .setSecurityAuditLogDir(Paths.get("audit"));
 
   Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
-      .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("data", Paths.get("/data/cache2"));
 
   Node node3 = Node.newDefaultNode("node3", "localhost", 9410)
@@ -87,12 +67,6 @@ public class NodeTest {
       .setNodeGroupBindAddress("0.0.0.0")
       .setNodeMetadataDir(Paths.get("%H" + separator + "terracotta" + separator + "metadata"))
       .setNodeLogDir(Paths.get("%H" + separator + "terracotta" + separator + "logs"))
-      .setClientReconnectWindow(120, TimeUnit.SECONDS)
-      .setFailoverPriority(availability())
-      .setClientLeaseDuration(150, TimeUnit.SECONDS)
-      .setSecuritySslTls(false)
-      .setSecurityWhitelist(false)
-      .setOffheapResource("main", 512, MemoryUnit.MB)
       .setDataDir("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"));
 
   @Test
@@ -205,15 +179,9 @@ public class NodeTest {
     node2.removeDataDir("other");
 
     // attaching
-    node1.setSecurityDir(Paths.get("Sec1"));
+    node1.setSecurityDir(null);
     node2.setSecurityDir(Paths.get("Sec2"));
     clone = node2.cloneForAttachment(node1);
-
-    assertThat(node2.getOffheapResources(), hasKey("foo"));
-    assertThat(node2.getOffheapResources(), hasKey("bar"));
-    assertThat(node2.getOffheapResources(), not(hasKey("off")));
-    assertThat(clone.getOffheapResources(), hasKey("off"));
-    assertThat(clone.getOffheapResources(), not(hasKey("foo")));
-    assertThat(clone.getOffheapResources(), not(hasKey("bar")));
+    assertThat(clone.getSecurityDir(), is(equalTo(null)));
   }
 }
