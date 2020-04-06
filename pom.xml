@@ -536,10 +536,10 @@
     </profile>
     <!-- profile handling support for java versions >=9  -->
     <profile>
-      <id>testJVM</id>
+      <id>azure_linux_java_11</id>
       <activation>
         <property>
-          <name>testJVM</name>
+          <name>azure_linux_java_11</name>
         </property>
       </activation>
       <properties>
@@ -552,8 +552,11 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
               <trimStackTrace>false</trimStackTrace>
-              <jvm>${testJVM}</jvm>
               <argLine>--illegal-access=permit</argLine>
+              <jvm>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</jvm>
+              <environmentVariables>
+                <JAVA_HOME>/usr/lib/jvm/zulu-11-azure-amd64</JAVA_HOME>
+              </environmentVariables>
             </configuration>
           </plugin>
           <plugin>
@@ -561,8 +564,50 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
               <trimStackTrace>false</trimStackTrace>
-              <jvm>${testJVM}</jvm>
               <argLine>--illegal-access=permit</argLine>
+              <jvm>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</jvm>
+              <environmentVariables>
+                <JAVA_HOME>/usr/lib/jvm/zulu-11-azure-amd64</JAVA_HOME>
+              </environmentVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>azure_windows_java_11</id>
+      <activation>
+        <property>
+          <name>azure_windows_java_11</name>
+        </property>
+      </activation>
+      <properties>
+        <toolchain.provider.version>1.11</toolchain.provider.version>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <trimStackTrace>false</trimStackTrace>
+              <argLine>--illegal-access=permit</argLine>
+              <jvm>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</jvm>
+              <environmentVariables>
+                <JAVA_HOME>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64</JAVA_HOME>
+              </environmentVariables>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <trimStackTrace>false</trimStackTrace>
+              <argLine>--illegal-access=permit</argLine>
+              <jvm>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</jvm>
+              <environmentVariables>
+                <JAVA_HOME>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64</JAVA_HOME>
+              </environmentVariables>
             </configuration>
           </plugin>
         </plugins>
