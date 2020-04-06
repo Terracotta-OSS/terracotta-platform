@@ -75,6 +75,7 @@ import java.util.stream.Stream;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.function.Function.identity;
 import static java.util.stream.IntStream.rangeClosed;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
@@ -125,7 +126,7 @@ public class DynamicConfigIT {
     this.nodesPerStripe = clusterDef.nodesPerStripe();
     this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
   }
-  
+
   @Before
   public void before() {
     this.clusterFactory = new ClusterFactory(getClass().getSimpleName(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
@@ -197,13 +198,13 @@ public class DynamicConfigIT {
   }
 
   protected OptionalInt findActive(int stripeId) {
-    return IntStream.rangeClosed(1, nodesPerStripe)
+    return IntStream.rangeClosed(stripeId, nodesPerStripe)
         .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_ACTIVE)
         .findFirst();
   }
 
   protected int[] findPassives(int stripeId) {
-    return IntStream.rangeClosed(1, nodesPerStripe)
+    return IntStream.rangeClosed(stripeId, nodesPerStripe)
         .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_PASSIVE)
         .toArray();
   }
@@ -296,6 +297,14 @@ public class DynamicConfigIT {
         .pollInterval(Duration.ofMillis(500))
         .atMost(timeout, TimeUnit.SECONDS)
         .until(callable, matcher);
+  }
+
+  protected void waitForActive(int stripeId) {
+    waitUntil(() -> findActive(stripeId).isPresent(), is(true));
+  }
+
+  protected void waitForSomePassives(int stripeId) {
+    waitUntil(() -> findPassives(stripeId).length, is(greaterThan(0)));
   }
 
   protected Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
