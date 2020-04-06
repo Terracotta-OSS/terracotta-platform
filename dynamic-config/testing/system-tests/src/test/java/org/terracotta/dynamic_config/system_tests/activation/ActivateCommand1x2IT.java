@@ -57,6 +57,8 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    waitForActive(1);
+    waitForSomePassives(1);
     waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitUntil(out.getLog(1, findPassives(1)[0]), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
   }
@@ -88,6 +90,8 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
             "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
         allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
 
+    waitForActive(1);
+    waitForSomePassives(1);
     waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitUntil(out.getLog(1, findPassives(1)[0]), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
   }

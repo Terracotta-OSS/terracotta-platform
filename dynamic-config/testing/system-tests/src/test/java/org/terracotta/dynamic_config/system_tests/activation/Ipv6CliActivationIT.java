@@ -55,6 +55,8 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
 
     out.clearLog(1, 1);
     assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
+
+    waitForActive(1);
     waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
   }
 
@@ -67,6 +69,9 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
 
     out.clearLog();
     assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
+
+    waitForActive(1);
+    waitForSomePassives(1);
     waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
     waitUntil(out.getLog(1, findPassives(1)[0]), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
   }
