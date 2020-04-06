@@ -147,8 +147,8 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
             <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
@@ -157,18 +157,10 @@
             <angela.distribution>${project.version}</angela.distribution>
             <angela.kitInstallationDir>${project.build.directory}/platform-kit-${project.version}</angela.kitInstallationDir>
             <angela.java.vendor/> <!--empty to allow any vendor-->
-            <angela.java.version>${toolchain.provider.version}</angela.java.version>
+            <angela.java.version>${java.test.version}</angela.java.version>
             <!--<angela.java.opts>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</angela.java.opts>-->
           </systemPropertyVariables>
         </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

@@ -167,8 +167,8 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
             <JAVA_HOME>/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home/</JAVA_HOME>
@@ -176,14 +176,6 @@
 <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
           </systemPropertyVariables>
         </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

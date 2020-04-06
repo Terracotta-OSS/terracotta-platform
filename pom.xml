@@ -19,14 +19,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.terracotta</groupId>
+  <parent>
+    <groupId>org.terracotta</groupId>
+    <artifactId>terracotta-parent</artifactId>
+    <version>5.10</version>
+  </parent>
+
   <artifactId>platform-root</artifactId>
   <version>5.7-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
     <maven.version>3.2.5</maven.version>
-    <maven-forge-plugin.version>1.2.16</maven-forge-plugin.version>
     <slf4j.version>1.7.25</slf4j.version>
     <logback.version>1.2.3</logback.version>
     <terracotta-apis.version>1.7.0-pre1</terracotta-apis.version>
@@ -40,8 +44,6 @@
     <jackson.version>2.10.1</jackson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <java.version>1.8</java.version>
-    <toolchain.provider.version>1.8</toolchain.provider.version>
   </properties>
 
   <modules>
@@ -261,53 +263,11 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.8.1</version>
           <configuration>
-            <source>${java.version}</source>
-            <target>${java.version}</target>
             <compilerArgs>
               <arg>-Xlint:all</arg>
               <arg>-Werror</arg>
             </compilerArgs>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.22.2</version>
-          <configuration>
-            <trimStackTrace>false</trimStackTrace>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.22.2</version>
-          <configuration>
-            <trimStackTrace>false</trimStackTrace>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.sonatype.plugins</groupId>
-          <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.1</version>
-          <extensions>true</extensions>
-          <configuration>
-            <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
-            <serverId>terracotta-nexus-staging</serverId>
-            <skipNexusStagingDeployMojo>${skipDeploy}</skipNexusStagingDeployMojo>
-          </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-toolchains-plugin</artifactId>
-          <version>3.0.0</version>
-          <configuration>
-            <toolchains>
-              <jdk>
-                <version>${toolchain.provider.version}</version>
-              </jdk>
-            </toolchains>
           </configuration>
         </plugin>
         <plugin>
@@ -341,22 +301,7 @@
           <artifactId>maven-jaxb2-plugin</artifactId>
           <version>0.14.0</version>
         </plugin>
-        <plugin>
-          <groupId>com.github.spotbugs</groupId>
-          <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>3.1.12.2</version>
-          <configuration>
-            <xmlOutput>true</xmlOutput>
-          </configuration>
-          <dependencies>
-            <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
-            <dependency>
-              <groupId>com.github.spotbugs</groupId>
-              <artifactId>spotbugs</artifactId>
-              <version>4.0.0</version>
-            </dependency>
-          </dependencies>
-        </plugin>
+
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>3.2.0</version>
@@ -408,10 +353,6 @@
 
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-      </plugin>
-      <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <version>2.5.4</version>
@@ -447,33 +388,40 @@
   </build>
 
   <profiles>
-    <!-- fast profile for local use which will disable the default activated profiles and speed up the build -->
-    <profile>
-      <id>fast</id>
-    </profile>
     <!-- default profile including toolchain, javadoc, findbugs, license check, enforcer, etc -->
     <profile>
       <id>slow</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>fast</name>
+          <value>!true</value>
+        </property>
       </activation>
       <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>com.github.spotbugs</groupId>
+              <artifactId>spotbugs-maven-plugin</artifactId>
+              <version>3.1.12.2</version>
+              <configuration>
+                <xmlOutput>true</xmlOutput>
+              </configuration>
+              <dependencies>
+                <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
+                <dependency>
+                  <groupId>com.github.spotbugs</groupId>
+                  <artifactId>spotbugs</artifactId>
+                  <version>4.0.0</version>
+                </dependency>
+              </dependencies>
+            </plugin>
+          </plugins>
+        </pluginManagement>
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-toolchains-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>toolchain</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
-            <version>1.4.1</version>
             <executions>
               <execution>
                 <goals>
@@ -485,7 +433,7 @@
                       <uniqueVersions>true</uniqueVersions>
                     </dependencyConvergence>
                     <requireJavaVersion>
-                      <version>[${java.version},)</version>
+                      <version>[${java.build.version},)</version>
                     </requireJavaVersion>
                     <requireMavenVersion>
                       <version>[${maven.version},)</version>
@@ -522,11 +470,6 @@
             </executions>
           </plugin>
           <plugin>
-            <groupId>org.sonatype.plugins</groupId>
-            <artifactId>nexus-staging-maven-plugin</artifactId>
-            <extensions>true</extensions>
-          </plugin>
-          <plugin>
             <inherited>false</inherited>
             <groupId>com.mycila</groupId>
             <artifactId>license-maven-plugin</artifactId>
@@ -538,84 +481,53 @@
               </execution>
             </executions>
           </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- profile handling support for java versions >=9  -->
-    <profile>
-      <id>azure_linux_java_11</id>
-      <activation>
-        <property>
-          <name>azure_linux_java_11</name>
-        </property>
-      </activation>
-      <properties>
-        <toolchain.provider.version>1.11</toolchain.provider.version>
-      </properties>
-      <build>
-        <plugins>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
+            <groupId>org.terracotta</groupId>
+            <artifactId>maven-forge-plugin</artifactId>
+            <!--
+              configuration added to what is inherited from parent
+              See antrun plugin in this pom.
+             -->
             <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <argLine>--illegal-access=permit</argLine>
-              <jvm>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</jvm>
-              <environmentVariables>
-                <JAVA_HOME>/usr/lib/jvm/zulu-11-azure-amd64</JAVA_HOME>
-              </environmentVariables>
+              <argLine>${java.test.argLine}</argLine>
             </configuration>
           </plugin>
           <plugin>
+            <!--
+              Workaround for maven not being able to set a property conditionally based on parent property.
+
+              When testing with Java 9+ we need to pass a flag to the jvm (illegal-access).
+              When testing with Java 8, we must not, since it's not supported.
+
+              Since $java.test.version is set in the parent, we can't easily key a profile off the value
+              of this variable (profile activation doesn't resolve maven variables).  Using antrun instead to set
+              the value of $java.test.argLine and referencing it in maven-forge-definition.
+            -->
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <argLine>--illegal-access=permit</argLine>
-              <jvm>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</jvm>
-              <environmentVariables>
-                <JAVA_HOME>/usr/lib/jvm/zulu-11-azure-amd64</JAVA_HOME>
-              </environmentVariables>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>azure_windows_java_11</id>
-      <activation>
-        <property>
-          <name>azure_windows_java_11</name>
-        </property>
-      </activation>
-      <properties>
-        <toolchain.provider.version>1.11</toolchain.provider.version>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <argLine>--illegal-access=permit</argLine>
-              <jvm>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</jvm>
-              <environmentVariables>
-                <JAVA_HOME>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64</JAVA_HOME>
-              </environmentVariables>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <argLine>--illegal-access=permit</argLine>
-              <jvm>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</jvm>
-              <environmentVariables>
-                <JAVA_HOME>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64</JAVA_HOME>
-              </environmentVariables>
-            </configuration>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.8</version>
+            <executions>
+              <execution>
+                <phase>validate</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <exportAntProperties>true</exportAntProperties>
+                  <target>
+                    <!--
+                      only add the jvm param if we're testing on newer JDKs
+                      Note: this property should not have a default in properties section, otherwise
+                      antrun may not be able to overwrite its value (or at least won't display it correctly)
+                    -->
+                    <condition property="java.test.argLine" value="" else="--illegal-access=permit">
+                      <equals arg1="${java.test.version}" arg2="1.8"/>
+                    </condition>
+                    <echo message="Configured test argLine (for java ${java.test.version}): '${java.test.argLine}'"/>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
