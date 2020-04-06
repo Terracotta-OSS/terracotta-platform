@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.integration.tests;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
@@ -39,7 +40,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * @author Mathieu Carbou
@@ -61,11 +61,10 @@ public class StripeNamedIT extends AbstractSingleTest {
     NmsService nmsService = new DefaultNmsService(nmsEntity);
     nmsService.setOperationTimeout(60, TimeUnit.SECONDS);
 
-    String currentTopo = toJson(nmsService.readTopology().toMap()).toString();
-    String actual = removeRandomValues(currentTopo);
-    String expected = readJson("topology-renamed.json").toString();
+    JsonNode actual = removeRandomValues(toJson(nmsService.readTopology().toMap()));
+    JsonNode expected = readJson("topology-renamed.json");
 
-    JSONAssert.assertEquals(expected, actual, true);
+    assertEquals(expected, actual);
 
     // clear previous notifs
     nmsService.readMessages();

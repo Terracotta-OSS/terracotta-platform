@@ -97,11 +97,6 @@
       <artifactId>jackson-databind</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.skyscreamer</groupId>
-      <artifactId>jsonassert</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
@@ -176,6 +171,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
+            <JAVA_HOME>/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home/</JAVA_HOME>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
 <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
           </systemPropertyVariables>

@@ -15,13 +15,14 @@
  */
 package org.terracotta.management.integration.tests;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.notification.ContextualNotification;
 
 import java.util.List;
 
-import org.skyscreamer.jsonassert.JSONAssert;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Mathieu Carbou
@@ -31,10 +32,9 @@ public class TopologyIT extends AbstractSingleTest {
   @Test
   public void can_read_topology() throws Exception {
     Cluster cluster = nmsService.readTopology();
-    String currentTopo = toJson(cluster.toMap()).toString();
-    String actual = removeRandomValues(currentTopo);
-    String expected = readJson("topology.json").toString();
-    JSONAssert.assertEquals(expected, actual, true);
+    JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
+    JsonNode expected = readJson("topology.json");
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -62,11 +62,10 @@ public class TopologyIT extends AbstractSingleTest {
         "CLIENT_CACHE_CREATED", "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "SERVER_CACHE_CREATED", "SERVER_ENTITY_FETCHED",
         "CLIENT_ATTACHED", "CLIENT_CACHE_CREATED", "SERVER_ENTITY_FETCHED", "CLIENT_ATTACHED", "CLIENT_CACHE_CREATED");
 
-    String currentJson = toJson(notifs).toString();
-    String actual = removeRandomValues(currentJson);
-    String expected = readJson("notifications.json").toString();
+    JsonNode actual = removeRandomValues(toJson(notifs));
+    JsonNode expected = readJson("notifications.json");
 
-    JSONAssert.assertEquals(expected, actual, true);
+    assertEquals(expected, actual);
   }
 
 }
