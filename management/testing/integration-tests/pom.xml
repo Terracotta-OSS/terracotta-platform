@@ -167,8 +167,8 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
