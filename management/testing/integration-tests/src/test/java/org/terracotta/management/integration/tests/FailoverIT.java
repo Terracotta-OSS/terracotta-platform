@@ -15,9 +15,9 @@
  */
 package org.terracotta.management.integration.tests;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
-import org.terracotta.management.model.cluster.AbstractManageableNode;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.Server;
@@ -28,7 +28,6 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * @author Mathieu Carbou
@@ -80,10 +79,9 @@ public class FailoverIT extends AbstractHATest {
     Cluster cluster = nmsService.readTopology();
 
     // removes all random values
-    String currentTopo = toJson(cluster.toMap()).toString();
-    String actual = removeRandomValues(currentTopo);
+    JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
 
-    JSONAssert.assertEquals(readJson("topology-after-failover.json").toString(), readJsonStr(actual).toString(), true);
+    assertEquals(readJson("topology-after-failover.json"), actual);
   }
 
   @Test

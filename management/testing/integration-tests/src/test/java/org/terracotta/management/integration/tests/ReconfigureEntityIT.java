@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.integration.tests;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +30,6 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * @author Mathieu Carbou
@@ -79,19 +79,17 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
   @Test
   public void topology_after_reconfigure() throws Exception {
     Cluster cluster = nmsService.readTopology();
-    String currentTopo = toJson(cluster.toMap()).toString();
-    String actual = removeRandomValues(currentTopo);
-    String expected = readJson("topology-before-reconfigure.json").toString();
-    JSONAssert.assertEquals(expected, actual, true);
+    JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
+    JsonNode expected = readJson("topology-before-reconfigure.json");
+    assertEquals(expected, actual);
 
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
     factory0.reconfigure("pet-clinic/pets", "pet-clinic/clients");
 
     cluster = nmsService.readTopology();
-    currentTopo = toJson(cluster.toMap()).toString();
-    actual = removeRandomValues(currentTopo);
-    expected = readJson("topology-reconfigured.json").toString();
-    JSONAssert.assertEquals(expected, actual, true);
+    actual = removeRandomValues(toJson(cluster.toMap()));
+    expected = readJson("topology-reconfigured.json");
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -105,12 +103,10 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     List<ContextualNotification> notifs = waitForAllNotifications(latestReceivedNotifs);
     notifs = notifs.subList(notifs.size() - latestReceivedNotifs.length, notifs.size());
 
+    JsonNode actual = removeRandomValues(toJson(notifs));
+    JsonNode expected = readJson("notifications-after-reconfigure.json");
 
-    String currentJson = toJson(notifs).toString();
-    String actual = removeRandomValues(currentJson);
-    String expected = readJson("notifications-after-reconfigure.json").toString();
-
-    JSONAssert.assertEquals(expected, actual, true);
+    assertEquals(expected, actual);
   }
 
 }

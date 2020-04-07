@@ -215,6 +215,10 @@ public abstract class AbstractTest {
     assertTrue(test.test(statistics));
   }
 
+  protected JsonNode removeRandomValues(JsonNode currentTopo) {
+    return readJsonStr(removeRandomValues(currentTopo.toString()));
+  }
+
   protected String removeRandomValues(String currentTopo) {
     // removes all random values
     return currentTopo
