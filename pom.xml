@@ -32,7 +32,7 @@
     <terracotta-apis.version>1.7.0-pre1</terracotta-apis.version>
     <terracotta-configuration.version>10.7.0-pre2</terracotta-configuration.version>
     <passthrough-testing.version>1.7.0-pre12</passthrough-testing.version>
-    <terracotta-core.version>5.7.0-pre23</terracotta-core.version>
+    <terracotta-core.version>5.7.0-pre24</terracotta-core.version>
     <tripwire.version>1.0.0-pre7</tripwire.version>
     <angela.version>3.0.18</angela.version>
     <statistics.version>2.1</statistics.version>
