@@ -24,17 +24,31 @@ resources:
       name: terracotta/terracotta
 
 jobs:
-- template: build-templates/maven-common.yml@templates
-  parameters:
-    jdkVersion: '1.8'
-    jobName: 'Java8'
-    timeoutInMinutes: 90
-    vmImage: 'ubuntu-latest'
-    options: '-B'
-- template: build-templates/maven-common.yml@templates
-  parameters:
-    jdkVersion: '1.8'
-    jobName: 'Java11'
-    timeoutInMinutes: 90
-    vmImage: 'ubuntu-latest'
-    options: '-B -DtestJVM=/usr/lib/jvm/zulu-11-azure-amd64/bin/java'
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jdkVersion: '1.8'
+      jobName: 'linux_java_8'
+      timeoutInMinutes: 120
+      vmImage: 'ubuntu-latest'
+      options: '-B'
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jdkVersion: '1.8'
+      jobName: 'linux_java_11'
+      timeoutInMinutes: 120
+      vmImage: 'ubuntu-latest'
+      options: '-B -Dazure_linux_java_11'
+#  - template: build-templates/maven-common.yml@templates
+#    parameters:
+#      jdkVersion: '1.8'
+#      jobName: 'windows_java_8'
+#      timeoutInMinutes: 120
+#      vmImage: 'windows-latest'
+#      options: '-B'
+#  - template: build-templates/maven-common.yml@templates
+#    parameters:
+#      jdkVersion: '1.8'
+#      jobName: 'windows_java_11'
+#      timeoutInMinutes: 120
+#      vmImage: 'windows-latest'
+#      options: '-B -Dazure_windows_java_11'
