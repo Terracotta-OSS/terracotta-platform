@@ -93,4 +93,12 @@ public class InetSocketAddressConvertor {
     }
     return serversList;
   }
+
+  public static String toHostPort(InetSocketAddress address) {
+    if (isValidIPv6(address.getHostName(), false)) {
+      return "[" + address.getHostName() + "]" + ":" + address.getPort();
+    } else {
+      return address.getHostName() + ":" + address.getPort();
+    }
+  }
 }
