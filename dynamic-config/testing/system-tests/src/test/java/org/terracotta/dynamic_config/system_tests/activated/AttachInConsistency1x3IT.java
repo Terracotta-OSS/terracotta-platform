@@ -59,6 +59,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     //Activate cluster
     activateCluster();
+    waitForActive(1);
     waitForNPassives(1, 1);
   }
 
@@ -113,8 +114,8 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     // Ensure that earlier stopped active now restarts as passive and sync the config from current active
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
-    waitForPassive(1, activeId);
     waitForActive(1, passiveId);
+    waitForPassive(1, activeId);
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
