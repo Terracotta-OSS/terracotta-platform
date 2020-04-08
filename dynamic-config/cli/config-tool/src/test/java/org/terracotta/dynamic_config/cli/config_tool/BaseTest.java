@@ -29,6 +29,7 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
+import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.entity.client.NomadEntity;
 import org.terracotta.nomad.entity.client.NomadEntityProvider;
@@ -59,6 +60,7 @@ public abstract class BaseTest {
   protected NomadEntityProvider nomadEntityProvider;
   protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
+  protected StopService stopService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
 
   private final Cache<InetSocketAddress, TopologyService> topologyServices = new Cache<>(addr -> mock(TopologyService.class, addr.toString()));
@@ -105,6 +107,7 @@ public abstract class BaseTest {
     multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
     nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
+    stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
   }
 
   protected DiagnosticService diagnosticServiceMock(String host, int port) {

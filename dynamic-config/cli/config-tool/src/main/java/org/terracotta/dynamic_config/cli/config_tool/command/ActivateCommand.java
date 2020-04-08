@@ -56,7 +56,7 @@ public class ActivateCommand extends RemoteCommand {
   @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Parameter(names = {"-R"}, description = "Restrict the activation process to the node only")

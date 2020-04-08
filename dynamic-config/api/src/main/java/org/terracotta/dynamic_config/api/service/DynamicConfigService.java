@@ -25,13 +25,6 @@ import java.time.Duration;
 public interface DynamicConfigService {
 
   /**
-   * Restarts this node by invoking the appropriate platform APIs. Useful when a node needs to be restarted after activation.
-   *
-   * @param delay initial delay before restart happens
-   */
-  void restart(Duration delay);
-
-  /**
    * Changes the in-memory cluster to a new one for this node while it is still not activated.
    * The cluster topology will become effective when the nodes will be activated and restarted.
    */
@@ -55,12 +48,25 @@ public interface DynamicConfigService {
   void upgradeLicense(String licenseContent);
 
   /**
-   * Reset and restart an activated node.
+   * Reset
    * <p>
    * This method will backup and reset the configurations and Nomad append log,
-   * and will restart the node as if it was alone in its own cluster.
    * <p>
-   * The node will restart in diagnostic mode.
+   * The node will restart in diagnostic mode if restarted.
    */
-  void resetAndRestart();
+  void reset();
+
+  /**
+   * Restarts this node by invoking the appropriate platform APIs. Useful when a node needs to be restarted after activation.
+   *
+   * @param delay initial delay before restart happens
+   */
+  void restart(Duration delay);
+
+  /**
+   * Stops an activated node.
+   * <p>
+   * This method will zap and stop the node.
+   */
+  void stop(Duration delay);
 }
