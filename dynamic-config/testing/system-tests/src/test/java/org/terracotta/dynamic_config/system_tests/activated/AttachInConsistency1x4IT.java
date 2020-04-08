@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -125,7 +124,6 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   }
 
   @Test
-  @Ignore("TODO - FIXME")
   public void testFailoverDuringNomadCommitForPassiveAddition() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId1 = findPassives(1)[0];
