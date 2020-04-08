@@ -48,7 +48,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 1);
+    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node

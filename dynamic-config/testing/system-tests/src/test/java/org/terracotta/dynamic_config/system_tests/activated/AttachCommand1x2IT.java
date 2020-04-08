@@ -55,7 +55,7 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
 
     stopNode(1, 1);
-    waitForActive(1, 1);
+    waitForActive(1, 2);
   }
 
   @Test

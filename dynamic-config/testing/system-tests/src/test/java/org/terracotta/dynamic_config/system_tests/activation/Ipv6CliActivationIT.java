@@ -51,7 +51,6 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
     assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
 
     waitForActive(1);
-    waitForActive(1);
   }
 
   @Test

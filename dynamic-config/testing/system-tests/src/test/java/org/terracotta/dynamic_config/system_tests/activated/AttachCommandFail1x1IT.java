@@ -40,7 +40,7 @@ public class AttachCommandFail1x1IT extends DynamicConfigIT {
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 1);
+    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //create prepare failure
