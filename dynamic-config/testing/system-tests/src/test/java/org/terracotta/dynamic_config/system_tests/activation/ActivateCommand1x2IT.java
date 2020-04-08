@@ -34,7 +34,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
@@ -47,7 +46,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   public void testSingleNodeActivation() {
     assertThat(activateCluster(),
         allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
   }
 
   @Test
@@ -58,9 +57,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
     assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
     waitForActive(1);
-    waitForSomePassives(1);
-    waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitUntil(out.getLog(1, findPassives(1)[0]), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassives(1);
   }
 
   @Test
@@ -72,7 +69,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
             containsOutput("came back up"),
             is(successful())));
 
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
 
     // TDB-4726
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(InetSocketAddress.createUnresolved("localhost", getNodePort()), "diag", ofSeconds(10), ofSeconds(10), null)) {
@@ -91,9 +88,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
         allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
 
     waitForActive(1);
-    waitForSomePassives(1);
-    waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitUntil(out.getLog(1, findPassives(1)[0]), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassives(1);
   }
 
   @Test
@@ -107,7 +102,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 1)),
         allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
 
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
 
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, 2, topologyService -> assertFalse(topologyService.isActivated()));
@@ -116,7 +111,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 2)),
         allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
 
-    waitUntil(out.getLog(1, 2), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassive(1, 2);
 
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));

@@ -15,37 +15,32 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AttachCommandFail1x1IT extends DynamicConfigIT {
-  @Rule
-  public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
   public void attachFailAtPrepareOnlyActiveInStripe() throws Exception {
     // activate a 1x1 cluster
     startNode(1, 1);
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
     activateCluster();
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start a second node
     startNode(1, 2);
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //create prepare failure

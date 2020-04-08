@@ -75,13 +75,14 @@ import java.util.stream.Stream;
 import static java.nio.file.Files.walkFileTree;
 import static java.util.function.Function.identity;
 import static java.util.stream.IntStream.rangeClosed;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
+import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
@@ -136,6 +137,10 @@ public class DynamicConfigIT {
       if (autoActivate) {
         tsa.attachAll();
         tsa.activateAll();
+        for (int stripeId = 1; stripeId <= stripes; stripeId++) {
+          waitForActive(stripeId);
+          waitForPassives(stripeId);
+        }
       }
     }
   }
@@ -303,8 +308,24 @@ public class DynamicConfigIT {
     waitUntil(() -> findActive(stripeId).isPresent(), is(true));
   }
 
-  protected void waitForSomePassives(int stripeId) {
-    waitUntil(() -> findPassives(stripeId).length, is(greaterThan(0)));
+  protected void waitForActive(int stripeId, int nodeId) {
+    waitUntil(() -> tsa.getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_ACTIVE)));
+  }
+
+  protected void waitForPassive(int stripeId, int nodeId) {
+    waitUntil(() -> tsa.getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_PASSIVE)));
+  }
+
+  protected void waitForDiagnostic(int stripeId, int nodeId) {
+    waitUntil(() -> tsa.getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_IN_DIAGNOSTIC_MODE)));
+  }
+
+  protected void waitForPassives(int stripeId) {
+    waitUntil(() -> findPassives(stripeId).length, is(equalTo(nodesPerStripe - 1)));
+  }
+
+  protected void waitForNPassives(int stripeId, int count) {
+    waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
   }
 
   protected Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
@@ -376,6 +397,7 @@ public class DynamicConfigIT {
       result = configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath);
     }
     assertThat(result, is(successful()));
+    waitForActive(1);
     return result;
   }
 

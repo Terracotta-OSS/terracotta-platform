@@ -23,7 +23,6 @@ import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 import org.terracotta.json.Json;
 import org.terracotta.persistence.sanskrit.JsonUtils;
 import org.terracotta.persistence.sanskrit.MutableSanskritObject;
@@ -55,14 +54,11 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MODE;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.hasExitStatus;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   //TODO [DYNAMIC-CONFIG]: TDB-4863 - fix Angela to properly redirect process error streams
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
@@ -102,9 +98,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     tsa.start(getNode(1, activeNodeId));
     assertThat(tsa.getActives().size(), is(1));
 
-    out.clearLog(1, passiveNodeId);
     tsa.start(getNode(1, passiveNodeId));
-    waitUntil(out.getLog(1, passiveNodeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassive(1, passiveNodeId);
 
     verifyTopologies();
 
@@ -132,9 +127,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     tsa.start(getNode(1, activeNodeId));
     assertThat(tsa.getActives().size(), is(1));
 
-    out.clearLog(1, passiveNodeId);
     tsa.start(getNode(1, passiveNodeId));
-    waitUntil(out.getLog(1, passiveNodeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassive(1, passiveNodeId);
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     tsa.stopAll();
@@ -188,9 +182,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertContentsBeforeOrAfterSync(5, 4);
     tsa.start(getNode(1, activeNodeId));
 
-    out.clearLog(1, passiveNodeId);
     tsa.start(getNode(1, passiveNodeId));
-    waitUntil(out.getLog(1, passiveNodeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassive(1, passiveNodeId);
 
     verifyTopologies();
 

@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
@@ -28,10 +27,9 @@ import java.time.Duration;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
@@ -48,12 +46,12 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitUntil(out.getLog(1, 2), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
@@ -61,6 +59,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     //Activate cluster
     activateCluster();
+    waitForNPassives(1, 1);
   }
 
   @Test
@@ -69,7 +68,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
 
     startNode(1, 3);
-    waitUntil(out.getLog(1, 3), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     // attach failure (forcing attach otherwise we have to restart cluster)
@@ -93,7 +92,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
     int passiveId = findPassives(1)[0];
 
     startNode(1, 3);
-    waitUntil(out.getLog(1, 3), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     //create failover in prepare phase for active
@@ -113,10 +112,9 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
 
     // Ensure that earlier stopped active now restarts as passive and sync the config from current active
-    out.clearLog(1, activeId);
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
-    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForPassive(1, activeId);
+    waitForActive(1, passiveId);
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
@@ -125,7 +123,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
     startNode(1, 3);
-    waitUntil(out.getLog(1, 3), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     //setup for failover in commit phase on active
@@ -138,11 +136,10 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, 3)),
         containsOutput("Two-Phase commit failed"));
 
-
     //start the old active and verify it is in passive state
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForActive(1, passiveId);
+    waitForPassive(1, activeId);
 
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));

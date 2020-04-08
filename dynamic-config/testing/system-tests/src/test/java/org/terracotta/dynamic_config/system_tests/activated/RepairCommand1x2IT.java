@@ -15,11 +15,9 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -33,7 +31,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLinesStartingWith;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
@@ -46,8 +43,6 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
   public RepairCommand1x2IT() {
     super(Duration.ofSeconds(180));
   }
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
@@ -80,7 +75,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     // restart passive - it should sync
     startNode(1, passiveId);
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
   }
 
@@ -105,9 +100,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
-    out.clearLog(1, activeId);
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
-    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, activeId);
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
@@ -126,9 +120,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
 
     // if we restart the detached node, it will restart as active, which is expected in availability mode
-    out.clearLog(1, passiveId);
     startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo());
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
     // on passive, the set command was committed
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
@@ -150,24 +143,20 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     //setup for failover in commit phase on active
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
-    out.clearLog(1, activeId);
-    out.clearLog(1, passiveId);
-
     assertThat(
         configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         is(successful()));
 
-    waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
 
     // Stripe is lost no active
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
 
-    out.clearLog(1, activeId);
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
-    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, activeId);
 
     // Active has prepare changes for node removal
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
@@ -210,9 +199,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
-    out.clearLog(1, activeId);
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
-    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, activeId);
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
@@ -231,9 +219,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
 
     // if we restart the detached node, it will restart as active, which is expected in availability mode
-    out.clearLog(1, passiveId);
     startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo());
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
     // on passive, the set command was committed
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
@@ -241,47 +228,39 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
 
     configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort(1, passiveId));
-    waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, passiveId);
   }
 
   @Test
   public void test_reset_node() {
     // reset diagnostic node
     startNode(1, 1);
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
-    out.clearLog(1, 1);
+    waitForDiagnostic(1, 1);
     assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
 
     // reset activated node
-    out.clearLog(1, 1);
     assertThat(configToolInvocation("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
-    out.clearLog(1, 1);
+    waitForActive(1, 1);
     assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
 
     // reset node restarted in repair mode
-    out.clearLog(1, 1);
     assertThat(configToolInvocation("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
     stopNode(1, 1);
-    out.clearLog(1, 1);
     startNode(1, 1, "-r", getNode(1, 1).getConfigRepo(), "--repair-mode");
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
-    out.clearLog(1, 1);
+    waitForDiagnostic(1, 1);
     assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
 
     // ensure we still can re-activate the node
     stopNode(1, 1);
-    out.clearLog(1, 1);
     // restart but not in repair mode (angela keeps last params used)
     startNode(1, 1);
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
-    out.clearLog(1, 1);
+    waitForDiagnostic(1, 1);
     assertThat(configToolInvocation("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
   }
 
   private void activate1x2Cluster() {
@@ -291,8 +270,6 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
 
     waitForActive(1);
-    waitForSomePassives(1);
-    waitUntil(out.getLog(1, findActive(1).getAsInt()), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
-    waitUntil(out.getLog(1, findPassives(1)[0]), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassives(1);
   }
 }
