@@ -314,6 +314,6 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   }
 
   private static String stringify(Throwable e) {
-    return e == null ? "" : e.getMessage() == null ? "" : e.getMessage();
+    return e == null ? "" : e.getMessage() == null ? e.getClass().getName() : e.getMessage();
   }
 }
