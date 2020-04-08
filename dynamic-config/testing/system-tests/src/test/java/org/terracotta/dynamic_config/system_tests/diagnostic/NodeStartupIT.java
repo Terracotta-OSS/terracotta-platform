@@ -116,7 +116,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
     }
   }
 
@@ -127,7 +127,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeRepositoryDir().toString());
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
     }
   }
 
@@ -202,7 +202,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       );
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--cluster-name', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
+      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
     }
   }
 

@@ -193,7 +193,6 @@ public class Options {
       Set<String> filteredOptions = new HashSet<>(jCommander.getUserSpecifiedOptions());
       filteredOptions.remove("-f");
       filteredOptions.remove("-l");
-      filteredOptions.remove("-N");
       filteredOptions.remove("-s");
       filteredOptions.remove("-p");
       filteredOptions.remove("-r");
@@ -201,7 +200,6 @@ public class Options {
       filteredOptions.remove(addDashDash(REPAIR_MODE));
       filteredOptions.remove(addDashDash(CONFIG_FILE));
       filteredOptions.remove(addDashDash(LICENSE_FILE));
-      filteredOptions.remove(addDashDash(CLUSTER_NAME));
       filteredOptions.remove(addDashDash(NODE_HOSTNAME));
       filteredOptions.remove(addDashDash(NODE_PORT));
       filteredOptions.remove(addDashDash(NODE_REPOSITORY_DIR));
@@ -209,11 +207,10 @@ public class Options {
       if (filteredOptions.size() != 0) {
         throw new ParameterException(
             String.format(
-                "'%s' parameter can only be used with '%s', '%s', '%s', '%s', '%s' and '%s' parameters",
+                "'%s' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
                 addDashDash(CONFIG_FILE),
                 addDashDash(REPAIR_MODE),
                 addDashDash(LICENSE_FILE),
-                addDashDash(CLUSTER_NAME),
                 addDashDash(NODE_HOSTNAME),
                 addDashDash(NODE_PORT),
                 addDashDash(NODE_REPOSITORY_DIR)
