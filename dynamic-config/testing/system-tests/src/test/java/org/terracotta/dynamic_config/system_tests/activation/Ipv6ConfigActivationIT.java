@@ -25,7 +25,6 @@ import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 import java.nio.file.Path;
 
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 
 @ClusterDefinition(autoStart = false)
@@ -37,7 +36,7 @@ public class Ipv6ConfigActivationIT extends DynamicConfigIT {
   public void testStartupFromMigratedConfigRepoAndGetCommand() throws Exception {
     Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1NodeIpv6);
     startNode(1, 1, "--node-repository-dir", configurationRepo.toString());
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
 
     assertThat(configToolInvocation("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"), containsOutput("offheap-resources.main=512MB"));
   }

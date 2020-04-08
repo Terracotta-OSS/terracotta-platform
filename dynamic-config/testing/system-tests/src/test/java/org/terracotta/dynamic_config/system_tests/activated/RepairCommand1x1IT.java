@@ -15,12 +15,10 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -35,7 +33,6 @@ import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.event.Level.DEBUG;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 
 /**
@@ -47,8 +44,6 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
   public RepairCommand1x1IT() {
     super(Duration.ofSeconds(120));
   }
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
@@ -98,7 +93,7 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
 
     // ensure the server can still start if the configuration is not committed
     startNode(1, 1);
-    waitUntil(out.getLog(1, 1), containsLog("INFO - Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
     withTopologyService("localhost", getNodePort(), topologyService -> assertTrue(topologyService.hasIncompleteChange()));
 
     // ensure that the server has started with the last committed config

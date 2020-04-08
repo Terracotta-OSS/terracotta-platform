@@ -28,7 +28,6 @@ import java.nio.file.Paths;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLinesInOrderStartingWith;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 
 /**
  * @author Mathieu Carbou
@@ -41,6 +40,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_diagnostic_on_unconfigured_node() throws Exception {
     startNode(1, 1);
+    waitForDiagnostic(1, 1);
     assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic1.txt").toURI())).collect(toList())));
   }
@@ -48,6 +48,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_diagnostic_on_activated_node() throws Exception {
     startNode(1, 1);
+    waitForDiagnostic(1, 1);
     activateCluster();
     assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic2.txt").toURI())).collect(toList())));
@@ -56,6 +57,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_diagnostic_on_repair_mode() throws Exception {
     startNode(1, 1);
+    waitForDiagnostic(1, 1);
     activateCluster();
 
     String nodeName = getNode(1, 1).getServerSymbolicName().getSymbolicName();
@@ -76,10 +78,10 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
 
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-repository-dir", "repository/stripe1/node-1-1");
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
 
     startNode(1, 2);
-    waitUntil(out.getLog(1, 2), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 2);
 
     assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic4.txt").toURI())).collect(toList())));

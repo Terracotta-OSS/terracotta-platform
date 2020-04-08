@@ -167,7 +167,7 @@ public class AttachCommand extends TopologyCommand {
         "The nodes to attach won't be activated and restarted, and their topology will be rolled back to their initial value."
     );
     newNodes.forEach((addr, cluster) -> {
-      logger.info("Rollback topology of node: {} to: {}", addr, cluster);
+      logger.info("Rollback topology of node: {}", addr);
       setUpcomingCluster(Collections.singletonList(addr), cluster);
     });
     throw error;

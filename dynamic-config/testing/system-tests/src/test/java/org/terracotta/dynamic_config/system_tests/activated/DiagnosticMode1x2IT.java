@@ -15,13 +15,11 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.time.Duration;
 
@@ -30,7 +28,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.hasExitStatus;
 
@@ -39,8 +36,6 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.has
  */
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DiagnosticMode1x2IT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   public DiagnosticMode1x2IT() {
     super(Duration.ofSeconds(120));
@@ -55,7 +50,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     assertThat(tsa.getStopped().size(), is(1));
 
     startNode(active, "--repair-mode", "--node-name", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
-    waitUntil(out.getLog(1, activeNodeId), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, activeNodeId);
   }
 
   @Test
@@ -66,7 +61,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     assertThat(tsa.getStopped().size(), is(1));
 
     startNode(passive, "--repair-mode", "--node-name", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
-    waitUntil(out.getLog(1, passiveNodeId), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, passiveNodeId);
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -78,9 +73,8 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     tsa.stop(active);
     assertThat(tsa.getStopped().size(), is(1));
 
-    out.clearLog(1, 1);
     startNode(active, "--repair-mode", "-n", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
-    waitUntil(out.getLog(1, activeNodeId), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, activeNodeId);
 
     // diag port available
     Cluster cluster = getUpcomingCluster("localhost", getNodePort(1, activeNodeId));

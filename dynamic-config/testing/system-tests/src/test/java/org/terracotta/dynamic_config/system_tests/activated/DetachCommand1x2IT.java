@@ -15,11 +15,9 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.time.Duration;
 
@@ -29,7 +27,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
@@ -38,9 +35,6 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
  */
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DetachCommand1x2IT extends DynamicConfigIT {
-
-  @Rule
-  public final NodeOutputRule out = new NodeOutputRule();
 
   public DetachCommand1x2IT() {
     super(Duration.ofSeconds(180));
@@ -51,15 +45,14 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
 
-    out.clearLog(1, activeId);
     assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, activeId)), is(successful()));
 
     // the detached node is cleared and restarts in diagnostic mode
-    waitUntil(out.getLog(1, activeId), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, activeId);
     withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.isActivated()));
 
     // failover - existing passive becomes active
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
 
     assertTopologyChanged(activeId, passiveId);
@@ -70,9 +63,8 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
 
-    out.clearLog(1, passiveId);
     assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
-    waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
 
     assertTopologyChanged(activeId, passiveId);
@@ -96,9 +88,8 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
             "The newly added node will be restarted, but not the existing ones."));
 
     // try forcing the detach
-    out.clearLog(1, passiveId);
     assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
-    waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
 
     assertTopologyChanged(activeId, passiveId);
@@ -123,11 +114,10 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
 
     // restart the detached node : it should be removed
-    out.clearLog(1, passiveId);
     startNode(1, passiveId);
 
     // in availability mode, the server will restart ACTIVE with the topology it knows
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
@@ -193,24 +183,20 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     //setup for failover in commit phase on active
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
-    out.clearLog(1, activeId);
-    out.clearLog(1, passiveId);
-
     assertThat(
         configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         is(successful()));
 
-    waitUntil(out.getLog(1, passiveId), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
 
     // Stripe is lost no active
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
 
-    out.clearLog(1, activeId);
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
-    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, activeId);
 
     // Active has prepare changes for node removal
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
@@ -240,11 +226,10 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
 
-    out.clearLog(1, passiveId);
     startNode(1, passiveId);
 
     // in availability mode, the server will restart ACTIVE with the topology it knows
-    waitUntil(out.getLog(1, passiveId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
@@ -267,9 +252,8 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
-    out.clearLog(1, activeId);
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
-    waitUntil(out.getLog(1, activeId), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, activeId);
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));

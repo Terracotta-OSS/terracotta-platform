@@ -37,7 +37,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 
 @ClusterDefinition(autoStart = false)
 public class NodeStartupIT extends DynamicConfigIT {
@@ -48,14 +47,14 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testStartingWithNonExistentRepo() {
     startSingleNode("-r", getNodeRepositoryDir().toString());
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
   }
 
   @Test
   public void testStartingWithSingleNodeConfigFile() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
   }
 
   @Test
@@ -63,7 +62,7 @@ public class NodeStartupIT extends DynamicConfigIT {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", port, "--node-repository-dir", "repository/stripe1/node-1");
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
   }
 
   @Test
@@ -71,7 +70,7 @@ public class NodeStartupIT extends DynamicConfigIT {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
 
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(equalTo("localhost")));
   }
 
@@ -175,7 +174,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testSuccessfulStartupCliParams() {
     startSingleNode("-p", String.valueOf(getNodePort()), "-r", getNodeRepositoryDir().toString());
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
   }
 
   @Test
@@ -186,7 +185,7 @@ public class NodeStartupIT extends DynamicConfigIT {
         "--node-repository-dir", getNodeRepositoryDir().toString(),
         "--node-hostname", "%c"
     );
-    waitUntil(out.getLog(1, 1), containsLog("Started the server in diagnostic mode"));
+    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(InetAddress.getLocalHost().getCanonicalHostName()));
   }
 

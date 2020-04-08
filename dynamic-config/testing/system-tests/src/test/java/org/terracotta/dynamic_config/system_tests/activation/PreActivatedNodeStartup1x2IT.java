@@ -21,7 +21,6 @@ import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,26 +32,24 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.fail;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
 
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
 
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
     Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1Node);
     startSingleNode("--node-repository-dir", configurationRepo.toString());
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
   }
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     Path configurationRepo = generateNodeRepositoryDir(1, 2, ConfigRepositoryGenerator::generate1Stripe2Nodes);
     startNode(1, 2, "--node-repository-dir", configurationRepo.toString());
-    waitUntil(out.getLog(1, 2), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 2);
   }
 
   @Test
@@ -60,7 +57,7 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
     // Angela work dirs are different for each server instance. We'd need to create a repo at a common place for this test
     String sharedRepo = Files.createDirectories(getBaseDir()).toAbsolutePath().toString();
     startNode(1, 1, "--node-name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort()), "-N", "tc-cluster");
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
 
     try {
       startNode(1, 2,
