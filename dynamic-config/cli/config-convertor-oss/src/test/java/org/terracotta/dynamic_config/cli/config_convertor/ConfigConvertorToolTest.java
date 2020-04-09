@@ -34,7 +34,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class ConfigConvertorToolTest {
 
-  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"));
+  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
 
   @Test
   public void test_conversion_1() {

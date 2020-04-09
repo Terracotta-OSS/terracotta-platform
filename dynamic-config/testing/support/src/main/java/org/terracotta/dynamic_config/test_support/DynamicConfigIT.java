@@ -96,7 +96,7 @@ import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 public class DynamicConfigIT {
   private static Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
 
-  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"));
+  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
   @Rule public PortLockingRule ports;
   @Rule public Timeout timeoutRule;
 
