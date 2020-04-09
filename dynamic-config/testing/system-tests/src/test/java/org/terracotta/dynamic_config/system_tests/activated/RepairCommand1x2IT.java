@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
@@ -225,7 +226,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_reset_node() {
+  public void test_reset_node() throws TimeoutException {
     // reset diagnostic node
     startNode(1, 1);
     waitForDiagnostic(1, 1);
@@ -256,7 +257,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     waitForActive(1, 1);
   }
 
-  private void activate1x2Cluster() {
+  private void activate1x2Cluster() throws TimeoutException {
     assertThat(
         configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)),
         is(successful()));

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -45,20 +46,20 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
 
   @Test
-  public void testStartingWithNonExistentRepo() {
+  public void testStartingWithNonExistentRepo() throws TimeoutException {
     startSingleNode("-r", getNodeRepositoryDir().toString());
     waitForDiagnostic(1, 1);
   }
 
   @Test
-  public void testStartingWithSingleNodeConfigFile() {
+  public void testStartingWithSingleNodeConfigFile() throws TimeoutException {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
     waitForDiagnostic(1, 1);
   }
 
   @Test
-  public void testStartingWithSingleNodeConfigFileWithHostPort() {
+  public void testStartingWithSingleNodeConfigFileWithHostPort() throws TimeoutException {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", port, "--node-repository-dir", "repository/stripe1/node-1");
@@ -75,7 +76,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_nonExistentFile() {
+  public void testFailedStartupConfigFile_nonExistentFile() throws TimeoutException {
     Path configurationFile = Paths.get(".").resolve("blah");
     try {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--node-repository-dir", "repository/stripe1/node-1");
@@ -86,7 +87,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidPort() {
+  public void testFailedStartupConfigFile_invalidPort() throws TimeoutException {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid1.properties");
     try {
@@ -98,7 +99,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidSecurity() {
+  public void testFailedStartupConfigFile_invalidSecurity() throws TimeoutException {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid2.properties");
     try {
@@ -110,7 +111,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidCliParams() {
+  public void testFailedStartupConfigFile_invalidCliParams() throws TimeoutException {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     try {
       startSingleNode("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
@@ -121,7 +122,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidCliParams_2() {
+  public void testFailedStartupConfigFile_invalidCliParams_2() throws TimeoutException {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     try {
       startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeRepositoryDir().toString());
@@ -132,7 +133,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidAuthc() {
+  public void testFailedStartupCliParams_invalidAuthc() throws TimeoutException {
     try {
       startSingleNode("--security-authc=blah", "-r", getNodeRepositoryDir().toString());
       fail();
@@ -142,7 +143,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidHostname() {
+  public void testFailedStartupCliParams_invalidHostname() throws TimeoutException {
     try {
       startNode(1, 1, "--node-hostname=:::", "-r", getNodeRepositoryDir().toString());
       fail();
@@ -152,7 +153,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidFailoverPriority() {
+  public void testFailedStartupCliParams_invalidFailoverPriority() throws TimeoutException {
     try {
       startSingleNode("--failover-priority=blah", "-r", getNodeRepositoryDir().toString());
       fail();
@@ -162,7 +163,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidSecurity() {
+  public void testFailedStartupCliParams_invalidSecurity() throws TimeoutException {
     try {
       startSingleNode("--security-audit-log-dir", "audit-dir", "-r", getNodeRepositoryDir().toString());
       fail();
@@ -172,7 +173,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testSuccessfulStartupCliParams() {
+  public void testSuccessfulStartupCliParams() throws TimeoutException {
     startSingleNode("-p", String.valueOf(getNodePort()), "-r", getNodeRepositoryDir().toString());
     waitForDiagnostic(1, 1);
   }
@@ -190,7 +191,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParamsWithConfigFileAndRepositoryDir() {
+  public void testFailedStartupCliParamsWithConfigFileAndRepositoryDir() throws TimeoutException {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     try {

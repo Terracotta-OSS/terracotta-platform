@@ -72,7 +72,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
   @Before
   @Override
-  public void before() {
+  public void before() throws Exception {
     super.before();
     if (tsa.getActive() == getNode(1, 1)) {
       activeNodeId = 1;

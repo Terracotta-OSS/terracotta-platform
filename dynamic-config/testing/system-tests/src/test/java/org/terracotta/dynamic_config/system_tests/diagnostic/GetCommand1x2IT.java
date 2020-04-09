@@ -31,7 +31,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
 public class GetCommand1x2IT extends DynamicConfigIT {
   @Before
   @Override
-  public void before() {
+  public void before() throws Exception {
     super.before();
     assertThat(
         configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)),
