@@ -250,29 +250,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void restart(Duration delayInSeconds) {
-    // The delay helps the caller close the connection while it's live, otherwise it gets stuck for request timeout duration
-    final long millis = delayInSeconds.toMillis();
-    if (millis < 1_000) {
-      throw new IllegalArgumentException("Invalid delay: " + delayInSeconds.getSeconds() + " seconds");
-    }
-    LOGGER.info("Node will restart in: {} seconds", delayInSeconds.getSeconds());
-    new Thread(getClass().getSimpleName() + "-DelayedRestart") {
-      @Override
-      public void run() {
-        try {
-          sleep(millis);
-        } catch (InterruptedException e) {
-          // do nothing, still try to kill server
-        }
-        LOGGER.info("Restarting node");
-
-        TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
-      }
-    }.start();
-  }
-
-  @Override
   public boolean isActivated() {
     return clusterActivated;
   }
@@ -339,16 +316,34 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void resetAndRestart() {
-    LOGGER.info("Resetting and restarting...");
+  public void reset() {
+    LOGGER.info("Resetting...");
     try {
       nomadServerManager.getNomadServer().reset();
       clusterActivated = false;
       nomadServerManager.downgradeForRead();
-      restart(Duration.ofSeconds(5));
     } catch (NomadException e) {
       throw new IllegalStateException("Unable to reset Nomad system: " + e.getMessage(), e);
     }
+  }
+
+  @Override
+  public void restart(Duration delayInSeconds) {
+    LOGGER.info("Will restart node in {} seconds", delayInSeconds.getSeconds());
+    runAfterDelay(delayInSeconds, () -> {
+      LOGGER.info("Restarting node");
+      TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
+    });
+  }
+
+  @Override
+  public void stop(Duration delayInSeconds) {
+    LOGGER.info("Will stop node in {} seconds", delayInSeconds.getSeconds());
+    runAfterDelay(delayInSeconds, () -> {
+      LOGGER.info("Stopping node");
+      //TODO [DYNAMIC-CONFIG]: TDB-4942 - when upgrading to the new core version, use ZAP_AND_STOP instead
+      TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_ONLY);
+    });
   }
 
   @Override
@@ -431,5 +426,25 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     return updatedCluster.getNode(me.getNodeInternalAddress()) // important to use the internal address
         .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getNodeName())
             .orElse(null));
+  }
+
+  private void runAfterDelay(Duration delayInSeconds, Runnable runnable) {
+    // The delay helps the caller close the connection while it's live, otherwise it gets stuck for request timeout duration
+    final long millis = delayInSeconds.toMillis();
+    if (millis < 1_000) {
+      throw new IllegalArgumentException("Invalid delay: " + delayInSeconds.getSeconds() + " seconds");
+    }
+    LOGGER.info("Node will restart in: {} seconds", delayInSeconds.getSeconds());
+    new Thread(getClass().getSimpleName() + "-DelayedRestart") {
+      @Override
+      public void run() {
+        try {
+          sleep(millis);
+        } catch (InterruptedException e) {
+          // do nothing, still try to kill server
+        }
+        runnable.run();
+      }
+    }.start();
   }
 }

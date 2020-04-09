@@ -92,22 +92,26 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
+    // passive down
     stopNode(1, passiveId);
 
-    //Both active and passive is down.
+    // detach command will kill the active, so the stripe will go down
     assertThat(
-        configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-e", "10s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
+    // we restart the active
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, activeId);
 
+    // active has a prepared change
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
 
+    // we force a commit on the active
     assertThat(
         configToolInvocation("-r", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
@@ -115,18 +119,16 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
             containsOutput("Forcing a commit"),
             containsOutput("Configuration is repaired")));
 
+    // the topology is down 1 node
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
+    withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
 
-    // if we restart the detached node, it will restart as active, which is expected in availability mode
+    // if we restart the detached node, it will restart in active mode because it has been stopped before the detach
     startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo());
     waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
-    // on passive, the set command was committed
-    withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
   }
 
   @Test
@@ -144,17 +146,11 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     assertThat(
-        configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-e", "10s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
-        is(successful()));
-
-    waitForDiagnostic(1, passiveId);
-    withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.isActivated()));
+        containsOutput("Commit failed for node localhost:" + getNodePort(1, activeId) + ". Reason: java.util.concurrent.TimeoutException"));
 
     // Stripe is lost no active
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(1)));
-
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, activeId);
 
@@ -195,7 +191,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     //Both active and passive is down.
     assertThat(
-        configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-e", "10s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
@@ -218,15 +214,12 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
 
-    // if we restart the detached node, it will restart as active, which is expected in availability mode
+    // if we restart the detached node, that was offline  it will restart as active, which is expected in availability mode
     startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo());
     waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
-    // on passive, the set command was committed
-    withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
 
+    // we can reset this node
     configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort(1, passiveId));
     waitForDiagnostic(1, passiveId);
   }

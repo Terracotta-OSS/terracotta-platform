@@ -92,6 +92,41 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  public void testRestrictedActivationToActivateNodesAtDifferentTime() throws Exception {
+    assertThat(
+        configToolInvocation(
+            "-r", timeout + "s",
+            "activate",
+            "-R",
+            "-s", "localhost:" + getNodePort(1, 1),
+            "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
+        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    waitForActive(1, 1);
+
+    withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
+    withTopologyService(1, 2, topologyService -> assertFalse(topologyService.isActivated()));
+
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
+
+    assertThat(
+        configToolInvocation(
+            "-r", timeout + "s",
+            "activate",
+            "-R",
+            "-s", "localhost:" + getNodePort(1, 2),
+            "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
+        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    waitForPassive(1, 2);
+
+    withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
+    withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
+
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
+  }
+
+  @Test
   public void testRestrictedActivationToAttachANewActivatedNode() throws Exception {
     String config = copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString();
 

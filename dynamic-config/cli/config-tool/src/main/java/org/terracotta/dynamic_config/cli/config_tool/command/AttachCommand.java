@@ -49,7 +49,7 @@ public class AttachCommand extends TopologyCommand {
   @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   // list of new nodes to add with their backup topology

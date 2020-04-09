@@ -36,6 +36,8 @@ import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartProgress;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
+import org.terracotta.dynamic_config.cli.config_tool.stop.StopProgress;
+import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
@@ -86,6 +88,7 @@ public abstract class RemoteCommand extends Command {
   @Inject public DiagnosticServiceProvider diagnosticServiceProvider;
   @Inject public NomadManager<NodeContext> nomadManager;
   @Inject public RestartService restartService;
+  @Inject public StopService stopService;
 
   protected void licenseValidation(InetSocketAddress node, Cluster cluster) {
     logger.trace("licenseValidation({}, {})", node, cluster);
@@ -120,7 +123,11 @@ public abstract class RemoteCommand extends Command {
     restartNodes(
         newNodes,
         Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
+        // these are the list of states tha twe allow to consider a server has restarted
+        // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
+        // and has consequently bootstrapped the configuration from Nomad.
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
     logger.info("All nodes came back up");
   }
 
@@ -201,6 +208,13 @@ public abstract class RemoteCommand extends Command {
     failures.reThrow();
   }
 
+  protected final LogicalServerState getState(InetSocketAddress expectedOnlineNode) {
+    logger.trace("getUpcomingCluster({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+      return diagnosticService.getLogicalServerState();
+    }
+  }
+
   protected final Cluster getUpcomingCluster(InetSocketAddress expectedOnlineNode) {
     logger.trace("getUpcomingCluster({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
@@ -224,16 +238,13 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void restartNodes(Collection<InetSocketAddress> addresses, Duration maximumWaitTime, Duration restartDelay) {
+  protected final void restartNodes(Collection<InetSocketAddress> addresses, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
     logger.trace("restartNodes({}, {})", addresses, maximumWaitTime);
     try {
       RestartProgress progress = restartService.restartNodes(
           addresses,
           restartDelay,
-          // these are the list of states tha twe allow to consider a server has restarted
-          // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
-          // and has consequently bootstrapped the configuration from Nomad.
-          EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
+          acceptedStates);
       progress.getErrors().forEach((address, e) -> logger.warn("Unable to ask node: {} to restart: please restart it manually.", address));
       progress.onRestarted((address, state) -> logger.info("Node: {} has restarted in state: {}", address, state));
       Map<InetSocketAddress, LogicalServerState> restarted = progress.await(maximumWaitTime);
@@ -249,6 +260,28 @@ public abstract class RemoteCommand extends Command {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Restart has been interrupted", e);
+    }
+  }
+
+  protected final void stopNodes(Collection<InetSocketAddress> addresses, Duration maximumWaitTime, Duration restartDelay) {
+    logger.trace("stopNodes({}, {})", addresses, maximumWaitTime);
+    try {
+      StopProgress progress = stopService.stopNodes(addresses, restartDelay);
+      progress.getErrors().forEach((address, e) -> logger.warn("Unable to ask node: {} to stop: please stop it manually.", address));
+      progress.onStopped(address -> logger.info("Node: {} has stopped", address));
+      Collection<InetSocketAddress> stopped = progress.await(maximumWaitTime);
+      // check where we are
+      Collection<InetSocketAddress> missing = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+      missing.addAll(addresses);
+      missing.removeAll(progress.getErrors().keySet()); // remove nodes that we were not able to contact
+      missing.removeAll(stopped); // remove nodes that have been restarted
+      if (!missing.isEmpty()) {
+        throw new IllegalStateException("Some nodes failed to stop within " + maximumWaitTime.getSeconds() + " seconds:" + lineSeparator()
+            + " - " + missing.stream().map(InetSocketAddress::toString).collect(joining(lineSeparator() + " - ")));
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Stop has been interrupted", e);
     }
   }
 
@@ -356,9 +389,19 @@ public abstract class RemoteCommand extends Command {
   }
 
   protected final void resetAndRestart(InetSocketAddress expectedOnlineNode) {
-    logger.info("Node: {} will reset and restart in 5 seconds", expectedOnlineNode);
+    logger.info("Reset node: {}. Will restart in 5 seconds", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
-      diagnosticService.getProxy(DynamicConfigService.class).resetAndRestart();
+      DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
+      proxy.reset();
+      proxy.restart(Duration.ofSeconds(5));
+    }
+  }
+
+  protected final void reset(InetSocketAddress expectedOnlineNode) {
+    logger.info("Reset node: {}", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+      DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
+      proxy.reset();
     }
   }
 

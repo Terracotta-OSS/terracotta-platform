@@ -15,28 +15,39 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.terracotta.common.struct.Measure;
+import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 
 /**
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f]")
+@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
 public class DetachCommand extends TopologyCommand {
 
-  boolean sourceNodeUnreachable;
+  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to stop. Default: 60s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> stopWaitTime = Measure.of(60, TimeUnit.SECONDS);
+
+  @Parameter(names = {"-D"}, description = "Delay before the server stops itself. Default: 2s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> stopDelay = Measure.of(2, TimeUnit.SECONDS);
+
+  private final Collection<InetSocketAddress> nodesToRemove = new ArrayList<>(1);
+  private final Collection<InetSocketAddress> onlineNodesToRemove = new ArrayList<>(1);
 
   @Override
   public void validate() {
@@ -50,11 +61,21 @@ public class DetachCommand extends TopologyCommand {
       throw new IllegalStateException("Source node: " + source + " is not part of cluster at: " + destination);
     }
 
-    sourceNodeUnreachable = !destinationOnlineNodes.containsKey(source);
+    if (operationType == NODE) {
+      // when we want to detach a node
+      nodesToRemove.add(source);
+    } else {
+      // when we want tp detach a stripe, we detach all the nodes of the stripe
+      nodesToRemove.addAll(destinationCluster.getStripe(source).get().getNodeAddresses());
+    }
 
-    validateLogOrFail(() -> !sourceNodeUnreachable, "Node to detach: " + source + " is not reachable. " +
-        "Use -f to force the node removal in destination cluster. " +
-        "The detached node will reset when it will restart.");
+    // compute teh list of online nodes to detach if requested
+    onlineNodesToRemove.addAll(nodesToRemove);
+    onlineNodesToRemove.retainAll(destinationOnlineNodes.keySet());
+
+    validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to detach: " + toString(onlineNodesToRemove) + " are online. " +
+        "The nodes should be safely shutdown first. " +
+        "Use -f to force the node removal by the detach command: the nodes will first reset and stop before being detached");
   }
 
   @Override
@@ -99,48 +120,32 @@ public class DetachCommand extends TopologyCommand {
   }
 
   @Override
-  protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
-    Collection<InetSocketAddress> removedNodes = getNodesToResetAndRestart();
+  protected void onNomadChangeReady(NodeNomadChange nomadChange) {
+    if (!onlineNodesToRemove.isEmpty()) {
 
-    RuntimeException all = null;
-    for (InetSocketAddress removedNode : removedNodes) {
-      try {
-        resetAndRestart(removedNode);
-      } catch (RuntimeException e) {
-        logger.warn("Failed to reset and restart node {}: {}", removedNode, e.getMessage());
-        if (all == null) {
-          all = e;
-        } else {
-          all.addSuppressed(e);
+      logger.info("Reset nodes: {}", toString(onlineNodesToRemove));
+
+      for (InetSocketAddress address : onlineNodesToRemove) {
+        try {
+          reset(address);
+        } catch (RuntimeException e) {
+          logger.warn("Error during reset of node: {}: {}", address, e.getMessage(), e);
         }
       }
-    }
-    if (all != null) {
-      throw all;
+
+      logger.info("Stopping nodes: {}", toString(onlineNodesToRemove));
+
+      stopNodes(
+          onlineNodesToRemove,
+          Duration.ofMillis(stopWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+          Duration.ofMillis(stopDelay.getQuantity(TimeUnit.MILLISECONDS)));
+
+      // if we have stopped some nodes, we need to update the list of nodes online
+      destinationOnlineNodes.keySet().removeAll(onlineNodesToRemove);
+
+      // if a failover happened, make sure we get the new server states
+      destinationOnlineNodes.entrySet().forEach(e -> e.setValue(getState(e.getKey())));
     }
   }
 
-  @Override
-  protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
-    logger.error("An error occurred during the detach transaction." + lineSeparator() +
-        "The node to detach will not be restarted." + lineSeparator() +
-        "You you will need to run the diagnostic command to check the configuration state and restart the node to detach manually.");
-    throw error;
-  }
-
-  private Collection<InetSocketAddress> getNodesToResetAndRestart() {
-    Collection<InetSocketAddress> nodes = new ArrayList<>();
-    if (operationType == NODE) {
-      // when we want to detach a node
-      if (sourceNodeUnreachable) {
-        logger.warn("Node: {} is not reachable. It will be removed from the cluster when it will be restarted", source);
-      } else {
-        nodes.add(source);
-      }
-    } else {
-      // when we want tp detach a stripe
-      nodes.addAll(destinationCluster.getStripe(source).get().getNodeAddresses());
-    }
-    return nodes;
-  }
 }

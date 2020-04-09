@@ -55,11 +55,6 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
     LOGGER.info("Starting node from config file: {}", substitutedConfigFile);
     Cluster cluster = clusterCreator.create(substitutedConfigFile);
 
-    // overwrite the cluster name if given in CLI on top of within the config file
-    if (options.getClusterName() != null) {
-      cluster.setName(options.getClusterName());
-    }
-
     Node node = configurationGeneratorVisitor.getMatchingNodeFromConfigFile(options.getNodeHostname(), options.getNodePort(), options.getConfigFile(), cluster);
 
     if (cluster.getName() != null) {

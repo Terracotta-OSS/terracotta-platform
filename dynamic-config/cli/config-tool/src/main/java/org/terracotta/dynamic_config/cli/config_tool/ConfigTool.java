@@ -40,6 +40,7 @@ import org.terracotta.dynamic_config.cli.config_tool.command.SetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.UnsetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
+import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.entity.client.NomadEntity;
 import org.terracotta.nomad.entity.client.NomadEntityProvider;
@@ -118,9 +119,10 @@ public class ConfigTool {
         MAIN.getSecurityRootDirectory());
     NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
+    StopService stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
 
     LOGGER.debug("Injecting services in CommandRepository");
-    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
+    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService);
 
     jCommander.getAskedCommand().map(command -> {
       // check for help

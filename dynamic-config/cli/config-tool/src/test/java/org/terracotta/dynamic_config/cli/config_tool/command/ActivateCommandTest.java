@@ -43,6 +43,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -100,12 +101,6 @@ public class ActivateCommandTest extends BaseTest {
             .setConfigPropertiesFile(Paths.get("."))
             .validate(),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Either node or config properties file should be specified, not both")))));
-
-    assertThat(
-        () -> command()
-            .setNode(InetSocketAddress.createUnresolved("localhost", 9410))
-            .validate(),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Cluster name should be provided when node is specified")))));
   }
 
 
@@ -147,7 +142,7 @@ public class ActivateCommandTest extends BaseTest {
           cmd.validate();
           cmd.run();
         },
-        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Cluster is already activated"))))
+        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(startsWith("Nodes are already activated: "))))
     );
   }
 
@@ -292,7 +287,7 @@ public class ActivateCommandTest extends BaseTest {
 
   private ActivateCommand command() {
     ActivateCommand command = new ActivateCommand();
-    inject(command, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
+    inject(command, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService);
     return command;
   }
 

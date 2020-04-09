@@ -38,6 +38,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
@@ -73,10 +74,9 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
     when(topologyServiceMock("localhost", 9410).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
 
     when(topologyServiceMock("localhost", 9410).isActivated()).thenReturn(false);
-    when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(false);
 
     when(diagnosticServiceMock("localhost", 9410).getLogicalServerState()).thenReturn(STARTING);
-    when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenReturn(STARTING);
+    when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenReturn(UNREACHABLE);
   }
 
   @Test
