@@ -19,7 +19,7 @@ import org.terracotta.connection.ConnectionException;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
 
 import static java.util.Objects.requireNonNull;
 
@@ -41,7 +41,7 @@ public class NomadEntityProvider {
     this.securityRootDirectory = securityRootDirectory;
   }
 
-  public <T> NomadEntity<T> fetchNomadEntity(List<InetSocketAddress> addresses) throws ConnectionException {
+  public <T> NomadEntity<T> fetchNomadEntity(Collection<InetSocketAddress> addresses) throws ConnectionException {
     return NomadEntityFactory.fetch(addresses, connectionName, connectTimeout, settings, securityRootDirectory);
   }
 }
