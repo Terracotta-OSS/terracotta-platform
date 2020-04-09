@@ -35,6 +35,7 @@ import org.terracotta.nomad.server.NomadException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 
@@ -48,7 +49,7 @@ public class NomadEntityFactory {
 
   private static final String SECURITY_ROOT_DIRECTORY = "security.root.directory";
 
-  public static <T> NomadEntity<T> fetch(List<InetSocketAddress> addresses,
+  public static <T> NomadEntity<T> fetch(Collection<InetSocketAddress> addresses,
                                          String connectionName,
                                          Duration connectTimeout,
                                          NomadEntity.Settings settings,

@@ -40,7 +40,7 @@ import org.terracotta.nomad.server.NomadServer;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -78,7 +78,7 @@ public abstract class BaseTest {
     return diagnosticService;
   });
 
-  private final Cache<List<InetSocketAddress>, NomadEntity<?>> nomadEntities = new Cache<>(list -> {
+  private final Cache<Collection<InetSocketAddress>, NomadEntity<?>> nomadEntities = new Cache<>(list -> {
     final NomadEntity<?> entity = mock(NomadEntity.class, list.toString());
     try {
       lenient().when(entity.commit(any(CommitMessage.class))).thenReturn(AcceptRejectResponse.accept());
@@ -100,7 +100,7 @@ public abstract class BaseTest {
     nomadEntityProvider = new NomadEntityProvider(getClass().getSimpleName(), timeout, new NomadEntity.Settings().setRequestTimeout(timeout), null) {
       @SuppressWarnings("unchecked")
       @Override
-      public <T> NomadEntity<T> fetchNomadEntity(List<InetSocketAddress> addresses) throws ConnectionException {
+      public <T> NomadEntity<T> fetchNomadEntity(Collection<InetSocketAddress> addresses) throws ConnectionException {
         return (NomadEntity<T>) nomadEntities.get(addresses);
       }
     };

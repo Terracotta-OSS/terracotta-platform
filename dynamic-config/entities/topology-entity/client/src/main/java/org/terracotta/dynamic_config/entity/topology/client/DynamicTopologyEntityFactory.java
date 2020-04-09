@@ -34,6 +34,7 @@ import org.terracotta.exception.EntityVersionMismatchException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Future;
@@ -49,7 +50,7 @@ public class DynamicTopologyEntityFactory {
 
   private static final String SECURITY_ROOT_DIRECTORY = "security.root.directory";
 
-  public static DynamicTopologyEntity fetch(List<InetSocketAddress> addresses,
+  public static DynamicTopologyEntity fetch(Collection<InetSocketAddress> addresses,
                                             String connectionName,
                                             Duration connectTimeout,
                                             DynamicTopologyEntity.Settings settings,
@@ -108,17 +109,29 @@ public class DynamicTopologyEntityFactory {
 
   private static DynamicTopologyEntity closeable(DynamicTopologyEntity entity, Connection connection) {
     return new DynamicTopologyEntity() {
-      public void setListener(Listener listener) {entity.setListener(listener);}
+      public void setListener(Listener listener) {
+        entity.setListener(listener);
+      }
 
-      public Cluster getUpcomingCluster() throws TimeoutException, InterruptedException {return entity.getUpcomingCluster();}
+      public Cluster getUpcomingCluster() throws TimeoutException, InterruptedException {
+        return entity.getUpcomingCluster();
+      }
 
-      public Cluster getRuntimeCluster() throws TimeoutException, InterruptedException {return entity.getRuntimeCluster();}
+      public Cluster getRuntimeCluster() throws TimeoutException, InterruptedException {
+        return entity.getRuntimeCluster();
+      }
 
-      public boolean mustBeRestarted() throws TimeoutException, InterruptedException {return entity.mustBeRestarted();}
+      public boolean mustBeRestarted() throws TimeoutException, InterruptedException {
+        return entity.mustBeRestarted();
+      }
 
-      public boolean hasIncompleteChange() throws TimeoutException, InterruptedException {return entity.hasIncompleteChange();}
+      public boolean hasIncompleteChange() throws TimeoutException, InterruptedException {
+        return entity.hasIncompleteChange();
+      }
 
-      public License getLicense() throws TimeoutException, InterruptedException {return entity.getLicense();}
+      public License getLicense() throws TimeoutException, InterruptedException {
+        return entity.getLicense();
+      }
 
       @Override
       public Future<Void> releaseEntity() {
