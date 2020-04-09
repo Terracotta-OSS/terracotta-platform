@@ -21,6 +21,8 @@ import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @author Mathieu Carbou
  */
@@ -31,7 +33,7 @@ public class NmsAgentEntityFactory {
   private final Connection connection;
 
   public NmsAgentEntityFactory(Connection connection) {
-    this.connection = connection;
+    this.connection = requireNonNull(connection);
   }
 
   public NmsAgentEntity retrieve() {

@@ -84,7 +84,7 @@ public abstract class AbstractTest {
   protected NmsService nmsService;
 
   @Rule
-  public Timeout timeout = Timeout.seconds(60);
+  public Timeout timeout = Timeout.seconds(90);
 
   protected final void commonSetUp(Cluster cluster) throws Exception {
     this.cluster = cluster;
@@ -183,7 +183,7 @@ public abstract class AbstractTest {
     // connects to server
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, getClass().getSimpleName());
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "15000");
     this.managementConnection = ConnectionFactory.connect(uri, properties);
 
     // create a NMS Entity

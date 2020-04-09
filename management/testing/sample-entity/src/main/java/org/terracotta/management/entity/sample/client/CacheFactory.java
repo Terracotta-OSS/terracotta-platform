@@ -67,7 +67,7 @@ public class CacheFactory implements Closeable {
     // connects to server
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, path);
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "15000");
     if(uuid != null) {
       properties.setProperty(ConnectionPropertyNames.CONNECTION_UUID, uuid);
     }

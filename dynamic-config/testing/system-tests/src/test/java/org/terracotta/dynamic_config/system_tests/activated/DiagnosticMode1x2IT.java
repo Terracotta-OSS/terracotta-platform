@@ -39,7 +39,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.has
 public class DiagnosticMode1x2IT extends DynamicConfigIT {
 
   public DiagnosticMode1x2IT() {
-    super(Duration.ofSeconds(120));
+    super(Duration.ofSeconds(180));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

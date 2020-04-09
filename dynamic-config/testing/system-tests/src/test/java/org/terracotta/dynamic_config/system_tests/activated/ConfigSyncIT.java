@@ -67,7 +67,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
   private int passiveNodeId;
 
   public ConfigSyncIT() {
-    super(Duration.ofSeconds(120));
+    super(Duration.ofSeconds(180));
   }
 
   @Before

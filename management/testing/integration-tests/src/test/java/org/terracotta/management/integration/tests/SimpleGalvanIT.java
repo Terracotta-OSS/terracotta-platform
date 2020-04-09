@@ -56,7 +56,7 @@ public class SimpleGalvanIT {
   }
 
   @Rule
-  public Timeout timeout = Timeout.seconds(30);
+  public Timeout timeout = Timeout.seconds(60);
 
   CacheFactory cacheFactory;
 
