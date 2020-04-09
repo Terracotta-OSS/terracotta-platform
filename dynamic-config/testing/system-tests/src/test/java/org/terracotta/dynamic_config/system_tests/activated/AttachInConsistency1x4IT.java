@@ -17,13 +17,15 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.angela.common.ConfigToolExecutionResult;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.time.Duration;
-import java.util.concurrent.TimeoutException;
 
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -36,7 +38,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
 public class AttachInConsistency1x4IT extends DynamicConfigIT {
 
   public AttachInConsistency1x4IT() {
-    super(Duration.ofSeconds(180));
+    super(Duration.ofSeconds(300));
     this.failoverPriority = FailoverPriority.consistency();
   }
 
@@ -138,42 +140,52 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
-    // we will restart the node killed by the STOP in 10 sec so that he can vote again
-    System.out.println("Will restart the old active ID: " + activeId + " in 15s...");
-
-    Thread restartOldActive = new Thread(() -> {
-      try {
-        Thread.sleep(10_000);
-        System.out.println("Restarting old active ID: " + activeId + "...");
-        startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
-        waitForPassive(1, activeId);
-      } catch (InterruptedException | TimeoutException e) {
-        Thread.currentThread().interrupt();
-      }
-    });
-    restartOldActive.start();
-
     // attach command, and failover triggered during commit
     // this will bring down the active
-    // but the 2 other passives cannot decide which one will become active
-    // so the command will block... Until the thread has time to restart the old active (which will become passive and vote)!
-    assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, 4)),
-        is(successful()));
 
-    waitForPassive(1, 4);
+    // 1. but the 2 other passives cannot decide which one will become active because they are only 2 nodes so no majority
+    //    so the command will block... Until the thread has time to restart the old active (which will become passive and vote)!
+    // 2. or it might be possible that one of the passive has time ot become active
+    ConfigToolExecutionResult output = configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 4));
+    assertThat(output, either(is(successful())).or(containsOutput("Two-Phase commit failed")));
 
+    //start the old active and verify it becomes passive
+    startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
+    waitForPassive(1, activeId);
+
+    // in any case, we must have an activate elected now
+    waitForActive(1);
+
+    if (!is(successful()).matches(output)) {
+      // change was not committed on the active that has crashed, but id the passive replication was done,
+      // it is possible that one of the passive that became active got the change and committed.
+      // repair command will be able to replay the commit if necessary
+      configToolInvocation("-t", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId));
+    }
+
+    // all nodes of teh destination cluster now have the updated topology
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(4)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId1)).getNodeCount(), is(equalTo(4)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(4)));
+
+    if (!is(successful()).matches(output)) {
+      // node 4 was not added
+      withTopologyService(1, 4, topologyService -> assertFalse(topologyService.isActivated()));
+      assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
+
+      // we will be able to add it through a restrictive activation
+      configToolInvocation("export",
+          "-s", "localhost:" + getNodePort(1, activeId),
+          "-f", tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath().toString());
+      assertThat(configToolInvocation("activate",
+          "-R", "-s", "localhost:" + getNodePort(1, 4),
+          "-f", tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath().toString()),
+          allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    }
+
+    // we finally verify that the added node became passive, activated with the right topology
+    waitForPassive(1, 4);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(4)));
-
-    withTopologyService(1, passiveId1, topologyService -> assertTrue(topologyService.isActivated()));
-    withTopologyService(1, passiveId2, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, 4, topologyService -> assertTrue(topologyService.isActivated()));
-
-    restartOldActive.join();
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(4)));
-    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
   }
 }

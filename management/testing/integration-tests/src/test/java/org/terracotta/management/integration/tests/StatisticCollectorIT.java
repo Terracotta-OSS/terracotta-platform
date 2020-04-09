@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.tc.util.Assert.assertFalse;
 import static java.lang.Thread.sleep;
 
 /**
@@ -36,43 +37,13 @@ public class StatisticCollectorIT extends AbstractSingleTest {
   @Test
   public void can_reschedule_client_collectors() throws Exception {
     triggerClientStatComputation(1, TimeUnit.SECONDS);
-
-    long start, end;
-
-    do {
-      start = System.currentTimeMillis();
-      readClientStatistics();
-      end = System.currentTimeMillis();
-    } while (end - start < 1000 && !Thread.currentThread().isInterrupted());
-
-    triggerClientStatComputation(4, TimeUnit.SECONDS);
-
-    do {
-      start = System.currentTimeMillis();
-      readClientStatistics();
-      end = System.currentTimeMillis();
-    } while (end - start < 2000 && !Thread.currentThread().isInterrupted());
+    assertFalse(readClientStatistics().isEmpty());
   }
 
   @Test
   public void can_reschedule_server_collectors() throws Exception {
     triggerServerStatComputation(1, TimeUnit.SECONDS);
-
-    long start, end;
-
-    do {
-      start = System.currentTimeMillis();
-      readServerStatistics();
-      end = System.currentTimeMillis();
-    } while (end - start < 1000 && !Thread.currentThread().isInterrupted());
-
-    triggerServerStatComputation(4, TimeUnit.SECONDS);
-
-    do {
-      start = System.currentTimeMillis();
-      readServerStatistics();
-      end = System.currentTimeMillis();
-    } while (end - start < 2000 && !Thread.currentThread().isInterrupted());
+    assertFalse(readServerStatistics().isEmpty());
   }
 
   @Test
@@ -115,7 +86,7 @@ public class StatisticCollectorIT extends AbstractSingleTest {
         .count() == 1L);
   }
 
-  private List<? extends ContextualStatistics> readClientStatistics() {
+  private List<? extends ContextualStatistics> readClientStatistics() throws InterruptedException {
     List<? extends ContextualStatistics> statistics;
     do {
       statistics = nmsService.readMessages()
@@ -124,11 +95,12 @@ public class StatisticCollectorIT extends AbstractSingleTest {
           .flatMap(message -> message.unwrap(ContextualStatistics.class).stream())
           .filter(contextualStatistics -> contextualStatistics.getContext().getOrDefault(Client.KEY, "").contains("pet-clinic"))
           .collect(Collectors.toList());
+      Thread.sleep(200);
     } while (statistics.isEmpty() && !Thread.currentThread().isInterrupted());
     return statistics;
   }
 
-  private List<? extends ContextualStatistics> readServerStatistics() {
+  private List<? extends ContextualStatistics> readServerStatistics() throws InterruptedException {
     List<? extends ContextualStatistics> statistics;
     do {
       statistics = nmsService.readMessages()
@@ -137,6 +109,7 @@ public class StatisticCollectorIT extends AbstractSingleTest {
           .flatMap(message -> message.unwrap(ContextualStatistics.class).stream())
           .filter(contextualStatistics -> contextualStatistics.getContext().contains(Server.KEY))
           .collect(Collectors.toList());
+      Thread.sleep(200);
     } while (statistics.isEmpty() && !Thread.currentThread().isInterrupted());
     return statistics;
   }
