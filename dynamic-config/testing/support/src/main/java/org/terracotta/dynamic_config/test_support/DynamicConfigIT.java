@@ -96,7 +96,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
 public class DynamicConfigIT {
   private static Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
 
-  @Rule public TmpDir tmpDir = new TmpDir();
+  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"));
   @Rule public PortLockingRule ports;
   @Rule public Timeout timeoutRule;
 
