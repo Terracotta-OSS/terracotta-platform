@@ -92,6 +92,11 @@
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>terracotta-utilities-test-tools</artifactId>
+        <version>0.0.2</version>
+      </dependency>
+      <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-config-parser</artifactId>
         <version>${terracotta-configuration.version}</version>
@@ -230,11 +235,6 @@
         <groupId>com.github.stefanbirkner</groupId>
         <artifactId>system-rules</artifactId>
         <version>1.19.0</version>
-      </dependency>
-      <dependency>
-        <groupId>org.awaitility</groupId>
-        <artifactId>awaitility</artifactId>
-        <version>4.0.2</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

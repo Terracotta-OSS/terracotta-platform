@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -146,7 +147,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
         System.out.println("Restarting old active ID: " + activeId + "...");
         startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
         waitForPassive(1, activeId);
-      } catch (InterruptedException e) {
+      } catch (InterruptedException | TimeoutException e) {
         Thread.currentThread().interrupt();
       }
     });

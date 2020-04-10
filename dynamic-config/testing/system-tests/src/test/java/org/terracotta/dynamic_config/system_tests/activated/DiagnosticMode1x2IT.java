@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.time.Duration;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -43,7 +44,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
-  public void test_restart_active_in_diagnostic_mode() {
+  public void test_restart_active_in_diagnostic_mode() throws TimeoutException {
     int activeNodeId = findActive(1).getAsInt();
     TerracottaServer active = getNode(1, activeNodeId);
     tsa.stop(active);
@@ -54,7 +55,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_restart_passive_in_diagnostic_mode() {
+  public void test_restart_passive_in_diagnostic_mode() throws TimeoutException {
     int passiveNodeId = findPassives(1)[0];
     TerracottaServer passive = getNode(1, passiveNodeId);
     tsa.stop(passive);

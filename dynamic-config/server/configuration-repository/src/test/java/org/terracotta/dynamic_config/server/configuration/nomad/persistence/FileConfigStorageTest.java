@@ -40,7 +40,7 @@ import static org.junit.Assert.assertTrue;
 public class FileConfigStorageTest {
 
   @Rule
-  public TmpDir temporaryFolder = new TmpDir();
+  public TmpDir temporaryFolder = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
 
   @Test
   public void saveAndRetrieve() throws Exception {

@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.test_support;
 
-import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
@@ -65,10 +64,10 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -92,11 +91,12 @@ import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 
 public class DynamicConfigIT {
   private static Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
 
-  @Rule public TmpDir tmpDir = new TmpDir();
+  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
   @Rule public PortLockingRule ports;
   @Rule public Timeout timeoutRule;
 
@@ -129,7 +129,8 @@ public class DynamicConfigIT {
   }
 
   @Before
-  public void before() {
+  // keep throws Exception to support extend the class
+  public void before() throws Exception {
     this.clusterFactory = new ClusterFactory(getClass().getSimpleName(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
     this.tsa = clusterFactory.tsa();
     if (autoStart) {
@@ -146,7 +147,8 @@ public class DynamicConfigIT {
   }
 
   @After
-  public void after() throws IOException {
+  // keep throws Exception to support extend the class
+  public void after() throws Exception {
     try {
       clusterFactory.close();
     } catch (IOException | RuntimeException e) {
@@ -284,47 +286,45 @@ public class DynamicConfigIT {
     return getBaseDir().resolve("repository").resolve("stripe" + stripeId).resolve("node-" + nodeId);
   }
 
-  protected void waitUntil(ConfigToolExecutionResult result, Matcher<? super ConfigToolExecutionResult> matcher) {
+  protected void waitUntil(ConfigToolExecutionResult result, Matcher<? super ConfigToolExecutionResult> matcher) throws TimeoutException {
     waitUntil(() -> result, matcher, timeout);
   }
 
-  protected void waitUntil(NodeOutputRule.NodeLog result, Matcher<? super NodeOutputRule.NodeLog> matcher) {
+  protected void waitUntil(NodeOutputRule.NodeLog result, Matcher<? super NodeOutputRule.NodeLog> matcher) throws TimeoutException {
     waitUntil(() -> result, matcher, timeout);
   }
 
-  protected <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher) {
+  protected <T> void waitUntil(Supplier<T> callable, Matcher<? super T> matcher) throws TimeoutException {
     waitUntil(callable, matcher, timeout);
   }
 
-  protected <T> void waitUntil(Callable<T> callable, Matcher<? super T> matcher, long timeout) {
-    Awaitility.await()
-        // do not use iterative because it slows down the whole test suite considerably, especially in case of a failing process causing a timeout
-        .pollInterval(Duration.ofMillis(500))
-        .atMost(timeout, TimeUnit.SECONDS)
-        .until(callable, matcher);
+  protected <T> void waitUntil(Supplier<T> callable, Matcher<? super T> matcher, long timeout) throws TimeoutException {
+    assertThatEventually(callable, matcher)
+        .threadDumpOnTimeout()
+        .within(Duration.ofSeconds(timeout));
   }
 
-  protected void waitForActive(int stripeId) {
+  protected void waitForActive(int stripeId) throws TimeoutException {
     waitUntil(() -> findActive(stripeId).isPresent(), is(true));
   }
 
-  protected void waitForActive(int stripeId, int nodeId) {
+  protected void waitForActive(int stripeId, int nodeId) throws TimeoutException {
     waitUntil(() -> tsa.getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_ACTIVE)));
   }
 
-  protected void waitForPassive(int stripeId, int nodeId) {
+  protected void waitForPassive(int stripeId, int nodeId) throws TimeoutException {
     waitUntil(() -> tsa.getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_PASSIVE)));
   }
 
-  protected void waitForDiagnostic(int stripeId, int nodeId) {
+  protected void waitForDiagnostic(int stripeId, int nodeId) throws TimeoutException {
     waitUntil(() -> tsa.getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_IN_DIAGNOSTIC_MODE)));
   }
 
-  protected void waitForPassives(int stripeId) {
+  protected void waitForPassives(int stripeId) throws TimeoutException {
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(nodesPerStripe - 1)));
   }
 
-  protected void waitForNPassives(int stripeId, int count) {
+  protected void waitForNPassives(int stripeId, int count) throws TimeoutException {
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
   }
 
@@ -384,11 +384,11 @@ public class DynamicConfigIT {
     }
   }
 
-  protected ConfigToolExecutionResult activateCluster() {
+  protected ConfigToolExecutionResult activateCluster() throws TimeoutException {
     return activateCluster("tc-cluster");
   }
 
-  protected ConfigToolExecutionResult activateCluster(String name) {
+  protected ConfigToolExecutionResult activateCluster(String name) throws TimeoutException {
     String licensePath = licensePath();
     ConfigToolExecutionResult result;
     if (licensePath == null) {

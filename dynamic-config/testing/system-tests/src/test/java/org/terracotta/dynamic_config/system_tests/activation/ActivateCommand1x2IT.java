@@ -26,6 +26,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeoutException;
 
 import static java.time.Duration.ofSeconds;
 import static org.hamcrest.Matchers.allOf;
@@ -43,14 +44,14 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
-  public void testSingleNodeActivation() {
+  public void testSingleNodeActivation() throws TimeoutException {
     assertThat(activateCluster(),
         allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
     waitForActive(1, 1);
   }
 
   @Test
-  public void testMultiNodeSingleStripeActivation() {
+  public void testMultiNodeSingleStripeActivation() throws TimeoutException {
     assertThat(
         configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)),
         is(successful()));
@@ -79,7 +80,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testMultiNodeSingleStripeActivationWithConfigFile() {
+  public void testMultiNodeSingleStripeActivationWithConfigFile() throws TimeoutException {
     assertThat(
         configToolInvocation(
             "-r", timeout + "s",

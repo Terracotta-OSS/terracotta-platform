@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.util.concurrent.TimeoutException;
+
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
@@ -45,7 +47,7 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testSingleNodeStartupFromCliParamsAndActivateCommand() {
+  public void testSingleNodeStartupFromCliParamsAndActivateCommand() throws TimeoutException {
     waitForDiagnostic(1, 1);
 
     assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
@@ -54,7 +56,7 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testMultiNodeStartupFromCliParamsAndActivateCommand() {
+  public void testMultiNodeStartupFromCliParamsAndActivateCommand() throws TimeoutException {
     waitForDiagnostic(1, 1);
     waitForDiagnostic(1, 2);
 

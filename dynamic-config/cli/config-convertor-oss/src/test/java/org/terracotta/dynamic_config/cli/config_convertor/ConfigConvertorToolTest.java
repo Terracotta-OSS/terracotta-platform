@@ -22,6 +22,7 @@ import org.terracotta.testing.TmpDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -33,7 +34,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class ConfigConvertorToolTest {
 
-  @Rule public TmpDir tmpDir = new TmpDir(false);
+  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
 
   @Test
   public void test_conversion_1() {

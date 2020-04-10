@@ -23,6 +23,7 @@ import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.nio.file.Path;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -35,7 +36,7 @@ public class Ipv6ConfigIT extends DynamicConfigIT {
   @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
-  public void testStartupFromConfigFileAndExportCommand() {
+  public void testStartupFromConfigFileAndExportCommand() throws TimeoutException {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_multi-node_ipv6.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "[::1]", "-p", String.valueOf(getNodePort()), "-r", "repository/stripe1/node-1-1");
     waitForDiagnostic(1, 1);
