@@ -81,9 +81,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>galvan-support</artifactId>
-      <version>${terracotta-core.version}</version>
+      <groupId>org.terracotta</groupId>
+      <artifactId>galvan-platform-support</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

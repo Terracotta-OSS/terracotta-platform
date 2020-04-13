@@ -43,7 +43,6 @@ public abstract class AbstractSingleTest extends AbstractTest {
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(resourceConfig)
-      .startupBuilder(DynamicConfigStartupBuilder::new)
       .build();
 
   @Before
