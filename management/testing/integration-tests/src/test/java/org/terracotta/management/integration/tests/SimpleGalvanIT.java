@@ -47,7 +47,6 @@ public class SimpleGalvanIT {
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(RESOURCE_CONFIG)
-      .startupBuilder(DynamicConfigStartupBuilder::new)
       .build();
 
   @BeforeClass

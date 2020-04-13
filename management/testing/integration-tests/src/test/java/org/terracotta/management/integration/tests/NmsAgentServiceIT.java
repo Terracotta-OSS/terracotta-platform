@@ -69,7 +69,6 @@ public class NmsAgentServiceIT {
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(resourceConfig)
-      .startupBuilder(DynamicConfigStartupBuilder::new)
       .build();
 
   Connection managementConnection;
