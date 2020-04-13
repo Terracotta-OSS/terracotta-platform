@@ -37,7 +37,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
 public class AttachCommand1x3IT extends DynamicConfigIT {
 
   public AttachCommand1x3IT() {
-    super(Duration.ofSeconds(120));
+    super(Duration.ofSeconds(180));
   }
 
   @Before

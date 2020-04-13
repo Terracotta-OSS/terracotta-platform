@@ -114,7 +114,8 @@ public class DynamicConfigIT {
   protected FailoverPriority failoverPriority = FailoverPriority.availability();
 
   public DynamicConfigIT() {
-    this(Duration.ofSeconds(60));
+    // 60 sec is not enough for Azure windows builds
+    this(Duration.ofSeconds(90));
   }
 
   public DynamicConfigIT(Duration testTimeout) {

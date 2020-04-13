@@ -42,7 +42,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.con
 public class RepairCommand1x1IT extends DynamicConfigIT {
 
   public RepairCommand1x1IT() {
-    super(Duration.ofSeconds(120));
+    super(Duration.ofSeconds(180));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

@@ -1,4 +1,3 @@
-entityID=EntityID{className='org.terracotta.lease.LeaseAcquirer', entityName='SystemLeaseAcquirer'}
 entityID=EntityID{className='org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity', entityName='dynamic-config-topology-entity'}
 entityID=EntityID{className='org.terracotta.management.entity.nms.agent.client.NmsAgentEntity', entityName='NmsAgent'}
 entityID=EntityID{className='org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService', entityName='dynamic-config-management-entity'}

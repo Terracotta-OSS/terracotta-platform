@@ -38,17 +38,17 @@ jobs:
       timeoutInMinutes: 120
       vmImage: 'ubuntu-latest'
       options: '-B -Dazure_linux_java_11'
-#  - template: build-templates/maven-common.yml@templates
-#    parameters:
-#      jdkVersion: '1.8'
-#      jobName: 'windows_java_8'
-#      timeoutInMinutes: 120
-#      vmImage: 'windows-latest'
-#      options: '-B'
-#  - template: build-templates/maven-common.yml@templates
-#    parameters:
-#      jdkVersion: '1.8'
-#      jobName: 'windows_java_11'
-#      timeoutInMinutes: 120
-#      vmImage: 'windows-latest'
-#      options: '-B -Dazure_windows_java_11'
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jdkVersion: '1.8'
+      jobName: 'windows_java_8'
+      timeoutInMinutes: 120
+      vmImage: 'windows-latest'
+      options: '-B'
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jdkVersion: '1.8'
+      jobName: 'windows_java_11'
+      timeoutInMinutes: 120
+      vmImage: 'windows-latest'
+      options: '-B -Dazure_windows_java_11'
