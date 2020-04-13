@@ -26,7 +26,7 @@ import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.json.Json;
 
 import java.net.InetSocketAddress;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -125,7 +125,10 @@ public abstract class TopologyCommand extends RemoteCommand {
 
     } else {
       logger.info("Sending the topology change");
-      setUpcomingCluster(Collections.singletonList(source), result);
+      Collection<InetSocketAddress> allOnlineSourceNodes = getAllOnlineSourceNodes();
+      if (!allOnlineSourceNodes.isEmpty()) {
+        setUpcomingCluster(allOnlineSourceNodes, result);
+      }
       setUpcomingCluster(destinationOnlineNodes.keySet(), result);
     }
 
@@ -183,6 +186,8 @@ public abstract class TopologyCommand extends RemoteCommand {
   protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
     throw error;
   }
+
+  protected abstract Collection<InetSocketAddress> getAllOnlineSourceNodes();
 
   protected abstract Cluster updateTopology();
 

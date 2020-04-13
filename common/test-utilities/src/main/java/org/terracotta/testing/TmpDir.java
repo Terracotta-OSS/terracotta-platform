@@ -18,6 +18,8 @@ package org.terracotta.testing;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.org.junit.rules.TemporaryFolder;
 
 import java.nio.file.Path;
@@ -26,6 +28,8 @@ import java.nio.file.Path;
  * @author Mathieu Carbou
  */
 public class TmpDir implements TestRule {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(TmpDir.class);
 
   private final Path parent;
   private final boolean autoClean;
@@ -63,8 +67,10 @@ public class TmpDir implements TestRule {
       public void evaluate() throws Throwable {
         if (description.getMethodName() == null) {
           root = temporaryFolder.newFolder(description.getTestClass().getSimpleName()).toPath();
+          LOGGER.info("Temporary directory for {}: {}", description.getTestClass().getSimpleName(), root);
         } else {
           root = temporaryFolder.newFolder(description.getTestClass().getSimpleName(), description.getMethodName()).toPath();
+          LOGGER.info("Temporary directory for {}#{}: {}", description.getTestClass().getSimpleName(), description.getMethodName(), root);
         }
         base.evaluate();
       }

@@ -33,7 +33,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
@@ -53,7 +52,7 @@ public class AttachCommand extends TopologyCommand {
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   // list of new nodes to add with their backup topology
-  private final Map<InetSocketAddress, Cluster> newNodes = new LinkedHashMap<>();
+  private final Map<InetSocketAddress, Cluster> newOnlineNodes = new LinkedHashMap<>();
 
   private Cluster sourceCluster;
 
@@ -101,6 +100,16 @@ public class AttachCommand extends TopologyCommand {
           "Source stripe from node: " + source + " is part of a cluster containing more than 1 stripes. " +
               "It must be detached first before being attached to a new cluster. " +
               "You can run the command with -f option to force the attachment at the risk of breaking the cluster from where the node is taken.");
+    }
+
+    // make sure nodes to attach are online
+    // building the list of nodes
+    if (operationType == NODE) {
+      // we attach only a node
+      newOnlineNodes.put(source, getUpcomingCluster(source));
+    } else {
+      // we attach a whole stripe
+      sourceCluster.getStripe(source).get().getNodeAddresses().forEach(addr -> newOnlineNodes.put(addr, getUpcomingCluster(addr)));
     }
   }
 
@@ -150,14 +159,13 @@ public class AttachCommand extends TopologyCommand {
 
   @Override
   protected void onNomadChangeReady(NodeNomadChange nomadChange) {
-    (operationType == NODE ? Stream.of(source) : sourceCluster.getStripe(source).get().getNodeAddresses().stream()).forEach(addr -> newNodes.put(addr, getUpcomingCluster(addr)));
-    setUpcomingCluster(newNodes.keySet(), nomadChange.getCluster());
+    setUpcomingCluster(newOnlineNodes.keySet(), nomadChange.getCluster());
   }
 
   @Override
   protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
     Cluster result = nomadChange.getCluster();
-    activate(newNodes.keySet(), result, null, restartDelay, restartWaitTime);
+    activate(newOnlineNodes.keySet(), result, null, restartDelay, restartWaitTime);
   }
 
   @Override
@@ -166,10 +174,15 @@ public class AttachCommand extends TopologyCommand {
         "The node information may still be added to the destination cluster: you will need to run the diagnostic / export command to check the state of the transaction." + lineSeparator() +
         "The nodes to attach won't be activated and restarted, and their topology will be rolled back to their initial value."
     );
-    newNodes.forEach((addr, cluster) -> {
+    newOnlineNodes.forEach((addr, cluster) -> {
       logger.info("Rollback topology of node: {}", addr);
       setUpcomingCluster(Collections.singletonList(addr), cluster);
     });
     throw error;
+  }
+
+  @Override
+  protected Collection<InetSocketAddress> getAllOnlineSourceNodes() {
+    return newOnlineNodes.keySet();
   }
 }

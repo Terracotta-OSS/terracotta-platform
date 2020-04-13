@@ -192,6 +192,18 @@ public class DynamicConfigIT {
   }
 
   protected int getNodePort(int stripeId, int nodeId) {
+    if (nodeId > nodesPerStripe) {
+      throw new IllegalArgumentException("Invalid node ID: " + nodeId + ". Stripes have maximum of " + nodesPerStripe + " nodes.");
+    }
+    if (nodeId < 1) {
+      throw new IllegalArgumentException("Invalid node ID: " + nodeId);
+    }
+    if (stripeId > stripes) {
+      throw new IllegalArgumentException("Invalid stripe ID: " + stripeId + ". There are " + stripes + " stripe(s).");
+    }
+    if (stripeId < 1) {
+      throw new IllegalArgumentException("Invalid stripe ID: " + nodeId);
+    }
     //1-1 => 0 and 1
     //1-2 => 2 and 3
     //1-3 => 4 and 5
@@ -206,13 +218,13 @@ public class DynamicConfigIT {
   }
 
   protected OptionalInt findActive(int stripeId) {
-    return IntStream.rangeClosed(stripeId, nodesPerStripe)
+    return IntStream.rangeClosed(1, nodesPerStripe)
         .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_ACTIVE)
         .findFirst();
   }
 
   protected int[] findPassives(int stripeId) {
-    return IntStream.rangeClosed(stripeId, nodesPerStripe)
+    return IntStream.rangeClosed(1, nodesPerStripe)
         .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_PASSIVE)
         .toArray();
   }
