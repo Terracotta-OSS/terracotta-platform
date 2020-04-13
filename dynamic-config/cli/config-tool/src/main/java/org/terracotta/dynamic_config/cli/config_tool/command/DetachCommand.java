@@ -46,7 +46,6 @@ public class DetachCommand extends TopologyCommand {
   @Parameter(names = {"-D"}, description = "Delay before the server stops itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> stopDelay = Measure.of(2, TimeUnit.SECONDS);
 
-  private final Collection<InetSocketAddress> nodesToRemove = new ArrayList<>(1);
   private final Collection<InetSocketAddress> onlineNodesToRemove = new ArrayList<>(1);
 
   @Override
@@ -63,19 +62,21 @@ public class DetachCommand extends TopologyCommand {
 
     if (operationType == NODE) {
       // when we want to detach a node
-      nodesToRemove.add(source);
+      onlineNodesToRemove.add(source);
     } else {
       // when we want tp detach a stripe, we detach all the nodes of the stripe
-      nodesToRemove.addAll(destinationCluster.getStripe(source).get().getNodeAddresses());
+      onlineNodesToRemove.addAll(destinationCluster.getStripe(source).get().getNodeAddresses());
     }
 
-    // compute teh list of online nodes to detach if requested
-    onlineNodesToRemove.addAll(nodesToRemove);
+    // compute the list of online nodes to detach if requested
     onlineNodesToRemove.retainAll(destinationOnlineNodes.keySet());
 
-    validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to detach: " + toString(onlineNodesToRemove) + " are online. " +
-        "The nodes should be safely shutdown first. " +
-        "Use -f to force the node removal by the detach command: the nodes will first reset and stop before being detached");
+    // if the nodes are activated, the user must first stop them becasue they are part of a working cluster
+    if (!onlineNodesToRemove.isEmpty() && areAllNodesActivated(onlineNodesToRemove)) {
+      validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to detach: " + toString(onlineNodesToRemove) + " are online. " +
+          "The nodes should be safely shutdown first. " +
+          "Use -f to force the node removal by the detach command: the nodes will first reset and stop before being detached");
+    }
   }
 
   @Override
@@ -148,4 +149,8 @@ public class DetachCommand extends TopologyCommand {
     }
   }
 
+  @Override
+  protected Collection<InetSocketAddress> getAllOnlineSourceNodes() {
+    return onlineNodesToRemove;
+  }
 }

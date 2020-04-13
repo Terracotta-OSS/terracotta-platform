@@ -21,8 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
-import org.terracotta.diagnostic.client.connection.DiagnosticServiceProviderException;
-import org.terracotta.diagnostic.common.DiagnosticException;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 
@@ -194,7 +192,8 @@ public class StopService {
     try (DiagnosticService logicalServerState = diagnosticServiceProvider.fetchDiagnosticService(addr, Duration.ofSeconds(5))) {
       LogicalServerState state = logicalServerState.getLogicalServerState();
       return state == LogicalServerState.UNREACHABLE;
-    } catch (DiagnosticServiceProviderException | DiagnosticException e) {
+    } catch (RuntimeException e) {
+      // DetailedConnectionException, DiagnosticServiceProviderException, DiagnosticException
       return true;
     }
   }

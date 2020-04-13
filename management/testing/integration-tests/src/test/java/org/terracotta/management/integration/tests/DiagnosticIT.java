@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
  * @author Mathieu Carbou
@@ -41,21 +42,39 @@ public class DiagnosticIT extends AbstractSingleTest {
 
   @Test
   public void cluster_state_dump() throws Exception {
-    put(0, "pets", "pet1", "Cubitus");
-
     Properties properties = new Properties();
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "10000");
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, "diagnostic");
-    properties.setProperty(PROP_REQUEST_TIMEOUT, "5000");
-    properties.setProperty(PROP_REQUEST_TIMEOUTMESSAGE, "5000");
+    properties.setProperty(PROP_REQUEST_TIMEOUT, "10000");
+    properties.setProperty(PROP_REQUEST_TIMEOUTMESSAGE, "10000");
     URI uri = URI.create("diagnostic://" + voltron.getConnectionURI().getAuthority());
+
+    while (!Thread.currentThread().isInterrupted()) {
+
+      try (Connection connection = ConnectionFactory.connect(uri, properties)) {
+        EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
+        Diagnostics diagnostics = ref.fetchEntity(null);
+        String dump = diagnostics.getClusterState();
+//      System.out.println(dump);
+        try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
+          if (lines.allMatch(line -> containsString(line).matches(dump))) {
+            return;
+          }
+        }
+      }
+
+      try {
+        Thread.sleep(1_00);
+      } catch (InterruptedException e) {
+        fail("interrupted");
+      }
+    }
+
     try (Connection connection = ConnectionFactory.connect(uri, properties)) {
       EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
       Diagnostics diagnostics = ref.fetchEntity(null);
-
       String dump = diagnostics.getClusterState();
 //      System.out.println(dump);
-
       try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
         lines.forEach(line -> {
           //System.out.println(line);
