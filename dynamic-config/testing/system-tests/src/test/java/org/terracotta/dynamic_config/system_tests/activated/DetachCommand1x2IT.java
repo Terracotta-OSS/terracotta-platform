@@ -16,13 +16,9 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Test;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.diagnostic.client.DiagnosticService;
-import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.net.InetSocketAddress;
 import java.time.Duration;
 
 import static org.hamcrest.Matchers.allOf;
@@ -31,7 +27,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
 
@@ -56,7 +51,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
 
-    assertPassiveStopped(activeId);
+    waitUntil(() -> tsa.getStopped().size(), is(1));
     assertTopologyChanged(passiveId);
   }
 
@@ -66,7 +61,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     final int passiveId = findPassives(1)[0];
 
     assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
-    assertPassiveStopped(passiveId);
+    waitUntil(() -> tsa.getStopped().size(), is(1));
     assertTopologyChanged(activeId);
   }
 
@@ -107,7 +102,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
 
     configToolInvocation("-t", "5s", "detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId), "-f");
 
-    assertPassiveStopped(passiveId);
+    waitUntil(() -> tsa.getStopped().size(), is(1));
     assertTopologyChanged(activeId);
   }
 
@@ -127,7 +122,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
-    assertPassiveStopped(passiveId);
+    waitUntil(() -> tsa.getStopped().size(), is(1));
 
     // Nomad rollback happened
     // we end up with a cluster of 2 nodes with 1 of them removed
@@ -152,7 +147,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Commit failed for node localhost:" + getNodePort(1, activeId) + ". Reason: java.util.concurrent.TimeoutException"));
 
-    assertPassiveStopped(passiveId);
+    waitUntil(() -> tsa.getStopped().size(), is(2));
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, activeId);
@@ -194,13 +189,13 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
-    //Both active and passive is down.
+    //Both active and passive are down.
     assertThat(
         configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
-    assertPassiveStopped(passiveId);
+    waitUntil(() -> tsa.getStopped().size(), is(2));
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, activeId);
@@ -216,18 +211,5 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, nodeId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, nodeId)).getNodeCount(), is(equalTo(1)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, nodeId)).getSingleNode().get().getNodePort(), is(equalTo(getNodePort(1, nodeId))));
-  }
-
-  private void assertPassiveStopped(int nodeId) {
-    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        InetSocketAddress.createUnresolved("localhost", getNodePort(1, nodeId)),
-        getClass().getSimpleName(),
-        Duration.ofSeconds(5),
-        Duration.ofSeconds(5),
-        null)) {
-      fail(diagnosticService.getLogicalServerState().name());
-    } catch (ConnectionException ignored) {
-      // ok, down
-    }
   }
 }
