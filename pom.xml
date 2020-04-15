@@ -298,7 +298,6 @@
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
           <version>1.6.1</version>
-          <extensions>true</extensions>
           <configuration>
             <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
             <serverId>terracotta-nexus-staging</serverId>
@@ -316,9 +315,15 @@
               </jdk>
             </toolchains>
           </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>toolchain</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
-          <inherited>false</inherited>
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
           <version>3.0.rc1</version>
@@ -342,6 +347,13 @@
               <exclude>mvnw.cmd</exclude>
             </excludes>
           </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.jvnet.jaxb2.maven2</groupId>
@@ -363,6 +375,13 @@
               <version>4.0.0</version>
             </dependency>
           </dependencies>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
@@ -410,6 +429,78 @@
             </archive>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>2.5.4</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addClasspath>true</addClasspath>
+              </manifest>
+            </archive>
+          </configuration>
+          <executions>
+            <execution>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>manifest</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.2.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>jar-no-fork</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>1.4.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <dependencyConvergence>
+                    <uniqueVersions>true</uniqueVersions>
+                  </dependencyConvergence>
+                  <requireJavaVersion>
+                    <version>[${java.build.version},)</version>
+                  </requireJavaVersion>
+                  <requireMavenVersion>
+                    <version>[${maven.version},)</version>
+                  </requireMavenVersion>
+                </rules>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.1.1</version>
+          <configuration>
+            <quiet>true</quiet>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -421,45 +512,23 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>2.5.4</version>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-            </manifest>
-          </archive>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>manifest</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.2.1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>jar-no-fork</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
 
   <profiles>
     <!--
-      default profile including toolchain, javadoc, findbugs, license check, enforcer, etc
-      Use any Maven command with -Dfast to speed up the build - used daily for just compilation and packaging
+      Default profile is slow.
+      It includes: including toolchain, javadoc, findbugs, license check, enforcer, etc.
+      Use any Maven command with -Dfast to speed up the build.
+      -Dfast can be used daily and will just do compilation and packaging
     -->
     <profile>
-      <id>slow</id>
+      <id>default</id>
       <activation>
         <property>
           <name>fast</name>
@@ -471,64 +540,18 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-toolchains-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>toolchain</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
-            <version>1.4.1</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>enforce</goal>
-                </goals>
-                <configuration>
-                  <rules>
-                    <dependencyConvergence>
-                      <uniqueVersions>true</uniqueVersions>
-                    </dependencyConvergence>
-                    <requireJavaVersion>
-                      <version>[${java.build.version},)</version>
-                    </requireJavaVersion>
-                    <requireMavenVersion>
-                      <version>[${maven.version},)</version>
-                    </requireMavenVersion>
-                  </rules>
-                </configuration>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.1.1</version>
-            <configuration>
-              <quiet>true</quiet>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.sonatype.plugins</groupId>
@@ -536,16 +559,9 @@
             <extensions>true</extensions>
           </plugin>
           <plugin>
-            <inherited>false</inherited>
             <groupId>com.mycila</groupId>
             <artifactId>license-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
+            <inherited>false</inherited>
           </plugin>
         </plugins>
       </build>
@@ -566,9 +582,9 @@
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
               <argLine>--illegal-access=permit</argLine>
-              <jvm>${java}</jvm>
+              <jvm>${java.test.bin}</jvm>
               <environmentVariables>
-                <JAVA_HOME>${jvm}</JAVA_HOME>
+                <JAVA_HOME>${java.test.home}</JAVA_HOME>
               </environmentVariables>
             </configuration>
           </plugin>
@@ -578,9 +594,9 @@
             <configuration>
               <trimStackTrace>false</trimStackTrace>
               <argLine>--illegal-access=permit</argLine>
-              <jvm>${java}</jvm>
+              <jvm>${java.test.bin}</jvm>
               <environmentVariables>
-                <JAVA_HOME>${jvm}</JAVA_HOME>
+                <JAVA_HOME>${java.test.home}</JAVA_HOME>
               </environmentVariables>
             </configuration>
           </plugin>
@@ -599,8 +615,8 @@
         </file>
       </activation>
       <properties>
-        <jvm>/Users/matc/.jenv/versions/11.0</jvm>
-        <java>/Users/matc/.jenv/versions/11.0/bin/java</java>
+        <java.test.home>/Users/matc/.jenv/versions/11.0</java.test.home>
+        <java.test.bin>/Users/matc/.jenv/versions/11.0/bin/java</java.test.bin>
       </properties>
     </profile>
     <profile>
@@ -615,8 +631,8 @@
         </file>
       </activation>
       <properties>
-        <jvm>/usr/lib/jvm/zulu-11-azure-amd64</jvm>
-        <java>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</java>
+        <java.test.home>/usr/lib/jvm/zulu-11-azure-amd64</java.test.home>
+        <java.test.bin>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</java.test.bin>
       </properties>
     </profile>
     <profile>
@@ -631,8 +647,8 @@
         </file>
       </activation>
       <properties>
-        <jvm>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64</jvm>
-        <java>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</java>
+        <java.test.home>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64</java.test.home>
+        <java.test.bin>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</java.test.bin>
       </properties>
     </profile>
   </profiles>
