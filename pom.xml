@@ -525,6 +525,7 @@
               <script>
                 <![CDATA[
 import java.nio.file.Paths
+import java.nio.file.Files
 
 // parameters
 def version = '${java.test.version}'
@@ -533,8 +534,21 @@ def argLineJvm9 = '--illegal-access=permit'
 // compute values
 def argLine = Float.parseFloat(version.substring(2)) >= 9 ? argLineJvm9 : null
 def bin = System.getProperty('os.name').toLowerCase().contains('win') ? 'java.exe' : 'java'
-def toolchains = new XmlSlurper().parse(Paths.get(System.getProperty("user.home"), '.m2', 'toolchains.xml').toFile())
-def jvmHome = toolchains.toolchain.find { it.type.text() == 'jdk' && it.provides.version.text() == version }.configuration.jdkHome.text()
+def toolchainsPath = Paths.get(System.getProperty("user.home"), '.m2', 'toolchains.xml')
+if(!Files.exists(toolchainsPath)) {
+  log.error("Did not find toolchains.xml file at: " + toolchainsPath)
+  throw new RuntimeException("Did not find toolchains.xml file at: " + toolchainsPath)
+}
+def toolchains = new XmlSlurper().parse(toolchainsPath.toFile())
+def jvmHome = toolchains?.toolchain?.find { it?.type?.text() == 'jdk' && it?.provides?.version?.text() == version }?.configuration?.jdkHome?.text()
+if(!jvmHome) {
+  log.error("Did not find JVM home for version " + version + " in toolchains.xml file at: " + toolchainsPath)
+  throw new RuntimeException("Did not find JVM home for version " + version + " in toolchains.xml file at: " + toolchainsPath)
+}
+if(!Files.exists(Paths.get(jvmHome))) {
+  log.error("JVM Home path does not exist: " + jvmHome + " for version " + version + " defined in toolchains.xml file at: " + toolchainsPath)
+  throw new RuntimeException("JVM Home path does not exist: " + jvmHome + " for version " + version + " defined in toolchains.xml file at: " + toolchainsPath)
+}
 def jvmBin = Paths.get(jvmHome, 'bin', bin)
 
 // reset project properties
