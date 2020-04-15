@@ -219,23 +219,15 @@
           </execution>
         </executions>
       </plugin>
-
-    </plugins>
-  </build>
-
-  <profiles>
-
-    <profile>
-      <!-- builds a kit with all libraries exploded -->
-      <id>kit-v1</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <build>
-        <plugins>
-          <!-- apply the platform Kit layout -->
-          <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>platform-kit</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
             <configuration>
               <appendAssemblyId>false</appendAssemblyId>
               <tarLongFileMode>posix</tarLongFileMode>
@@ -244,20 +236,13 @@
                 <descriptor>src/main/assembly/platform-kit-v1.xml</descriptor>
               </descriptors>
             </configuration>
-            <executions>
-              <execution>
-                <id>platform-kit</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>single</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
+  <profiles>
     <profile>
       <!-- builds a nice kit -->
       <id>kit-v2</id>
@@ -680,14 +665,6 @@
           <!-- apply the platform Kit layout -->
           <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
-            <configuration>
-              <appendAssemblyId>false</appendAssemblyId>
-              <tarLongFileMode>posix</tarLongFileMode>
-              <attach>true</attach>
-              <descriptors>
-                <descriptor>src/main/assembly/platform-kit-v2.xml</descriptor>
-              </descriptors>
-            </configuration>
             <executions>
               <execution>
                 <id>platform-kit</id>
@@ -695,6 +672,14 @@
                 <goals>
                   <goal>single</goal>
                 </goals>
+                <configuration>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <tarLongFileMode>posix</tarLongFileMode>
+                  <attach>true</attach>
+                  <descriptors>
+                    <descriptor>src/main/assembly/platform-kit-v2.xml</descriptor>
+                  </descriptors>
+                </configuration>
               </execution>
             </executions>
           </plugin>

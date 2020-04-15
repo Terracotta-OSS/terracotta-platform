@@ -25,8 +25,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <maven.version>3.2.5</maven.version>
-    <maven-forge-plugin.version>1.2.16</maven-forge-plugin.version>
+    <maven.version>3.6.3</maven.version>
     <slf4j.version>1.7.25</slf4j.version>
     <logback.version>1.2.3</logback.version>
     <terracotta-apis.version>1.7.0-pre1</terracotta-apis.version>
@@ -40,8 +39,9 @@
     <jackson.version>2.10.1</jackson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <java.version>1.8</java.version>
-    <toolchain.provider.version>1.8</toolchain.provider.version>
+    <java.build.version>1.8</java.build.version>
+    <!-- Use -Djava.test.version=1.11 for example to run tests om Java 11 JVM -->
+    <java.test.version>${java.build.version}</java.test.version>
   </properties>
 
   <modules>
@@ -263,8 +263,8 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.1</version>
           <configuration>
-            <source>${java.version}</source>
-            <target>${java.version}</target>
+            <source>${java.build.version}</source>
+            <target>${java.build.version}</target>
             <compilerArgs>
               <arg>-Xlint:all</arg>
               <arg>-Werror</arg>
@@ -277,7 +277,16 @@
           <version>2.22.2</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
+            <argLine>${java.test.argLine}</argLine>
           </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -285,13 +294,13 @@
           <version>2.22.2</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
+            <argLine>${java.test.argLine}</argLine>
           </configuration>
         </plugin>
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
           <version>1.6.1</version>
-          <extensions>true</extensions>
           <configuration>
             <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
             <serverId>terracotta-nexus-staging</serverId>
@@ -305,13 +314,19 @@
           <configuration>
             <toolchains>
               <jdk>
-                <version>${toolchain.provider.version}</version>
+                <version>${java.build.version}</version>
               </jdk>
             </toolchains>
           </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>toolchain</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
-          <inherited>false</inherited>
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
           <version>3.0.rc1</version>
@@ -335,6 +350,13 @@
               <exclude>mvnw.cmd</exclude>
             </excludes>
           </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.jvnet.jaxb2.maven2</groupId>
@@ -356,6 +378,13 @@
               <version>4.0.0</version>
             </dependency>
           </dependencies>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
@@ -403,6 +432,149 @@
             </archive>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>2.5.4</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addClasspath>true</addClasspath>
+              </manifest>
+            </archive>
+          </configuration>
+          <executions>
+            <execution>
+              <phase>process-classes</phase>
+              <goals>
+                <goal>manifest</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.2.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>jar-no-fork</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>1.4.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <dependencyConvergence>
+                    <uniqueVersions>true</uniqueVersions>
+                  </dependencyConvergence>
+                  <requireJavaVersion>
+                    <version>[${java.build.version},)</version>
+                  </requireJavaVersion>
+                  <requireMavenVersion>
+                    <version>[${maven.version},)</version>
+                  </requireMavenVersion>
+                </rules>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.1.1</version>
+          <configuration>
+            <quiet>true</quiet>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <!--
+           This plugin reads the content of the toolchains.xml file to extract the JVM home and use
+           it for the tests
+          -->
+        <plugin>
+          <groupId>org.codehaus.gmavenplus</groupId>
+          <artifactId>gmavenplus-plugin</artifactId>
+          <version>1.9.0</version>
+          <executions>
+            <execution>
+              <phase>initialize</phase>
+              <goals>
+                <goal>execute</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <scripts>
+              <script>
+                <![CDATA[
+import java.nio.file.Paths
+
+// parameters
+def version = '${java.test.version}'
+def argLineJvm9 = '--illegal-access=permit'
+
+// compute values
+def argLine = Float.parseFloat(version.substring(2)) >= 9 ? argLineJvm9 : null
+def bin = System.getProperty('os.name').toLowerCase().contains('win') ? 'java.exe' : 'java'
+def toolchains = new XmlSlurper().parse(Paths.get(System.getProperty("user.home"), '.m2', 'toolchains.xml').toFile())
+def jvmHome = toolchains.toolchain.find { it.type.text() == 'jdk' && it.provides.version.text() == version }.configuration.jdkHome.text()
+def jvmBin = Paths.get(jvmHome, 'bin', bin)
+
+// reset project properties
+project.properties['java.test.version'] = version
+project.properties['java.test.home'] = jvmHome
+project.properties['java.test.bin'] = jvmBin.toAbsolutePath().toString()
+if(argLine) {
+  project.properties['java.test.argLine'] = argLine
+}
+
+// log
+log.info("java.test.version => " + project.properties['java.test.version'])
+log.info("java.test.home => " + project.properties['java.test.home'])
+log.info("java.test.bin => " + project.properties['java.test.bin'])
+log.info("java.test.argLine => " + project.properties['java.test.argLine'])
+                  ]]>
+              </script>
+            </scripts>
+          </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy</artifactId>
+              <version>3.0.3</version>
+              <scope>runtime</scope>
+            </dependency>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-xml</artifactId>
+              <version>3.0.3</version>
+              <scope>runtime</scope>
+            </dependency>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-ant</artifactId>
+              <version>3.0.3</version>
+              <scope>runtime</scope>
+            </dependency>
+          </dependencies>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -414,112 +586,50 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>2.5.4</version>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-            </manifest>
-          </archive>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>manifest</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.2.1</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>jar-no-fork</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
 
   <profiles>
-    <!-- fast profile for local use which will disable the default activated profiles and speed up the build -->
+    <!--
+      Default profile is slow.
+      It includes: including toolchain, javadoc, findbugs, license check, enforcer, etc.
+      Use any Maven command with -Dfast to speed up the build.
+      -Dfast can be used daily and will just do compilation and packaging
+    -->
     <profile>
-      <id>fast</id>
-    </profile>
-    <!-- default profile including toolchain, javadoc, findbugs, license check, enforcer, etc -->
-    <profile>
-      <id>slow</id>
+      <id>default</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>fast</name>
+          <value>!true</value>
+        </property>
       </activation>
       <build>
         <plugins>
           <plugin>
+            <groupId>org.codehaus.gmavenplus</groupId>
+            <artifactId>gmavenplus-plugin</artifactId>
+          </plugin>
+          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-toolchains-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>toolchain</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
-            <version>1.4.1</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>enforce</goal>
-                </goals>
-                <configuration>
-                  <rules>
-                    <dependencyConvergence>
-                      <uniqueVersions>true</uniqueVersions>
-                    </dependencyConvergence>
-                    <requireJavaVersion>
-                      <version>[${java.version},)</version>
-                    </requireJavaVersion>
-                    <requireMavenVersion>
-                      <version>[${maven.version},)</version>
-                    </requireMavenVersion>
-                  </rules>
-                </configuration>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.1.1</version>
-            <configuration>
-              <quiet>true</quiet>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.sonatype.plugins</groupId>
@@ -527,42 +637,17 @@
             <extensions>true</extensions>
           </plugin>
           <plugin>
-            <inherited>false</inherited>
             <groupId>com.mycila</groupId>
             <artifactId>license-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
+            <inherited>false</inherited>
           </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- profile handling support for java versions >=9  -->
-    <profile>
-      <id>azure_linux_java_11</id>
-      <activation>
-        <property>
-          <name>azure_linux_java_11</name>
-        </property>
-      </activation>
-      <properties>
-        <toolchain.provider.version>1.11</toolchain.provider.version>
-      </properties>
-      <build>
-        <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <argLine>--illegal-access=permit</argLine>
-              <jvm>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</jvm>
+              <jvm>${java.test.bin}</jvm>
               <environmentVariables>
-                <JAVA_HOME>/usr/lib/jvm/zulu-11-azure-amd64</JAVA_HOME>
+                <JAVA_HOME>${java.test.home}</JAVA_HOME>
               </environmentVariables>
             </configuration>
           </plugin>
@@ -570,50 +655,9 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <argLine>--illegal-access=permit</argLine>
-              <jvm>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</jvm>
+              <jvm>${java.test.bin}</jvm>
               <environmentVariables>
-                <JAVA_HOME>/usr/lib/jvm/zulu-11-azure-amd64</JAVA_HOME>
-              </environmentVariables>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>azure_windows_java_11</id>
-      <activation>
-        <property>
-          <name>azure_windows_java_11</name>
-        </property>
-      </activation>
-      <properties>
-        <toolchain.provider.version>1.11</toolchain.provider.version>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <argLine>--illegal-access=permit</argLine>
-              <jvm>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</jvm>
-              <environmentVariables>
-                <JAVA_HOME>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64</JAVA_HOME>
-              </environmentVariables>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <argLine>--illegal-access=permit</argLine>
-              <jvm>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</jvm>
-              <environmentVariables>
-                <JAVA_HOME>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64</JAVA_HOME>
+                <JAVA_HOME>${java.test.home}</JAVA_HOME>
               </environmentVariables>
             </configuration>
           </plugin>
