@@ -277,7 +277,6 @@
           <version>2.22.2</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
-            <argLine>${java.test.argLine}</argLine>
           </configuration>
           <executions>
             <execution>
@@ -294,7 +293,6 @@
           <version>2.22.2</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
-            <argLine>${java.test.argLine}</argLine>
           </configuration>
         </plugin>
         <plugin>
@@ -525,31 +523,31 @@
               <script>
                 <![CDATA[
 import java.nio.file.Paths
+import java.nio.file.Files
 
 // parameters
 def version = '${java.test.version}'
-def argLineJvm9 = '--illegal-access=permit'
 
 // compute values
-def argLine = Float.parseFloat(version.substring(2)) >= 9 ? argLineJvm9 : null
 def bin = System.getProperty('os.name').toLowerCase().contains('win') ? 'java.exe' : 'java'
 def toolchains = new XmlSlurper().parse(Paths.get(System.getProperty("user.home"), '.m2', 'toolchains.xml').toFile())
-def jvmHome = toolchains.toolchain.find { it.type.text() == 'jdk' && it.provides.version.text() == version }.configuration.jdkHome.text()
+def jvmHome = toolchains?.toolchain?.find { it?.type?.text() == 'jdk' && it?.provides?.version?.text() == version }?.configuration?.jdkHome?.text()
+if(!jvmHome) {
+  // this is the only validation we need. Other ones are done by toolchains plugin
+  log.error("Did not find JVM home for version " + version + " in toolchains.xml file at: " + toolchainsPath)
+  throw new RuntimeException("Did not find JVM home for version " + version + " in toolchains.xml file at: " + toolchainsPath)
+}
 def jvmBin = Paths.get(jvmHome, 'bin', bin)
 
 // reset project properties
 project.properties['java.test.version'] = version
 project.properties['java.test.home'] = jvmHome
 project.properties['java.test.bin'] = jvmBin.toAbsolutePath().toString()
-if(argLine) {
-  project.properties['java.test.argLine'] = argLine
-}
 
 // log
 log.info("java.test.version => " + project.properties['java.test.version'])
 log.info("java.test.home => " + project.properties['java.test.home'])
 log.info("java.test.bin => " + project.properties['java.test.bin'])
-log.info("java.test.argLine => " + project.properties['java.test.argLine'])
                   ]]>
               </script>
             </scripts>
