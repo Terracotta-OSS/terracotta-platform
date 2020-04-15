@@ -167,12 +167,13 @@
     <!--
       KIT
     -->
-
+    
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>terracotta-kit</artifactId>
       <version>${terracotta-core.version}</version>
       <type>tar.gz</type>
+      <!-- Just comment out this section if u need to debug some core classes-->
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
