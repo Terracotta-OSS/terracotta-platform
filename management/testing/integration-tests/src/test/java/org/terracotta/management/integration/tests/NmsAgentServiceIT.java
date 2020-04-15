@@ -25,6 +25,7 @@ import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.agent.client.DefaultNmsAgentService;
+import org.terracotta.management.entity.nms.agent.client.NmsAgentEntity;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityFactory;
 import org.terracotta.management.entity.nms.client.DefaultNmsService;
 import org.terracotta.management.entity.nms.client.NmsEntityFactory;
@@ -39,10 +40,12 @@ import org.terracotta.testing.rules.Cluster;
 
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
@@ -61,7 +64,7 @@ public class NmsAgentServiceIT {
           "</config>\n";
 
   @Rule
-  public Timeout timeout = Timeout.seconds(90);
+  public Timeout timeout = Timeout.seconds(120);
 
   @Rule
   public Cluster voltron = newCluster()
@@ -87,11 +90,13 @@ public class NmsAgentServiceIT {
 
     NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
     nmsService = new DefaultNmsService(nmsEntityFactory.retrieveOrCreate(new NmsConfig()));
+    nmsService.setOperationTimeout(30, TimeUnit.SECONDS);
 
     clientConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
 
     // note the supplier below, which is used to recycle the entity with a potentially new connection
-    nmsAgentService = new DefaultNmsAgentService(() -> new NmsAgentEntityFactory(clientConnection).retrieve());
+    nmsAgentService = new DefaultNmsAgentService(this::createAgentEntity);
+    nmsAgentService.setOperationTimeout(30, TimeUnit.SECONDS);
     nmsAgentService.setOnOperationError((operation, throwable) -> opErrors.incrementAndGet());
     nmsAgentService.setManagementRegistry(registry);
   }
@@ -196,5 +201,12 @@ public class NmsAgentServiceIT {
       }
     }
     fail();
+  }
+
+  private NmsAgentEntity createAgentEntity() {
+    // uses the global client connection object to create an entity
+    // this connection ref will always be there, but might be "broken"
+    assertNotNull(clientConnection);
+    return new NmsAgentEntityFactory(clientConnection).retrieve();
   }
 }
