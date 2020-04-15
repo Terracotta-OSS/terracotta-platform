@@ -40,6 +40,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.build.version>1.8</java.build.version>
+    <!-- Use -Djava.test.version=1.11 for example to run tests om Java 11 JVM -->
     <java.test.version>${java.build.version}</java.test.version>
   </properties>
 
@@ -276,6 +277,7 @@
           <version>2.22.2</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
+            <argLine>${java.test.argLine}</argLine>
           </configuration>
           <executions>
             <execution>
@@ -292,6 +294,7 @@
           <version>2.22.2</version>
           <configuration>
             <trimStackTrace>false</trimStackTrace>
+            <argLine>${java.test.argLine}</argLine>
           </configuration>
         </plugin>
         <plugin>
@@ -501,6 +504,77 @@
             </execution>
           </executions>
         </plugin>
+        <!--
+           This plugin reads the content of the toolchains.xml file to extract the JVM home and use
+           it for the tests
+          -->
+        <plugin>
+          <groupId>org.codehaus.gmavenplus</groupId>
+          <artifactId>gmavenplus-plugin</artifactId>
+          <version>1.9.0</version>
+          <executions>
+            <execution>
+              <phase>initialize</phase>
+              <goals>
+                <goal>execute</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <scripts>
+              <script>
+                <![CDATA[
+import java.nio.file.Paths
+
+// parameters
+def version = '${java.test.version}'
+def argLineJvm9 = '--illegal-access=permit'
+
+// compute values
+def argLine = Float.parseFloat(version.substring(2)) >= 9 ? argLineJvm9 : null
+def bin = System.getProperty('os.name').toLowerCase().contains('win') ? 'java.exe' : 'java'
+def toolchains = new XmlSlurper().parse(Paths.get(System.getProperty("user.home"), '.m2', 'toolchains.xml').toFile())
+def jvmHome = toolchains.toolchain.find { it.type.text() == 'jdk' && it.provides.version.text() == version }.configuration.jdkHome.text()
+def jvmBin = Paths.get(jvmHome, 'bin', bin)
+
+// reset project properties
+project.properties['java.test.version'] = version
+project.properties['java.test.home'] = jvmHome
+project.properties['java.test.bin'] = jvmBin.toAbsolutePath().toString()
+if(argLine) {
+  project.properties['java.test.argLine'] = argLine
+}
+
+// log
+log.info("java.test.version => " + project.properties['java.test.version'])
+log.info("java.test.home => " + project.properties['java.test.home'])
+log.info("java.test.bin => " + project.properties['java.test.bin'])
+log.info("java.test.argLine => " + project.properties['java.test.argLine'])
+                  ]]>
+              </script>
+            </scripts>
+          </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy</artifactId>
+              <version>3.0.3</version>
+              <scope>runtime</scope>
+            </dependency>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-xml</artifactId>
+              <version>3.0.3</version>
+              <scope>runtime</scope>
+            </dependency>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-ant</artifactId>
+              <version>3.0.3</version>
+              <scope>runtime</scope>
+            </dependency>
+          </dependencies>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -538,6 +612,10 @@
       <build>
         <plugins>
           <plugin>
+            <groupId>org.codehaus.gmavenplus</groupId>
+            <artifactId>gmavenplus-plugin</artifactId>
+          </plugin>
+          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-toolchains-plugin</artifactId>
           </plugin>
@@ -563,25 +641,10 @@
             <artifactId>license-maven-plugin</artifactId>
             <inherited>false</inherited>
           </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- profile handling support for java versions >=9 -->
-    <profile>
-      <id>java_11</id>
-      <activation>
-        <property>
-          <name>java.test.version</name>
-          <value>1.11</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
-              <argLine>--illegal-access=permit</argLine>
               <jvm>${java.test.bin}</jvm>
               <environmentVariables>
                 <JAVA_HOME>${java.test.home}</JAVA_HOME>
@@ -592,8 +655,6 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              <trimStackTrace>false</trimStackTrace>
-              <argLine>--illegal-access=permit</argLine>
               <jvm>${java.test.bin}</jvm>
               <environmentVariables>
                 <JAVA_HOME>${java.test.home}</JAVA_HOME>
@@ -602,54 +663,6 @@
           </plugin>
         </plugins>
       </build>
-    </profile>
-    <profile>
-      <id>local_java_11</id>
-      <activation>
-        <property>
-          <name>java.test.version</name>
-          <value>1.11</value>
-        </property>
-        <file>
-          <exists>/Users/matc/.jenv/versions/11.0/bin/java</exists>
-        </file>
-      </activation>
-      <properties>
-        <java.test.home>/Users/matc/.jenv/versions/11.0</java.test.home>
-        <java.test.bin>/Users/matc/.jenv/versions/11.0/bin/java</java.test.bin>
-      </properties>
-    </profile>
-    <profile>
-      <id>azure_linux_java_11</id>
-      <activation>
-        <property>
-          <name>java.test.version</name>
-          <value>1.11</value>
-        </property>
-        <file>
-          <exists>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</exists>
-        </file>
-      </activation>
-      <properties>
-        <java.test.home>/usr/lib/jvm/zulu-11-azure-amd64</java.test.home>
-        <java.test.bin>/usr/lib/jvm/zulu-11-azure-amd64/bin/java</java.test.bin>
-      </properties>
-    </profile>
-    <profile>
-      <id>azure_windows_java_11</id>
-      <activation>
-        <property>
-          <name>java.test.version</name>
-          <value>1.11</value>
-        </property>
-        <file>
-          <exists>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</exists>
-        </file>
-      </activation>
-      <properties>
-        <java.test.home>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64</java.test.home>
-        <java.test.bin>C:\program files\java\zulu-11-azure-jdk_11.33.15-11.0.4-win_x64\bin\java.exe</java.test.bin>
-      </properties>
     </profile>
   </profiles>
 
