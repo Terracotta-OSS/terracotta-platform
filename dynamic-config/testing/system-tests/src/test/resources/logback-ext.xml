@@ -17,14 +17,6 @@
 
 -->
 <included>
-  <!-- hide most of server logs-->
-  <logger name="org.terracotta" level="WARN"/>
-  <logger name="com.terracottatech" level="WARN"/>
-  <logger name="com.tc" level="WARN"/>
-  <logger name="org.terracotta.lease" level="WARN"/>
-  <!-- except some -->
-  <logger name="com.tc.server.TCServerMain" level="INFO"/>
-  <logger name="com.tc.objectserver.impl.DistributedObjectServer" level="INFO"/>
   <!--  <logger name="org.terracotta.dynamic_config" level="TRACE"/>-->
   <!--  <logger name="org.terracotta.persistence.sanskrit" level="TRACE"/>-->
   <!--  <logger name="org.terracotta.nomad" level="TRACE"/>-->
