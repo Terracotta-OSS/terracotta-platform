@@ -171,7 +171,6 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
-            <JAVA_HOME>/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home/</JAVA_HOME>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
 <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
           </systemPropertyVariables>
