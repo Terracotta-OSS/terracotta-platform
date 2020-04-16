@@ -170,6 +170,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>maven-forge-plugin</artifactId>
         <configuration>
+          <forkCount>1C</forkCount>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
 <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
