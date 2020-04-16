@@ -67,7 +67,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
 
   private long timeoutMs = 5000;
   private Executor managementCallExecutor = Runnable::run;
-  private ManagementProvider<?> diagnosticProvider = new DiagnosticProvider(DiagnosticUtility.class);
+  private final ManagementProvider<?> diagnosticProvider = new DiagnosticProvider(DiagnosticUtility.class);
   private BiConsumer<Operation, Throwable> onOperationError = (op, err) -> LOGGER.trace("Failed to call management entity. Message will be lost. Error: {}", err.getMessage(), err);
 
   private final ManagementProvider<?> managementProvider = new ManagementProviderAdapter<Object>(CAPABILITY_NAME, Object.class) {
@@ -352,7 +352,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
     entity.registerMessageListener(Message.class, this);
     entity.setEndpointListener(this);
 
-    // assignement needed before calling refreshManagementRegistry();
+    // needed before calling refreshManagementRegistry();
     this.entity = entity;
 
     // this will call again getEntity();

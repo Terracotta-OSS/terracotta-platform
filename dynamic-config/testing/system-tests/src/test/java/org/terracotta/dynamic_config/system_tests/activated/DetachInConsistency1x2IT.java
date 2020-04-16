@@ -34,7 +34,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
 public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
   public DetachInConsistency1x2IT() {
-    super(Duration.ofSeconds(120));
+    super(Duration.ofSeconds(180));
     this.failoverPriority = FailoverPriority.consistency();
   }
 
