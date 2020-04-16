@@ -70,7 +70,7 @@ public class MultiDiagnosticServiceConnectionTest {
   @Test
   public void getEndpoints() throws DiagnosticServiceProviderException {
     DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(nodes);
-    assertThat(diagnosticServices.getOnlineEndpoints(), containsInAnyOrder(nodes.toArray()));
+    assertThat(diagnosticServices.getOnlineEndpoints().keySet(), containsInAnyOrder(nodes.toArray()));
   }
 
   @Test

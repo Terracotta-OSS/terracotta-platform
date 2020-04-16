@@ -39,12 +39,12 @@ public class DiagnosticServices implements AutoCloseable {
     this.offlineEndpoints = requireNonNull(offlineEndpoints);
   }
 
-  public Collection<InetSocketAddress> getOnlineEndpoints() {
-    return Collections.unmodifiableSet(onlineEndpoints.keySet());
+  public Map<InetSocketAddress, DiagnosticService> getOnlineEndpoints() {
+    return Collections.unmodifiableMap(onlineEndpoints);
   }
 
-  public Collection<InetSocketAddress> getOfflineEndpoints() {
-    return Collections.unmodifiableSet(offlineEndpoints.keySet());
+  public Map<InetSocketAddress, DiagnosticServiceProviderException> getOfflineEndpoints() {
+    return Collections.unmodifiableMap(offlineEndpoints);
   }
 
   public Optional<DiagnosticServiceProviderException> getError(InetSocketAddress address) {
