@@ -59,9 +59,6 @@ public interface MultiDiagnosticServiceProvider {
    * If some nodes are offline, they will be reported in {@link DiagnosticServices#getOfflineEndpoints()}.
    * <p>
    * The returned {@link DiagnosticServices} will have a list of online nodes and a list of offline nodes.
-   *
-   * @throws DiagnosticServiceProviderException If one of the node is unreachable,
-   *                                            or if all the nodes cannot be reached within a specific duration (timeout)
    */
   DiagnosticServices fetchDiagnosticServices(Collection<InetSocketAddress> addresses);
 }
