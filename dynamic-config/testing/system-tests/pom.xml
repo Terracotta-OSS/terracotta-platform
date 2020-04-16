@@ -77,6 +77,11 @@
       <version>${logback.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>voter</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -158,6 +163,7 @@
             <angela.kitInstallationDir>${project.build.directory}/platform-kit-${project.version}</angela.kitInstallationDir>
             <angela.java.vendor/> <!--empty to allow any vendor-->
             <angela.java.version>${java.test.version}</angela.java.version>
+            <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
             <!--<angela.java.opts>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</angela.java.opts>-->
           </systemPropertyVariables>
         </configuration>
