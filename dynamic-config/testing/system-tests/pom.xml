@@ -151,6 +151,32 @@
           </execution>
         </executions>
       </plugin>
+      <!--
+        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section.
+        This section is used when running tests from Maven CLI
+        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
+      -->
+      <plugin>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
+            <angela.skipUninstall>true</angela.skipUninstall>
+            <angela.tsa.fullLogging>true</angela.tsa.fullLogging>
+            <angela.distribution>${project.version}</angela.distribution>
+            <angela.kitInstallationDir>${project.build.directory}/platform-kit-${project.version}</angela.kitInstallationDir>
+            <angela.java.vendor/> <!--empty to allow any vendor-->
+            <angela.java.version>${java.test.version}</angela.java.version>
+            <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <!--
+        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section
+        This section is used when running tests from the IDE
+        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
+      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>

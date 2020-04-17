@@ -166,13 +166,32 @@
           </execution>
         </executions>
       </plugin>
+      <!--
+        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section.
+        This section is used when running tests from Maven CLI
+        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
+      -->
+      <plugin>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <!--
+        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section
+        This section is used when running tests from the IDE
+        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
+      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
-<!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
+            <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
           </systemPropertyVariables>
         </configuration>
       </plugin>
