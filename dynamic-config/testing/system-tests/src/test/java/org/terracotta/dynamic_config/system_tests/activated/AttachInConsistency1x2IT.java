@@ -20,15 +20,15 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLog;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsLog;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AttachInConsistency1x2IT extends DynamicConfigIT {

@@ -21,17 +21,18 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 
 import java.time.Duration;
 
+import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 3, autoStart = false)
 public class AttachInConsistency1x3IT extends DynamicConfigIT {
@@ -131,11 +132,12 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
-    // active died and passive can't become active 
+    // active died and passive can't become active
+    // or the passive has the time to become active before active is killed
     assertThat(
         configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, 3)),
-        containsOutput("Two-Phase commit failed"));
+        either(is(successful())).or(containsOutput("Two-Phase commit failed")));
 
     //start the old active and verify it is in passive state
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());

@@ -20,8 +20,8 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -47,7 +47,7 @@ public class NodeStartupIT extends DynamicConfigIT {
 
   @Test
   public void testStartingWithNonExistentRepo() throws TimeoutException {
-    startSingleNode("-r", getNodeRepositoryDir().toString());
+    startSingleNode("-r", getNodeRepositoryDir(1, 1).toString());
     waitForDiagnostic(1, 1);
   }
 
@@ -125,7 +125,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testFailedStartupConfigFile_invalidCliParams_2() throws TimeoutException {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     try {
-      startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeRepositoryDir().toString());
+      startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeRepositoryDir(1, 1).toString());
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--node-hostname', '--node-port' and '--node-repository-dir' parameters"));
@@ -135,7 +135,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidAuthc() throws TimeoutException {
     try {
-      startSingleNode("--security-authc=blah", "-r", getNodeRepositoryDir().toString());
+      startSingleNode("--security-authc=blah", "-r", getNodeRepositoryDir(1, 1).toString());
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
@@ -145,7 +145,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidHostname() throws TimeoutException {
     try {
-      startNode(1, 1, "--node-hostname=:::", "-r", getNodeRepositoryDir().toString());
+      startNode(1, 1, "--node-hostname=:::", "-r", getNodeRepositoryDir(1, 1).toString());
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
@@ -155,7 +155,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidFailoverPriority() throws TimeoutException {
     try {
-      startSingleNode("--failover-priority=blah", "-r", getNodeRepositoryDir().toString());
+      startSingleNode("--failover-priority=blah", "-r", getNodeRepositoryDir(1, 1).toString());
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)"));
@@ -165,7 +165,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidSecurity() throws TimeoutException {
     try {
-      startSingleNode("--security-audit-log-dir", "audit-dir", "-r", getNodeRepositoryDir().toString());
+      startSingleNode("--security-audit-log-dir", "audit-dir", "-r", getNodeRepositoryDir(1, 1).toString());
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("security-dir is mandatory for any of the security configuration"));
@@ -174,7 +174,7 @@ public class NodeStartupIT extends DynamicConfigIT {
 
   @Test
   public void testSuccessfulStartupCliParams() throws TimeoutException {
-    startSingleNode("-p", String.valueOf(getNodePort()), "-r", getNodeRepositoryDir().toString());
+    startSingleNode("-p", String.valueOf(getNodePort()), "-r", getNodeRepositoryDir(1, 1).toString());
     waitForDiagnostic(1, 1);
   }
 
@@ -182,8 +182,8 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testSuccessfulStartupCliParamsContainingSubstitutionParams() throws Exception {
     startSingleNode(
         "--node-port", String.valueOf(getNodePort()),
-        "--node-group-port", String.valueOf(getNodeGroupPort()),
-        "--node-repository-dir", getNodeRepositoryDir().toString(),
+        "--node-group-port", String.valueOf(getNodeGroupPort(1, 1)),
+        "--node-repository-dir", getNodeRepositoryDir(1, 1).toString(),
         "--node-hostname", "%c"
     );
     waitForDiagnostic(1, 1);
@@ -222,12 +222,12 @@ public class NodeStartupIT extends DynamicConfigIT {
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
-        "--node-name", "node-1-1",
+        "--node-name", getNodeName(1, 1),
         "--node-hostname", "localhost",
-        "--node-log-dir", "terracotta1-1/logs",
-        "--node-backup-dir", "terracotta1-1/backup",
-        "--node-metadata-dir", "terracotta1-1/metadata",
-        "--data-dirs", "main:terracotta1-1/data-dir"
+        "--node-log-dir", getNodePath(1, 1).resolve("logs").toString(),
+        "--node-backup-dir", getNodePath(1, 1).resolve("backup").toString(),
+        "--node-metadata-dir", getNodePath(1, 1).resolve("metadata").toString(),
+        "--data-dirs", "main:" + getNodePath(1, 1).resolve("data-dir").toString()
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {
@@ -235,7 +235,7 @@ public class NodeStartupIT extends DynamicConfigIT {
     }
     if (provided.contains("--node-name")) {
       defaultArgs.remove("--node-name");
-      defaultArgs.remove("node-1-1");
+      defaultArgs.remove(getNodeName(1, 1));
     }
     if (provided.contains("-s") || provided.contains("--node-hostname")) {
       defaultArgs.remove("--node-hostname");

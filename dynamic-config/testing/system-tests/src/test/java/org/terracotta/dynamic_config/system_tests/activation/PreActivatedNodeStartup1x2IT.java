@@ -56,20 +56,20 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
   public void testPreventConcurrentUseOfRepository() throws Exception {
     // Angela work dirs are different for each server instance. We'd need to create a repo at a common place for this test
     String sharedRepo = Files.createDirectories(getBaseDir()).toAbsolutePath().toString();
-    startNode(1, 1, "--node-name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort()), "-N", "tc-cluster");
+    startNode(1, 1, "--node-name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort(1, 1)), "-N", "tc-cluster");
     waitForActive(1, 1);
 
     try {
       startNode(1, 2,
-          "--node-name", "node-1-2",
+          "--node-name", getNodeName(1, 2),
           "--node-repository-dir", sharedRepo,
           "-p", String.valueOf(getNodePort(1, 2)),
           "-g", String.valueOf(getNodeGroupPort(1, 2)),
           "--node-hostname", "localhost",
-          "--node-log-dir", "terracotta1-2/logs",
-          "--node-backup-dir", "terracotta1-2/backup",
-          "--node-metadata-dir", "terracotta1-2/metadata",
-          "--data-dirs", "main:terracotta1-2/data-dir");
+          "--node-log-dir", getNodePath(1, 2).resolve("logs").toString(),
+          "--node-backup-dir", getNodePath(1, 2).resolve("backup").toString(),
+          "--node-metadata-dir", getNodePath(1, 2).resolve("metadata").toString(),
+          "--data-dirs", "main:" + getNodePath(1, 2).resolve("data-dir").toString());
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "sanskrit")));
@@ -79,12 +79,12 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
-        "--node-name", "node-1-1",
+        "--node-name", getNodeName(1, 1),
         "--node-hostname", "localhost",
-        "--node-log-dir", "terracotta1-1/logs",
-        "--node-backup-dir", "terracotta1-1/backup",
-        "--node-metadata-dir", "terracotta1-1/metadata",
-        "--data-dirs", "main:terracotta1-1/data-dir"
+        "--node-log-dir", getNodePath(1, 1).resolve("logs").toString(),
+        "--node-backup-dir", getNodePath(1, 1).resolve("backup").toString(),
+        "--node-metadata-dir", getNodePath(1, 1).resolve("metadata").toString(),
+        "--data-dirs", "main:" + getNodePath(1, 1).resolve("data-dir").toString()
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {
@@ -92,7 +92,7 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
     }
     if (provided.contains("--node-name")) {
       defaultArgs.remove("--node-name");
-      defaultArgs.remove("node-1-1");
+      defaultArgs.remove(getNodeName(1, 1));
     }
     if (provided.contains("-s") || provided.contains("--node-hostname")) {
       defaultArgs.remove("--node-hostname");

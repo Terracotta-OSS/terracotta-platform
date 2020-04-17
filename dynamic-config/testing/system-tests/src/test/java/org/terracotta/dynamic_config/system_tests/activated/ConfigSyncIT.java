@@ -54,8 +54,8 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MODE;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.hasExitStatus;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
@@ -71,10 +71,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
   }
 
   @Before
-  @Override
   public void before() throws Exception {
-    super.before();
-    if (tsa.getActive() == getNode(1, 1)) {
+    if (angela.tsa().getActive() == getNode(1, 1)) {
       activeNodeId = 1;
       passiveNodeId = 2;
     } else {
@@ -86,32 +84,32 @@ public class ConfigSyncIT extends DynamicConfigIT {
   @Test
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
     stopNode(1, passiveNodeId);
-    assertThat(tsa.getStopped().size(), is(1));
+    assertThat(angela.tsa().getStopped().size(), is(1));
 
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB"), is(successful()));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
     stopNode(1, activeNodeId);
-    assertThat(tsa.getStopped().size(), is(2));
+    assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(5, 3);
-    tsa.start(getNode(1, activeNodeId));
-    assertThat(tsa.getActives().size(), is(1));
+    angela.tsa().start(getNode(1, activeNodeId));
+    assertThat(angela.tsa().getActives().size(), is(1));
 
-    tsa.start(getNode(1, passiveNodeId));
+    angela.tsa().start(getNode(1, passiveNodeId));
     waitForPassive(1, passiveNodeId);
 
     verifyTopologies();
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
-    tsa.stopAll();
+    angela.tsa().stopAll();
     assertContentsBeforeOrAfterSync(5, 5);
   }
 
   @Test
   public void testPassiveSyncWhenActiveHasSomeUnCommittedChanges() throws Exception {
     stopNode(1, passiveNodeId);
-    assertThat(tsa.getStopped().size(), is(1));
+    assertThat(angela.tsa().getStopped().size(), is(1));
 
     // trigger commit failure on active
     // the passive should zap when restarting
@@ -122,16 +120,16 @@ public class ConfigSyncIT extends DynamicConfigIT {
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
     stopNode(1, activeNodeId);
-    assertThat(tsa.getStopped().size(), is(2));
+    assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(4, 3);
-    tsa.start(getNode(1, activeNodeId));
-    assertThat(tsa.getActives().size(), is(1));
+    angela.tsa().start(getNode(1, activeNodeId));
+    assertThat(angela.tsa().getActives().size(), is(1));
 
-    tsa.start(getNode(1, passiveNodeId));
+    angela.tsa().start(getNode(1, passiveNodeId));
     waitForPassive(1, passiveNodeId);
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
-    tsa.stopAll();
+    angela.tsa().stopAll();
     assertContentsBeforeOrAfterSync(4, 4);
   }
 
@@ -147,22 +145,22 @@ public class ConfigSyncIT extends DynamicConfigIT {
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     stopNode(1, passiveNodeId);
     stopNode(1, activeNodeId);
-    assertThat(tsa.getStopped().size(), is(2));
+    assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(4, 5);
     // Start only the former active for now (the passive startup would be done later, and should fail)
-    tsa.start(getNode(1, activeNodeId));
-    assertThat(tsa.getActives().size(), is(1));
+    angela.tsa().start(getNode(1, activeNodeId));
+    assertThat(angela.tsa().getActives().size(), is(1));
 
     err.clearLog();
     try {
-      tsa.start(getNode(1, passiveNodeId));
+      angela.tsa().start(getNode(1, passiveNodeId));
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("Passive cannot sync because the configuration change history does not match"));
     }
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
-    tsa.stopAll();
+    angela.tsa().stopAll();
     assertContentsBeforeOrAfterSync(4, 5);
   }
 
@@ -178,17 +176,17 @@ public class ConfigSyncIT extends DynamicConfigIT {
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     stopNode(1, passiveNodeId);
     stopNode(1, activeNodeId);
-    assertThat(tsa.getStopped().size(), is(2));
+    assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(5, 4);
-    tsa.start(getNode(1, activeNodeId));
+    angela.tsa().start(getNode(1, activeNodeId));
 
-    tsa.start(getNode(1, passiveNodeId));
+    angela.tsa().start(getNode(1, passiveNodeId));
     waitForPassive(1, passiveNodeId);
 
     verifyTopologies();
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
-    tsa.stopAll();
+    angela.tsa().stopAll();
     assertContentsBeforeOrAfterSync(5, 5);
   }
 
@@ -201,8 +199,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     Files.createDirectories(activePath);
     Files.createDirectories(passivePath);
 
-    tsa.browse(active, Paths.get(active.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(activePath.toFile());
-    tsa.browse(passive, Paths.get(passive.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(passivePath.toFile());
+    angela.tsa().browse(active, Paths.get(active.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(activePath.toFile());
+    angela.tsa().browse(passive, Paths.get(passive.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(passivePath.toFile());
 
     List<SanskritObject> activeChanges = getChanges(activePath);
     List<SanskritObject> passiveChanges = getChanges(passivePath);

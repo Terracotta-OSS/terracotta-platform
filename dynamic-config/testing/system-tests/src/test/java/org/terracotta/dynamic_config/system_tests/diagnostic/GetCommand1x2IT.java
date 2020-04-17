@@ -24,15 +24,13 @@ import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class GetCommand1x2IT extends DynamicConfigIT {
   @Before
-  @Override
   public void before() throws Exception {
-    super.before();
     assertThat(
         configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)),
         is(successful()));
@@ -64,8 +62,8 @@ public class GetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
         allOf(
-            containsOutput("stripe.1.node.1.data-dirs=main:terracotta1-1" + separator + "data-dir"),
-            containsOutput("stripe.1.node.2.data-dirs=main:terracotta1-2" + separator + "data-dir")));
+            containsOutput("stripe.1.node.1.data-dirs=main:node-1-1" + separator + "data-dir"),
+            containsOutput("stripe.1.node.2.data-dirs=main:node-1-2" + separator + "data-dir")));
   }
 
   @Test

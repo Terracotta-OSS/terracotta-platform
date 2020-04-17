@@ -19,13 +19,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.nio.file.Path;
 
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
 
 @ClusterDefinition(autoStart = false)
 public class Ipv6ConfigActivationIT extends DynamicConfigIT {
