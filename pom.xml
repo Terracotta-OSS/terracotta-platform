@@ -19,12 +19,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.terracotta</groupId>
-    <artifactId>terracotta-parent</artifactId>
-    <version>5.13</version>
-  </parent>
-
+  <groupId>org.terracotta</groupId>
   <artifactId>platform-root</artifactId>
   <version>5.7-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -44,6 +39,9 @@
     <jackson.version>2.10.1</jackson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <java.build.version>1.8</java.build.version>
+    <!-- Use -Djava.test.version=1.11 for example to run tests om Java 11 JVM -->
+    <java.test.version>${java.build.version}</java.test.version>
   </properties>
 
   <modules>
@@ -253,13 +251,143 @@
     </dependencies>
   </dependencyManagement>
 
+  <dependencies>
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <version>4.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
   <build>
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.1</version>
+          <configuration>
+            <source>${java.build.version}</source>
+            <target>${java.build.version}</target>
+            <compilerArgs>
+              <arg>-Xlint:all</arg>
+              <arg>-Werror</arg>
+            </compilerArgs>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>2.22.2</version>
+          <configuration>
+            <trimStackTrace>false</trimStackTrace>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.22.2</version>
+          <configuration>
+            <trimStackTrace>false</trimStackTrace>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.1</version>
+          <configuration>
+            <nexusUrl>http://nexus.terracotta.eur.ad.sag</nexusUrl>
+            <serverId>terracotta-nexus-staging</serverId>
+            <skipNexusStagingDeployMojo>${skipDeploy}</skipNexusStagingDeployMojo>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-toolchains-plugin</artifactId>
+          <version>3.0.0</version>
+          <configuration>
+            <toolchains>
+              <jdk>
+                <version>${java.build.version}</version>
+              </jdk>
+            </toolchains>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>toolchain</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <version>3.0.rc1</version>
+          <configuration>
+            <keywords>
+              <keyword>License</keyword>
+            </keywords>
+            <aggregate>true</aggregate>
+            <header>header.txt</header>
+            <mapping>
+              <java>SLASHSTAR_STYLE</java>
+            </mapping>
+            <excludes>
+              <exclude>**/README</exclude>
+              <exclude>**/src/test/resources/**</exclude>
+              <!-- if you only import management in your ide, it will generate its metadata under management/ -->
+              <exclude>**/.idea/**</exclude>
+              <exclude>**/nbproject/**</exclude>
+              <exclude>**/*.adoc</exclude>
+              <exclude>mvnw</exclude>
+              <exclude>mvnw.cmd</exclude>
+            </excludes>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
           <groupId>org.jvnet.jaxb2.maven2</groupId>
           <artifactId>maven-jaxb2-plugin</artifactId>
           <version>0.14.0</version>
+        </plugin>
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>3.1.12.2</version>
+          <configuration>
+            <xmlOutput>true</xmlOutput>
+          </configuration>
+          <dependencies>
+            <!-- overwrite dependency on spotbugs if you want to specify the version of spotbugs -->
+            <dependency>
+              <groupId>com.github.spotbugs</groupId>
+              <artifactId>spotbugs</artifactId>
+              <version>4.0.0</version>
+            </dependency>
+          </dependencies>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
@@ -339,6 +467,117 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>1.4.1</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <dependencyConvergence>
+                    <uniqueVersions>true</uniqueVersions>
+                  </dependencyConvergence>
+                  <requireJavaVersion>
+                    <version>[${java.build.version},)</version>
+                  </requireJavaVersion>
+                  <requireMavenVersion>
+                    <version>[${maven.version},)</version>
+                  </requireMavenVersion>
+                </rules>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.1.1</version>
+          <configuration>
+            <quiet>true</quiet>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <!--
+           This plugin reads the content of the toolchains.xml file to extract the JVM home and use
+           it for the tests
+          -->
+        <plugin>
+          <groupId>org.codehaus.gmavenplus</groupId>
+          <artifactId>gmavenplus-plugin</artifactId>
+          <version>1.9.0</version>
+          <executions>
+            <execution>
+              <phase>initialize</phase>
+              <goals>
+                <goal>execute</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <scripts>
+              <script>
+                <![CDATA[
+import java.nio.file.Paths
+import java.nio.file.Files
+
+// parameters
+def version = '${java.test.version}'
+
+// compute values
+def bin = System.getProperty('os.name').toLowerCase().contains('win') ? 'java.exe' : 'java'
+def toolchains = new XmlSlurper().parse(Paths.get(System.getProperty("user.home"), '.m2', 'toolchains.xml').toFile())
+def jvmHome = toolchains?.toolchain?.find { it?.type?.text() == 'jdk' && it?.provides?.version?.text() == version }?.configuration?.jdkHome?.text()
+if(!jvmHome) {
+  // this is the only validation we need. Other ones are done by toolchains plugin
+  log.error("Did not find JVM home for version " + version + " in toolchains.xml file at: " + toolchainsPath)
+  throw new RuntimeException("Did not find JVM home for version " + version + " in toolchains.xml file at: " + toolchainsPath)
+}
+def jvmBin = Paths.get(jvmHome, 'bin', bin)
+
+// reset project properties
+project.properties['java.test.version'] = version
+project.properties['java.test.home'] = jvmHome
+project.properties['java.test.bin'] = jvmBin.toAbsolutePath().toString()
+
+// log
+log.info("java.test.version => " + project.properties['java.test.version'])
+log.info("java.test.home => " + project.properties['java.test.home'])
+log.info("java.test.bin => " + project.properties['java.test.bin'])
+                  ]]>
+              </script>
+            </scripts>
+          </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy</artifactId>
+              <version>3.0.3</version>
+              <scope>runtime</scope>
+            </dependency>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-xml</artifactId>
+              <version>3.0.3</version>
+              <scope>runtime</scope>
+            </dependency>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-ant</artifactId>
+              <version>3.0.3</version>
+              <scope>runtime</scope>
+            </dependency>
+          </dependencies>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -356,11 +595,15 @@
         <artifactId>maven-source-plugin</artifactId>
       </plugin>
     </plugins>
-
   </build>
 
   <profiles>
-    <!-- default profile including toolchain, javadoc, findbugs, license check, enforcer, etc -->
+    <!--
+      Default profile is slow.
+      It includes: including toolchain, javadoc, findbugs, license check, enforcer, etc.
+      Use any Maven command with -Dfast to speed up the build.
+      -Dfast can be used daily and will just do compilation and packaging
+    -->
     <profile>
       <id>default</id>
       <activation>
@@ -372,46 +615,55 @@
       <build>
         <plugins>
           <plugin>
+            <groupId>org.codehaus.gmavenplus</groupId>
+            <artifactId>gmavenplus-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
+          </plugin>
+          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>enforce</goal>
-                </goals>
-                <configuration>
-                  <rules>
-                    <dependencyConvergence>
-                      <uniqueVersions>true</uniqueVersions>
-                    </dependencyConvergence>
-                    <requireJavaVersion>
-                      <version>[${java.build.version},)</version>
-                    </requireJavaVersion>
-                    <requireMavenVersion>
-                      <version>[${maven.version},)</version>
-                    </requireMavenVersion>
-                  </rules>
-                </configuration>
-              </execution>
-            </executions>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.1.1</version>
-            <configuration>
-              <quiet>true</quiet>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-              </execution>
-            </executions>
           </plugin>
-
-
+          <plugin>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <extensions>true</extensions>
+          </plugin>
+          <plugin>
+            <groupId>com.mycila</groupId>
+            <artifactId>license-maven-plugin</artifactId>
+            <inherited>false</inherited>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <jvm>${java.test.bin}</jvm>
+              <environmentVariables>
+                <JAVA_HOME>${java.test.home}</JAVA_HOME>
+              </environmentVariables>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <jvm>${java.test.bin}</jvm>
+              <environmentVariables>
+                <JAVA_HOME>${java.test.home}</JAVA_HOME>
+              </environmentVariables>
+            </configuration>
+          </plugin>
         </plugins>
       </build>
     </profile>
