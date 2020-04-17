@@ -47,8 +47,8 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
   public void test_restart_active_in_diagnostic_mode() throws TimeoutException {
     int activeNodeId = findActive(1).getAsInt();
     TerracottaServer active = getNode(1, activeNodeId);
-    tsa.stop(active);
-    assertThat(tsa.getStopped().size(), is(1));
+    angela.tsa().stop(active);
+    assertThat(angela.tsa().getStopped().size(), is(1));
 
     startNode(active, "--repair-mode", "--node-name", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
     waitForDiagnostic(1, activeNodeId);
@@ -58,8 +58,8 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
   public void test_restart_passive_in_diagnostic_mode() throws TimeoutException {
     int passiveNodeId = findPassives(1)[0];
     TerracottaServer passive = getNode(1, passiveNodeId);
-    tsa.stop(passive);
-    assertThat(tsa.getStopped().size(), is(1));
+    angela.tsa().stop(passive);
+    assertThat(angela.tsa().getStopped().size(), is(1));
 
     startNode(passive, "--repair-mode", "--node-name", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
     waitForDiagnostic(1, passiveNodeId);
@@ -71,8 +71,8 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     int activeNodeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
     TerracottaServer active = getNode(1, activeNodeId);
-    tsa.stop(active);
-    assertThat(tsa.getStopped().size(), is(1));
+    angela.tsa().stop(active);
+    assertThat(angela.tsa().getStopped().size(), is(1));
 
     startNode(active, "--repair-mode", "-n", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
     waitForDiagnostic(1, activeNodeId);

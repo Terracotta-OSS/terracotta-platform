@@ -51,7 +51,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
 
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
     assertTopologyChanged(passiveId);
   }
 
@@ -61,7 +61,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     final int passiveId = findPassives(1)[0];
 
     assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
     assertTopologyChanged(activeId);
   }
 
@@ -102,7 +102,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
 
     configToolInvocation("-t", "5s", "detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId), "-f");
 
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
     assertTopologyChanged(activeId);
   }
 
@@ -122,7 +122,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
 
     // Nomad rollback happened
     // we end up with a cluster of 2 nodes with 1 of them removed
@@ -147,7 +147,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Commit failed for node localhost:" + getNodePort(1, activeId) + ". Reason: java.util.concurrent.TimeoutException"));
 
-    waitUntil(() -> tsa.getStopped().size(), is(2));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(2));
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, activeId);
@@ -195,7 +195,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
-    waitUntil(() -> tsa.getStopped().size(), is(2));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(2));
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, activeId);

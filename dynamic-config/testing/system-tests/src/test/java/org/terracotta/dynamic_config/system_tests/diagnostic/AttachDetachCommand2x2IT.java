@@ -88,7 +88,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
   }
 
   private void downloadToLocal() throws IOException {
-    tsa.browse(getNode(1, 1), ".").list().stream()
+    angela.tsa().browse(getNode(1, 1), ".").list().stream()
         .filter(remoteFile -> remoteFile.getName().equals(OUTPUT_JSON_FILE))
         .findFirst()
         .get()

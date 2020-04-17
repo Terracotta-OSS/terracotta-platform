@@ -66,7 +66,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, passiveId2, topologyService -> assertTrue(topologyService.isActivated()));
 
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
 
@@ -81,7 +81,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     final int passiveId2 = findPassives(1)[1];
 
     assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, passiveId2, topologyService -> assertTrue(topologyService.isActivated()));
@@ -129,7 +129,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(3)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(3)));
