@@ -94,7 +94,7 @@ import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.suc
 import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 
 public class DynamicConfigIT {
-  private static Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
 
   @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
   @Rule public PortLockingRule ports;
