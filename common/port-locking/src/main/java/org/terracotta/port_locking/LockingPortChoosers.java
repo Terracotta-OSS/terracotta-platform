@@ -18,6 +18,16 @@ package org.terracotta.port_locking;
 import java.security.SecureRandom;
 
 public class LockingPortChoosers {
+
+  private static final LockingPortChooser SINGLETON = new LockingPortChooser(
+      new RandomPortAllocator(new SecureRandom()),
+      new MuxPortLocker(
+          new LocalPortLocker(),
+          new SocketPortLocker(),
+          new GlobalFilePortLocker()
+      )
+  );
+
   /**
    * Returns a LockingPortChooser that works by acquiring a lock for a port by creating a FileLock on the corresponding
    * byte in an agreed upon file. The FileLocks are created by GlobalFilePortLocker.
@@ -28,13 +38,6 @@ public class LockingPortChoosers {
    * @return the LockingPortChooser that can generate ports that should be free to use as long as the lock is held
    */
   public static LockingPortChooser getFileLockingPortChooser() {
-    return new LockingPortChooser(
-        new RandomPortAllocator(new SecureRandom()),
-        new MuxPortLocker(
-            new LocalPortLocker(),
-            new SocketPortLocker(),
-            new GlobalFilePortLocker()
-        )
-    );
+    return SINGLETON;
   }
 }

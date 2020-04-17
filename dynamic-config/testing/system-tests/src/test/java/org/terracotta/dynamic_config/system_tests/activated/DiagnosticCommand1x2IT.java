@@ -19,7 +19,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,7 +27,7 @@ import java.nio.file.Paths;
 
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsLinesInOrderStartingWith;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsLinesInOrderStartingWith;
 
 /**
  * @author Mathieu Carbou

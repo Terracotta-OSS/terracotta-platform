@@ -16,32 +16,28 @@
 package org.terracotta.dynamic_config.test_support;
 
 import org.hamcrest.Matcher;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.angela.client.ClusterFactory;
-import org.terracotta.angela.client.Tsa;
-import org.terracotta.angela.client.config.custom.CustomConfigurationContext;
-import org.terracotta.angela.client.config.custom.CustomTsaConfigurationContext;
+import org.terracotta.angela.client.config.ConfigurationContext;
 import org.terracotta.angela.common.ConfigToolExecutionResult;
 import org.terracotta.angela.common.distribution.Distribution;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.angela.common.topology.Topology;
-import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.test_support.angela.AngelaRule;
+import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
-import org.terracotta.port_locking.PortLockingRule;
+import org.terracotta.port_locking.LockingPortChooser;
+import org.terracotta.port_locking.LockingPortChoosers;
 import org.terracotta.testing.TmpDir;
 
 import java.io.IOException;
@@ -61,15 +57,11 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
-import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static java.nio.file.Files.walkFileTree;
 import static java.util.function.Function.identity;
@@ -90,27 +82,26 @@ import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 
 public class DynamicConfigIT {
-  private static Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
+
+  protected static boolean WIN = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
   @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
-  @Rule public PortLockingRule ports;
+  @Rule public AngelaRule angela;
   @Rule public Timeout timeoutRule;
 
-  protected long timeout;
-
-  protected ClusterFactory clusterFactory;
-  protected Tsa tsa;
+  private final LockingPortChooser lockingPortChooser = LockingPortChoosers.getFileLockingPortChooser();
 
   private int stripes;
   private boolean autoStart;
   private int nodesPerStripe;
   private boolean autoActivate;
-  private Map<String, TerracottaServer> nodes = new ConcurrentHashMap<>();
-  private ClusterDefinition clusterDef;
+
+  protected long timeout;
   protected FailoverPriority failoverPriority = FailoverPriority.availability();
 
   public DynamicConfigIT() {
@@ -118,114 +109,67 @@ public class DynamicConfigIT {
   }
 
   public DynamicConfigIT(Duration testTimeout) {
-    this.timeout = testTimeout.toMillis();
-    this.timeoutRule = Timeout.millis(testTimeout.toMillis());
-    this.clusterDef = getClass().getAnnotation(ClusterDefinition.class);
+    // cluster definition
+    ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.stripes = clusterDef.stripes();
     this.autoStart = clusterDef.autoStart();
     this.autoActivate = clusterDef.autoActivate();
     this.nodesPerStripe = clusterDef.nodesPerStripe();
-    this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
+
+    // timeout
+    this.timeout = testTimeout.toMillis();
+
+    // rules
+    this.timeoutRule = Timeout.millis(testTimeout.toMillis());
+    this.angela = new AngelaRule(lockingPortChooser, createConfigurationContext(stripes, nodesPerStripe), autoStart, autoActivate);
   }
 
-  @Before
-  // keep throws Exception to support extend the class
-  public void before() throws Exception {
-    this.clusterFactory = new ClusterFactory(getClass().getSimpleName(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
-    this.tsa = clusterFactory.tsa();
-    if (autoStart) {
-      startNodes();
-      if (autoActivate) {
-        tsa.attachAll();
-        tsa.activateAll();
-        for (int stripeId = 1; stripeId <= stripes; stripeId++) {
-          waitForActive(stripeId);
-          waitForPassives(stripeId);
-        }
-      }
-    }
+  // =========================================
+  // tmp dir
+  // =========================================
+
+  protected Path getBaseDir() {
+    return tmpDir.getRoot();
   }
 
-  @After
-  // keep throws Exception to support extend the class
-  public void after() throws Exception {
-    try {
-      clusterFactory.close();
-    } catch (IOException | RuntimeException e) {
-      LOGGER.error("Close error: " + e.getMessage(), e);
-      throw e;
-    }
-  }
-
-  protected void startNodes() {
-    for (int stripeId = 1; stripeId <= stripes; stripeId++) {
-      for (int nodeId = 1; nodeId <= nodesPerStripe; nodeId++) {
-        startNode(stripeId, nodeId);
-      }
-    }
-  }
+  // =========================================
+  // angela calls
+  // =========================================
 
   protected void startNode(int stripeId, int nodeId) {
-    startNode(getNode(stripeId, nodeId));
+    angela.startNode(stripeId, nodeId);
   }
 
   protected void startNode(int stripeId, int nodeId, String... cli) {
-    startNode(getNode(stripeId, nodeId), cli);
+    angela.startNode(stripeId, nodeId, cli);
   }
 
   protected void startNode(TerracottaServer node, String... cli) {
-    tsa.start(node, cli);
+    angela.tsa().start(node, cli);
   }
 
   protected void stopNode(int stripeId, int nodeId) {
-    tsa.stop(getNode(stripeId, nodeId));
+    angela.tsa().stop(getNode(stripeId, nodeId));
   }
 
   protected TerracottaServer getNode(int stripeId, int nodeId) {
-    String key = combine(stripeId, nodeId);
-    TerracottaServer server = nodes.get(key);
-    if (server == null) {
-      throw new IllegalArgumentException("No server for node " + key);
-    }
-    return server;
+    return angela.getNode(stripeId, nodeId);
   }
 
   protected int getNodePort(int stripeId, int nodeId) {
-    if (nodeId > nodesPerStripe) {
-      throw new IllegalArgumentException("Invalid node ID: " + nodeId + ". Stripes have maximum of " + nodesPerStripe + " nodes.");
-    }
-    if (nodeId < 1) {
-      throw new IllegalArgumentException("Invalid node ID: " + nodeId);
-    }
-    if (stripeId > stripes) {
-      throw new IllegalArgumentException("Invalid stripe ID: " + stripeId + ". There are " + stripes + " stripe(s).");
-    }
-    if (stripeId < 1) {
-      throw new IllegalArgumentException("Invalid stripe ID: " + nodeId);
-    }
-    //1-1 => 0 and 1
-    //1-2 => 2 and 3
-    //1-3 => 4 and 5
-    //2-1 => 6 and 7
-    //2-2 => 8 and 9
-    //2-3 => 10 and 11
-    return ports.getPorts()[2 * (nodeId - 1) + 2 * nodesPerStripe * (stripeId - 1)];
+    return angela.getNodePort(stripeId, nodeId);
   }
 
   protected int getNodeGroupPort(int stripeId, int nodeId) {
-    return getNodePort(stripeId, nodeId) + 1;
+    return angela.getNodePort(stripeId, nodeId);
   }
 
   protected OptionalInt findActive(int stripeId) {
-    return IntStream.rangeClosed(1, nodesPerStripe)
-        .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_ACTIVE)
-        .findFirst();
+    return angela.findActive(stripeId);
   }
 
   protected int[] findPassives(int stripeId) {
-    return IntStream.rangeClosed(1, nodesPerStripe)
-        .filter(nodeId -> tsa.getState(getNode(stripeId, nodeId)) == STARTED_AS_PASSIVE)
-        .toArray();
+    return angela.findPassives(stripeId);
   }
 
   protected int getNodePort() {
@@ -236,13 +180,88 @@ public class DynamicConfigIT {
     return getNodePort(1, 1) + 1;
   }
 
-  protected Path getBaseDir() {
-    return tmpDir.getRoot();
+  protected InetSocketAddress getNodeAddress(int stripeId, int nodeId) {
+    return InetSocketAddress.createUnresolved("localhost", getNodePort(stripeId, nodeId));
   }
 
-  protected InetSocketAddress getNodeAddress() {
-    return InetSocketAddress.createUnresolved("localhost", getNodePort());
+  protected ConfigToolExecutionResult activateCluster() throws TimeoutException {
+    return activateCluster("tc-cluster");
   }
+
+  protected ConfigToolExecutionResult activateCluster(String name) throws TimeoutException {
+    Path licensePath = getLicensePath();
+    ConfigToolExecutionResult result = licensePath == null ?
+        configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
+        configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
+    assertThat(result, is(successful()));
+    waitForActive(1);
+    return result;
+  }
+
+  protected ConfigToolExecutionResult configToolInvocation(String... cli) {
+    return angela.tsa().configTool(getNode(1, 1)).executeCommand(cli);
+  }
+
+  // =========================================
+  // node and topology construction
+  // =========================================
+
+  protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe) {
+    return customConfigurationContext().tsa(tsa -> tsa
+        .clusterName("tc-cluster")
+        .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
+        .topology(new Topology(
+            getDistribution(),
+            dynamicCluster(
+                rangeClosed(1, stripes)
+                    .mapToObj(stripeId -> stripe(rangeClosed(1, nodesPerStripe)
+                        .mapToObj(nodeId -> createNode(stripeId, nodeId))
+                        .toArray(TerracottaServer[]::new)))
+                    .toArray(Stripe[]::new)))));
+  }
+
+  protected TerracottaServer createNode(int stripeId, int nodeId) {
+    String symbolicName = "node-" + stripeId + "-" + nodeId;
+    return server(symbolicName, "localhost")
+        .configRepo(getNodePath(stripeId, nodeId).resolve("repository").toString())
+        .logs(getNodePath(stripeId, nodeId).resolve("logs").toString())
+        .dataDir("main:" + getNodePath(stripeId, nodeId).resolve("data-dir").toString())
+        .offheap("main:512MB,foo:1GB")
+        .metaData(getNodePath(stripeId, nodeId).resolve("metadata").toString())
+        .failoverPriority(failoverPriority.toString());
+  }
+
+  protected Distribution getDistribution() {
+    return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
+  }
+
+  protected String getNodeName(int stripeId, int nodeId) {
+    return "node-" + stripeId + "-" + nodeId;
+  }
+
+  protected Path getNodePath(int stripeId, int nodeId) {
+    return Paths.get(getNodeName(stripeId, nodeId));
+  }
+
+  protected Path getNodeRepositoryDir(int stripeId, int nodeId) {
+    return getNodePath(stripeId, nodeId).resolve("repository");
+  }
+
+  protected Path getLicensePath() {
+    try {
+      return getLicenceUrl() == null ? null : Paths.get(getLicenceUrl().toURI());
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  private URL getLicenceUrl() {
+    return getClass().getResource("/license.xml");
+  }
+
+  // =========================================
+  // config repo generation
+  // =========================================
 
   protected Path copyConfigProperty(String configFile) {
     Path src;
@@ -258,9 +277,9 @@ public class DynamicConfigIT {
       try (Reader reader = new InputStreamReader(Files.newInputStream(src), StandardCharsets.UTF_8)) {
         loaded.load(reader);
       }
-      Properties variables = variables();
+      Properties variables = generateProperties();
       Properties resolved = new PropertyResolver(variables).resolveAll(loaded);
-      if (isWindows()) {
+      if (WIN) {
         // Convert all / to \\ for Windows.
         // This assumes we only use / and \\ for paths in property values
         resolved.stringPropertyNames()
@@ -278,25 +297,63 @@ public class DynamicConfigIT {
     return dest;
   }
 
-  protected String licensePath() {
-    try {
-      return licenseUrl() == null ? null : Paths.get(licenseUrl().toURI()).toString();
-    } catch (URISyntaxException e) {
-      throw new IllegalStateException(e);
-    }
+  protected Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
+    Path nodeRepositoryDir = getNodeRepositoryDir(stripeId, nodeId);
+    Path repositoriesDir = getBaseDir().resolve("generated-repositories");
+    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, new ConfigRepositoryGenerator.PortSupplier() {
+      @Override
+      public int getNodePort(int stripeId, int nodeId) {
+        return 0;
+      }
+
+      @Override
+      public int getNodeGroupPort(int stripeId, int nodeId) {
+        return 0;
+      }
+    });
+    LOGGER.debug("Generating cluster node repositories into: {}", repositoriesDir);
+    fn.accept(clusterGenerator);
+    copyDirectory(repositoriesDir.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeRepositoryDir);
+    LOGGER.debug("Created node repository into: {}", nodeRepositoryDir);
+    return nodeRepositoryDir;
   }
 
-  private URL licenseUrl() {
-    return getClass().getResource("/license.xml");
+  private static void copyDirectory(Path source, Path destination) throws IOException {
+    Files.createDirectories(destination);
+    walkFileTree(source, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        Files.createDirectories(destination.resolve(source.relativize(dir)));
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Files.copy(file, destination.resolve(source.relativize(file)));
+        return FileVisitResult.CONTINUE;
+      }
+    });
   }
 
-  protected Path getNodeRepositoryDir() {
-    return getNodeRepositoryDir(1, 1);
+  private Properties generateProperties() {
+    return rangeClosed(1, stripes).mapToObj(stripeId -> rangeClosed(1, nodesPerStripe).mapToObj(nodeId -> tuple2(stripeId, nodeId))).flatMap(identity()).reduce(new Properties(), (props, tuple) -> {
+      int stripeId = tuple.t1;
+      int nodeId = tuple.t2;
+      int nodePort = getNodePort(stripeId, nodeId);
+      int groupPort = nodePort + 1;
+      String configRepoPath = getNodeRepositoryDir(stripeId, nodeId).toString();
+      props.setProperty(("PORT-" + stripeId + "-" + nodeId), String.valueOf(nodePort));
+      props.setProperty(("GROUP-PORT-" + stripeId + "-" + nodeId), String.valueOf(groupPort));
+      props.setProperty(("CONFIG-REPO-" + stripeId + "-" + nodeId), configRepoPath);
+      return props;
+    }, (p1, p2) -> {
+      throw new UnsupportedOperationException();
+    });
   }
 
-  protected Path getNodeRepositoryDir(int stripeId, int nodeId) {
-    return getBaseDir().resolve("repository").resolve("stripe" + stripeId).resolve("node-" + nodeId);
-  }
+  // =========================================
+  // assertions
+  // =========================================
 
   protected void waitUntil(ConfigToolExecutionResult result, Matcher<? super ConfigToolExecutionResult> matcher) throws TimeoutException {
     waitUntil(() -> result, matcher, timeout);
@@ -321,15 +378,15 @@ public class DynamicConfigIT {
   }
 
   protected void waitForActive(int stripeId, int nodeId) throws TimeoutException {
-    waitUntil(() -> tsa.getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_ACTIVE)));
+    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_ACTIVE)));
   }
 
   protected void waitForPassive(int stripeId, int nodeId) throws TimeoutException {
-    waitUntil(() -> tsa.getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_PASSIVE)));
+    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_PASSIVE)));
   }
 
   protected void waitForDiagnostic(int stripeId, int nodeId) throws TimeoutException {
-    waitUntil(() -> tsa.getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_IN_DIAGNOSTIC_MODE)));
+    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_IN_DIAGNOSTIC_MODE)));
   }
 
   protected void waitForPassives(int stripeId) throws TimeoutException {
@@ -340,20 +397,13 @@ public class DynamicConfigIT {
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
   }
 
-  protected Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
-    Path nodeRepositoryDir = getNodeRepositoryDir(stripeId, nodeId);
-    Path repositoriesDir = getBaseDir().resolve("repositories");
-    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, ports.getPorts());
-    LOGGER.debug("Generating cluster node repositories into: {}", repositoriesDir);
-    fn.accept(clusterGenerator);
-    copyDirectory(repositoriesDir.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeRepositoryDir);
-    LOGGER.debug("Created node repository into: {}", nodeRepositoryDir);
-    return nodeRepositoryDir;
-  }
-
   protected Cluster getUpcomingCluster(int stripeId, int nodeId) throws Exception {
     return getUpcomingCluster("localhost", getNodePort(stripeId, nodeId));
   }
+
+  // =========================================
+  // information retrieval
+  // =========================================
 
   protected Cluster getUpcomingCluster(String host, int port) throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
@@ -394,112 +444,5 @@ public class DynamicConfigIT {
         null)) {
       consumer.accept(diagnosticService.getProxy(TopologyService.class));
     }
-  }
-
-  protected ConfigToolExecutionResult activateCluster() throws TimeoutException {
-    return activateCluster("tc-cluster");
-  }
-
-  protected ConfigToolExecutionResult activateCluster(String name) throws TimeoutException {
-    String licensePath = licensePath();
-    ConfigToolExecutionResult result;
-    if (licensePath == null) {
-      result = configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name);
-    } else {
-      result = configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath);
-    }
-    assertThat(result, is(successful()));
-    waitForActive(1);
-    return result;
-  }
-
-  private static void copyDirectory(Path source, Path destination) throws IOException {
-    Files.createDirectories(destination);
-    walkFileTree(source, new SimpleFileVisitor<Path>() {
-      @Override
-      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        Files.createDirectories(destination.resolve(source.relativize(dir)));
-        return FileVisitResult.CONTINUE;
-      }
-
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        Files.copy(file, destination.resolve(source.relativize(file)));
-        return FileVisitResult.CONTINUE;
-      }
-    });
-  }
-
-  private Stream<Tuple2<Integer, Integer>> nodeDefinitions() {
-    return rangeClosed(1, stripes).mapToObj(stripeId -> rangeClosed(1, nodesPerStripe).mapToObj(nodeId -> tuple2(stripeId, nodeId))).flatMap(identity());
-  }
-
-  private Properties variables() {
-    return nodeDefinitions().reduce(new Properties(), (props, tuple) -> {
-      int stripeId = tuple.t1;
-      int nodeId = tuple.t2;
-      int nodePort = getNodePort(stripeId, nodeId);
-      int groupPort = nodePort + 1;
-      String configRepoPath = getNodeRepositoryDir(stripeId, nodeId).toString();
-      props.setProperty(("PORT-" + stripeId + "-" + nodeId), String.valueOf(nodePort));
-      props.setProperty(("GROUP-PORT-" + stripeId + "-" + nodeId), String.valueOf(groupPort));
-      props.setProperty(("CONFIG-REPO-" + stripeId + "-" + nodeId), configRepoPath);
-      return props;
-    }, (p1, p2) -> {
-      throw new UnsupportedOperationException();
-    });
-  }
-
-  protected TerracottaServer createNode(int stripeId, int nodesId) {
-    String uniqueId = combine(stripeId, nodesId);
-    return server("node-" + uniqueId, "localhost")
-        .tsaPort(getNodePort(stripeId, nodesId))
-        .tsaGroupPort(getNodeGroupPort(stripeId, nodesId))
-        .configRepo("terracotta" + uniqueId + "/repository")
-        .logs("terracotta" + uniqueId + "/logs")
-        .dataDir("main:terracotta" + uniqueId + "/data-dir")
-        .offheap("main:512MB,foo:1GB")
-        .metaData("terracotta" + uniqueId + "/metadata")
-        .failoverPriority(failoverPriority.toString());
-  }
-
-  protected String combine(int stripeId, int nodesId) {
-    return stripeId + "-" + nodesId;
-  }
-
-  protected CustomConfigurationContext createConfigContext(int stripeCount, int nodesPerStripe) {
-    Stripe[] stripes = new Stripe[stripeCount];
-    for (int stripeIndex = 0; stripeIndex < stripeCount; stripeIndex++) {
-      TerracottaServer[] servers = new TerracottaServer[nodesPerStripe];
-      for (int serverIndex = 0; serverIndex < nodesPerStripe; serverIndex++) {
-        String key = combine(stripeIndex + 1, serverIndex + 1);
-        TerracottaServer node = createNode(stripeIndex + 1, serverIndex + 1);
-        nodes.put(key, node);
-        servers[serverIndex] = node;
-      }
-      stripes[stripeIndex] = stripe(servers);
-    }
-
-    return customConfigurationContext()
-        .tsa(tsa -> {
-          CustomTsaConfigurationContext topology = tsa
-              .clusterName("tc-cluster")
-              .topology(new Topology(getDistribution(), dynamicCluster(stripes)));
-          if (licenseUrl() != null) {
-            topology.license(new License(licenseUrl()));
-          }
-        });
-  }
-
-  protected Distribution getDistribution() {
-    return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
-  }
-
-  protected ConfigToolExecutionResult configToolInvocation(String... cli) {
-    return tsa.configTool(getNode(1, 1)).executeCommand(cli);
-  }
-
-  private static boolean isWindows() {
-    return System.getProperty("os.name").toLowerCase().startsWith("windows");
   }
 }

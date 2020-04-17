@@ -66,10 +66,10 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
           "-p", String.valueOf(getNodePort(1, 2)),
           "-g", String.valueOf(getNodeGroupPort(1, 2)),
           "--node-hostname", "localhost",
-          "--node-log-dir", "terracotta1-2/logs",
-          "--node-backup-dir", "terracotta1-2/backup",
-          "--node-metadata-dir", "terracotta1-2/metadata",
-          "--data-dirs", "main:terracotta1-2/data-dir");
+          "--node-log-dir", "node-1-2/logs",
+          "--node-backup-dir", "node-1-2/backup",
+          "--node-metadata-dir", "node-1-2/metadata",
+          "--data-dirs", "main:node-1-2/data-dir");
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "sanskrit")));
@@ -81,10 +81,10 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
         "--node-name", "node-1-1",
         "--node-hostname", "localhost",
-        "--node-log-dir", "terracotta1-1/logs",
-        "--node-backup-dir", "terracotta1-1/backup",
-        "--node-metadata-dir", "terracotta1-1/metadata",
-        "--data-dirs", "main:terracotta1-1/data-dir"
+        "--node-log-dir", "node-1-1/logs",
+        "--node-backup-dir", "node-1-1/backup",
+        "--node-metadata-dir", "node-1-1/metadata",
+        "--data-dirs", "main:node-1-1/data-dir"
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {

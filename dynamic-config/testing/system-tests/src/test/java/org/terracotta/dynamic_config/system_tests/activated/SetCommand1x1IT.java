@@ -24,9 +24,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.hasExitStatus;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 @ClusterDefinition(autoActivate = true)
 public class SetCommand1x1IT extends DynamicConfigIT {
@@ -86,7 +86,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void setDataDir_overlappingPaths() {
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.first=terracotta1-1/data-dir"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.first=node-1-1/data-dir"),
         allOf(not(hasExitStatus(0)), containsOutput("overlaps with the existing data directory")));
   }
 

@@ -27,8 +27,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DetachInConsistency1x2IT extends DynamicConfigIT {
@@ -47,7 +47,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, activeId)),
         containsOutput("Nomad system is currently not accessible."));
 
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
@@ -60,7 +60,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
     assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     assertTopologyChanged(activeId);
   }
@@ -95,7 +95,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
-    waitUntil(() -> tsa.getStopped().size(), is(1));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(1));
     
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
@@ -118,7 +118,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
         containsOutput("Two-Phase commit failed"));
 
     // Stripe is lost no active
-    waitUntil(() -> tsa.getStopped().size(), is(2));
+    waitUntil(() -> angela.tsa().getStopped().size(), is(2));
 
     // Can't become active 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());

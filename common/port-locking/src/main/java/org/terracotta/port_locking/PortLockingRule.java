@@ -24,14 +24,18 @@ import java.util.stream.IntStream;
  */
 public class PortLockingRule extends ExternalResource {
 
-  private static final LockingPortChooser LOCKING_PORT_CHOOSER = LockingPortChoosers.getFileLockingPortChooser();
-
+  private final LockingPortChooser lockingPortChooser;
   private final int count;
 
   private MuxPortLock portLock;
   private int[] ports = new int[0];
 
   public PortLockingRule(int count) {
+    this(LockingPortChoosers.getFileLockingPortChooser(), count);
+  }
+
+  public PortLockingRule(LockingPortChooser lockingPortChooser, int count) {
+    this.lockingPortChooser = lockingPortChooser;
     this.count = count;
   }
 
@@ -46,7 +50,7 @@ public class PortLockingRule extends ExternalResource {
   @Override
   protected void before() {
     if (count > 0) {
-      this.portLock = LOCKING_PORT_CHOOSER.choosePorts(count);
+      this.portLock = lockingPortChooser.choosePorts(count);
       this.ports = IntStream.range(portLock.getPort(), portLock.getPort() + count).toArray();
     } else {
       this.ports = new int[0];

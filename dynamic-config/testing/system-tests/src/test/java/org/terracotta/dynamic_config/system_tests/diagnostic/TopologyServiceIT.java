@@ -44,7 +44,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
   @Override
   protected void startNode(int stripeId, int nodeId) {
     startNode(1, 1,
-        "--node-repository-dir", "terracotta" + combine(stripeId, nodeId) + "/repository",
+        "--node-repository-dir", getNodePath(stripeId, nodeId).resolve("repository").toString(),
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
     );
   }
@@ -52,7 +52,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
   @Test
   public void test_getPendingTopology() throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        getNodeAddress(),
+        getNodeAddress(1, 1),
         getClass().getSimpleName(),
         Duration.ofSeconds(5),
         Duration.ofSeconds(5),
