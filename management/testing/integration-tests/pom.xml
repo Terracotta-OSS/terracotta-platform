@@ -176,6 +176,7 @@
         <artifactId>maven-forge-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
+            <forkCount>1C</forkCount>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
           </systemPropertyVariables>
         </configuration>
@@ -189,6 +190,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
+          <forkCount>1C</forkCount>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
             <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
