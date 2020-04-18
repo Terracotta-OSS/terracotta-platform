@@ -57,6 +57,16 @@ Run everything, like on Azure. *Lasts ~1h20min*
 ./mvnw clean verify
 ``` 
 
+### Concurrent Maven executions
+
+It is possible to further speed the execution of the build by using `-TxC`.
+
+Example, running the unit tests with `-T4C` leads to a build lasting only 1 min 20 sec.
+
+```bash
+./mvnw clean install -DskipTests -Dfast -T4C
+```
+
 ### Plugin config
 
 - Use `<trimStackTrace>false</trimStackTrace>`
