@@ -20,56 +20,68 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.terracotta.dynamic-config.testing</groupId>
-    <artifactId>dynamic-config-testing</artifactId>
+    <groupId>org.terracotta.dynamic-config.cli</groupId>
+    <artifactId>dynamic-config-cli</artifactId>
     <version>5.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>dynamic-config-testing-support</artifactId>
-  <name>Dynamic Config :: Testing :: Support</name>
+  <artifactId>dynamic-config-cli-config-converter</artifactId>
+  <name>Dynamic Config :: CLI :: Config Converter</name>
 
   <dependencies>
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>dynamic-config-cli-config-converter</artifactId>
+      <artifactId>dynamic-config-cli-support</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.diagnostic</groupId>
-      <artifactId>diagnostic-client</artifactId>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-configuration-repository</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <!-- server apis -->
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>tc-config-parser</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-server-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>tc-tripwire-plugin</artifactId>
+    </dependency>
+
+    <!-- server plugins -->
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>monitoring-service-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>data-root-resource</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>offheap-resource</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>lease-entity-server</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.terracotta.common</groupId>
       <artifactId>common-test-utilities</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-port-locking</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-
-    <!-- provided libs because of EE/OSS diff -->
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>angela</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-client-api</artifactId>
-      <scope>provided</scope>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

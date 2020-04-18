@@ -84,7 +84,7 @@ public class ConfigFileStartupBuilder extends StartupCommandBuilder {
     }
 
     List<String> command = new ArrayList<>();
-    String scriptPath = getAbsolutePath(Paths.get("tools", "config-convertor", "bin", "config-convertor"));
+    String scriptPath = getAbsolutePath(Paths.get("tools", "config-converter", "bin", "config-converter"));
     command.add(scriptPath);
     command.add("convert");
 

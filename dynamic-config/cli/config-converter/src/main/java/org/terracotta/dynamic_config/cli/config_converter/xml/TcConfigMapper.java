@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.cli.converter;
+package org.terracotta.dynamic_config.cli.config_converter.xml;
 
-import com.beust.jcommander.IStringConverter;
+import org.terracotta.dynamic_config.api.model.Cluster;
 
-import java.net.InetSocketAddress;
+import java.nio.file.Path;
 
 /**
  * @author Mathieu Carbou
  */
-public class InetSocketAddressConverter implements IStringConverter<InetSocketAddress> {
-  @Override
-  public InetSocketAddress convert(String value) {
-    return org.terracotta.inet.InetSocketAddressConverter.getInetSocketAddress(value);
-  }
+public interface TcConfigMapper {
+
+  default void init(ClassLoader classLoader) {}
+
+  /**
+   * Reads list of tc configuration xml file and output the Cluster object.
+   */
+  Cluster parseConfig(String clusterName, Path... tcConfigPaths);
 }

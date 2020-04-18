@@ -35,7 +35,7 @@ import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.inet.InetSocketAddressConvertor;
+import org.terracotta.inet.InetSocketAddressConverter;
 
 import java.io.File;
 import java.io.IOException;
@@ -242,7 +242,7 @@ public class Json {
 
         @Override
         protected InetSocketAddress _deserialize(String value, DeserializationContext ctxt) {
-          return InetSocketAddressConvertor.getInetSocketAddress(value);
+          return InetSocketAddressConverter.getInetSocketAddress(value);
         }
       });
     }

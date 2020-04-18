@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.cli.converter;
+package org.terracotta.dynamic_config.cli.config_converter.exception;
 
-import com.beust.jcommander.IStringConverter;
+import org.terracotta.common.struct.Tuple2;
 
-import java.net.InetSocketAddress;
+public class InvalidInputException extends ConfigConversionException {
 
-/**
- * @author Mathieu Carbou
- */
-public class InetSocketAddressConverter implements IStringConverter<InetSocketAddress> {
-  @Override
-  public InetSocketAddress convert(String value) {
-    return org.terracotta.inet.InetSocketAddressConverter.getInetSocketAddress(value);
+  private static final long serialVersionUID = 1L;
+
+  @SafeVarargs
+  public InvalidInputException(ErrorCode errorCode, final String s, Tuple2<String, String>... params) {
+    super(errorCode, s, params);
   }
 }

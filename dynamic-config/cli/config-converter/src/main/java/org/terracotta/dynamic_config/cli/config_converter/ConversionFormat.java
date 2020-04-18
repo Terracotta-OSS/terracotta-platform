@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.cli.converter;
+package org.terracotta.dynamic_config.cli.config_converter;
 
-import com.beust.jcommander.IStringConverter;
+import com.beust.jcommander.converters.EnumConverter;
 
-import java.net.InetSocketAddress;
+public enum ConversionFormat {
+  REPOSITORY,
+  PROPERTIES;
 
-/**
- * @author Mathieu Carbou
- */
-public class InetSocketAddressConverter implements IStringConverter<InetSocketAddress> {
-  @Override
-  public InetSocketAddress convert(String value) {
-    return org.terracotta.inet.InetSocketAddressConverter.getInetSocketAddress(value);
+  public static class FormatConverter extends EnumConverter<ConversionFormat> {
+    public FormatConverter() {
+      super("-t", ConversionFormat.class);
+    }
   }
 }

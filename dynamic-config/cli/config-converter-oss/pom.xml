@@ -20,22 +20,27 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.terracotta.dynamic-config</groupId>
-    <artifactId>dynamic-config</artifactId>
+    <groupId>org.terracotta.dynamic-config.cli</groupId>
+    <artifactId>dynamic-config-cli</artifactId>
     <version>5.7-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <groupId>org.terracotta.dynamic-config.cli</groupId>
-  <artifactId>dynamic-config-cli</artifactId>
-  <packaging>pom</packaging>
-  <name>Dynamic Config :: CLI :: POM</name>
+  <artifactId>config-converter-oss</artifactId>
+  <name>Dynamic Config :: CLI :: Config Converter (OSS)</name>
 
-  <modules>
-    <module>cli-support</module>
-    <module>config-tool</module>
-    <module>config-converter</module>
-    <module>config-converter-oss</module>
-  </modules>
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.cli</groupId>
+      <artifactId>dynamic-config-cli-config-converter</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-test-utilities</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

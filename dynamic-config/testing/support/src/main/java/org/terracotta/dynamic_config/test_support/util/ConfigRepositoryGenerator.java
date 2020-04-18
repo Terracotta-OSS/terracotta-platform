@@ -15,8 +15,8 @@
  */
 package org.terracotta.dynamic_config.test_support.util;
 
-import org.terracotta.dynamic_config.cli.config_convertor.ConfigConvertor;
-import org.terracotta.dynamic_config.cli.config_convertor.ConfigRepoProcessor;
+import org.terracotta.dynamic_config.cli.config_converter.ConfigConverter;
+import org.terracotta.dynamic_config.cli.config_converter.ConfigRepoProcessor;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -105,8 +105,8 @@ public class ConfigRepositoryGenerator {
       assertFalse("Directory already exists: " + root, Files.exists(root));
       createDirectories(root);
       ConfigRepoProcessor resultProcessor = skipCommit ? new CommitSkippingConfigRepoProcessor(root) : new ConfigRepoProcessor(root);
-      ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
-      convertor.processInput("testCluster", tcConfigPaths);
+      ConfigConverter converter = new ConfigConverter(resultProcessor::process);
+      converter.processInput("testCluster", tcConfigPaths);
 
       URL licenseUrl = ConfigRepositoryGenerator.class.getResource("/license.xml");
       if (licenseUrl != null) {

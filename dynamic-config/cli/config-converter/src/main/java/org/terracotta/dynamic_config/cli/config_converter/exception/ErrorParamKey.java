@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.cli.converter;
+package org.terracotta.dynamic_config.cli.config_converter.exception;
 
-import com.beust.jcommander.IStringConverter;
-
-import java.net.InetSocketAddress;
-
-/**
- * @author Mathieu Carbou
- */
-public class InetSocketAddressConverter implements IStringConverter<InetSocketAddress> {
-  @Override
-  public InetSocketAddress convert(String value) {
-    return org.terracotta.inet.InetSocketAddressConverter.getInetSocketAddress(value);
-  }
+public enum ErrorParamKey {
+  URI,
+  CONFIG_FILE,
+  SERVERS_IN_CONFIG_FILES,
+  MISMATCHED_SERVERS,
+  SERVERS_IN_COMMAND,
+  INVALID_FILE_TYPE,
 }
