@@ -35,8 +35,9 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
   @Rule
   public final NodeOutputRule out = new NodeOutputRule();
 
-  public AttachInConsistency1x2IT() {
-    this.failoverPriority = FailoverPriority.consistency();
+  @Override
+  protected FailoverPriority getFailoverPriority() {
+    return FailoverPriority.consistency();
   }
 
   @Test

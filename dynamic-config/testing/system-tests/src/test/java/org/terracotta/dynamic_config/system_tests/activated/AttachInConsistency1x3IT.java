@@ -40,7 +40,11 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
   public AttachInConsistency1x3IT() {
     super(Duration.ofSeconds(180));
-    this.failoverPriority = FailoverPriority.consistency();
+  }
+
+  @Override
+  protected FailoverPriority getFailoverPriority() {
+    return FailoverPriority.consistency();
   }
 
   @Before
@@ -131,7 +135,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
-    // active died and passive can't become active 
+    // active died and passive can't become active
     assertThat(
         configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, 3)),

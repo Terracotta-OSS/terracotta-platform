@@ -36,7 +36,11 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
   public DetachInConsistency1x3IT() {
     super(Duration.ofSeconds(180));
-    this.failoverPriority = FailoverPriority.consistency();
+  }
+
+  @Override
+  protected FailoverPriority getFailoverPriority() {
+    return FailoverPriority.consistency();
   }
 
   @Before
@@ -217,7 +221,6 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
         configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
-
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, passiveId2);

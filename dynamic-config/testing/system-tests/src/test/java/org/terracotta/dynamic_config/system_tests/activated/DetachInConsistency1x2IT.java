@@ -35,7 +35,11 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
   public DetachInConsistency1x2IT() {
     super(Duration.ofSeconds(180));
-    this.failoverPriority = FailoverPriority.consistency();
+  }
+
+  @Override
+  protected FailoverPriority getFailoverPriority() {
+    return FailoverPriority.consistency();
   }
 
   @Test
@@ -150,7 +154,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
         configToolInvocation("-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
-    
+
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));

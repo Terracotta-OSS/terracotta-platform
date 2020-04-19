@@ -39,7 +39,11 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
 
   public AttachInConsistency1x4IT() {
     super(Duration.ofSeconds(300));
-    this.failoverPriority = FailoverPriority.consistency();
+  }
+
+  @Override
+  protected FailoverPriority getFailoverPriority() {
+    return FailoverPriority.consistency();
   }
 
   @Before

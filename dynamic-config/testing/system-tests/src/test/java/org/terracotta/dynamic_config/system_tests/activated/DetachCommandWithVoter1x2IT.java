@@ -23,35 +23,34 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.voter.ActiveVoter;
 
 import java.time.Duration;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
-import static org.terracotta.voter.ActiveVoter.TOPOLOGY_FETCH_TIME_PROPERTY;
+import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
-  private static final long TOPOLOGY_FETCH_INTERVAL = 11000L;
 
   public DetachCommandWithVoter1x2IT() {
     super(Duration.ofSeconds(180));
-    this.failoverPriority = FailoverPriority.consistency(1);
+  }
+
+  @Override
+  protected FailoverPriority getFailoverPriority() {
+    return FailoverPriority.consistency(1);
   }
 
   @Test
   public void testDetachAndVerifyWithVoter() throws Exception {
-    ActiveVoter activeVoter = null;
-    try {
-      int activeId = findActive(1).getAsInt();
-      int passiveId = findPassives(1)[0];
+    int activeId = findActive(1).getAsInt();
+    int passiveId = findPassives(1)[0];
 
-      activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
+    try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
       activeVoter.start();
 
       // To ensure voter connects to all the servers 
@@ -60,27 +59,21 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
       stopNode(1, passiveId);
       assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
-      Set<String> expectedRes = new HashSet<>();
-      expectedRes.add(getNode(1, activeId).getHostPort());
+      String[] nodes = new String[]{getNode(1, activeId).getHostPort()};
 
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
-      assertThat(activeVoter.getExistingTopology(), is(expectedRes));
-      assertThat(activeVoter.getHeartbeatFutures().size(), is(1));
+      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(1));
 
       withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
-    } finally {
-      activeVoter.stop();
     }
   }
 
   @Test
   public void testDetachAndAttachVerifyWithVoter() throws Exception {
-    ActiveVoter activeVoter = null;
-    try {
-      int activeId = findActive(1).getAsInt();
-      int passiveId = findPassives(1)[0];
+    int activeId = findActive(1).getAsInt();
+    int passiveId = findPassives(1)[0];
 
-      activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
+    try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
       activeVoter.start();
 
       // To ensure voter connects to all the servers 
@@ -88,27 +81,22 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
 
       assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
-      Set<String> expectedRes = new HashSet<>();
-      expectedRes.add(getNode(1, activeId).getHostPort());
+      String[] nodes = new String[]{getNode(1, activeId).getHostPort()};
 
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
-      assertThat(activeVoter.getExistingTopology(), is(expectedRes));
-      assertThat(activeVoter.getHeartbeatFutures().size(), is(1));
+      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(1));
 
       startNode(1, passiveId);
       waitForDiagnostic(1, passiveId);
 
       assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
-      expectedRes.add(getNode(1, passiveId).getHostPort());
-      assertThat(activeVoter.getExistingTopology(), is(expectedRes));
-      assertThat(activeVoter.getHeartbeatFutures().size(), is(2));
+      nodes = new String[]{getNode(1, passiveId).getHostPort()};
+      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(2));
 
       withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
       withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
-    } finally {
-      activeVoter.stop();
     }
   }
 }

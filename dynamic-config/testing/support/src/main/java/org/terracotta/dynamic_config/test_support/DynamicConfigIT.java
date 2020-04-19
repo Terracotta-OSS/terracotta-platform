@@ -101,8 +101,9 @@ public class DynamicConfigIT {
 
   protected final TmpDir tmpDir;
   protected final PortLockingRule ports;
+  protected final long timeout;
 
-  protected long timeout;
+  private final Map<String, TerracottaServer> nodes = new ConcurrentHashMap<>();
 
   protected ClusterFactory clusterFactory;
   protected Tsa tsa;
@@ -111,9 +112,8 @@ public class DynamicConfigIT {
   private boolean autoStart;
   private int nodesPerStripe;
   private boolean autoActivate;
-  private Map<String, TerracottaServer> nodes = new ConcurrentHashMap<>();
+
   private ClusterDefinition clusterDef;
-  protected FailoverPriority failoverPriority = FailoverPriority.availability();
 
   public DynamicConfigIT() {
     this(Duration.ofSeconds(120));
@@ -471,7 +471,11 @@ public class DynamicConfigIT {
         .dataDir("main:terracotta" + uniqueId + "/data-dir")
         .offheap("main:512MB,foo:1GB")
         .metaData("terracotta" + uniqueId + "/metadata")
-        .failoverPriority(failoverPriority.toString());
+        .failoverPriority(getFailoverPriority().toString());
+  }
+
+  protected FailoverPriority getFailoverPriority() {
+    return FailoverPriority.availability();
   }
 
   protected String combine(int stripeId, int nodesId) {
