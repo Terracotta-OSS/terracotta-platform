@@ -16,10 +16,10 @@
 package org.terracotta.dynamic_config.test_support;
 
 import org.hamcrest.Matcher;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.rules.Timeout;
+import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.ClusterFactory;
@@ -41,6 +41,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
+import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.PortLockingRule;
 import org.terracotta.testing.TmpDir;
 
@@ -96,9 +97,10 @@ import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
 
-  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
-  @Rule public PortLockingRule ports;
-  @Rule public Timeout timeoutRule;
+  @Rule public RuleChain rules;
+
+  protected final TmpDir tmpDir;
+  protected final PortLockingRule ports;
 
   protected long timeout;
 
@@ -118,17 +120,36 @@ public class DynamicConfigIT {
   }
 
   public DynamicConfigIT(Duration testTimeout) {
+    this(testTimeout, Paths.get(System.getProperty("user.dir"), "target"));
+  }
+
+  public DynamicConfigIT(Duration testTimeout, Path parentTmpDir) {
     this.timeout = testTimeout.toMillis();
-    this.timeoutRule = Timeout.millis(testTimeout.toMillis());
     this.clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.stripes = clusterDef.stripes();
     this.autoStart = clusterDef.autoStart();
     this.autoActivate = clusterDef.autoActivate();
     this.nodesPerStripe = clusterDef.nodesPerStripe();
-    this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
+
+    // this rule ensures that the timeout rule is surrounded by any other rules
+    // so that if a test times out, the other rules can correctly close
+    this.rules = RuleChain.emptyRuleChain()
+        .around(tmpDir = new TmpDir(parentTmpDir, false))
+        .around(ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe))
+        .around(new ExtendedTestRule() {
+          @Override
+          protected void before(Description description) throws Throwable {
+            DynamicConfigIT.this.before();
+          }
+
+          @Override
+          protected void after(Description description) throws Throwable {
+            DynamicConfigIT.this.after();
+          }
+        })
+        .around(Timeout.millis(testTimeout.toMillis()));
   }
 
-  @Before
   // keep throws Exception to support extend the class
   public void before() throws Exception {
     this.clusterFactory = new ClusterFactory(getClass().getSimpleName(), createConfigContext(clusterDef.stripes(), clusterDef.nodesPerStripe()));
@@ -146,7 +167,6 @@ public class DynamicConfigIT {
     }
   }
 
-  @After
   // keep throws Exception to support extend the class
   public void after() throws Exception {
     try {
