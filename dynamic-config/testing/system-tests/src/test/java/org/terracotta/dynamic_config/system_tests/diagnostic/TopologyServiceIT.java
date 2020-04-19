@@ -44,7 +44,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
   @Override
   protected void startNode(int stripeId, int nodeId) {
     startNode(1, 1,
-        "--node-repository-dir", "terracotta" + combine(stripeId, nodeId) + "/repository",
+        "--node-repository-dir", getNodePath(stripeId, nodeId).resolve("repository").toString(),
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
     );
   }
@@ -52,7 +52,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
   @Test
   public void test_getPendingTopology() throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        getNodeAddress(),
+        getNodeAddress(1, 1),
         getClass().getSimpleName(),
         Duration.ofSeconds(5),
         Duration.ofSeconds(5),
@@ -66,7 +66,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
       //System.out.println(toPrettyJson(pendingTopology));
 
       assertThat(pendingCluster, is(equalTo(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node-1-1", "localhost", getNodePort())
-          .setNodeGroupPort(getNodeGroupPort())
+          .setNodeGroupPort(getNodeGroupPort(1, 1))
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
           .setNodeMetadataDir(Paths.get("metadata", "stripe1"))

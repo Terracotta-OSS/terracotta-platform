@@ -30,19 +30,18 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
 
   @Override
   protected void startNode(int stripeId, int nodeId) {
-    String uniqueId = combine(stripeId, nodeId);
     startNode(stripeId, nodeId,
-        "--node-name", "node" + uniqueId,
+        "--node-name", getNodeName(stripeId, nodeId),
         "--node-hostname", "::1",
         "--node-bind-address", "::",
         "--node-group-bind-address", "::",
         "--node-port", String.valueOf(getNodePort(stripeId, nodeId)),
         "--node-group-port", String.valueOf(getNodeGroupPort(stripeId, nodeId)),
-        "--node-log-dir", "terracotta" + uniqueId + "/logs",
-        "--node-backup-dir", "terracotta" + uniqueId + "/backup",
-        "--node-metadata-dir", "terracotta" + uniqueId + "/metadata",
-        "--node-repository-dir", "terracotta" + uniqueId + "/repository",
-        "--data-dirs", "main:terracotta" + uniqueId + "/data-dir"
+        "--node-log-dir", getNodePath(stripeId, nodeId).resolve("logs").toString(),
+        "--node-backup-dir", getNodePath(stripeId, nodeId).resolve("backup").toString(),
+        "--node-metadata-dir", getNodePath(stripeId, nodeId).resolve("metadata").toString(),
+        "--node-repository-dir", getNodePath(stripeId, nodeId).resolve("repository").toString(),
+        "--data-dirs", "main:" + getNodePath(stripeId, nodeId).resolve("data-dir")
     );
   }
 

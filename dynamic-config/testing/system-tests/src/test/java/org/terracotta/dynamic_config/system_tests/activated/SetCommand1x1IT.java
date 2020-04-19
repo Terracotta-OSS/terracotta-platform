@@ -86,7 +86,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void setDataDir_overlappingPaths() {
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.first=terracotta1-1/data-dir"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.first=node-1-1/data-dir"),
         allOf(not(hasExitStatus(0)), containsOutput("overlaps with the existing data directory")));
   }
 
