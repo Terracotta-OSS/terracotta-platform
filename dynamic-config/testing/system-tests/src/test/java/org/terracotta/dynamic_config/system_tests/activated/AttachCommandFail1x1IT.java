@@ -24,8 +24,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AttachCommandFail1x1IT extends DynamicConfigIT {

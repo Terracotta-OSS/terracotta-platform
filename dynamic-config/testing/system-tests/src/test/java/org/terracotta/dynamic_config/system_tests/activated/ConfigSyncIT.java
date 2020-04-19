@@ -54,8 +54,8 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MODE;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.hasExitStatus;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {

@@ -33,7 +33,7 @@ import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.event.Level.DEBUG;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
 
 /**
  * @author Mathieu Carbou

@@ -22,8 +22,8 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.not;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.hasExitStatus;
 
 /**
  * @author Mathieu Carbou

@@ -20,8 +20,8 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 
 import java.net.InetAddress;
 import java.nio.file.Path;

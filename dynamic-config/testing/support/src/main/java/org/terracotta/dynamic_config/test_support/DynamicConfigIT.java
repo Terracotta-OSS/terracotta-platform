@@ -39,8 +39,8 @@ import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.testing.PortLockingRule;
 import org.terracotta.testing.TmpDir;
@@ -91,7 +91,7 @@ import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 
 public class DynamicConfigIT {

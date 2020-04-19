@@ -23,7 +23,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class Ipv6CliActivationIT extends DynamicConfigIT {

@@ -29,8 +29,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.hasExitStatus;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.hasExitStatus;
 
 /**
  * @author Mathieu Carbou
