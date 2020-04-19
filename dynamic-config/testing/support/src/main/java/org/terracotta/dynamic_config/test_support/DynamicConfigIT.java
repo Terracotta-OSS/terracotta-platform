@@ -19,6 +19,7 @@ import org.hamcrest.Matcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,9 +97,10 @@ import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
 
-  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
-  @Rule public PortLockingRule ports;
-  @Rule public Timeout timeoutRule;
+  @Rule public RuleChain rules;
+
+  protected final TmpDir tmpDir;
+  protected final PortLockingRule ports;
 
   protected long timeout;
 
@@ -118,14 +120,23 @@ public class DynamicConfigIT {
   }
 
   public DynamicConfigIT(Duration testTimeout) {
+    this(testTimeout, Paths.get(System.getProperty("user.dir"), "target"));
+  }
+
+  public DynamicConfigIT(Duration testTimeout, Path parentTmpDir) {
     this.timeout = testTimeout.toMillis();
-    this.timeoutRule = Timeout.millis(testTimeout.toMillis());
     this.clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.stripes = clusterDef.stripes();
     this.autoStart = clusterDef.autoStart();
     this.autoActivate = clusterDef.autoActivate();
     this.nodesPerStripe = clusterDef.nodesPerStripe();
-    this.ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe);
+
+    // this rule ensures that the timeout rule is surrounded by any other rules
+    // so that if a test times out, the other rules can correctly close
+    this.rules = RuleChain.emptyRuleChain()
+        .around(tmpDir = new TmpDir(parentTmpDir, false))
+        .around(ports = new PortLockingRule(2 * this.stripes * this.nodesPerStripe))
+        .around(Timeout.millis(testTimeout.toMillis()));
   }
 
   @Before
