@@ -22,6 +22,8 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 
+import java.time.Duration;
+
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -34,6 +36,10 @@ import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.s
 public class AttachInConsistency1x2IT extends DynamicConfigIT {
   @Rule
   public final NodeOutputRule out = new NodeOutputRule();
+
+  public AttachInConsistency1x2IT() {
+    super(Duration.ofSeconds(180));
+  }
 
   @Override
   protected FailoverPriority getFailoverPriority() {
