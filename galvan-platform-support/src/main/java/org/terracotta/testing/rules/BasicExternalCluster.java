@@ -22,10 +22,9 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.passthrough.IClusterControl;
-import org.terracotta.port_locking.LockingPortChooser;
-import org.terracotta.port_locking.LockingPortChoosers;
 import org.terracotta.testing.config.ConfigFileStartupBuilder;
 import org.terracotta.testing.config.ConfigRepoStartupBuilder;
+import org.terracotta.testing.config.PortAllocator;
 import org.terracotta.testing.config.StartupCommandBuilder;
 import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.config.TcConfigBuilder;
@@ -55,8 +54,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLUSTER_NAME;
 
 class BasicExternalCluster extends Cluster {
-  private static final LockingPortChooser PORT_CHOOSER = LockingPortChoosers.getFileLockingPortChooser();
-
   private final Path clusterDirectory;
   private final int stripeSize;
   private final Set<Path> serverJars;
@@ -70,6 +67,7 @@ class BasicExternalCluster extends Cluster {
   private final String logConfigExt;
   private final int serverHeapSize;
   private final boolean activate;
+  private final PortAllocator portAllocator;
 
   private String displayName;
   private ReadyStripe cluster;
@@ -82,10 +80,12 @@ class BasicExternalCluster extends Cluster {
   private volatile boolean isInterruptingClient;
   private Thread shepherdingThread;
   private boolean isSafe;
+  private volatile PortAllocator.PortAllocation portAllocation;
 
   BasicExternalCluster(Path clusterDirectory, int stripeSize, Set<Path> serverJars, String namespaceFragment,
                        String serviceFragment, int clientReconnectWindow, int voterCount, boolean consistentStart, Properties tcProperties,
-                       Properties systemProperties, String logConfigExt, int serverHeapSize, boolean activate) {
+                       Properties systemProperties, String logConfigExt, int serverHeapSize, boolean activate, PortAllocator portAllocator) {
+    this.portAllocator = portAllocator;
     if (Files.exists(clusterDirectory)) {
       if (Files.isRegularFile(clusterDirectory)) {
         throw new IllegalArgumentException("Cluster directory is a file: " + clusterDirectory);
@@ -161,7 +161,8 @@ class BasicExternalCluster extends Cluster {
     List<Integer> serverPorts = new ArrayList<>();
     List<Integer> serverGroupPorts = new ArrayList<>();
     List<Integer> serverDebugPorts = new ArrayList<>();
-    int basePort = PORT_CHOOSER.choosePorts(stripeSize * 2).getPort();
+    portAllocation = portAllocator.reserve(stripeSize * 2);
+    int basePort = portAllocation.getBasePort();
     for (int i = 0; i < stripeSize; i++) {
       serverNames.add("testServer" + i);
       serverPorts.add(basePort++);
@@ -308,8 +309,12 @@ class BasicExternalCluster extends Cluster {
         // Interrupts are unexpected at this point - fail.
         Assert.fail(unexpected.getLocalizedMessage());
       }
+    } finally {
+      this.shepherdingThread = null;
+      if (portAllocation != null) {
+        portAllocation.close();
+      }
     }
-    this.shepherdingThread = null;
   }
 
   @Override

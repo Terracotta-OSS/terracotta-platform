@@ -15,6 +15,9 @@
  */
 package org.terracotta.testing.rules;
 
+import org.terracotta.testing.config.DefaultPortAllocator;
+import org.terracotta.testing.config.PortAllocator;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -35,11 +38,12 @@ public class BasicExternalClusterBuilder {
   private int clientReconnectWindowTime = DEFAULT_CLIENT_RECONNECT_WINDOW;
   private int failoverPriorityVoterCount = DEFAULT_VOTER_COUNT;
   private boolean consistentStart = false;
-  private Properties tcProperties = new Properties();
-  private Properties systemProperties = new Properties();
+  private final Properties tcProperties = new Properties();
+  private final Properties systemProperties = new Properties();
   private String logConfigExt = "logback-ext.xml";
   private int serverHeapSize = DEFAULT_SERVER_HEAP_MB;
   private boolean activate = true;
+  private PortAllocator portAllocator = new DefaultPortAllocator();
 
   private BasicExternalClusterBuilder(final int stripeSize) {
     this.stripeSize = stripeSize;
@@ -142,9 +146,14 @@ public class BasicExternalClusterBuilder {
     return this;
   }
 
+  public BasicExternalClusterBuilder withPortAllocator(PortAllocator portAllocator) {
+    this.portAllocator = portAllocator;
+    return this;
+  }
+
   public Cluster build() {
     return new BasicExternalCluster(clusterDirectory, stripeSize, serverJars, namespaceFragment, serviceFragment,
         clientReconnectWindowTime, failoverPriorityVoterCount, consistentStart, tcProperties, systemProperties,
-        logConfigExt, serverHeapSize, activate);
+        logConfigExt, serverHeapSize, activate, portAllocator);
   }
 }

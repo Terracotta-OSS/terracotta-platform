@@ -15,14 +15,14 @@
  */
 package org.terracotta.testing.master;
 
-import org.terracotta.port_locking.LockingPortChooser;
-import org.terracotta.port_locking.LockingPortChoosers;
 import org.terracotta.testing.api.BasicTestClusterConfiguration;
 import org.terracotta.testing.common.Assert;
 import org.terracotta.testing.config.BasicClientArgumentBuilder;
 import org.terracotta.testing.config.ClientsConfiguration;
 import org.terracotta.testing.config.ClusterInfo;
 import org.terracotta.testing.config.ConfigRepoStartupBuilder;
+import org.terracotta.testing.config.DefaultPortAllocator;
+import org.terracotta.testing.config.PortAllocator;
 import org.terracotta.testing.config.StartupCommandBuilder;
 import org.terracotta.testing.config.StripeConfiguration;
 import org.terracotta.testing.config.TcConfigBuilder;
@@ -42,7 +42,35 @@ import static org.terracotta.testing.config.ConfigConstants.DEFAULT_SERVER_HEAP_
  * The harness entry-point for the harness running {@link BasicTestClusterConfiguration} tests.
  */
 public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConfiguration> {
-  private static final LockingPortChooser PORT_CHOOSER = LockingPortChoosers.getFileLockingPortChooser();
+
+  protected final PortAllocator portAllocator;
+
+  public BasicHarnessEntry() {
+    this(new DefaultPortAllocator());
+  }
+
+  public BasicHarnessEntry(PortAllocator portAllocator) {
+    this.portAllocator = portAllocator;
+  }
+
+  /**
+   * @deprecated Use {@link #reservePorts(int)} instead
+   */
+  @Override
+  @Deprecated
+  public int chooseRandomPortRange(int number) {
+    // Ensure this method is never called because the port chooser used
+    // in the super class does not correctly ensure coordination across
+    // JVM of reserved ports, which cam make some test fail if they are
+    // run concurrently using separate forked JVM.
+    //
+    // Now, you have to use the port allocator.
+    throw new UnsupportedOperationException();
+  }
+
+  public PortAllocator.PortAllocation reservePorts(int number) {
+    return portAllocator.reserve(number);
+  }
 
   // Run the one configuration.
   @Override
@@ -55,66 +83,68 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     List<Integer> serverPorts = new ArrayList<>();
     List<Integer> serverGroupPorts = new ArrayList<>();
     List<Integer> serverDebugPorts = new ArrayList<>();
-    int basePort = PORT_CHOOSER.choosePorts(stripeSize * 2).getPort();
-    int serverDebugPortStart = debugOptions.serverDebugPortStart;
-    for (int i = 0; i < stripeSize; i++) {
-      serverNames.add("testServer" + i);
-      serverPorts.add(basePort++);
-      serverGroupPorts.add(basePort++);
-      serverDebugPorts.add(serverDebugPortStart == 0 ? 0 : serverDebugPortStart++);
-    }
+    try (PortAllocator.PortAllocation portAllocation = portAllocator.reserve(stripeSize * 2)) {
+      int basePort = portAllocation.getBasePort();
+      int serverDebugPortStart = debugOptions.serverDebugPortStart;
+      for (int i = 0; i < stripeSize; i++) {
+        serverNames.add("testServer" + i);
+        serverPorts.add(basePort++);
+        serverGroupPorts.add(basePort++);
+        serverDebugPorts.add(serverDebugPortStart == 0 ? 0 : serverDebugPortStart++);
+      }
 
-    String stripeName = "stripe1";
-    Path stripeInstallationDir = harnessOptions.configTestDir.resolve(stripeName);
-    Files.createDirectory(stripeInstallationDir);
+      String stripeName = "stripe1";
+      Path stripeInstallationDir = harnessOptions.configTestDir.resolve(stripeName);
+      Files.createDirectory(stripeInstallationDir);
 
-    Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir, harnessOptions);
-    VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
+      Path tcConfig = createTcConfig(serverNames, serverPorts, serverGroupPorts, stripeInstallationDir, harnessOptions);
+      VerboseManager stripeVerboseManager = verboseManager.createComponentManager("[" + stripeName + "]");
 
-    StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
-        stripeName, DEFAULT_SERVER_HEAP_MB, "logback-ext.xml", harnessOptions.serverProperties);
-    TestStateManager stateManager = new TestStateManager();
-    GalvanStateInterlock interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
-    StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
-    // Configure and install each server in the stripe.
-    for (int i = 0; i < stripeSize; ++i) {
-      String serverName = stripeConfig.getServerNames().get(i);
-      Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
-      Path tcConfigRelative = relativize(serverWorkingDir, tcConfig);
-      Path kitLocationRelative = relativize(serverWorkingDir, harnessOptions.kitOriginPath);
-      // Determine if we want a debug port.
-      int debugPort = stripeConfig.getServerDebugPorts().get(i);
-      StartupCommandBuilder builder = new ConfigRepoStartupBuilder()
-          .tcConfigs(tcConfigRelative)
-          .serverName(serverName)
-          .stripeName(stripeName)
-          .serverWorkingDir(serverWorkingDir)
-          .kitDir(kitLocationRelative)
-          .logConfigExtension("logback-ext.xml");
-      stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);
-    }
-    ReadyStripe oneStripe = ReadyStripe.configureAndStartStripe(interlock, verboseManager, stripeConfig, stripeInstaller);
-    // We just want to unwrap this, directly.
-    IMultiProcessControl processControl = oneStripe.getStripeControl();
-    String connectUri = oneStripe.getStripeUri();
-    ClusterInfo clusterInfo = oneStripe.getClusterInfo();
-    Assert.assertTrue(null != processControl);
-    Assert.assertTrue(null != connectUri);
+      StripeConfiguration stripeConfig = new StripeConfiguration(serverDebugPorts, serverPorts, serverGroupPorts, serverNames,
+          stripeName, DEFAULT_SERVER_HEAP_MB, "logback-ext.xml", harnessOptions.serverProperties);
+      TestStateManager stateManager = new TestStateManager();
+      GalvanStateInterlock interlock = new GalvanStateInterlock(verboseManager.createComponentManager("[Interlock]").createHarnessLogger(), stateManager);
+      StripeInstaller stripeInstaller = new StripeInstaller(interlock, stateManager, stripeVerboseManager, stripeConfig);
+      // Configure and install each server in the stripe.
+      for (int i = 0; i < stripeSize; ++i) {
+        String serverName = stripeConfig.getServerNames().get(i);
+        Path serverWorkingDir = stripeInstallationDir.resolve(serverName);
+        Path tcConfigRelative = relativize(serverWorkingDir, tcConfig);
+        Path kitLocationRelative = relativize(serverWorkingDir, harnessOptions.kitOriginPath);
+        // Determine if we want a debug port.
+        int debugPort = stripeConfig.getServerDebugPorts().get(i);
+        StartupCommandBuilder builder = new ConfigRepoStartupBuilder()
+            .tcConfigs(tcConfigRelative)
+            .serverName(serverName)
+            .stripeName(stripeName)
+            .serverWorkingDir(serverWorkingDir)
+            .kitDir(kitLocationRelative)
+            .logConfigExtension("logback-ext.xml");
+        stripeInstaller.installNewServer(serverName, serverWorkingDir, debugPort, builder::build);
+      }
+      ReadyStripe oneStripe = ReadyStripe.configureAndStartStripe(interlock, verboseManager, stripeConfig, stripeInstaller);
+      // We just want to unwrap this, directly.
+      IMultiProcessControl processControl = oneStripe.getStripeControl();
+      String connectUri = oneStripe.getStripeUri();
+      ClusterInfo clusterInfo = oneStripe.getClusterInfo();
+      Assert.assertTrue(null != processControl);
+      Assert.assertTrue(null != connectUri);
 
-    // The cluster is now running so install and run the clients.
-    BasicClientArgumentBuilder argBuilder = new BasicClientArgumentBuilder(harnessOptions.testClassName, harnessOptions.errorClassName);
-    ClientsConfiguration clientsConfiguration = new ClientsConfiguration(harnessOptions.configTestDir, harnessOptions.clientClassPath,
-        harnessOptions.clientsToCreate, argBuilder, connectUri, 1, stripeSize, debugOptions.setupClientDebugPort,
-        debugOptions.destroyClientDebugPort, debugOptions.testClientDebugPortStart, harnessOptions.failOnLog, clusterInfo);
-    VerboseManager clientsVerboseManager = verboseManager.createComponentManager("[Clients]");
+      // The cluster is now running so install and run the clients.
+      BasicClientArgumentBuilder argBuilder = new BasicClientArgumentBuilder(harnessOptions.testClassName, harnessOptions.errorClassName);
+      ClientsConfiguration clientsConfiguration = new ClientsConfiguration(harnessOptions.configTestDir, harnessOptions.clientClassPath,
+          harnessOptions.clientsToCreate, argBuilder, connectUri, 1, stripeSize, debugOptions.setupClientDebugPort,
+          debugOptions.destroyClientDebugPort, debugOptions.testClientDebugPortStart, harnessOptions.failOnLog, clusterInfo);
+      VerboseManager clientsVerboseManager = verboseManager.createComponentManager("[Clients]");
 
-    new ClientSubProcessManager(interlock, stateManager, clientsVerboseManager, clientsConfiguration, processControl).start();
-    // NOTE:  waitForFinish() throws GalvanFailureException on failure.
-    try {
-      stateManager.waitForFinish();
-    } finally {
-      // No matter what happened, shut down the test.
-      interlock.forceShutdown();
+      new ClientSubProcessManager(interlock, stateManager, clientsVerboseManager, clientsConfiguration, processControl).start();
+      // NOTE:  waitForFinish() throws GalvanFailureException on failure.
+      try {
+        stateManager.waitForFinish();
+      } finally {
+        // No matter what happened, shut down the test.
+        interlock.forceShutdown();
+      }
     }
   }
 
