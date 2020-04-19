@@ -41,7 +41,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
 import org.terracotta.dynamic_config.test_support.util.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
-import org.terracotta.port_locking.PortLockingRule;
+import org.terracotta.testing.PortLockingRule;
 import org.terracotta.testing.TmpDir;
 
 import java.io.IOException;

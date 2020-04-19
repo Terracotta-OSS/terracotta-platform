@@ -18,7 +18,6 @@ package org.terracotta.testing.rules;
 import com.tc.util.Assert;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
@@ -114,8 +113,13 @@ class BasicExternalCluster extends Cluster {
     this.activate = activate;
   }
 
+  public void manualStart(String displayName) throws Throwable {
+    this.displayName = displayName;
+    internalStart();
+  }
+
   @Override
-  public Statement apply(Statement base, Description description) {
+  protected void before(Description description) throws Throwable {
     String methodName = description.getMethodName();
     Class<?> testClass = description.getTestClass();
     if (methodName == null) {
@@ -129,16 +133,6 @@ class BasicExternalCluster extends Cluster {
     } else {
       this.displayName = testClass.getSimpleName() + "-" + methodName;
     }
-    return super.apply(base, description);
-  }
-
-  public void manualStart(String displayName) throws Throwable {
-    this.displayName = displayName;
-    internalStart();
-  }
-
-  @Override
-  protected void before() throws Throwable {
     internalStart();
   }
 
@@ -290,7 +284,7 @@ class BasicExternalCluster extends Cluster {
   }
 
   @Override
-  protected void after() {
+  protected void after(Description description) {
     internalStop();
   }
 

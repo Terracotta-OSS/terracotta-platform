@@ -28,7 +28,7 @@ import java.util.List;
  */
 public abstract class ExtendedTestRule implements TestRule {
   @Override
-  public Statement apply(Statement base, Description description) {
+  public final Statement apply(Statement base, Description description) {
     return new Statement() {
       @Override
       public void evaluate() throws Throwable {

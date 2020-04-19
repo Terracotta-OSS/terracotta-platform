@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.port_locking;
+package org.terracotta.testing;
 
-import org.junit.rules.ExternalResource;
+import org.junit.runner.Description;
+import org.terracotta.port_locking.LockingPortChooser;
+import org.terracotta.port_locking.LockingPortChoosers;
+import org.terracotta.port_locking.MuxPortLock;
 
 import java.util.stream.IntStream;
 
 /**
  * @author Mathieu Carbou
  */
-public class PortLockingRule extends ExternalResource {
+public class PortLockingRule extends ExtendedTestRule {
 
-  private static final LockingPortChooser LOCKING_PORT_CHOOSER = LockingPortChoosers.getFileLockingPortChooser();
+  private final LockingPortChooser lockingPortChooser;
 
   private final int count;
 
@@ -32,6 +35,11 @@ public class PortLockingRule extends ExternalResource {
   private int[] ports = new int[0];
 
   public PortLockingRule(int count) {
+    this(LockingPortChoosers.getFileLockingPortChooser(), count);
+  }
+
+  public PortLockingRule(LockingPortChooser lockingPortChooser, int count) {
+    this.lockingPortChooser = lockingPortChooser;
     this.count = count;
   }
 
@@ -44,9 +52,9 @@ public class PortLockingRule extends ExternalResource {
   }
 
   @Override
-  protected void before() {
+  protected void before(Description description) {
     if (count > 0) {
-      this.portLock = LOCKING_PORT_CHOOSER.choosePorts(count);
+      this.portLock = lockingPortChooser.choosePorts(count);
       this.ports = IntStream.range(portLock.getPort(), portLock.getPort() + count).toArray();
     } else {
       this.ports = new int[0];
@@ -54,7 +62,7 @@ public class PortLockingRule extends ExternalResource {
   }
 
   @Override
-  protected void after() {
+  protected void after(Description description) {
     if (portLock != null) {
       portLock.close();
     }
