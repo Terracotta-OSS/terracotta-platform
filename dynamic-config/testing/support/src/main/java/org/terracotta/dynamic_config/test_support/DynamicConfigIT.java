@@ -101,7 +101,7 @@ public class DynamicConfigIT {
   }
 
   public DynamicConfigIT(Duration testTimeout) {
-    this(testTimeout, Paths.get(System.getProperty("user.dir"), "target"));
+    this(testTimeout, Paths.get(System.getProperty("user.dir"), "target", "test-data"));
   }
 
   public DynamicConfigIT(Duration testTimeout, Path parentTmpDir) {
