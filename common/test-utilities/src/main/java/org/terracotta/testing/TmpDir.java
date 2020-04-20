@@ -57,6 +57,9 @@ public class TmpDir extends ExtendedTestRule {
 
   @Override
   protected void before(Description description) throws Throwable {
+    if (parent != null) {
+      Files.createDirectories(parent);
+    }
     delegate = TemporaryFolder.builder()
         .parentFolder(parent == null ? null : parent.toFile())
         .assureDeletion()
