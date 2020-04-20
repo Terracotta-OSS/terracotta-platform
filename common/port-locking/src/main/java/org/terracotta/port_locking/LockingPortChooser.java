@@ -24,7 +24,7 @@ public class LockingPortChooser {
     this.portLocker = portLocker;
   }
 
-  public MuxPortLock choosePorts(int portCount) {
+  public synchronized MuxPortLock choosePorts(int portCount) {
     while (true) {
       MuxPortLock muxPortLock = tryChoosePorts(portCount);
 
