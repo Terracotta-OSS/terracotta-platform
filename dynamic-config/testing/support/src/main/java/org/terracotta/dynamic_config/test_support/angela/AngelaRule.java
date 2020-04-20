@@ -24,6 +24,7 @@ import org.terracotta.angela.client.Tms;
 import org.terracotta.angela.client.Tsa;
 import org.terracotta.angela.client.config.ConfigurationContext;
 import org.terracotta.angela.common.cluster.Cluster;
+import org.terracotta.angela.common.net.PortProvider;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.port_locking.LockingPortChooser;
 import org.terracotta.port_locking.MuxPortLock;
@@ -33,7 +34,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 import static java.util.stream.IntStream.rangeClosed;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
@@ -44,7 +47,7 @@ import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASS
  */
 public class AngelaRule extends ExtendedTestRule {
 
-  private final Collection<MuxPortLock> portLocks = new ArrayList<>();
+  private final Collection<MuxPortLock> portLocks = new CopyOnWriteArrayList<>();
   private final LockingPortChooser lockingPortChooser;
   private final ConfigurationContext configuration;
   private final boolean autoStart;
@@ -57,11 +60,18 @@ public class AngelaRule extends ExtendedTestRule {
   private Supplier<ClientArray> clientArray;
   private Supplier<ClusterMonitor> clusterMonitor;
 
+  private int userIgnitePortCount;
+
   public AngelaRule(LockingPortChooser lockingPortChooser, ConfigurationContext configuration, boolean autoStart, boolean autoActivate) {
     this.lockingPortChooser = lockingPortChooser;
     this.configuration = configuration;
     this.autoStart = autoStart;
     this.autoActivate = autoActivate;
+  }
+
+  public AngelaRule withIgnitePortCount(int count) {
+    this.userIgnitePortCount = count;
+    return this;
   }
 
   // =========================================
@@ -70,19 +80,39 @@ public class AngelaRule extends ExtendedTestRule {
 
   @Override
   protected void before(Description description) throws Throwable {
-    List<TerracottaServer> servers = configuration.tsa().getTopology().getServers();
+    final int ignitePortCount = computeIgnitePortCount();
+    final int nodePortCount = computeNodePortCount();
 
-    int ports = (int) (servers.stream().filter(terracottaServer -> terracottaServer.getTsaPort() == 0).count()
-        + servers.stream().filter(terracottaServer -> terracottaServer.getTsaGroupPort() == 0).count());
+    int base = reservePorts(ignitePortCount + nodePortCount).getPort();
 
-    int start = reservePorts(ports).getPort();
-
-    for (TerracottaServer server : servers) {
-      server.tsaPort(start++);
-      server.tsaGroupPort(start++);
+    // assign generated ports to nodes
+    for (TerracottaServer node : configuration.tsa().getTopology().getServers()) {
+      if (node.getTsaPort() <= 0) {
+        node.tsaPort(base++);
+      }
+      if (node.getTsaGroupPort() <= 0) {
+        node.tsaGroupPort(base++);
+      }
     }
 
-    this.clusterFactory = new ClusterFactory(description.getTestClass().getSimpleName(), configuration);
+    final int ignitePort = base;
+
+    this.clusterFactory = new ClusterFactory(description.getTestClass().getSimpleName(), configuration, new PortProvider() {
+      @Override
+      public int getIgnitePort() {
+        return ignitePort;
+      }
+
+      @Override
+      public int getIgnitePortRange() {
+        return ignitePortCount - 1;
+      }
+
+      @Override
+      public int getNewRandomFreePorts(int count) {
+        return reservePorts(count).getPort();
+      }
+    });
 
     tsa = memoize(clusterFactory::tsa);
     cluster = memoize(clusterFactory::cluster);
@@ -117,9 +147,7 @@ public class AngelaRule extends ExtendedTestRule {
         errs.add(e);
       }
     }
-    if (!errs.isEmpty()) {
-      throw new MultipleFailureException(errs);
-    }
+    MultipleFailureException.assertEmpty(errs);
   }
 
   // =========================================
@@ -234,7 +262,33 @@ public class AngelaRule extends ExtendedTestRule {
   // utils
   // =========================================
 
-  private MuxPortLock reservePorts(int count) {
+  protected int computeIgnitePortCount() {
+    // note: in angela, the default ignite port range is 1000, so it was creating a lot of checks port checks which takes time.
+    // if the user specifies a number we take it
+    // IgniteLocalPortRange should match the number of Ignite agents needed to launch
+    // They should be equal to the number of nodes on the cluster +/- some other agents (i.e tms, etc)
+    // So if user does not put any number, we could determine a large enough default one based on the cluster size
+    if (userIgnitePortCount > 0) {
+      return userIgnitePortCount;
+    }
+    // by default, returns:
+    // - 1 port for ignite (angela defaults is 40000)
+    // - 1 port for each node
+    // - a random number of port to support launching enough agents
+    return 1 + configuration.tsa().getTopology().getServers().size() + 30;
+  }
+
+  protected int computeNodePortCount() {
+    // compute the number of port to reserve for the nodes
+    // not having any assigned port and group port
+    List<TerracottaServer> nodes = configuration.tsa().getTopology().getServers();
+    return (int) IntStream.concat(
+        nodes.stream().mapToInt(TerracottaServer::getTsaPort),
+        nodes.stream().mapToInt(TerracottaServer::getTsaGroupPort)
+    ).filter(port -> port <= 0).count();
+  }
+
+  private synchronized MuxPortLock reservePorts(int count) {
     MuxPortLock muxPortLock = lockingPortChooser.choosePorts(count);
     portLocks.add(muxPortLock);
     return muxPortLock;
