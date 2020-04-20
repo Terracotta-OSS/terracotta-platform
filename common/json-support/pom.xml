@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.common</groupId>
     <artifactId>common</artifactId>
-    <version>5.7-SNAPSHOT</version>
+    <version>5.7.4-pre16</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
