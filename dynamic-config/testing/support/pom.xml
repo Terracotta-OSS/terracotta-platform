@@ -32,7 +32,7 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>dynamic-config-cli-config-convertor</artifactId>
+      <artifactId>dynamic-config-cli-config-converter</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

@@ -146,10 +146,10 @@
     </dependencySet>
 
     <dependencySet>
-      <outputDirectory>tools/config-convertor/lib</outputDirectory>
+      <outputDirectory>tools/config-converter/lib</outputDirectory>
       <includes>
-        <include>org.terracotta.dynamic-config.cli:config-convertor-oss</include>
-        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-convertor</include>
+        <include>org.terracotta.dynamic-config.cli:config-converter-oss</include>
+        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-converter</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
         <include>org.terracotta.internal:tc-config-parser</include>
         <include>org.terracotta:tcconfig-schema</include>

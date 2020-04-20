@@ -90,12 +90,16 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   }
 
   public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories) {
+    this(parameterSubstitutor, pathResolver, dataDirectories, false);
+  }
+
+  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories, boolean skipIO) {
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
 
     String tempPlatformRootIdentifier = null;
     for (DataRootMapping mapping : dataDirectories.getDirectory()) {
-      addDataDirectory(mapping.getName(), mapping.getValue());
+      addDataDirectory(mapping.getName(), mapping.getValue(), skipIO);
       if (mapping.isUseForPlatform()) {
         if (tempPlatformRootIdentifier == null) {
           tempPlatformRootIdentifier = mapping.getName();
@@ -115,7 +119,11 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
 
   @Override
   public void addDataDirectory(String name, String path) {
-    validateDataDirectory(name, path);
+    addDataDirectory(name, path, false);
+  }
+
+  public void addDataDirectory(String name, String path, boolean skipIO) {
+    validateDataDirectory(name, path, skipIO);
 
     Path dataDirectory = compute(Paths.get(path));
 
@@ -127,6 +135,10 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
 
   @Override
   public void validateDataDirectory(String name, String path) {
+    validateDataDirectory(name, path, false);
+  }
+
+  public void validateDataDirectory(String name, String path, boolean skipIO) {
     Path dataDirectory = compute(Paths.get(path));
 
     if (dataRootMap.containsKey(name)) {
@@ -144,10 +156,12 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
       );
     }
 
-    try {
-      ensureDirectory(dataDirectory);
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to create data directory: " + dataDirectory, e);
+    if (!skipIO) {
+      try {
+        ensureDirectory(dataDirectory);
+      } catch (IOException e) {
+        throw new RuntimeException("Unable to create data directory: " + dataDirectory, e);
+      }
     }
   }
 

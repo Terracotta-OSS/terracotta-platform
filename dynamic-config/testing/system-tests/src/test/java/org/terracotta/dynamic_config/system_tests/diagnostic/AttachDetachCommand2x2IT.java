@@ -28,7 +28,7 @@ import java.time.Duration;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -88,7 +88,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
   }
 
   private void downloadToLocal() throws IOException {
-    tsa.browse(getNode(1, 1), ".").list().stream()
+    angela.tsa().browse(getNode(1, 1), ".").list().stream()
         .filter(remoteFile -> remoteFile.getName().equals(OUTPUT_JSON_FILE))
         .findFirst()
         .get()

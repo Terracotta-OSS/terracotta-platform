@@ -33,7 +33,7 @@ import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.slf4j.event.Level.DEBUG;
-import static org.terracotta.dynamic_config.test_support.util.AngelaMatchers.containsOutput;
+import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
 
 /**
  * @author Mathieu Carbou
@@ -89,7 +89,7 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
 
     // close the server when the last change is not committed or rolled back
     stopNode(1, 1);
-    assertThat(tsa.getStopped().size(), is(1));
+    assertThat(angela.tsa().getStopped().size(), is(1));
 
     // ensure the server can still start if the configuration is not committed
     startNode(1, 1);

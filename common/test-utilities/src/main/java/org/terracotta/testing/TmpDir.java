@@ -15,24 +15,27 @@
  */
 package org.terracotta.testing;
 
-import org.junit.rules.TestRule;
 import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 /**
  * @author Mathieu Carbou
  */
-public class TmpDir implements TestRule {
+public class TmpDir extends ExtendedTestRule {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TmpDir.class);
 
   private final Path parent;
   private final boolean autoClean;
+  private TemporaryFolder delegate;
   private Path root;
 
   public TmpDir() {
@@ -53,31 +56,37 @@ public class TmpDir implements TestRule {
   }
 
   @Override
-  public Statement apply(Statement base, Description description) {
-    TemporaryFolder temporaryFolder = new TemporaryFolder(parent == null ? null : parent.toFile()) {
-      @Override
-      protected void after() {
-        if (autoClean) {
-          super.after();
-        }
-      }
-    };
-    return temporaryFolder.apply(new Statement() {
-      @Override
-      public void evaluate() throws Throwable {
-        if (description.getMethodName() == null) {
-          root = temporaryFolder.newFolder(description.getTestClass().getSimpleName()).toPath();
-          LOGGER.info("Temporary directory for {}: {}", description.getTestClass().getSimpleName(), root);
-        } else {
-          root = temporaryFolder.newFolder(description.getTestClass().getSimpleName(), description.getMethodName()).toPath();
-          LOGGER.info("Temporary directory for {}#{}: {}", description.getTestClass().getSimpleName(), description.getMethodName(), root);
-        }
-        base.evaluate();
-      }
-    }, description);
+  protected void before(Description description) throws Throwable {
+    delegate = TemporaryFolder.builder()
+        .parentFolder(parent == null ? null : parent.toFile())
+        .assureDeletion()
+        .build();
+    delegate.create();
+    if (description.getMethodName() == null) {
+      root = delegate.newFolder(description.getTestClass().getSimpleName()).toPath();
+      LOGGER.info("Temporary directory for {}: {}", description.getTestClass().getSimpleName(), root);
+    } else {
+      root = delegate.newFolder(description.getTestClass().getSimpleName(), description.getMethodName()).toPath();
+      LOGGER.info("Temporary directory for {}#{}: {}", description.getTestClass().getSimpleName(), description.getMethodName(), root);
+    }
+  }
+
+  @Override
+  protected void after(Description description) throws Throwable {
+    if (autoClean || empty()) {
+      delegate.delete();
+    }
   }
 
   public Path getRoot() {
     return root;
+  }
+
+  private boolean empty() {
+    try (Stream<Path> walk = Files.walk(root)) {
+      return walk.allMatch(path -> Files.isDirectory(path));
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }

@@ -15,13 +15,14 @@
  */
 package org.terracotta.testing.rules;
 
-import java.net.URI;
-import org.junit.rules.ExternalResource;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.passthrough.IClusterControl;
+import org.terracotta.testing.ExtendedTestRule;
 
-public abstract class Cluster extends ExternalResource {
+import java.net.URI;
+
+public abstract class Cluster extends ExtendedTestRule {
 
   public abstract URI getConnectionURI();
 

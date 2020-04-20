@@ -15,8 +15,8 @@
  */
 package org.terracotta.dynamic_config.test_support.util;
 
-import org.terracotta.dynamic_config.cli.config_convertor.ConfigConvertor;
-import org.terracotta.dynamic_config.cli.config_convertor.ConfigRepoProcessor;
+import org.terracotta.dynamic_config.cli.config_converter.ConfigConverter;
+import org.terracotta.dynamic_config.cli.config_converter.ConfigRepoProcessor;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -37,41 +37,59 @@ import static org.junit.Assert.assertFalse;
  */
 public class ConfigRepositoryGenerator {
 
-  private final Path root;
-  private int inUse;
-  private int[] ports;
+  public interface PortSupplier {
+    int getNodePort(int stripeId, int nodeId);
 
-  public ConfigRepositoryGenerator(Path root, int... ports) {
+    int getNodeGroupPort(int stripeId, int nodeId);
+
+    static PortSupplier fromList(int nodesPerStripe, int... ports) {
+      return new PortSupplier() {
+        @Override
+        public int getNodePort(int stripeId, int nodeId) {
+          return ports[2 * (nodeId - 1) + 2 * nodesPerStripe * (stripeId - 1)];
+        }
+
+        @Override
+        public int getNodeGroupPort(int stripeId, int nodeId) {
+          return getNodePort(stripeId, nodeId);
+        }
+      };
+    }
+  }
+
+  private final Path root;
+  private final PortSupplier portSupplier;
+
+  public ConfigRepositoryGenerator(Path root, PortSupplier portSupplier) {
     this.root = root;
-    this.ports = ports;
+    this.portSupplier = portSupplier;
+  }
+
+  public ConfigRepositoryGenerator(Path root, int nodesPerStripe, int... ports) {
+    this(root, PortSupplier.fromList(nodesPerStripe, ports));
   }
 
   public void generate2Stripes2Nodes() {
-    convert(substituteParams(2, "/tc-configs/stripe1-2-nodes.xml"), substituteParams(2, "/tc-configs/stripe2-2-nodes.xml"));
+    convert(substituteParams(1, 2, "/tc-configs/stripe1-2-nodes.xml"), substituteParams(2, 2, "/tc-configs/stripe2-2-nodes.xml"));
   }
 
   public void generate1Stripe2Nodes() {
-    convert(substituteParams(2, "/tc-configs/stripe1-2-nodes.xml"));
+    convert(substituteParams(1, 2, "/tc-configs/stripe1-2-nodes.xml"));
   }
 
   public void generate1Stripe1NodeIpv6() {
-    convert(substituteParams(1, "/tc-configs/stripe1-1-node_ipv6.xml"));
+    convert(substituteParams(1, 1, "/tc-configs/stripe1-1-node_ipv6.xml"));
   }
 
   public void generate1Stripe1Node() {
-    convert(substituteParams(1, "/tc-configs/stripe1-1-node.xml"));
+    convert(substituteParams(1, 1, "/tc-configs/stripe1-1-node.xml"));
   }
 
   public void generate1Stripe1NodeAndSkipCommit() {
-    convert(true, substituteParams(1, "/tc-configs/stripe1-1-node.xml"));
+    convert(true, substituteParams(1, 1, "/tc-configs/stripe1-1-node.xml"));
   }
 
-  private Path substituteParams(int nodes, String path) {
-    int portsNeeded = 2 * nodes; // one for port and group-port each
-    if (ports.length - inUse < portsNeeded) {
-      throw new IllegalArgumentException("Not enough ports to use. Required: " + portsNeeded + ", found: " + (ports.length - inUse));
-    }
-
+  private Path substituteParams(int stripeId, int nodes, String path) {
     String defaultConfig;
     try {
       defaultConfig = String.join(System.lineSeparator(), Files.readAllLines(Paths.get(ConfigRepositoryGenerator.class.getResource(path).toURI())));
@@ -84,8 +102,8 @@ public class ConfigRepositoryGenerator {
     String configuration = defaultConfig;
     for (int i = 1; i <= nodes; i++) {
       configuration = configuration
-          .replace("${PORT-" + i + "}", String.valueOf(ports[inUse++]))
-          .replace("${GROUP-PORT-" + i + "}", String.valueOf(ports[inUse++]));
+          .replace("${PORT-" + i + "}", String.valueOf(portSupplier.getNodePort(stripeId, i)))
+          .replace("${GROUP-PORT-" + i + "}", String.valueOf(portSupplier.getNodeGroupPort(stripeId, i)));
     }
 
     try {
@@ -105,8 +123,8 @@ public class ConfigRepositoryGenerator {
       assertFalse("Directory already exists: " + root, Files.exists(root));
       createDirectories(root);
       ConfigRepoProcessor resultProcessor = skipCommit ? new CommitSkippingConfigRepoProcessor(root) : new ConfigRepoProcessor(root);
-      ConfigConvertor convertor = new ConfigConvertor(resultProcessor::process);
-      convertor.processInput("testCluster", tcConfigPaths);
+      ConfigConverter converter = new ConfigConverter(resultProcessor::process);
+      converter.processInput("testCluster", tcConfigPaths);
 
       URL licenseUrl = ConfigRepositoryGenerator.class.getResource("/license.xml");
       if (licenseUrl != null) {
@@ -129,8 +147,8 @@ public class ConfigRepositoryGenerator {
   }
 
   public static void main(String[] args) {
-    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/single-stripe-single-node"), 9410, 9430).generate1Stripe1Node();
-    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/single-stripe-multi-node"), 9410, 9430, 9510, 9530).generate1Stripe2Nodes();
-    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/multi-stripe"), 9410, 9430, 9510, 9530, 9610, 9630, 9710, 9730).generate2Stripes2Nodes();
+    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/single-stripe-single-node"), 1, 9410, 9430).generate1Stripe1Node();
+    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/single-stripe-multi-node"), 2, 9410, 9430, 9510, 9530).generate1Stripe2Nodes();
+    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/multi-stripe"), 2, 9410, 9430, 9510, 9530, 9610, 9630, 9710, 9730).generate2Stripes2Nodes();
   }
 }

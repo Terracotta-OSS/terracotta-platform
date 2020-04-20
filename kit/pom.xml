@@ -150,17 +150,17 @@
     </dependency>
 
     <!--
-      tools/config-convertor/lib
+      tools/config-converter/lib
     -->
 
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>dynamic-config-cli-config-convertor</artifactId>
+      <artifactId>dynamic-config-cli-config-converter</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>config-convertor-oss</artifactId>
+      <artifactId>config-converter-oss</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -598,16 +598,16 @@
                 </configuration>
               </execution>
               <execution>
-                <id>config-convertor</id>
+                <id>config-converter</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>shade</goal>
                 </goals>
                 <configuration>
-                  <outputFile>${project.build.directory}/packages/tools/config-convertor/lib/config-convertor-${project.version}.jar</outputFile>
+                  <outputFile>${project.build.directory}/packages/tools/config-converter/lib/config-converter-${project.version}.jar</outputFile>
                   <artifactSet>
                     <includes>
-                      <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-convertor</include>
+                      <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-converter</include>
                       <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
                       <include>org.terracotta.internal:tc-config-parser</include>
                       <include>org.terracotta:tcconfig-schema</include>
@@ -620,7 +620,7 @@
                     </transformer>
                     <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                       <resource>META-INF/MANIFEST.MF</resource>
-                      <file>../dynamic-config/cli/config-convertor/target/classes/META-INF/MANIFEST.MF</file>
+                      <file>../dynamic-config/cli/config-converter/target/classes/META-INF/MANIFEST.MF</file>
                     </transformer>
                   </transformers>
                 </configuration>

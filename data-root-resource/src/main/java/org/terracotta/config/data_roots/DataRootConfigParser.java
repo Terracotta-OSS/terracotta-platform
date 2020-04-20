@@ -62,7 +62,9 @@ public class DataRootConfigParser implements ExtendedConfigParser {
 
     PathResolver pathResolver = getPathResolver(source);
 
-    return new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, pathResolver, dataDirectories);
+    // true == skip any file IO when using this parser.
+    // this parser is only used by the migration tool now
+    return new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, pathResolver, dataDirectories, true);
   }
 
   public Function<Element, DataDirectories> parser() {
