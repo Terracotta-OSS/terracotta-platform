@@ -24,9 +24,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.hasExitStatus;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.hasExitStatus;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(autoActivate = true)
 public class SetCommand1x1IT extends DynamicConfigIT {
