@@ -36,8 +36,11 @@ public class ConfigRepoStartupBuilder extends StartupCommandBuilder {
       try {
         installServer();
         Path generatedRepositories = convertConfigFiles();
+
         // moves the generated files onto the server folder, but only for this server we are building
-        Files.move(generatedRepositories.resolve("stripe-" + getStripeId()).resolve(getServerName()), getServerWorkingDir().resolve("repository"));
+        Path source = generatedRepositories.resolve("stripe-" + getStripeId()).resolve(getServerName()).toAbsolutePath();
+        Path destination = getServerWorkingDir().resolve("repository").toAbsolutePath();
+        org.terracotta.utilities.io.Files.relocate(source, destination);
         buildStartupCommand();
       } catch (IOException e) {
         throw new UncheckedIOException(e);

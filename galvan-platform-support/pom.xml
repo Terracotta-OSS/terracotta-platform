@@ -67,5 +67,9 @@
       <artifactId>common-port-locking</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-tools</artifactId>
+    </dependency>
   </dependencies>
 </project>
