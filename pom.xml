@@ -42,6 +42,7 @@
     <angela.version>3.0.20</angela.version>
     <statistics.version>2.1</statistics.version>
     <jackson.version>2.10.1</jackson.version>
+    <terracotta-utilities.version>0.0.2</terracotta-utilities.version>
   </properties>
 
   <modules>
@@ -96,7 +97,12 @@
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>terracotta-utilities-test-tools</artifactId>
-        <version>0.0.2</version>
+        <version>${terracotta-utilities.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>terracotta-utilities-tools</artifactId>
+        <version>${terracotta-utilities.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
