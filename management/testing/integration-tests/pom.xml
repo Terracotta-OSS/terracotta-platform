@@ -175,8 +175,8 @@
         <groupId>org.terracotta</groupId>
         <artifactId>maven-forge-plugin</artifactId>
         <configuration>
+          <forkCount>1C</forkCount>
           <systemPropertyVariables>
-            <forkCount>1C</forkCount>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
           </systemPropertyVariables>
         </configuration>
