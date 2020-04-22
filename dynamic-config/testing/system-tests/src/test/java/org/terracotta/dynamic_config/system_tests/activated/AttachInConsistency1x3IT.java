@@ -18,10 +18,10 @@ package org.terracotta.dynamic_config.system_tests.activated;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 
 import java.time.Duration;
 
@@ -30,8 +30,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 3, autoStart = false)
 public class AttachInConsistency1x3IT extends DynamicConfigIT {

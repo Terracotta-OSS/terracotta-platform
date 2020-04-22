@@ -24,8 +24,8 @@ import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class GetCommand1x2IT extends DynamicConfigIT {

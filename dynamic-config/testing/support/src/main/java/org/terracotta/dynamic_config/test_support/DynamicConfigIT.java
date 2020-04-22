@@ -23,6 +23,8 @@ import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.config.ConfigurationContext;
+import org.terracotta.angela.client.support.junit.AngelaRule;
+import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.ConfigToolExecutionResult;
 import org.terracotta.angela.common.distribution.Distribution;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
@@ -34,11 +36,8 @@ import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.test_support.angela.AngelaRule;
-import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
-import org.terracotta.port_locking.LockingPortChoosers;
 import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.TmpDir;
 
@@ -71,6 +70,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
@@ -82,7 +82,6 @@ import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
 import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 
 public class DynamicConfigIT {
@@ -109,9 +108,7 @@ public class DynamicConfigIT {
     this.timeout = testTimeout.toMillis();
     this.rules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(
-            LockingPortChoosers.getFileLockingPortChooser(),
-            createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe()), clusterDef.autoStart(), clusterDef.autoActivate()) {
+        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe()), clusterDef.autoStart(), clusterDef.autoActivate()) {
           @Override
           public void startNode(int stripeId, int nodeId) {
             // let the subclasses control the node startup

@@ -27,7 +27,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(stripes = 2)
 public class ImportCommand2x1IT extends DynamicConfigIT {

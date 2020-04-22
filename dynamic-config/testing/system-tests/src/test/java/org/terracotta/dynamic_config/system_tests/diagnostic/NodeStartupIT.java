@@ -18,9 +18,9 @@ package org.terracotta.dynamic_config.system_tests.diagnostic;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemErrRule;
+import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.angela.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
 
 import java.net.InetAddress;

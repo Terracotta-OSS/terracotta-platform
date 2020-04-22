@@ -31,8 +31,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.successful;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 4, autoStart = false)
 public class AttachInConsistency1x4IT extends DynamicConfigIT {

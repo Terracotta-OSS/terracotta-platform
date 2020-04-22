@@ -23,8 +23,8 @@ import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.not;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.test_support.angela.AngelaMatchers.hasExitStatus;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.hasExitStatus;
 
 @ClusterDefinition
 public class GetCommand1x1IT extends DynamicConfigIT {
