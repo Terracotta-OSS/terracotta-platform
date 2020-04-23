@@ -30,16 +30,16 @@
     <appender-ref ref="STDOUT"/>
   </root>
 
-  <logger name="org.terracotta.dynamic_config" level="TRACE" additivity="false">
+  <logger name="org.terracotta.dynamic_config" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.terracotta.nomad" level="TRACE" additivity="false">
+  <logger name="org.terracotta.nomad" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.terracotta.persistence.sanskrit" level="TRACE" additivity="false">
+  <logger name="org.terracotta.persistence.sanskrit" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
-  <logger name="org.terracotta.diagnostic" level="TRACE" additivity="false">
+  <logger name="org.terracotta.diagnostic" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
   <logger name="org.terracotta.angela" level="INFO" additivity="false">
