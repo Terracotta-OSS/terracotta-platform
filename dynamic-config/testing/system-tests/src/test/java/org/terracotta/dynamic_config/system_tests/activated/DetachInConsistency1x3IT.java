@@ -156,7 +156,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     stopNode(1, passiveId);
 
     assertThat(
-        configToolInvocation("-e", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
@@ -218,7 +218,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     //Both active and one passive is down.
     assertThat(
-        configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 

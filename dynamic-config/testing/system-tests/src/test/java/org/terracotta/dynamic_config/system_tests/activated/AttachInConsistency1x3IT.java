@@ -137,7 +137,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     // active died and passive can't become active
     assertThat(
-        configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, 3)),
         containsOutput("Two-Phase commit failed"));
 

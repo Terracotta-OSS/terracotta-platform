@@ -27,8 +27,11 @@ import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 @Parameters(commandNames = LocalMainCommand.NAME)
 public class RemoteMainCommand extends LocalMainCommand {
 
-  @Parameter(names = {"-e", "--entity-timeout"}, description = "Entity operation timeout. Default: 120s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> entityOperationTimeout = Measure.of(120, TimeUnit.SECONDS);
+  @Parameter(names = {"-er", "--entity-request-timeout"}, hidden = true, description = "Entity operation timeout. Default: 120s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> entityOperationTimeout;
+
+  @Parameter(names = {"-et", "--entity-connection-timeout"}, hidden = true, description = "Entity Connection timeout. Default: 30s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> entityConnectionTimeout;
 
   @Parameter(names = {"-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> requestTimeout = Measure.of(10, TimeUnit.SECONDS);
@@ -48,10 +51,26 @@ public class RemoteMainCommand extends LocalMainCommand {
   }
 
   public Measure<TimeUnit> getEntityOperationTimeout() {
+    validateParameter();
     return entityOperationTimeout;
   }
 
+  public Measure<TimeUnit> getEntityConnectionTimeout() {
+    validateParameter();
+    return entityConnectionTimeout;  
+  }
+  
   public String getSecurityRootDirectory() {
     return securityRootDirectory;
   }
+
+  private void validateParameter() {
+    if(entityOperationTimeout == null) {
+      entityOperationTimeout = Measure.of(12 * requestTimeout.getQuantity(), TimeUnit.SECONDS);
+    }
+    if(entityConnectionTimeout == null) {
+      entityConnectionTimeout = Measure.of(3 * connectionTimeout.getQuantity(), TimeUnit.SECONDS);
+    }
+  }
+
 }
