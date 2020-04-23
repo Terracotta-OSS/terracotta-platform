@@ -97,7 +97,7 @@ public class ConvertCommand extends Command {
           allLicenseDirs.forEach(licenseDir -> {
             try {
               Path destLicenseFile = licenseDir.resolve(licensePath.getFileName());
-              Files.copy(licensePath, destLicenseFile);
+              org.terracotta.utilities.io.Files.copy(licensePath, destLicenseFile);
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }

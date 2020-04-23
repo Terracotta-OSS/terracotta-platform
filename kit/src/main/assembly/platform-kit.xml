@@ -98,6 +98,7 @@
         <include>com.fasterxml.jackson.datatype:jackson-datatype-jdk8</include>
         <include>com.fasterxml.jackson.datatype:jackson-datatype-jsr310</include>
         <include>com.beust:jcommander</include>
+        <include>org.terracotta:terracotta-utilities-tools</include>
         <include>org.terracotta:offheap-resource</include>
         <include>org.terracotta:data-root-resource</include>
         <include>org.terracotta:lease-entity-server</include>
@@ -151,6 +152,7 @@
         <include>org.terracotta.dynamic-config.cli:config-converter-oss</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-converter</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
+        <include>org.terracotta:terracotta-utilities-tools</include>
         <include>org.terracotta.internal:tc-config-parser</include>
         <include>org.terracotta:tcconfig-schema</include>
         <include>com.sun.xml.fastinfoset:FastInfoset</include>

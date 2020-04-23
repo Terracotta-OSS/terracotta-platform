@@ -39,6 +39,10 @@
       <groupId>com.beust</groupId>
       <artifactId>jcommander</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-tools</artifactId>
+    </dependency>
 
     <!-- server apis -->
     <dependency>

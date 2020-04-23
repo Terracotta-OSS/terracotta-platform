@@ -103,7 +103,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
         ClusterConfigFilename.from(filename).ifPresent(ccf -> {
           Path backup = config.resolveSibling("backup-" + filename + "-" + time);
           try {
-            Files.move(config, backup);
+            org.terracotta.utilities.io.Files.relocate(config, backup);
           } catch (IOException ioe) {
             if (error.get() == null) {
               error.set(new ConfigStorageException(ioe));

@@ -90,12 +90,14 @@ public abstract class StartupCommandBuilder {
     // Create a copy of the server for this installation.
     Files.createDirectories(serverWorkingDir);
 
+    //TODO: use the new Files utility
     //Copy a custom logback configuration
     Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverWorkingDir.resolve("logback-test.xml"), REPLACE_EXISTING);
 
     if (logConfigExt != null) {
       InputStream logExt = this.getClass().getResourceAsStream("/" + logConfigExt);
       if (logExt != null) {
+        //TODO: use the new Files utility
         Files.copy(logExt, serverWorkingDir.resolve("logback-ext-test.xml"), REPLACE_EXISTING);
       }
     }

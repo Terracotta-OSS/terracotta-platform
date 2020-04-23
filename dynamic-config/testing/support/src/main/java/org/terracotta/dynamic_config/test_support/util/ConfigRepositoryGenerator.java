@@ -28,7 +28,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
-import static java.nio.file.Files.copy;
 import static java.nio.file.Files.createDirectories;
 import static org.junit.Assert.assertFalse;
 
@@ -132,7 +131,7 @@ public class ConfigRepositoryGenerator {
         try (Stream<Path> pathList = Files.list(root)) {
           pathList.forEach(repoPath -> {
             try {
-              copy(licensePath, createDirectories(repoPath.resolve("license")).resolve(licensePath.getFileName()));
+              org.terracotta.utilities.io.Files.copy(licensePath, createDirectories(repoPath.resolve("license")).resolve(licensePath.getFileName()));
             } catch (IOException e) {
               throw new UncheckedIOException(e);
             }
