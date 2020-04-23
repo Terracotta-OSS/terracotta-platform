@@ -99,6 +99,7 @@ public class ConfigTool {
     CustomJCommander jCommander = parseArguments(commandRepository, args);
 
     // Process arguments like '-v'
+    MAIN.validate();
     MAIN.run();
 
     ConcurrencySizing concurrencySizing = new ConcurrencySizing();

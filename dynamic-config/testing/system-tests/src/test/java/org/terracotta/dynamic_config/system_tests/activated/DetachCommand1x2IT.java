@@ -143,7 +143,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
 
     // Stripe is lost no active
     assertThat(
-        configToolInvocation("-e", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Commit failed for node localhost:" + getNodePort(1, activeId) + ". Reason: java.util.concurrent.TimeoutException"));
 
