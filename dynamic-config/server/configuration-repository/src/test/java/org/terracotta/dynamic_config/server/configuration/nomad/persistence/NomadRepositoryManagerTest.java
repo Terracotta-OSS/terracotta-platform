@@ -232,7 +232,7 @@ public class NomadRepositoryManagerTest {
     Files.createFile(configFilePath);
     assertThat(findNodeName(nomadRoot, identity()), is(Optional.empty()));
 
-    Files.delete(configFilePath);
+    org.terracotta.utilities.io.Files.delete(configFilePath);
     configFilePath = config.resolve("node1.3.properties");
     Files.createFile(configFilePath);
     String nodeName = findNodeName(nomadRoot, identity()).get();
@@ -251,7 +251,7 @@ public class NomadRepositoryManagerTest {
             .andMessage(is("Found versioned cluster config files for the following different nodes: node2, node1 in: " + config)))
     );
 
-    Files.delete(configFilePath);
+    org.terracotta.utilities.io.Files.delete(configFilePath);
     configFilePath = config.resolve("3.node1.properties");
     Files.createFile(configFilePath);
     findNodeName(nomadRoot, identity());

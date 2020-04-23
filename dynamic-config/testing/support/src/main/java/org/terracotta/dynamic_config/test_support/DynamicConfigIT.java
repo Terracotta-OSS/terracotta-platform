@@ -51,12 +51,9 @@ import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.OptionalInt;
 import java.util.Properties;
@@ -64,7 +61,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static java.nio.file.Files.walkFileTree;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -82,6 +78,7 @@ import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
+import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 
 public class DynamicConfigIT {
@@ -320,26 +317,9 @@ public class DynamicConfigIT {
     });
     LOGGER.debug("Generating cluster node repositories into: {}", repositoriesDir);
     fn.accept(clusterGenerator);
-    copyDirectory(repositoriesDir.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeRepositoryDir);
+    org.terracotta.utilities.io.Files.copy(repositoriesDir.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeRepositoryDir, RECURSIVE);
     LOGGER.debug("Created node repository into: {}", nodeRepositoryDir);
     return nodeRepositoryDir;
-  }
-
-  private static void copyDirectory(Path source, Path destination) throws IOException {
-    Files.createDirectories(destination);
-    walkFileTree(source, new SimpleFileVisitor<Path>() {
-      @Override
-      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        Files.createDirectories(destination.resolve(source.relativize(dir)));
-        return FileVisitResult.CONTINUE;
-      }
-
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        Files.copy(file, destination.resolve(source.relativize(file)));
-        return FileVisitResult.CONTINUE;
-      }
-    });
   }
 
   private Properties generateProperties() {

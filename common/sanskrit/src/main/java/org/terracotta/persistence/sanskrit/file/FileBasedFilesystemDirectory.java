@@ -85,7 +85,7 @@ public class FileBasedFilesystemDirectory implements FilesystemDirectory {
   @Override
   public void delete(String filename) throws IOException {
     Path path = directory.resolve(filename);
-    Files.deleteIfExists(path);
+    org.terracotta.utilities.io.Files.deleteIfExists(path);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class FileBasedFilesystemDirectory implements FilesystemDirectory {
     Path path = directory.resolve(filename);
     if (Files.exists(path)) {
       Path dest = path.resolveSibling("backup-" + filename + "-" + time);
-      Files.move(path, dest);
+      org.terracotta.utilities.io.Files.relocate(path, dest);
     }
   }
 }

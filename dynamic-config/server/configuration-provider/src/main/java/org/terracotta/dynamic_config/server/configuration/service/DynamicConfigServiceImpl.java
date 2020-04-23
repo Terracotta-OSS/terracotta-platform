@@ -385,14 +385,14 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
         licenseService.validate(tempFile, upcomingNodeContext.getCluster());
         LOGGER.info("License validated");
         LOGGER.debug("Moving license file: {} to: {}", tempFile, licensePath);
-        Files.move(tempFile, licensePath, StandardCopyOption.REPLACE_EXISTING);
+        org.terracotta.utilities.io.Files.relocate(tempFile, licensePath, StandardCopyOption.REPLACE_EXISTING);
         LOGGER.info("License installed");
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       } finally {
         if (tempFile != null) {
           try {
-            Files.deleteIfExists(tempFile);
+            org.terracotta.utilities.io.Files.deleteIfExists(tempFile);
           } catch (IOException ignored) {
           }
         }
@@ -402,7 +402,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     } else {
       LOGGER.info("No license installed");
       try {
-        Files.deleteIfExists(licensePath);
+        org.terracotta.utilities.io.Files.deleteIfExists(licensePath);
       } catch (IOException e) {
         LOGGER.warn("Error deleting existing license: " + e.getMessage(), e);
       }
