@@ -17,7 +17,6 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -106,7 +105,6 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
     }
   }
 
-  @Ignore("TDB-4949")
   @Test
   public void testAttachAfterKillingActive() throws Exception {
     int activeId = findActive(1).getAsInt();
@@ -123,9 +121,6 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
       stopNode(1, activeId);
       waitForActive(1, passiveId);
 
-      // Not able to connect to the new active 
-      // Perhaps because of two concurrent diagnostic connection one from voter for heartbeating and other from config tool
-      // Investigate ?
       assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
       String[] nodes = new String[]{

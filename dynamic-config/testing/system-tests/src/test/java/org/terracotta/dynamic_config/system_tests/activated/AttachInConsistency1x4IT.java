@@ -150,7 +150,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     // 1. but the 2 other passives cannot decide which one will become active because they are only 2 nodes so no majority
     //    so the command will block... Until the thread has time to restart the old active (which will become passive and vote)!
     // 2. or it might be possible that one of the passive has time ot become active
-    ConfigToolExecutionResult output = configToolInvocation("-e", "40s", "-r", "5s", "-t", "5s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 4));
+    ConfigToolExecutionResult output = configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 4));
     assertThat(output, either(is(successful())).or(containsOutput("Two-Phase commit failed")));
 
     //start the old active and verify it becomes passive

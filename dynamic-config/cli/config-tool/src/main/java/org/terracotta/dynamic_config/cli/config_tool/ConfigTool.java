@@ -99,19 +99,21 @@ public class ConfigTool {
     CustomJCommander jCommander = parseArguments(commandRepository, args);
 
     // Process arguments like '-v'
+    MAIN.validate();
     MAIN.run();
 
     ConcurrencySizing concurrencySizing = new ConcurrencySizing();
     Duration connectionTimeout = Duration.ofMillis(MAIN.getConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
     Duration requestTimeout = Duration.ofMillis(MAIN.getRequestTimeout().getQuantity(TimeUnit.MILLISECONDS));
     Duration entityOperationTimeout = Duration.ofMillis(MAIN.getEntityOperationTimeout().getQuantity(TimeUnit.MILLISECONDS));
-
+    Duration entityConnectionTimeout = Duration.ofMillis(MAIN.getEntityConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
+    
     // create services
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, MAIN.getSecurityRootDirectory());
     MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);
     NomadEntityProvider nomadEntityProvider = new NomadEntityProvider(
         "CONFIG-TOOL",
-        connectionTimeout,
+        entityConnectionTimeout,
         // A long timeout is important here.
         // We need to block the call and wait for any return.
         // We cannot timeout shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
