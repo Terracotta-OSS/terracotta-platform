@@ -50,11 +50,11 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
       Measure<MemoryUnit> measure = Measure.parse(change.getValue(), MemoryUnit.class);
       String name = change.getKey();
       long newValue = measure.getQuantity(MemoryUnit.B);
-      OffHeapResource offHeapResource = offHeapResources.getOffHeapResource(OffHeapResourceIdentifier.identifier(name));
-      if (offHeapResource != null) {
-        if (newValue <= offHeapResource.capacity()) {
+      Measure<MemoryUnit> existing = baseConfig.getCluster().getOffheapResources().get(name);
+      if (existing != null) {
+        if (newValue <= existing.getQuantity(MemoryUnit.B)) {
           throw new InvalidConfigChangeException("New offheap-resource size: " + change.getValue() +
-              " should be larger than the old size: " + Measure.of(offHeapResource.capacity(), measure.getUnit()));
+              " should be larger than the old size: " + existing);
         }
       }
 
