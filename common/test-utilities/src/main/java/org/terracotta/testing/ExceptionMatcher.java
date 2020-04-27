@@ -20,9 +20,6 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-import java.util.Map;
-import java.util.WeakHashMap;
-
 import static java.util.Objects.requireNonNull;
 import static org.hamcrest.CoreMatchers.instanceOf;
 
@@ -31,7 +28,6 @@ import static org.hamcrest.CoreMatchers.instanceOf;
  */
 public class ExceptionMatcher extends TypeSafeMatcher<ExceptionMatcher.Closure> {
 
-  private static final ThreadLocal<Map<Closure, Throwable>> FAILURES = ThreadLocal.withInitial(WeakHashMap::new);
   private static final CustomMatcher<String> ANY_MESSAGE = new CustomMatcher<String>("ANY MESSAGE") {
     @Override
     public boolean matches(Object item) {
@@ -48,6 +44,8 @@ public class ExceptionMatcher extends TypeSafeMatcher<ExceptionMatcher.Closure> 
   private final Matcher<? super Class<? extends Throwable>> typeMatcher;
   private Matcher<? super String> messageMatcher = ANY_MESSAGE;
   private Matcher<? super Class<? extends Throwable>> causeMatcher = ANY_CAUSE;
+
+  private Throwable failure;
 
   private ExceptionMatcher(Matcher<? super Class<? extends Throwable>> typeMatcher) {
     this.typeMatcher = requireNonNull(typeMatcher);
@@ -72,16 +70,15 @@ public class ExceptionMatcher extends TypeSafeMatcher<ExceptionMatcher.Closure> 
       item.run();
       return false;
     } catch (Throwable e) {
-      FAILURES.get().put(item, e);
+      failure = e;
       return typeMatcher.matches(e) && messageMatcher.matches(e.getMessage()) && causeMatcher.matches(e.getCause());
     }
   }
 
   @Override
   protected void describeMismatchSafely(Closure item, Description mismatchDescription) {
-    Throwable throwable = FAILURES.get().get(item);
-    if (throwable != null) {
-      super.describeMismatchSafely(new ToStringClosure(throwable.toString()), mismatchDescription);
+    if (failure != null) {
+      super.describeMismatchSafely(new ToStringClosure(failure.toString()), mismatchDescription);
     } else {
       super.describeMismatchSafely(new ToStringClosure("no exception was thrown"), mismatchDescription);
     }
