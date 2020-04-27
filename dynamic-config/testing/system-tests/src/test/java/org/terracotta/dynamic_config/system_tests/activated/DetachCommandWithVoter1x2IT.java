@@ -31,7 +31,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
-import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
@@ -61,8 +60,8 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
 
       String[] nodes = new String[]{getNode(1, activeId).getHostPort()};
 
-      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
-      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(1));
+      waitUntil(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      waitUntil(() -> activeVoter.getHeartbeatFutures().size(), is(1));
 
       withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     }
@@ -83,17 +82,20 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
 
       String[] nodes = new String[]{getNode(1, activeId).getHostPort()};
 
-      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
-      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(1));
+      waitUntil(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      waitUntil(() -> activeVoter.getHeartbeatFutures().size(), is(1));
 
       startNode(1, passiveId);
       waitForDiagnostic(1, passiveId);
 
       assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
-      nodes = new String[]{getNode(1, passiveId).getHostPort()};
-      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
-      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(2));
+      nodes = new String[]{
+          getNode(1, activeId).getHostPort(),
+          getNode(1, passiveId).getHostPort()
+      };
+      waitUntil(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      waitUntil(() -> activeVoter.getHeartbeatFutures().size(), is(2));
 
       withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
       withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
