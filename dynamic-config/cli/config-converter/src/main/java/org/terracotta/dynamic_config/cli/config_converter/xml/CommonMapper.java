@@ -28,6 +28,7 @@ import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
 import org.terracotta.data.config.DataRootMapping;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.lease.service.config.LeaseConfigurationParser;
 import org.terracotta.lease.service.config.LeaseElement;
 import org.terracotta.offheapresource.OffHeapResourceConfigurationParser;
@@ -178,5 +179,11 @@ public class CommonMapper {
     // First try to find a deprecated service tag "<persistence:platform-persistence data-directory-id="root1"/>"
     // that will give us the ID of the dataroot to use for platform persistence
     return toDataDirs(plugins, DataRootMapping::isUseForPlatform).entrySet().stream().findFirst();
+  }
+
+  public Measure<TimeUnit> toClientReconnectWindow(TcConfig tcConfig) {
+    return tcConfig == null || tcConfig.getServers() == null || tcConfig.getServers().getClientReconnectWindow() == null ?
+        Measure.parse(Setting.CLIENT_RECONNECT_WINDOW.getDefaultValue(), TimeUnit.class) :
+        Measure.of(tcConfig.getServers().getClientReconnectWindow(), TimeUnit.SECONDS);
   }
 }
