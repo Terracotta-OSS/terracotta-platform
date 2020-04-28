@@ -115,6 +115,7 @@ public class CommandLineProcessorChainTest {
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
     when(options.getNodePort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
     cluster.setName(CLUSTER_NAME);
 
@@ -134,6 +135,7 @@ public class CommandLineProcessorChainTest {
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
     when(options.getNodePort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
     cluster.setName(CLUSTER_NAME);
 
@@ -153,6 +155,7 @@ public class CommandLineProcessorChainTest {
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
     when(options.getNodePort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
     cluster.addStripe(new Stripe(node2));
     cluster.setName(CLUSTER_NAME);
@@ -173,6 +176,7 @@ public class CommandLineProcessorChainTest {
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
     when(options.getNodePort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
     cluster.getSingleStripe().get().attachNode(node2);
 

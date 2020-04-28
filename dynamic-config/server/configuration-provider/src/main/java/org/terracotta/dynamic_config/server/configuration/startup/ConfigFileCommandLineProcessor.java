@@ -22,25 +22,25 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-import org.terracotta.dynamic_config.server.configuration.service.ParameterSubstitutor;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFileCommandLineProcessor.class);
-  private static final IParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
 
   private final Options options;
   private final ClusterFactory clusterCreator;
   private final CommandLineProcessor nextStarter;
   private final ConfigurationGeneratorVisitor configurationGeneratorVisitor;
+  private final IParameterSubstitutor parameterSubstitutor;
 
-  ConfigFileCommandLineProcessor(CommandLineProcessor nextStarter, Options options, ClusterFactory clusterCreator, ConfigurationGeneratorVisitor configurationGeneratorVisitor) {
+  ConfigFileCommandLineProcessor(CommandLineProcessor nextStarter, Options options, ClusterFactory clusterCreator, ConfigurationGeneratorVisitor configurationGeneratorVisitor, IParameterSubstitutor parameterSubstitutor) {
     this.options = options;
     this.clusterCreator = clusterCreator;
     this.nextStarter = nextStarter;
     this.configurationGeneratorVisitor = configurationGeneratorVisitor;
+    this.parameterSubstitutor = parameterSubstitutor;
   }
 
   @Override
@@ -51,7 +51,7 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
       return;
     }
 
-    Path substitutedConfigFile = Paths.get(PARAMETER_SUBSTITUTOR.substitute(options.getConfigFile()));
+    Path substitutedConfigFile = Paths.get(parameterSubstitutor.substitute(options.getConfigFile()));
     LOGGER.info("Starting node from config file: {}", substitutedConfigFile);
     Cluster cluster = clusterCreator.create(substitutedConfigFile);
 

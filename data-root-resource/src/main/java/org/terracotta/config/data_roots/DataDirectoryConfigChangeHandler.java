@@ -15,19 +15,35 @@
  */
 package org.terracotta.config.data_roots;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
+import org.terracotta.dynamic_config.server.api.PathResolver;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
 
 /**
  * Handles dynamic data-directory additions
  */
 public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
-  private final DataDirectoriesConfig dataDirectoriesConfig;
+  private static final Logger LOGGER = LoggerFactory.getLogger(DataDirectoryConfigChangeHandler.class);
 
-  public DataDirectoryConfigChangeHandler(DataDirectoriesConfig dataDirectoriesConfig) {
+  private final DataDirectoriesConfig dataDirectoriesConfig;
+  private final IParameterSubstitutor parameterSubstitutor;
+  private final PathResolver pathResolver;
+
+  public DataDirectoryConfigChangeHandler(DataDirectoriesConfig dataDirectoriesConfig, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
     this.dataDirectoriesConfig = dataDirectoriesConfig;
+    this.parameterSubstitutor = parameterSubstitutor;
+    this.pathResolver = pathResolver;
   }
 
   @Override
@@ -35,13 +51,26 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
     if (change.getValue() == null) {
       throw new InvalidConfigChangeException("Invalid change: " + change);
     }
+    Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs();
+    LOGGER.trace("Validating change: {} against node data directories: {}", change, dataDirs);
+
+    String dataDirectoryName = change.getKey();
+    Path dataDirectoryPath = Paths.get(change.getValue());
+
+    if (dataDirs.containsKey(dataDirectoryName)) {
+      throw new InvalidConfigChangeException("A data directory with name: " + dataDirectoryName + " already exists");
+    }
+
+    for (Map.Entry<String, Path> entry : dataDirs.entrySet()) {
+      if (overLaps(entry.getValue(), dataDirectoryPath)) {
+        throw new InvalidConfigChangeException("Data directory: " + dataDirectoryName + " overlaps with: " + entry.getKey());
+      }
+    }
 
     try {
-      String dataDirectoryName = change.getKey();
-      String dataDirectoryPath = change.getValue();
-      dataDirectoriesConfig.validateDataDirectory(dataDirectoryName, dataDirectoryPath);
-    } catch (RuntimeException e) {
-      throw new InvalidConfigChangeException(e.getMessage(), e);
+      ensureDirectory(dataDirectoryPath);
+    } catch (IOException e) {
+      throw new InvalidConfigChangeException("Unable to create data directory: " + dataDirectoryName + ": " + e.getMessage(), e);
     }
   }
 
@@ -50,5 +79,26 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
     String dataDirectoryName = change.getKey();
     String dataDirectoryPath = change.getValue();
     dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
+  }
+
+  public boolean overLaps(Path existing, Path newDataDirectoryPath) {
+    Path e = compute(existing);
+    Path n = compute(newDataDirectoryPath);
+    return e.startsWith(n) || n.startsWith(e);
+  }
+
+  private Path compute(Path path) {
+    return parameterSubstitutor.substitute(pathResolver.resolve(path)).normalize();
+  }
+
+  private void ensureDirectory(Path directory) throws IOException, InvalidConfigChangeException {
+    directory = compute(directory);
+    if (!Files.exists(directory)) {
+      Files.createDirectories(directory);
+    } else {
+      if (!Files.isDirectory(directory)) {
+        throw new InvalidConfigChangeException("A file with configured data directory: " + directory + " already exists!");
+      }
+    }
   }
 }

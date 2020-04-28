@@ -33,7 +33,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
-import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
 
 @ClusterDefinition(nodesPerStripe = 3)
 public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
@@ -86,8 +85,8 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
           getNode(1, passiveId).getHostPort(),
           getNode(1, 3).getHostPort()};
 
-      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
-      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(3));
+      waitUntil(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      waitUntil(() -> activeVoter.getHeartbeatFutures().size(), is(3));
 
       // kill the old passive and detach it from cluster
       stopNode(1, passiveId);
@@ -97,8 +96,8 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
           getNode(1, activeId).getHostPort(),
           getNode(1, 3).getHostPort()};
 
-      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
-      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(2));
+      waitUntil(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      waitUntil(() -> activeVoter.getHeartbeatFutures().size(), is(2));
 
       withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
       withTopologyService(1, 3, topologyService -> assertTrue(topologyService.isActivated()));
@@ -128,8 +127,8 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
           getNode(1, passiveId).getHostPort(),
           getNode(1, 3).getHostPort()};
 
-      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
-      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(3));
+      waitUntil(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      waitUntil(() -> activeVoter.getHeartbeatFutures().size(), is(3));
     }
   }
 
@@ -153,8 +152,8 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
           getNode(1, passiveId).getHostPort(),
           getNode(1, 3).getHostPort()};
 
-      assertThatEventually(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
-      assertThatEventually(() -> activeVoter.getHeartbeatFutures().size(), is(3));
+      waitUntil(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
+      waitUntil(() -> activeVoter.getHeartbeatFutures().size(), is(3));
 
       withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
       withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));

@@ -24,6 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertFalse;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.hasExitStatus;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
@@ -62,6 +63,17 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
+  public void setOffheapResources_addResources_sane_new_keys_and_lower_value() throws Exception {
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(),
+            "-c", "offheap-resources.foo=1GB",
+            "-c", "offheap-resources.foo=500MB"),
+        allOf(
+            not(hasExitStatus(0)),
+            containsOutput("Duplicate configurations found: offheap-resources.foo=1GB and offheap-resources.foo=500MB")));
+  }
+
+  @Test
   public void setOffheapResources_addResource_increaseSize() {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=main:1GB,second:1GB"), is(successful()));
 
@@ -84,24 +96,55 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setDataDir_overlappingPaths() {
+  public void setDataDir_overlappingPaths() throws Exception {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.first=node-1-1/data-dir"),
-        allOf(not(hasExitStatus(0)), containsOutput("overlaps with the existing data directory")));
+        allOf(
+            not(hasExitStatus(0)),
+            containsOutput("Prepare rejected"),
+            containsOutput("Reason: Error when trying to apply setting change 'set data-dirs.first=node-1-1/data-dir': Data directory: first overlaps with: main")));
+
+    // prepare change should be rolled back
+    withTopologyService(1, 1, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
   }
 
   @Test
-  public void setDataDir_addMultipleNonExistentDataDirs_overLappingPaths() {
+  public void setDataDir_addMultipleNonExistentDataDirs_overLappingPaths() throws Exception {
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-1"),
-        allOf(not(hasExitStatus(0)), containsOutput("overlaps with the existing data directory")));
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(),
+            "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1",
+            "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-1"),
+        allOf(
+            not(hasExitStatus(0)),
+            containsOutput("Prepare rejected"),
+            containsOutput("Reason: Error when trying to apply setting change 'set data-dirs.third=user-data/main/stripe1-node1-data-dir-1': Data directory: third overlaps with: second")));
+
+    // prepare change should be rolled back
+    withTopologyService(1, 1, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
   }
 
   @Test
-  public void setDataDir_addMultipleNonExistentDataDirs_overLappingPaths_flavor2() {
+  public void setDataDir_addMultipleNonExistentDataDirs_same_keys() throws Exception {
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(),
+            "-c", "data-dirs.foo=user-data/main/stripe1-node1-data-dir-1",
+            "-c", "data-dirs.foo=user-data/main/stripe1-node1-data-dir-2"),
+        allOf(
+            not(hasExitStatus(0)),
+            containsOutput("Duplicate configurations found: data-dirs.foo=user-data/main/stripe1-node1-data-dir-1 and data-dirs.foo=user-data/main/stripe1-node1-data-dir-2")));
+  }
+
+  @Test
+  public void setDataDir_addMultipleNonExistentDataDirs_overLappingPaths_flavor2() throws Exception {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-1"),
-        allOf(not(hasExitStatus(0)), containsOutput("overlaps with the existing data directory")));
+        allOf(
+            not(hasExitStatus(0)),
+            containsOutput("Prepare rejected"),
+            containsOutput("Reason: Error when trying to apply setting change 'set data-dirs.third=user-data/main/stripe1-node1-data-dir-1': Data directory: third overlaps with: second")));
+
+    // prepare change should be rolled back
+    withTopologyService(1, 1, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
   }
 
   @Test

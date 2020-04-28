@@ -16,6 +16,7 @@
 package org.terracotta.config.data_roots;
 
 import org.hamcrest.Matchers;
+import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -23,6 +24,9 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
+import org.terracotta.testing.TmpDir;
 
 import java.nio.file.Paths;
 
@@ -34,26 +38,28 @@ import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluste
 
 public class DataDirectoryConfigChangeHandlerTest {
 
+  @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
+
   private NodeContext topology = new NodeContext(Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("bar", "localhost").clearDataDirs())), 1, "bar");
-  private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.DATA_DIRS, "new-root", "/path/to/data/root");
+  private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.DATA_DIRS, "new-root", "path/to/data/root");
 
   @Test
   public void testGetConfigWithChange() throws Exception {
     DataDirectoriesConfig dataDirectoriesConfig = mock(DataDirectoriesConfig.class);
-    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig);
+    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, IParameterSubstitutor.identity(), new PathResolver(tmpDir.getRoot()));
     dataDirectoryConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
 
     assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().entrySet(), Matchers.hasSize(1));
-    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs(), hasEntry("new-root", Paths.get("/path/to/data/root")));
+    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs(), hasEntry("new-root", Paths.get("path/to/data/root")));
   }
 
   @Test
   public void testApplyChange() {
     DataDirectoriesConfig dataDirectoriesConfig = mock(DataDirectoriesConfig.class);
-    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig);
+    DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, IParameterSubstitutor.identity(), new PathResolver(tmpDir.getRoot()));
 
     dataDirectoryConfigChangeHandler.apply(set.toConfiguration(topology.getCluster()));
 
-    verify(dataDirectoriesConfig).addDataDirectory("new-root", "/path/to/data/root");
+    verify(dataDirectoriesConfig).addDataDirectory("new-root", "path/to/data/root");
   }
 }
