@@ -15,52 +15,48 @@
  */
 package org.terracotta.diagnostic.server;
 
-import com.tc.management.AbstractTerracottaMBean;
-import com.tc.management.TerracottaMBean;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.StubMethod;
 
 import java.lang.reflect.Method;
 
 import static java.util.Objects.requireNonNull;
+import javax.management.StandardMBean;
 import static net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default.NO_CONSTRUCTORS;
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import org.terracotta.server.ServerMBean;
 
 /**
  * @author Mathieu Carbou
  */
 class TerracottaMBeanGenerator {
 
-  <T> TerracottaMBean generateMBean(DiagnosticServiceDescriptor<T> descriptor) {
+  <T> StandardMBean generateMBean(DiagnosticServiceDescriptor<T> descriptor) {
     requireNonNull(descriptor);
     return generateMBean(descriptor.getServiceInterface(), descriptor.getServiceImplementation());
   }
 
-  <T> TerracottaMBean generateMBean(Class<T> serviceInterface, T serviceImplementation) {
+  <T> StandardMBean generateMBean(Class<T> serviceInterface, T serviceImplementation) {
     Class<?> mBeanInterface = generateMBeanInterface(serviceInterface);
     return generateMBeanImplementation(mBeanInterface, serviceInterface, serviceImplementation);
   }
 
-  <T> TerracottaMBean generateMBeanImplementation(Class<?> mBeanInterface, Class<T> serviceInterface, T serviceImplementation) {
+  <T> StandardMBean generateMBeanImplementation(Class<?> mBeanInterface, Class<T> serviceInterface, T serviceImplementation) {
     requireNonNull(mBeanInterface);
     requireNonNull(serviceInterface);
     requireNonNull(serviceImplementation);
     try {
-      DynamicType.Builder.MethodDefinition.ReceiverTypeDefinition<AbstractTerracottaMBean> bb = new ByteBuddy()
-          .subclass(AbstractTerracottaMBean.class, NO_CONSTRUCTORS)
-          .implement(TerracottaMBean.class, serviceInterface, mBeanInterface)
+      DynamicType.Builder.MethodDefinition.ReceiverTypeDefinition<StandardMBean> bb = new ByteBuddy()
+          .subclass(StandardMBean.class, NO_CONSTRUCTORS)
+          .implement(ServerMBean.class, serviceInterface, mBeanInterface)
           .name(serviceInterface.getName() + "MBeanImpl")
           // ctor
           .defineConstructor(Visibility.PUBLIC)
-          .intercept(MethodCall.invoke(AbstractTerracottaMBean.class.getDeclaredConstructor(Class.class, boolean.class)).with(mBeanInterface, false))
-          // reset()
-          .define(TerracottaMBean.class.getMethod("reset"))
-          .intercept(StubMethod.INSTANCE)
+          .intercept(MethodCall.invoke(StandardMBean.class.getDeclaredConstructor(Class.class, boolean.class)).with(mBeanInterface, false))
           // toString()
           .method(named("toString"))
           .intercept(FixedValue.value("Mbean: " + serviceInterface.getName()));
@@ -81,10 +77,10 @@ class TerracottaMBeanGenerator {
   }
 
   @SuppressWarnings("unchecked")
-  <T> Class<? extends TerracottaMBean> generateMBeanInterface(Class<T> serviceInterface) {
+  <T> Class<? extends ServerMBean> generateMBeanInterface(Class<T> serviceInterface) {
     requireNonNull(serviceInterface);
-    return (Class<? extends TerracottaMBean>) new ByteBuddy()
-        .makeInterface(TerracottaMBean.class, serviceInterface)
+    return (Class<? extends ServerMBean>) new ByteBuddy()
+        .makeInterface(ServerMBean.class, serviceInterface)
         .name(serviceInterface.getName() + "MBean")
         .make()
         .load(getClass().getClassLoader())

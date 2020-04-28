@@ -15,8 +15,6 @@
  */
 package org.terracotta.diagnostic.server;
 
-import com.tc.management.TerracottaMBean;
-import com.tc.management.TerracottaManagement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.DiagnosticCodec;
@@ -43,7 +41,9 @@ import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
+import javax.management.StandardMBean;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
+import org.terracotta.server.ServerMBean;
 
 /**
  * Common manager holding all diagnostic services registered on a server
@@ -145,9 +145,9 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
     descriptor.addMBean(name);
   }
 
-  private static void registerMBean(String name, TerracottaMBean mBean) {
+  private static void registerMBean(String name, StandardMBean mBean) {
     try {
-      ObjectName beanName = TerracottaManagement.createObjectName(null, name, TerracottaManagement.MBeanDomain.PUBLIC);
+      ObjectName beanName = ServerMBean.createMBeanName(name);
       ManagementFactory.getPlatformMBeanServer().registerMBean(mBean, beanName);
       LOGGER.info("Registered MBean with name: {}", name);
     } catch (MalformedObjectNameException | NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException e) {
@@ -157,7 +157,7 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
 
   private static void unregisterMBean(String name) {
     try {
-      ObjectName beanName = TerracottaManagement.createObjectName(null, name, TerracottaManagement.MBeanDomain.PUBLIC);
+      ObjectName beanName = ServerMBean.createMBeanName(name);
       ManagementFactory.getPlatformMBeanServer().unregisterMBean(beanName);
       LOGGER.info("Unregistered MBean with name: {}", name);
     } catch (MalformedObjectNameException | MBeanRegistrationException e) {

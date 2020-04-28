@@ -15,7 +15,7 @@
  */
 package org.terracotta.diagnostic.server;
 
-import com.tc.management.TerracottaMBean;
+import javax.management.StandardMBean;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
@@ -33,6 +33,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.server.ServerMBean;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -51,17 +52,17 @@ public class TerracottaMBeanGeneratorTest {
         () -> generator.generateMBeanInterface(null),
         is(throwing(instanceOf(NullPointerException.class))));
 
-    Class<? extends TerracottaMBean> mBeanInterface = generator.generateMBeanInterface(MyService.class);
+    Class<? extends ServerMBean> mBeanInterface = generator.generateMBeanInterface(MyService.class);
 
     assertThat(mBeanInterface.getName(), is(equalTo(MyService.class.getName() + "MBean")));
     assertThat(MyService.class.isAssignableFrom(mBeanInterface), is(true));
-    assertThat(TerracottaMBean.class.isAssignableFrom(mBeanInterface), is(true));
+    assertThat(ServerMBean.class.isAssignableFrom(mBeanInterface), is(true));
     assertThat(mBeanInterface.getMethod("say", String.class), is(not(nullValue())));
   }
 
   @Test
   public void test_generateMBeanImplementation() {
-    Class<? extends TerracottaMBean> mBeanInterface = generator.generateMBeanInterface(MyService.class);
+    Class<? extends ServerMBean> mBeanInterface = generator.generateMBeanInterface(MyService.class);
 
     assertThat(
         () -> generator.generateMBeanImplementation(null, MyService.class, service),
@@ -73,7 +74,7 @@ public class TerracottaMBeanGeneratorTest {
         () -> generator.generateMBeanImplementation(mBeanInterface, MyService.class, null),
         is(throwing(instanceOf(NullPointerException.class))));
 
-    TerracottaMBean mBean = generator.generateMBeanImplementation(mBeanInterface, MyService.class, service);
+    StandardMBean mBean = generator.generateMBeanImplementation(mBeanInterface, MyService.class, service);
     assertThat(mBean, is(instanceOf(mBeanInterface)));
     verifyMBean(mBean);
   }
@@ -84,7 +85,7 @@ public class TerracottaMBeanGeneratorTest {
         () -> generator.generateMBean(null),
         is(throwing(instanceOf(NullPointerException.class))));
 
-    TerracottaMBean mBean = generator.generateMBean(MyService.class, service);
+    StandardMBean mBean = generator.generateMBean(MyService.class, service);
     verifyMBean(mBean);
   }
 
@@ -93,24 +94,21 @@ public class TerracottaMBeanGeneratorTest {
   public void test_generateMBean_with_generics() {
     MyService2<String> delegate = mock(MyService2.class);
     when(delegate.say(ArgumentMatchers.any())).thenReturn("Hello you");
-    Class<? extends TerracottaMBean> mBeanInterface = generator.generateMBeanInterface(MyService2.class);
-    TerracottaMBean mBean = generator.generateMBeanImplementation(mBeanInterface, MyService2.class, new MyServiceImpl2<>(delegate));
+    Class<? extends ServerMBean> mBeanInterface = generator.generateMBeanInterface(MyService2.class);
+    StandardMBean mBean = generator.generateMBeanImplementation(mBeanInterface, MyService2.class, new MyServiceImpl2<>(delegate));
     assertThat(mBean, is(instanceOf(mBeanInterface)));
     verifyMBean(mBean);
     verify(delegate, times(1)).say("you");
   }
 
-  private void verifyMBean(TerracottaMBean mBean) {
+  private void verifyMBean(StandardMBean mBean) {
     assertThat(mBean, is(
         either(instanceOf(MyService.class))
             .or(instanceOf(MyService2.class))));
-    assertThat(mBean.getInterfaceClassName(), is(
+    assertThat(mBean.getMBeanInterface().getName(), is(
         either(equalTo(MyService.class.getName() + "MBean"))
             .or(equalTo(MyService.class.getName() + "2MBean"))));
-    assertThat(mBean.isEnabled(), is(true));
-    assertThat(mBean.isNotificationBroadcaster(), is(false));
-    assertThat(mBean::reset, is(not(throwing())));
-
+    
     if (mBean instanceof MyService) {
       assertThat(((MyService) mBean).say("you"), is(equalTo("Hello you")));
       verify(service, times(1)).say("you");

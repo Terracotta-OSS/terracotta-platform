@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.server.configuration.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tc.server.TCServerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -37,7 +36,6 @@ import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.Json;
-import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -61,6 +59,9 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.Objects.requireNonNull;
+import org.terracotta.server.ServerEnv;
+import static org.terracotta.server.StopAction.RESTART;
+import static org.terracotta.server.StopAction.ZAP;
 
 public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventService, DynamicConfigListener, StateDumpable {
 
@@ -333,7 +334,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.info("Will restart node in {} seconds", delayInSeconds.getSeconds());
     runAfterDelay(delayInSeconds, () -> {
       LOGGER.info("Restarting node");
-      TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_AND_RESTART);
+      ServerEnv.getServer().stop(RESTART);
     });
   }
 
@@ -342,8 +343,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.info("Will stop node in {} seconds", delayInSeconds.getSeconds());
     runAfterDelay(delayInSeconds, () -> {
       LOGGER.info("Stopping node");
-      //TODO [DYNAMIC-CONFIG]: TDB-4942 - when upgrading to the new core version, use ZAP_AND_STOP instead
-      TCServerMain.getServer().stop(PlatformService.RestartMode.STOP_ONLY);
+      ServerEnv.getServer().stop(ZAP);
     });
   }
 

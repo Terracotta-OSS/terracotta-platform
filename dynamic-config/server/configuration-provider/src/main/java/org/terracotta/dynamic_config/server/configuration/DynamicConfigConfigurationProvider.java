@@ -15,10 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration;
 
-import com.tc.exception.TCServerRestartException;
-import com.tc.exception.TCShutdownServerException;
-import com.tc.exception.ZapDirtyDbServerNodeException;
-import com.tc.server.ServiceClassLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationProvider;
@@ -61,6 +57,8 @@ import java.util.Set;
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.StopAction;
 
 public class DynamicConfigConfigurationProvider implements ConfigurationProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigConfigurationProvider.class);
@@ -179,16 +177,17 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       Set<Require> requires;
       try {
         requires = dynamicConfigurationPassiveSync.sync(DynamicConfigSyncData.decode(bytes));
-      } catch (NomadException | RuntimeException e) {
-        // shutdown the server because of a unrecoverable error
-        throw new TCShutdownServerException("Shutdown because of sync failure: " + e.getMessage(), e);
+      } catch (NomadException n) {
+        // rely on the server to stop based on uncaught exception
+        throw new RuntimeException(n);
       }
 
       if (requires.contains(RESTART_REQUIRED)) {
         if (requires.contains(ZAP_REQUIRED)) {
-          throw new ZapDirtyDbServerNodeException("Zapping server");
+          ServerEnv.getServer().warn("Zapping server");
+          ServerEnv.getServer().stop(StopAction.ZAP, StopAction.RESTART);
         } else {
-          throw new TCServerRestartException("Restarting server");
+          ServerEnv.getServer().stop(StopAction.RESTART);
         }
       }
 
@@ -222,9 +221,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     }
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   private ClassLoader getServiceClassLoader() {
-    return new ServiceClassLoader(getClass().getClassLoader(),
+    return ServerEnv.getServer().getServiceClassLoader(getClass().getClassLoader(),
         DynamicConfigExtension.class,
         LicenseService.class);
   }

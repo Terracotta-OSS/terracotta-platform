@@ -33,10 +33,10 @@
     <maven.version>3.6.3</maven.version>
     <slf4j.version>1.7.25</slf4j.version>
     <logback.version>1.2.3</logback.version>
-    <terracotta-apis.version>1.7.0-pre1</terracotta-apis.version>
+    <terracotta-apis.version>1.7.0-pre2</terracotta-apis.version>
     <terracotta-configuration.version>10.7.0-pre2</terracotta-configuration.version>
-    <passthrough-testing.version>1.7.0-pre12</passthrough-testing.version>
-    <terracotta-core.version>5.7.0-pre25</terracotta-core.version>
+    <passthrough-testing.version>1.7.0-pre13</passthrough-testing.version>
+    <terracotta-core.version>5.7.0-pre28</terracotta-core.version>
     <tripwire.version>1.0.0-pre7</tripwire.version>
     <galvan.version>1.5.0-pre3</galvan.version>
     <angela.version>3.0.23</angela.version>
@@ -111,12 +111,7 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
-        <artifactId>dso-l1</artifactId>
-        <version>${terracotta-core.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.terracotta.internal</groupId>
-        <artifactId>dso-l2</artifactId>
+        <artifactId>common-spi</artifactId>
         <version>${terracotta-core.version}</version>
       </dependency>
       <dependency>

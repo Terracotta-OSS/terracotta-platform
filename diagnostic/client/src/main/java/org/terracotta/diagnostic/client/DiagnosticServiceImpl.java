@@ -15,7 +15,6 @@
  */
 package org.terracotta.diagnostic.client;
 
-import com.terracotta.diagnostic.Diagnostics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
@@ -31,6 +30,7 @@ import java.util.function.Supplier;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
+import org.terracotta.connection.Diagnostics;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
@@ -50,7 +50,7 @@ class DiagnosticServiceImpl implements DiagnosticService {
   private final Diagnostics delegate;
   private final DiagnosticCodec<String> codec;
 
-  DiagnosticServiceImpl(Connection connection, com.terracotta.diagnostic.Diagnostics delegate, DiagnosticCodec<?> codec) {
+  DiagnosticServiceImpl(Connection connection, Diagnostics delegate, DiagnosticCodec<?> codec) {
     this.connection = requireNonNull(connection);
     this.delegate = requireNonNull(delegate);
     // we need to ensure the JMX parameter contains no space at all because the DiagnosticsHandler is poorly written

@@ -15,7 +15,6 @@
  */
 package org.terracotta.diagnostic.client;
 
-import com.terracotta.diagnostic.Diagnostics;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,6 +49,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.terracotta.connection.Diagnostics;
 
 /**
  * @author Mathieu Carbou
