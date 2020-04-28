@@ -17,8 +17,8 @@ package org.terracotta.client.message.tracker;
 
 import org.terracotta.entity.StateDumpable;
 
-import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Keeps track of an entity's objects with their ids and their corresponding values.
@@ -26,7 +26,7 @@ import java.util.function.Predicate;
  *
  * @param <R> type of the value
  */
-interface Tracker<R> extends StateDumpable {
+interface Tracker<M, R> extends StateDumpable {
 
   /**
    * A tracker policy that will track all messages
@@ -47,7 +47,7 @@ interface Tracker<R> extends StateDumpable {
    * @param object Incoming entity object
    * @param value Outgoing entity value
    */
-  void track(long id, Object object, R value);
+  void track(long track, long id, M object, R value);
 
   /**
    * Returns the tracked value associated with the given ID, null otherwise.
@@ -57,6 +57,15 @@ interface Tracker<R> extends StateDumpable {
    */
   R getTrackedValue(long id);
 
+  R getTrackedValue(M message);
+
+  /**
+   * 
+   * @param id Tracked entity ID
+   * @return Tracked entity request
+   */
+  M getTrackedRequest(long id);
+
   /**
    * Clears id-value mappings for all ids less than the provided id.
    *
@@ -65,17 +74,10 @@ interface Tracker<R> extends StateDumpable {
   void reconcile(long id);
 
   /**
-   * Get all id - value mappings.
-
-   * @return all tracked values
-   */
-  Map<Long, R> getTrackedValues();
-
-  /**
    * Bulk load a set of ids, value mappings.
    * To be used by a passive entity when the active syncs its message tracker data.
    *
    * @param trackedValues a map of id, value mappings
    */
-  void loadOnSync(Map<Long, R> trackedValues);
+  void loadOnSync(Stream<RecordedMessage<M, R>> trackedValues);
 }

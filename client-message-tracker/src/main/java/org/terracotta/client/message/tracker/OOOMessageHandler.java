@@ -61,14 +61,29 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
   Stream<ClientSourceId> getTrackedClients();
 
   /**
-   * Get all message id - response mappings for the given {@code clientSourceId} in the given segment
-   *
+   * Get all message id - response mappings for the given {@code clientSourceId} in the given segment.
+   *  Deprecated for future use.  Use getRecordedMessagesForSegment instead
    * @param index the segment index
    * @param clientSourceId a client descriptor
    * @return a map with message id - response mappings
    */
+  @Deprecated
   Map<Long, R> getTrackedResponsesForSegment(int index, ClientSourceId clientSourceId);
 
+  /**
+   * Get a stream of tracked messages ordered by sequence id - Order is important so replay is
+   * sequenced correctly.
+   *
+   * @return a stream of ordered RecordedMessages
+   */
+  Stream<RecordedMessage<M, R>> getRecordedMessages();
+
+  /**
+   * load all the sequenced messages to the current message tracker
+   * 
+   * @param recorded - a stream of recorded messages
+   */
+  void loadRecordedMessages(Stream<RecordedMessage<M, R>> recorded);
   /**
    * Bulk load a set of message ids, response mappings for the given client descriptor  in the given segment.
    * To be used by a passive entity when the active syncs its message tracker data.
@@ -77,17 +92,9 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
    * @param clientSourceId a client descriptor
    * @param trackedResponses a map of message id, response mappings
    */
+  @Deprecated
   void loadTrackedResponsesForSegment(int index, ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
 
-  /**
-   * Bulk load a set of message ids, response mappings for the given client descriptor.
-   * To be used by a passive entity when the active syncs its message tracker data.
-   * The mappings loaded by this message will go to any of the segments but goes to a
-   * special tracker that is common between all segments.
-   *
-   * @param clientSourceId a client descriptor
-   * @param trackedResponses a map of message id, response mappings
-   */
   @Deprecated
   void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
 

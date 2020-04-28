@@ -15,28 +15,12 @@
  */
 package org.terracotta.client.message.tracker;
 
-import org.terracotta.entity.StateDumpable;
-
-import java.util.Set;
 import org.terracotta.entity.ClientSourceId;
 
-/**
- * Keeps track of the trackers for individual clients.
- */
-interface ClientTracker<M, R> extends StateDumpable {
-
-  /**
-   * Deregister a client from being tracked.
-   *
-   * @param clientId a client id
-   */
-  void untrackClient(ClientSourceId clientId);
-
-  /**
-   * Return ids of all the clients tracked by this tracker.
-   *
-   * @return set of tracked client sources
-   */
-  Set<ClientSourceId> getTrackedClients();
-
+public interface RecordedMessage<M, R> {
+  long getSequenceId();
+  ClientSourceId getClientSourceId();
+  long getTransactionId();
+  M getRequest();
+  R getResponse();
 }

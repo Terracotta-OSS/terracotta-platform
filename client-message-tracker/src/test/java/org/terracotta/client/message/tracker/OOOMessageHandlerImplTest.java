@@ -103,6 +103,7 @@ public class OOOMessageHandlerImplTest {
     assertThat(entityResponse2, sameInstance(entityResponse1));
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testSegmentation() throws Exception {
     EntityMessage message1 = mock(EntityMessage.class);
@@ -167,6 +168,7 @@ public class OOOMessageHandlerImplTest {
     assertThat(trackedResponsesForClient2Segment1.get(txnId4), is(response4));
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testLoadTrackedResponsesForSegment() throws Exception {
     messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, m -> 0, () -> {});
@@ -284,6 +286,7 @@ public class OOOMessageHandlerImplTest {
    * @throws EntityUserException
    */
   @Test
+  @SuppressWarnings("deprecation")
   public void testTyping() throws EntityUserException {
     OOOMessageHandler<DummyEntityMessage, DummyEntityResponse> messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, m -> 0, () -> {});
 
