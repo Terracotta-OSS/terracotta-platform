@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import static java.lang.System.lineSeparator;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 
 public class CustomJCommander extends JCommander {
   private final Collection<String> userSpecifiedOptions = new HashSet<>();
@@ -75,7 +76,14 @@ public class CustomJCommander extends JCommander {
         out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "");
         Optional<Setting> settingOptional = Setting.findSetting(ConsoleParamsUtils.stripDashDash(pd.getLongestName()));
         if (settingOptional.isPresent()) {
-          String defaultValue = settingOptional.get().getDefaultValue();
+          Setting setting = settingOptional.get();
+          String defaultValue = setting.getDefaultValue();
+
+          // special handling
+          if (setting == NODE_NAME) {
+            defaultValue = "<randomly-generated>";
+          }
+
           if (defaultValue != null) {
             out.append(indent).append("    ");
             for (int i = 0; i < maxParamLength - pd.getNames().length(); i++) {
