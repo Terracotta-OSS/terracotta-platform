@@ -441,7 +441,7 @@ public class Configuration {
     }
 
     if (value == null) {
-      targetContexts.forEach(ctx -> setting.getProperty(ctx).ifPresent(value -> setting.setProperty(ctx.getNode(), key, null)));
+      targetContexts.forEach(ctx -> setting.getProperty(ctx).ifPresent(value -> setting.setProperty(ctx, key, null)));
 
     } else {
       if (setting == Setting.LICENSE_FILE) {
