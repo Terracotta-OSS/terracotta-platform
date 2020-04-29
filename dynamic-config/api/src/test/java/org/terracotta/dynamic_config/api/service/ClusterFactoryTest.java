@@ -59,27 +59,28 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_create_cli() {
-    assertCliEquals(cli(), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))));
-    assertCliEquals(cli("node-hostname=%c"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))));
-    assertCliEquals(cli("node-hostname=foo"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))));
+    assertCliEquals(cli("failover-priority=availability"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))));
+    assertCliEquals(cli("failover-priority=availability", "node-hostname=%c"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))));
+    assertCliEquals(cli("failover-priority=availability", "node-hostname=foo"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))));
   }
 
   @Test
   public void test_create_cli_validated() {
-    assertCliFail(cli("security-ssl-tls=false", "security-authc=certificate"), "security-ssl-tls is required for security-authc=certificate");
-    assertCliFail(cli("security-ssl-tls=true", "security-authc=certificate"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("security-ssl-tls=true"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("security-authc=file"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("security-authc=ldap"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("security-audit-log-dir=foo"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("security-whitelist=true"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("security-dir=foo"), "One of security-ssl-tls, security-authc, or security-whitelist is required for security configuration");
+    assertCliFail(cli("failover-priority=availability", "security-ssl-tls=false", "security-authc=certificate"), "security-ssl-tls is required for security-authc=certificate");
+    assertCliFail(cli("failover-priority=availability", "security-ssl-tls=true", "security-authc=certificate"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "security-ssl-tls=true"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "security-authc=file"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "security-authc=ldap"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "security-audit-log-dir=foo"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "security-whitelist=true"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "security-dir=foo"), "One of security-ssl-tls, security-authc, or security-whitelist is required for security configuration");
   }
 
   @Test
   public void test_create_config() {
     assertConfigEquals(
         config(
+            "failover-priority=availability",
             "stripe.1.node.1.node-name=node1",
             "stripe.1.node.1.node-name=real",
             "stripe.1.node.1.node-hostname=localhost",
@@ -89,6 +90,7 @@ public class ClusterFactoryTest {
 
     assertConfigEquals(
         config(
+            "failover-priority=availability",
             "stripe.1.node.1.node-name=node1",
             "stripe.1.node.1.node-hostname=localhost"
         ),
@@ -96,6 +98,7 @@ public class ClusterFactoryTest {
 
     assertConfigEquals(
         config(
+            "failover-priority=availability",
             "stripe.1.node.1.node-name=node1",
             "stripe.1.node.1.node-hostname=localhost",
             "stripe.1.node.2.node-name=node2",
@@ -171,33 +174,34 @@ public class ClusterFactoryTest {
   public void test_create_config_validated() {
     // security
     assertConfigFail(
-        config("stripe.1.node.1.node-hostname=localhost", "security-ssl-tls=false", "security-authc=certificate"),
+        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-ssl-tls=false", "security-authc=certificate"),
         "security-ssl-tls is required for security-authc=certificate");
     assertConfigFail(
-        config("stripe.1.node.1.node-hostname=localhost", "security-ssl-tls=true", "security-authc=certificate"),
+        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-ssl-tls=true", "security-authc=certificate"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("stripe.1.node.1.node-hostname=localhost", "security-ssl-tls=true"),
+        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-ssl-tls=true"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("stripe.1.node.1.node-hostname=localhost", "security-authc=file"),
+        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-authc=file"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("stripe.1.node.1.node-hostname=localhost", "security-authc=ldap"),
+        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-authc=ldap"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("stripe.1.node.1.node-hostname=localhost", "stripe.1.node.1.security-audit-log-dir=foo"),
+        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "stripe.1.node.1.security-audit-log-dir=foo"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("stripe.1.node.1.node-hostname=localhost", "security-whitelist=true"),
+        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-whitelist=true"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("stripe.1.node.1.node-hostname=localhost", "stripe.1.node.1.security-dir=foo"),
+        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "stripe.1.node.1.security-dir=foo"),
         "One of security-ssl-tls, security-authc, or security-whitelist is required for security configuration");
 
     // duplicate node name
     assertConfigFail(
         config(
+            "failover-priority=availability",
             "stripe.1.node.1.node-hostname=localhost1", "stripe.1.node.1.node-name=foo",
             "stripe.1.node.2.node-hostname=localhost2", "stripe.1.node.2.node-name=foo"
         ),

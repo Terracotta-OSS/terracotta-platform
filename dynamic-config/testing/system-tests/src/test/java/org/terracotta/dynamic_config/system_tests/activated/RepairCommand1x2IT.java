@@ -222,6 +222,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     // we can reset this node
     configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort(1, passiveId));
+    waitForStopped(1, passiveId);
+    startNode(1, passiveId, "--failover-priority", "availability");
     waitForDiagnostic(1, passiveId);
   }
 
@@ -231,12 +233,16 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     startNode(1, 1);
     waitForDiagnostic(1, 1);
     assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    waitForStopped(1, 1);
+    startNode(1, 1);
     waitForDiagnostic(1, 1);
 
     // reset activated node
     assertThat(configToolInvocation("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForActive(1, 1);
     assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    waitForStopped(1, 1);
+    startNode(1, 1);
     waitForDiagnostic(1, 1);
 
     // reset node restarted in repair mode
@@ -246,6 +252,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     startNode(1, 1, "-r", getNode(1, 1).getConfigRepo(), "--repair-mode");
     waitForDiagnostic(1, 1);
     assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    waitForStopped(1, 1);
+    startNode(1, 1);
     waitForDiagnostic(1, 1);
 
     // ensure we still can re-activate the node

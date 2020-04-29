@@ -32,6 +32,7 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
   protected void startNode(int stripeId, int nodeId) {
     startNode(stripeId, nodeId,
         "--node-name", getNodeName(stripeId, nodeId),
+        "--failover-priority", "availability",
         "--node-hostname", "::1",
         "--node-bind-address", "::",
         "--node-group-bind-address", "::",

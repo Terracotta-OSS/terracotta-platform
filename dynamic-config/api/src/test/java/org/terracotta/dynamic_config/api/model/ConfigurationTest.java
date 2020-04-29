@@ -88,7 +88,13 @@ public class ConfigurationTest {
         LICENSE_FILE
     ).forEach(setting -> assertThat(
         () -> Configuration.valueOf(setting),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'license-file='. Reason: license-file requires a value"))))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: license-file requires a value"))))));
+
+    Stream.of(
+        FAILOVER_PRIORITY
+    ).forEach(setting -> assertThat(
+        () -> Configuration.valueOf(setting),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: failover-priority requires a value"))))));
 
     Stream.of(
         NODE_HOSTNAME,
@@ -103,7 +109,6 @@ public class ConfigurationTest {
         CLIENT_RECONNECT_WINDOW,
         CLUSTER_NAME,
         DATA_DIRS,
-        FAILOVER_PRIORITY,
         NODE_BACKUP_DIR,
         NODE_BIND_ADDRESS,
         NODE_GROUP_BIND_ADDRESS,

@@ -155,7 +155,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidFailoverPriority() throws TimeoutException {
     try {
-      startSingleNode("--failover-priority=blah", "-r", getNodeRepositoryDir(1, 1).toString());
+      startSingleNode("--failover-priority", "blah", "-r", getNodeRepositoryDir(1, 1).toString());
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)"));
@@ -222,6 +222,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
+        "--failover-priority", "availability",
         "--node-name", getNodeName(1, 1),
         "--node-hostname", "localhost",
         "--node-log-dir", getNodePath(1, 1).resolve("logs").toString(),
@@ -240,6 +241,10 @@ public class NodeStartupIT extends DynamicConfigIT {
     if (provided.contains("-s") || provided.contains("--node-hostname")) {
       defaultArgs.remove("--node-hostname");
       defaultArgs.remove("localhost");
+    }
+    if (provided.contains("--failover-priority")) {
+      defaultArgs.remove("--failover-priority");
+      defaultArgs.remove("availability");
     }
     defaultArgs.addAll(provided);
     startNode(1, 1, defaultArgs.toArray(new String[0]));

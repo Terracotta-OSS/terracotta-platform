@@ -299,7 +299,7 @@ public enum Setting {
   ),
   FAILOVER_PRIORITY(SettingName.FAILOVER_PRIORITY,
       false,
-      "availability",
+      null,
       CLUSTER,
       fromCluster(Cluster::getFailoverPriority),
       intoCluster((cluster, value) -> cluster.setFailoverPriority(FailoverPriority.valueOf(value))),
@@ -638,7 +638,8 @@ public enum Setting {
   }
 
   public boolean isRequired() {
-    return !allowsOperation(UNSET) && (!allowsOperation(CONFIG) || getDefaultValue() != null);
+    //TODO [DYNAMIC-CONFIG]: TDB-4898 - correctly handle required settings
+    return this == FAILOVER_PRIORITY || !allowsOperation(UNSET) && (!allowsOperation(CONFIG) || getDefaultValue() != null);
   }
 
   public boolean isReadOnly() {

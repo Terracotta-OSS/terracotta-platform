@@ -52,6 +52,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 
 /**
  * @author Mathieu Carbou
@@ -97,13 +98,18 @@ public class NomadServerManager {
   }
 
   public void init(Path repositoryPath, String nodeName) throws UncheckedNomadException {
-    // Case where Nomad is bootstrapped from an existing config repository
-    // We only know the node name, the the node will start in diagnostic mode
-    // So we create an empty cluster / node topology
+    // Case where Nomad is bootstrapped from an existing config repository.
+    // We only know the node name.
+    // getConfiguration() can be empty in case the repo has been created
+    // but not yet populated with some Nomad entries, or it was reset.
+    // In these cases, node will start in diagnostic mode and use an existing
+    // repo structure. So we create an empty cluster / node topology
     init(repositoryPath,
         () -> nodeName,
         () -> getConfiguration().orElseGet(
-            () -> new NodeContext(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue())))), 1, nodeName)));
+            () -> new NodeContext(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue()))))
+                //TODO [DYNAMIC-CONFIG]: TDB-4898 - correctly handle required settings
+                .setFailoverPriority(availability()), 1, nodeName)));
   }
 
   public void init(Path repositoryPath, NodeContext nodeContext) throws UncheckedNomadException {

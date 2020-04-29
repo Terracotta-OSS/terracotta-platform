@@ -33,8 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 /**
  * @author Mathieu Carbou
  */
@@ -74,7 +72,7 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
       return Cluster.newCluster(new Stripe(nodes))
           .setClientLeaseDuration(commonMapper.toClientLeaseDuration(xmlPlugins))
           .setOffheapResources(commonMapper.toOffheapResources(xmlPlugins))
-          .setClientReconnectWindow(tcConfig.getServers().getClientReconnectWindow(), SECONDS)
+          .setClientReconnectWindow(commonMapper.toClientReconnectWindow(tcConfig))
           .setFailoverPriority(commonMapper.toFailoverPriority(tcConfig.getFailoverPriority()));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
