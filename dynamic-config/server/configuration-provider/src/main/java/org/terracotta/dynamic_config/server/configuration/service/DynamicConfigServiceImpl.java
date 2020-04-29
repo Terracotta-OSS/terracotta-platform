@@ -85,6 +85,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (hasLicenseFile()) {
       validateAgainstLicense(upcomingNodeContext.getCluster());
     }
+    new ClusterValidator(nodeContext.getCluster()).validate();
   }
 
   /**

@@ -49,6 +49,13 @@ public class ClusterValidator {
     validateNodeName();
     validateServerSettings();
     validateSecurityDir();
+    validateFailoverSetting();
+  }
+
+  private void validateFailoverSetting() {
+    if (cluster.getFailoverPriority() == null) {
+      throw new MalformedClusterException(Setting.FAILOVER_PRIORITY + " setting is missing");
+    }
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

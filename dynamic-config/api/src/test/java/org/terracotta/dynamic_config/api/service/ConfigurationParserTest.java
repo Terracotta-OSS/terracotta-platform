@@ -70,12 +70,11 @@ public class ConfigurationParserTest {
   public void test_cliToProperties_1() {
     // node name should be resolved from default value (%h) if not given
     assertCliEquals(
-        cli(),
+        cli("failover-priority=availability"),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))),
         "stripe.1.node.1.node-hostname=localhost",
         "cluster-name=",
         "client-reconnect-window=120s",
-        "failover-priority=availability",
         "client-lease-duration=150s",
         "security-authc=",
         "security-ssl-tls=false",
@@ -105,11 +104,10 @@ public class ConfigurationParserTest {
   public void test_cliToProperties_2() {
     // placeholder in node name should be resolved eagerly
     assertCliEquals(
-        cli("node-hostname=%c"),
+        cli("failover-priority=availability", "node-hostname=%c"),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))),
         "cluster-name=",
         "client-reconnect-window=120s",
-        "failover-priority=availability",
         "client-lease-duration=150s",
         "security-authc=",
         "security-ssl-tls=false",
@@ -139,11 +137,10 @@ public class ConfigurationParserTest {
   public void test_cliToProperties_3() {
     // node name without placeholder triggers no resolve
     assertCliEquals(
-        cli("node-hostname=foo"),
+        cli("failover-priority=availability", "node-hostname=foo"),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))),
         "cluster-name=",
         "client-reconnect-window=120s",
-        "failover-priority=availability",
         "client-lease-duration=150s",
         "security-authc=",
         "security-ssl-tls=false",
@@ -173,39 +170,45 @@ public class ConfigurationParserTest {
   public void test_parsing_invalid() {
     // node-hostname required
     assertConfigFail(config(), "No configuration provided");
-    assertConfigFail(config("security-ssl-tls=false"), "node-hostname is missing");
+    assertConfigFail(config("failover-priority=availability", "security-ssl-tls=false"), "node-hostname is missing");
 
     // placeholder forbidden for node-hostname
-    assertConfigFail(config("stripe.1.node.1.node-hostname=%h"), "node-hostname cannot contain any placeholders");
+    assertConfigFail(config("failover-priority=availability", "stripe.1.node.1.node-hostname=%h"), "node-hostname cannot contain any placeholders");
     assertConfigFail(config(
+        "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",
         "stripe.1.node.2.node-name=foo"
     ), "Invalid input: 'stripe.1.node.2.node-hostname=%h'. Placeholders are not allowed");
 
     // scope
-    assertConfigFail(config("node-hostname=foo"), "Invalid input: 'node-hostname=foo'. Reason: node-hostname cannot be set at cluster level");
+    assertConfigFail(config("failover-priority=availability", "node-hostname=foo"), "Invalid input: 'node-hostname=foo'. Reason: node-hostname cannot be set at cluster level");
     assertConfigFail(config(
+        "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",
         "stripe.1.node-backup-dir=foo/bar"
     ), "Invalid input: 'stripe.1.node-backup-dir=foo/bar'. Reason: stripe level configuration not allowed");
     assertConfigFail(config(
+        "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",
         "node-backup-dir=foo/bar"
     ), "Invalid settings found at cluster level: node-backup-dir");
     assertConfigFail(config(
+        "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",
         "stripe.1.node.1.failover-priority=availability"
     ), "Invalid input: 'stripe.1.node.1.failover-priority=availability'. Reason: failover-priority does not allow any operation at node level");
 
     // node and stripe ids
-    assertConfigFail(config("stripe.1.node.2.node-hostname=localhost"), "Node ID must start at 1 in stripe 1");
-    assertConfigFail(config("stripe.2.node.1.node-hostname=localhost"), "Stripe ID must start at 1");
+    assertConfigFail(config("failover-priority=availability", "stripe.1.node.2.node-hostname=localhost"), "Node ID must start at 1 in stripe 1");
+    assertConfigFail(config("failover-priority=availability", "stripe.2.node.1.node-hostname=localhost"), "Stripe ID must start at 1");
     assertConfigFail(config(
+        "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",
         "stripe.1.node.2.node-hostname=localhost",
         "stripe.1.node.4.node-hostname=localhost"
     ), "Node ID must end at 3 in stripe 1");
     assertConfigFail(config(
+        "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",
         "stripe.2.node.1.node-hostname=localhost",
         "stripe.4.node.1.node-hostname=localhost"
@@ -213,10 +216,12 @@ public class ConfigurationParserTest {
 
     // not allowed in config
     assertConfigFail(config(
+        "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",
         "stripe.1.node.1.node-repository-dir=foo/bar"
     ), "Invalid input: 'stripe.1.node.1.node-repository-dir=foo/bar'. Reason: node-repository-dir does not allow any operation at node level");
     assertConfigFail(config(
+        "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",
         "license-file=foo/bar"
     ), "Invalid settings found at cluster level: license-file");
@@ -228,6 +233,7 @@ public class ConfigurationParserTest {
     // and we support the fact that the last one will override the previous one
     assertConfigEquals(
         config(
+            "failover-priority=availability",
             "stripe.1.node.1.node-name=node1",
             "stripe.1.node.1.node-name=real",
             "stripe.1.node.1.node-hostname=localhost",
@@ -236,7 +242,6 @@ public class ConfigurationParserTest {
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("real", "foo"))),
         "cluster-name=",
         "client-reconnect-window=120s",
-        "failover-priority=availability",
         "client-lease-duration=150s",
         "security-authc=",
         "security-ssl-tls=false",
@@ -265,13 +270,13 @@ public class ConfigurationParserTest {
     // minimal config is to only have node-hostname, but to facilitate testing we add node-name
     assertConfigEquals(
         config(
+            "failover-priority=availability",
             "stripe.1.node.1.node-name=node1",
             "stripe.1.node.1.node-hostname=localhost"
         ),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))),
         "cluster-name=",
         "client-reconnect-window=120s",
-        "failover-priority=availability",
         "client-lease-duration=150s",
         "security-authc=",
         "security-ssl-tls=false",
@@ -298,7 +303,7 @@ public class ConfigurationParserTest {
   @Test
   public void test_parsing_minimal_2x2() {
     assertConfigEquals(
-        config(
+        config("failover-priority=availability",
             "stripe.1.node.1.node-name=node1",
             "stripe.1.node.1.node-hostname=localhost",
             "stripe.1.node.2.node-name=node2",
@@ -318,7 +323,6 @@ public class ConfigurationParserTest {
         ),
         "cluster-name=",
         "client-reconnect-window=120s",
-        "failover-priority=availability",
         "client-lease-duration=150s",
         "security-authc=",
         "security-ssl-tls=false",
