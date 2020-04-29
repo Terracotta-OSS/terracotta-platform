@@ -55,11 +55,11 @@ public class Cluster implements Cloneable, PropertyHolder {
   private String name;
   private Measure<TimeUnit> clientReconnectWindow;
   private Measure<TimeUnit> clientLeaseDuration;
-  private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
   private String securityAuthc;
   private boolean securitySslTls = Boolean.parseBoolean(Setting.SECURITY_SSL_TLS.getDefaultValue());
   private boolean securityWhitelist = Boolean.parseBoolean(Setting.SECURITY_WHITELIST.getDefaultValue());
   private FailoverPriority failoverPriority = FailoverPriority.availability();
+  private final Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
 
   @JsonCreator
   Cluster(@JsonProperty("name") String name,

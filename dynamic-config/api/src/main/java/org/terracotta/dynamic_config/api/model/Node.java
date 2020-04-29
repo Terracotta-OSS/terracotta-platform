@@ -51,9 +51,9 @@ public class Node implements Cloneable, PropertyHolder {
   private Path nodeBackupDir;
   private Path securityDir;
   private Path securityAuditLogDir;
-  private Map<String, String> tcProperties = new ConcurrentHashMap<>();
-  private Map<String, Level> nodeLoggerOverrides = new ConcurrentHashMap<>();
-  private Map<String, Path> dataDirs = new ConcurrentHashMap<>();
+  private final Map<String, String> tcProperties = new ConcurrentHashMap<>();
+  private final Map<String, Level> nodeLoggerOverrides = new ConcurrentHashMap<>();
+  private final Map<String, Path> dataDirs = new ConcurrentHashMap<>();
 
   Node() {
   }
