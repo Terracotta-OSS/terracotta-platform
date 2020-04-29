@@ -71,6 +71,7 @@ import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
+import static org.terracotta.angela.common.TerracottaServerState.STOPPED;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
@@ -368,6 +369,10 @@ public class DynamicConfigIT {
 
   protected final void waitForDiagnostic(int stripeId, int nodeId) throws TimeoutException {
     waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_IN_DIAGNOSTIC_MODE)));
+  }
+
+  protected final void waitForStopped(int stripeId, int nodeId) throws TimeoutException {
+    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STOPPED)));
   }
 
   protected final void waitForPassives(int stripeId) throws TimeoutException {

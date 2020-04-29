@@ -56,7 +56,7 @@ public class RepairCommand extends RemoteCommand {
   @Override
   public final void run() {
     if (forcedRepairAction == RepairAction.RESET) {
-      resetAndRestart(node);
+      resetAndStop(node);
     } else {
       nomadRepair();
     }

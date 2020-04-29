@@ -388,12 +388,12 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void resetAndRestart(InetSocketAddress expectedOnlineNode) {
-    logger.info("Reset node: {}. Will restart in 5 seconds", expectedOnlineNode);
+  protected final void resetAndStop(InetSocketAddress expectedOnlineNode) {
+    logger.info("Reset node: {}. Node will stop in 5 seconds", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
       proxy.reset();
-      proxy.restart(Duration.ofSeconds(5));
+      proxy.stop(Duration.ofSeconds(5));
     }
   }
 
