@@ -53,7 +53,6 @@ import static java.lang.System.lineSeparator;
 
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
-  private static final RemoteMainCommand MAIN = new RemoteMainCommand();
 
   public static void main(String... args) {
     try {
@@ -74,12 +73,13 @@ public class ConfigTool {
   }
 
   public static void start(String... args) {
+    final RemoteMainCommand mainCommand = new RemoteMainCommand();
     LOGGER.debug("Registering commands with CommandRepository");
     CommandRepository commandRepository = new CommandRepository();
     commandRepository.addAll(
         new HashSet<>(
             Arrays.asList(
-                MAIN,
+                mainCommand,
                 new ActivateCommand(),
                 new AttachCommand(),
                 new DetachCommand(),
@@ -96,20 +96,20 @@ public class ConfigTool {
     );
 
     LOGGER.debug("Parsing command-line arguments");
-    CustomJCommander jCommander = parseArguments(commandRepository, args);
+    CustomJCommander jCommander = parseArguments(commandRepository, mainCommand, args);
 
     // Process arguments like '-v'
-    MAIN.validate();
-    MAIN.run();
+    mainCommand.validate();
+    mainCommand.run();
 
     ConcurrencySizing concurrencySizing = new ConcurrencySizing();
-    Duration connectionTimeout = Duration.ofMillis(MAIN.getConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
-    Duration requestTimeout = Duration.ofMillis(MAIN.getRequestTimeout().getQuantity(TimeUnit.MILLISECONDS));
-    Duration entityOperationTimeout = Duration.ofMillis(MAIN.getEntityOperationTimeout().getQuantity(TimeUnit.MILLISECONDS));
-    Duration entityConnectionTimeout = Duration.ofMillis(MAIN.getEntityConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
+    Duration connectionTimeout = Duration.ofMillis(mainCommand.getConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
+    Duration requestTimeout = Duration.ofMillis(mainCommand.getRequestTimeout().getQuantity(TimeUnit.MILLISECONDS));
+    Duration entityOperationTimeout = Duration.ofMillis(mainCommand.getEntityOperationTimeout().getQuantity(TimeUnit.MILLISECONDS));
+    Duration entityConnectionTimeout = Duration.ofMillis(mainCommand.getEntityConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
     
     // create services
-    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, MAIN.getSecurityRootDirectory());
+    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, mainCommand.getSecurityRootDirectory());
     MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);
     NomadEntityProvider nomadEntityProvider = new NomadEntityProvider(
         "CONFIG-TOOL",
@@ -118,7 +118,7 @@ public class ConfigTool {
         // We need to block the call and wait for any return.
         // We cannot timeout shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
         new NomadEntity.Settings().setRequestTimeout(entityOperationTimeout),
-        MAIN.getSecurityRootDirectory());
+        mainCommand.getSecurityRootDirectory());
     NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
     StopService stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
@@ -144,8 +144,8 @@ public class ConfigTool {
     });
   }
 
-  private static CustomJCommander parseArguments(CommandRepository commandRepository, String[] args) {
-    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, MAIN);
+  private static CustomJCommander parseArguments(CommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
+    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand);
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {
