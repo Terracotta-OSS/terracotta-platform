@@ -55,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.List;
 import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
@@ -66,8 +67,10 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
+import org.terracotta.angela.client.filesystem.RemoteFolder;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
+import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
@@ -117,6 +120,15 @@ public class DynamicConfigIT {
         .around(new ExtendedTestRule() {
           @Override
           protected void before(Description description) throws Throwable {
+            List<TerracottaServer> servers = angela.getClusterFactory().tsa().getTsaConfigurationContext().getTopology().getServers();
+            for (TerracottaServer s : servers) {
+              try {
+                RemoteFolder folder = angela.getClusterFactory().tsa().browse(s, "");
+                folder.upload("logback-test.xml", this.getClass().getResourceAsStream("/tc-logback.xml"));
+              } catch (IOException exp) {
+                LOGGER.warn("unable to upload logback configuration", exp);
+              }
+            }
             if (clusterDef.autoStart() && clusterDef.autoActivate()) {
               for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
                 waitForActive(stripeId);
@@ -210,6 +222,7 @@ public class DynamicConfigIT {
     return customConfigurationContext().tsa(tsa -> tsa
         .clusterName("tc-cluster")
         .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
+        .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms128m -Xmx128m"))
         .topology(new Topology(
             getDistribution(),
             dynamicCluster(
