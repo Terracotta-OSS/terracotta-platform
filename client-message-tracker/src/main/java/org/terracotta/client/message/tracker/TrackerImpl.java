@@ -16,19 +16,20 @@
 package org.terracotta.client.message.tracker;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Map;
 import org.terracotta.entity.StateDumpCollector;
 
-import java.util.Map;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-class TrackerImpl<R> implements Tracker<R> {
+class TrackerImpl<M, R> implements Tracker<M, R> {
 
   private final Predicate<Object> trackerPolicy;
-  private final SortedMap<Long, R> trackedValues;
+  private final SortedMap<Long, RequestResponse<M, R>> trackedValues;
 
   /**
    * Constructor taking a predicate to define the tracking policy. If the predicate returns true, the source will
@@ -43,19 +44,31 @@ class TrackerImpl<R> implements Tracker<R> {
   }
 
   @Override
-  public void track(long id, Object source, R value) {
+  public void track(long track, long id, M source, R value) {
     if (id > 0 && trackerPolicy.test(source)) {
-      placeTrackedValue(id, value);
+      placeTrackedValue(track, id, source, value);
     }
   }
   
-  private synchronized void placeTrackedValue(long id, R value) {
-    trackedValues.put(id, value);
+  private synchronized void placeTrackedValue(long insert, long id, M req, R value) {
+    trackedValues.put(id, new RequestResponse<>(insert, id, req, value));
   }
 
   @Override
   public synchronized R getTrackedValue(long id) {
-    return trackedValues.get(id);
+    return Optional.ofNullable(trackedValues.get(id)).map(RequestResponse::getResponse).orElse(null);
+  }
+
+  @Override
+  public synchronized R getTrackedValue(M id) {
+    return trackedValues.values().stream()
+      .filter(rr->rr.getRequest().equals(id))
+      .findAny().map(rr->rr.getResponse()).get();
+  }
+  
+  @Override
+  public synchronized M getTrackedRequest(long id) {
+    return Optional.ofNullable(trackedValues.get(id)).map(RequestResponse::getRequest).orElse(null);
   }
 
   @Override
@@ -63,19 +76,59 @@ class TrackerImpl<R> implements Tracker<R> {
     trackedValues.headMap(id).clear();
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  @Override
-  public synchronized Map<Long, R> getTrackedValues() {
-    return Collections.unmodifiableMap(new HashMap(trackedValues));
+  synchronized Collection<RequestResponse<M, R>> getTrackedValues() {
+    return trackedValues.values();
+  }
+  /**
+   * only used in a deprecated call {@link OOOMessageHandler#loadTrackedResponsesForSegment(int, org.terracotta.entity.ClientSourceId, java.util.Map) }
+   */
+  synchronized void loadOnSync(Map<Long, R> mappedResponses) {
+    for (Map.Entry<Long, R> e : mappedResponses.entrySet()) {
+      this.trackedValues.put(e.getKey(), new RequestResponse<>(-1, e.getKey(), null, e.getValue()));
+    }
   }
 
   @Override
-  public synchronized void loadOnSync(Map<Long, R> trackedValues) {
-    this.trackedValues.putAll(trackedValues);
+  public synchronized void loadOnSync(Stream<RecordedMessage<M, R>> trackedValues) {
+    trackedValues.forEach(e->{
+      M request = e.getRequest();
+      R response = e.getResponse();
+      this.trackedValues.put(e.getTransactionId(), new RequestResponse<>(e.getSequenceId(), e.getTransactionId(), request, response));
+    });
   }
 
   @Override
   public synchronized void addStateTo(StateDumpCollector stateDumper) {
     stateDumper.addState("TrackedResponses", new ArrayList<>(trackedValues.keySet()));
+  }
+
+  static class RequestResponse<M, R> {
+    private final long insert;
+    private final long transaction;
+    private final M request;
+    private final R response;
+
+    RequestResponse(long insert, long transaction, M request, R response) {
+      this.insert = insert;
+      this.transaction = transaction;
+      this.request = request;
+      this.response = response;
+    }
+
+    public long getSequenceId() {
+      return insert;
+    }
+
+    public long getTransactionId() {
+      return transaction;
+    }
+
+    public M getRequest() {
+      return request;
+    }
+
+    public R getResponse() {
+      return response;
+    }
   }
 }

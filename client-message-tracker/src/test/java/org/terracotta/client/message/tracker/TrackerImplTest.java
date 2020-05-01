@@ -15,6 +15,7 @@
  */
 package org.terracotta.client.message.tracker;
 
+import java.util.Collection;
 import org.junit.Test;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
@@ -28,6 +29,8 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
+import org.terracotta.entity.ClientDescriptor;
+import org.terracotta.entity.ClientSourceId;
 
 public class TrackerImplTest {
 
@@ -36,8 +39,8 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker<EntityResponse> tracker = new TrackerImpl<>(o -> true);
-    tracker.track(1L, message, response);
+    TrackerImpl<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> true);
+    tracker.track(1L, 1L, message, response);
 
     assertThat(tracker.getTrackedValue(1L), sameInstance(response));
   }
@@ -47,8 +50,8 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker<EntityResponse> tracker = new TrackerImpl<>(o -> false);
-    tracker.track(1L, message, response);
+    Tracker<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> false);
+    tracker.track(1L, 1L, message, response);
 
     assertThat(tracker.getTrackedValue(1L), nullValue());
   }
@@ -58,8 +61,8 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker<EntityResponse> tracker = new TrackerImpl<>(o -> true);
-    tracker.track(-1L, message, response);  // a message with non-positive message id
+    Tracker<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> true);
+    tracker.track(1L, -1L, message, response);  // a message with non-positive message id
 
     assertThat(tracker.getTrackedValue(-1L), nullValue());
   }
@@ -69,10 +72,10 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    TrackerImpl<EntityResponse> tracker = new TrackerImpl<>(o -> true);
-    tracker.track(1L, message, response);
-    tracker.track(2L, message, response);
-    tracker.track(3L, message, response);
+    TrackerImpl<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> true);
+    tracker.track(1L, 1L, message, response);
+    tracker.track(2L, 2L, message, response);
+    tracker.track(3L, 3L, message, response);
 
     assertThat(tracker.getTrackedValue(1L), notNullValue());
     assertThat(tracker.getTrackedValue(2L), notNullValue());
@@ -99,10 +102,10 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker<EntityResponse> tracker = new TrackerImpl<>(o -> true);
-    tracker.track(1L, message, response);
-    tracker.track(2L, message, response);
-    tracker.track(3L, message, response);
+    Tracker<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> true);
+    tracker.track(1L, 1L, message, response);
+    tracker.track(2L, 2L, message, response);
+    tracker.track(3L, 3L, message, response);
 
     tracker.reconcile(2L);
     assertThat(tracker.getTrackedValue(1L), nullValue());
@@ -112,15 +115,5 @@ public class TrackerImplTest {
     assertThat(tracker.getTrackedValue(1L), nullValue());
     assertThat(tracker.getTrackedValue(2L), notNullValue());
 
-  }
-
-  @Test
-  public void testLoadOnSync() throws Exception {
-    TrackerImpl<Object> tracker = new TrackerImpl<>(o -> true);
-    Map<Long, Object> responses = Collections.singletonMap(1L, "value");
-    tracker.loadOnSync(responses);
-    Map<Long, Object> actual = tracker.getTrackedValues();
-    assertThat(actual.size(), is(1));
-    assertThat(actual.get(1L), is("value"));
   }
 }

@@ -76,11 +76,20 @@
 
     <!-- Access TcServerMain from TcServer and the exception classes -->
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-l2</artifactId>
+      <groupId>org.terracotta</groupId>
+      <artifactId>standard-cluster-services</artifactId>
       <scope>provided</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>configuration-provider</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>com.github.stefanbirkner</groupId>
       <artifactId>system-rules</artifactId>

@@ -81,6 +81,7 @@ public class DemoActiveEntity implements ActiveServerEntity<EntityMessage, Entit
     };
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void synchronizeKeyToPassive(PassiveSynchronizationChannel<EntityMessage> passiveSynchronizationChannel, int concurrencyKey) {
     // Sync entity data for the given concurrency key

@@ -23,8 +23,6 @@ import org.terracotta.diagnostic.server.api.Expose;
 
 import javax.management.InstanceNotFoundException;
 
-import static com.tc.management.TerracottaManagement.MBeanDomain.PUBLIC;
-import static com.tc.management.TerracottaManagement.createObjectName;
 import static java.lang.management.ManagementFactory.getPlatformMBeanServer;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -32,6 +30,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import org.terracotta.server.ServerMBean;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -58,20 +57,20 @@ public class DefaultDiagnosticServicesRegistrationTest {
     DiagnosticServicesRegistration<MyService2> registration = diagnosticServices.register(MyService2.class, new MyServiceImpl());
 
     assertThat(diagnosticServices.findService(MyService2.class).isPresent(), is(true));
-    assertThat(getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "s2", PUBLIC)), is(not(nullValue())));
+    assertThat(getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s2")), is(not(nullValue())));
 
     assertThat(registration.exposeMBean("AnotherName"), is(true));
 
-    assertThat(getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "AnotherName", PUBLIC)), is(not(nullValue())));
+    assertThat(getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("AnotherName")), is(not(nullValue())));
 
     registration.close();
 
     assertThat(diagnosticServices.findService(MyService2.class).isPresent(), is(false));
     assertThat(
-        () -> getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "s2", PUBLIC)),
+        () -> getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s2")),
         is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=s2")))));
     assertThat(
-        () -> getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "AnotherName", PUBLIC)),
+        () -> getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("AnotherName")),
         is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=AnotherName")))));
 
     // subsequent init is not failing
@@ -84,9 +83,9 @@ public class DefaultDiagnosticServicesRegistrationTest {
     assertThat(registration.exposeMBean("foo"), is(true));
     assertThat(registration.exposeMBean("bar"), is(true));
 
-    assertThat(getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "s2", PUBLIC)), is(not(nullValue())));
-    assertThat(getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "foo", PUBLIC)), is(not(nullValue())));
-    assertThat(getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "bar", PUBLIC)), is(not(nullValue())));
+    assertThat(getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s2")), is(not(nullValue())));
+    assertThat(getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("foo")), is(not(nullValue())));
+    assertThat(getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("bar")), is(not(nullValue())));
 
     registration.close();
 
@@ -94,13 +93,13 @@ public class DefaultDiagnosticServicesRegistrationTest {
     assertThat(registration.exposeMBean("baz"), is(false));
 
     assertThat(
-        () -> getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "s2", PUBLIC)),
+        () -> getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s2")),
         is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=s2")))));
     assertThat(
-        () -> getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "foo", PUBLIC)),
+        () -> getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("foo")),
         is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=foo")))));
     assertThat(
-        () -> getPlatformMBeanServer().getMBeanInfo(createObjectName(null, "bar", PUBLIC)),
+        () -> getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("bar")),
         is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=bar")))));
   }
 

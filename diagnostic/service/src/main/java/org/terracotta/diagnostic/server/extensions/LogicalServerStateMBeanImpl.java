@@ -15,44 +15,38 @@
  */
 package org.terracotta.diagnostic.server.extensions;
 
-import com.tc.management.AbstractTerracottaMBean;
-import com.tc.management.TerracottaManagement;
-import com.tc.objectserver.impl.JMXSubsystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.diagnostic.server.api.extension.LogicalServerStateProvider;
 
 import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.Set;
 
-import static com.tc.management.TerracottaManagement.MBeanDomain.PUBLIC;
 import static java.lang.Boolean.parseBoolean;
+import javax.management.StandardMBean;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_CONSISTENCY_MANAGER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.ServerJMX;
+import org.terracotta.server.ServerMBean;
 
-public class LogicalServerStateMBeanImpl extends AbstractTerracottaMBean implements LogicalServerStateProvider {
+public class LogicalServerStateMBeanImpl extends StandardMBean implements org.terracotta.server.ServerMBean, LogicalServerStateProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(LogicalServerStateMBeanImpl.class);
-  private final JMXSubsystem subsystem;
+  private final ServerJMX subsystem = ServerEnv.getServer().getManagement();
 
-  public LogicalServerStateMBeanImpl() throws NotCompliantMBeanException {
-    this(new JMXSubsystem());
-  }
-
-  public LogicalServerStateMBeanImpl(JMXSubsystem jmxSubsystem) throws NotCompliantMBeanException {
+  public LogicalServerStateMBeanImpl() {
     super(LogicalServerStateProvider.class, false);
-    this.subsystem = jmxSubsystem;
   }
 
   public void expose() {
     try {
-      ObjectName mBeanName = TerracottaManagement.createObjectName(null, MBEAN_LOGICAL_SERVER_STATE, TerracottaManagement.MBeanDomain.PUBLIC);
+      ObjectName mBeanName = ServerMBean.createMBeanName(MBEAN_LOGICAL_SERVER_STATE);
       ManagementFactory.getPlatformMBeanServer().registerMBean(this, mBeanName);
     } catch (Exception e) {
       LOGGER.warn("LogicalServerState MBean not initialized", e);
@@ -64,11 +58,6 @@ public class LogicalServerStateMBeanImpl extends AbstractTerracottaMBean impleme
     boolean isBlocked = hasConsistencyManager() && parseBoolean(isBlocked());
     boolean isReconnectWindow = parseBoolean(isReconnectWindow());
     return enhanceServerState(getState(), isReconnectWindow, isBlocked);
-  }
-
-  @Override
-  public void reset() {
-    // nothing
   }
 
   private LogicalServerState enhanceServerState(String state, boolean reconnectWindow, boolean isBlocked) {
@@ -85,7 +74,7 @@ public class LogicalServerStateMBeanImpl extends AbstractTerracottaMBean impleme
   boolean hasConsistencyManager() {
     try {
       Set<ObjectInstance> matchingBeans = ManagementFactory.getPlatformMBeanServer().queryMBeans(
-          TerracottaManagement.createObjectName(null, MBEAN_CONSISTENCY_MANAGER, PUBLIC), null);
+          ServerMBean.createMBeanName(MBEAN_CONSISTENCY_MANAGER), null);
       return matchingBeans.iterator().hasNext();
     } catch (MalformedObjectNameException e) {
       // really not supposed to happen

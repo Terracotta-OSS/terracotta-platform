@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.server.configuration.startup;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.tc.services.MappedStateCollector;
 import com.tc.text.PrettyPrintable;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
@@ -45,6 +44,7 @@ import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -162,7 +162,8 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public Map<String, ?> getStateMap() {
-    MappedStateCollector collector = new MappedStateCollector("collector");
+    Map<String, Object> main = new LinkedHashMap<>();
+    StateDumpCollector collector = createCollector("collector", main);
 
     StateDumpCollector startupConfig = collector.subStateDumpCollector(getClass().getName());
     startupConfig.addState("unConfigured", unConfigured);
@@ -179,7 +180,23 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
         .map(StateDumpable.class::cast)
         .forEach(sd -> sd.addStateTo(serviceProviderConfigurations.subStateDumpCollector(sd.getClass().getName())));
 
-    return collector.getMap();
+    return main;
+  }
+
+  private StateDumpCollector createCollector(String name, Map<String, Object> map) {
+    return new StateDumpCollector() {
+      @Override
+      public StateDumpCollector subStateDumpCollector(String name) {
+        Map<String, Object> sub = new LinkedHashMap<>();
+        map.put(name, sub);
+        return createCollector(name, sub);
+      }
+
+      @Override
+      public void addState(String key, Object value) {
+        map.put(key, value);
+      }
+    };
   }
 
   @Override

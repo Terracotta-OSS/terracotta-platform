@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.diagnostic.server;
+package org.terracotta.client.message.tracker;
 
-/**
- * MBean interface used as a communication layer
- *
- * @author Mathieu Carbou
- */
-public interface DiagnosticRequestHandlerMBean {
-  boolean hasServiceInterface(String serviceName);
+import org.terracotta.entity.ClientSourceId;
 
-  String request(String payload);
+public interface RecordedMessage<M, R> {
+  long getSequenceId();
+  ClientSourceId getClientSourceId();
+  long getTransactionId();
+  M getRequest();
+  R getResponse();
 }

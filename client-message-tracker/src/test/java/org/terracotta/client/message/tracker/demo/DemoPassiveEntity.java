@@ -81,6 +81,7 @@ public class DemoPassiveEntity implements PassiveServerEntity<EntityMessage, Ent
     messageHandler.invoke(realContext, message, this::processMessage);
   }
 
+  @SuppressWarnings({"rawtypes","unchecked","deprecation"})
   private EntityResponse processMessage(InvokeContext context, EntityMessage message) {
     if (message instanceof MessageTrackerSyncMessage) {
       MessageTrackerSyncMessage trackerSyncMessage = (MessageTrackerSyncMessage) message;

@@ -15,7 +15,6 @@
  */
 package org.terracotta.diagnostic.client;
 
-import com.terracotta.diagnostic.Diagnostics;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
@@ -34,6 +33,7 @@ import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
+import org.terracotta.connection.Diagnostics;
 
 /**
  * @author Mathieu Carbou
@@ -96,7 +96,7 @@ public class DiagnosticServiceFactory {
 
   private static DiagnosticService fetch(Connection connection, Duration diagnosticInvokeTimeout)
       throws EntityNotProvidedException, EntityVersionMismatchException, EntityNotFoundException {
-    EntityRef<com.terracotta.diagnostic.Diagnostics, Object, Properties> ref = connection.getEntityRef(com.terracotta.diagnostic.Diagnostics.class, 1, "root");
+    EntityRef<Diagnostics, Object, Properties> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
     Properties properties = new Properties();
     properties.setProperty("request.timeout", String.valueOf(diagnosticInvokeTimeout.toMillis()));
     Diagnostics delegate = ref.fetchEntity(properties);
