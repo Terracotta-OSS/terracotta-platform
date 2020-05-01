@@ -116,7 +116,7 @@ public class ConfigurationGeneratorVisitor {
     String nodeName = nodeContext.getNodeName();
     logger.info("Starting node: {} in cluster: {}", nodeName, nodeContext.getCluster().getName());
     Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
-    logger.debug("Creating node config repository at: {}", parameterSubstitutor.substitute(nodeRepositoryDir.toAbsolutePath()));
+    logger.debug("Creating node config repository at: {}", parameterSubstitutor.substitute(nodeRepositoryDir).toAbsolutePath());
     nomadServerManager.init(nodeRepositoryDir, nodeContext);
 
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
