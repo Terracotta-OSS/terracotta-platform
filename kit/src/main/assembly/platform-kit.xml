@@ -133,6 +133,9 @@
     <dependencySet>
       <outputDirectory>tools/common/lib</outputDirectory>
       <includes>
+        <include>org.terracotta:terracotta-utilities-tools</include>
+        <include>org.terracotta.common:common-inet-support</include>
+        <include>org.terracotta.common:common-structures</include>
         <include>io.github.classgraph:classgraph</include>
         <include>com.fasterxml.jackson.core:jackson-annotations</include>
         <include>com.fasterxml.jackson.core:jackson-core</include>
@@ -152,7 +155,6 @@
         <include>org.terracotta.dynamic-config.cli:config-converter-oss</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-converter</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
-        <include>org.terracotta:terracotta-utilities-tools</include>
         <include>org.terracotta.internal:tc-config-parser</include>
         <include>org.terracotta:tcconfig-schema</include>
         <include>com.sun.xml.fastinfoset:FastInfoset</include>
@@ -177,10 +179,8 @@
         <include>org.terracotta.diagnostic:diagnostic-client</include>
         <include>org.terracotta.diagnostic:diagnostic-common</include>
         <include>org.terracotta.diagnostic:diagnostic-model</include>
-        <include>org.terracotta.common:common-inet-support</include>
         <include>org.terracotta.common:common-json-support</include>
         <include>org.terracotta.common:common-nomad</include>
-        <include>org.terracotta.common:common-structures</include>
       </includes>
     </dependencySet>
 
