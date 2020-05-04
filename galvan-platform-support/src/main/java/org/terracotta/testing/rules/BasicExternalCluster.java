@@ -92,7 +92,7 @@ class BasicExternalCluster extends Cluster {
       }
     } else {
       boolean didCreateDirectories = clusterDirectory.toFile().mkdirs();
-      if (!didCreateDirectories) {
+      if (!didCreateDirectories && !Files.exists(clusterDirectory)) {
         throw new IllegalArgumentException("Cluster directory could not be created: " + clusterDirectory);
       }
     }
