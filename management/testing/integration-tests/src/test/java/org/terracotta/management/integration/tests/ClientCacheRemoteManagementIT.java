@@ -38,7 +38,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
     ManagementRegistry registry = nmsService.readTopology()
         .clientStream()
         .filter(cli -> cli.getName().equals("pet-clinic"))
-        .findFirst()
+        .findAny()
         .flatMap(Client::getManagementRegistry)
         .get();
 
@@ -59,7 +59,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
     Client client = nmsService.readTopology()
         .clientStream()
         .filter(e -> e.getName().equals("pet-clinic"))
-        .findFirst()
+        .findAny()
         .get();
 
     // similar to cacheManagerName and cacheName context
@@ -88,7 +88,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
     Client client = nmsService.readTopology()
         .clientStream()
         .filter(e -> e.getName().equals("pet-clinic"))
-        .findFirst()
+        .findAny()
         .get();
 
     // only the client id is necessary

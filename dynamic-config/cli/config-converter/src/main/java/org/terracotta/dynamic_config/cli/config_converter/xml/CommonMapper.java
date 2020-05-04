@@ -88,7 +88,7 @@ public class CommonMapper {
         .stream()
         .map(LeaseElement.class::cast)
         .map(leaseElement -> Measure.of(Long.parseLong(leaseElement.getLeaseValue()), TimeUnit.valueOf(leaseElement.getTimeUnit().toUpperCase())))
-        .findFirst()
+        .findAny()
         .orElse(null);
   }
 
@@ -178,7 +178,7 @@ public class CommonMapper {
   public Optional<Map.Entry<String, Path>> toNodeMetadataDir(Map<Class<?>, List<Object>> plugins) {
     // First try to find a deprecated service tag "<persistence:platform-persistence data-directory-id="root1"/>"
     // that will give us the ID of the dataroot to use for platform persistence
-    return toDataDirs(plugins, DataRootMapping::isUseForPlatform).entrySet().stream().findFirst();
+    return toDataDirs(plugins, DataRootMapping::isUseForPlatform).entrySet().stream().findAny();
   }
 
   public Measure<TimeUnit> toClientReconnectWindow(TcConfig tcConfig) {

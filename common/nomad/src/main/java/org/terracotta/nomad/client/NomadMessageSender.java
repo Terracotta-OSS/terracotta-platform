@@ -294,7 +294,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   public final void registerPreparedServer(InetSocketAddress address) {
-    preparedServers.add(servers.stream().filter(s -> s.getAddress().equals(address)).findFirst().get());
+    preparedServers.add(servers.stream().filter(s -> s.getAddress().equals(address)).findAny().get());
   }
 
   private <T> void runSync(Callable<T> callable, Consumer<T> onSuccess, Consumer<Throwable> onError) {

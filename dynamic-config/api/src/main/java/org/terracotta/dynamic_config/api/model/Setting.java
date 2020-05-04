@@ -717,7 +717,7 @@ public enum Setting {
   }
 
   public static Optional<Setting> findSetting(String name) {
-    return Stream.of(values()).filter(setting -> setting.name.equals(name)).findFirst();
+    return Stream.of(values()).filter(setting -> setting.name.equals(name)).findAny();
   }
 
   public static <T extends PropertyHolder> T fillRequiredSettings(T o) {

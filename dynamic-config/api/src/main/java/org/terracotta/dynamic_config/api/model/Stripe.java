@@ -98,7 +98,7 @@ public class Stripe implements Cloneable {
   }
 
   public Optional<Node> getNode(InetSocketAddress address) {
-    return nodes.stream().filter(node -> node.hasAddress(address)).findFirst();
+    return nodes.stream().filter(node -> node.hasAddress(address)).findAny();
   }
 
   public boolean containsNode(InetSocketAddress address) {
@@ -166,7 +166,7 @@ public class Stripe implements Cloneable {
   }
 
   public Optional<Node> getNode(String nodeName) {
-    return nodes.stream().filter(node -> node.getNodeName().equals(nodeName)).findFirst();
+    return nodes.stream().filter(node -> node.getNodeName().equals(nodeName)).findAny();
   }
 
   public Optional<Node> getNode(int nodeId) {
@@ -183,13 +183,13 @@ public class Stripe implements Cloneable {
     return IntStream.range(0, nodes.size())
         .filter(idx -> nodeName.equals(nodes.get(idx).getNodeName()))
         .map(idx -> idx + 1)
-        .findFirst();
+        .findAny();
   }
 
   public OptionalInt getNodeId(InetSocketAddress nodeAddress) {
     return IntStream.range(0, nodes.size())
         .filter(idx -> nodes.get(idx).hasAddress(nodeAddress))
         .map(idx -> idx + 1)
-        .findFirst();
+        .findAny();
   }
 }

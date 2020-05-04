@@ -56,7 +56,7 @@ public class ReadStatistics {
     ServerEntity serverEntity = cluster
         .activeServerEntityStream()
         .filter(e -> e.getType().equals(NmsConfig.ENTITY_TYPE))
-        .findFirst()
+        .findAny()
         .get();
 
     Context context = serverEntity.getContext();
@@ -68,7 +68,7 @@ public class ReadStatistics {
     cluster
         .clientStream()
         .filter(c -> c.getName().equals("pet-clinic"))
-        .findFirst()
+        .findAny()
         .ifPresent(ehcache -> {
 
           Context ctx = ehcache.getContext()

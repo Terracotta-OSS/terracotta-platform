@@ -20,7 +20,6 @@ import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -51,14 +50,14 @@ public class DiagnosticServices implements AutoCloseable {
     return offlineEndpoints.entrySet().stream()
         .filter(e -> InetSocketAddressUtils.areEqual(e.getKey(), address))
         .map(Map.Entry::getValue)
-        .findFirst();
+        .findAny();
   }
 
   public Optional<DiagnosticService> getDiagnosticService(InetSocketAddress address) {
     return onlineEndpoints.entrySet().stream()
         .filter(e -> InetSocketAddressUtils.areEqual(e.getKey(), address))
         .map(Map.Entry::getValue)
-        .findFirst();
+        .findAny();
   }
 
   public <T> Stream<Tuple2<InetSocketAddress, T>> map(BiFunction<InetSocketAddress, DiagnosticService, T> fn) {

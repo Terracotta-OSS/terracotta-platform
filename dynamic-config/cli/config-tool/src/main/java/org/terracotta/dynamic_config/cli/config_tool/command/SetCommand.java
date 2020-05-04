@@ -50,7 +50,7 @@ public class SetCommand extends ConfigurationMutationCommand {
         .filter(configuration -> configuration.getSetting() == LICENSE_FILE)
         .map(Configuration::getValue)
         .map(Paths::get)
-        .findFirst()
+        .findAny()
         .orElse(null);
 
 

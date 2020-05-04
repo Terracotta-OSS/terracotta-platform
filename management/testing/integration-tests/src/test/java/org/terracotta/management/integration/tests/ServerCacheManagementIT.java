@@ -44,7 +44,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     ManagementRegistry registry = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(serverEntity -> serverEntity.getName().equals("pet-clinic/clients"))
-        .findFirst()
+        .findAny()
         .flatMap(ServerEntity::getManagementRegistry)
         .get();
 
@@ -65,7 +65,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     registry = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(serverEntity -> serverEntity.getType().equals(NmsConfig.ENTITY_TYPE))
-        .findFirst()
+        .findAny()
         .flatMap(ServerEntity::getManagementRegistry)
         .get();
 
@@ -80,7 +80,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     ServerEntity serverEntity = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(e -> e.getName().equals("pet-clinic/pets"))
-        .findFirst()
+        .findAny()
         .get();
 
     Context context = serverEntity.getContext().with("cacheName", "pet-clinic/pets");

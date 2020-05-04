@@ -77,7 +77,7 @@ public final class ManagementRegistry implements Serializable {
   }
 
   public Optional<Capability> getCapability(String capabilityName) {
-    return capabilities.stream().filter(capability -> capability.getName().equals(capabilityName)).findFirst();
+    return capabilities.stream().filter(capability -> capability.getName().equals(capabilityName)).findAny();
   }
 
   public ContextContainer getContextContainer() {

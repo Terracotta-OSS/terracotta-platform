@@ -31,7 +31,7 @@ public class Injector {
         .forEach(field -> {
           Object found = Stream.of(services)
               .filter(service -> field.getType().isInstance(service))
-              .findFirst()
+              .findAny()
               .orElseThrow(() -> new IllegalStateException("No service found to inject into " + field));
           try {
             field.set(target, found);

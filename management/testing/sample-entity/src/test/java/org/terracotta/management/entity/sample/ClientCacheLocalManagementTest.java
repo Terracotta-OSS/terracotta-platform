@@ -155,7 +155,7 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
     do {
       statistics = queryAllStats(node)
           .filter(o -> o.getContext().get("cacheName").equals(cacheName))
-          .findFirst()
+          .findAny()
           .get();
       Thread.yield();
     } while (!Thread.currentThread().isInterrupted() && !test.test(statistics));

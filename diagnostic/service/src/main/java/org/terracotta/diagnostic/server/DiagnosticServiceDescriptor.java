@@ -107,7 +107,7 @@ class DiagnosticServiceDescriptor<T> implements DiagnosticServicesRegistration<T
     if (list.size() > 1) {
       throw new AssertionError("Method overloading not yet supported: " + serviceInterface.getName());
     }
-    return list.stream().findFirst();
+    return list.stream().findAny();
   }
 
   Optional<String> discoverMBeanName() {

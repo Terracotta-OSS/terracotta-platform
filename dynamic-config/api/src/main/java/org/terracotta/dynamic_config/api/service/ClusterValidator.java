@@ -89,7 +89,7 @@ public class ClusterValidator {
           .stream()
           .filter(e -> e.getValue() > 1)
           .map(Map.Entry::getKey)
-          .findFirst()
+          .findAny()
           .ifPresent(nodeName -> {
             throw new MalformedClusterException("Found duplicate node name: " + nodeName + " in stripe " + stripeId);
           });

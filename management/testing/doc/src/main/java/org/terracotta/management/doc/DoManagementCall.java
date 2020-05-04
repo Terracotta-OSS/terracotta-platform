@@ -65,7 +65,7 @@ public class DoManagementCall {
     ServerEntity serverEntity = cluster
         .activeServerEntityStream()
         .filter(e -> e.getName().equals("pet-clinic/pets"))
-        .findFirst()
+        .findAny()
         .get();
     Context cacheName = serverEntity.getContext().with("cacheName", "pet-clinic/pets");
     nmsService.call(cacheName, "ServerCacheCalls", "clear", Void.TYPE).waitForReturn();
