@@ -7,15 +7,15 @@
         "nodes": [
           {
             "dataDirs": {
-              "main": "%H/terracotta/user-data/main"
+              "main": "terracotta/user-data/main"
             },
             "nodeBindAddress": "0.0.0.0",
             "nodeGroupBindAddress": "0.0.0.0",
             "nodeGroupPort": 9430,
             "nodeHostname": "localhost",
-            "nodeLogDir": "%H/terracotta/logs",
+            "nodeLogDir": "terracotta/logs",
             "nodeLoggerOverrides": {},
-            "nodeMetadataDir": "%H/terracotta/metadata",
+            "nodeMetadataDir": "terracotta/metadata",
             "nodeName": "foo",
             "nodePort": 9410,
             "tcProperties": {}

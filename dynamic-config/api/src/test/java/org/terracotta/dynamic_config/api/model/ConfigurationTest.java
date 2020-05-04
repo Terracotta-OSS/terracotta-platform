@@ -77,7 +77,7 @@ public class ConfigurationTest {
   @Test
   public void test_valueOf_settings_cluster_level() {
     Stream.of(NODE_REPOSITORY_DIR).forEach(setting -> {
-      String err = "Invalid input: 'node-repository-dir=%H/terracotta/repository'. Reason: node-repository-dir does not allow any operation at cluster level".replace("/", File.separator); // unix/win compat'
+      String err = "Invalid input: 'node-repository-dir=terracotta/repository'. Reason: node-repository-dir does not allow any operation at cluster level".replace("/", File.separator); // unix/win compat'
       assertThat(
           () -> Configuration.valueOf(setting),
           is(throwing(instanceOf(IllegalArgumentException.class))

@@ -30,15 +30,15 @@
         {
           "dataDirs": {
             "cache": "/data/cache1",
-            "main": "%H/terracotta/user-data/main"
+            "main": "terracotta/user-data/main"
           },
           "nodeBindAddress": "0.0.0.0",
           "nodeGroupBindAddress": "0.0.0.0",
           "nodeGroupPort": 9430,
           "nodeHostname": "localhost",
-          "nodeLogDir": "%H/terracotta/logs",
+          "nodeLogDir": "terracotta/logs",
           "nodeLoggerOverrides": {},
-          "nodeMetadataDir": "%H/terracotta/metadata",
+          "nodeMetadataDir": "terracotta/metadata",
           "nodeName": "node0",
           "nodePort": 9410,
           "tcProperties": {}
@@ -50,15 +50,15 @@
         {
           "dataDirs": {
             "cache": "/data/cache2",
-            "main": "%H/terracotta/user-data/main"
+            "main": "terracotta/user-data/main"
           },
           "nodeBindAddress": "0.0.0.0",
           "nodeGroupBindAddress": "0.0.0.0",
           "nodeGroupPort": 9430,
           "nodeHostname": "localhost",
-          "nodeLogDir": "%H/terracotta/logs",
+          "nodeLogDir": "terracotta/logs",
           "nodeLoggerOverrides": {},
-          "nodeMetadataDir": "%H/terracotta/metadata",
+          "nodeMetadataDir": "terracotta/metadata",
           "nodeName": "node1",
           "nodePort": 9411,
           "tcProperties": {}
