@@ -17,31 +17,31 @@
 
 -->
 <tc-config xmlns="http://www.terracotta.org/config"
-           xmlns:ohr1="http://www.terracotta.org/config/offheap-resource"
-           xmlns:ohr="http://www.terracottatech.com/config/data-roots">
+           xmlns:ohr="http://www.terracotta.org/config/offheap-resource"
+           xmlns:data="http://www.terracottatech.com/config/data-roots">
   <plugins>
     <config>
-      <ohr:data-directories>
-        <ohr:directory name="root1">%(user.dir)/user-data/main/stripe2</ohr:directory>
-      </ohr:data-directories>
+      <data:data-directories>
+        <data:directory name="root1">%(user.dir)/user-data/main/stripe1</data:directory>
+      </data:data-directories>
     </config>
     <config>
-      <ohr1:offheap-resources>
-        <ohr1:resource name="primary-server-resource" unit="MB">64</ohr1:resource>
-      </ohr1:offheap-resources>
+      <ohr:offheap-resources>
+        <ohr:resource name="primary-server-resource" unit="MB">64</ohr:resource>
+      </ohr:offheap-resources>
     </config>
   </plugins>
   <tc-properties/>
   <servers>
-    <server host="localhost" name="node-3">
-      <logs>%(user.dir)/logs/stripe2/node-3</logs>
-      <tsa-port>9610</tsa-port>
-      <tsa-group-port>9630</tsa-group-port>
+    <server host="localhost" name="node-1">
+      <logs>%(user.dir)/logs/stripe1/node-1</logs>
+      <tsa-port>9410</tsa-port>
+      <tsa-group-port>9430</tsa-group-port>
     </server>
-    <server host="localhost" name="node-4">
-      <logs>%(user.dir)/logs/stripe2/node-4</logs>
-      <tsa-port>9710</tsa-port>
-      <tsa-group-port>9730</tsa-group-port>
+    <server host="localhost" name="node-2">
+      <logs>%(user.dir)/logs/stripe1/node-2</logs>
+      <tsa-port>9510</tsa-port>
+      <tsa-group-port>9530</tsa-group-port>
     </server>
     <client-reconnect-window>120</client-reconnect-window>
   </servers>
