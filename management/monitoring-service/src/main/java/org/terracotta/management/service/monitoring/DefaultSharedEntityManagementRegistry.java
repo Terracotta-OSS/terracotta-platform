@@ -88,7 +88,7 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
     entityRegistries.add(entityManagementRegistry);
     return entityRegistries.stream()
         .filter(existing -> existing != entityManagementRegistry && existing.getMonitoringService().getConsumerId() == consumerId)
-        .findFirst();
+        .findAny();
   }
 
   void removeEntityManagementRegistry(EntityManagementRegistry managementRegistry) {
@@ -105,7 +105,7 @@ class DefaultSharedEntityManagementRegistry implements SharedEntityManagementReg
     serverRegistries.add(serverManagementRegistry);
     return serverRegistries.stream()
         .filter(existing -> existing != serverManagementRegistry && existing.getMonitoringService().getConsumerId() == consumerId)
-        .findFirst();
+        .findAny();
   }
 
   void removeServerManagementRegistry(EntityManagementRegistry managementRegistry) {

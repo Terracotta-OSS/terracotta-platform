@@ -229,7 +229,7 @@ public final class Server extends AbstractNode<Stripe> {
     String consumerId = context.get(ServerEntity.CONSUMER_ID);
     if (consumerId != null) {
       long cid = Long.parseLong(consumerId);
-      return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == cid).findFirst();
+      return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == cid).findAny();
     }
     return Optional.empty();
   }
@@ -239,7 +239,7 @@ public final class Server extends AbstractNode<Stripe> {
   }
 
   public final Optional<ServerEntity> getServerEntity(long consumerId) {
-    return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == consumerId).findFirst();
+    return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == consumerId).findAny();
   }
 
   public final Optional<ServerEntity> getServerEntity(String id) {
@@ -247,7 +247,7 @@ public final class Server extends AbstractNode<Stripe> {
   }
 
   public final Optional<ServerEntity> getServerEntity(String name, String type) {
-    return serverEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findFirst();
+    return serverEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findAny();
   }
 
   public final boolean hasServerEntity(String name, String type) {

@@ -110,7 +110,7 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
       String q = quantityUnit.substring(i);
       unit = validUnits.stream()
           .filter(u -> u.getShortName().equals(q))
-          .findFirst()
+          .findAny()
           .orElseThrow(() -> new IllegalArgumentException("Invalid measure: '" + quantityUnit + "'. <unit> must be one of " + validUnits + "."));
     }
 

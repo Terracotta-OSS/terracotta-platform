@@ -38,20 +38,42 @@ public class ClusterValidatorTest {
   private final Random random = new Random();
 
   @Test
-  public void testDuplicateNodeName() {
-    Node node1 = Node.newDefaultNode("foo", "localhost");
-    Node node2 = Node.newDefaultNode("foo", "localhost");
+  public void testDuplicateNodeNameSameStripe() {
+    Node node1 = Node.newDefaultNode("foo", "localhost1");
+    Node node2 = Node.newDefaultNode("foo", "localhost2");
 
     assertClusterValidationFails("Found duplicate node name: foo in stripe 1", Cluster.newDefaultCluster(new Stripe(node1, node2)));
+  }
+
+  @Test
+  public void testDuplicateNodeNameDifferentStripe() {
+    Node node1 = Node.newDefaultNode("foo", "localhost1");
+    Node node2 = Node.newDefaultNode("foo", "localhost2");
 
     // but this is OK in different stripes
     new ClusterValidator(Cluster.newDefaultCluster(new Stripe(node1), new Stripe(node2))).validate();
   }
 
   @Test
+  public void testDuplicateAddressesSameStripe() {
+    Node node1 = Node.newDefaultNode("foo1", "localhost");
+    Node node2 = Node.newDefaultNode("foo2", "localhost");
+
+    assertClusterValidationFails("Duplicate node addresses found: localhost:9410", Cluster.newDefaultCluster(new Stripe(node1, node2)));
+  }
+
+  @Test
+  public void testDuplicateAddressesDifferentStripes() {
+    Node node1 = Node.newDefaultNode("foo1", "localhost");
+    Node node2 = Node.newDefaultNode("foo2", "localhost");
+
+    assertClusterValidationFails("Duplicate node addresses found: localhost:9410", Cluster.newDefaultCluster(new Stripe(node1), new Stripe(node2)));
+  }
+
+  @Test
   public void testDifferingDataDirectoryNames() {
-    Node node1 = Node.newDefaultNode("localhost");
-    Node node2 = Node.newDefaultNode("localhost");
+    Node node1 = Node.newDefaultNode("localhost1");
+    Node node2 = Node.newDefaultNode("localhost2");
     node1.setDataDir("dir-1", Paths.get("data"));
     node2.setDataDir("dir-2", Paths.get("data"));
 
@@ -61,8 +83,8 @@ public class ClusterValidatorTest {
   @Test
   public void testValidCluster() {
     Node[] nodes = Stream.of(
-        Node.newDefaultNode("localhost"),
-        Node.newDefaultNode("localhost")
+        Node.newDefaultNode("localhost1"),
+        Node.newDefaultNode("localhost2")
     ).map(node -> node
         .setSecurityAuditLogDir(Paths.get("audit-" + random.nextInt()))
         .setSecurityDir(Paths.get("security-root" + random.nextInt()))
@@ -90,7 +112,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_1() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")).peek(node -> {
+    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-dir"));
       node.setSecurityAuditLogDir(Paths.get("security-audit-dir"));
     }).toArray(Node[]::new);
@@ -103,7 +125,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_2() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")).peek(node -> {
+    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-dir"));
       node.setSecurityAuditLogDir(Paths.get("security-audit-dir"));
     }).toArray(Node[]::new);
@@ -115,7 +137,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_3() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")).toArray(Node[]::new);
+    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).toArray(Node[]::new);
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes));
     new ClusterValidator(cluster).validate();
@@ -123,7 +145,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_4() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")).peek(node -> {
+    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-root-dir"));
     }).toArray(Node[]::new);
 
@@ -135,7 +157,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_5() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")).peek(node -> {
+    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-root-dir"));
       node.setSecurityAuditLogDir(Paths.get("security-audit-dir"));
     }).toArray(Node[]::new);
@@ -149,7 +171,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_6() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")};
+    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
         .setSecuritySslTls(false);
@@ -158,7 +180,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_7() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")).peek(node -> {
+    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-root-dir"));
     }).toArray(Node[]::new);
 
@@ -169,7 +191,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_1() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")};
+    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
         .setSecuritySslTls(false)
@@ -180,7 +202,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_2() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")};
+    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
         .setSecuritySslTls(true)
@@ -191,7 +213,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_3() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")};
+    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
         .setSecuritySslTls(true);
@@ -201,7 +223,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_4() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")};
+    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
         .setSecurityAuthc("file");
@@ -211,7 +233,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_5() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")).peek(node -> {
+    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
       node.setSecurityAuditLogDir(Paths.get("."));
     }).toArray(Node[]::new);
 
@@ -222,7 +244,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_6() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")};
+    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
         .setSecurityWhitelist(true);
@@ -232,7 +254,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_7() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost"), Node.newDefaultNode("localhost")).peek(node -> {
+    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("."));
     }).toArray(Node[]::new);
 

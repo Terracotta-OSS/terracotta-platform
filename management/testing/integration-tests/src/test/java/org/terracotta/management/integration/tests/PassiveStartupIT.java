@@ -62,8 +62,8 @@ public class PassiveStartupIT extends AbstractHATest {
 
     assertThat(get(1, "clients", "client1"), equalTo("Mat"));
 
-    Server active = nmsService.readTopology().serverStream().filter(Server::isActive).findFirst().get();
-    Server passive = nmsService.readTopology().serverStream().filter(server -> !server.isActive()).findFirst().get();
+    Server active = nmsService.readTopology().serverStream().filter(Server::isActive).findAny().get();
+    Server passive = nmsService.readTopology().serverStream().filter(server -> !server.isActive()).findAny().get();
     assertThat(active.getState(), equalTo(Server.State.ACTIVE));
     assertThat(passive.getState(), equalTo(Server.State.PASSIVE));
 
@@ -93,7 +93,7 @@ public class PassiveStartupIT extends AbstractHATest {
     assertThat(states.contains("PASSIVE"), is(true));
 
     // only 1 server in source: passive server
-    ContextualNotification stateChanged = collected.stream().filter(n -> n.getType().equals("SERVER_STATE_CHANGED")).findFirst().get();
+    ContextualNotification stateChanged = collected.stream().filter(n -> n.getType().equals("SERVER_STATE_CHANGED")).findAny().get();
     assertThat(stateChanged.getContext().get(Server.NAME_KEY), equalTo(passive.getServerName()));
   }
 

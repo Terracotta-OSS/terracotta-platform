@@ -62,12 +62,6 @@ class ConfigurationParser {
     if (configurations.isEmpty()) {
       throw new IllegalArgumentException("No configuration provided");
     }
-    if (configurations.stream().noneMatch(configuration -> configuration.getSetting() == NODE_HOSTNAME)) {
-      throw new IllegalArgumentException(NODE_HOSTNAME + " is missing");
-    }
-    if (configurations.stream().anyMatch(configuration -> configuration.getSetting() == NODE_HOSTNAME && IParameterSubstitutor.containsSubstitutionParams(configuration.getValue()))) {
-      throw new IllegalArgumentException(NODE_HOSTNAME + " cannot contain any placeholders");
-    }
   }
 
   /**
@@ -213,31 +207,25 @@ class ConfigurationParser {
         }
         // validate the config object
         configuration.validate(CONFIG);
-        // ensure that properties requiring an eager resolve are resolved
-        if (configuration.getSetting().requiresEagerSubstitution() && IParameterSubstitutor.containsSubstitutionParams(configuration.getValue())) {
-          throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Placeholders are not allowed");
-        }
       });
     }
 
     // build the cluster
     Cluster cluster = Cluster.newCluster();
-    configurationMap.forEach((stripeId, nodeCounts) -> {
+    configurationMap.forEach((stripeId, nodeConfigurations) -> {
       Stripe stripe = new Stripe();
-      nodeCounts.keySet().forEach(nodeId -> {
+      nodeConfigurations.forEach((nodeId, configurations) -> {
         // create the node and eagerly initialize the basic fields
         Node node = Node.empty();
         stripe.addNode(node);
         if (stripe.getNodeCount() != nodeId) {
           throw new AssertionError("Expected node count to be: " + nodeId + " but was: " + stripe.getNodeCount());
         }
-        Stream.of(NODE_NAME, NODE_HOSTNAME, NODE_PORT).map(setting -> configurations.stream()
-            .filter(configuration -> configuration.getSetting() == setting
-                && configuration.getScope() == NODE
-                && configuration.getStripeId() == stripeId
-                && configuration.getNodeId() == nodeId)
-            .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Required setting missing: '" + setting + "' for node ID: " + nodeId + " in stripe ID: " + stripeId)))
+        Stream.of(NODE_NAME, NODE_HOSTNAME, NODE_PORT)
+            .map(setting -> configurations.stream()
+                .filter(configuration -> configuration.getSetting() == setting)
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException("Required setting missing: '" + setting + "' for node ID: " + nodeId + " in stripe ID: " + stripeId)))
             .forEach(o -> o.apply(node));
       });
       cluster.addStripe(stripe);
@@ -253,6 +241,9 @@ class ConfigurationParser {
   }
 
   static Cluster parsePropertyConfiguration(Properties properties, Consumer<Configuration> defaultAddedListener) {
+    // Note: node hostname, port and name are all required minimal properties.
+    // They are used to identify a node in an exported cluster configuration file
+    // and no placeholder resolving can be done client-side
     return new ConfigurationParser(propertiesToConfigurations(properties), defaultAddedListener).parse();
   }
 
@@ -276,27 +267,34 @@ class ConfigurationParser {
   /**
    * Transform the user input CLI into properties
    */
-  private static Properties cliToProperties(Map<Setting, String> consoleParameters, IParameterSubstitutor parameterSubstitutor, Consumer<Configuration> defaultAddedListener) {
-    requireNonNull(consoleParameters);
+  private static Properties cliToProperties(Map<Setting, String> cliParameters, IParameterSubstitutor parameterSubstitutor, Consumer<Configuration> defaultAddedListener) {
+    requireNonNull(cliParameters);
 
     // transform the user input in CLI in a property config
     Properties properties = new Properties();
-    consoleParameters.forEach((k, v) -> properties.setProperty(prefixed(k), v));
+    cliParameters.forEach((k, v) -> properties.setProperty(prefixed(k), v));
 
-    String key = prefixed(NODE_HOSTNAME);
-    String hostname = consoleParameters.get(NODE_HOSTNAME);
-    if (hostname == null) {
-      // We can't have hostname null during Node construction from the client side (e.g. during parsing a config properties
-      // file in activate command). Therefore, this logic is here, and not in Node::fillDefaults
-      hostname = parameterSubstitutor.substitute(NODE_HOSTNAME.getDefaultValue());
-      defaultAddedListener.accept(Configuration.valueOf(key + "=" + hostname));
-    } else {
-      hostname = parameterSubstitutor.substitute(hostname);
-    }
-    properties.setProperty(key, hostname);
+    // node hostname, port and name are eagerly resolved in CLI
+    Stream.of(Setting.values())
+        .filter(Setting::mustBeResolved)
+        .forEach(s -> eagerlyResolve(parameterSubstitutor, defaultAddedListener, properties, s));
 
     // delegate back to the parsing of a config file
     return properties;
+  }
+
+  private static void eagerlyResolve(IParameterSubstitutor parameterSubstitutor, Consumer<Configuration> defaultAddedListener, Properties properties, Setting setting) {
+    String key = prefixed(setting);
+    String set = properties.getProperty(key);
+    if (set == null) {
+      // We can't have this setting null during Node construction from the client side (e.g. during parsing a config properties
+      // file in activate command). Therefore, this logic is here, and not in Node::fillDefaults
+      set = parameterSubstitutor.substitute(setting.getDefaultValue());
+      defaultAddedListener.accept(Configuration.valueOf(key + "=" + set));
+    } else {
+      set = parameterSubstitutor.substitute(set);
+    }
+    properties.setProperty(key, set);
   }
 
   private static String prefixed(Setting setting) {

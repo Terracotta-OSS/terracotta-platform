@@ -19,6 +19,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -47,9 +48,26 @@ public class ClusterValidator {
 
   public void validate() throws MalformedClusterException {
     validateNodeName();
+    validateAddresses();
     validateServerSettings();
     validateSecurityDir();
     validateFailoverSetting();
+  }
+
+  private void validateAddresses() {
+    cluster.getStripes()
+        .stream()
+        .flatMap(s -> s.getNodes().stream().map(Node::getNodeAddress))
+        .collect(groupingBy(identity(), counting()))
+        .entrySet()
+        .stream()
+        .filter(e -> e.getValue() > 1)
+        .map(Map.Entry::getKey)
+        .map(InetSocketAddress::toString)
+        .reduce((result, addr) -> result + ", " + addr)
+        .ifPresent(duplicates -> {
+          throw new MalformedClusterException("Duplicate node addresses found: " + duplicates);
+        });
   }
 
   private void validateFailoverSetting() {
@@ -71,7 +89,7 @@ public class ClusterValidator {
           .stream()
           .filter(e -> e.getValue() > 1)
           .map(Map.Entry::getKey)
-          .findFirst()
+          .findAny()
           .ifPresent(nodeName -> {
             throw new MalformedClusterException("Found duplicate node name: " + nodeName + " in stripe " + stripeId);
           });

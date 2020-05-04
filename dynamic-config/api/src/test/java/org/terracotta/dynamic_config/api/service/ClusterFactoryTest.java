@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.lenient;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -55,6 +56,8 @@ public class ClusterFactoryTest {
     lenient().when(substitutor.substitute("%c")).thenReturn("localhost.home");
     lenient().when(substitutor.substitute("%H")).thenReturn("home");
     lenient().when(substitutor.substitute("foo")).thenReturn("foo");
+    lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
+    lenient().when(substitutor.substitute("9410")).thenReturn("9410");
   }
 
   @Test
@@ -100,21 +103,21 @@ public class ClusterFactoryTest {
         config(
             "failover-priority=availability",
             "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost",
+            "stripe.1.node.1.node-hostname=localhost1",
             "stripe.1.node.2.node-name=node2",
-            "stripe.1.node.2.node-hostname=localhost",
+            "stripe.1.node.2.node-hostname=localhost2",
             "stripe.2.node.1.node-name=node1",
-            "stripe.2.node.1.node-hostname=localhost",
+            "stripe.2.node.1.node-hostname=localhost3",
             "stripe.2.node.2.node-name=node2",
-            "stripe.2.node.2.node-hostname=localhost"
+            "stripe.2.node.2.node-hostname=localhost4"
         ),
         Cluster.newDefaultCluster(
             new Stripe(
-                Node.newDefaultNode("node1", "localhost"),
-                Node.newDefaultNode("node2", "localhost")),
+                Node.newDefaultNode("node1", "localhost1"),
+                Node.newDefaultNode("node2", "localhost2")),
             new Stripe(
-                Node.newDefaultNode("node1", "localhost"),
-                Node.newDefaultNode("node2", "localhost"))
+                Node.newDefaultNode("node1", "localhost3"),
+                Node.newDefaultNode("node2", "localhost4"))
         ));
 
     assertConfigEquals(

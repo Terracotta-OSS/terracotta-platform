@@ -76,7 +76,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
           .stream()
           .filter(e -> e.getValue().equals(metadataDir))
           .map(Map.Entry::getKey)
-          .findFirst()
+          .findAny()
           .orElseGet(() -> {
             // we are using dynamic config
             String id = "platform";

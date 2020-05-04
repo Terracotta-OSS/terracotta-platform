@@ -258,7 +258,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   public Optional<Stripe> getStripe(InetSocketAddress address) {
     return stripes.stream()
         .filter(stripe -> stripe.containsNode(address))
-        .findFirst();
+        .findAny();
   }
 
   @JsonIgnore
@@ -325,21 +325,21 @@ public class Cluster implements Cloneable, PropertyHolder {
     return stripes.stream()
         .flatMap(stripe -> stripe.getNodes().stream())
         .filter(node -> node.hasAddress(nodeAddress))
-        .findFirst();
+        .findAny();
   }
 
   public OptionalInt getStripeId(InetSocketAddress address) {
     return IntStream.range(0, stripes.size())
         .filter(idx -> stripes.get(idx).containsNode(address))
         .map(idx -> idx + 1)
-        .findFirst();
+        .findAny();
   }
 
   public OptionalInt getNodeId(InetSocketAddress address) {
     return stripes.stream()
         .map(stripe -> stripe.getNodeId(address))
         .filter(OptionalInt::isPresent)
-        .findFirst()
+        .findAny()
         .orElse(OptionalInt.empty());
   }
 
@@ -348,7 +348,7 @@ public class Cluster implements Cloneable, PropertyHolder {
         .map(stripe -> IntStream.range(0, stripe.getNodeCount())
             .filter(idx -> nodeName.equals(stripe.getNodes().get(idx).getNodeName()))
             .map(idx -> idx + 1)
-            .findFirst())
+            .findAny())
         .orElse(OptionalInt.empty());
   }
 

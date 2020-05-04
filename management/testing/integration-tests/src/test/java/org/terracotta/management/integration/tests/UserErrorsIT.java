@@ -45,7 +45,7 @@ public class UserErrorsIT extends AbstractSingleTest {
     Client client = nmsService.readTopology()
         .clientStream()
         .filter(e -> e.getName().equals("pet-clinic"))
-        .findFirst()
+        .findAny()
         .get();
 
     // similar to cacheManagerName and cacheName context
@@ -70,7 +70,7 @@ public class UserErrorsIT extends AbstractSingleTest {
     ServerEntity serverEntity = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(e -> e.getName().equals("pet-clinic/pets"))
-        .findFirst()
+        .findAny()
         .get();
 
     Context context = serverEntity.getContext()

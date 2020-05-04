@@ -38,7 +38,7 @@ public class OffHeapLimitReachedIT extends AbstractSingleTest {
     List<ContextualNotification> notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
     Map<String, String> attributes = notifications.stream()
         .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
-        .findFirst()
+        .findAny()
         .get()
         .getAttributes();
     assertThat(attributes.keySet(), hasItem("oldThreshold"));
@@ -54,7 +54,7 @@ public class OffHeapLimitReachedIT extends AbstractSingleTest {
     notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
     attributes = notifications.stream()
         .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
-        .findFirst()
+        .findAny()
         .get()
         .getAttributes();
     
@@ -66,7 +66,7 @@ public class OffHeapLimitReachedIT extends AbstractSingleTest {
     notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
     attributes = notifications.stream()
         .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
-        .findFirst()
+        .findAny()
         .get()
         .getAttributes();
     
@@ -79,7 +79,7 @@ public class OffHeapLimitReachedIT extends AbstractSingleTest {
     notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
     attributes = notifications.stream()
         .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
-        .findFirst()
+        .findAny()
         .get()
         .getAttributes();
     
