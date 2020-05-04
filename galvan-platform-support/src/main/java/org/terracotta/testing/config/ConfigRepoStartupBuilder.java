@@ -109,7 +109,7 @@ public class ConfigRepoStartupBuilder extends StartupCommandBuilder {
           .pipeStderr(System.err);
 
       if (getDebugPort() > 0) {
-        builder.env("JAVA_OPTS", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + getDebugPort());
+        builder.env("JAVA_OPTS", "-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + getDebugPort());
       }
       process = builder.build();
     } catch (Exception e) {
