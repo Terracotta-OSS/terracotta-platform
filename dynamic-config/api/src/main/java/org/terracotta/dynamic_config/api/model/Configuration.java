@@ -334,6 +334,10 @@ public class Configuration {
         if (value == null && setting.isRequired()) {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
         }
+        // ensure that properties requiring an eager resolve are resolved
+        if (setting.mustBeResolved() && IParameterSubstitutor.containsSubstitutionParams(value)) {
+          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Placeholders are not allowed");
+        }
         break;
       default:
         throw new AssertionError(operation);

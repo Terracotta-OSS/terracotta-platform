@@ -42,6 +42,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -64,6 +65,8 @@ public class ConfigurationParserTest {
     lenient().when(substitutor.substitute("%c")).thenReturn("localhost.home");
     lenient().when(substitutor.substitute("%H")).thenReturn("home");
     lenient().when(substitutor.substitute("foo")).thenReturn("foo");
+    lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
+    lenient().when(substitutor.substitute("9410")).thenReturn("9410");
   }
 
   @Test
@@ -97,6 +100,8 @@ public class ConfigurationParserTest {
         "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
     );
     verify(substitutor, times(1)).substitute("%h");
+    verify(substitutor, times(1)).substitute("9410");
+    verify(substitutor, times(1)).substitute(startsWith("node-"));
     verifyNoMoreInteractions(substitutor);
   }
 
@@ -130,6 +135,8 @@ public class ConfigurationParserTest {
         "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
     );
     verify(substitutor).substitute("%c");
+    verify(substitutor, times(1)).substitute("9410");
+    verify(substitutor, times(1)).substitute(startsWith("node-"));
     verifyNoMoreInteractions(substitutor);
   }
 
@@ -163,6 +170,8 @@ public class ConfigurationParserTest {
         "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
     );
     verify(substitutor).substitute("foo");
+    verify(substitutor, times(1)).substitute("9410");
+    verify(substitutor, times(1)).substitute(startsWith("node-"));
     verifyNoMoreInteractions(substitutor);
   }
 
@@ -170,10 +179,9 @@ public class ConfigurationParserTest {
   public void test_parsing_invalid() {
     // node-hostname required
     assertConfigFail(config(), "No configuration provided");
-    assertConfigFail(config("failover-priority=availability", "security-ssl-tls=false"), "node-hostname is missing");
 
     // placeholder forbidden for node-hostname
-    assertConfigFail(config("failover-priority=availability", "stripe.1.node.1.node-hostname=%h"), "node-hostname cannot contain any placeholders");
+    assertConfigFail(config("failover-priority=availability", "stripe.1.node.1.node-hostname=%h"), "Invalid input: 'stripe.1.node.1.node-hostname=%h'. Placeholders are not allowed");
     assertConfigFail(config(
         "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",

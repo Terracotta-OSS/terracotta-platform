@@ -704,8 +704,8 @@ public enum Setting {
     return this.allowedValues.isEmpty() || this.allowedValues.contains(value);
   }
 
-  public boolean requiresEagerSubstitution() {
-    return this == NODE_HOSTNAME;
+  public boolean mustBeResolved() {
+    return this == NODE_HOSTNAME || this == NODE_PORT || this == NODE_NAME;
   }
 
   private PropertyHolder getTarget(NodeContext nodeContext) {
