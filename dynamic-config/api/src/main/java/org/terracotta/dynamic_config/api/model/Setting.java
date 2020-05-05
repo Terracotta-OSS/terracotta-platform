@@ -185,7 +185,7 @@ public enum Setting {
   ),
   NODE_REPOSITORY_DIR(SettingName.NODE_REPOSITORY_DIR,
       false,
-      "%H" + separator + "terracotta" + separator + "repository",
+      "terracotta" + separator + "repository",
       NODE,
       node -> {
         throw new UnsupportedOperationException("Unable to get the repository directory of a node");
@@ -199,7 +199,7 @@ public enum Setting {
   ),
   NODE_METADATA_DIR(SettingName.NODE_METADATA_DIR,
       false,
-      "%H" + separator + "terracotta" + separator + "metadata",
+      "terracotta" + separator + "metadata",
       NODE,
       fromNode(Node::getNodeMetadataDir),
       intoNode((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
@@ -211,7 +211,7 @@ public enum Setting {
   ),
   NODE_LOG_DIR(SettingName.NODE_LOG_DIR,
       false,
-      "%H" + separator + "terracotta" + separator + "logs",
+      "terracotta" + separator + "logs",
       NODE,
       fromNode(Node::getNodeLogDir),
       intoNode((node, value) -> node.setNodeLogDir(Paths.get(value))),
@@ -429,7 +429,7 @@ public enum Setting {
   ),
   DATA_DIRS(SettingName.DATA_DIRS,
       true,
-      "main:%H" + separator + "terracotta" + separator + "user-data" + separator + "main",
+      "main:terracotta" + separator + "user-data" + separator + "main",
       NODE,
       fromNode(Node::getDataDirs),
       intoNodeMap((node, tuple) -> {

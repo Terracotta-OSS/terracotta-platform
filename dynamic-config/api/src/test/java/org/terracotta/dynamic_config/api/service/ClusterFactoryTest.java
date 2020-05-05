@@ -136,13 +136,13 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.node-group-port=9430",
             "stripe.1.node.1.node-bind-address=0.0.0.0",
             "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.node-metadata-dir=terracotta/metadata",
+            "stripe.1.node.1.node-log-dir=terracotta/logs",
             "stripe.1.node.1.node-backup-dir=",
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.security-dir=",
             "stripe.1.node.1.security-audit-log-dir=",
-            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+            "stripe.1.node.1.data-dirs=main:terracotta/user-data/main"
         ),
         Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
 
@@ -162,13 +162,13 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.node-group-port=9430",
             "stripe.1.node.1.node-bind-address=0.0.0.0",
             "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.node-metadata-dir=terracotta/metadata",
+            "stripe.1.node.1.node-log-dir=terracotta/logs",
             "stripe.1.node.1.node-backup-dir=",
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.security-dir=",
             "stripe.1.node.1.security-audit-log-dir=",
-            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+            "stripe.1.node.1.data-dirs=main:terracotta/user-data/main"
         ),
         Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
   }
