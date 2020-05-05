@@ -124,12 +124,16 @@ public class CommonMapper {
   public Map<Class<?>, List<Object>> parsePlugins(String xml, TcConfig tcConfig,
                                                   BiFunction<ExtendedConfigParser, Element, Optional<Stream<?>>> configMapper,
                                                   BiFunction<ServiceConfigParser, Element, Optional<Stream<?>>> serviceMapper) {
-    return tcConfig
-        .getPlugins()
-        .getConfigOrService()
-        .stream()
-        .flatMap(o -> parsePlugin(xml, o, configMapper, serviceMapper))
-        .collect(groupingBy(Object::getClass));
+    if (tcConfig.getPlugins() != null) {
+      return tcConfig
+          .getPlugins()
+          .getConfigOrService()
+          .stream()
+          .flatMap(o -> parsePlugin(xml, o, configMapper, serviceMapper))
+          .collect(groupingBy(Object::getClass));
+    } else {
+      return Collections.emptyMap();
+    }
   }
 
   protected Stream<?> parsePlugin(String xml, Object o,
