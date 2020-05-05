@@ -125,7 +125,7 @@ public class SetSettingTest {
   public void test_setProperty_DATA_DIRS() {
     Node node = Node.newDefaultNode("localhost");
     assertThat(node.getDataDirs().size(), is(equalTo(1)));
-    assertThat(node.getDataDirs().get("main"), is(equalTo(Paths.get("terracotta" + separator + "user-data" + separator + "main"))));
+    assertThat(node.getDataDirs().get("main"), is(equalTo(Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"))));
 
     DATA_DIRS.setProperty(node, null);
     assertThat(node.getDataDirs().size(), is(equalTo(0)));

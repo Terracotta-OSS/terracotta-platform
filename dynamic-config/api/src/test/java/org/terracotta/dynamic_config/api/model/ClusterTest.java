@@ -268,11 +268,11 @@ public class ClusterTest {
   public void test_toProperties() {
     Cluster cluster = Cluster.newDefaultCluster("my-cluster", new Stripe(
         newDefaultNode("node-1", "localhost")
-            .setDataDir("foo", Paths.get("tc1/foo"))
-            .setDataDir("bar", Paths.get("tc1/bar")),
+            .setDataDir("foo", Paths.get("%H/tc1/foo"))
+            .setDataDir("bar", Paths.get("%H/tc1/bar")),
         newDefaultNode("node-2", "localhost")
-            .setDataDir("foo", Paths.get("tc2/foo"))
-            .setDataDir("bar", Paths.get("tc2/bar"))
+            .setDataDir("foo", Paths.get("%H/tc2/foo"))
+            .setDataDir("bar", Paths.get("%H/tc2/bar"))
             .setTcProperty("server.entity.processor.threads", "64")
             .setTcProperty("topology.validate", "true")))
         .setFailoverPriority(consistency(2))

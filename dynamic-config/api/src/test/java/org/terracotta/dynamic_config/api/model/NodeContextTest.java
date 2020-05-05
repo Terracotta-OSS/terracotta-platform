@@ -36,12 +36,12 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class NodeContextTest {
 
   Node node1 = newDefaultNode("node1", "localhost", 9410)
-      .setDataDir("foo", Paths.get("tc1/foo"))
-      .setDataDir("bar", Paths.get("tc1/bar"));
+      .setDataDir("foo", Paths.get("%H/tc1/foo"))
+      .setDataDir("bar", Paths.get("%H/tc1/bar"));
 
   Node node2 = newDefaultNode("node2", "localhost", 9411)
-      .setDataDir("foo", Paths.get("tc2/foo"))
-      .setDataDir("bar", Paths.get("tc2/bar"))
+      .setDataDir("foo", Paths.get("%H/tc2/foo"))
+      .setDataDir("bar", Paths.get("%H/tc2/bar"))
       .setTcProperty("server.entity.processor.threads", "64")
       .setTcProperty("topology.validate", "true");
 
