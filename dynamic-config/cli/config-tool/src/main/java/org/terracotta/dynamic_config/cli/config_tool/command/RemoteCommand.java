@@ -117,7 +117,7 @@ public abstract class RemoteCommand extends Command {
     }
 
     runClusterActivation(newNodes, cluster);
-    logger.debug("Configuration repositories have been created for all nodes");
+    logger.debug("Configuration directories have been created for all nodes");
 
     logger.info("Restarting nodes: {}", toString(newNodes));
     restartNodes(

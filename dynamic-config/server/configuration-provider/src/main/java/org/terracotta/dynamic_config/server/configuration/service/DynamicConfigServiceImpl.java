@@ -44,6 +44,7 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.server.ServerEnv;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -59,7 +60,6 @@ import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.util.Objects.requireNonNull;
-import org.terracotta.server.ServerEnv;
 import static org.terracotta.server.StopAction.RESTART;
 import static org.terracotta.server.StopAction.ZAP;
 
@@ -82,7 +82,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     this.runtimeNodeContext = requireNonNull(nodeContext);
     this.licenseService = requireNonNull(licenseService);
     this.nomadServerManager = requireNonNull(nomadServerManager);
-    this.licensePath = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
+    this.licensePath = nomadServerManager.getConfigurationManager().getLicensePath().resolve(LICENSE_FILE_NAME);
     if (hasLicenseFile()) {
       validateAgainstLicense(upcomingNodeContext.getCluster());
     }
@@ -106,7 +106,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   // do not move this method up in the interface otherwise any client could access the license content through diagnostic port
   public synchronized Optional<String> getLicenseContent() {
-    Path targetLicensePath = nomadServerManager.getRepositoryManager().getLicensePath().resolve(LICENSE_FILE_NAME);
+    Path targetLicensePath = nomadServerManager.getConfigurationManager().getLicensePath().resolve(LICENSE_FILE_NAME);
     if (Files.exists(targetLicensePath)) {
       try {
         return Optional.of(new String(Files.readAllBytes(targetLicensePath), StandardCharsets.UTF_8));
@@ -121,7 +121,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   public void addStateTo(StateDumpCollector stateDumpCollector) {
     stateDumpCollector.addState("licensePath", licensePath.toString());
     stateDumpCollector.addState("hasLicenseFile", hasLicenseFile());
-    stateDumpCollector.addState("configRepositoryDir", nomadServerManager.getRepositoryManager().getConfigRepositoryDir().toString());
+    stateDumpCollector.addState("configurationDir", nomadServerManager.getConfigurationManager().getConfigurationDirectory().toString());
     stateDumpCollector.addState("activated", isActivated());
     stateDumpCollector.addState("mustBeRestarted", mustBeRestarted());
     stateDumpCollector.addState("runtimeNodeContext", Json.parse(Json.toJson(getRuntimeNodeContext()), new TypeReference<Map<String, ?>>() {}));
@@ -171,7 +171,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public void onNewConfigurationSaved(NodeContext nodeContext, Long version) {
-    LOGGER.info("New config repository version: {} has been saved", version);
+    LOGGER.info("New configuration directory version: {} has been saved", version);
     // do not fire events within a synchronized block
     NodeContext upcoming = getUpcomingNodeContext();
     listeners.forEach(c -> c.onNewConfigurationSaved(upcoming, version));

@@ -41,7 +41,7 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
         "--node-log-dir", getNodePath(stripeId, nodeId).resolve("logs").toString(),
         "--node-backup-dir", getNodePath(stripeId, nodeId).resolve("backup").toString(),
         "--node-metadata-dir", getNodePath(stripeId, nodeId).resolve("metadata").toString(),
-        "--node-repository-dir", getNodePath(stripeId, nodeId).resolve("repository").toString(),
+        "--node-config-dir", getNodePath(stripeId, nodeId).resolve("config").toString(),
         "--data-dirs", "main:" + getNodePath(stripeId, nodeId).resolve("data-dir")
     );
   }

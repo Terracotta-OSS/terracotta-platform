@@ -36,10 +36,10 @@ public interface DynamicTopologyEntity extends Entity {
   void setListener(Listener listener);
 
   /**
-   * Returns the topology that has been lastly persisted in the config repository and will be
+   * Returns the topology that has been lastly persisted in the configuration directory and will be
    * effective after a restart if the node needs to be restarted following a change
    * <p>
-   * If a configuration change is made, and this change does not require a restart, the change will be persisted in the config repository,
+   * If a configuration change is made, and this change does not require a restart, the change will be persisted in the configuration directory,
    * and the change will be directly applied to both the runtime topology and the upcoming one, so that they are equal.
    */
   Cluster getUpcomingCluster() throws TimeoutException, InterruptedException;

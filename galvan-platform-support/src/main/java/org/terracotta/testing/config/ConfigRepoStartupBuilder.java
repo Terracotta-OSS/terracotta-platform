@@ -39,7 +39,7 @@ public class ConfigRepoStartupBuilder extends StartupCommandBuilder {
 
         // moves the generated files onto the server folder, but only for this server we are building
         Path source = generatedRepositories.resolve("stripe-" + getStripeId()).resolve(getServerName()).toAbsolutePath();
-        Path destination = getServerWorkingDir().resolve("repository").toAbsolutePath();
+        Path destination = getServerWorkingDir().resolve("config").toAbsolutePath();
         org.terracotta.utilities.io.Files.relocate(source, destination);
         buildStartupCommand();
       } catch (IOException e) {
@@ -59,16 +59,16 @@ public class ConfigRepoStartupBuilder extends StartupCommandBuilder {
     }
 
     command.add("-r");
-    command.add("repository");
+    command.add("config");
     builtCommand = command.toArray(new String[0]);
   }
 
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private Path convertConfigFiles() {
-    Path generatedRepositories = getServerWorkingDir().getParent().getParent().resolve("generated-repositories");
+    Path generatedRepositories = getServerWorkingDir().getParent().getParent().resolve("generated-configs");
 
     if (Files.exists(generatedRepositories)) {
-      // this builder is called fro each server, but the CLI will generate the repositories for all.
+      // this builder is called fro each server, but the CLI will generate the config directories for all.
       return generatedRepositories;
     }
 

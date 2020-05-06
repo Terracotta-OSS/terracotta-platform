@@ -183,19 +183,19 @@ public enum Setting {
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART)
   ),
-  NODE_REPOSITORY_DIR(SettingName.NODE_REPOSITORY_DIR,
+  NODE_CONFIG_DIR(SettingName.NODE_CONFIG_DIR,
       false,
-      "%H" + separator + "terracotta" + separator + "repository",
+      "%H" + separator + "terracotta" + separator + "config",
       NODE,
       node -> {
-        throw new UnsupportedOperationException("Unable to get the repository directory of a node");
+        throw new UnsupportedOperationException("Unable to get the configuration directory of a node");
       },
       unsupported(),
       noneOf(Operation.class),
       noneOf(Requirement.class),
       emptyList(),
       emptyList(),
-      (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_REPOSITORY_DIR, tuple2(key, value))
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_CONFIG_DIR, tuple2(key, value))
   ),
   NODE_METADATA_DIR(SettingName.NODE_METADATA_DIR,
       false,
@@ -723,7 +723,7 @@ public enum Setting {
   public static <T extends PropertyHolder> T fillRequiredSettings(T o) {
     Stream.of(Setting.values())
         .filter(isEqual(NODE_HOSTNAME).negate())
-        .filter(isEqual(NODE_REPOSITORY_DIR).negate())
+        .filter(isEqual(NODE_CONFIG_DIR).negate())
         .filter(isEqual(CLUSTER_NAME).negate())
         .filter(isEqual(LICENSE_FILE).negate())
         .filter(s -> s.isScope(o.getScope()))
@@ -735,7 +735,7 @@ public enum Setting {
   public static <T extends PropertyHolder> T fillSettings(T o) {
     Stream.of(Setting.values())
         .filter(isEqual(NODE_HOSTNAME).negate())
-        .filter(isEqual(NODE_REPOSITORY_DIR).negate())
+        .filter(isEqual(NODE_CONFIG_DIR).negate())
         .filter(isEqual(CLUSTER_NAME).negate())
         .filter(isEqual(LICENSE_FILE).negate())
         .filter(s -> s.isScope(o.getScope()))

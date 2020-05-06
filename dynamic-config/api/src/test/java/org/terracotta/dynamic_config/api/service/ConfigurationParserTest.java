@@ -226,8 +226,8 @@ public class ConfigurationParserTest {
     assertConfigFail(config(
         "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",
-        "stripe.1.node.1.node-repository-dir=foo/bar"
-    ), "Invalid input: 'stripe.1.node.1.node-repository-dir=foo/bar'. Reason: node-repository-dir does not allow any operation at node level");
+        "stripe.1.node.1.node-config-dir=foo/bar"
+    ), "Invalid input: 'stripe.1.node.1.node-config-dir=foo/bar'. Reason: node-config-dir does not allow any operation at node level");
     assertConfigFail(config(
         "failover-priority=availability",
         "stripe.1.node.1.node-hostname=localhost",

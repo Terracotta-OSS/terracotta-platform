@@ -62,24 +62,24 @@ public class ConfigFileStartupBuilder extends StartupCommandBuilder {
     command.add("-p");
     command.add(String.valueOf(getPort()));
 
-    Path repository;
+    Path configDir;
     try {
-      repository = Files.createTempDirectory(getServerWorkingDir(), "repository");
+      configDir = Files.createTempDirectory(getServerWorkingDir(), "config");
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
     command.add("-r");
-    command.add(repository.toString());
+    command.add(configDir.toString());
 
     builtCommand = command.toArray(new String[0]);
   }
 
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   private Path convertToConfigFile() {
-    Path generatedConfigFileDir = getServerWorkingDir().getParent().getParent().resolve("generated-config");
+    Path generatedConfigFileDir = getServerWorkingDir().getParent().getParent().resolve("generated-configs");
 
     if (Files.exists(generatedConfigFileDir)) {
-      // this builder is called for each server, but the CLI will generate the repositories for all.
+      // this builder is called for each server, but the CLI will generate the config directories for all.
       return generatedConfigFileDir;
     }
 

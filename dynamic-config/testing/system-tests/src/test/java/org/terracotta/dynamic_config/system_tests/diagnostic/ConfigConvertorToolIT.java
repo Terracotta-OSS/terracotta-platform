@@ -33,8 +33,8 @@ import java.nio.file.Paths;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class ConfigConvertorToolIT {
   @Rule
@@ -48,9 +48,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1.xml",
         "-n", "my-cluster",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("my-cluster.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
 
@@ -78,7 +78,7 @@ public class ConfigConvertorToolIT {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString());
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString());
   }
 
   @Test
@@ -89,7 +89,7 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_no_server_element.xml",
         "-n", "my-cluster",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
   }
 
@@ -99,9 +99,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1.xml",
         "-n", "my-cluster",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("my-cluster.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodeLogDir(), is(Paths.get("%h-logs")));
@@ -114,9 +114,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster_default_lease_failover_reconnect_window.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getClientLeaseDuration(), is(Measure.of(150, TimeUnit.SECONDS)));
@@ -128,9 +128,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster_default_lease_failover_reconnect_window.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
@@ -142,9 +142,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster_default_lease_failover_reconnect_window.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getClientReconnectWindow(), is(Measure.of(120, TimeUnit.SECONDS)));
@@ -156,9 +156,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_lease_failover_reconnect_window",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster_lease_failover_reconnect_window.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getClientLeaseDuration(), is(Measure.of(5, TimeUnit.SECONDS)));
@@ -170,9 +170,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_lease_failover_reconnect_window",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster_lease_failover_reconnect_window.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
@@ -184,9 +184,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_lease_failover_reconnect_window",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster_lease_failover_reconnect_window.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getClientReconnectWindow(), is(Measure.of(125, TimeUnit.SECONDS)));
@@ -198,9 +198,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-node-port-bind-address",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster-node-port-bind-address.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-node-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodePort(), is(9411));
@@ -212,9 +212,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-node-port-bind-address",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster-node-port-bind-address.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-node-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodeBindAddress(), is("1.1.1.1"));
@@ -226,9 +226,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-node-group-port-group-bind-address",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster-node-group-port-group-bind-address.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-node-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodeGroupPort(), is(9431));
@@ -240,9 +240,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-node-group-port-group-bind-address",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster-node-group-port-group-bind-address.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-node-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodeGroupBindAddress(), is("2.2.2.2"));
@@ -254,9 +254,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-log-dir-tc-prop",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster-log-dir-tc-prop.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodeLogDir(), is(Paths.get("abcd")));
@@ -268,9 +268,9 @@ public class ConfigConvertorToolIT {
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-log-dir-tc-prop",
         "-t", "properties",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("cluster-log-dir-tc-prop.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getTcProperties().size(), is(1));
@@ -282,10 +282,10 @@ public class ConfigConvertorToolIT {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
-        "-t", "repository",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-t", "directory",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("stripe-1").resolve("testServer0").resolve("config").resolve("testServer0.1.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("stripe-1").resolve("testServer0").resolve("cluster").resolve("testServer0.1.properties");
     assertTrue(Files.exists(config));
     assertThat(Props.load(getClass().getResourceAsStream("/conversion/cluster-1.properties")), is(equalTo(Props.load(config))));
   }
@@ -295,9 +295,9 @@ public class ConfigConvertorToolIT {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-repositories").resolve("stripe-1").resolve("testServer0").resolve("config").resolve("testServer0.1.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("stripe-1").resolve("testServer0").resolve("cluster").resolve("testServer0.1.properties");
     assertTrue(Files.exists(config));
     assertThat(Props.load(getClass().getResourceAsStream("/conversion/cluster-1.properties")), is(equalTo(Props.load(config))));
   }

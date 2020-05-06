@@ -27,31 +27,32 @@ import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
-import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadRepositoryManager.RepositoryDepth.FULL;
-import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadRepositoryManager.RepositoryDepth.NONE;
-import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadRepositoryManager.RepositoryDepth.ROOT_ONLY;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager.ConfigDirDepth.FULL;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager.ConfigDirDepth.NONE;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager.ConfigDirDepth.ROOT_ONLY;
 
-public class NomadRepositoryManager {
-  private static final String CONFIG = "config";
-  private static final String LICENSE = "license";
-  private static final String SANSKRIT = "sanskrit";
+public class NomadConfigurationManager {
+
+  static final String DIR_CLUSTER = "cluster";
+  static final String DIR_LICENSE = "license";
+  static final String DIR_CHANGES = "changes";
 
   private final Path rootPath;
-  private final Path configPath;
+  private final Path clusterPath;
   private final Path licensePath;
-  private final Path sanskritPath;
+  private final Path changesPath;
   private final IParameterSubstitutor parameterSubstitutor;
 
-  public NomadRepositoryManager(Path configRepositoryDir, IParameterSubstitutor parameterSubstitutor) {
+  public NomadConfigurationManager(Path configurationDirectory, IParameterSubstitutor parameterSubstitutor) {
     this.parameterSubstitutor = parameterSubstitutor;
-    requireNonNull(configRepositoryDir);
+    requireNonNull(configurationDirectory);
     requireNonNull(parameterSubstitutor);
 
     // substitute path eagerly as this class needs to interact with the file system for all its functionalities
-    this.rootPath = parameterSubstitutor.substitute(configRepositoryDir).toAbsolutePath();
-    this.configPath = rootPath.resolve(CONFIG);
-    this.licensePath = rootPath.resolve(LICENSE);
-    this.sanskritPath = rootPath.resolve(SANSKRIT);
+    this.rootPath = parameterSubstitutor.substitute(configurationDirectory).toAbsolutePath();
+    this.clusterPath = rootPath.resolve(DIR_CLUSTER);
+    this.licensePath = rootPath.resolve(DIR_LICENSE);
+    this.changesPath = rootPath.resolve(DIR_CHANGES);
   }
 
   public Optional<String> getNodeName() {
@@ -59,48 +60,48 @@ public class NomadRepositoryManager {
   }
 
   public void createDirectories() {
-    RepositoryDepth repositoryDepth = getRepositoryDepth();
-    if (repositoryDepth == NONE) {
+    ConfigDirDepth depth = getConfigurationDirectoryDepth();
+    if (depth == NONE) {
       createNomadRoot();
     }
 
-    if (repositoryDepth == NONE || repositoryDepth == ROOT_ONLY) {
+    if (depth == NONE || depth == ROOT_ONLY) {
       createNomadSubDirectories();
     }
   }
 
-  public Path getConfigRepositoryDir() {
+  public Path getConfigurationDirectory() {
     return rootPath;
   }
 
-  public Path getConfigPath() {
-    return configPath;
+  public Path getClusterPath() {
+    return clusterPath;
   }
 
   public Path getLicensePath() {
     return licensePath;
   }
 
-  public Path getSanskritPath() {
-    return sanskritPath;
+  public Path getChangesPath() {
+    return changesPath;
   }
 
-  RepositoryDepth getRepositoryDepth() {
-    boolean nomadRootExists = checkDirectoryExists(rootPath);
-    boolean configPathExists = checkDirectoryExists(configPath);
+  ConfigDirDepth getConfigurationDirectoryDepth() {
+    boolean rootExists = checkDirectoryExists(rootPath);
+    boolean clusterPathExists = checkDirectoryExists(clusterPath);
     boolean licensePathExists = checkDirectoryExists(licensePath);
-    boolean sanskritPathExists = checkDirectoryExists(sanskritPath);
+    boolean changesPathExists = checkDirectoryExists(changesPath);
 
-    if (nomadRootExists && sanskritPathExists && configPathExists && licensePathExists) {
+    if (rootExists && changesPathExists && clusterPathExists && licensePathExists) {
       return FULL;
     }
-    if (nomadRootExists && !sanskritPathExists && !configPathExists && !licensePathExists) {
+    if (rootExists && !changesPathExists && !clusterPathExists && !licensePathExists) {
       return ROOT_ONLY;
     }
-    if (!nomadRootExists && !sanskritPathExists && !configPathExists && !licensePathExists) {
+    if (!rootExists && !changesPathExists && !clusterPathExists && !licensePathExists) {
       return NONE;
     }
-    throw new IllegalStateException("Repository is partially formed. A valid repository should contain '" + CONFIG + "', '" + LICENSE + "', and '" + SANSKRIT + "' directories");
+    throw new IllegalStateException("Configuration directory is partially formed. A valid configuration directory should contain '" + DIR_CLUSTER + "', '" + DIR_LICENSE + "', and '" + DIR_CHANGES + "' directories");
   }
 
   boolean checkDirectoryExists(Path path) {
@@ -113,9 +114,9 @@ public class NomadRepositoryManager {
 
   void createNomadSubDirectories() {
     try {
-      Files.createDirectories(configPath);
+      Files.createDirectories(clusterPath);
       Files.createDirectories(licensePath);
-      Files.createDirectories(sanskritPath);
+      Files.createDirectories(changesPath);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -129,27 +130,27 @@ public class NomadRepositoryManager {
     }
   }
 
-  enum RepositoryDepth {
+  enum ConfigDirDepth {
     FULL,
     ROOT_ONLY,
     NONE
   }
 
   /**
-   * Returns the node name from a configuration file contained in a fully-formed config repository.
+   * Returns the node name from a configuration file contained in a fully-formed configuration directory.
    *
-   * @param nomadRoot repository root
+   * @param configurationDirectory configuration directory
    * @return {@code Optional} containing the node name, or an empty {@code Optional} if a node name couldn't be found
-   * @throws IllegalStateException if the repository is malformed
+   * @throws IllegalStateException if the configuration directory is malformed
    * @throws UncheckedIOException  if an {@code IOException} occurs while reading the configuration file
    */
-  public static Optional<String> findNodeName(Path nomadRoot, IParameterSubstitutor parameterSubstitutor) {
-    requireNonNull(nomadRoot);
+  public static Optional<String> findNodeName(Path configurationDirectory, IParameterSubstitutor parameterSubstitutor) {
+    requireNonNull(configurationDirectory);
 
-    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(nomadRoot, parameterSubstitutor);
-    RepositoryDepth repositoryDepth = nomadRepositoryManager.getRepositoryDepth();
-    if (repositoryDepth == FULL) {
-      try (Stream<Path> pathStream = Files.list(nomadRepositoryManager.getConfigPath())) {
+    NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(configurationDirectory, parameterSubstitutor);
+    ConfigDirDepth depth = nomadConfigurationManager.getConfigurationDirectoryDepth();
+    if (depth == FULL) {
+      try (Stream<Path> pathStream = Files.list(nomadConfigurationManager.getClusterPath())) {
         Set<String> nodeNames = pathStream
             .map(Path::getFileName)
             .map(Path::toString)
@@ -162,7 +163,7 @@ public class NomadRepositoryManager {
           throw new IllegalStateException(
               String.format("Found versioned cluster config files for the following different nodes: %s in: %s",
                   String.join(", ", nodeNames),
-                  nomadRepositoryManager.getConfigPath()
+                  nomadConfigurationManager.getClusterPath()
               )
           );
         } else if (nodeNames.size() == 1) {

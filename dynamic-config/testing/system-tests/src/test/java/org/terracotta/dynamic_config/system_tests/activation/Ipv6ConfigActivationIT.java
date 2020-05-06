@@ -20,7 +20,7 @@ import org.junit.Test;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
+import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 
 import java.nio.file.Path;
 
@@ -34,8 +34,8 @@ public class Ipv6ConfigActivationIT extends DynamicConfigIT {
 
   @Test
   public void testStartupFromMigratedConfigRepoAndGetCommand() throws Exception {
-    Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1NodeIpv6);
-    startNode(1, 1, "--node-repository-dir", configurationRepo.toString());
+    Path configurationRepo = generateNodeConfigDir(1, 1, ConfigurationGenerator::generate1Stripe1NodeIpv6);
+    startNode(1, 1, "--node-config-dir", configurationRepo.toString());
     waitForActive(1, 1);
 
     assertThat(configToolInvocation("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"), containsOutput("offheap-resources.main=512MB"));

@@ -23,7 +23,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Nomad change that supports the initial setup of the config repository
+ * Nomad change that supports the initial setup of the configuration directory
  *
  * @author Mathieu Carbou
  */

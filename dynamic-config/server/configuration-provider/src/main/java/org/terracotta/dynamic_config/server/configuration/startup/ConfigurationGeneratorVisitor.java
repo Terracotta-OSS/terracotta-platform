@@ -24,7 +24,7 @@ import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.PathResolver;
-import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadRepositoryManager;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.service.DynamicConfigServiceImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.inet.InetSocketAddressUtils;
@@ -88,7 +88,7 @@ public class ConfigurationGeneratorVisitor {
     }
 
     NodeContext nodeContext = nomadServerManager.getConfiguration()
-        .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the repository folder and try again."));
+        .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the configuration directory and try again."));
 
     if (repairMode) {
       // If repair mode is ON: , make sure we make platform think that the node is alone...
@@ -101,36 +101,36 @@ public class ConfigurationGeneratorVisitor {
     return new StartupConfiguration(nodeContext, unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor);
   }
 
-  void startUnconfigured(NodeContext nodeContext, String optionalNodeRepositoryFromCLI) {
+  void startUnconfigured(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {
     String nodeName = nodeContext.getNodeName();
     logger.info("Starting unconfigured node: {}", nodeName);
-    Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
-    nomadServerManager.init(nodeRepositoryDir, nodeContext);
+    Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
+    nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
     this.nodeContext = nodeContext;
     this.repairMode = false;
     this.unConfiguredMode = true;
   }
 
-  void startActivated(NodeContext nodeContext, String optionalLicenseFile, String optionalNodeRepositoryFromCLI) {
+  void startActivated(NodeContext nodeContext, String optionalLicenseFile, String optionalNodeConfigurationDirectoryFromCLI) {
     String nodeName = nodeContext.getNodeName();
     logger.info("Starting node: {} in cluster: {}", nodeName, nodeContext.getCluster().getName());
-    Path nodeRepositoryDir = getOrDefaultRepositoryDir(optionalNodeRepositoryFromCLI);
-    logger.debug("Creating node config repository at: {}", parameterSubstitutor.substitute(nodeRepositoryDir).toAbsolutePath());
-    nomadServerManager.init(nodeRepositoryDir, nodeContext);
+    Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirectoryFromCLI);
+    logger.debug("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
+    nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.activate(nodeContext.getCluster(), optionalLicenseFile == null ? null : read(optionalLicenseFile));
-    runNomadActivation(nodeContext.getCluster(), nodeContext.getNode(), nomadServerManager, nodeRepositoryDir);
+    runNomadActivation(nodeContext.getCluster(), nodeContext.getNode(), nomadServerManager, nodeConfigurationDir);
 
     this.nodeContext = nodeContext;
     this.repairMode = false;
     this.unConfiguredMode = false;
   }
 
-  void startUsingConfigRepo(Path nodeRepositoryDir, String nodeName, boolean repairMode) {
-    logger.info("Starting node: {} from config repository: {}", nodeName, parameterSubstitutor.substitute(nodeRepositoryDir));
-    nomadServerManager.init(nodeRepositoryDir, nodeName);
+  void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode) {
+    logger.info("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
+    nomadServerManager.init(nodeConfigurationDir, nodeName);
 
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     if (!repairMode) {
@@ -195,16 +195,16 @@ public class ConfigurationGeneratorVisitor {
     );
   }
 
-  Path getOrDefaultRepositoryDir(String repositoryDir) {
-    return Paths.get(repositoryDir != null ? repositoryDir : Setting.NODE_REPOSITORY_DIR.getDefaultValue());
+  Path getOrDefaultConfigurationDirectory(String configPath) {
+    return Paths.get(configPath != null ? configPath : Setting.NODE_CONFIG_DIR.getDefaultValue());
   }
 
-  Optional<String> findNodeName(Path repositoryDir, IParameterSubstitutor parameterSubstitutor) {
-    return NomadRepositoryManager.findNodeName(repositoryDir, parameterSubstitutor);
+  Optional<String> findNodeName(Path configPath, IParameterSubstitutor parameterSubstitutor) {
+    return NomadConfigurationManager.findNodeName(configPath, parameterSubstitutor);
   }
 
-  private void runNomadActivation(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeRepositoryDir) {
-    requireNonNull(nodeRepositoryDir);
+  private void runNomadActivation(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeConfigurationDir) {
+    requireNonNull(nodeConfigurationDir);
     NomadEnvironment environment = new NomadEnvironment();
     NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();

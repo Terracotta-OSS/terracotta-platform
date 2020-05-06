@@ -32,7 +32,7 @@
   <name>Common :: POM</name>
 
   <description>
-    Group of modules that are not related to platform: utilities, single libraries or stuff that could be easily moved out to another repository or on its own.
+    Group of modules that are not related to platform: utilities, single libraries or stuff that could be easily moved out to another configuration directory or on its own.
   </description>
 
   <modules>

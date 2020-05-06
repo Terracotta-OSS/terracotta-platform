@@ -61,9 +61,9 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
       if (cluster.getStripeCount() > 1) {
         throw new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster");
       }
-      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getNodeAddress()), options.getLicenseFile(), options.getNodeRepositoryDir());
+      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getNodeAddress()), options.getLicenseFile(), options.getNodeConfigDir());
     } else {
-      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getNodeAddress()), options.getNodeRepositoryDir());
+      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getNodeAddress()), options.getNodeConfigDir());
     }
   }
 }

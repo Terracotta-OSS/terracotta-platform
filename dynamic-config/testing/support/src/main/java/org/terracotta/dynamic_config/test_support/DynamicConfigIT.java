@@ -23,9 +23,11 @@ import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.config.ConfigurationContext;
+import org.terracotta.angela.client.filesystem.RemoteFolder;
 import org.terracotta.angela.client.support.junit.AngelaRule;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.ConfigToolExecutionResult;
+import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
 import org.terracotta.angela.common.distribution.Distribution;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
@@ -36,7 +38,7 @@ import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
+import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.TmpDir;
@@ -67,10 +69,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
-import org.terracotta.angela.client.filesystem.RemoteFolder;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
-import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
@@ -237,7 +237,7 @@ public class DynamicConfigIT {
     String symbolicName = "node-" + stripeId + "-" + nodeId;
     // note: node port and group port will be automatically set
     return server(symbolicName, "localhost")
-        .configRepo(getNodePath(stripeId, nodeId).resolve("repository").toString())
+        .configRepo(getNodePath(stripeId, nodeId).resolve("config").toString())
         .logs(getNodePath(stripeId, nodeId).resolve("logs").toString())
         .dataDir("main:" + getNodePath(stripeId, nodeId).resolve("data-dir").toString())
         .offheap("main:512MB,foo:1GB")
@@ -261,8 +261,8 @@ public class DynamicConfigIT {
     return Paths.get(getNodeName(stripeId, nodeId));
   }
 
-  protected final Path getNodeRepositoryDir(int stripeId, int nodeId) {
-    return getNodePath(stripeId, nodeId).resolve("repository");
+  protected final Path getNodeConfigDir(int stripeId, int nodeId) {
+    return getNodePath(stripeId, nodeId).resolve("config");
   }
 
   protected Path getLicensePath() {
@@ -315,10 +315,10 @@ public class DynamicConfigIT {
     return dest;
   }
 
-  protected Path generateNodeRepositoryDir(int stripeId, int nodeId, Consumer<ConfigRepositoryGenerator> fn) throws Exception {
-    Path nodeRepositoryDir = getBaseDir().resolve(getNodeRepositoryDir(stripeId, nodeId));
-    Path repositoriesDir = getBaseDir().resolve("generated-repositories");
-    ConfigRepositoryGenerator clusterGenerator = new ConfigRepositoryGenerator(repositoriesDir, new ConfigRepositoryGenerator.PortSupplier() {
+  protected Path generateNodeConfigDir(int stripeId, int nodeId, Consumer<ConfigurationGenerator> fn) throws Exception {
+    Path nodeConfigurationDir = getBaseDir().resolve(getNodeConfigDir(stripeId, nodeId));
+    Path configDirs = getBaseDir().resolve("generated-configs");
+    ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(configDirs, new ConfigurationGenerator.PortSupplier() {
       @Override
       public int getNodePort(int stripeId, int nodeId) {
         return angela.getNodePort(stripeId, nodeId);
@@ -329,11 +329,11 @@ public class DynamicConfigIT {
         return angela.getNodeGroupPort(stripeId, nodeId);
       }
     });
-    LOGGER.debug("Generating cluster node repositories into: {}", repositoriesDir);
+    LOGGER.debug("Generating cluster node configuration directories into: {}", configDirs);
     fn.accept(clusterGenerator);
-    org.terracotta.utilities.io.Files.copy(repositoriesDir.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeRepositoryDir, RECURSIVE);
-    LOGGER.debug("Created node repository into: {}", nodeRepositoryDir);
-    return nodeRepositoryDir;
+    org.terracotta.utilities.io.Files.copy(configDirs.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeConfigurationDir, RECURSIVE);
+    LOGGER.debug("Created node configuration directory into: {}", nodeConfigurationDir);
+    return nodeConfigurationDir;
   }
 
   private Properties generateProperties() {

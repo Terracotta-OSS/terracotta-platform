@@ -32,10 +32,10 @@ public class ConfigConverterTest {
   @Test
   public void test_conversion_fail_cluster_name_missing() {
     exceptionRule.expect(ParameterException.class);
-    exceptionRule.expectMessage("Cluster name is required for conversion to a config repository");
+    exceptionRule.expectMessage("Cluster name is required for conversion into a configuration directory");
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/tc-config.xml",
-        "-d", tmpDir.getRoot().resolve("generated-repositories").toAbsolutePath().toString(),
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
   }
 

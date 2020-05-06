@@ -77,7 +77,7 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     } catch (SAXException e) {
-      throw new IllegalStateException("Invalid config repository XML file: " + e.getMessage(), e);
+      throw new IllegalStateException("Invalid tc-config XML input: " + e.getMessage(), e);
     }
   }
 

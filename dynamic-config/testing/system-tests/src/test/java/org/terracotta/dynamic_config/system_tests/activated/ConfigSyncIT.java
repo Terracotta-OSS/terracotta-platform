@@ -199,8 +199,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     Files.createDirectories(activePath);
     Files.createDirectories(passivePath);
 
-    angela.tsa().browse(active, Paths.get(active.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(activePath.toFile());
-    angela.tsa().browse(passive, Paths.get(passive.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(passivePath.toFile());
+    angela.tsa().browse(active, Paths.get(active.getConfigRepo()).resolve("changes").toString()).downloadTo(activePath.toFile());
+    angela.tsa().browse(passive, Paths.get(passive.getConfigRepo()).resolve("changes").toString()).downloadTo(passivePath.toFile());
 
     List<SanskritObject> activeChanges = getChanges(activePath);
     List<SanskritObject> passiveChanges = getChanges(passivePath);

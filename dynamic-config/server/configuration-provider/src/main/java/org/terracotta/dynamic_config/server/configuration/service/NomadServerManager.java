@@ -35,7 +35,7 @@ import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.ConfigChangeApplicator;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.UncheckedNomadException;
-import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadRepositoryManager;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.ApplicabilityNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.ClusterActivationNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.DefaultRoutingNomadChangeProcessor;
@@ -66,7 +66,7 @@ public class NomadServerManager {
   private final DynamicConfigListener dynamicConfigListener;
 
   private volatile UpgradableNomadServer<NodeContext> nomadServer;
-  private volatile NomadRepositoryManager repositoryManager;
+  private volatile NomadConfigurationManager configurationManager;
   private volatile DynamicConfigServiceImpl dynamicConfigService;
   private volatile RoutingNomadChangeProcessor routingNomadChangeProcessor;
 
@@ -85,8 +85,8 @@ public class NomadServerManager {
     return dynamicConfigService;
   }
 
-  public NomadRepositoryManager getRepositoryManager() {
-    return repositoryManager;
+  public NomadConfigurationManager getConfigurationManager() {
+    return configurationManager;
   }
 
   public Optional<RoutingNomadChangeProcessor> getRoutingNomadChangeProcessor() {
@@ -97,14 +97,14 @@ public class NomadServerManager {
     return dynamicConfigListener;
   }
 
-  public void init(Path repositoryPath, String nodeName) throws UncheckedNomadException {
-    // Case where Nomad is bootstrapped from an existing config repository.
+  public void init(Path configPath, String nodeName) throws UncheckedNomadException {
+    // Case where Nomad is bootstrapped from an existing configuration directory.
     // We only know the node name.
     // getConfiguration() can be empty in case the repo has been created
     // but not yet populated with some Nomad entries, or it was reset.
     // In these cases, node will start in diagnostic mode and use an existing
     // repo structure. So we create an empty cluster / node topology
-    init(repositoryPath,
+    init(configPath,
         () -> nodeName,
         () -> getConfiguration().orElseGet(
             () -> new NodeContext(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue()))))
@@ -112,27 +112,27 @@ public class NomadServerManager {
                 .setFailoverPriority(availability()), 1, nodeName)));
   }
 
-  public void init(Path repositoryPath, NodeContext nodeContext) throws UncheckedNomadException {
-    init(repositoryPath, nodeContext::getNodeName, () -> nodeContext);
+  public void init(Path configPath, NodeContext nodeContext) throws UncheckedNomadException {
+    init(configPath, nodeContext::getNodeName, () -> nodeContext);
   }
 
-  public void init(Path repositoryPath, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws UncheckedNomadException {
-    requireNonNull(repositoryPath);
+  public void init(Path configPath, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws UncheckedNomadException {
+    requireNonNull(configPath);
     requireNonNull(nodeName);
     requireNonNull(nodeContext);
 
-    this.repositoryManager = new NomadRepositoryManager(repositoryPath, parameterSubstitutor);
-    this.repositoryManager.createDirectories();
+    this.configurationManager = new NomadConfigurationManager(configPath, parameterSubstitutor);
+    this.configurationManager.createDirectories();
 
     try {
-      this.nomadServer = NomadServerFactory.createServer(repositoryManager, null, nodeName.get(), dynamicConfigListener);
+      this.nomadServer = NomadServerFactory.createServer(configurationManager, null, nodeName.get(), dynamicConfigListener);
     } catch (SanskritException | NomadException e) {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
     this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this);
 
-    LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(repositoryPath.toString()));
+    LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(configPath.toString()));
   }
 
   public void downgradeForRead() {

@@ -48,6 +48,8 @@ import org.terracotta.dynamic_config.server.configuration.sync.Require;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.StopAction;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,8 +59,6 @@ import java.util.Set;
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
-import org.terracotta.server.ServerEnv;
-import org.terracotta.server.StopAction;
 
 public class DynamicConfigConfigurationProvider implements ConfigurationProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigConfigurationProvider.class);
@@ -85,8 +85,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // It makes sure to resolve any relative path to absolute ones based on the working directory.
       // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
       // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
-      // the config repository: repository/config.
-      // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
+      // the config directory: config/cluster.
+      // So this has the effect of putting all defined directories inside such as config/config/logs, config/config/user-data, config/metadata, etc
       // That is why we need to force the resolving within the XML relatively to the user directory.
       Path baseDir = parameterSubstitutor.substitute(Paths.get("%(user.dir)"));
       PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
