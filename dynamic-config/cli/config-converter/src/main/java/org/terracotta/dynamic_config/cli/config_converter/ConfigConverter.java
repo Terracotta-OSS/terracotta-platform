@@ -90,8 +90,7 @@ public class ConfigConverter {
       });
     }
     if (!perNodeWarnings.isEmpty()) {
-      LOGGER.warn("{}WARNING:{}The following nodes were found to have placeholders in paths, which may not work as intended on new hosts after config conversion: {}{}{}",
-          lineSeparator(),
+      LOGGER.warn("{}NOTE: The following nodes were found to have placeholders in paths, which may not work as intended on new hosts after config conversion: {}{}{}",
           lineSeparator(),
           lineSeparator(),
           perNodeWarnings.entrySet().stream()
