@@ -65,9 +65,9 @@ public class NodeTest {
       .setNodeGroupPort(9430)
       .setNodeBindAddress("0.0.0.0")
       .setNodeGroupBindAddress("0.0.0.0")
-      .setNodeMetadataDir(Paths.get("terracotta" + separator + "metadata"))
-      .setNodeLogDir(Paths.get("terracotta" + separator + "logs"))
-      .setDataDir("main", Paths.get("terracotta" + separator + "user-data" + separator + "main"));
+      .setNodeMetadataDir(Paths.get("%H" + separator + "terracotta" + separator + "metadata"))
+      .setNodeLogDir(Paths.get("%H" + separator + "terracotta" + separator + "logs"))
+      .setDataDir("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"));
 
   @Test
   public void test_clone() {

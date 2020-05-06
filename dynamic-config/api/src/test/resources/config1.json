@@ -31,7 +31,7 @@
           "nodeHostname": "localhost",
           "nodeLogDir": "stripe1/testServer0/logs",
           "nodeLoggerOverrides": {},
-          "nodeMetadataDir": "terracotta/metadata",
+          "nodeMetadataDir": "%H/terracotta/metadata",
           "nodeName": "testServer0",
           "nodePort": 23633,
           "tcProperties": {
