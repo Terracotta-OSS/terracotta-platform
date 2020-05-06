@@ -55,7 +55,7 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
       processor.validate(baseConfig, dynamicConfigNomadChange);
 
       // if the change is valid, we apply it on the topology, for all the nodes,
-      // to generate a config repository that is the same everywhere
+      // to generate a configuration directory that is the same everywhere
       Cluster original = baseConfig == null ? null : baseConfig.getCluster();
       Cluster updated = dynamicConfigNomadChange.apply(original);
       if (updated == null) {

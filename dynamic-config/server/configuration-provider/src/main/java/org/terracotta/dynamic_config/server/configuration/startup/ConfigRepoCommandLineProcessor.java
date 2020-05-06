@@ -39,14 +39,14 @@ public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
 
   @Override
   public void process() {
-    Path repositoryDir = configurationGeneratorVisitor.getOrDefaultRepositoryDir(options.getNodeRepositoryDir());
-    Optional<String> nodeName = configurationGeneratorVisitor.findNodeName(repositoryDir, parameterSubstitutor);
+    Path configPath = configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(options.getNodeConfigDir());
+    Optional<String> nodeName = configurationGeneratorVisitor.findNodeName(configPath, parameterSubstitutor);
     if (nodeName.isPresent()) {
-      configurationGeneratorVisitor.startUsingConfigRepo(repositoryDir, nodeName.get(), options.wantsRepairMode());
+      configurationGeneratorVisitor.startUsingConfigRepo(configPath, nodeName.get(), options.wantsRepairMode());
       return;
     }
 
-    LOGGER.info("Did not find config repository at: " + parameterSubstitutor.substitute(repositoryDir));
+    LOGGER.info("Did not find configuration directory at: " + parameterSubstitutor.substitute(configPath));
     // Couldn't start node - pass the responsibility to the next starter
     nextStarter.process();
   }

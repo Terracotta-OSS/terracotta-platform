@@ -39,20 +39,20 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   @Test
   public void test_auto_activation_success_for_1x1_cluster() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/1x1.properties");
-    startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort()), "--node-repository-dir", "repository/stripe1/node-1-1");
+    startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort()), "--node-config-dir", "config/stripe1/node-1-1");
     waitForActive(1, 1);
   }
 
   @Test
   public void test_auto_activation_failure_for_different_1x2_cluster() throws Exception {
-    startNode(1, 1, "-f", copyConfigProperty("/config-property-files/1x2.properties").toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-repository-dir", "repository/stripe1/node-1-1");
+    startNode(1, 1, "-f", copyConfigProperty("/config-property-files/1x2.properties").toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-config-dir", "config/stripe1/node-1-1");
     waitForActive(1, 1);
 
     try {
       startNode(1, 2,
           "-f", copyConfigProperty("/config-property-files/1x2-diff.properties").toString(),
           "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)),
-          "--node-repository-dir", "repository/stripe1/node-1-2");
+          "--node-config-dir", "config/stripe1/node-1-2");
       fail();
     } catch (Exception e) {
       assertThat(err.getLog(), containsString("Unable to find any change in active node matching the topology used to activate this passive node"));
@@ -62,10 +62,10 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   @Test
   public void test_auto_activation_success_for_1x2_cluster() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
-    startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-repository-dir", "repository/stripe1/node-1-1");
+    startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-config-dir", "config/stripe1/node-1-1");
     waitForActive(1, 1);
 
-    startNode(1, 2, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--node-repository-dir", "repository/stripe1/node-1-2");
+    startNode(1, 2, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--node-config-dir", "config/stripe1/node-1-2");
     waitForPassive(1, 2);
   }
 }

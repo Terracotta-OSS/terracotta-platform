@@ -21,7 +21,7 @@ import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChang
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
-import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadRepositoryManager;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -63,13 +63,13 @@ public class ConfigRepoProcessor {
   }
 
   protected NomadServer<NodeContext> getNomadServer(int stripeId, String nodeName) {
-    Path repositoryPath = outputFolderPath.resolve("stripe-" + stripeId).resolve(nodeName);
-    return createServer(repositoryPath, stripeId, nodeName);
+    Path configPath = outputFolderPath.resolve("stripe-" + stripeId).resolve(nodeName);
+    return createServer(configPath, stripeId, nodeName);
   }
 
-  private NomadServer<NodeContext> createServer(Path repositoryPath, int stripeId, String nodeName) {
-    NomadRepositoryManager nomadRepositoryManager = new NomadRepositoryManager(repositoryPath, IParameterSubstitutor.identity());
-    nomadRepositoryManager.createDirectories();
+  private NomadServer<NodeContext> createServer(Path configPath, int stripeId, String nodeName) {
+    NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(configPath, IParameterSubstitutor.identity());
+    nomadConfigurationManager.createDirectories();
 
     ChangeApplicator<NodeContext> changeApplicator = new ChangeApplicator<NodeContext>() {
       @Override
@@ -87,7 +87,7 @@ public class ConfigRepoProcessor {
     };
 
     try {
-      return NomadServerFactory.createServer(nomadRepositoryManager, changeApplicator, nodeName, new DynamicConfigListenerAdapter());
+      return NomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, nodeName, new DynamicConfigListenerAdapter());
     } catch (SanskritException | NomadException e) {
       throw new RuntimeException(e);
     }

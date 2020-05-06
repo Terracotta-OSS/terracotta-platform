@@ -31,7 +31,7 @@ public interface DynamicConfigService {
   void setUpcomingCluster(Cluster cluster);
 
   /**
-   * Activates the Nomad system so that we can write a first config repository version.
+   * Activates the Nomad system so that we can write a first configuration directory version.
    * This requires the topology to set plus eventually the license installed.
    * <p>
    * License can be null.

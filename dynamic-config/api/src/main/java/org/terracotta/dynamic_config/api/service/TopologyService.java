@@ -32,11 +32,11 @@ public interface TopologyService {
    * <p>
    * - If the node is not activated: returns the topology that is currently being built and will be effective after node activation and restart
    * <p>
-   * - If the node is activated: returns the topology that has been lastly persisted in the config repository and will be effective after a restart.
+   * - If the node is activated: returns the topology that has been lastly persisted in the configuration directory and will be effective after a restart.
    * <p>
    * This is possible that the upcoming topology equals the runtime topology if no configuration change has been made requiring a restart
    * <p>
-   * If a configuration change is made, and this change does not require a restart, the change will be persisted in the config repository,
+   * If a configuration change is made, and this change does not require a restart, the change will be persisted in the configuration directory,
    * and the change will be directly applied to both the runtime topology and the upcoming one, so that they are equal.
    */
   NodeContext getUpcomingNodeContext();

@@ -52,6 +52,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.LICENSE_FILE;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_CONFIG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
@@ -59,7 +60,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_REPOSITORY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
@@ -76,8 +76,8 @@ public class ConfigurationTest {
 
   @Test
   public void test_valueOf_settings_cluster_level() {
-    Stream.of(NODE_REPOSITORY_DIR).forEach(setting -> {
-      String err = "Invalid input: 'node-repository-dir=%H/terracotta/repository'. Reason: node-repository-dir does not allow any operation at cluster level".replace("/", File.separator); // unix/win compat'
+    Stream.of(NODE_CONFIG_DIR).forEach(setting -> {
+      String err = "Invalid input: 'node-config-dir=%H/terracotta/config'. Reason: node-config-dir does not allow any operation at cluster level".replace("/", File.separator); // unix/win compat'
       assertThat(
           () -> Configuration.valueOf(setting),
           is(throwing(instanceOf(IllegalArgumentException.class))
@@ -154,7 +154,7 @@ public class ConfigurationTest {
         CLUSTER_NAME,
         FAILOVER_PRIORITY,
         LICENSE_FILE,
-        NODE_REPOSITORY_DIR,
+        NODE_CONFIG_DIR,
         OFFHEAP_RESOURCES,
         SECURITY_AUTHC,
         SECURITY_SSL_TLS,
@@ -222,7 +222,7 @@ public class ConfigurationTest {
         CLUSTER_NAME,
         FAILOVER_PRIORITY,
         LICENSE_FILE,
-        NODE_REPOSITORY_DIR,
+        NODE_CONFIG_DIR,
         OFFHEAP_RESOURCES,
         SECURITY_AUTHC,
         SECURITY_SSL_TLS,
@@ -390,7 +390,7 @@ public class ConfigurationTest {
       // empty value not allowed
       // set not allowed
       Stream.of(
-          tuple2(NODE_REPOSITORY_DIR, "foo/bar")
+          tuple2(NODE_CONFIG_DIR, "foo/bar")
       ).forEach(tuple -> {
         rejectInput(tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
         rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
@@ -735,7 +735,7 @@ public class ConfigurationTest {
     // set not allowed for all scopes
     // config not allowed for all scopes
     Stream.of(
-        tuple2(NODE_REPOSITORY_DIR, "foo/bar")
+        tuple2(NODE_CONFIG_DIR, "foo/bar")
     ).forEach(tuple -> {
       reject(GET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
       reject(UNSET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");

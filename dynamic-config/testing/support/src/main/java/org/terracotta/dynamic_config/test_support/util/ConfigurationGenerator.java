@@ -34,7 +34,7 @@ import static org.junit.Assert.assertFalse;
 /**
  * @author Mathieu Carbou
  */
-public class ConfigRepositoryGenerator {
+public class ConfigurationGenerator {
 
   public interface PortSupplier {
     int getNodePort(int stripeId, int nodeId);
@@ -59,12 +59,12 @@ public class ConfigRepositoryGenerator {
   private final Path root;
   private final PortSupplier portSupplier;
 
-  public ConfigRepositoryGenerator(Path root, PortSupplier portSupplier) {
+  public ConfigurationGenerator(Path root, PortSupplier portSupplier) {
     this.root = root;
     this.portSupplier = portSupplier;
   }
 
-  public ConfigRepositoryGenerator(Path root, int nodesPerStripe, int... ports) {
+  public ConfigurationGenerator(Path root, int nodesPerStripe, int... ports) {
     this(root, PortSupplier.fromList(nodesPerStripe, ports));
   }
 
@@ -91,7 +91,7 @@ public class ConfigRepositoryGenerator {
   private Path substituteParams(int stripeId, int nodes, String path) {
     String defaultConfig;
     try {
-      defaultConfig = String.join(System.lineSeparator(), Files.readAllLines(Paths.get(ConfigRepositoryGenerator.class.getResource(path).toURI())));
+      defaultConfig = String.join(System.lineSeparator(), Files.readAllLines(Paths.get(ConfigurationGenerator.class.getResource(path).toURI())));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     } catch (URISyntaxException e) {
@@ -125,7 +125,7 @@ public class ConfigRepositoryGenerator {
       ConfigConverter converter = new ConfigConverter(resultProcessor::process);
       converter.processInput("testCluster", tcConfigPaths);
 
-      URL licenseUrl = ConfigRepositoryGenerator.class.getResource("/license.xml");
+      URL licenseUrl = ConfigurationGenerator.class.getResource("/license.xml");
       if (licenseUrl != null) {
         Path licensePath = Paths.get(licenseUrl.toURI());
         try (Stream<Path> pathList = Files.list(root)) {
@@ -146,8 +146,8 @@ public class ConfigRepositoryGenerator {
   }
 
   public static void main(String[] args) {
-    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/single-stripe-single-node"), 1, 9410, 9430).generate1Stripe1Node();
-    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/single-stripe-multi-node"), 2, 9410, 9430, 9510, 9530).generate1Stripe2Nodes();
-    new ConfigRepositoryGenerator(Paths.get("target/test-data/repos/multi-stripe"), 2, 9410, 9430, 9510, 9530, 9610, 9630, 9710, 9730).generate2Stripes2Nodes();
+    new ConfigurationGenerator(Paths.get("target/test-data/repos/single-stripe-single-node"), 1, 9410, 9430).generate1Stripe1Node();
+    new ConfigurationGenerator(Paths.get("target/test-data/repos/single-stripe-multi-node"), 2, 9410, 9430, 9510, 9530).generate1Stripe2Nodes();
+    new ConfigurationGenerator(Paths.get("target/test-data/repos/multi-stripe"), 2, 9410, 9430, 9510, 9530, 9610, 9630, 9710, 9730).generate2Stripes2Nodes();
   }
 }

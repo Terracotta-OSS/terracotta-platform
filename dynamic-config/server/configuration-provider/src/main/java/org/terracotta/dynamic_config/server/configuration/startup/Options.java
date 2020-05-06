@@ -38,6 +38,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.FAILOVER_PRIOR
 import static org.terracotta.dynamic_config.api.model.SettingName.LICENSE_FILE;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.SettingName.NODE_CONFIG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_GROUP_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOSTNAME;
@@ -47,7 +48,6 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PUBLIC_PORT;
-import static org.terracotta.dynamic_config.api.model.SettingName.NODE_REPOSITORY_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.SettingName.REPAIR_MODE;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT_LOG_DIR;
@@ -84,8 +84,8 @@ public class Options {
   @Parameter(names = {"-A", "--" + NODE_GROUP_BIND_ADDRESS})
   private String nodeGroupBindAddress;
 
-  @Parameter(names = {"-r", "--" + NODE_REPOSITORY_DIR})
-  private String nodeRepositoryDir;
+  @Parameter(names = {"-r", "--" + NODE_CONFIG_DIR})
+  private String nodeConfigDir;
 
   @Parameter(names = {"-m", "--" + NODE_METADATA_DIR})
   private String nodeMetadataDir;
@@ -174,7 +174,7 @@ public class Options {
           return !longestName.equals(addDashDash(LICENSE_FILE))
               && !longestName.equals(addDashDash(CONFIG_FILE))
               && !longestName.equals(addDashDash(REPAIR_MODE))
-              && !longestName.equals(addDashDash(NODE_REPOSITORY_DIR));
+              && !longestName.equals(addDashDash(NODE_CONFIG_DIR));
         })
         .forEach(pd -> paramValueMap.put(Setting.fromName(ConsoleParamsUtils.stripDashDash(pd.getLongestName())), pd.getParameterized().get(this).toString()));
   }
@@ -202,7 +202,7 @@ public class Options {
       filteredOptions.remove(addDashDash(LICENSE_FILE));
       filteredOptions.remove(addDashDash(NODE_HOSTNAME));
       filteredOptions.remove(addDashDash(NODE_PORT));
-      filteredOptions.remove(addDashDash(NODE_REPOSITORY_DIR));
+      filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
 
       if (filteredOptions.size() != 0) {
         throw new ParameterException(
@@ -213,7 +213,7 @@ public class Options {
                 addDashDash(LICENSE_FILE),
                 addDashDash(NODE_HOSTNAME),
                 addDashDash(NODE_PORT),
-                addDashDash(NODE_REPOSITORY_DIR)
+                addDashDash(NODE_CONFIG_DIR)
             )
         );
       }
@@ -228,8 +228,8 @@ public class Options {
     return nodePort;
   }
 
-  public String getNodeRepositoryDir() {
-    return nodeRepositoryDir;
+  public String getNodeConfigDir() {
+    return nodeConfigDir;
   }
 
   public String getClusterName() {

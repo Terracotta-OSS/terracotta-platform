@@ -23,7 +23,7 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Conf
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.DefaultHashComputer;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.FileConfigStorage;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.InitialConfigStorage;
-import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadRepositoryManager;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.SanskritNomadServerState;
 import org.terracotta.json.Json;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
@@ -42,15 +42,15 @@ import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
 public class NomadServerFactory {
-  public static UpgradableNomadServer<NodeContext> createServer(NomadRepositoryManager repositoryManager,
+  public static UpgradableNomadServer<NodeContext> createServer(NomadConfigurationManager configurationManager,
                                                                 ChangeApplicator<NodeContext> changeApplicator,
                                                                 String nodeName,
                                                                 DynamicConfigListener listener) throws SanskritException, NomadException {
     ObjectMapper objectMapper = Json.copyObjectMapper(true);
-    FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(repositoryManager.getSanskritPath());
+    FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(configurationManager.getChangesPath());
     Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapper);
 
-    InitialConfigStorage<NodeContext> configStorage = new InitialConfigStorage<>(new ConfigStorageAdapter<NodeContext>(new FileConfigStorage(repositoryManager.getConfigPath(), nodeName)) {
+    InitialConfigStorage<NodeContext> configStorage = new InitialConfigStorage<>(new ConfigStorageAdapter<NodeContext>(new FileConfigStorage(configurationManager.getClusterPath(), nodeName)) {
       @Override
       public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
         super.saveConfig(version, config);

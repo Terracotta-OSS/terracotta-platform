@@ -45,7 +45,7 @@ import static org.terracotta.dynamic_config.api.service.IParameterSubstitutor.id
 public class CommandLineProcessorChainTest {
   private static final String LICENSE_FILE = "/path/to/license-file";
   private static final String CONFIG_FILE = "/path/to/config-file";
-  private static final String NODE_REPOSITORY_DIR = "/path/to/node-repository-dir";
+  private static final String NODE_REPOSITORY_DIR = "/path/to/node-config-dir";
   private static final String CLUSTER_NAME = "tc-cluster";
   private static final String HOST_NAME = "localhost";
   private static final String NODE_NAME = "node-1";
@@ -81,12 +81,12 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testStartupWithConfigRepo_noParamsPassed_repoExists() {
-    when(configurationGeneratorVisitor.getOrDefaultRepositoryDir(null)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
+    when(configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(null)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(configurationGeneratorVisitor.findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class))).thenReturn(Optional.of(NODE_NAME));
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getOrDefaultRepositoryDir(null);
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(null);
     verify(configurationGeneratorVisitor).findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
@@ -94,13 +94,13 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testStartupWithConfigRepo_configRepoPassed_repoExists() {
-    when(options.getNodeRepositoryDir()).thenReturn(NODE_REPOSITORY_DIR);
-    when(configurationGeneratorVisitor.getOrDefaultRepositoryDir(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
+    when(options.getNodeConfigDir()).thenReturn(NODE_REPOSITORY_DIR);
+    when(configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(configurationGeneratorVisitor.findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class))).thenReturn(Optional.of(NODE_NAME));
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getOrDefaultRepositoryDir(NODE_REPOSITORY_DIR);
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(NODE_REPOSITORY_DIR);
     verify(configurationGeneratorVisitor).findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
@@ -108,7 +108,7 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testStartupWithConfigFile_nonExistentConfigRepo() {
-    when(configurationGeneratorVisitor.getOrDefaultRepositoryDir(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
+    when(configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(configurationGeneratorVisitor.findNodeName(Paths.get(NODE_REPOSITORY_DIR), identity())).thenReturn(Optional.empty());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
@@ -122,7 +122,7 @@ public class CommandLineProcessorChainTest {
     mainCommandLineProcessor.process();
 
     verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
-    verify(configurationGeneratorVisitor).getOrDefaultRepositoryDir(any());
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
@@ -141,7 +141,7 @@ public class CommandLineProcessorChainTest {
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getOrDefaultRepositoryDir(any());
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
     verify(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
@@ -165,7 +165,7 @@ public class CommandLineProcessorChainTest {
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getOrDefaultRepositoryDir(any());
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verifyNoMoreInteractions(configurationGeneratorVisitor);
   }
@@ -183,7 +183,7 @@ public class CommandLineProcessorChainTest {
     mainCommandLineProcessor.process();
 
     verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
-    verify(configurationGeneratorVisitor).getOrDefaultRepositoryDir(any());
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUnconfigured(nodeContext, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
@@ -191,7 +191,7 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testStartupWithCliParams_nonExistentConfigRepo() {
-    when(configurationGeneratorVisitor.getOrDefaultRepositoryDir(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
+    when(configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(configurationGeneratorVisitor.findNodeName(Paths.get(NODE_REPOSITORY_DIR), identity())).thenReturn(Optional.empty());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getClusterName()).thenReturn(CLUSTER_NAME);
@@ -200,7 +200,7 @@ public class CommandLineProcessorChainTest {
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getOrDefaultRepositoryDir(any());
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
@@ -215,7 +215,7 @@ public class CommandLineProcessorChainTest {
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getOrDefaultRepositoryDir(any());
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
@@ -240,7 +240,7 @@ public class CommandLineProcessorChainTest {
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getOrDefaultRepositoryDir(any());
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUnconfigured(nodeContext, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);

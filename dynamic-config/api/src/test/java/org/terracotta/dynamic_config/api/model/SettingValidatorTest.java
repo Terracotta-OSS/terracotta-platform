@@ -32,6 +32,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.LICENSE_FILE;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_CONFIG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
@@ -40,7 +41,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_REPOSITORY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
@@ -124,7 +124,7 @@ public class SettingValidatorTest {
 
   @Test
   public void test_paths() {
-    Stream.of(NODE_REPOSITORY_DIR, NODE_LOG_DIR, LICENSE_FILE).forEach(setting -> {
+    Stream.of(NODE_CONFIG_DIR, NODE_LOG_DIR, LICENSE_FILE).forEach(setting -> {
       validateDefaults(setting);
       assertThat(
           () -> setting.validate("/\u0000/"),

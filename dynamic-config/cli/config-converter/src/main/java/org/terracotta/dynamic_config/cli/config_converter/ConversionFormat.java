@@ -18,7 +18,7 @@ package org.terracotta.dynamic_config.cli.config_converter;
 import com.beust.jcommander.converters.EnumConverter;
 
 public enum ConversionFormat {
-  REPOSITORY,
+  DIRECTORY,
   PROPERTIES;
 
   public static class FormatConverter extends EnumConverter<ConversionFormat> {

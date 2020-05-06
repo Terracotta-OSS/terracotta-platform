@@ -36,11 +36,11 @@ import java.util.stream.Stream;
 
 import static java.lang.System.lineSeparator;
 import static java.nio.file.Files.isDirectory;
+import static org.terracotta.dynamic_config.cli.config_converter.ConversionFormat.DIRECTORY;
 import static org.terracotta.dynamic_config.cli.config_converter.ConversionFormat.PROPERTIES;
-import static org.terracotta.dynamic_config.cli.config_converter.ConversionFormat.REPOSITORY;
 
-@Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration repository format")
-@Usage("convert -c <tc-config>,<tc-config>... ( -t repository [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
+@Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration directory format")
+@Usage("convert -c <tc-config>,<tc-config>... ( -t configRepository [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
 public class ConvertCommand extends Command {
   @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
   private List<Path> tcConfigFiles;
@@ -54,8 +54,8 @@ public class ConvertCommand extends Command {
   @Parameter(names = {"-n"}, description = "New cluster name")
   private String newClusterName;
 
-  @Parameter(names = {"-t"}, description = "Conversion type (repository|properties). Default: repository", converter = ConversionFormat.FormatConverter.class)
-  private ConversionFormat conversionFormat = REPOSITORY;
+  @Parameter(names = {"-t"}, description = "Conversion type (directory|properties). Default: directory", converter = ConversionFormat.FormatConverter.class)
+  private ConversionFormat conversionFormat = DIRECTORY;
 
   @Parameter(names = {"-f"}, description = "Force a config conversion, ignoring warnings, if any. Default: false")
   private boolean force;
@@ -73,11 +73,11 @@ public class ConvertCommand extends Command {
     }
 
     if (licensePath != null && conversionFormat == PROPERTIES) {
-      throw new ParameterException("Path to license file can only be provided for conversion to a config repository");
+      throw new ParameterException("Path to license file can only be provided for conversion into a configuration directory");
     }
 
-    if (newClusterName == null && conversionFormat == REPOSITORY) {
-      throw new ParameterException("Cluster name is required for conversion to a config repository");
+    if (newClusterName == null && conversionFormat == DIRECTORY) {
+      throw new ParameterException("Cluster name is required for conversion into a configuration directory");
     }
 
     if (licensePath != null && !Files.exists(licensePath)) {
@@ -87,7 +87,7 @@ public class ConvertCommand extends Command {
 
   @Override
   public final void run() {
-    if (conversionFormat == REPOSITORY) {
+    if (conversionFormat == DIRECTORY) {
       ConfigRepoProcessor resultProcessor = new ConfigRepoProcessor(destinationDir);
       ConfigConverter converter = new ConfigConverter(resultProcessor::process, force);
       converter.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
@@ -106,7 +106,7 @@ public class ConvertCommand extends Command {
           throw new UncheckedIOException(e);
         }
       }
-      logger.info("Configuration repositories saved under: {}", destinationDir.toAbsolutePath().normalize());
+      logger.info("Configuration directories saved under: {}", destinationDir.toAbsolutePath().normalize());
 
     } else if (conversionFormat == PROPERTIES) {
       ConfigPropertiesProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, newClusterName);
