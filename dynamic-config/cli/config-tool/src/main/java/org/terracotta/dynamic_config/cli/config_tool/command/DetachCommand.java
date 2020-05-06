@@ -77,6 +77,13 @@ public class DetachCommand extends TopologyCommand {
           "The nodes should be safely shutdown first. " +
           "Use -f to force the node removal by the detach command: the nodes will first reset and stop before being detached");
     }
+
+    if(operationType == NODE) {
+      Stripe stripe = destinationCluster.getStripe(source).get();
+      if (stripe.getNodeCount() == 1) {
+        throw new IllegalStateException("Unable to detach since destination stripe contains only 1 node");
+      }
+    }
   }
 
   @Override
