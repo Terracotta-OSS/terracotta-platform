@@ -36,6 +36,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -108,6 +109,7 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testStartupWithConfigFile_nonExistentConfigRepo() {
+    when(options.allowsAutoActivation()).thenReturn(true);
     when(configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(configurationGeneratorVisitor.findNodeName(Paths.get(NODE_REPOSITORY_DIR), identity())).thenReturn(Optional.empty());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
@@ -130,6 +132,7 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testPreactivatedWithConfigFile_ok() {
+    when(options.allowsAutoActivation()).thenReturn(true);
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
@@ -150,6 +153,7 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testPreactivatedWithConfigFile_greaterThanOneNode() {
+    when(options.allowsAutoActivation()).thenReturn(true);
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
@@ -160,13 +164,18 @@ public class CommandLineProcessorChainTest {
     cluster.addStripe(new Stripe(node2));
     cluster.setName(CLUSTER_NAME);
 
+    doThrow(new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster"))
+        .when(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
+
     expectedException.expect(UnsupportedOperationException.class);
     expectedException.expectMessage("Cannot start a pre-activated multi-stripe cluster");
 
     mainCommandLineProcessor.process();
 
+    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
+    verify(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
   }
 
@@ -191,6 +200,7 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testStartupWithCliParams_nonExistentConfigRepo() {
+    when(options.allowsAutoActivation()).thenReturn(true);
     when(configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(configurationGeneratorVisitor.findNodeName(Paths.get(NODE_REPOSITORY_DIR), identity())).thenReturn(Optional.empty());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
@@ -208,6 +218,7 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testPreactivatedWithCliParams_ok() {
+    when(options.allowsAutoActivation()).thenReturn(true);
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getClusterName()).thenReturn(CLUSTER_NAME);
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
@@ -223,6 +234,7 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testPreactivatedWithCliParams_absentClusterName() {
+    when(options.allowsAutoActivation()).thenReturn(true);
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
 

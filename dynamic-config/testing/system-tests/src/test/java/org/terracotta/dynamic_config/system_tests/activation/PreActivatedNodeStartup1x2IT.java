@@ -48,7 +48,7 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     Path configurationRepo = generateNodeConfigDir(1, 2, ConfigurationGenerator::generate1Stripe2Nodes);
-    startNode(1, 2, "--node-config-dir", configurationRepo.toString());
+    startNode(1, 2, "--auto-activate", "--node-config-dir", configurationRepo.toString());
     waitForActive(1, 2);
   }
 
@@ -56,11 +56,12 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
   public void testPreventConcurrentUseOfConfigDir() throws Exception {
     // Angela work dirs are different for each server instance. We'd need to create a repo at a common place for this test
     String sharedRepo = Files.createDirectories(getBaseDir()).toAbsolutePath().toString();
-    startNode(1, 1, "--failover-priority", "availability", "--node-name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort(1, 1)), "-N", "tc-cluster");
+    startNode(1, 1, "--auto-activate", "--failover-priority", "availability", "--node-name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort(1, 1)), "-N", "tc-cluster");
     waitForActive(1, 1);
 
     try {
       startNode(1, 2,
+          "--auto-activate",
           "--failover-priority", "availability",
           "--node-name", getNodeName(1, 2),
           "--node-config-dir", sharedRepo,
@@ -80,6 +81,7 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
+        "--auto-activate",
         "--failover-priority", "availability",
         "--node-name", getNodeName(1, 1),
         "--node-hostname", "localhost",
