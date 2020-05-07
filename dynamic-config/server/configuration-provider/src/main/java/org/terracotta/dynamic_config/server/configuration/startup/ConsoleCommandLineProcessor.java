@@ -53,7 +53,7 @@ public class ConsoleCommandLineProcessor implements CommandLineProcessor {
     if (options.getLicenseFile() != null) {
       requireNonNull(cluster.getName(), "Cluster name is required with license file");
     }
-    if (cluster.getName() != null) {
+    if (options.allowsAutoActivation()) {
       configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getNodeAddress()), options.getLicenseFile(), options.getNodeConfigDir());
     } else {
       configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getNodeAddress()), options.getNodeConfigDir());

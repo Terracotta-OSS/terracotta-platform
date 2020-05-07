@@ -75,28 +75,28 @@ public class ConfigurationParserTest {
     assertCliEquals(
         cli("failover-priority=availability"),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))),
-        "stripe.1.node.1.node-hostname=localhost",
+        "stripe.1.node.1.hostname=localhost",
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
-        "security-authc=",
-        "security-ssl-tls=false",
-        "security-whitelist=false",
+        "authc=",
+        "ssl-tls=false",
+        "whitelist=false",
         "offheap-resources=main:512MB",
-        "stripe.1.node.1.node-name=<GENERATED>",
-        "stripe.1.node.1.node-port=9410",
-        "stripe.1.node.1.node-public-port=",
-        "stripe.1.node.1.node-public-hostname=",
-        "stripe.1.node.1.node-group-port=9430",
-        "stripe.1.node.1.node-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-        "stripe.1.node.1.node-logger-overrides=",
-        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.name=<GENERATED>",
+        "stripe.1.node.1.port=9410",
+        "stripe.1.node.1.public-port=",
+        "stripe.1.node.1.public-hostname=",
+        "stripe.1.node.1.group-port=9430",
+        "stripe.1.node.1.bind-address=0.0.0.0",
+        "stripe.1.node.1.group-bind-address=0.0.0.0",
+        "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.logger-overrides=",
+        "stripe.1.node.1.backup-dir=",
         "stripe.1.node.1.tc-properties=",
         "stripe.1.node.1.security-dir=",
-        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.audit-log-dir=",
         "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
     );
     verify(substitutor, times(1)).substitute("%h");
@@ -109,29 +109,29 @@ public class ConfigurationParserTest {
   public void test_cliToProperties_2() {
     // placeholder in node name should be resolved eagerly
     assertCliEquals(
-        cli("failover-priority=availability", "node-hostname=%c"),
+        cli("failover-priority=availability", "hostname=%c"),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
-        "security-authc=",
-        "security-ssl-tls=false",
-        "security-whitelist=false",
+        "authc=",
+        "ssl-tls=false",
+        "whitelist=false",
         "offheap-resources=main:512MB",
-        "stripe.1.node.1.node-name=<GENERATED>",
-        "stripe.1.node.1.node-port=9410",
-        "stripe.1.node.1.node-public-port=",
-        "stripe.1.node.1.node-public-hostname=",
-        "stripe.1.node.1.node-group-port=9430",
-        "stripe.1.node.1.node-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-        "stripe.1.node.1.node-logger-overrides=",
-        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.name=<GENERATED>",
+        "stripe.1.node.1.port=9410",
+        "stripe.1.node.1.public-port=",
+        "stripe.1.node.1.public-hostname=",
+        "stripe.1.node.1.group-port=9430",
+        "stripe.1.node.1.bind-address=0.0.0.0",
+        "stripe.1.node.1.group-bind-address=0.0.0.0",
+        "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.logger-overrides=",
+        "stripe.1.node.1.backup-dir=",
         "stripe.1.node.1.tc-properties=",
         "stripe.1.node.1.security-dir=",
-        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.audit-log-dir=",
         "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
     );
     verify(substitutor).substitute("%c");
@@ -144,29 +144,29 @@ public class ConfigurationParserTest {
   public void test_cliToProperties_3() {
     // node name without placeholder triggers no resolve
     assertCliEquals(
-        cli("failover-priority=availability", "node-hostname=foo"),
+        cli("failover-priority=availability", "hostname=foo"),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
-        "security-authc=",
-        "security-ssl-tls=false",
-        "security-whitelist=false",
+        "authc=",
+        "ssl-tls=false",
+        "whitelist=false",
         "offheap-resources=main:512MB",
-        "stripe.1.node.1.node-name=<GENERATED>",
-        "stripe.1.node.1.node-port=9410",
-        "stripe.1.node.1.node-public-port=",
-        "stripe.1.node.1.node-public-hostname=",
-        "stripe.1.node.1.node-group-port=9430",
-        "stripe.1.node.1.node-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-        "stripe.1.node.1.node-logger-overrides=",
-        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.name=<GENERATED>",
+        "stripe.1.node.1.port=9410",
+        "stripe.1.node.1.public-port=",
+        "stripe.1.node.1.public-hostname=",
+        "stripe.1.node.1.group-port=9430",
+        "stripe.1.node.1.bind-address=0.0.0.0",
+        "stripe.1.node.1.group-bind-address=0.0.0.0",
+        "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.logger-overrides=",
+        "stripe.1.node.1.backup-dir=",
         "stripe.1.node.1.tc-properties=",
         "stripe.1.node.1.security-dir=",
-        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.audit-log-dir=",
         "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
     );
     verify(substitutor).substitute("foo");
@@ -177,60 +177,60 @@ public class ConfigurationParserTest {
 
   @Test
   public void test_parsing_invalid() {
-    // node-hostname required
+    // hostname required
     assertConfigFail(config(), "No configuration provided");
 
-    // placeholder forbidden for node-hostname
-    assertConfigFail(config("failover-priority=availability", "stripe.1.node.1.node-hostname=%h"), "Invalid input: 'stripe.1.node.1.node-hostname=%h'. Placeholders are not allowed");
+    // placeholder forbidden for hostname
+    assertConfigFail(config("failover-priority=availability", "stripe.1.node.1.hostname=%h"), "Invalid input: 'stripe.1.node.1.hostname=%h'. Placeholders are not allowed");
     assertConfigFail(config(
         "failover-priority=availability",
-        "stripe.1.node.1.node-hostname=localhost",
-        "stripe.1.node.2.node-name=foo"
-    ), "Invalid input: 'stripe.1.node.2.node-hostname=%h'. Placeholders are not allowed");
+        "stripe.1.node.1.hostname=localhost",
+        "stripe.1.node.2.name=foo"
+    ), "Invalid input: 'stripe.1.node.2.hostname=%h'. Placeholders are not allowed");
 
     // scope
-    assertConfigFail(config("failover-priority=availability", "node-hostname=foo"), "Invalid input: 'node-hostname=foo'. Reason: node-hostname cannot be set at cluster level");
+    assertConfigFail(config("failover-priority=availability", "hostname=foo"), "Invalid input: 'hostname=foo'. Reason: hostname cannot be set at cluster level");
     assertConfigFail(config(
         "failover-priority=availability",
-        "stripe.1.node.1.node-hostname=localhost",
-        "stripe.1.node-backup-dir=foo/bar"
-    ), "Invalid input: 'stripe.1.node-backup-dir=foo/bar'. Reason: stripe level configuration not allowed");
+        "stripe.1.node.1.hostname=localhost",
+        "stripe.1.backup-dir=foo/bar"
+    ), "Invalid input: 'stripe.1.backup-dir=foo/bar'. Reason: stripe level configuration not allowed");
     assertConfigFail(config(
         "failover-priority=availability",
-        "stripe.1.node.1.node-hostname=localhost",
-        "node-backup-dir=foo/bar"
-    ), "Invalid settings found at cluster level: node-backup-dir");
+        "stripe.1.node.1.hostname=localhost",
+        "backup-dir=foo/bar"
+    ), "Invalid settings found at cluster level: backup-dir");
     assertConfigFail(config(
         "failover-priority=availability",
-        "stripe.1.node.1.node-hostname=localhost",
+        "stripe.1.node.1.hostname=localhost",
         "stripe.1.node.1.failover-priority=availability"
     ), "Invalid input: 'stripe.1.node.1.failover-priority=availability'. Reason: failover-priority does not allow any operation at node level");
 
     // node and stripe ids
-    assertConfigFail(config("failover-priority=availability", "stripe.1.node.2.node-hostname=localhost"), "Node ID must start at 1 in stripe 1");
-    assertConfigFail(config("failover-priority=availability", "stripe.2.node.1.node-hostname=localhost"), "Stripe ID must start at 1");
+    assertConfigFail(config("failover-priority=availability", "stripe.1.node.2.hostname=localhost"), "Node ID must start at 1 in stripe 1");
+    assertConfigFail(config("failover-priority=availability", "stripe.2.node.1.hostname=localhost"), "Stripe ID must start at 1");
     assertConfigFail(config(
         "failover-priority=availability",
-        "stripe.1.node.1.node-hostname=localhost",
-        "stripe.1.node.2.node-hostname=localhost",
-        "stripe.1.node.4.node-hostname=localhost"
+        "stripe.1.node.1.hostname=localhost",
+        "stripe.1.node.2.hostname=localhost",
+        "stripe.1.node.4.hostname=localhost"
     ), "Node ID must end at 3 in stripe 1");
     assertConfigFail(config(
         "failover-priority=availability",
-        "stripe.1.node.1.node-hostname=localhost",
-        "stripe.2.node.1.node-hostname=localhost",
-        "stripe.4.node.1.node-hostname=localhost"
+        "stripe.1.node.1.hostname=localhost",
+        "stripe.2.node.1.hostname=localhost",
+        "stripe.4.node.1.hostname=localhost"
     ), "Stripe ID must end at 3");
 
     // not allowed in config
     assertConfigFail(config(
         "failover-priority=availability",
-        "stripe.1.node.1.node-hostname=localhost",
-        "stripe.1.node.1.node-config-dir=foo/bar"
-    ), "Invalid input: 'stripe.1.node.1.node-config-dir=foo/bar'. Reason: node-config-dir does not allow any operation at node level");
+        "stripe.1.node.1.hostname=localhost",
+        "stripe.1.node.1.config-dir=foo/bar"
+    ), "Invalid input: 'stripe.1.node.1.config-dir=foo/bar'. Reason: config-dir does not allow any operation at node level");
     assertConfigFail(config(
         "failover-priority=availability",
-        "stripe.1.node.1.node-hostname=localhost",
+        "stripe.1.node.1.hostname=localhost",
         "license-file=foo/bar"
     ), "Invalid settings found at cluster level: license-file");
   }
@@ -242,32 +242,32 @@ public class ConfigurationParserTest {
     assertConfigEquals(
         config(
             "failover-priority=availability",
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-name=real",
-            "stripe.1.node.1.node-hostname=localhost",
-            "stripe.1.node.1.node-hostname=foo"
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.name=real",
+            "stripe.1.node.1.hostname=localhost",
+            "stripe.1.node.1.hostname=foo"
         ),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("real", "foo"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
-        "security-authc=",
-        "security-ssl-tls=false",
-        "security-whitelist=false",
+        "authc=",
+        "ssl-tls=false",
+        "whitelist=false",
         "offheap-resources=main:512MB",
-        "stripe.1.node.1.node-port=9410",
-        "stripe.1.node.1.node-public-port=",
-        "stripe.1.node.1.node-public-hostname=",
-        "stripe.1.node.1.node-group-port=9430",
-        "stripe.1.node.1.node-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-        "stripe.1.node.1.node-logger-overrides=",
-        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.port=9410",
+        "stripe.1.node.1.public-port=",
+        "stripe.1.node.1.public-hostname=",
+        "stripe.1.node.1.group-port=9430",
+        "stripe.1.node.1.bind-address=0.0.0.0",
+        "stripe.1.node.1.group-bind-address=0.0.0.0",
+        "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.logger-overrides=",
+        "stripe.1.node.1.backup-dir=",
         "stripe.1.node.1.tc-properties=",
         "stripe.1.node.1.security-dir=",
-        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.audit-log-dir=",
         "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
     );
     verifyNoMoreInteractions(substitutor);
@@ -275,34 +275,34 @@ public class ConfigurationParserTest {
 
   @Test
   public void test_parsing_minimal() {
-    // minimal config is to only have node-hostname, but to facilitate testing we add node-name
+    // minimal config is to only have hostname, but to facilitate testing we add name
     assertConfigEquals(
         config(
             "failover-priority=availability",
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost"
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost"
         ),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
-        "security-authc=",
-        "security-ssl-tls=false",
-        "security-whitelist=false",
+        "authc=",
+        "ssl-tls=false",
+        "whitelist=false",
         "offheap-resources=main:512MB",
-        "stripe.1.node.1.node-port=9410",
-        "stripe.1.node.1.node-public-port=",
-        "stripe.1.node.1.node-public-hostname=",
-        "stripe.1.node.1.node-group-port=9430",
-        "stripe.1.node.1.node-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-        "stripe.1.node.1.node-logger-overrides=",
-        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.port=9410",
+        "stripe.1.node.1.public-port=",
+        "stripe.1.node.1.public-hostname=",
+        "stripe.1.node.1.group-port=9430",
+        "stripe.1.node.1.bind-address=0.0.0.0",
+        "stripe.1.node.1.group-bind-address=0.0.0.0",
+        "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.logger-overrides=",
+        "stripe.1.node.1.backup-dir=",
         "stripe.1.node.1.tc-properties=",
         "stripe.1.node.1.security-dir=",
-        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.audit-log-dir=",
         "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
     );
     verifyNoMoreInteractions(substitutor);
@@ -312,14 +312,14 @@ public class ConfigurationParserTest {
   public void test_parsing_minimal_2x2() {
     assertConfigEquals(
         config("failover-priority=availability",
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost",
-            "stripe.1.node.2.node-name=node2",
-            "stripe.1.node.2.node-hostname=localhost",
-            "stripe.2.node.1.node-name=node1",
-            "stripe.2.node.1.node-hostname=localhost",
-            "stripe.2.node.2.node-name=node2",
-            "stripe.2.node.2.node-hostname=localhost"
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost",
+            "stripe.1.node.2.name=node2",
+            "stripe.1.node.2.hostname=localhost",
+            "stripe.2.node.1.name=node1",
+            "stripe.2.node.1.hostname=localhost",
+            "stripe.2.node.2.name=node2",
+            "stripe.2.node.2.hostname=localhost"
         ),
         Cluster.newDefaultCluster(
             new Stripe(
@@ -332,65 +332,65 @@ public class ConfigurationParserTest {
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
-        "security-authc=",
-        "security-ssl-tls=false",
-        "security-whitelist=false",
+        "authc=",
+        "ssl-tls=false",
+        "whitelist=false",
         "offheap-resources=main:512MB",
-        "stripe.1.node.1.node-port=9410",
-        "stripe.1.node.1.node-public-port=",
-        "stripe.1.node.1.node-public-hostname=",
-        "stripe.1.node.1.node-group-port=9430",
-        "stripe.1.node.1.node-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-        "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-        "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-        "stripe.1.node.1.node-logger-overrides=",
-        "stripe.1.node.1.node-backup-dir=",
+        "stripe.1.node.1.port=9410",
+        "stripe.1.node.1.public-port=",
+        "stripe.1.node.1.public-hostname=",
+        "stripe.1.node.1.group-port=9430",
+        "stripe.1.node.1.bind-address=0.0.0.0",
+        "stripe.1.node.1.group-bind-address=0.0.0.0",
+        "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.1.log-dir=%H/terracotta/logs",
+        "stripe.1.node.1.logger-overrides=",
+        "stripe.1.node.1.backup-dir=",
         "stripe.1.node.1.tc-properties=",
         "stripe.1.node.1.security-dir=",
-        "stripe.1.node.1.security-audit-log-dir=",
+        "stripe.1.node.1.audit-log-dir=",
         "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main",
-        "stripe.1.node.2.node-port=9410",
-        "stripe.1.node.2.node-public-port=",
-        "stripe.1.node.2.node-public-hostname=",
-        "stripe.1.node.2.node-group-port=9430",
-        "stripe.1.node.2.node-bind-address=0.0.0.0",
-        "stripe.1.node.2.node-group-bind-address=0.0.0.0",
-        "stripe.1.node.2.node-metadata-dir=%H/terracotta/metadata",
-        "stripe.1.node.2.node-log-dir=%H/terracotta/logs",
-        "stripe.1.node.2.node-logger-overrides=",
-        "stripe.1.node.2.node-backup-dir=",
+        "stripe.1.node.2.port=9410",
+        "stripe.1.node.2.public-port=",
+        "stripe.1.node.2.public-hostname=",
+        "stripe.1.node.2.group-port=9430",
+        "stripe.1.node.2.bind-address=0.0.0.0",
+        "stripe.1.node.2.group-bind-address=0.0.0.0",
+        "stripe.1.node.2.metadata-dir=%H/terracotta/metadata",
+        "stripe.1.node.2.log-dir=%H/terracotta/logs",
+        "stripe.1.node.2.logger-overrides=",
+        "stripe.1.node.2.backup-dir=",
         "stripe.1.node.2.tc-properties=",
         "stripe.1.node.2.security-dir=",
-        "stripe.1.node.2.security-audit-log-dir=",
+        "stripe.1.node.2.audit-log-dir=",
         "stripe.1.node.2.data-dirs=main:%H/terracotta/user-data/main",
-        "stripe.2.node.1.node-port=9410",
-        "stripe.2.node.1.node-public-port=",
-        "stripe.2.node.1.node-public-hostname=",
-        "stripe.2.node.1.node-group-port=9430",
-        "stripe.2.node.1.node-bind-address=0.0.0.0",
-        "stripe.2.node.1.node-group-bind-address=0.0.0.0",
-        "stripe.2.node.1.node-metadata-dir=%H/terracotta/metadata",
-        "stripe.2.node.1.node-log-dir=%H/terracotta/logs",
-        "stripe.2.node.1.node-logger-overrides=",
-        "stripe.2.node.1.node-backup-dir=",
+        "stripe.2.node.1.port=9410",
+        "stripe.2.node.1.public-port=",
+        "stripe.2.node.1.public-hostname=",
+        "stripe.2.node.1.group-port=9430",
+        "stripe.2.node.1.bind-address=0.0.0.0",
+        "stripe.2.node.1.group-bind-address=0.0.0.0",
+        "stripe.2.node.1.metadata-dir=%H/terracotta/metadata",
+        "stripe.2.node.1.log-dir=%H/terracotta/logs",
+        "stripe.2.node.1.logger-overrides=",
+        "stripe.2.node.1.backup-dir=",
         "stripe.2.node.1.tc-properties=",
         "stripe.2.node.1.security-dir=",
-        "stripe.2.node.1.security-audit-log-dir=",
+        "stripe.2.node.1.audit-log-dir=",
         "stripe.2.node.1.data-dirs=main:%H/terracotta/user-data/main",
-        "stripe.2.node.2.node-port=9410",
-        "stripe.2.node.2.node-public-port=",
-        "stripe.2.node.2.node-public-hostname=",
-        "stripe.2.node.2.node-group-port=9430",
-        "stripe.2.node.2.node-bind-address=0.0.0.0",
-        "stripe.2.node.2.node-group-bind-address=0.0.0.0",
-        "stripe.2.node.2.node-metadata-dir=%H/terracotta/metadata",
-        "stripe.2.node.2.node-log-dir=%H/terracotta/logs",
-        "stripe.2.node.2.node-logger-overrides=",
-        "stripe.2.node.2.node-backup-dir=",
+        "stripe.2.node.2.port=9410",
+        "stripe.2.node.2.public-port=",
+        "stripe.2.node.2.public-hostname=",
+        "stripe.2.node.2.group-port=9430",
+        "stripe.2.node.2.bind-address=0.0.0.0",
+        "stripe.2.node.2.group-bind-address=0.0.0.0",
+        "stripe.2.node.2.metadata-dir=%H/terracotta/metadata",
+        "stripe.2.node.2.log-dir=%H/terracotta/logs",
+        "stripe.2.node.2.logger-overrides=",
+        "stripe.2.node.2.backup-dir=",
         "stripe.2.node.2.tc-properties=",
         "stripe.2.node.2.security-dir=",
-        "stripe.2.node.2.security-audit-log-dir=",
+        "stripe.2.node.2.audit-log-dir=",
         "stripe.2.node.2.data-dirs=main:%H/terracotta/user-data/main"
     );
     verifyNoMoreInteractions(substitutor);
@@ -398,32 +398,32 @@ public class ConfigurationParserTest {
 
   @Test
   public void test_parsing_complete_1x1() {
-    // minimal config is to only have node-hostname, but to facilitate testing we add node-name
+    // minimal config is to only have hostname, but to facilitate testing we add name
     assertConfigEquals(
         config(
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost",
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
             "client-reconnect-window=120s",
             "failover-priority=availability",
             "client-lease-duration=150s",
-            "security-authc=",
-            "security-ssl-tls=false",
-            "security-whitelist=false",
+            "authc=",
+            "ssl-tls=false",
+            "whitelist=false",
             "offheap-resources=main:512MB",
-            "stripe.1.node.1.node-port=9410",
-            "stripe.1.node.1.node-public-port=",
-            "stripe.1.node.1.node-public-hostname=",
-            "stripe.1.node.1.node-group-port=9430",
-            "stripe.1.node.1.node-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-            "stripe.1.node.1.node-logger-overrides=",
-            "stripe.1.node.1.node-backup-dir=",
+            "stripe.1.node.1.port=9410",
+            "stripe.1.node.1.public-port=",
+            "stripe.1.node.1.public-hostname=",
+            "stripe.1.node.1.group-port=9430",
+            "stripe.1.node.1.bind-address=0.0.0.0",
+            "stripe.1.node.1.group-bind-address=0.0.0.0",
+            "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+            "stripe.1.node.1.log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.logger-overrides=",
+            "stripe.1.node.1.backup-dir=",
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.security-dir=",
-            "stripe.1.node.1.security-audit-log-dir=",
+            "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
         Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
@@ -439,28 +439,28 @@ public class ConfigurationParserTest {
 
     assertConfigEquals(
         config(
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost",
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
             "client-reconnect-window=120s",
             "failover-priority=availability",
-            "security-authc=",
-            "security-ssl-tls=false",
-            "security-whitelist=false",
+            "authc=",
+            "ssl-tls=false",
+            "whitelist=false",
             "offheap-resources=main:512MB",
-            "stripe.1.node.1.node-port=9410",
-            "stripe.1.node.1.node-public-port=",
-            "stripe.1.node.1.node-public-hostname=",
-            "stripe.1.node.1.node-group-port=9430",
-            "stripe.1.node.1.node-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-            "stripe.1.node.1.node-logger-overrides=",
-            "stripe.1.node.1.node-backup-dir=",
+            "stripe.1.node.1.port=9410",
+            "stripe.1.node.1.public-port=",
+            "stripe.1.node.1.public-hostname=",
+            "stripe.1.node.1.group-port=9430",
+            "stripe.1.node.1.bind-address=0.0.0.0",
+            "stripe.1.node.1.group-bind-address=0.0.0.0",
+            "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+            "stripe.1.node.1.log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.logger-overrides=",
+            "stripe.1.node.1.backup-dir=",
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.security-dir=",
-            "stripe.1.node.1.security-audit-log-dir=",
+            "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
         Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))),
@@ -468,29 +468,29 @@ public class ConfigurationParserTest {
 
     assertConfigEquals(
         config(
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost",
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
             "client-reconnect-window=120s",
             "client-lease-duration=150s",
             "failover-priority=availability",
-            "security-authc=",
-            "security-ssl-tls=false",
-            "security-whitelist=false",
+            "authc=",
+            "ssl-tls=false",
+            "whitelist=false",
             "offheap-resources=main:512MB",
-            "stripe.1.node.1.node-port=9410",
-            "stripe.1.node.1.node-public-port=",
-            "stripe.1.node.1.node-public-hostname=",
-            "stripe.1.node.1.node-group-port=9430",
-            "stripe.1.node.1.node-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-            "stripe.1.node.1.node-logger-overrides=",
-            "stripe.1.node.1.node-backup-dir=",
+            "stripe.1.node.1.port=9410",
+            "stripe.1.node.1.public-port=",
+            "stripe.1.node.1.public-hostname=",
+            "stripe.1.node.1.group-port=9430",
+            "stripe.1.node.1.bind-address=0.0.0.0",
+            "stripe.1.node.1.group-bind-address=0.0.0.0",
+            "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+            "stripe.1.node.1.log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.logger-overrides=",
+            "stripe.1.node.1.backup-dir=",
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.security-dir=",
-            "stripe.1.node.1.security-audit-log-dir=",
+            "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
         Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));

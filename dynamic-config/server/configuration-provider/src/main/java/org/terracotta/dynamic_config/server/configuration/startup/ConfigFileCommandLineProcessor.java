@@ -57,10 +57,7 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
 
     Node node = configurationGeneratorVisitor.getMatchingNodeFromConfigFile(options.getNodeHostname(), options.getNodePort(), options.getConfigFile(), cluster);
 
-    if (cluster.getName() != null) {
-      if (cluster.getStripeCount() > 1) {
-        throw new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster");
-      }
+    if (options.allowsAutoActivation()) {
       configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getNodeAddress()), options.getLicenseFile(), options.getNodeConfigDir());
     } else {
       configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getNodeAddress()), options.getNodeConfigDir());

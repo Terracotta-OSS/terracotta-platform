@@ -54,7 +54,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testStartingWithSingleNodeConfigFile() throws TimeoutException {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startNode(1, 1, "--config-file", configurationFile.toString(), "--node-config-dir", "config/stripe1/node-1");
+    startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
     waitForDiagnostic(1, 1);
   }
 
@@ -62,14 +62,14 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testStartingWithSingleNodeConfigFileWithHostPort() throws TimeoutException {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", port, "--node-config-dir", "config/stripe1/node-1");
+    startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", port, "--config-dir", "config/stripe1/node-1");
     waitForDiagnostic(1, 1);
   }
 
   @Test
   public void testStartingWithConfigFile() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startNode(1, 1, "--config-file", configurationFile.toString(), "--node-config-dir", "config/stripe1/node-1");
+    startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
 
     waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(equalTo("localhost")));
@@ -79,7 +79,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testFailedStartupConfigFile_nonExistentFile() throws TimeoutException {
     Path configurationFile = Paths.get(".").resolve("blah");
     try {
-      startNode(1, 1, "--config-file", configurationFile.toString(), "--node-config-dir", "config/stripe1/node-1");
+      startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("Failed to read config file"));
@@ -91,10 +91,10 @@ public class NodeStartupIT extends DynamicConfigIT {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid1.properties");
     try {
-      startNode(1, 1, "--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-config-dir", "config/stripe1/node-1");
+      startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("<port> specified in node-port=<port> must be an integer between 1 and 65535"));
+      waitUntil(err::getLog, containsString("<port> specified in port=<port> must be an integer between 1 and 65535"));
     }
   }
 
@@ -103,7 +103,7 @@ public class NodeStartupIT extends DynamicConfigIT {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid2.properties");
     try {
-      startNode(1, 1, "--config-file", configurationFile.toString(), "--node-hostname", "localhost", "--node-port", port, "--node-config-dir", "config/stripe1/node-1");
+      startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("security-dir is mandatory for any of the security configuration"));
@@ -114,10 +114,10 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testFailedStartupConfigFile_invalidCliParams() throws TimeoutException {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     try {
-      startSingleNode("--config-file", configurationFile.toString(), "--node-bind-address", "::1");
+      startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--node-hostname', '--node-port' and '--node-config-dir' parameters"));
+      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--hostname', '--port' and '--config-dir' parameters"));
     }
   }
 
@@ -128,27 +128,27 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--node-hostname', '--node-port' and '--node-config-dir' parameters"));
+      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--hostname', '--port' and '--config-dir' parameters"));
     }
   }
 
   @Test
   public void testFailedStartupCliParams_invalidAuthc() throws TimeoutException {
     try {
-      startSingleNode("--security-authc=blah", "-r", getNodeConfigDir(1, 1).toString());
+      startSingleNode("--authc=blah", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("security-authc should be one of: [file, ldap, certificate]"));
+      waitUntil(err::getLog, containsString("authc should be one of: [file, ldap, certificate]"));
     }
   }
 
   @Test
   public void testFailedStartupCliParams_invalidHostname() throws TimeoutException {
     try {
-      startNode(1, 1, "--node-hostname=:::", "-r", getNodeConfigDir(1, 1).toString());
+      startNode(1, 1, "--hostname=:::", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("<address> specified in node-hostname=<address> must be a valid hostname or IP address"));
+      waitUntil(err::getLog, containsString("<address> specified in hostname=<address> must be a valid hostname or IP address"));
     }
   }
 
@@ -165,7 +165,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidSecurity() throws TimeoutException {
     try {
-      startSingleNode("--security-audit-log-dir", "audit-dir", "-r", getNodeConfigDir(1, 1).toString());
+      startSingleNode("--audit-log-dir", "audit-dir", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("security-dir is mandatory for any of the security configuration"));
@@ -181,10 +181,10 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testSuccessfulStartupCliParamsContainingSubstitutionParams() throws Exception {
     startSingleNode(
-        "--node-port", String.valueOf(getNodePort()),
-        "--node-group-port", String.valueOf(getNodeGroupPort(1, 1)),
-        "--node-config-dir", getNodeConfigDir(1, 1).toString(),
-        "--node-hostname", "%c"
+        "--port", String.valueOf(getNodePort()),
+        "--group-port", String.valueOf(getNodeGroupPort(1, 1)),
+        "--config-dir", getNodeConfigDir(1, 1).toString(),
+        "--hostname", "%c"
     );
     waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(InetAddress.getLocalHost().getCanonicalHostName()));
@@ -197,13 +197,13 @@ public class NodeStartupIT extends DynamicConfigIT {
     try {
       startNode(1, 1,
           "--config-file", configurationFile.toString(),
-          "--node-hostname", "localhost",
-          "--node-port", port,
-          "--node-metadata-dir", "foo"
+          "--hostname", "localhost",
+          "--port", port,
+          "--metadata-dir", "foo"
       );
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--node-hostname', '--node-port' and '--node-config-dir' parameters"));
+      waitUntil(err::getLog, containsString("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--hostname', '--port' and '--config-dir' parameters"));
     }
   }
 
@@ -211,7 +211,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testStartingNodeWhenMigrationDidNotCommit() throws Exception {
     Path configurationRepo = generateNodeConfigDir(1, 1, ConfigurationGenerator::generate1Stripe1NodeAndSkipCommit);
     try {
-      startSingleNode("--node-config-dir", configurationRepo.toString());
+      startSingleNode("--config-dir", configurationRepo.toString());
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the configuration directory and try again."));
@@ -223,23 +223,23 @@ public class NodeStartupIT extends DynamicConfigIT {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
         "--failover-priority", "availability",
-        "--node-name", getNodeName(1, 1),
-        "--node-hostname", "localhost",
-        "--node-log-dir", getNodePath(1, 1).resolve("logs").toString(),
-        "--node-backup-dir", getNodePath(1, 1).resolve("backup").toString(),
-        "--node-metadata-dir", getNodePath(1, 1).resolve("metadata").toString(),
+        "--name", getNodeName(1, 1),
+        "--hostname", "localhost",
+        "--log-dir", getNodePath(1, 1).resolve("logs").toString(),
+        "--backup-dir", getNodePath(1, 1).resolve("backup").toString(),
+        "--metadata-dir", getNodePath(1, 1).resolve("metadata").toString(),
         "--data-dirs", "main:" + getNodePath(1, 1).resolve("data-dir").toString()
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {
-      throw new AssertionError("Do not use -n. use --node-name instead");
+      throw new AssertionError("Do not use -n. use --name instead");
     }
-    if (provided.contains("--node-name")) {
-      defaultArgs.remove("--node-name");
+    if (provided.contains("--name")) {
+      defaultArgs.remove("--name");
       defaultArgs.remove(getNodeName(1, 1));
     }
-    if (provided.contains("-s") || provided.contains("--node-hostname")) {
-      defaultArgs.remove("--node-hostname");
+    if (provided.contains("-s") || provided.contains("--hostname")) {
+      defaultArgs.remove("--hostname");
       defaultArgs.remove("localhost");
     }
     if (provided.contains("--failover-priority")) {

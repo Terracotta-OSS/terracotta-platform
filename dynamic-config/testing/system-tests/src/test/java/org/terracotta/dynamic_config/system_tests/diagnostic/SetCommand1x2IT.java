@@ -48,10 +48,10 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void testStripe_level_setBackupDirectory() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node-backup-dir=backup" + File.separator + "stripe-1"), is(successful()));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.backup-dir=backup" + File.separator + "stripe-1"), is(successful()));
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-backup-dir"),
-        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.node-backup-dir=backup" + File.separator + "stripe-1"), containsOutput("stripe.1.node.2.node-backup-dir=backup" + File.separator + "stripe-1")));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.backup-dir=backup" + File.separator + "stripe-1"), containsOutput("stripe.1.node.2.backup-dir=backup" + File.separator + "stripe-1")));
   }
 
 
@@ -66,10 +66,10 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void testCluster_setBackupDirectory() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-backup-dir=backup" + File.separator + "data"), is(successful()));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "backup-dir=backup" + File.separator + "data"), is(successful()));
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-backup-dir"),
-        allOf(hasExitStatus(0), containsOutput("node-backup-dir=backup" + File.separator + "data")));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
+        allOf(hasExitStatus(0), containsOutput("backup-dir=backup" + File.separator + "data")));
   }
 
   @Test

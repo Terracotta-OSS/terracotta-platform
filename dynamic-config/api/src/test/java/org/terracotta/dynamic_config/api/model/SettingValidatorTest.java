@@ -81,7 +81,7 @@ public class SettingValidatorTest {
     validateDefaults(NODE_HOSTNAME);
     assertThat(
         () -> NODE_HOSTNAME.validate(".."),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<address> specified in node-hostname=<address> must be a valid hostname or IP address")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<address> specified in hostname=<address> must be a valid hostname or IP address")))));
     assertThat(
         () -> NODE_HOSTNAME.validate(null),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_HOSTNAME + " cannot be null")))));
@@ -199,7 +199,7 @@ public class SettingValidatorTest {
     SECURITY_AUTHC.validate("file");
     assertThat(
         () -> SECURITY_AUTHC.validate("foo"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("security-authc should be one of: [file, ldap, certificate]"))))
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("authc should be one of: [file, ldap, certificate]"))))
     );
   }
 
@@ -329,23 +329,23 @@ public class SettingValidatorTest {
 
     assertThat(
         () -> NODE_LOGGER_OVERRIDES.validate(null, "key:"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
     assertThat(
         () -> NODE_LOGGER_OVERRIDES.validate(null, "key: "),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
     assertThat(
         () -> NODE_LOGGER_OVERRIDES.validate(null, ":value"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
     assertThat(
         () -> NODE_LOGGER_OVERRIDES.validate(null, " :value"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides should be specified in the format <logger>:<level>,<logger>:<level>...")))));
 
     assertThat(
         () -> NODE_LOGGER_OVERRIDES.validate("com.foo", "FATAL"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides.com.foo is invalid: Bad level: FATAL")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides.com.foo is invalid: Bad level: FATAL")))));
     assertThat(
         () -> NODE_LOGGER_OVERRIDES.validate("com.foo", "OFF"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("node-logger-overrides.com.foo is invalid: Bad level: OFF")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides.com.foo is invalid: Bad level: OFF")))));
   }
 
   private void validateDefaults(Setting setting) {

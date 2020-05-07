@@ -62,10 +62,10 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void setNodeGroupPort() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port=9630"), is(successful()));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port=9630"), is(successful()));
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port"),
-        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.node-group-port=9630")));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.group-port=9630")));
   }
 
   @Test
@@ -78,10 +78,10 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void setNodeBackupDir() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-backup-dir=backup/stripe1-node1-backup"), is(successful()));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.backup-dir=backup/stripe1-node1-backup"), is(successful()));
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-backup-dir"),
-        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.node-backup-dir=backup" + separator + "stripe1-node1-backup")));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.backup-dir"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.backup-dir=backup" + separator + "stripe1-node1-backup")));
   }
 
   @Test

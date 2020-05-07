@@ -77,7 +77,7 @@ public class ConfigurationTest {
   @Test
   public void test_valueOf_settings_cluster_level() {
     Stream.of(NODE_CONFIG_DIR).forEach(setting -> {
-      String err = "Invalid input: 'node-config-dir=%H/terracotta/config'. Reason: node-config-dir does not allow any operation at cluster level".replace("/", File.separator); // unix/win compat'
+      String err = "Invalid input: 'config-dir=%H/terracotta/config'. Reason: config-dir does not allow any operation at cluster level".replace("/", File.separator); // unix/win compat'
       assertThat(
           () -> Configuration.valueOf(setting),
           is(throwing(instanceOf(IllegalArgumentException.class))
@@ -137,7 +137,7 @@ public class ConfigurationTest {
       // verify the generated string
       if (setting == NODE_NAME) {
         // node name always generates a random default value
-        assertThat(rawInput, rawInput, startsWith("node-name=node-"));
+        assertThat(rawInput, rawInput, startsWith("name=node-"));
       } else {
         String defaultValue = setting.getDefaultValue();
         assertThat(rawInput, configuration.getValue(), is(equalTo(defaultValue)));
@@ -205,7 +205,7 @@ public class ConfigurationTest {
       // verify the generated string
       if (setting == NODE_NAME) {
         // node name always generates a random default value
-        assertThat(rawInput, rawInput, startsWith("stripe.1.node-name=node-"));
+        assertThat(rawInput, rawInput, startsWith("stripe.1.name=node-"));
       } else {
         String defaultValue = setting.getDefaultValue();
         assertThat(rawInput, configuration.getValue(), is(equalTo(defaultValue)));
@@ -264,7 +264,7 @@ public class ConfigurationTest {
       // verify the generated string
       if (setting == NODE_NAME) {
         // node name always generates a random default value
-        assertThat(rawInput, rawInput, startsWith("stripe.1.node.1.node-name=node-"));
+        assertThat(rawInput, rawInput, startsWith("stripe.1.node.1.name=node-"));
       } else {
         String defaultValue = setting.getDefaultValue();
         assertThat(rawInput, configuration.getValue(), is(equalTo(defaultValue)));
@@ -275,7 +275,7 @@ public class ConfigurationTest {
 
   @Test
   public void test_valueOf_with_valid_string() {
-    // test for each supported namespace separation . and : (i.e. stripe.1.node-backup-dir=foo/bar and stripe.1:node-backup-dir=foo/bar)
+    // test for each supported namespace separation . and : (i.e. stripe.1.backup-dir=foo/bar and stripe.1:backup-dir=foo/bar)
     Stream.of(".", ":").forEach(ns -> {
 
       // get allowed for all scopes
@@ -493,7 +493,7 @@ public class ConfigurationTest {
   public void test_valueOf_with_invalid_string() {
     assertThat(() -> Configuration.valueOf((String) null), is(throwing(instanceOf(NullPointerException.class))));
 
-    // test for each supported namespace separation . and : (i.e. stripe.1.node-backup-dir=foo/bar and stripe.1:node-backup-dir=foo/bar)
+    // test for each supported namespace separation . and : (i.e. stripe.1.backup-dir=foo/bar and stripe.1:backup-dir=foo/bar)
     Stream.of(".", ":").forEach(ns -> {
 
       // missing setting name
@@ -509,22 +509,22 @@ public class ConfigurationTest {
       rejectInput("stripe.1.foo.node.1" + ns + "foo", "Invalid input: 'stripe.1.foo.node.1" + ns + "foo'. Reason: Invalid setting name: 'foo'");
 
       // bad ids
-      rejectInput("stripe.0" + ns + "node-backup-dir", "Invalid input: 'stripe.0" + ns + "node-backup-dir'. Reason: Expected stripe ID to be greater than 0");
-      rejectInput("stripe.-1" + ns + "node-backup-dir", "Invalid input: 'stripe.-1" + ns + "node-backup-dir'");
-      rejectInput("stripe.foo" + ns + "node-backup-dir", "Invalid input: 'stripe.foo" + ns + "node-backup-dir'");
-      rejectInput("stripe.1.node.0" + ns + "node-backup-dir", "Invalid input: 'stripe.1.node.0" + ns + "node-backup-dir'. Reason: Expected node ID to be greater than 0");
-      rejectInput("stripe.1.node.-1" + ns + "node-backup-dir", "Invalid input: 'stripe.1.node.-1" + ns + "node-backup-dir'");
-      rejectInput("stripe.1.node.foo" + ns + "node-backup-dir", "Invalid input: 'stripe.1.node.foo" + ns + "node-backup-dir'");
+      rejectInput("stripe.0" + ns + "backup-dir", "Invalid input: 'stripe.0" + ns + "backup-dir'. Reason: Expected stripe ID to be greater than 0");
+      rejectInput("stripe.-1" + ns + "backup-dir", "Invalid input: 'stripe.-1" + ns + "backup-dir'");
+      rejectInput("stripe.foo" + ns + "backup-dir", "Invalid input: 'stripe.foo" + ns + "backup-dir'");
+      rejectInput("stripe.1.node.0" + ns + "backup-dir", "Invalid input: 'stripe.1.node.0" + ns + "backup-dir'. Reason: Expected node ID to be greater than 0");
+      rejectInput("stripe.1.node.-1" + ns + "backup-dir", "Invalid input: 'stripe.1.node.-1" + ns + "backup-dir'");
+      rejectInput("stripe.1.node.foo" + ns + "backup-dir", "Invalid input: 'stripe.1.node.foo" + ns + "backup-dir'");
 
       // bad formats
-      rejectInput("node.1.stripe.1" + ns + "node-backup-dir", "Invalid input: 'node.1.stripe.1" + ns + "node-backup-dir'");
-      rejectInput("stripe.1.stripe.1" + ns + "node-backup-dir", "Invalid input: 'stripe.1.stripe.1" + ns + "node-backup-dir'");
-      rejectInput("stripe.1.node.1.stripe.1" + ns + "node-backup-dir", "Invalid input: 'stripe.1.node.1.stripe.1" + ns + "node-backup-dir'");
-      rejectInput("stripe.1.node.1.node.1" + ns + "node-backup-dir", "Invalid input: 'stripe.1.node.1.node.1" + ns + "node-backup-dir'");
-      rejectInput("stripe" + ns + "node-backup-dir", "Invalid input: 'stripe" + ns + "node-backup-dir'");
+      rejectInput("node.1.stripe.1" + ns + "backup-dir", "Invalid input: 'node.1.stripe.1" + ns + "backup-dir'");
+      rejectInput("stripe.1.stripe.1" + ns + "backup-dir", "Invalid input: 'stripe.1.stripe.1" + ns + "backup-dir'");
+      rejectInput("stripe.1.node.1.stripe.1" + ns + "backup-dir", "Invalid input: 'stripe.1.node.1.stripe.1" + ns + "backup-dir'");
+      rejectInput("stripe.1.node.1.node.1" + ns + "backup-dir", "Invalid input: 'stripe.1.node.1.node.1" + ns + "backup-dir'");
+      rejectInput("stripe" + ns + "backup-dir", "Invalid input: 'stripe" + ns + "backup-dir'");
 
       // bad settings combinations
-      rejectInput("node-backup-dir.key", "Invalid input: 'node-backup-dir.key'. Reason: node-backup-dir is not a map and must not have a key");
+      rejectInput("backup-dir.key", "Invalid input: 'backup-dir.key'. Reason: backup-dir is not a map and must not have a key");
       rejectInput("stripe.1.node.1.failover-priority", "Invalid input: 'stripe.1.node.1.failover-priority'. Reason: failover-priority does not allow any operation at node level");
     });
   }
@@ -955,7 +955,7 @@ public class ConfigurationTest {
 
     // stripe wide
     assertThat(cluster.getSingleNode().get().getNodeBackupDir(), is(nullValue()));
-    Configuration.valueOf("stripe.1:node-backup-dir=foo/bar").apply(cluster);
+    Configuration.valueOf("stripe.1:backup-dir=foo/bar").apply(cluster);
     assertThat(cluster.getSingleNode().get().getNodeBackupDir(), is(equalTo(Paths.get("foo/bar"))));
 
     // node level
@@ -979,33 +979,33 @@ public class ConfigurationTest {
 
     // bad stripe
     assertThat(
-        () -> Configuration.valueOf("stripe.0:node-backup-dir=foo/bar").apply(cluster),
+        () -> Configuration.valueOf("stripe.0:backup-dir=foo/bar").apply(cluster),
         is(throwing(instanceOf(IllegalArgumentException.class))
-            .andMessage(is(equalTo("Invalid input: 'stripe.0:node-backup-dir=foo/bar'. Reason: Expected stripe ID to be greater than 0")))));
+            .andMessage(is(equalTo("Invalid input: 'stripe.0:backup-dir=foo/bar'. Reason: Expected stripe ID to be greater than 0")))));
     assertThat(
-        () -> Configuration.valueOf("stripe.2:node-backup-dir=foo/bar").apply(cluster),
+        () -> Configuration.valueOf("stripe.2:backup-dir=foo/bar").apply(cluster),
         is(throwing(instanceOf(IllegalArgumentException.class))
-            .andMessage(is(equalTo("Invalid input: 'stripe.2:node-backup-dir=foo/bar'. Reason: Invalid stripe ID: 2. Cluster contains: 1 stripe(s)")))));
+            .andMessage(is(equalTo("Invalid input: 'stripe.2:backup-dir=foo/bar'. Reason: Invalid stripe ID: 2. Cluster contains: 1 stripe(s)")))));
 
     // bad node
     assertThat(
-        () -> Configuration.valueOf("stripe.1.node.0:node-backup-dir=foo/bar").apply(cluster),
+        () -> Configuration.valueOf("stripe.1.node.0:backup-dir=foo/bar").apply(cluster),
         is(throwing(instanceOf(IllegalArgumentException.class))
-            .andMessage(is(equalTo("Invalid input: 'stripe.1.node.0:node-backup-dir=foo/bar'. Reason: Expected node ID to be greater than 0")))));
+            .andMessage(is(equalTo("Invalid input: 'stripe.1.node.0:backup-dir=foo/bar'. Reason: Expected node ID to be greater than 0")))));
     assertThat(
-        () -> Configuration.valueOf("stripe.1.node.2:node-backup-dir=foo/bar").apply(cluster),
+        () -> Configuration.valueOf("stripe.1.node.2:backup-dir=foo/bar").apply(cluster),
         is(throwing(instanceOf(IllegalArgumentException.class))
-            .andMessage(is(equalTo("Invalid input: 'stripe.1.node.2:node-backup-dir=foo/bar'. Reason: Invalid node ID: 2. Stripe ID: 1 contains: 1 node(s)")))));
+            .andMessage(is(equalTo("Invalid input: 'stripe.1.node.2:backup-dir=foo/bar'. Reason: Invalid node ID: 2. Stripe ID: 1 contains: 1 node(s)")))));
   }
 
   @Test
   public void test_isDuplicateOf() {
-    assertThat("stripe.1.node.1.node-name=foo", is(duplicating("stripe.1.node.1.node-name=bar")));
-    assertThat("stripe.1.node.1.node-name", is(duplicating("stripe.1.node.1.node-name")));
-    assertThat("stripe.1.node-backup-dir=foo", is(duplicating("stripe.1:node-backup-dir=bar")));
-    assertThat("stripe.1.node-backup-dir", is(duplicating("stripe.1:node-backup-dir")));
-    assertThat("node-backup-dir=foo", is(duplicating("node-backup-dir=bar")));
-    assertThat("node-backup-dir", is(duplicating("node-backup-dir")));
+    assertThat("stripe.1.node.1.name=foo", is(duplicating("stripe.1.node.1.name=bar")));
+    assertThat("stripe.1.node.1.name", is(duplicating("stripe.1.node.1.name")));
+    assertThat("stripe.1.backup-dir=foo", is(duplicating("stripe.1:backup-dir=bar")));
+    assertThat("stripe.1.backup-dir", is(duplicating("stripe.1:backup-dir")));
+    assertThat("backup-dir=foo", is(duplicating("backup-dir=bar")));
+    assertThat("backup-dir", is(duplicating("backup-dir")));
     assertThat("offheap-resources", is(duplicating("offheap-resources")));
     assertThat("offheap-resources=main:1GB", is(duplicating("offheap-resources=main:1GB")));
     assertThat("offheap-resources.main=1GB", is(duplicating("offheap-resources.main=1GB")));
@@ -1015,10 +1015,10 @@ public class ConfigurationTest {
     assertThat("offheap-resources", is(incompatibleWith("offheap-resources=main:1GB")));
     assertThat("offheap-resources=main:1GB", is(incompatibleWith("offheap-resources")));
 
-    assertThat("stripe.1.node.1.node-name=foo", is(not(duplicating("stripe.1.node.1.node-backup-dir=bar"))));
-    assertThat("stripe.1.node.1.node-name=foo", is(not(duplicating("stripe.1.node.2.node-name=bar"))));
-    assertThat("stripe.1.node-backup-dir=foo", is(not(duplicating("stripe.2:node-backup-dir=foo"))));
-    assertThat("stripe.1.node-backup-dir=foo", is(not(duplicating("stripe.1.node.2:node-backup-dir=bar"))));
+    assertThat("stripe.1.node.1.name=foo", is(not(duplicating("stripe.1.node.1.backup-dir=bar"))));
+    assertThat("stripe.1.node.1.name=foo", is(not(duplicating("stripe.1.node.2.name=bar"))));
+    assertThat("stripe.1.backup-dir=foo", is(not(duplicating("stripe.2:backup-dir=foo"))));
+    assertThat("stripe.1.backup-dir=foo", is(not(duplicating("stripe.1.node.2:backup-dir=bar"))));
     assertThat("offheap-resources.main", is(not(duplicating("offheap-resources.second"))));
     assertThat("offheap-resources.main=1GB", is(not(duplicating("offheap-resources.second=1GB"))));
   }

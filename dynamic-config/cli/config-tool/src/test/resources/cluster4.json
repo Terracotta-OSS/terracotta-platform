@@ -17,14 +17,10 @@
           "nodeName": "node0",
           "nodePort": 9410,
           "tcProperties": {}
-        }
-      ]
-    },
-    {
-      "nodes": [
+        },
         {
           "dataDirs": {
-            "cache": "/data/cache1",
+            "cache": "/data/cache2",
             "main": "%H/terracotta/user-data/main"
           },
           "nodeBindAddress": "0.0.0.0",
@@ -34,8 +30,8 @@
           "nodeLogDir": "%H/terracotta/logs",
           "nodeLoggerOverrides": {},
           "nodeMetadataDir": "%H/terracotta/metadata",
-          "nodeName": "node1",
-          "nodePort": 9411,
+          "nodeName": "node2",
+          "nodePort": 9412,
           "tcProperties": {}
         }
       ]

@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import static org.terracotta.dynamic_config.api.model.SettingName.AUTO_ACTIVATE;
 import static org.terracotta.dynamic_config.api.model.SettingName.CLIENT_LEASE_DURATION;
 import static org.terracotta.dynamic_config.api.model.SettingName.CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.dynamic_config.api.model.SettingName.CLUSTER_NAME;
@@ -141,6 +142,12 @@ public class Options {
   @Parameter(names = {"-D", "--" + REPAIR_MODE})
   private boolean wantsRepairMode;
 
+  // hidden option that won't appear in the help file,
+  // so that we can start a pre-activated stripe directly in dev / test.
+  // no need to have a short option for this one, this is not public.
+  @Parameter(names = {"--" + AUTO_ACTIVATE}, hidden = true)
+  private boolean allowsAutoActivation;
+
   private final Map<Setting, String> paramValueMap = new HashMap<>();
 
   public Map<Setting, String> getTopologyOptions() {
@@ -174,6 +181,7 @@ public class Options {
           return !longestName.equals(addDashDash(LICENSE_FILE))
               && !longestName.equals(addDashDash(CONFIG_FILE))
               && !longestName.equals(addDashDash(REPAIR_MODE))
+              && !longestName.equals(addDashDash(AUTO_ACTIVATE))
               && !longestName.equals(addDashDash(NODE_CONFIG_DIR));
         })
         .forEach(pd -> paramValueMap.put(Setting.fromName(ConsoleParamsUtils.stripDashDash(pd.getLongestName())), pd.getParameterized().get(this).toString()));
@@ -197,6 +205,7 @@ public class Options {
       filteredOptions.remove("-p");
       filteredOptions.remove("-r");
 
+      filteredOptions.remove(addDashDash(AUTO_ACTIVATE));
       filteredOptions.remove(addDashDash(REPAIR_MODE));
       filteredOptions.remove(addDashDash(CONFIG_FILE));
       filteredOptions.remove(addDashDash(LICENSE_FILE));
@@ -246,5 +255,9 @@ public class Options {
 
   public boolean wantsRepairMode() {
     return wantsRepairMode;
+  }
+
+  public boolean allowsAutoActivation() {
+    return allowsAutoActivation;
   }
 }

@@ -53,7 +53,10 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   Node node1 = Node.newDefaultNode("node1", "localhost", 9411)
       .setDataDir("cache", Paths.get("/data/cache1"));
 
-  Cluster cluster = Cluster.newDefaultCluster(new Stripe(node0), new Stripe(node1))
+  Node node2 = Node.newDefaultNode("node2", "localhost", 9412)
+      .setDataDir("cache", Paths.get("/data/cache2"));
+
+  Cluster cluster = Cluster.newDefaultCluster(new Stripe(node0, node2), new Stripe(node1))
       .setOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Captor
@@ -77,6 +80,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     when(diagnosticServiceMock("localhost", 9410).getLogicalServerState()).thenReturn(STARTING);
     when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenReturn(UNREACHABLE);
+    when(diagnosticServiceMock("localhost", 9412).getLogicalServerState()).thenReturn(STARTING);
   }
 
   @Test
@@ -84,7 +88,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
     TopologyCommand command = newCommand()
         .setOperationType(NODE)
         .setDestination("localhost", 9410)
-        .setSource(createUnresolved("localhost", 9411));
+        .setSource(createUnresolved("localhost", 9412));
     command.validate();
     command.run();
 
@@ -96,9 +100,11 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
     assertThat(Json.toJson(allValues.get(0)), allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster3.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
-    assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), contains(createUnresolved("localhost", 9410)));
+    assertThat(cluster.getStripes(), hasSize(2));
+    assertThat(cluster.getNodeAddresses(), hasSize(2));
+    assertThat(cluster.getNodeAddresses(), contains(
+        createUnresolved("localhost", 9410),
+        createUnresolved("localhost", 9411)));
   }
 
   @Test
@@ -115,11 +121,11 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
-    assertThat(allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster3.json"), Cluster.class))));
+    assertThat(Json.toJson(allValues.get(0)), allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster4.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), contains(createUnresolved("localhost", 9410)));
+    assertThat(cluster.getNodeAddresses(), hasSize(2));
+    assertThat(cluster.getNodeAddresses(), contains(createUnresolved("localhost", 9410), createUnresolved("localhost", 9412)));
   }
 }

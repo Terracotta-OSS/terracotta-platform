@@ -50,8 +50,8 @@ public class SettingNomadChangeTest {
     assertThat(set(cluster(), OFFHEAP_RESOURCES, "main", "1GB").getSummary(), is(equalTo("set offheap-resources.main=1GB")));
     assertThat(unset(cluster(), OFFHEAP_RESOURCES).getSummary(), is(equalTo("unset offheap-resources")));
     assertThat(unset(cluster(), OFFHEAP_RESOURCES, "main").getSummary(), is(equalTo("unset offheap-resources.main")));
-    assertThat(set(stripe(1), NODE_LOG_DIR, "foo").getSummary(), is(equalTo("set node-log-dir=foo (stripe ID: 1)")));
-    assertThat(set(node(1, "node1"), NODE_LOG_DIR, "foo").getSummary(), is(equalTo("set node-log-dir=foo (stripe ID: 1, node: node1)")));
+    assertThat(set(stripe(1), NODE_LOG_DIR, "foo").getSummary(), is(equalTo("set log-dir=foo (stripe ID: 1)")));
+    assertThat(set(node(1, "node1"), NODE_LOG_DIR, "foo").getSummary(), is(equalTo("set log-dir=foo (stripe ID: 1, node: node1)")));
   }
 
   @Test
@@ -61,28 +61,28 @@ public class SettingNomadChangeTest {
     assertThat(change.getApplicability(), is(equalTo(cluster())));
     assertThat(change.getSetting(), is(equalTo(OFFHEAP_RESOURCES)));
 
-    configuration = Configuration.valueOf("stripe.1.node.1.node-log-dir=foo");
+    configuration = Configuration.valueOf("stripe.1.node.1.log-dir=foo");
     change = fromConfiguration(configuration, Operation.SET, Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))));
     assertThat(change.getApplicability(), is(equalTo(node(1, "node1"))));
     assertThat(change.getSetting(), is(equalTo(NODE_LOG_DIR)));
 
-    configuration = Configuration.valueOf("stripe.1.node-log-dir=foo");
+    configuration = Configuration.valueOf("stripe.1.log-dir=foo");
     change = fromConfiguration(configuration, Operation.SET, Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))));
     assertThat(change.getApplicability(), is(equalTo(stripe(1))));
     assertThat(change.getSetting(), is(equalTo(NODE_LOG_DIR)));
     assertThat(change.getOperation(), is(equalTo(Operation.SET)));
 
-    configuration = Configuration.valueOf("stripe.1.node-backup-dir=foo");
+    configuration = Configuration.valueOf("stripe.1.backup-dir=foo");
     change = fromConfiguration(configuration, Operation.UNSET, Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))));
     assertThat(change.getApplicability(), is(equalTo(stripe(1))));
     assertThat(change.getSetting(), is(equalTo(NODE_BACKUP_DIR)));
     assertThat(change.getOperation(), is(equalTo(Operation.UNSET)));
 
     assertThat(
-        () -> fromConfiguration(Configuration.valueOf("node-backup-dir"), Operation.CONFIG, Cluster.newDefaultCluster()),
+        () -> fromConfiguration(Configuration.valueOf("backup-dir"), Operation.CONFIG, Cluster.newDefaultCluster()),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Operation config cannot be converted to a Nomad change for an active cluster")))));
     assertThat(
-        () -> fromConfiguration(Configuration.valueOf("node-backup-dir"), Operation.GET, Cluster.newDefaultCluster()),
+        () -> fromConfiguration(Configuration.valueOf("backup-dir"), Operation.GET, Cluster.newDefaultCluster()),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Operation get cannot be converted to a Nomad change for an active cluster")))));
   }
 
@@ -91,10 +91,10 @@ public class SettingNomadChangeTest {
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost")));
 
     assertThat(set(cluster(), CLUSTER_NAME, "my-cluster").toConfiguration(cluster), is(equalTo(Configuration.valueOf("cluster-name=my-cluster"))));
-    assertThat(unset(cluster(), NODE_BACKUP_DIR).toConfiguration(cluster), is(equalTo(Configuration.valueOf("node-backup-dir"))));
-    assertThat(set(cluster(), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("node-backup-dir=foo"))));
-    assertThat(set(stripe(1), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("stripe.1.node-backup-dir=foo"))));
-    assertThat(set(node(1, "node1"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("stripe.1.node.1.node-backup-dir=foo"))));
+    assertThat(unset(cluster(), NODE_BACKUP_DIR).toConfiguration(cluster), is(equalTo(Configuration.valueOf("backup-dir"))));
+    assertThat(set(cluster(), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("backup-dir=foo"))));
+    assertThat(set(stripe(1), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("stripe.1.backup-dir=foo"))));
+    assertThat(set(node(1, "node1"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("stripe.1.node.1.backup-dir=foo"))));
     assertThat(set(cluster(), OFFHEAP_RESOURCES, "main", "1GB").toConfiguration(cluster), is(equalTo(Configuration.valueOf("offheap-resources.main=1GB"))));
     assertThat(unset(cluster(), OFFHEAP_RESOURCES, "main").toConfiguration(cluster), is(equalTo(Configuration.valueOf("offheap-resources.main"))));
 

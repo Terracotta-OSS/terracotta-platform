@@ -35,7 +35,7 @@ public class Ipv6ConfigActivationIT extends DynamicConfigIT {
   @Test
   public void testStartupFromMigratedConfigRepoAndGetCommand() throws Exception {
     Path configurationRepo = generateNodeConfigDir(1, 1, ConfigurationGenerator::generate1Stripe1NodeIpv6);
-    startNode(1, 1, "--node-config-dir", configurationRepo.toString());
+    startNode(1, 1, "--config-dir", configurationRepo.toString());
     waitForActive(1, 1);
 
     assertThat(configToolInvocation("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"), containsOutput("offheap-resources.main=512MB"));

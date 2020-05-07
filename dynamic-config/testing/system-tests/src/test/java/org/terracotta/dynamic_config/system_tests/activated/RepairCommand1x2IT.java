@@ -56,7 +56,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     final int passiveId = findPassives(1)[0];
 
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "node-logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         containsOutput("Commit failed for node"));
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));

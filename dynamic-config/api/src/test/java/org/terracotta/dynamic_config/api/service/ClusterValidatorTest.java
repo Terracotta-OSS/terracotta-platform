@@ -197,7 +197,7 @@ public class ClusterValidatorTest {
         .setSecuritySslTls(false)
         .setSecurityAuthc("certificate");
 
-    assertClusterValidationFails("security-ssl-tls is required for security-authc=certificate", cluster);
+    assertClusterValidationFails("ssl-tls is required for authc=certificate", cluster);
   }
 
   @Test
@@ -260,7 +260,7 @@ public class ClusterValidatorTest {
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes));
 
-    assertClusterValidationFails("One of security-ssl-tls, security-authc, or security-whitelist is required for security configuration", cluster);
+    assertClusterValidationFails("One of ssl-tls, authc, or whitelist is required for security configuration", cluster);
   }
 
   private String generateAddress() {

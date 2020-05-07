@@ -27,13 +27,13 @@ import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
  * <p>
  * <p>
  * Simulate a missing value with:
- * <pre>set -c stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=</pre>
+ * <pre>set -c stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=</pre>
  * <p>
  * Simulate a Nomad prepare failure with:
- * <pre>set -c stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=TRACE</pre>
+ * <pre>set -c stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=TRACE</pre>
  * <p>
  * Simulate a Nomad commit failure with:
- * <pre>set -c stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=INFO</pre>
+ * <pre>set -c stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=INFO</pre>
  *
  * @author Mathieu Carbou
  */

@@ -188,29 +188,29 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void setNodeLogDir_postActivation() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-log-dir=logs/stripe1"),
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=logs/stripe1"),
         containsOutput("restart of the cluster is required"));
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-log-dir"),
-        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.node-log-dir=logs" + separator + "stripe1")));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.log-dir=logs" + separator + "stripe1")));
   }
 
   @Test
   public void setNodeBindAddress_postActivation() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-bind-address=127.0.0.1"),
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "bind-address=127.0.0.1"),
         containsOutput("restart of the cluster is required"));
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-bind-address"),
-        containsOutput("stripe.1.node.1.node-bind-address=127.0.0.1"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "bind-address"),
+        containsOutput("stripe.1.node.1.bind-address=127.0.0.1"));
   }
 
   @Test
   public void setNodeGroupBindAddress_postActivation() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "node-group-bind-address=127.0.0.1"),
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "group-bind-address=127.0.0.1"),
         allOf(hasExitStatus(0), containsOutput("restart of the cluster is required")));
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-group-bind-address"),
-        containsOutput("stripe.1.node.1.node-group-bind-address=127.0.0.1"));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "group-bind-address"),
+        containsOutput("stripe.1.node.1.group-bind-address=127.0.0.1"));
   }
 
   @Test
@@ -232,14 +232,14 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void testSetLogger() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides=org.terracotta:TRACE,com.tc:TRACE"), is(successful()));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides=org.terracotta:TRACE,com.tc:TRACE"), is(successful()));
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-logger-overrides"),
-        allOf(hasExitStatus(0), containsOutput("node-logger-overrides=com.tc:TRACE,org.terracotta:TRACE")));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
+        allOf(hasExitStatus(0), containsOutput("logger-overrides=com.tc:TRACE,org.terracotta:TRACE")));
 
-    assertThat(configToolInvocation("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides.com.tc"), is(successful()));
+    assertThat(configToolInvocation("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.com.tc"), is(successful()));
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "node-logger-overrides"),
-        allOf(hasExitStatus(0), containsOutput("node-logger-overrides=org.terracotta:TRACE")));
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
+        allOf(hasExitStatus(0), containsOutput("logger-overrides=org.terracotta:TRACE")));
   }
 }

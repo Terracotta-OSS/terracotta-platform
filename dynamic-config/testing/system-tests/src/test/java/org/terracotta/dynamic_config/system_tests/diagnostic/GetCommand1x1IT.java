@@ -77,7 +77,7 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void testNode_getNodePort() {
     assertThat(
-        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-port"),
-        containsOutput("stripe.1.node.1.node-port=" + getNodePort()));
+        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.port"),
+        containsOutput("stripe.1.node.1.port=" + getNodePort()));
   }
 }

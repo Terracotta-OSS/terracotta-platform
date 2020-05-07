@@ -30,7 +30,7 @@ public class ConfigRepoIT extends DynamicConfigIT {
   @Test
   public void ensure_created_config_repo_are_the_same_regardless_of_applicability() throws Exception {
     // trigger a change that is applied at runtime
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-logger-overrides=org.terracotta:TRACE,com.tc:TRACE"), is(successful()));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides=org.terracotta:TRACE,com.tc:TRACE"), is(successful()));
 
     // config repos written on disk should be the same
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
