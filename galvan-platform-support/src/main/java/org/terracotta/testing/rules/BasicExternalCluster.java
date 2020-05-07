@@ -162,11 +162,10 @@ class BasicExternalCluster extends Cluster {
     List<Integer> serverGroupPorts = new ArrayList<>();
     List<Integer> serverDebugPorts = new ArrayList<>();
     portAllocation = portAllocator.reserve(stripeSize * 2);
-    int basePort = portAllocation.getBasePort();
     for (int i = 0; i < stripeSize; i++) {
       serverNames.add("testServer" + i);
-      serverPorts.add(basePort++);
-      serverGroupPorts.add(basePort++);
+      serverPorts.add(portAllocation.next());
+      serverGroupPorts.add(portAllocation.next());
       serverDebugPorts.add(serverDebugStartPort == 0 ? 0 : serverDebugStartPort++);
     }
 

@@ -84,12 +84,11 @@ public class BasicHarnessEntry extends AbstractHarnessEntry<BasicTestClusterConf
     List<Integer> serverGroupPorts = new ArrayList<>();
     List<Integer> serverDebugPorts = new ArrayList<>();
     try (PortAllocator.PortAllocation portAllocation = portAllocator.reserve(stripeSize * 2)) {
-      int basePort = portAllocation.getBasePort();
       int serverDebugPortStart = debugOptions.serverDebugPortStart;
       for (int i = 0; i < stripeSize; i++) {
         serverNames.add("testServer" + i);
-        serverPorts.add(basePort++);
-        serverGroupPorts.add(basePort++);
+        serverPorts.add(portAllocation.next());
+        serverGroupPorts.add(portAllocation.next());
         serverDebugPorts.add(serverDebugPortStart == 0 ? 0 : serverDebugPortStart++);
       }
 
