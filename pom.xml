@@ -43,6 +43,7 @@
     <statistics.version>2.1</statistics.version>
     <jackson.version>2.10.1</jackson.version>
     <terracotta-utilities.version>0.0.3</terracotta-utilities.version>
+    <ipc-eventbus.version>1.1.1</ipc-eventbus.version>
   </properties>
 
   <modules>
@@ -98,6 +99,11 @@
         <groupId>org.terracotta</groupId>
         <artifactId>terracotta-utilities-test-tools</artifactId>
         <version>${terracotta-utilities.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>ipc-eventbus</artifactId>
+        <version>${ipc-eventbus.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
