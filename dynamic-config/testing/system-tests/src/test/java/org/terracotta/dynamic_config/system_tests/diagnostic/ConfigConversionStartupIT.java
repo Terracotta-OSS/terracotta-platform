@@ -30,7 +30,7 @@ import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 public class ConfigConversionStartupIT extends DynamicConfigIT {
   @Test
   public void testStartupAfterConfigConversionForDefaultFailoverLeaseAndClientReconnWindow() throws Exception {
-    Path repositoriesDir = getBaseDir().resolve("generated-repositories");
+    Path repositoriesDir = getBaseDir().resolve("generated-configs");
     ConfigurationGenerator configGenerator = getConfigGenerator(repositoriesDir);
     Path tcConfig = configGenerator.substituteParams(1, 1, "/conversion/tc-config_missing_failover_lease_client_reconnect.xml");
     ConfigConverterTool.start("convert",
