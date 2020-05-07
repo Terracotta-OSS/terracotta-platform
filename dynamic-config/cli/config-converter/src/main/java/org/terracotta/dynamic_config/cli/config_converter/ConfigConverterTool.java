@@ -30,7 +30,6 @@ import static java.lang.System.lineSeparator;
 
 public class ConfigConverterTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigConverterTool.class);
-  private static final LocalMainCommand MAIN = new LocalMainCommand();
 
   public static void main(String... args) {
     try {
@@ -53,21 +52,22 @@ public class ConfigConverterTool {
 
   public static void start(String... args) {
     LOGGER.debug("Registering commands with CommandRepository");
+    LocalMainCommand mainCommand = new LocalMainCommand();
     CommandRepository commandRepository = new CommandRepository();
     commandRepository.addAll(
         new HashSet<>(
             Arrays.asList(
-                MAIN,
+                mainCommand,
                 new ConvertCommand()
             )
         )
     );
 
     LOGGER.debug("Parsing command-line arguments");
-    CustomJCommander jCommander = parseArguments(commandRepository, args);
+    CustomJCommander jCommander = parseArguments(commandRepository, args, mainCommand);
 
     // Process arguments like '-v'
-    MAIN.run();
+    mainCommand.run();
 
     LOGGER.debug("Injecting services in CommandRepository");
     commandRepository.inject(); // no service injection yet
@@ -90,8 +90,8 @@ public class ConfigConverterTool {
     });
   }
 
-  private static CustomJCommander parseArguments(CommandRepository commandRepository, String[] args) {
-    CustomJCommander jCommander = new CustomJCommander("config-converter", commandRepository, MAIN);
+  private static CustomJCommander parseArguments(CommandRepository commandRepository, String[] args, LocalMainCommand mainCommand) {
+    CustomJCommander jCommander = new CustomJCommander("config-converter", commandRepository, mainCommand);
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {

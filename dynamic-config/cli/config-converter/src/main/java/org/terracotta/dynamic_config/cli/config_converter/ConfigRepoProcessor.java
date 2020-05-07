@@ -56,10 +56,11 @@ public class ConfigRepoProcessor {
         .collect(Collectors.toList());
 
     NomadEnvironment environment = new NomadEnvironment();
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
-    NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
-    nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
-    failureRecorder.reThrow();
+    try (NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC())) {
+      NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
+      nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
+      failureRecorder.reThrow();
+    }
   }
 
   protected NomadServer<NodeContext> getNomadServer(int stripeId, String nodeName) {

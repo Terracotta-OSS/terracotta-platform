@@ -213,10 +213,11 @@ public class ConfigurationGeneratorVisitor {
   private void runNomadActivation(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeConfigurationDir) {
     requireNonNull(nodeConfigurationDir);
     NomadEnvironment environment = new NomadEnvironment();
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
-    NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
-    nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
-    failureRecorder.reThrow();
+    try (NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC())) {
+      NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
+      nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
+      failureRecorder.reThrow();
+    }
     logger.debug("Nomad activation run successful");
   }
 

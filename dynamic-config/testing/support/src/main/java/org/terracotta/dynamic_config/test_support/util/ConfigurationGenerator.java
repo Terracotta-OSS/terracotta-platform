@@ -80,6 +80,10 @@ public class ConfigurationGenerator {
     convert(substituteParams(1, 1, "/tc-configs/stripe1-1-node_ipv6.xml"));
   }
 
+  public void generate1Stripe1NodeMinimal() {
+    convert(substituteParams(1, 1, "/tc-configs/stripe1-1-minimal.xml"));
+  }
+
   public void generate1Stripe1Node() {
     convert(substituteParams(1, 1, "/tc-configs/stripe1-1-node.xml"));
   }
@@ -88,7 +92,7 @@ public class ConfigurationGenerator {
     convert(true, substituteParams(1, 1, "/tc-configs/stripe1-1-node.xml"));
   }
 
-  public Path substituteParams(int stripeId, int nodes, String path) {
+  private Path substituteParams(int stripeId, int nodes, String path) {
     String defaultConfig;
     try {
       defaultConfig = String.join(System.lineSeparator(), Files.readAllLines(Paths.get(ConfigurationGenerator.class.getResource(path).toURI())));
