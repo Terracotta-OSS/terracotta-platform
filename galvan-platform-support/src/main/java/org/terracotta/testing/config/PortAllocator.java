@@ -15,6 +15,8 @@
  */
 package org.terracotta.testing.config;
 
+import java.util.Iterator;
+
 /**
  * @author Mathieu Carbou
  */
@@ -22,11 +24,7 @@ public interface PortAllocator {
 
   PortAllocation reserve(int portCounts);
 
-    interface PortAllocation extends AutoCloseable {
-    int getBasePort();
-
-    int getPortCount();
-
+  interface PortAllocation extends AutoCloseable, Iterator<Integer> {
     @Override
     void close();
   }

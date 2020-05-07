@@ -45,11 +45,6 @@
       <artifactId>common-test-utilities</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-port-locking</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <dependency>
       <groupId>org.hamcrest</groupId>

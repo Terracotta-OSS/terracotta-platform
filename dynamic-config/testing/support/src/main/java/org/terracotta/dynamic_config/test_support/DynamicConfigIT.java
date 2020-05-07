@@ -83,7 +83,7 @@ import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
-import static org.terracotta.utilities.test.WaitForAssert.assertThatEventually;
+import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
@@ -350,50 +350,48 @@ public class DynamicConfigIT {
   // assertions
   // =========================================
 
-  protected final void waitUntil(ConfigToolExecutionResult result, Matcher<? super ConfigToolExecutionResult> matcher) throws TimeoutException {
+  protected final void waitUntil(ConfigToolExecutionResult result, Matcher<ConfigToolExecutionResult> matcher) {
     waitUntil(() -> result, matcher, timeout);
   }
 
-  protected final void waitUntil(NodeOutputRule.NodeLog result, Matcher<? super NodeOutputRule.NodeLog> matcher) throws TimeoutException {
+  protected final void waitUntil(NodeOutputRule.NodeLog result, Matcher<NodeOutputRule.NodeLog> matcher) {
     waitUntil(() -> result, matcher, timeout);
   }
 
-  protected final <T> void waitUntil(Supplier<T> callable, Matcher<? super T> matcher) throws TimeoutException {
+  protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher) {
     waitUntil(callable, matcher, timeout);
   }
 
-  protected final <T> void waitUntil(Supplier<T> callable, Matcher<? super T> matcher, long timeout) throws TimeoutException {
-    assertThatEventually(callable, matcher)
-        .threadDumpOnTimeout()
-        .within(Duration.ofSeconds(timeout));
+  protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher, long timeout) {
+    assertThat(callable, within(Duration.ofSeconds(timeout)).matches(matcher));
   }
 
-  protected final void waitForActive(int stripeId) throws TimeoutException {
+  protected final void waitForActive(int stripeId) {
     waitUntil(() -> findActive(stripeId).isPresent(), is(true));
   }
 
-  protected final void waitForActive(int stripeId, int nodeId) throws TimeoutException {
+  protected final void waitForActive(int stripeId, int nodeId) {
     waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_ACTIVE)));
   }
 
-  protected final void waitForPassive(int stripeId, int nodeId) throws TimeoutException {
+  protected final void waitForPassive(int stripeId, int nodeId) {
     waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_PASSIVE)));
   }
 
-  protected final void waitForDiagnostic(int stripeId, int nodeId) throws TimeoutException {
+  protected final void waitForDiagnostic(int stripeId, int nodeId) {
     waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_IN_DIAGNOSTIC_MODE)));
   }
 
-  protected final void waitForStopped(int stripeId, int nodeId) throws TimeoutException {
+  protected final void waitForStopped(int stripeId, int nodeId) {
     waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STOPPED)));
   }
 
-  protected final void waitForPassives(int stripeId) throws TimeoutException {
+  protected final void waitForPassives(int stripeId) {
     int expectedPassiveCount = angela.getNodeCount(stripeId) - 1;
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(expectedPassiveCount)));
   }
 
-  protected final void waitForNPassives(int stripeId, int count) throws TimeoutException {
+  protected final void waitForNPassives(int stripeId, int count) {
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
   }
 

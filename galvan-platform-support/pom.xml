@@ -63,13 +63,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-port-locking</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-tools</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>terracotta-utilities-tools</artifactId>
+      <artifactId>terracotta-utilities-port-chooser</artifactId>
     </dependency>
   </dependencies>
 </project>

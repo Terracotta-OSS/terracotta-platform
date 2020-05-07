@@ -39,7 +39,6 @@
     <module>inet-support</module>
     <module>json-support</module>
     <module>test-utilities</module>
-    <module>port-locking</module>
     <module>structures</module>
     <module>sanskrit</module>
     <module>nomad</module>
