@@ -323,7 +323,16 @@ public class DynamicConfigIT {
   protected Path generateNodeConfigDir(int stripeId, int nodeId, Consumer<ConfigurationGenerator> fn) throws Exception {
     Path nodeConfigurationDir = getBaseDir().resolve(getNodeConfigDir(stripeId, nodeId));
     Path configDirs = getBaseDir().resolve("generated-configs");
-    ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(configDirs, new ConfigurationGenerator.PortSupplier() {
+    ConfigurationGenerator clusterGenerator = getConfigGenerator(configDirs);
+    LOGGER.debug("Generating cluster node configuration directories into: {}", configDirs);
+    fn.accept(clusterGenerator);
+    org.terracotta.utilities.io.Files.copy(configDirs.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeConfigurationDir, RECURSIVE);
+    LOGGER.debug("Created node configuration directory into: {}", nodeConfigurationDir);
+    return nodeConfigurationDir;
+  }
+
+  protected ConfigurationGenerator getConfigGenerator(Path configDirs) {
+    return new ConfigurationGenerator(configDirs, new ConfigurationGenerator.PortSupplier() {
       @Override
       public int getNodePort(int stripeId, int nodeId) {
         return angela.getNodePort(stripeId, nodeId);
@@ -334,11 +343,6 @@ public class DynamicConfigIT {
         return angela.getNodeGroupPort(stripeId, nodeId);
       }
     });
-    LOGGER.debug("Generating cluster node configuration directories into: {}", configDirs);
-    fn.accept(clusterGenerator);
-    org.terracotta.utilities.io.Files.copy(configDirs.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeConfigurationDir, RECURSIVE);
-    LOGGER.debug("Created node configuration directory into: {}", nodeConfigurationDir);
-    return nodeConfigurationDir;
   }
 
   private Properties generateProperties() {

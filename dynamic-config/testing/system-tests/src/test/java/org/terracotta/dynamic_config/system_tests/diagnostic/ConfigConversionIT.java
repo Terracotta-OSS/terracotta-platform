@@ -36,7 +36,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-public class ConfigConvertorToolIT {
+public class ConfigConversionIT {
   @Rule
   public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
   @Rule

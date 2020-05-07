@@ -88,7 +88,7 @@ public class ConfigurationGenerator {
     convert(true, substituteParams(1, 1, "/tc-configs/stripe1-1-node.xml"));
   }
 
-  private Path substituteParams(int stripeId, int nodes, String path) {
+  public Path substituteParams(int stripeId, int nodes, String path) {
     String defaultConfig;
     try {
       defaultConfig = String.join(System.lineSeparator(), Files.readAllLines(Paths.get(ConfigurationGenerator.class.getResource(path).toURI())));
