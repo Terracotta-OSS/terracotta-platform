@@ -63,20 +63,20 @@ public class ClusterFactoryTest {
   @Test
   public void test_create_cli() {
     assertCliEquals(cli("failover-priority=availability"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))));
-    assertCliEquals(cli("failover-priority=availability", "node-hostname=%c"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))));
-    assertCliEquals(cli("failover-priority=availability", "node-hostname=foo"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))));
   }
 
   @Test
   public void test_create_cli_validated() {
-    assertCliFail(cli("failover-priority=availability", "security-ssl-tls=false", "security-authc=certificate"), "security-ssl-tls is required for security-authc=certificate");
-    assertCliFail(cli("failover-priority=availability", "security-ssl-tls=true", "security-authc=certificate"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "security-ssl-tls=true"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "security-authc=file"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "security-authc=ldap"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "security-audit-log-dir=foo"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "security-whitelist=true"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "security-dir=foo"), "One of security-ssl-tls, security-authc, or security-whitelist is required for security configuration");
+    assertCliFail(cli("failover-priority=availability", "ssl-tls=false", "authc=certificate"), "ssl-tls is required for authc=certificate");
+    assertCliFail(cli("failover-priority=availability", "ssl-tls=true", "authc=certificate"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "ssl-tls=true"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "authc=file"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "authc=ldap"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "audit-log-dir=foo"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "whitelist=true"), "security-dir is mandatory for any of the security configuration");
+    assertCliFail(cli("failover-priority=availability", "security-dir=foo"), "One of ssl-tls, authc, or whitelist is required for security configuration");
   }
 
   @Test
@@ -84,32 +84,32 @@ public class ClusterFactoryTest {
     assertConfigEquals(
         config(
             "failover-priority=availability",
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-name=real",
-            "stripe.1.node.1.node-hostname=localhost",
-            "stripe.1.node.1.node-hostname=foo"
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.name=real",
+            "stripe.1.node.1.hostname=localhost",
+            "stripe.1.node.1.hostname=foo"
         ),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("real", "foo"))));
 
     assertConfigEquals(
         config(
             "failover-priority=availability",
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost"
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost"
         ),
         Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))));
 
     assertConfigEquals(
         config(
             "failover-priority=availability",
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost1",
-            "stripe.1.node.2.node-name=node2",
-            "stripe.1.node.2.node-hostname=localhost2",
-            "stripe.2.node.1.node-name=node1",
-            "stripe.2.node.1.node-hostname=localhost3",
-            "stripe.2.node.2.node-name=node2",
-            "stripe.2.node.2.node-hostname=localhost4"
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost1",
+            "stripe.1.node.2.name=node2",
+            "stripe.1.node.2.hostname=localhost2",
+            "stripe.2.node.1.name=node1",
+            "stripe.2.node.1.hostname=localhost3",
+            "stripe.2.node.2.name=node2",
+            "stripe.2.node.2.hostname=localhost4"
         ),
         Cluster.newDefaultCluster(
             new Stripe(
@@ -122,52 +122,52 @@ public class ClusterFactoryTest {
 
     assertConfigEquals(
         config(
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost",
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
             "client-reconnect-window=120s",
             "failover-priority=availability",
             "client-lease-duration=150s",
-            "security-authc=",
-            "security-ssl-tls=false",
-            "security-whitelist=false",
+            "authc=",
+            "ssl-tls=false",
+            "whitelist=false",
             "offheap-resources=main:512MB",
-            "stripe.1.node.1.node-port=9410",
-            "stripe.1.node.1.node-group-port=9430",
-            "stripe.1.node.1.node-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-            "stripe.1.node.1.node-backup-dir=",
+            "stripe.1.node.1.port=9410",
+            "stripe.1.node.1.group-port=9430",
+            "stripe.1.node.1.bind-address=0.0.0.0",
+            "stripe.1.node.1.group-bind-address=0.0.0.0",
+            "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+            "stripe.1.node.1.log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.backup-dir=",
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.security-dir=",
-            "stripe.1.node.1.security-audit-log-dir=",
+            "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
         Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
 
     assertConfigEquals(
         config(
-            "stripe.1.node.1.node-name=node1",
-            "stripe.1.node.1.node-hostname=localhost",
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
             "client-reconnect-window=120s",
             "failover-priority=availability",
             "client-lease-duration=150s",
-            "security-authc=",
-            "security-ssl-tls=false",
-            "security-whitelist=false",
+            "authc=",
+            "ssl-tls=false",
+            "whitelist=false",
             "offheap-resources=main:512MB",
-            "stripe.1.node.1.node-port=9410",
-            "stripe.1.node.1.node-group-port=9430",
-            "stripe.1.node.1.node-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-group-bind-address=0.0.0.0",
-            "stripe.1.node.1.node-metadata-dir=%H/terracotta/metadata",
-            "stripe.1.node.1.node-log-dir=%H/terracotta/logs",
-            "stripe.1.node.1.node-backup-dir=",
+            "stripe.1.node.1.port=9410",
+            "stripe.1.node.1.group-port=9430",
+            "stripe.1.node.1.bind-address=0.0.0.0",
+            "stripe.1.node.1.group-bind-address=0.0.0.0",
+            "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
+            "stripe.1.node.1.log-dir=%H/terracotta/logs",
+            "stripe.1.node.1.backup-dir=",
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.security-dir=",
-            "stripe.1.node.1.security-audit-log-dir=",
+            "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
         Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
@@ -177,36 +177,36 @@ public class ClusterFactoryTest {
   public void test_create_config_validated() {
     // security
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-ssl-tls=false", "security-authc=certificate"),
-        "security-ssl-tls is required for security-authc=certificate");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "ssl-tls=false", "authc=certificate"),
+        "ssl-tls is required for authc=certificate");
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-ssl-tls=true", "security-authc=certificate"),
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "ssl-tls=true", "authc=certificate"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-ssl-tls=true"),
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "ssl-tls=true"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-authc=file"),
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "authc=file"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-authc=ldap"),
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "authc=ldap"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "stripe.1.node.1.security-audit-log-dir=foo"),
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "stripe.1.node.1.audit-log-dir=foo"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "security-whitelist=true"),
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "whitelist=true"),
         "security-dir is mandatory for any of the security configuration");
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.node-hostname=localhost", "stripe.1.node.1.security-dir=foo"),
-        "One of security-ssl-tls, security-authc, or security-whitelist is required for security configuration");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "stripe.1.node.1.security-dir=foo"),
+        "One of ssl-tls, authc, or whitelist is required for security configuration");
 
     // duplicate node name
     assertConfigFail(
         config(
             "failover-priority=availability",
-            "stripe.1.node.1.node-hostname=localhost1", "stripe.1.node.1.node-name=foo",
-            "stripe.1.node.2.node-hostname=localhost2", "stripe.1.node.2.node-name=foo"
+            "stripe.1.node.1.hostname=localhost1", "stripe.1.node.1.name=foo",
+            "stripe.1.node.2.hostname=localhost2", "stripe.1.node.2.name=foo"
         ),
         "Found duplicate node name: foo in stripe 1");
 

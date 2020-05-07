@@ -65,7 +65,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
 
     stopNode(1, 1);
 
-    startNode(1, 1, "--repair-mode", "--node-name", nodeName, "-r", repo);
+    startNode(1, 1, "--repair-mode", "--name", nodeName, "-r", repo);
     assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic3.txt").toURI())).collect(toList())));
   }
@@ -77,7 +77,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     // - failover during nomad commit when detaching a node: upon restart, the node will be PREPARED, will have a topology pointing to a node that has been restarted in diagnostic mode
 
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
-    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-config-dir", "config/stripe1/node-1-1");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/node-1-1");
     waitForActive(1, 1);
 
     startNode(1, 2);

@@ -41,14 +41,14 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
     Path configurationRepo = generateNodeConfigDir(1, 1, ConfigurationGenerator::generate1Stripe1Node);
-    startSingleNode("--node-config-dir", configurationRepo.toString());
+    startSingleNode("--config-dir", configurationRepo.toString());
     waitForActive(1, 1);
   }
 
   @Test
   public void testStartingWithSingleStripeMultiNodeRepo() throws Exception {
     Path configurationRepo = generateNodeConfigDir(1, 2, ConfigurationGenerator::generate1Stripe2Nodes);
-    startNode(1, 2, "--auto-activate", "--node-config-dir", configurationRepo.toString());
+    startNode(1, 2, "--auto-activate", "--config-dir", configurationRepo.toString());
     waitForActive(1, 2);
   }
 
@@ -56,21 +56,21 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
   public void testPreventConcurrentUseOfConfigDir() throws Exception {
     // Angela work dirs are different for each server instance. We'd need to create a repo at a common place for this test
     String sharedRepo = Files.createDirectories(getBaseDir()).toAbsolutePath().toString();
-    startNode(1, 1, "--auto-activate", "--failover-priority", "availability", "--node-name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort(1, 1)), "-N", "tc-cluster");
+    startNode(1, 1, "--auto-activate", "--failover-priority", "availability", "--name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort(1, 1)), "-N", "tc-cluster");
     waitForActive(1, 1);
 
     try {
       startNode(1, 2,
           "--auto-activate",
           "--failover-priority", "availability",
-          "--node-name", getNodeName(1, 2),
-          "--node-config-dir", sharedRepo,
+          "--name", getNodeName(1, 2),
+          "--config-dir", sharedRepo,
           "-p", String.valueOf(getNodePort(1, 2)),
           "-g", String.valueOf(getNodeGroupPort(1, 2)),
-          "--node-hostname", "localhost",
-          "--node-log-dir", getNodePath(1, 2).resolve("logs").toString(),
-          "--node-backup-dir", getNodePath(1, 2).resolve("backup").toString(),
-          "--node-metadata-dir", getNodePath(1, 2).resolve("metadata").toString(),
+          "--hostname", "localhost",
+          "--log-dir", getNodePath(1, 2).resolve("logs").toString(),
+          "--backup-dir", getNodePath(1, 2).resolve("backup").toString(),
+          "--metadata-dir", getNodePath(1, 2).resolve("metadata").toString(),
           "--data-dirs", "main:" + getNodePath(1, 2).resolve("data-dir").toString());
       fail();
     } catch (Exception e) {
@@ -83,23 +83,23 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
         "--auto-activate",
         "--failover-priority", "availability",
-        "--node-name", getNodeName(1, 1),
-        "--node-hostname", "localhost",
-        "--node-log-dir", getNodePath(1, 1).resolve("logs").toString(),
-        "--node-backup-dir", getNodePath(1, 1).resolve("backup").toString(),
-        "--node-metadata-dir", getNodePath(1, 1).resolve("metadata").toString(),
+        "--name", getNodeName(1, 1),
+        "--hostname", "localhost",
+        "--log-dir", getNodePath(1, 1).resolve("logs").toString(),
+        "--backup-dir", getNodePath(1, 1).resolve("backup").toString(),
+        "--metadata-dir", getNodePath(1, 1).resolve("metadata").toString(),
         "--data-dirs", "main:" + getNodePath(1, 1).resolve("data-dir").toString()
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {
-      throw new AssertionError("Do not use -n. use --node-name instead");
+      throw new AssertionError("Do not use -n. use --name instead");
     }
-    if (provided.contains("--node-name")) {
-      defaultArgs.remove("--node-name");
+    if (provided.contains("--name")) {
+      defaultArgs.remove("--name");
       defaultArgs.remove(getNodeName(1, 1));
     }
-    if (provided.contains("-s") || provided.contains("--node-hostname")) {
-      defaultArgs.remove("--node-hostname");
+    if (provided.contains("-s") || provided.contains("--hostname")) {
+      defaultArgs.remove("--hostname");
       defaultArgs.remove("localhost");
     }
     defaultArgs.addAll(provided);

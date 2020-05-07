@@ -46,7 +46,7 @@ import static org.terracotta.dynamic_config.api.service.IParameterSubstitutor.id
 public class CommandLineProcessorChainTest {
   private static final String LICENSE_FILE = "/path/to/license-file";
   private static final String CONFIG_FILE = "/path/to/config-file";
-  private static final String NODE_REPOSITORY_DIR = "/path/to/node-config-dir";
+  private static final String NODE_REPOSITORY_DIR = "/path/to/config-dir";
   private static final String CLUSTER_NAME = "tc-cluster";
   private static final String HOST_NAME = "localhost";
   private static final String NODE_NAME = "node-1";

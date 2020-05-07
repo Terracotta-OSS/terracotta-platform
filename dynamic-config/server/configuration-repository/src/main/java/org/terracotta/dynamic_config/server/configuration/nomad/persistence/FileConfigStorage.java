@@ -59,7 +59,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
       // removing extra information put
       int stripeId = Integer.parseInt(properties.remove("this.stripe-id").toString());
       int nodeId = Integer.parseInt(properties.remove("this.node-id").toString());
-      String nodeName = properties.remove("this.node-name").toString();
+      String nodeName = properties.remove("this.name").toString();
 
       Cluster cluster = new ClusterFactory().create(properties, configuration -> {
       }); // do not over-log added configs
@@ -83,7 +83,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
       // adds extra information about this node
       nonDefaults.setProperty("this.stripe-id", String.valueOf(config.getStripeId()));
       nonDefaults.setProperty("this.node-id", String.valueOf(config.getNodeId()));
-      nonDefaults.setProperty("this.node-name", String.valueOf(config.getNodeName()));
+      nonDefaults.setProperty("this.name", String.valueOf(config.getNodeName()));
 
       StringWriter out = new StringWriter();
       Props.store(out, nonDefaults, "Configuration for node '" + config.getNodeName() + "' in stripe ID " + config.getStripeId());

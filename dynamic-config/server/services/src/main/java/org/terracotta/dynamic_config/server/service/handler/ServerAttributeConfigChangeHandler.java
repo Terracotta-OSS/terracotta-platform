@@ -40,7 +40,7 @@ public class ServerAttributeConfigChangeHandler implements ConfigChangeHandler {
       }
 
       if (change.getSetting() == NODE_BIND_ADDRESS) {
-        // When node-bind-address is set, set the node-group-bind-address to the same value because platform does it
+        // When bind-address is set, set the group-bind-address to the same value because platform does it
         nodeContext.getNode().setNodeGroupBindAddress(change.getValue());
       }
     } catch (RuntimeException e) {

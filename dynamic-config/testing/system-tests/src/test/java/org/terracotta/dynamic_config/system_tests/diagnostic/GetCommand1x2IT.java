@@ -69,9 +69,9 @@ public class GetCommand1x2IT extends DynamicConfigIT {
   @Test
   public void testStripe_getAllNodeHostnames() {
     assertThat(
-        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node-hostname"),
+        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.hostname"),
         allOf(
-            containsOutput("stripe.1.node.1.node-hostname=localhost"),
-            containsOutput("stripe.1.node.2.node-hostname=localhost")));
+            containsOutput("stripe.1.node.1.hostname=localhost"),
+            containsOutput("stripe.1.node.2.hostname=localhost")));
   }
 }

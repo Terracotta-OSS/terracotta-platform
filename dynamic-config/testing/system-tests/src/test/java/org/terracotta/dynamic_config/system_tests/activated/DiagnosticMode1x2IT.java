@@ -50,7 +50,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     angela.tsa().stop(active);
     assertThat(angela.tsa().getStopped().size(), is(1));
 
-    startNode(active, "--repair-mode", "--node-name", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
+    startNode(active, "--repair-mode", "--name", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
     waitForDiagnostic(1, activeNodeId);
   }
 
@@ -61,7 +61,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     angela.tsa().stop(passive);
     assertThat(angela.tsa().getStopped().size(), is(1));
 
-    startNode(passive, "--repair-mode", "--node-name", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
+    startNode(passive, "--repair-mode", "--name", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
     waitForDiagnostic(1, passiveNodeId);
   }
 

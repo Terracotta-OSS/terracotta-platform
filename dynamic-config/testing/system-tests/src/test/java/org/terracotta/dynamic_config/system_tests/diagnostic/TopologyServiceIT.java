@@ -44,7 +44,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
   @Override
   protected void startNode(int stripeId, int nodeId) {
     startNode(1, 1,
-        "--node-config-dir", getNodePath(stripeId, nodeId).resolve("config").toString(),
+        "--config-dir", getNodePath(stripeId, nodeId).resolve("config").toString(),
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
     );
   }

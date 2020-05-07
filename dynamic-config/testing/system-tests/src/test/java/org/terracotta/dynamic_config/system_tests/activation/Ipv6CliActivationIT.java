@@ -31,17 +31,17 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
   @Override
   protected void startNode(int stripeId, int nodeId) {
     startNode(stripeId, nodeId,
-        "--node-name", getNodeName(stripeId, nodeId),
+        "--name", getNodeName(stripeId, nodeId),
         "--failover-priority", "availability",
-        "--node-hostname", "::1",
-        "--node-bind-address", "::",
-        "--node-group-bind-address", "::",
-        "--node-port", String.valueOf(getNodePort(stripeId, nodeId)),
-        "--node-group-port", String.valueOf(getNodeGroupPort(stripeId, nodeId)),
-        "--node-log-dir", getNodePath(stripeId, nodeId).resolve("logs").toString(),
-        "--node-backup-dir", getNodePath(stripeId, nodeId).resolve("backup").toString(),
-        "--node-metadata-dir", getNodePath(stripeId, nodeId).resolve("metadata").toString(),
-        "--node-config-dir", getNodePath(stripeId, nodeId).resolve("config").toString(),
+        "--hostname", "::1",
+        "--bind-address", "::",
+        "--group-bind-address", "::",
+        "--port", String.valueOf(getNodePort(stripeId, nodeId)),
+        "--group-port", String.valueOf(getNodeGroupPort(stripeId, nodeId)),
+        "--log-dir", getNodePath(stripeId, nodeId).resolve("logs").toString(),
+        "--backup-dir", getNodePath(stripeId, nodeId).resolve("backup").toString(),
+        "--metadata-dir", getNodePath(stripeId, nodeId).resolve("metadata").toString(),
+        "--config-dir", getNodePath(stripeId, nodeId).resolve("config").toString(),
         "--data-dirs", "main:" + getNodePath(stripeId, nodeId).resolve("data-dir")
     );
   }

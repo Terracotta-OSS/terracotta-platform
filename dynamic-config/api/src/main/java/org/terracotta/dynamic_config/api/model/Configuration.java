@@ -287,8 +287,8 @@ public class Configuration {
     } else if (rawValue.isEmpty()) {
       // equivalent to an unset or config because no value after equal sign
       // - cluster-name= (in config file)
-      // - unset node-backup-dir=
-      // - set node-backup-dir=
+      // - unset backup-dir=
+      // - set backup-dir=
       if (setting.isRequired()) {
         // unset is not supported at all
         throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " requires a value");
@@ -498,13 +498,13 @@ public class Configuration {
    *  set -c stripe.1.offheap-resources.main=1G
    *  set -c offheap-resources.main=1G
    *
-   *  get -c stripe.1.node.1.node-backup-dir
-   *  get -c stripe.1.node-backup-dir
-   *  get -c node-backup-dir
+   *  get -c stripe.1.node.1.backup-dir
+   *  get -c stripe.1.backup-dir
+   *  get -c backup-dir
    *
-   *  set -c stripe.1.node.1.node-backup-dir=foo/bar
-   *  set -c stripe.1.node-backup-dir=foo/bar
-   *  set -c node-backup-dir=foo/bar
+   *  set -c stripe.1.node.1.backup-dir=foo/bar
+   *  set -c stripe.1.backup-dir=foo/bar
+   *  set -c backup-dir=foo/bar
    * </pre>
    */
   public static Configuration valueOf(String input) {
@@ -584,7 +584,7 @@ public class Configuration {
   public static Configuration valueOf(Setting setting) {
     String val = setting.getDefaultValue();
     if (val == null) {
-      // simulate what we would have in a config file, such as: node-backup-dir=
+      // simulate what we would have in a config file, such as: backup-dir=
       val = "";
     }
     return new Configuration(setting + "=" + val, setting, CLUSTER, null, null, null, val);
@@ -593,7 +593,7 @@ public class Configuration {
   public static Configuration valueOf(Setting setting, int stripeId) {
     String val = setting.getDefaultValue();
     if (val == null) {
-      // simulate what we would have in a config file, such as: node-backup-dir=
+      // simulate what we would have in a config file, such as: backup-dir=
       val = "";
     }
     return new Configuration("stripe." + stripeId + "." + setting + "=" + val, setting, STRIPE, stripeId, null, null, val);
@@ -602,7 +602,7 @@ public class Configuration {
   public static Configuration valueOf(Setting setting, int stripeId, int nodeId) {
     String val = setting.getDefaultValue();
     if (val == null) {
-      // simulate what we would have in a config file, such as: node-backup-dir=
+      // simulate what we would have in a config file, such as: backup-dir=
       val = "";
     }
     return new Configuration("stripe." + stripeId + ".node." + nodeId + "." + setting + "=" + val, setting, NODE, stripeId, nodeId, null, val);

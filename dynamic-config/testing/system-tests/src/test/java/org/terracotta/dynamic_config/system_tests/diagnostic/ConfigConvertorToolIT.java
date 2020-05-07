@@ -196,11 +196,11 @@ public class ConfigConvertorToolIT {
   public void testNodePort() {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
-        "-n", "cluster-node-port-bind-address",
+        "-n", "cluster-port-bind-address",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-node-port-bind-address.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodePort(), is(9411));
@@ -210,11 +210,11 @@ public class ConfigConvertorToolIT {
   public void testNodeBindAddress() {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
-        "-n", "cluster-node-port-bind-address",
+        "-n", "cluster-port-bind-address",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-node-port-bind-address.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodeBindAddress(), is("1.1.1.1"));
@@ -224,11 +224,11 @@ public class ConfigConvertorToolIT {
   public void testNodeGroupPort() {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
-        "-n", "cluster-node-group-port-group-bind-address",
+        "-n", "cluster-group-port-group-bind-address",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-node-group-port-group-bind-address.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodeGroupPort(), is(9431));
@@ -238,11 +238,11 @@ public class ConfigConvertorToolIT {
   public void testNodeGroupBindAddress() {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
-        "-n", "cluster-node-group-port-group-bind-address",
+        "-n", "cluster-group-port-group-bind-address",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-node-group-port-group-bind-address.properties");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
     assertThat(cluster.getNode(1, 1).get().getNodeGroupBindAddress(), is("2.2.2.2"));

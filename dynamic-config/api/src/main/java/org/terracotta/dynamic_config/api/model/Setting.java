@@ -594,7 +594,7 @@ public enum Setting {
 
   /**
    * @return true if this setting supports some operations (get, set, unset, config) to be called with a scope passed as parameter.
-   * Example: node-name is defined as scope NODE, but we could execute "get node-name"
+   * Example: name is defined as scope NODE, but we could execute "get name"
    */
   public boolean allowsAnyOperationInScope(Scope scope) {
     if (operations.isEmpty()) {

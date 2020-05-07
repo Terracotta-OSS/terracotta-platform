@@ -114,7 +114,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // trigger commit failure on active
     // the passive should zap when restarting
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".node-logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
         not(hasExitStatus(0)));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
@@ -139,7 +139,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // but passive is fine
     // when passive restarts, its history is greater and not equal to the active, so it zaps
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".node-logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
         not(hasExitStatus(0)));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
@@ -170,7 +170,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // the active is OK
     // the passive should restart fine
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, passiveNodeId), "-c", "stripe.1.node." + passiveNodeId + ".node-logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, passiveNodeId), "-c", "stripe.1.node." + passiveNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         not(hasExitStatus(0)));
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
