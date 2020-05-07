@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
@@ -43,6 +44,13 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
     Path configurationRepo = generateNodeConfigDir(1, 1, ConfigurationGenerator::generate1Stripe1Node);
     startSingleNode("--config-dir", configurationRepo.toString());
     waitForActive(1, 1);
+  }
+
+  @Test
+  public void testStartupAfterConfigConversionWithMinimalConfig() throws Exception {
+    Path configurationRepo = generateNodeConfigDir(1, 1, ConfigurationGenerator::generate1Stripe1NodeMinimal);
+    startNode(1, 1, "--config-dir", configurationRepo.toString());
+    waitUntil(() -> angela.tsa().getActives().size(), is(1));
   }
 
   @Test
