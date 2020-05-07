@@ -120,15 +120,20 @@ public class DynamicConfigIT {
         .around(new ExtendedTestRule() {
           @Override
           protected void before(Description description) throws Throwable {
-            List<TerracottaServer> servers = angela.getClusterFactory().tsa().getTsaConfigurationContext().getTopology().getServers();
-            for (TerracottaServer s : servers) {
-              try {
-                RemoteFolder folder = angela.getClusterFactory().tsa().browse(s, "");
-                folder.upload("logback-test.xml", this.getClass().getResourceAsStream("/tc-logback.xml"));
-              } catch (IOException exp) {
-                LOGGER.warn("unable to upload logback configuration", exp);
+            // upload tc logging config, but ONLY IF EXISTS !
+            URL tcLoggingConfig = this.getClass().getResource("/tc-logback.xml");
+            if (tcLoggingConfig != null) {
+              List<TerracottaServer> servers = angela.tsa().getTsaConfigurationContext().getTopology().getServers();
+              for (TerracottaServer s : servers) {
+                try {
+                  RemoteFolder folder = angela.tsa().browse(s, "");
+                  folder.upload("logback-test.xml", tcLoggingConfig);
+                } catch (IOException exp) {
+                  LOGGER.warn("unable to upload logback configuration", exp);
+                }
               }
             }
+            // wait for server startup if auto-activated
             if (clusterDef.autoStart() && clusterDef.autoActivate()) {
               for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
                 waitForActive(stripeId);
