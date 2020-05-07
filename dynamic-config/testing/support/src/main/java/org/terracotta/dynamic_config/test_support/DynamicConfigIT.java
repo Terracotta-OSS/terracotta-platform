@@ -68,6 +68,7 @@ import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import org.terracotta.angela.client.config.TsaConfigurationContext;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
@@ -227,7 +228,8 @@ public class DynamicConfigIT {
     return customConfigurationContext().tsa(tsa -> tsa
         .clusterName("tc-cluster")
         .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
-        .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms128m -Xmx128m"))
+        .terracottaCommandLineEnvironment(TsaConfigurationContext.TerracottaCommandLineEnvironmentKeys.CONFIG_TOOL, TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m -Xmx32m"))
+        .terracottaCommandLineEnvironment(TsaConfigurationContext.TerracottaCommandLineEnvironmentKeys.SERVER_START_PREFIX, TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms64m -Xmx128m"))
         .topology(new Topology(
             getDistribution(),
             dynamicCluster(
