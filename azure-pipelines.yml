@@ -26,23 +26,27 @@ resources:
 jobs:
 - template: build-templates/maven-common.yml@templates
   parameters:
-    jobName: 'Linux_Java_8'
+    jobName: Linux_Java_8
     timeoutInMinutes: 180
+    pool: tc_linux_pool
+    options: -B -Dtest.parallel.forks=6
 - template: build-templates/maven-common.yml@templates
   parameters:
-    jobName: 'Linux_Java_11'
+    jobName: Linux_Java_11
     timeoutInMinutes: 180
-    options: '-B -Djava.test.version=1.11'
+    pool: tc_linux_pool
+    options: -B -Dtest.parallel.forks=6 -Djava.test.version=1.11
 - template: build-templates/maven-common.yml@templates
   parameters:
-    jobName: 'Windows_Java_8'
+    jobName: Windows_Java_8
     timeoutInMinutes: 180
-    vmImage: 'windows-latest'
+    pool: tc_windows_pool
+    options: -B -Dtest.parallel.forks=4
 - template: build-templates/maven-common.yml@templates
   parameters:
-    jobName: 'Windows_Java_11'
+    jobName: Windows_Java_11
     timeoutInMinutes: 180
-    vmImage: 'windows-latest'
-    options: '-B -Djava.test.version=1.11'
+    pool: tc_windows_pool
+    options: -B -Dtest.parallel.forks=4 -Djava.test.version=1.11
 
 
