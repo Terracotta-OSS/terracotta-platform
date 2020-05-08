@@ -31,8 +31,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-json-support</artifactId>
+      <groupId>org.terracotta.dynamic-config</groupId>
+      <artifactId>dynamic-config-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>runnel</artifactId>
       <version>${project.version}</version>
     </dependency>
 
