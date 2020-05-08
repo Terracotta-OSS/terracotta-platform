@@ -67,6 +67,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   @Override
+  @JsonIgnore
   public Scope getScope() {
     return CLUSTER;
   }
@@ -403,6 +404,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   /**
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
+  @Override
   public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
     Properties properties = Setting.modelToProperties(this, expanded, includeDefaultValues);
     for (int i = 0; i < stripes.size(); i++) {

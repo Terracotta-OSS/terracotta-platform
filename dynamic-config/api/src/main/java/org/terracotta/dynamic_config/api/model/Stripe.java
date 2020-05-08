@@ -38,7 +38,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 
-public class Stripe implements Cloneable {
+public class Stripe implements Cloneable, PropertyHolder {
   private final List<Node> nodes;
 
   @JsonCreator
@@ -197,6 +197,7 @@ public class Stripe implements Cloneable {
   /**
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
+  @Override
   public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
     Properties properties = new Properties();
     for (int i = 0; i < nodes.size(); i++) {
@@ -205,5 +206,11 @@ public class Stripe implements Cloneable {
       props.stringPropertyNames().forEach(key -> properties.setProperty(prefix + key, props.getProperty(key)));
     }
     return properties;
+  }
+
+  @JsonIgnore
+  @Override
+  public Scope getScope() {
+    return Scope.STRIPE;
   }
 }

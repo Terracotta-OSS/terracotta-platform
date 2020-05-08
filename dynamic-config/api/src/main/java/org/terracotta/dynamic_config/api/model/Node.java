@@ -60,6 +60,7 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   @Override
+  @JsonIgnore
   public Scope getScope() {
     return NODE;
   }
@@ -395,6 +396,7 @@ public class Node implements Cloneable, PropertyHolder {
   /**
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
+  @Override
   public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
     return Setting.modelToProperties(this, expanded, includeDefaultValues);
   }
