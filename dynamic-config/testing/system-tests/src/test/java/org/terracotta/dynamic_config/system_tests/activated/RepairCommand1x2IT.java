@@ -114,7 +114,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     // we force a commit on the active
     assertThat(
-        configToolInvocation("-r", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configToolInvocation("-r", "15s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
             containsOutput("Attempting an automatic repair of the configuration on nodes"),
             containsOutput("Forcing a commit"),
@@ -161,11 +161,11 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster(1, activeId).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster(1, activeId).getNodeCount(), is(equalTo(2)));
 
-    assertThat(configToolInvocation("-r", "5s", "diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
+    assertThat(configToolInvocation("-r", "15s", "diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
         containsLinesStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic5.txt").toURI())).collect(toList())));
 
     assertThat(
-        configToolInvocation("-r", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configToolInvocation("-r", "15s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
             containsOutput("Attempting an automatic repair of the configuration on nodes"),
             containsOutput("Configuration is repaired")));
