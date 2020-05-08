@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
 
@@ -191,5 +192,18 @@ public class Stripe implements Cloneable {
         .filter(idx -> nodes.get(idx).hasAddress(nodeAddress))
         .map(idx -> idx + 1)
         .findAny();
+  }
+
+  /**
+   * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
+   */
+  public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
+    Properties properties = new Properties();
+    for (int i = 0; i < nodes.size(); i++) {
+      String prefix = "node." + (i + 1) + ".";
+      Properties props = nodes.get(i).toProperties(expanded, includeDefaultValues);
+      props.stringPropertyNames().forEach(key -> properties.setProperty(prefix + key, props.getProperty(key)));
+    }
+    return properties;
   }
 }

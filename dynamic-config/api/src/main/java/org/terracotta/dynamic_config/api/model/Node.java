@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -389,6 +390,13 @@ public class Node implements Cloneable, PropertyHolder {
     }
 
     return thisCopy;
+  }
+
+  /**
+   * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
+   */
+  public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
+    return Setting.modelToProperties(this, expanded, includeDefaultValues);
   }
 
   public Node fillRequiredSettings() {
