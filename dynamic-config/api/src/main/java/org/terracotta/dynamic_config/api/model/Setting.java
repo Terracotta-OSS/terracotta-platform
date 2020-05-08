@@ -28,7 +28,9 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -650,10 +652,6 @@ public enum Setting {
     return this.scope == scope;
   }
 
-  public String getNamespace(int stripeId, int nodeId) {
-    return (isScope(NODE) ? "stripe." + stripeId + ".node." + nodeId + "." : "") + this;
-  }
-
   public void validate(String key, String value) {
     // do not validate if value is null and setting optional
     if (key == null && value == null && !isRequired()) {
@@ -678,14 +676,18 @@ public enum Setting {
   }
 
   public Stream<Tuple2<String, String>> getExpandedProperties(NodeContext nodeContext) {
+    return getExpandedProperties(getTarget(nodeContext));
+  }
+
+  public Stream<Tuple2<String, String>> getExpandedProperties(PropertyHolder o) {
     if (!isMap()) {
       throw new UnsupportedOperationException();
     }
-    return extractor.apply(getTarget(nodeContext)).filter(tuple -> tuple.t1 != null);
+    return extractor.apply(o).filter(tuple -> tuple.t1 != null);
   }
 
-  public void setProperty(PropertyHolder node, String value) {
-    setProperty(node, null, value);
+  public void setProperty(PropertyHolder o, String value) {
+    setProperty(o, null, value);
   }
 
   public void setProperty(NodeContext nodeContext, String key, String value) {
@@ -698,6 +700,23 @@ public enum Setting {
     }
     validate(key, value);
     this.setter.accept(node, tuple2(key, value));
+  }
+
+  public Properties toProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues) {
+    Properties properties = new Properties();
+    String currentValue = getProperty(o).orElse(null);
+    String defaultValue = getDefaultValue();
+    boolean exclude = !includeDefaultValues && currentValue == null && defaultValue == null // property is optional and has no default - we exclude
+        || !includeDefaultValues && defaultValue != null && Objects.equals(defaultValue, currentValue) // property has a default which is equal to the current value and we want to hide defaults
+        || !includeDefaultValues && currentValue == null && isRequired(); // current value is not set for a property that is required and has a default, and we want to exclude default
+    if (!exclude) {
+      if (currentValue == null || !expanded || !isMap()) {
+        properties.setProperty(name, currentValue != null ? currentValue : "");
+      } else {
+        getExpandedProperties(o).forEach(prop -> properties.setProperty(name + "." + prop.t1, prop.t2));
+      }
+    }
+    return properties;
   }
 
   public boolean allowsValue(String value) {
@@ -741,6 +760,15 @@ public enum Setting {
         .filter(s -> s.isScope(o.getScope()))
         .forEach(setting -> setting.fillDefault(o));
     return o;
+  }
+
+  public static Properties modelToProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues) {
+    Properties properties = new Properties();
+    Stream.of(Setting.values())
+        .filter(setting -> setting.allowsOperation(Operation.CONFIG))
+        .filter(setting -> setting.isScope(o.getScope()))
+        .forEach(setting -> properties.putAll(setting.toProperties(o, expanded, includeDefaultValues)));
+    return properties;
   }
 
   @SuppressWarnings("unchecked")

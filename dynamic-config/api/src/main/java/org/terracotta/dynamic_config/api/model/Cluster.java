@@ -40,13 +40,11 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
-import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.IntStream.rangeClosed;
-import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 
 public class Cluster implements Cloneable, PropertyHolder {
@@ -406,41 +404,13 @@ public class Cluster implements Cloneable, PropertyHolder {
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
   public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
-    // select the settings to output and sort them.
-    List<Setting> settings = Stream.of(Setting.values())
-        .filter(setting -> setting.allowsOperation(Operation.CONFIG))
-        .sorted(comparing(Setting::toString))
-        .collect(toList());
-    // iterate over all stripes
-    return rangeClosed(1, stripes.size()).boxed().flatMap(stripeId -> {
-      List<Node> nodes = stripes.get(stripeId - 1).getNodes();
-      // iterate over all nodes of this stripe
-      return rangeClosed(1, nodes.size()).boxed().flatMap(nodeId -> {
-        NodeContext nodeContext = new NodeContext(this, stripeId, nodes.get(nodeId - 1).getNodeName());
-        // for each setting, create the line:
-        // stripe.<ids>.node.<idx>.<setting>=<value> or stripe.<ids>.node.<idx>.<setting>.<key>=<value>
-        // depending whether we want the expanded or non expanded form
-        return settings.stream()
-            .flatMap(setting -> {
-              final String currentValue = setting.getProperty(nodeContext).orElse(null);
-              final String defaultValue = setting.getDefaultValue();
-              return !includeDefaultValues && currentValue == null && defaultValue == null // property is optional and has no default - we exclude
-                  || !includeDefaultValues && defaultValue != null && Objects.equals(defaultValue, currentValue) // property has a default which is equal to the current value and we want to hide defaults
-                  || !includeDefaultValues && currentValue == null && setting.isRequired() // current value is not set for a property that is required and has a default, and we want to exclude default
-                  ?
-                  Stream.empty() :
-                  currentValue == null || !expanded || !setting.isMap() ?
-                      Stream.of(tuple2(setting.getNamespace(stripeId, nodeId), currentValue != null ? currentValue : "")) :
-                      setting.getExpandedProperties(nodeContext).map(property -> tuple2(setting.getNamespace(stripeId, nodeId) + "." + property.t1, property.t2));
-            });
-      });
-    }).reduce(new Properties(), (props, tupe) -> {
-      // then reducing all these lines into a property object
-      props.setProperty(tupe.t1, tupe.t2);
-      return props;
-    }, (p1, p2) -> {
-      throw new UnsupportedOperationException();
-    });
+    Properties properties = Setting.modelToProperties(this, expanded, includeDefaultValues);
+    for (int i = 0; i < stripes.size(); i++) {
+      String prefix = "stripe." + (i + 1) + ".";
+      Properties props = stripes.get(i).toProperties(expanded, includeDefaultValues);
+      props.stringPropertyNames().forEach(key -> properties.setProperty(prefix + key, props.getProperty(key)));
+    }
+    return properties;
   }
 
   @JsonIgnore
