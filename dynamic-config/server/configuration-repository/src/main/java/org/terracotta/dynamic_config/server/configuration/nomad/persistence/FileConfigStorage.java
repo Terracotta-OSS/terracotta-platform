@@ -86,7 +86,8 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
       nonDefaults.setProperty("this.name", String.valueOf(config.getNodeName()));
 
       StringWriter out = new StringWriter();
-      Props.store(out, nonDefaults, "Configuration for node '" + config.getNodeName() + "' in stripe ID " + config.getStripeId());
+      String comments = "THIS FILE IS INTENDED FOR BOOK-KEEPING PURPOSES ONLY, AND IS NOT SUPPOSED TO BE EDITED. DO NOT ATTEMPT TO MODIFY.";
+      Props.store(out, nonDefaults, comments);
       Files.write(file, out.toString().getBytes(UTF_8));
     } catch (IOException e) {
       throw new ConfigStorageException(e);

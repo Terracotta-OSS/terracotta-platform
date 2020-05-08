@@ -81,11 +81,6 @@
       <artifactId>voter</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>ipc-eventbus</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
