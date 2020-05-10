@@ -39,6 +39,7 @@ import org.terracotta.entity.StateDumpCollector;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_ADDITION;
@@ -133,18 +134,18 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Dyn
       eventRegistration = eventService.register(new DynamicConfigListenerAdapter() {
         @Override
         public void onNodeAddition(int stripeId, Node addedNode) {
-          fire(new DynamicTopologyEntityMessage(EVENT_NODE_ADDITION, new Object[]{stripeId, addedNode}));
+          fire(new DynamicTopologyEntityMessage(EVENT_NODE_ADDITION, asList(stripeId, addedNode)));
         }
 
         @Override
         public void onNodeRemoval(int stripeId, Node removedNode) {
-          fire(new DynamicTopologyEntityMessage(EVENT_NODE_REMOVAL, new Object[]{stripeId, removedNode}));
+          fire(new DynamicTopologyEntityMessage(EVENT_NODE_REMOVAL, asList(stripeId, removedNode)));
         }
 
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
           Configuration configuration = change.toConfiguration(updated);
-          fire(new DynamicTopologyEntityMessage(EVENT_SETTING_CHANGED, new Object[]{configuration, updated}));
+          fire(new DynamicTopologyEntityMessage(EVENT_SETTING_CHANGED, asList(configuration, updated)));
         }
       });
     }

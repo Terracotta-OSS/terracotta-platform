@@ -15,12 +15,13 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Properties;
 
 /**
  * @author Mathieu Carbou
  */
 public interface PropertyHolder {
-  @JsonIgnore
   Scope getScope();
+
+  Properties toProperties(boolean expanded, boolean includeDefaultValues);
 }

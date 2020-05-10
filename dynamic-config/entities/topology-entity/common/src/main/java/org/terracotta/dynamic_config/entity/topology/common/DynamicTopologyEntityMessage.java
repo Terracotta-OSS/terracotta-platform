@@ -15,11 +15,12 @@
  */
 package org.terracotta.dynamic_config.entity.topology.common;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+
+import java.util.Objects;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Mathieu Carbou
@@ -39,17 +40,14 @@ public class DynamicTopologyEntityMessage implements EntityMessage, EntityRespon
 
   private final Type type;
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
   private final Object payload;
 
   public DynamicTopologyEntityMessage(Type type) {
     this(type, null);
   }
 
-  @JsonCreator
-  public DynamicTopologyEntityMessage(@JsonProperty(value = "type", required = true) Type type,
-                                      @JsonProperty(value = "payload") Object payload) {
-    this.type = type;
+  public DynamicTopologyEntityMessage(Type type, Object payload) {
+    this.type = requireNonNull(type);
     this.payload = payload;
   }
 
@@ -57,8 +55,9 @@ public class DynamicTopologyEntityMessage implements EntityMessage, EntityRespon
     return type;
   }
 
-  public Object getPayload() {
-    return payload;
+  @SuppressWarnings("unchecked")
+  public <T> T getPayload() {
+    return (T) payload;
   }
 
   @Override
@@ -67,5 +66,19 @@ public class DynamicTopologyEntityMessage implements EntityMessage, EntityRespon
         "type=" + type +
         ", payload=" + payload +
         '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof DynamicTopologyEntityMessage)) return false;
+    DynamicTopologyEntityMessage that = (DynamicTopologyEntityMessage) o;
+    return getType() == that.getType() &&
+        Objects.equals(getPayload(), that.getPayload());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getType(), getPayload());
   }
 }

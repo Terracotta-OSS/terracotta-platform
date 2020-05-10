@@ -29,6 +29,7 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -59,18 +60,18 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
       public void handleMessage(DynamicTopologyEntityMessage messageFromServer) {
         switch (messageFromServer.getType()) {
           case EVENT_NODE_ADDITION: {
-            Object[] payload = (Object[]) messageFromServer.getPayload();
-            listener.onNodeAddition((int) payload[0], (Node) payload[1]);
+            List<Object> payload = messageFromServer.getPayload();
+            listener.onNodeAddition((int) payload.get(0), (Node) payload.get(1));
             break;
           }
           case EVENT_NODE_REMOVAL: {
-            Object[] payload = (Object[]) messageFromServer.getPayload();
-            listener.onNodeRemoval((int) payload[0], (Node) payload[1]);
+            List<Object> payload = messageFromServer.getPayload();
+            listener.onNodeRemoval((int) payload.get(0), (Node) payload.get(1));
             break;
           }
           case EVENT_SETTING_CHANGED: {
-            Object[] payload = (Object[]) messageFromServer.getPayload();
-            listener.onSettingChange((Configuration) payload[0], (Cluster) payload[1]);
+            List<Object> payload = messageFromServer.getPayload();
+            listener.onSettingChange((Configuration) payload.get(0), (Cluster) payload.get(1));
             break;
           }
           default:
