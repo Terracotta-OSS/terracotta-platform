@@ -83,7 +83,6 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   public void testMultiNodeSingleStripeActivationWithConfigFile() throws TimeoutException {
     assertThat(
         configToolInvocation(
-            "-r", timeout + "s",
             "activate",
             "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
         allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
@@ -96,7 +95,6 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   public void testRestrictedActivationToActivateNodesAtDifferentTime() throws Exception {
     assertThat(
         configToolInvocation(
-            "-r", timeout + "s",
             "activate",
             "-R",
             "-s", "localhost:" + getNodePort(1, 1),
@@ -112,7 +110,6 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
     assertThat(
         configToolInvocation(
-            "-r", timeout + "s",
             "activate",
             "-R",
             "-s", "localhost:" + getNodePort(1, 2),

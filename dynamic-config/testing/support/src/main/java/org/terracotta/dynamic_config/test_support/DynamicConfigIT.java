@@ -23,6 +23,7 @@ import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.config.ConfigurationContext;
+import org.terracotta.angela.client.config.TsaConfigurationContext;
 import org.terracotta.angela.client.filesystem.RemoteFolder;
 import org.terracotta.angela.client.support.junit.AngelaRule;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
@@ -33,6 +34,8 @@ import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.angela.common.topology.Topology;
+import org.terracotta.common.struct.Measure;
+import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -57,6 +60,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.Properties;
@@ -68,7 +73,6 @@ import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import org.terracotta.angela.client.config.TsaConfigurationContext;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
@@ -87,9 +91,12 @@ import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
-
   protected static final boolean WIN = System.getProperty("os.name").toLowerCase().startsWith("windows");
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
+  private static final Duration DEFAULT_TEST_TIMEOUT = Duration.ofMinutes(2);
+  private static final Duration CONN_TIMEOUT = Duration.ofSeconds(30);
+  private static final Duration ASSERT_TIMEOUT = Duration.ofMinutes(1);
 
   protected final TmpDir tmpDir;
   protected final AngelaRule angela;
@@ -98,7 +105,7 @@ public class DynamicConfigIT {
   @Rule public RuleChain rules;
 
   public DynamicConfigIT() {
-    this(Duration.ofSeconds(120));
+    this(DEFAULT_TEST_TIMEOUT);
   }
 
   public DynamicConfigIT(Duration testTimeout) {
@@ -217,7 +224,47 @@ public class DynamicConfigIT {
   }
 
   protected ConfigToolExecutionResult configToolInvocation(String... cli) {
-    return angela.tsa().configTool(getNode(1, 1)).executeCommand(cli);
+    List<String> enhancedCli = new ArrayList<>(cli.length);
+    List<String> configToolOptions = getConfigToolOptions(cli);
+
+    boolean addedOptions = false;
+    String timeout = Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString();
+    if (!configToolOptions.contains("-t")) {
+      // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
+      enhancedCli.add("-t");
+      enhancedCli.add(timeout);
+      addedOptions = true;
+    }
+
+    if (!configToolOptions.contains("-r")) {
+      // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
+      enhancedCli.add("-r");
+      enhancedCli.add(timeout);
+      addedOptions = true;
+    }
+
+    String[] cmd;
+    if (addedOptions) {
+      enhancedCli.addAll(Arrays.asList(cli));
+      cmd = enhancedCli.toArray(new String[0]);
+    } else {
+      cmd = cli;
+    }
+    return angela.tsa().configTool(getNode(1, 1)).executeCommand(cmd);
+  }
+
+  private List<String> getConfigToolOptions(String[] cli) {
+    List<String> configToolOptions = new ArrayList<>(cli.length);
+    for (int i = 0; i < cli.length; i++) {
+      String opt = cli[i];
+      if (opt.startsWith("-")) {
+        configToolOptions.add(opt);
+        i++;
+      } else {
+        break;
+      }
+    }
+    return configToolOptions;
   }
 
   // =========================================
@@ -358,19 +405,19 @@ public class DynamicConfigIT {
   // =========================================
 
   protected final void waitUntil(ConfigToolExecutionResult result, Matcher<ConfigToolExecutionResult> matcher) {
-    waitUntil(() -> result, matcher, timeout);
+    waitUntil(() -> result, matcher, getAssertTimeout());
   }
 
   protected final void waitUntil(NodeOutputRule.NodeLog result, Matcher<NodeOutputRule.NodeLog> matcher) {
-    waitUntil(() -> result, matcher, timeout);
+    waitUntil(() -> result, matcher, getAssertTimeout());
   }
 
   protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher) {
-    waitUntil(callable, matcher, timeout);
+    waitUntil(callable, matcher, getAssertTimeout());
   }
 
-  protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher, long timeout) {
-    assertThat(callable, within(Duration.ofSeconds(timeout)).matches(matcher));
+  protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher, Duration timeout) {
+    assertThat(callable, within(timeout).matches(matcher));
   }
 
   protected final void waitForActive(int stripeId) {
@@ -414,8 +461,8 @@ public class DynamicConfigIT {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
-        Duration.ofSeconds(30),
-        Duration.ofSeconds(30),
+        getConnectionTimeout(),
+        getConnectionTimeout(),
         null)) {
       return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
     }
@@ -429,8 +476,8 @@ public class DynamicConfigIT {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
-        Duration.ofSeconds(30),
-        Duration.ofSeconds(30),
+        getConnectionTimeout(),
+        getConnectionTimeout(),
         null)) {
       return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
     }
@@ -444,10 +491,18 @@ public class DynamicConfigIT {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
-        Duration.ofSeconds(30),
-        Duration.ofSeconds(30),
+        getConnectionTimeout(),
+        getConnectionTimeout(),
         null)) {
       consumer.accept(diagnosticService.getProxy(TopologyService.class));
     }
+  }
+
+  protected Duration getConnectionTimeout() {
+    return CONN_TIMEOUT;
+  }
+
+  protected Duration getAssertTimeout() {
+    return ASSERT_TIMEOUT;
   }
 }
