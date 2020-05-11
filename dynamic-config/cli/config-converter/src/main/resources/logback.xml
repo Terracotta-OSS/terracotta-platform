@@ -24,8 +24,24 @@
     Default appender which will be used to log lines in normal mode
   -->
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>INFO</level>
+    <target>System.out</target>
+    <filter class="org.terracotta.dynamic_config.cli.logback.RangeFilter">
+      <min>INFO</min>
+      <max>INFO</max>
+    </filter>
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <pattern>%msg%n</pattern>
+    </layout>
+  </appender>
+
+  <!--
+    Default appender which will be used to log warnings and errors in stderr
+  -->
+  <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <filter class="org.terracotta.dynamic_config.cli.logback.RangeFilter">
+      <min>WARN</min>
+      <max>ERROR</max>
     </filter>
     <layout class="ch.qos.logback.classic.PatternLayout">
       <pattern>%msg%n</pattern>
@@ -36,7 +52,27 @@
     If verbose is activated, the STDOUT appender will be disabled and this one will
     be set to accept levels between TRACE and INFO
   -->
-  <appender name="STDOUT-DETAIL" class="ch.qos.logback.core.ConsoleAppender">
+  <appender name="VERBOSE-STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>
+    <filter class="org.terracotta.dynamic_config.cli.logback.RangeFilter">
+      <min>TRACE</min>
+      <max>INFO</max>
+    </filter>
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n</pattern>
+    </layout>
+  </appender>
+
+  <!--
+    If verbose is activated, the STDERR appender will be disabled and this one will
+    be set to accept levels between WARN and ERROR
+  -->
+  <appender name="VERBOSE-STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <filter class="org.terracotta.dynamic_config.cli.logback.RangeFilter">
+      <min>WARN</min>
+      <max>ERROR</max>
+    </filter>
     <layout class="ch.qos.logback.classic.PatternLayout">
       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n</pattern>
     </layout>
@@ -44,7 +80,9 @@
 
   <root level="WARN">
     <appender-ref ref="STDOUT"/>
-    <appender-ref ref="STDOUT-DETAIL"/>
+    <appender-ref ref="STDERR"/>
+    <appender-ref ref="VERBOSE-STDOUT"/>
+    <appender-ref ref="VERBOSE-STDERR"/>
   </root>
 
   <logger name="org.terracotta" level="WARN"/>

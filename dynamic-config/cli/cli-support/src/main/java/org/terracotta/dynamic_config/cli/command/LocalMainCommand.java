@@ -34,14 +34,20 @@ public class LocalMainCommand extends Command {
 
     if (verbose) {
       rootLogger.setLevel(Level.INFO);
-      rootLogger.getLoggerContext().getLoggerList().forEach(logger -> logger.detachAppender("STDOUT"));
+      rootLogger.getLoggerContext().getLoggerList().forEach(logger -> {
+        logger.detachAppender("STDOUT");
+        logger.detachAppender("STDERR");
+      });
       rootLogger.getLoggerContext().getLoggerList()
           .stream()
           .filter(logger -> logger.getName().startsWith("org.terracotta") || logger.getName().startsWith("com.terracottatech") || logger.getName().startsWith("com.tc"))
           .forEach(logger -> logger.setLevel(Level.TRACE));
 
     } else {
-      rootLogger.getLoggerContext().getLoggerList().forEach(logger -> logger.detachAppender("STDOUT-DETAIL"));
+      rootLogger.getLoggerContext().getLoggerList().forEach(logger -> {
+        logger.detachAppender("VERBOSE-STDOUT");
+        logger.detachAppender("VERBOSE-STDERR");
+      });
     }
   }
 
