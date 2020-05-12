@@ -66,6 +66,7 @@
     <module>dynamic-config</module>
     <module>galvan-platform-support</module>
     <module>kit</module>
+    <module>docs</module>
   </modules>
 
   <dependencyManagement>

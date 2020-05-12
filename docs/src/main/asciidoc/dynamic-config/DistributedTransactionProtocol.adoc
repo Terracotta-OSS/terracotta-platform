@@ -1,0 +1,267 @@
+////
+ Copyright (c) 2011-2020 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+////
+= Dynamic Config: Distributed Transaction Protocol
+
+== Objective
+
+We need a protocol for how the cluster tool operation to make a configuration change will ensure that all servers either
+make the change or do not make the change.
+
+== Requirements
+
+A server admin should not be required to always run the cluster tool from the same machine. In other words, the cluster
+tool will not have persistent state about the progress of the protocol.
+
+When cluster tool is run, it does not know if another cluster tool operation is underway at the same time.
+
+If a cluster is left in an inconsistent state then a user should be able to run a cluster tool command to bring the
+cluster back to a consistent state.
+
+== Design
+
+=== Overview
+
+==== Mutative messages
+
+Each server keeps a persistent count of how many mutative messages it has processed. A mutative message is a message
+that in some way changes the state of the server. This allows the cluster tool to query the state of the server and then
+tell the server to do something conditional on whether it still has the same mutative message count: the server's state
+is guaranteed not to have changed in the meantime if the mutative message count has not changed.
+
+Before a mutative message is processed, the expected mutative message count is compared to the server's
+mutativeMessageCount. If they do not match the message is rejected.
+
+When a mutative message is processed, the server's mutativeMessageCount is incremented. In addition, lastMutationHost
+and lastMutationUser are set to the values sent in the mutative message.
+
+==== Double discover
+
+The protocol uses a discovery mechanism to establish the current state of the servers. Another cluster tool may be
+altering the state of the cluster as this discovery mechanism runs, so the apparent results from the discovery may not
+reflect a coherent state. This makes it hard for the cluster tool to decide on the appropriate course of action after a
+single discovery.
+
+If, however, after the first discovery is complete, a second round of discovery is performed and it returns the same
+result as the first round of discovery (including matching mutative message counts), then the cluster tool can be
+certain that the discovered cluster state actually existed at some point in time between the end of the first discovery
+completing and the second discovery starting.
+
+This, combined with the mutative message count check, allows predictable progress in the protocol.
+
+If the second discovery returns a different result then the cluster tool can abort and report that it detected that
+another cluster tool instance was concurrently performing operations.
+
+==== Change request UUID
+
+Every change request will have a UUID to identity itself. This helps to track which changes have been prepared or
+committed, especially if two changes are attempted at the same time.
+
+==== Timeouts
+
+If, when the cluster tool sends a message to a server, the cluster tool does not receive a response then it will time
+out after a fixed period. This potentially leaves the cluster in an inconsistent state, but the recovery process can be
+used to handle this.
+
+The timeout length should be controllable via cluster tool command line arguments, but it will default to 10 seconds.
+
+==== Message ordering
+
+Servers handle messages in this protocol serially.
+
+=== Server states
+
+All server protocol state is persisted.
+
+The server has the following pieces of global state:
+
+. mode - an enum representing the phase of the protocol. Either:
+.. ACCEPTING: accepting change requests (i.e. the last change is committed or rolled back)
+.. PREPARED: has an outstanding change request (i.e. is part way through the process of making a change)
+. mutativeMessageCount - a monotonically increasing count of the number of mutative messages that have been processed by
+this server.
+. lastMutationHost - the name of the machine that hosted the cluster tool that sent the last mutative message.
+. lastMutationUser - the name of the user that ran the cluster tool that sent the last mutative message.
+. latestChange - the UUID of the most recent change request (whether prepared, committed or rolled back).
+. currentVersion - the version number of the current active configuration.
+. highestVersion - the highest version number seen by this server.
+
+The server also has the following pieces of information for each change request, keyed by UUID:
+
+. state - an enum representing the progress of this change request. Either:
+.. PREPARED
+.. COMMITTED
+.. ROLLED_BACK
+. version - the version number of the configuration that would result from committing the change.
+. creationHost - the hostname of the machine on which the creating cluster tool instance is running.
+. creationUser - the user as which the creating cluster tool instance is running.
+. summary - a human-readable summary of the change
+
+The server also holds the full configuration that would result from committing the change, keyed by version number.
+
+=== Messages
+
+==== Mutative messages
+
+Mutative messages must include the following information:
+
+. the expected mutative message count
+. the name of the machine hosting the cluster tool that sends the message
+. the name of the user running the cluster tool that sends the message
+
+==== The change-discover message
+
+A ```change-discover``` message contains no information.
+
+This message is the only one that is not considered mutative.
+
+When a server receives a ```change-discover``` message, it sends a response with the following information:
+
+. mode
+. mutativeMessageCount
+. lastMutationHost
+. lastMutationUser
+. latestChange
+. currentVersion
+. highestVersion
+. current active configuration
+. The following information about the change request specified by latestChange:
+.. state
+.. version
+.. details of the configuration represented by version.
+.. creationHost
+.. creationUser
+.. summary
+
+==== The change-prepare message
+
+A ```change-prepare``` message contains:
+
+. the UUID of the change request
+. the version number for this change
+. a human readable summary of the change (e.g. "Update offheap to 8GB")
+. the details of the change (e.g. a full new configuration, a delta to the existing configuration or a previously
+committed version number)
+. the mutative message information
+
+When a server receives a ```change-prepare``` message it:
+
+. checks the server's mutative message count matches the expectations of the incoming message. If not, it responds to
+the cluster tool, rejecting the change.
+. checks to see that it would be able to apply the changes specified in the change request. If not, it responds to the
+cluster tool, rejecting the change.
+. uses the information contained in the ```change-prepare``` message to create a new change request within the server's
+state, keyed by the change request UUID. The change request is in the PREPARED state.
+. sets mode to PREPARED, latestChange to the change request UUID, highestVersion to the version in the message and
+increments mutativeMessageCount.
+. sets lastMutationHost and lastMutationUser based on the mutative message information
+. responds to the cluster tool, accepting the change.
+
+==== The change-commit message
+
+A ```change-commit``` message contains:
+
+. the UUID of the change request
+. the mutative message information
+
+When a server receives a ```change-commit``` message it:
+
+. checks the server's mutative message count matches the expectations of the incoming message. If not, it responds to
+the cluster tool, rejecting the commit.
+. updates the change request to COMMITTED.
+. sets mode to ACCEPTING, currentVersion to the version in the change and increments mutativeMessageCount.
+. sets lastMutationHost and lastMutationUser based on the mutative message information.
+. if a restart is not required for this configuration change then the server switches to the new configuration.
+. responds to the cluster tool to say that the change is committed.
+
+==== The change-rollback message
+
+A ```change-rollback``` message contains:
+
+. the UUID of the change request
+. the mutative message information
+
+When a server receives a ```change-rollback``` message it:
+
+. checks the server's mutative message count matches the expectations of the incoming message. If not, it rejects the
+rollback.
+. updates the change request to ROLLED_BACK
+. sets mode to ACCEPTING and increments mutativeMessageCount.
+. sets lastMutationHost and lastMutationUser based on the mutative message information
+. responds to the cluster tool to say that the change is rolled-back.
+
+==== The change-takeover message
+
+A ```change-takeover``` message contains:
+
+. the mutative message information
+
+When a server receives a ```change-takeover``` message it:
+
+. checks the server's mutative message count matches the expectations of the incoming message. If not, it responds to
+the cluster tool, rejecting the takeover.
+. increments mutativeMessageCount.
+. sets lastMutationHost and lastMutationUser based on the mutative message information
+. responds to the cluster tool, accepting the takeover.
+
+=== Main protocol sequence
+
+In the simple case that everything works as expected, The following sequence of events would take place when making a
+change:
+
+. User runs the cluster tool command.
+. Cluster tool queries the cluster to get the topology information.
+. *PHASE 1*: Cluster tool sends a ```change-discover``` message to all servers
+. Once the cluster tool receives responses from all servers it:
+.. checks that all servers are in the ACCEPTING mode. If not, it stops.
+.. sends a second ```change-discover``` message to all servers.
+. Once the cluster tool receives responses from all servers to the second ```change-discover``` message it:
+.. checks that all servers responded with a discovery response the second time that matches their first response,
+including mutative message counts. If not it stops, reporting that another cluster tool is running.
+.. asserts that all servers have the same currentVersion.
+.. optionally checks with the user that currentVersion and the current configuration are as the user expected and gets a
+go ahead from the user.
+.. generates a UUID to identify the change.
+.. informs the user of the UUID of the change and that the servers may now be in an inconsistent state, which may mean
+that recovery is required if the cluster tool operation does not complete.
+. *PHASE 2*: The cluster tool sends a ```change-prepare``` message to every server and waits for responses from all
+servers. The version number used in the ```change-prepare``` message will be max(highestVersion) + 1.
+. *PHASE 3*: The cluster tool checks that all servers have accepted the change request:
+.. If they have, it sends a ```change-commit``` message to every server for the change.
+.. If they have not, it sends a ```change-rollback``` message to every server that has accepted the change.
+. Once the cluster tool receives responses from all servers to the commit / rollback message it:
+.. checks that all servers have committed / rolled-back the change. If so it informs the user that the servers are once
+again in a consistent state. And:
+... For a commit: it informs the user that the change has been made successfully.
+... For a rollback: it informs the user the the change could not be made and gives the reason why.
+.. if one or more servers has failed to commit / roll-back the change, it informs the user that there's a problem that
+requires intervention and recovery.
+
+=== Recovery
+
+The recovery process is as follows:
+
+. The cluster tool sends a ```change-discover``` message to every server.
+. Once the cluster tool receives responses from all servers it sends a second ```change-discover``` message to all
+servers.
+. Once the cluster tool receives responses from all servers to the second ```change-discover``` message then:
+.. if there are two discovery responses from a server that do not match each other, then the cluster tool:
+...  tells the user that another cluster tool is running and stops.
+.. if every server is in the ACCEPTING mode, the cluster tool:
+... asserts that all servers have the same currentVersion.
+... informs the user that the cluster is consistent.
+.. if one or more servers are in the PREPARED mode then:
+... the cluster tool sends a ```change-takeover``` message to every server.
+... the cluster tool checks that all servers accept the takeover.  If they do not, it tells the user that another
+cluster tool is running and stops.
+... if the servers have different values for their latestChange, then the cluster tool will send a ```change-rollback```
+message to all servers in the PREPARED mode and, once the responses are processed, stop.
+... the cluster tool asserts that it is not the case that the latestChange is COMMITTED on one server and ROLLED_BACK on
+another.
+... if one or more servers have the latestChange state as COMMITTED, the cluster tool will send a ```change-commit```
+message to all servers in the PREPARED mode and, once the responses are processed, stop.
+... if one or more servers have the latestChange state as ROLLED_BACK, the cluster tool will send a
+ ```change-rollback``` message to all servers in the PREPARED mode and, once the responses are processed, stop.
+... the cluster tool asserts that all servers are in the PREPARED mode.
+... all servers will be told to roll back the change (although it would also be valid to choose to commit).
