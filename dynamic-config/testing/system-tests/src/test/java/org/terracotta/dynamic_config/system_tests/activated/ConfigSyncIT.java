@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemErrRule;
+import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
@@ -40,13 +40,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.hasExitStatus;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
@@ -60,8 +60,7 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
 
-  //TODO [DYNAMIC-CONFIG]: TDB-4863 - fix Angela to properly redirect process error streams
-  @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
+  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   private int activeNodeId;
   private int passiveNodeId;
@@ -151,12 +150,12 @@ public class ConfigSyncIT extends DynamicConfigIT {
     angela.tsa().start(getNode(1, activeNodeId));
     assertThat(angela.tsa().getActives().size(), is(1));
 
-    err.clearLog();
+    out.clearLog(1, passiveNodeId);
     try {
       angela.tsa().start(getNode(1, passiveNodeId));
       fail();
     } catch (Exception e) {
-      waitUntil(err::getLog, containsString("Passive cannot sync because the configuration change history does not match"));
+      waitUntil(out.getLog(1, passiveNodeId), containsLog("Passive cannot sync because the configuration change history does not match"));
     }
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
