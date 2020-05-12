@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.entity.topology.server;
-
-import org.terracotta.dynamic_config.entity.topology.common.Message;
-import org.terracotta.entity.ConcurrencyStrategy;
-
-import java.util.Collections;
-import java.util.Set;
+package org.terracotta.dynamic_config.entity.topology.common;
 
 /**
  * @author Mathieu Carbou
  */
-class UltimateConcurrency implements ConcurrencyStrategy<Message> {
-  public int concurrencyKey(Message message) {
-    return ConcurrencyStrategy.UNIVERSAL_KEY;
-  }
-
-  @Override
-  public Set<Integer> getKeysForSynchronization() {
-    return Collections.emptySet();
-  }
+public enum Type {
+  REQ_UPCOMING_CLUSTER,
+  REQ_RUNTIME_CLUSTER,
+  REQ_MUST_BE_RESTARTED,
+  REQ_HAS_INCOMPLETE_CHANGE,
+  REQ_LICENSE,
+  EVENT_NODE_ADDITION,
+  EVENT_NODE_REMOVAL,
+  EVENT_SETTING_CHANGED,
 }

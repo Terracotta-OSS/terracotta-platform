@@ -56,6 +56,13 @@
       <artifactId>config-converter-oss</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.entities</groupId>
+      <artifactId>dynamic-config-topology-entity-client</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>angela</artifactId>

@@ -67,6 +67,7 @@ import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.stream.IntStream.rangeClosed;
@@ -277,7 +278,7 @@ public class DynamicConfigIT {
         .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
         .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms32m -Xmx256m"))
         .terracottaCommandLineEnvironment(TsaConfigurationContext.TerracottaCommandLineEnvironmentKeys.CONFIG_TOOL,
-                TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m -Xmx128m"))
+            TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m -Xmx128m"))
         .topology(new Topology(
             getDistribution(),
             dynamicCluster(
@@ -459,14 +460,7 @@ public class DynamicConfigIT {
   // =========================================
 
   protected final Cluster getUpcomingCluster(String host, int port) throws Exception {
-    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        InetSocketAddress.createUnresolved(host, port),
-        getClass().getSimpleName(),
-        getConnectionTimeout(),
-        getConnectionTimeout(),
-        null)) {
-      return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
-    }
+    return usingTopologyService(host, port, topologyService -> topologyService.getUpcomingNodeContext().getCluster());
   }
 
   protected final Cluster getRuntimeCluster(int stripeId, int nodeId) throws Exception {
@@ -474,14 +468,7 @@ public class DynamicConfigIT {
   }
 
   protected final Cluster getRuntimeCluster(String host, int port) throws Exception {
-    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        InetSocketAddress.createUnresolved(host, port),
-        getClass().getSimpleName(),
-        getConnectionTimeout(),
-        getConnectionTimeout(),
-        null)) {
-      return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
-    }
+    return usingTopologyService(host, port, topologyService -> topologyService.getRuntimeNodeContext().getCluster());
   }
 
   protected final void withTopologyService(int stripeId, int nodeId, Consumer<TopologyService> consumer) throws Exception {
@@ -489,13 +476,24 @@ public class DynamicConfigIT {
   }
 
   protected final void withTopologyService(String host, int port, Consumer<TopologyService> consumer) throws Exception {
+    usingTopologyService(host, port, topologyService -> {
+      consumer.accept(topologyService);
+      return null;
+    });
+  }
+
+  protected final <T> T usingTopologyService(int stripeId, int nodeId, Function<TopologyService, T> fn) throws Exception {
+    return usingTopologyService("localhost", getNodePort(stripeId, nodeId), fn);
+  }
+
+  protected final <T> T usingTopologyService(String host, int port, Function<TopologyService, T> fn) throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
         getConnectionTimeout(),
         getConnectionTimeout(),
         null)) {
-      consumer.accept(diagnosticService.getProxy(TopologyService.class));
+      return fn.apply(diagnosticService.getProxy(TopologyService.class));
     }
   }
 
