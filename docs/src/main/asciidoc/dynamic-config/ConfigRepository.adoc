@@ -1,0 +1,283 @@
+////
+ Copyright (c) 2011-2020 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+////
+= Dynamic Config: Repository for Configurations
+
+== Objective
+
+We need persistent storage for configurations and state relating to the protocol for changing configurations.
+
+== Requirements
+
+The on disk format should be easy to support, for example it should be human-readable.
+
+It should not be easy for customers to modify the persistent state directly, for example by editing files by hand.
+
+Changes to the persistent state should be atomic and recovery should be possible even if the process making the changes
+crashes at an inopportune moment.
+
+== Discussion
+
+=== Tamper resistance
+
+If, when we store some data, we hash it and also store the hash, then later we can detect if the data has been changed
+by recomputing the hash and checking that against the stored hash.
+
+However, if the customer is able to easily recompute the hash themselves then they can edit the data and change the
+verification hash.
+
+It is not possible to completely hide from the customer how we compute the hash because the hashing operation runs on
+their premises so they can use a decompiler or debugger to reverse engineer the hashing - private keys aren't private
+from the customer.
+
+So, we assume that hashing using a standard hashing algorithm such as SHA-2 and introducing some hidden, rather than
+private, bytes into the input is sufficient. For example, we could have a fixed byte array compiled into a Java class.
+
+=== Atomicity
+
+Java offers a few filesystem operations that could give atomicity, such as FileLock or moving files. However these are
+dependent on the atomicity guarantees provided by the underlying platform. Taking this path has the potential to
+introduce subtle, platform-specific bugs.
+
+The Terracotta team already has a cross-platform model for atomic updates to persistent storage: FRS. An append log
+provides its atomicity guarantees by having a clear endpoint to a record and only considering records that are fully
+written to the log.
+
+=== Human readability
+
+==== Formats
+
+XML and JSON are natural formats for data that is intended to be read both by machines and by humans with some technical
+experience. Other formats might include YAML or TOML.
+
+The maturity of tools for these formats in the Java ecosystem runs, from most mature to least: XML, JSON, YAML, TOML.
+XML and JSON have significantly better support than the other two.
+
+XML has an established way of defining schemas. JSON also has a way of defining schemas, but this is a relatively recent
+development.
+
+In XML, the whitespace is significant and the document cannot be manipulated without potentially changing the semantics
+of the document. In JSON, the whitespace is not significant.
+
+JSON is typically used to represent mappings between keys and values. XML tends to be used with predefined elements with
+specific semantic meaning (a schema - even if there is no formal schema defined).
+
+FRS works with key to value mappings. JSON is a natural fit to reproduce that in a human readable form. It also has the
+benefit that we can manipulate the whitespace in the document to avoid whatever record endpoint is used in an append
+log.
+
+However, we need something more than key to value mappings because, for example, we need to represent the addition of a
+new version. We do not want to have to restate the full list of versions just to add one. Instead we may want a command
+that adds a version to the list.
+
+With XML we could more easily define a schema for commands, however the overall flexibility of JSON for storing
+unstructured data and representing key to value mappings as well as its approach to whitespace make it good choice.
+
+==== Presentation
+
+A particular version of config should be not only human-readable, but easy to be read. In particular it should ideally
+be pretty printed (or equivalent) and be contained in a single file.
+
+=== Durability
+
+Java cannot fully ensure that bytes are successfully persisted on the storage media because the hardware may be buffering
+writes. Once a call to ask the OS to ensure bytes are flushed to persistent storage is completed, we will consider that
+those bytes are successfully stored. If a customer requires a full guarantee of persistence at this point then they
+should use hardware that provides such guarantees.
+
+== Design
+
+=== Overview
+
+==== Location of the configuration repository
+
+There will be directory called ```config-repo``` under the ```server/conf``` directory. All files that form part of the
+configuration repository will be stored in there.
+
+==== Layout of the configuration repository
+* Configuration repository will have two folders inside it.
+** pass:q[*<u>config</u>*]
+*** contains xml configuration file.
+**** Xml configuration file will have following naming convention
+***** ```cluster-config.<node-name>.N.xml``` where ```N``` is the version number for the file.```<node-name>```
+shall match with ```name``` attribute of ```<server>``` element in the xml (outside of ```<cluster>``` element)
+(see the structure given below).
+```
+<servers>
+    <server bind="0.0.0.0" host="localhost" name="testServer0">
+      <logs>/export2/homes/kcleerem/server/passive/logs1</logs>
+      <tsa-port>4164</tsa-port>
+      <tsa-group-port>4165</tsa-group-port>
+    </server>
+    <server bind="0.0.0.0" host="localhost" name="testServer1">
+      <logs>/export2/homes/kcleerem/server/passive/logs1</logs>
+      <tsa-port>9510</tsa-port>
+      <tsa-group-port>9630</tsa-group-port>
+    </server>
+    <client-reconnect-window>120</client-reconnect-window>
+  </servers>
+```
+***** ```<node-name>``` portion of the filename will enable the server to know its name.
+***** Once the configuration is read, by matching the ```<node-name>``` inside the ```<servers><server>``` elements in the file, get ```host```
+attribute and ```tsa-port``` element. Then traverse the ```<cluster>``` element and use this ```<host>-<port>``` combination
+to find out the stripe in which the current server belongs to.
+** pass:q[*<u>sanskrit</u>*]
+*** Contains append log and other metadata files.
+**** There will be a file called ```state.log``` which is used as an append log. There will be two files called ```hash0``` and ```hash1``` which contain hash information based on recent records in
+```state.log``` to resist tampering where records are removed from the end of the append log.
+
+===== Note :
+** Each node will have private repository location. Repository location can be passed from command line.
+** In same machine, if multiple tc-server instances are present, user needs to provide different repository locations for
+each and these locations need to be passed as command line parameters.
+
+
+
+==== Tamper-resistant hashing
+
+Whenever we generate a tamper-resistant hash, we will use SHA-512 truncated to 160 bits. Those 160 bits will be
+represented using 40 lowercase hex characters (i.e. 0 to 9 and a to f).
+
+We will have a static byte array in a Java class containing 64 bytes that we will append to any input to the hash
+function. These 64 bytes must not change. They should be randomly generated in advance and then hard-coded in a
+```.java``` file.
+
+==== Newlines
+
+Whenever we use a newline in the format of these files, including in the pretty printing of JSON, that newline will be
+the platform newline.
+
+This allows easy viewing of the files on the local platform.
+
+There are some downsides with this relating to support when that support takes place on a different platform to
+the customer - for example a developer checking a hash semi-manually on their local development machine could get a
+different hash.
+
+However, easily viewing the files is likely more important.
+
+=== Versioned config files
+
+The ```cluster-config.<node-name>.N.xml``` files will contain configuration information in the format of the current
+configuration file.
+
+We will compute a tamper-resistant hash using an input of the bytes in a config file. When the config file is fully
+written, we will write an entry to the append log that includes that tamper-resistant hash.
+
+=== The append log
+
+==== Overview
+The ```state.log``` file will contain records composed of three components: a timestamp, JSON holding the data for the
+record and a tamper-resistant hash.
+
+A newline appears between records.
+
+==== Timestamp
+
+The timestamp will appear on its own line. It will be formatted using the ISO standard. For example:
+```2018-10-18T16:52:28```. The timestamp will be in UTC.
+
+==== JSON
+
+The JSON will be a JSON object (rather than an array, etc.) pretty printed so that the opening curly brace appears as a
+single character on its own line, the contents of the JSON object are indented and the closing curly brace appears as a
+single character on its own line.
+
+The details of the contents of the JSON depend on the protocol that we choose. However, when a version ```N```, is
+indicated that refers to the configuration in the file ```cluster-config.<node-name>.N.xml```.
+
+==== Tamper-resistant hash
+
+The first part of the input to the hashing algorithm depends on whether there was a previous record in the append log.
+If there was not, then this part of the input contains no bytes. If there was a previous record then this part of the
+input contains the tamper-resistant hash of the previous record followed by two newlines.
+
+The remaining part of the input to the hashing algorithm is the timestamp in the ISO format as above, followed by a
+newline, followed by the pretty printed JSON.
+
+==== Example
+
+```
+2018-10-18T16:52:28
+{
+  "prepare": {
+    "version": 1,
+    "hash": "cfe5e48640899a5a6657a719412f613c73381c04"
+  }
+}
+59429e71f4a74647ffa18172e8bd43e89cf72b0b
+
+2018-10-25T13:32:56
+{
+  "commit": {
+    "version": 1
+  }
+}
+827a8fcca8a23182873c54984fff219b7608ad68
+```
+
+=== Hash files
+
+Initially neither file ```hash0``` nor ```hash1``` will exist. In this case, when the first record has been written to
+the append log, a hash of its tamper-resistant hash will be written to the ```hash0``` file.
+
+On subsequent writes to the append log, one of the two files, either ```hash0``` or ```hash1```, will exist. Let's call
+the file that does exist ```F``` and the file that does not exist ```F'```. When the latest record has been written to
+the append log, a hash of its tamper-resistant hash will be written ```F'``` and ```F``` will then be deleted.
+
+
+=== Restart
+
+When the server starts, it should clean up any changes to the append log that are not considered fully committed and
+then recover its state. As it does that, it should validate the data against the tamper-resistant hashes.
+
+==== Cleaning up uncommitted state
+
+If the record at the end of the append log is not fully written then it should be removed. It is fully written if it has
+the full 40 characters of its tamper-resistant hash.
+
+There will be zero, one or two of the files ```hash0``` and ```hash1```.
+
+. If there are zero files then either:
+.. there are no records in the append log
+.. there is a single record in the append log
+* in which case, that single record should be removed
+.. the append log is not valid
+
+. If there is one file then either:
+.. it contains exactly 40 lowercase hex characters that comprise a tamper-resistant hash, in which case:
+... it matches the hash of the tamper-resistant hash of the last record
+... it matches the hash of the tamper-resistant hash of the penultimate record
+* in which case, the last record should be removed
+... the append log is not valid
+.. it contains fewer than 40 lowercase hex characters
+* in which case the hash file should be deleted and the case of zero hash files should be examined
+.. the append log is not valid
+
+. If there are two files then either:
+.. they both contain exactly 40 lowercase hex characters that comprise a tamper-resistant hash, in which case either:
+... those two hashes match the hashes of the tamper-resistant hashes of the last two records in the append log
+* in which case, the hash file that matches the earlier record should be deleted
+... those two hashes match the hashes of the tamper-resistant hashes of the penultimate record and the antepenultimate
+record
+* in which case, the hash file that matches the earlier record should be deleted and the last record of the append log
+should be removed.
+... the append log is not valid
+.. one contains exactly 40 lowercase hex characters that comprise a tamper-resistant hash and the other one contains
+fewer than 40 lowercase hex characters, in which case:
+* the hash file that does not have the full hash should be removed and the case of one hash file should be examined
+.. the append log is not valid
+
+==== Recovering state
+
+Records are read from the beginning of the append log. The end of a record can be detected by the presence of a line in
+the append log containing just a closing curly brace with a line immediately after containing a 40 character lowercase
+hex hash.
+
+As each record is read, the tamper-resistant hash is calculated and checked against the tamper-resistant hash recorded
+in the record.
+
+Once the record hash passes the tamper detection checks, the JSON is parsed and the result applied to update the state.
+
+Once the append log is fully validated, any ```cluster-config.<node-name>.N.xml``` file that is not referenced from any of the JSON should
+be deleted.

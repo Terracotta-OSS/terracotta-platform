@@ -1,0 +1,197 @@
+////
+ Copyright (c) 2011-2020 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+////
+:toc:
+:toclevels: 5
+
+= Migrating from older Terracotta versions to 10.7
+
+This document describes the process of migrating from earlier Terracotta (10.5 and older) releases to release 10.7.
+
+== Background
+A major feature of the 10.7 release is dynamic configuration of the Terracotta cluster, which changes cluster startup and configuration mechanisms.
+This documents briefly lists the new concepts, tooling information, and the steps to be followed to migrate from an earlier 10.x to a 10.7 cluster.
+The term "server" has been replaced by "node", as the latter is the more appropriate term to denote individual hosts in a cluster.
+All mentions of "node" henceforth can be mentally transformed to mean "server".
+
+== What has changed
+. *Node startup mechanism*
++
+`start-tc-server.(bat|sh)` does not support a tc-config XML file anymore. Several new options have been added to this script.
+More information can be found in the <<startup-script, `startup script`>> section.
+
+. *Cluster configuration format*
++
+Cluster configuration can no more be specified using tc-config XML files. The old tc-configs can be migrated to the
+new configuration format using <<config-converter-tool, config converter tool>>.
+
+. *Cluster configuration mechanism*
++
+Cluster tool `configure` command has been removed in favor of <<config-tool-activate, config tool `activate`>> command.
+Cluster tool `reconfigure` command has been removed in favor of <<config-tool-set, config tool `set`>> command.
+
+== Important Terms and Concepts
+. *Config properties file*
++
+A Java properties file containing settings for the entire cluster.
+Can be exported from an existing cluster and imported on to a new cluster.
+Can be thought of as a single file which replaces multiple tc-config XML files
+(where each tc-config corresponded to one stripe in the cluster).
+
+. *Config directory*
++
+A non-editable, on-disk, per-node directory of node configuration information.
+Maintains a record of the configuration changes done on the node as well as the license in use for the node.
+
+[[config-converter-tool]]
+== Using config converter tool
+Config converter tool can be used to convert from tc-config XML files used with Terracotta versions upto 10.5 to the new configuration format.
+The tool can be located under `tools/config-converter/bin` in the product installation directory, and has the following usage:
+
+[source,bash]
+----
+> config-converter.(bat|sh) convert -c <tc-config>,<tc-config>... ( -t directory [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]
+----
+
+When the output format is config directory (i.e. `-t directory` or no `-t` specification), a license file can be supplied.
+
+NOTE: In a fresh install of Terracotta using the Software AG installer, the license file can be found under the Terracotta installation root.
+
+This way, the generated config directory will be ready-for-use by Terracotta clients. This is the recommended output format.
+Note that there is no change in the license file, or the licensing policies.
+Thus, existing Terracotta licenses will continue to work with 10.7 until their expiration.
+
+When the output format is config properties (i.e. `-t properties`), the generated config properties file contains
+information from all the tc-config XML files, and can also be used to start up the nodes.
+However, an additional cluster activation step may be required after the migrated cluster is started using this config properties file.
+
+[[startup-script]]
+== Updates to the `start-tc-server` script
+The `start-tc-server` script does not support tc-config XML files anymore. Instead, it supports several options which let
+you specify a node's configuration via the command itself.
+Here's the full list of supported options along with default values, obtained from the output of `start-tc-server.(bat|sh) --help` command:
+
+[source,bash]
+----
+> ./start-tc-server.sh -h
+Usage: start-tc-server [options]
+Options:
+ -c,--consistency-on-startup   ensure that data consistency is preserved
+                               on startup
+ -h,--help
+ -u,--upgrade-compatiblity     enable rolling upgrade compatiblity mode
+
+Dynamic Configuration Options:
+    -i, --client-lease-duration      (Default: 150s)
+    -R, --client-reconnect-window    (Default: 120s)
+    -N, --cluster-name
+    -f, --config-file
+    -d, --data-dirs                  (Default: main:%H/terracotta/user-data/main)
+    -y, --failover-priority
+    -l, --license-file
+    -b, --backup-dir
+    -a, --bind-address               (Default: 0.0.0.0)
+    -A, --group-bind-address         (Default: 0.0.0.0)
+    -g, --group-port                 (Default: 9430)
+    -s, --hostname                   (Default: %h)
+    -L, --log-dir                    (Default: %H/terracotta/logs)
+    -m, --metadata-dir               (Default: %H/terracotta/metadata)
+    -n, --name                       (Default: <randomly-generated>)
+    -p, --port                       (Default: 9410)
+    -S, --public-hostname
+    -P, --public-port
+    -r, --config-dir             (Default: %H/terracotta/config)
+    -o, --offheap-resources          (Default: main:512MB)
+    -D, --repair-mode
+    -u, --audit-log-dir
+    -z, --authc
+    -x, --security-dir
+    -t, --ssl-tls           (Default: false)
+    -w, --whitelist         (Default: false)
+    -T, --tc-properties
+----
+
+A node can directly start in activated state if:
+
+. `--config-file` option along with `--license-file` is provided, and the config properties file contains information of a single stripe.
+. It was started with a fully-formed config directory, obtained from <<config-converter-tool, config converter tool>>,
+or formed after <<config-tool-activate, config tool `activate`>> was executed in a previous run.
+
+Otherwise, <<config-tool-activate, config tool `activate`>> command will need to be run after the cluster topology has
+been created using <<config-tool-attach, config tool `attach`>> command.
+
+[[config-tool]]
+== Using config tool
+Config tool provides a suite of commands used for managing the cluster topology and configuration, among other things.
+The tool can be located under `tools/config-tool/bin` in the product installation directory.
+The following is an overview of important config tool commands:
+
+[[config-tool-attach]]
+=== `attach` command
+The `attach` command builds a cluster by constructing stripes from nodes, and cluster from stripes respectively.
+Currently, it works prior to cluster activation only. The work to allow dynamic addition of nodes from the cluster post
+cluster activation is underway, and will be delivered in 10.7 release itself.
+In near future, this command will allow dynamic addition of nodes to the cluster.
+
+[source,bash]
+----
+> config-tool.(bat|sh) attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]
+----
+
+[[config-tool-detach]]
+=== `detach` command
+The `detach` command allows removal of nodes from stripes, and stripes from cluster respectively.
+Currently, it works prior to cluster activation only. The work to allow dynamic removal of nodes from the cluster post
+cluster activation is underway, and will be delivered in 10.7 release itself.
+
+[source,bash]
+----
+> config-tool.(bat|sh) [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <stop-wait-time>] [-D <stop-delay>]
+----
+
+[[config-tool-activate]]
+=== `activate` command
+The `activate` command makes a cluster ready to be used by Terracotta clients.
+`activate` should be run once the topology has been created using <<config-tool-attach, `attach`>> command.
+
+[source,bash]
+----
+> config-tool.(bat|sh) activate -s <hostname[:port]> -f <config-file> [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]
+----
+
+[[config-tool-set]]
+=== `set` command
+The `set` command updates configuration settings on individual nodes, stripes or the entire cluster, depending on the specified namespace.
+Some settings can be updated dynamically, whereas others require a cluster restart.
+Note that not all settings (e.g. node's hostname) can be updated using this command.
+
+[source,bash]
+----
+> config-tool.(bat|sh) set -s <hostname[:port]> -c <[namespace:]property=value>,<[namespace:]property=value>...
+----
+
+[[config-tool-unset]]
+=== `unset` command
+This unset command updates the settings on individual nodes, stripes or the entire cluster by removing the value associated with them.
+Some settings can be updated dynamically, whereas others require a cluster restart.
+Note that not all settings (e.g. node's hostname) can be unset using this command.
+
+[source,bash]
+----
+> config-tool.(bat|sh) unset -s <hostname[:port]> -c <[namespace:]property>,<[namespace:]property>...
+----
+
+[[migration-steps]]
+== Steps to be followed for migration of an existing Terracotta 10.x (10.5 and older) cluster
+IMPORTANT: This sequence doesn't work currently. To be updated once TDB-4975 is fixed
+
+. Shut down all Terracotta clients and ensure no critical operations (like backup) are running on the cluster.
+Note down the hosts the nodes are running on.
+. Use the cluster tool `shutdown` command to shut down the Terracotta cluster.
+. Use the <<config-converter-tool, config converter tool>> to convert tc-config.xml files to config directory format.
+. Copy the config directories generated from the step above to the hosts from the first step.
+. Start the nodes using <<startup-script, startup script>> with option `-r`, supplying the config directory path.
+All persisted data prior to shutdown from the first step will be restored upon node startup.
+. Replace the old client jars with 10.7 jars in the client classpath.
+. Connect the clients back with the cluster.

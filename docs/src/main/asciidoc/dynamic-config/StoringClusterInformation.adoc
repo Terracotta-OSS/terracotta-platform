@@ -1,0 +1,100 @@
+////
+ Copyright (c) 2011-2020 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+////
+= Dynamic Config: Storing Cluster Information
+
+== Objective
+
+Currently we store information about the cluster in the TopologyEntity. This information needs to be managed in the same
+way as the other configuration information: versioned and updated atomically across the cluster.
+
+== Requirements
+
+=== Topology entity
+All information currently held in the TopologyEntity must be persisted using the configuration repository. This includes
+which servers exist, how those servers comprise stripes and the configuration of each stripe in the cluster.
+
+=== User controllable strings
+Some configuration options include user controllable strings. For example, a user can define the name of an offheap
+resource and then configure that offheap resource, controlling its size. A concrete example would be a user configuring
+a ```finance``` offheap then the configuration could logically be considered as:
+
+ offheap.finance.size=8589934592
+
+However, such a dot separated key space will not work because the user controllable strings could include dots.
+Similarly users may use other control symbols or whitespace, which can cause problems for some forms of persistence
+(such as using attribute values or element names in XML).
+
+=== Reconstruct configuration
+
+It must be possible to reconstruct the configuration for a server from the cluster information held on another server in
+the cluster.
+
+== Design
+
+=== Persistance location
+
+The cluster configuration will appear as a ```<plugins>/<config>``` element in the ```tc-config.xml``` file.
+
+=== XML structure
+
+The cluster configuration will be stored in an XML structure that looks like this:
+
+[source,xml]
+----
+<cluster>
+  <name>My Cluster</name>
+
+  <server>
+    <name>server-1-1</name>
+    <tc-config>
+      ...tc-config for server-1-1
+    </tc-config>
+  </server>
+  <server>
+    <name>server-1-2</name>
+    <tc-config>
+      ...tc-config for server-1-2
+    </tc-config>
+  </server>
+  <server>
+    <name>server-2-1</name>
+    <tc-config>
+      ...tc-config for server-2-1
+    </tc-config>
+  </server>
+  <server>
+    <name>server-2-2</name>
+    <tc-config>
+      ...tc-config for server-2-2
+    </tc-config>
+  </server>
+
+  <stripe>
+    <name>stripe-1</name>
+    <member>server-1-1</member>
+    <member>server-1-2</member>
+  </stripe>
+  <stripe>
+    <name>stripe-2</name>
+    <member>server-2-1</member>
+    <member>server-2-2</member>
+  </stripe>
+</cluster>
+----
+
+=== XML namespaces
+
+The XML elements that comprise the cluster configuration will use the namespace
+http://www.terracotta.org/config/cluster.
+
+The ```tc-config``` element shown in the example will use the http://www.terracotta.org/config namespace. This matches
+the normal namespace used for a ```tc-config``` element that would appear at the top level of a ```tc-config.xml```
+file.
+
+=== Copy of tc-config
+
+The ```<cluster>/<server>``` elements contain a copy of the ```tc-config.xml``` file for each server. However, the
+ ```<config>/<cluster>``` element is not included in that. If a full version of another server's ```tc-config.xml```
+file needs to be created, a copy of the ```<config>/<cluster>``` element can be inserted. It's rather quine-like.

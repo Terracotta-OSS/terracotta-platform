@@ -1,0 +1,182 @@
+////
+ Copyright (c) 2011-2020 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
+ Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+////
+:toc:
+:toclevels: 5
+
+= Passive sync and append log repair
+
+== Please read first
+
+- Config-tool.adoc
+- DistributedTransactionProtocol.adoc
+
+== Summary of the behavior and tooling
+
+=== ConfigHandlers
+
+They are the implementations on server-side that are responsible to check if a change is possible and apply it at runtime if wanted.
+
+One for each main component (node, offheap, data-root, etc).
+
+. They have 2 methods:
+.. `tryApply()` => check if the change can be applied to the topology, does all validation and checks.
+Its goal is to make sure that if this method pass, then the `apply()` method won't fail
+.. `apply()` => applies the change *at runtime* (only if it needs to be applied at runtime).
+This method should not fail, and this is ensured by `tryApply()`.
+But this method could still fail...
+
+=== CLI `set`, `unset`
+
+. CLI: User runs `config-tool set foo=bar`
+. DISCOVERY: Nomad triggers a first discovery
+.. If at least one server cannot accept a new change => fails
+. DISCOVERY: Nomad triggers a second discovery
+.. If the first and second discovery answers do not match => fails (a change or something might have happened between the 2 consecutive calls)
+.. If there is a version mismatch => fails
+.. If a change UUID is both committed on some servers and rolled-back on some others => fails
+. PREPARE: Nomad triggers the preparation of the change
+.. Servers are called to determine if the change can be applied (`tryApply` method of config handlers)
+.. Servers are called in order: passive firsts, active last
+.. If the change was not rejected, a new configuration version is written on disk
+. Nomad checks if all servers have accepted the change
+.. ROLLBACK: If at least one server rejects or if a failure happens, an automatic rollback happens
+. COMMIT: Nomad triggers the commit of the change if all servers have accepted it
+.. Servers are optionally calling the `apply` method of the config handlers to apply the change at runtime.
+.. Since `tryApply` succeeded, `apply` _should_ pass.
+.. If an error happens, Nomad fails to commit, does not accept further changes until is is repaired (recovery process)
+
+=== CLI `diagnostic`
+
+. Outputs details information about the config, Nomad and states of all servers
+
+=== CLI `repair`
+
+. Tries to repair a broken configuration "state"
+. If a Nomad change is partially committed (or rolled back), try to run again the commit (or rollback) phase again
+
+It can happen that the automatic repair is not able to determine what to do.
+This can happen if some nodes are offline, and all remaining online servers are all prepared.
+In this case, a hint must be given to the CLI to force either the commit or rollback
+
+[source,java]
+----
+  @Override
+  public boolean shouldDoCommit() {
+    return latestChangeUuids.size() == 1 // online servers all have the same change UUID at the end of the append log
+        && rolledBack.get() == 0 // AND we have no server online having rolled back this change
+        && prepared.get() > 0 // AND we have some servers online that are still prepared
+        && (prepared.get() + committed.get() == expectedNodeCount // AND we have all the nodes that are online and they are all either prepared or committed
+        || committed.get() > 0 // OR we have some nodes offline, but amongst the online nodes, some are committed, so we can commit
+        || committed.get() == 0 && forcedState == COMMITTED // OR we have some nodes offline, but amongst the online ones none are committed (they are all prepared), but user says he wants to force a commit
+    );
+  }
+
+  @Override
+  public boolean shouldDoRollback() {
+    return latestChangeUuids.size() == 1 // online servers all have the same change UUID at the end of the append log
+        && committed.get() == 0 // AND we have no server online having committed this change
+        && prepared.get() > 0 // AND we have some servers online that are still prepared
+        && (prepared.get() + rolledBack.get() == expectedNodeCount // AND we have all the nodes that are online and they are all either prepared or rolled back
+        || rolledBack.get() > 0 // OR we have some nodes offline, but amongst the online nodes, some are rolled back, so we can rollback the prepared ones
+        || rolledBack.get() == 0 && forcedState == ROLLED_BACK // OR we have some nodes offline, but amongst the online ones none are rolled back (they are all prepared), but user says he wants to force a rollback
+    );
+  }
+----
+
+[NOTE]
+====
+This command will likely be enough and cover 80% of the failures and will make sure all the nodes have their configuration committed and applied at runtime (if needed) and to repair.
+====
+
+=== Passive `sync`
+
+. If the active is in PREPARED state (change in progress) => fails to start (zap)
+. If the history does not match => fails
+. If the last passive change is PREPARED, apply the commit (or rollback) phase by looking at the active log.
+The passive will repair itself during sync process.
+. Then get the new changes from the active and apply them
+
+=== Startup
+
+A node starts with the last committed config.
+A Node will start even if its last append log entry is PREPARED.
+
+. If it become ACTIVE, the node can be repaired automatically to apply the new config by using the `repair` command
+. If it become PASSIVE, the node will sync with existing ACTIVE, repair itself if the ACTIVE is OK, or zap itself if the ACTIVE is PREPARED
+
+=== `TopologyService`
+
+The `TopologyService` contains some methods that can be queried on client-side and server-side to know the state of a node:
+
+- `TopologyService#mustBeRestarted()`: indicates if a node must be restarted to activate its new configuration
+- `TopologyService#hasPreparedConfigurationChange()`: indicates if a node is having a PREPARED change that is not finalized.
+In this state, not further change will be possible until it is committed or rolled back
+
+== Failure Scenarios:
+
+=== Partial commit and `apply` method
+
+A partial commit can happen in case of timeouts, server crash, or if the `apply` method fails (in the case where we apply the change at runtime).
+
+We have an `apply` implementation for the settings that can be changed at runtime like offheap, data root, node backup, lease, etc.
+
+[NOTE]
+====
+Currently, the `apply` code is quite robust: if `tryApply` succeeds, then likely `apply` will succeed except in case of an external cause (i.e. disk full, i/o error, etc).
+====
+
+=== Situation 1
+
+- 1 cluster of 1 server
+- The config change on active is not committed because of a network timeout
+
+=> Run `config-tool repair` to re-apply the missing commit or rollback
+
+=== Situation 2
+
+- 1 cluster of 1 server
+- The config change on active is not committed because of a bug in the `apply` method
+
+=> Run `config-tool repair` to check the configuration.
+It will try to re-apply the commit or rollback, but it will fail again.
+A patch is needed at the moment.
+
+[NOTE]
+====
+Do we want a mechanism to fix that without requiring a patch, such as being able to force a commit or rollback ?
+====
+
+=== Situation 3
+
+- 1 cluster of 1 server
+- The config change on active is not committed because of a crash
+- server is restarted (last change is PREPARED)
+
+=> Run `config-tool repair` to check the configuration and re-apply the commit or rollback
+
+=== Situation 4
+
+- 1 cluster of 1 stripe 2 nodes up
+- commit fails on active, not on passive
+- passive is killed by user or crashes, and is restarted
+- passive cannot start (zapped) because its history is different
+
+=> Run `config-tool repair` to check the configuration at any time and re-apply the missing commit or rollback
+
+=== Situation 5
+
+- 1 cluster of 1 stripe 2 nodes
+- passive is down
+- commit fails on active
+- passive cannot start (zapped) until active is repaired
+
+=> Run `config-tool repair` to check the configuration and re-apply the missing commit or rollback
+
+=== Situation 6
+
+- 1 cluster of 1 stripe 2 nodes up
+- commit fails on passive, not on active
+- passive is killed by user or crashes, and is restarted
+- passive wil start, sync, see that the PREPARED change it has has been committed on active and will repair itself and restart
