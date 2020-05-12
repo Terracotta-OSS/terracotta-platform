@@ -26,8 +26,6 @@ import org.terracotta.dynamic_config.cli.config_converter.command.ConvertCommand
 import java.util.Arrays;
 import java.util.HashSet;
 
-import static java.lang.System.lineSeparator;
-
 public class ConfigConverterTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigConverterTool.class);
 
@@ -36,15 +34,15 @@ public class ConfigConverterTool {
       ConfigConverterTool.start(args);
     } catch (Exception e) {
       String message = e.getMessage();
-      if (message != null && !message.isEmpty()) {
-        String errorMessage = String.format("%sError:%s%s%s", lineSeparator(), lineSeparator(), message, lineSeparator());
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.error("{}Error:", lineSeparator(), e); // do not output e.getMassage() because it duplicates the output
-        } else {
-          LOGGER.error(errorMessage);
-        }
+      if (message == null || message.isEmpty()) {
+        // an unexpected error without message
+        LOGGER.error("Internal error:", e);
+      } else if (LOGGER.isDebugEnabled()) {
+        // equivalent to verbose mode
+        LOGGER.error("Error:", e);
       } else {
-        LOGGER.error("{}Internal error:", lineSeparator(), e);
+        // normal mode: only display message
+        LOGGER.error("Error: {}", message);
       }
       System.exit(1);
     }
