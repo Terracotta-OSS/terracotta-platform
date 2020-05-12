@@ -100,7 +100,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
         configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("The nodes should be safely shutdown first."));
 
-    configToolInvocation("-t", "5s", "detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId), "-f");
+    configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId), "-f");
 
     waitUntil(() -> angela.tsa().getStopped().size(), is(1));
     assertTopologyChanged(activeId);
@@ -170,7 +170,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
 
     // detach failure (forcing detach otherwise we have to restart cluster)
     assertThat(
-        configToolInvocation("-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
@@ -191,7 +191,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
 
     //Both active and passive are down.
     assertThat(
-        configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 

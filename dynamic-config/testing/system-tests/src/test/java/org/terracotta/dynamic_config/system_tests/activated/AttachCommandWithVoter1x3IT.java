@@ -90,7 +90,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
 
       // kill the old passive and detach it from cluster
       stopNode(1, passiveId);
-      assertThat(configToolInvocation("-t", "5s", "detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       nodes = new String[]{
           getNode(1, activeId).getHostPort(),

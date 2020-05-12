@@ -76,7 +76,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
     stopNode(1, passiveId);
 
-    configToolInvocation("-t", "5s", "detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));
+    configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
@@ -129,7 +129,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
     // Force the commit 
     assertThat(
-        configToolInvocation("-t", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configToolInvocation("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         is(successful()));
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
@@ -151,7 +151,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
     // detach failure (forcing detach otherwise we have to restart cluster)
     assertThat(
-        configToolInvocation("-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
@@ -173,7 +173,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
     //Both active and passive is down.
     assertThat(
-        configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
@@ -182,7 +182,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
     // Force the commit 
     assertThat(
-        configToolInvocation("-t", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configToolInvocation("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         is(successful()));
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));

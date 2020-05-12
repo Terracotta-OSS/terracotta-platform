@@ -67,11 +67,11 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     // cannot automatic repair since 1 node is down
     assertThat(
-        configToolInvocation("-t", "5s", "repair", "-s", "localhost:" + getNodePort(1, activeId)),
+        configToolInvocation("repair", "-s", "localhost:" + getNodePort(1, activeId)),
         containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback."));
 
     // forces a repair
-    assertThat(configToolInvocation("-t", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)), containsOutput("Configuration is repaired."));
+    assertThat(configToolInvocation("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)), containsOutput("Configuration is repaired."));
     withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
 
     // restart passive - it should sync
@@ -98,7 +98,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     // detach command will kill the active, so the stripe will go down
     assertThat(
-        configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
@@ -114,7 +114,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     // we force a commit on the active
     assertThat(
-        configToolInvocation("-r", "15s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configToolInvocation("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
             containsOutput("Attempting an automatic repair of the configuration on nodes"),
             containsOutput("Forcing a commit"),
@@ -161,11 +161,11 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster(1, activeId).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster(1, activeId).getNodeCount(), is(equalTo(2)));
 
-    assertThat(configToolInvocation("-r", "15s", "diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
+    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
         containsLinesStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic5.txt").toURI())).collect(toList())));
 
     assertThat(
-        configToolInvocation("-r", "15s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configToolInvocation("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
             containsOutput("Attempting an automatic repair of the configuration on nodes"),
             containsOutput("Configuration is repaired")));
@@ -192,7 +192,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     //Both active and passive is down.
     assertThat(
-        configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
+        configToolInvocation("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
             "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
@@ -205,7 +205,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
 
     assertThat(
-        configToolInvocation("-r", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configToolInvocation("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
             containsOutput("Attempting an automatic repair of the configuration on nodes"),
             containsOutput("Forcing a commit"),
@@ -221,7 +221,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
 
     // we can reset this node
-    configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort(1, passiveId));
+    configToolInvocation("repair", "-f", "reset", "-s", "localhost:" + getNodePort(1, passiveId));
     waitForStopped(1, passiveId);
     startNode(1, passiveId, "--failover-priority", "availability");
     waitForDiagnostic(1, passiveId);
@@ -232,7 +232,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     // reset diagnostic node
     startNode(1, 1);
     waitForDiagnostic(1, 1);
-    assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    assertThat(configToolInvocation("repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForStopped(1, 1);
     startNode(1, 1);
     waitForDiagnostic(1, 1);
@@ -240,7 +240,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     // reset activated node
     assertThat(configToolInvocation("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForActive(1, 1);
-    assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    assertThat(configToolInvocation("repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForStopped(1, 1);
     startNode(1, 1);
     waitForDiagnostic(1, 1);
@@ -251,7 +251,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     stopNode(1, 1);
     startNode(1, 1, "-r", getNode(1, 1).getConfigRepo(), "--repair-mode");
     waitForDiagnostic(1, 1);
-    assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    assertThat(configToolInvocation("repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForStopped(1, 1);
     startNode(1, 1);
     waitForDiagnostic(1, 1);
