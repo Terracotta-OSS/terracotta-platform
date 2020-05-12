@@ -175,7 +175,7 @@
         <groupId>org.terracotta</groupId>
         <artifactId>maven-forge-plugin</artifactId>
         <configuration>
-          <forkCount>2</forkCount>
+          <forkCount>${test.parallel.forks}</forkCount>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
           </systemPropertyVariables>
@@ -190,7 +190,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <forkCount>2</forkCount>
+          <forkCount>${test.parallel.forks}</forkCount>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
             <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
