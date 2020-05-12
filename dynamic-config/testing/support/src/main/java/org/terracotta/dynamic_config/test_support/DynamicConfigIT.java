@@ -275,8 +275,9 @@ public class DynamicConfigIT {
     return customConfigurationContext().tsa(tsa -> tsa
         .clusterName("tc-cluster")
         .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
-        .terracottaCommandLineEnvironment(TsaConfigurationContext.TerracottaCommandLineEnvironmentKeys.CONFIG_TOOL, TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m -Xmx32m"))
-        .terracottaCommandLineEnvironment(TsaConfigurationContext.TerracottaCommandLineEnvironmentKeys.SERVER_START_PREFIX, TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms64m -Xmx128m"))
+        .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms32m -Xmx256m"))
+        .terracottaCommandLineEnvironment(TsaConfigurationContext.TerracottaCommandLineEnvironmentKeys.CONFIG_TOOL,
+                TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m -Xmx128m"))
         .topology(new Topology(
             getDistribution(),
             dynamicCluster(
