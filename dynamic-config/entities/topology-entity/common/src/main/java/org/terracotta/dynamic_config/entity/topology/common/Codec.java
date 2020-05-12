@@ -38,22 +38,21 @@ import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_ADDITION;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_REMOVAL;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_SETTING_CHANGED;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_HAS_INCOMPLETE_CHANGE;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_LICENSE;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_MUST_BE_RESTARTED;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_RUNTIME_CLUSTER;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_UPCOMING_CLUSTER;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_HAS_INCOMPLETE_CHANGE;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_LICENSE;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_MUST_BE_RESTARTED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_RUNTIME_CLUSTER;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_UPCOMING_CLUSTER;
 import static org.terracotta.runnel.EnumMappingBuilder.newEnumMappingBuilder;
 import static org.terracotta.runnel.StructBuilder.newStructBuilder;
 
 /**
  * @author Mathieu Carbou
  */
-public class DynamicTopologyMessageCodec implements MessageCodec<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> {
+public class Codec implements MessageCodec<Message, Response> {
 
   private static final DateTimeFormatter DT_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd", Locale.ENGLISH);
 
@@ -94,14 +93,35 @@ public class DynamicTopologyMessageCodec implements MessageCodec<DynamicTopology
       .build();
 
   @Override
-  public byte[] encodeMessage(DynamicTopologyEntityMessage message) throws MessageCodecException {
+  public byte[] encodeMessage(Message message) throws MessageCodecException {
     try {
-      Type type = message.getType();
+      return struct.encoder()
+          .enm("type", message.getType())
+          .encode()
+          .array();
+    } catch (RuntimeException e) {
+      throw new MessageCodecException(e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public Message decodeMessage(byte[] bytes) throws MessageCodecException {
+    try {
+      return new Message(struct.decoder(ByteBuffer.wrap(bytes)).<Type>enm("type").get());
+    } catch (RuntimeException e) {
+      throw new MessageCodecException(e.getMessage(), e);
+    }
+  }
+
+  @Override
+  public byte[] encodeResponse(Response response) throws MessageCodecException {
+    try {
+      Type type = response.getType();
       StructEncoder<Void> encoder = struct.encoder();
       encoder.enm("type", type);
       switch (type) {
         case REQ_LICENSE: {
-          License license = message.getPayload();
+          License license = response.getPayload();
           if (license != null) {
             encoder.struct(type.name())
                 .string("date", license.getExpiryDate().format(DT_FORMATTER))
@@ -113,24 +133,24 @@ public class DynamicTopologyMessageCodec implements MessageCodec<DynamicTopology
         }
         case REQ_HAS_INCOMPLETE_CHANGE:
         case REQ_MUST_BE_RESTARTED: {
-          encoder.bool(type.name(), message.getPayload());
+          encoder.bool(type.name(), response.getPayload());
           break;
         }
         case REQ_RUNTIME_CLUSTER:
         case REQ_UPCOMING_CLUSTER: {
-          encoder.string(type.name(), encodeCluster(message.getPayload()));
+          encoder.string(type.name(), encodeCluster(response.getPayload()));
           break;
         }
         case EVENT_NODE_ADDITION:
         case EVENT_NODE_REMOVAL: {
-          List<Object> oo = message.getPayload();
+          List<Object> oo = response.getPayload();
           encoder.struct(type.name())
               .int32("stripeId", (Integer) oo.get(0))
               .string("node", encodeNode((Node) oo.get(1)));
           break;
         }
         case EVENT_SETTING_CHANGED: {
-          List<Object> oo = message.getPayload();
+          List<Object> oo = response.getPayload();
           encoder.struct(type.name())
               .string("configuration", encodeConfiguration((Configuration) oo.get(0)))
               .string("cluster", encodeCluster((Cluster) oo.get(1)));
@@ -146,7 +166,7 @@ public class DynamicTopologyMessageCodec implements MessageCodec<DynamicTopology
   }
 
   @Override
-  public DynamicTopologyEntityMessage decodeMessage(byte[] bytes) throws MessageCodecException {
+  public Response decodeResponse(byte[] bytes) throws MessageCodecException {
     try {
       StructDecoder<Void> decoder = struct.decoder(ByteBuffer.wrap(bytes));
       Type type = decoder.<Type>enm("type").get();
@@ -154,30 +174,30 @@ public class DynamicTopologyMessageCodec implements MessageCodec<DynamicTopology
         case REQ_LICENSE: {
           StructDecoder<StructDecoder<Void>> payload = decoder.struct(type.name());
           if (payload == null) {
-            return new DynamicTopologyEntityMessage(type, null);
+            return new Response(type, null);
           } else {
             LocalDate expiryDate = LocalDate.parse(payload.string("date"), DT_FORMATTER);
             Map<String, Long> limits = new HashMap<>();
             payload.structs("limits").forEachRemaining(entry -> limits.put(entry.string("name"), entry.int64("value")));
-            return new DynamicTopologyEntityMessage(type, new License(limits, expiryDate));
+            return new Response(type, new License(limits, expiryDate));
           }
         }
         case REQ_HAS_INCOMPLETE_CHANGE:
         case REQ_MUST_BE_RESTARTED:
-          return new DynamicTopologyEntityMessage(type, decoder.bool(type.name()));
+          return new Response(type, decoder.bool(type.name()));
         case REQ_RUNTIME_CLUSTER:
         case REQ_UPCOMING_CLUSTER:
-          return new DynamicTopologyEntityMessage(type, decodeCluster(decoder.string(type.name())));
+          return new Response(type, decodeCluster(decoder.string(type.name())));
         case EVENT_NODE_ADDITION:
         case EVENT_NODE_REMOVAL: {
           StructDecoder<?> event = decoder.struct(type.name());
-          return new DynamicTopologyEntityMessage(type, asList(
+          return new Response(type, asList(
               event.int32("stripeId"),
               decodeNode(event.string("node"))));
         }
         case EVENT_SETTING_CHANGED: {
           StructDecoder<?> event = decoder.struct(type.name());
-          return new DynamicTopologyEntityMessage(type, asList(
+          return new Response(type, asList(
               decodeConfiguration(event.string("configuration")),
               decodeCluster(event.string("cluster"))));
         }
@@ -187,16 +207,6 @@ public class DynamicTopologyMessageCodec implements MessageCodec<DynamicTopology
     } catch (RuntimeException e) {
       throw new MessageCodecException(e.getMessage(), e);
     }
-  }
-
-  @Override
-  public byte[] encodeResponse(DynamicTopologyEntityMessage response) throws MessageCodecException {
-    return encodeMessage(response);
-  }
-
-  @Override
-  public DynamicTopologyEntityMessage decodeResponse(byte[] payload) throws MessageCodecException {
-    return decodeMessage(payload);
   }
 
   // the encode / decode methods below re-uses the inner mapping mechanism we have

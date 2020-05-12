@@ -15,17 +15,18 @@
  */
 package org.terracotta.dynamic_config.entity.topology.client;
 
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage;
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyMessageCodec;
+import org.terracotta.dynamic_config.entity.topology.common.Codec;
+import org.terracotta.dynamic_config.entity.topology.common.Message;
+import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityClientService;
 
 /**
  * @author Mathieu Carbou
  */
-public class DynamicTopologyEntityClientService implements EntityClientService<DynamicTopologyEntity, Void, DynamicTopologyEntityMessage, DynamicTopologyEntityMessage, DynamicTopologyEntity.Settings> {
+public class DynamicTopologyEntityClientService implements EntityClientService<DynamicTopologyEntity, Void, Message, Response, DynamicTopologyEntity.Settings> {
 
-  private final DynamicTopologyMessageCodec messageCodec = new DynamicTopologyMessageCodec();
+  private final Codec messageCodec = new Codec();
 
   @Override
   public boolean handlesEntityType(Class<DynamicTopologyEntity> cls) {
@@ -43,12 +44,12 @@ public class DynamicTopologyEntityClientService implements EntityClientService<D
   }
 
   @Override
-  public DynamicTopologyEntity create(EntityClientEndpoint<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> endpoint, DynamicTopologyEntity.Settings settings) {
+  public DynamicTopologyEntity create(EntityClientEndpoint<Message, Response> endpoint, DynamicTopologyEntity.Settings settings) {
     return new DynamicTopologyEntityImpl(endpoint, settings);
   }
 
   @Override
-  public DynamicTopologyMessageCodec getMessageCodec() {
+  public Codec getMessageCodec() {
     return messageCodec;
   }
 }

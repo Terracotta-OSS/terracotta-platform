@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.entity.topology.common;
 
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.EntityResponse;
 
 import java.util.Objects;
 
@@ -25,60 +24,35 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author Mathieu Carbou
  */
-public class DynamicTopologyEntityMessage implements EntityMessage, EntityResponse {
-
-  public enum Type {
-    REQ_UPCOMING_CLUSTER,
-    REQ_RUNTIME_CLUSTER,
-    REQ_MUST_BE_RESTARTED,
-    REQ_HAS_INCOMPLETE_CHANGE,
-    REQ_LICENSE,
-    EVENT_NODE_ADDITION,
-    EVENT_NODE_REMOVAL,
-    EVENT_SETTING_CHANGED,
-  }
+public class Message implements EntityMessage {
 
   private final Type type;
 
-  private final Object payload;
-
-  public DynamicTopologyEntityMessage(Type type) {
-    this(type, null);
-  }
-
-  public DynamicTopologyEntityMessage(Type type, Object payload) {
+  public Message(Type type) {
     this.type = requireNonNull(type);
-    this.payload = payload;
   }
 
   public Type getType() {
     return type;
   }
 
-  @SuppressWarnings("unchecked")
-  public <T> T getPayload() {
-    return (T) payload;
-  }
-
   @Override
   public String toString() {
-    return "DynamicTopologyEntityMessage{" +
+    return "Message{" +
         "type=" + type +
-        ", payload=" + payload +
         '}';
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof DynamicTopologyEntityMessage)) return false;
-    DynamicTopologyEntityMessage that = (DynamicTopologyEntityMessage) o;
-    return getType() == that.getType() &&
-        Objects.equals(getPayload(), that.getPayload());
+    if (!(o instanceof Message)) return false;
+    Message that = (Message) o;
+    return getType() == that.getType();
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getType(), getPayload());
+    return Objects.hash(getType());
   }
 }

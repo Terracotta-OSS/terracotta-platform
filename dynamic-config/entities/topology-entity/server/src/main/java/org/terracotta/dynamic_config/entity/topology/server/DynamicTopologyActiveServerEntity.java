@@ -22,7 +22,8 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage;
+import org.terracotta.dynamic_config.entity.topology.common.Message;
+import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
@@ -42,12 +43,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_ADDITION;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_REMOVAL;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_SETTING_CHANGED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
 
 
-public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> {
+public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Message, Response> {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicTopologyActiveServerEntity.class);
 
   private final TopologyService topologyService;
@@ -78,7 +79,7 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Dyn
   }
 
   @Override
-  public void synchronizeKeyToPassive(PassiveSynchronizationChannel<DynamicTopologyEntityMessage> syncChannel, int concurrencyKey) {
+  public void synchronizeKeyToPassive(PassiveSynchronizationChannel<Message> syncChannel, int concurrencyKey) {
   }
 
   @Override
@@ -101,23 +102,23 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Dyn
   }
 
   @Override
-  public DynamicTopologyEntityMessage invokeActive(ActiveInvokeContext<DynamicTopologyEntityMessage> context, DynamicTopologyEntityMessage message) throws EntityUserException {
+  public Response invokeActive(ActiveInvokeContext<Response> context, Message message) throws EntityUserException {
     LOGGER.trace("invokeActive({})", message);
     switch (message.getType()) {
       case REQ_UPCOMING_CLUSTER: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.getUpcomingNodeContext().getCluster());
+        return new Response(message.getType(), topologyService.getUpcomingNodeContext().getCluster());
       }
       case REQ_RUNTIME_CLUSTER: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.getRuntimeNodeContext().getCluster());
+        return new Response(message.getType(), topologyService.getRuntimeNodeContext().getCluster());
       }
       case REQ_MUST_BE_RESTARTED: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.mustBeRestarted());
+        return new Response(message.getType(), topologyService.mustBeRestarted());
       }
       case REQ_HAS_INCOMPLETE_CHANGE: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.hasIncompleteChange());
+        return new Response(message.getType(), topologyService.hasIncompleteChange());
       }
       case REQ_LICENSE: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.getLicense().orElse(null));
+        return new Response(message.getType(), topologyService.getLicense().orElse(null));
       }
       default:
         throw new AssertionError(message);
@@ -134,24 +135,24 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Dyn
       eventRegistration = eventService.register(new DynamicConfigListenerAdapter() {
         @Override
         public void onNodeAddition(int stripeId, Node addedNode) {
-          fire(new DynamicTopologyEntityMessage(EVENT_NODE_ADDITION, asList(stripeId, addedNode)));
+          fire(new Response(EVENT_NODE_ADDITION, asList(stripeId, addedNode)));
         }
 
         @Override
         public void onNodeRemoval(int stripeId, Node removedNode) {
-          fire(new DynamicTopologyEntityMessage(EVENT_NODE_REMOVAL, asList(stripeId, removedNode)));
+          fire(new Response(EVENT_NODE_REMOVAL, asList(stripeId, removedNode)));
         }
 
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
           Configuration configuration = change.toConfiguration(updated);
-          fire(new DynamicTopologyEntityMessage(EVENT_SETTING_CHANGED, asList(configuration, updated)));
+          fire(new Response(EVENT_SETTING_CHANGED, asList(configuration, updated)));
         }
       });
     }
   }
 
-  private void fire(DynamicTopologyEntityMessage msg) {
+  private void fire(Response msg) {
     if (!clients.isEmpty()) {
       LOGGER.trace("fire({})", msg);
       for (ClientDescriptor client : clients) {

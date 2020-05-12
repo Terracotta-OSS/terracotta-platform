@@ -15,11 +15,12 @@
  */
 package org.terracotta.dynamic_config.entity.topology.server;
 
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage;
+import org.terracotta.dynamic_config.entity.topology.common.Message;
+import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.PassiveServerEntity;
 
-public class DynamicTopologyPassiveServerEntity implements PassiveServerEntity<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> {
+public class DynamicTopologyPassiveServerEntity implements PassiveServerEntity<Message, Response> {
   @Override
   public void startSyncEntity() {
   }

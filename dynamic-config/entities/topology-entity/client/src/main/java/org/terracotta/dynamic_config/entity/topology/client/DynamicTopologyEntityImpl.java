@@ -21,7 +21,9 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage;
+import org.terracotta.dynamic_config.entity.topology.common.Message;
+import org.terracotta.dynamic_config.entity.topology.common.Response;
+import org.terracotta.dynamic_config.entity.topology.common.Type;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
@@ -34,11 +36,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_HAS_INCOMPLETE_CHANGE;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_LICENSE;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_MUST_BE_RESTARTED;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_RUNTIME_CLUSTER;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_UPCOMING_CLUSTER;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_HAS_INCOMPLETE_CHANGE;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_LICENSE;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_MUST_BE_RESTARTED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_RUNTIME_CLUSTER;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_UPCOMING_CLUSTER;
 
 /**
  * @author Mathieu Carbou
@@ -46,18 +48,18 @@ import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopolo
 class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicTopologyEntityImpl.class);
 
-  private final EntityClientEndpoint<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> endpoint;
+  private final EntityClientEndpoint<Message, Response> endpoint;
   private final Settings settings;
 
   private volatile Listener listener = new Listener() {};
 
-  public DynamicTopologyEntityImpl(EntityClientEndpoint<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> endpoint, Settings settings) {
+  public DynamicTopologyEntityImpl(EntityClientEndpoint<Message, Response> endpoint, Settings settings) {
     this.endpoint = endpoint;
     this.settings = settings == null ? new Settings() : settings;
 
-    endpoint.setDelegate(new EndpointDelegate<DynamicTopologyEntityMessage>() {
+    endpoint.setDelegate(new EndpointDelegate<Response>() {
       @Override
-      public void handleMessage(DynamicTopologyEntityMessage messageFromServer) {
+      public void handleMessage(Response messageFromServer) {
         switch (messageFromServer.getType()) {
           case EVENT_NODE_ADDITION: {
             List<Object> payload = messageFromServer.getPayload();
@@ -131,14 +133,14 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
     return endpoint.release();
   }
 
-  public <T> T request(DynamicTopologyEntityMessage.Type messageType, Class<T> type) throws TimeoutException, InterruptedException {
+  public <T> T request(Type messageType, Class<T> type) throws TimeoutException, InterruptedException {
     LOGGER.trace("request({})", messageType);
     Duration requestTimeout = settings.getRequestTimeout();
     try {
-      InvokeFuture<DynamicTopologyEntityMessage> invoke = endpoint.beginInvoke()
-          .message(new DynamicTopologyEntityMessage(messageType))
+      InvokeFuture<Response> invoke = endpoint.beginInvoke()
+          .message(new Message(messageType))
           .invoke();
-      DynamicTopologyEntityMessage response = (requestTimeout == null ? invoke.get() : invoke.getWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS));
+      Response response = (requestTimeout == null ? invoke.get() : invoke.getWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS));
       LOGGER.trace("response({})", response);
       return type.cast(response.getPayload());
     } catch (MessageCodecException | EntityException e) {
