@@ -71,7 +71,7 @@ public class ExportCommand extends RemoteCommand {
     String output = buildOutput(cluster, outputFormat);
 
     if (outputFile == null) {
-      logger.info("{}", output);
+      logger.info(output);
 
     } else {
       try {
@@ -108,12 +108,11 @@ public class ExportCommand extends RemoteCommand {
       case PROPERTIES:
         Properties nonDefaults = cluster.toProperties(false, false);
         try (StringWriter out = new StringWriter()) {
-          Props.store(out, nonDefaults, "Non-default configurations:");
+          Props.store(out, nonDefaults, "Non-default configurations");
           if (includeDefaultValues) {
             Properties defaults = cluster.toProperties(false, true);
             defaults.keySet().removeAll(nonDefaults.keySet());
-            out.write(System.lineSeparator());
-            Props.store(out, defaults, "Default configurations:");
+            Props.store(out, defaults, "Default configurations");
           }
           return out.toString();
         } catch (IOException e) {

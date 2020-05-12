@@ -49,8 +49,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import static java.lang.System.lineSeparator;
-
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
 
@@ -59,14 +57,15 @@ public class ConfigTool {
       ConfigTool.start(args);
     } catch (Exception e) {
       String message = e.getMessage();
-      if (message != null && !message.isEmpty()) {
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.error("{}Error:", lineSeparator(), e); // do not output e.getMassage() because it duplicates the output
-        } else {
-          LOGGER.error("{}Error:{}{}{}", lineSeparator(), lineSeparator(), message, lineSeparator());
-        }
+      if (message == null || message.isEmpty()) {
+        // an unexpected error without message
+        LOGGER.error("Internal error:", e);
+      } else if (LOGGER.isDebugEnabled()) {
+        // equivalent to verbose mode
+        LOGGER.error("Error:", e);
       } else {
-        LOGGER.error("{}Internal error:", lineSeparator(), e);
+        // normal mode: only display message
+        LOGGER.error("Error: {}", message);
       }
       System.exit(1);
     }
@@ -107,7 +106,7 @@ public class ConfigTool {
     Duration requestTimeout = Duration.ofMillis(mainCommand.getRequestTimeout().getQuantity(TimeUnit.MILLISECONDS));
     Duration entityOperationTimeout = Duration.ofMillis(mainCommand.getEntityOperationTimeout().getQuantity(TimeUnit.MILLISECONDS));
     Duration entityConnectionTimeout = Duration.ofMillis(mainCommand.getEntityConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
-    
+
     // create services
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, mainCommand.getSecurityRootDirectory());
     MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);

@@ -54,7 +54,7 @@ public class GetCommand extends ConfigurationCommand {
         .sorted()
         .reduce((result, line) -> result + System.lineSeparator() + line)
         .orElseThrow(() -> new ParameterException("No configuration found for: " + configurations.stream().map(Configuration::toString).collect(Collectors.joining(", "))));
-    logger.info(output + System.lineSeparator());
+    logger.info(output);
   }
 
   private boolean acceptKey(String key) {
