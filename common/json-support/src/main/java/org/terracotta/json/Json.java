@@ -257,7 +257,7 @@ public class Json {
           .enableClassInfo()
           .enableAnnotationInfo()
           .whitelistPackages("org.terracotta")
-          .scan()) {
+          .scan(1)) {
         for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(JsonTypeName.class.getName())) {
           final Class<?> clazz = classInfo.loadClass(true);
           if (clazz == null) {
