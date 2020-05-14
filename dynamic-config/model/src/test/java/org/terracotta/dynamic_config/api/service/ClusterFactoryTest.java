@@ -15,29 +15,43 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.common.struct.MemoryUnit;
+import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.lenient;
+import static org.terracotta.common.struct.Tuple2.tuple2;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
+import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -49,6 +63,9 @@ public class ClusterFactoryTest {
   private final ClusterFactory clusterFactory = new ClusterFactory();
 
   @Mock public IParameterSubstitutor substitutor;
+
+  ObjectMapper json = new ObjectMapper()
+      .registerModule(new DynamicConfigModelJsonModule());
 
   @Before
   public void setUp() {
@@ -212,6 +229,109 @@ public class ClusterFactoryTest {
 
     // Note: all possible failures (including those above) are already tested in ClusterValidatorTest
     // ClusterFactory being much more a wiring class, we do not repeat all tests
+  }
+
+  @Test
+  public void test_toProperties() {
+    Cluster cluster = Cluster.newDefaultCluster("my-cluster", new Stripe(
+        newDefaultNode("node-1", "localhost")
+            .setDataDir("foo", Paths.get("%H/tc1/foo"))
+            .setDataDir("bar", Paths.get("%H/tc1/bar")),
+        newDefaultNode("node-2", "localhost")
+            .setDataDir("foo", Paths.get("%H/tc2/foo"))
+            .setDataDir("bar", Paths.get("%H/tc2/bar"))
+            .setTcProperty("server.entity.processor.threads", "64")
+            .setTcProperty("topology.validate", "true")))
+        .setFailoverPriority(consistency(2))
+        .setOffheapResource("foo", 1, MemoryUnit.GB)
+        .setOffheapResource("bar", 2, MemoryUnit.GB);
+
+    Stream.of(
+        tuple2(cluster.toProperties(false, true), "config_with_defaults.properties"),
+        tuple2(cluster.toProperties(false, false), "config_without_defaults.properties"),
+        tuple2(cluster.toProperties(true, true), "config_expanded_default.properties"),
+        tuple2(cluster.toProperties(true, false), "config_expanded_without_default.properties")
+    ).forEach(rethrow(tuple -> {
+      Properties expected = fixPaths(Props.load(Paths.get(getClass().getResource("/config-property-files/" + tuple.t2).toURI())));
+      assertThat("File: " + tuple.t2 + " should perhaps be:\n" + Props.toString(tuple.t1), tuple.t1, is(equalTo(expected)));
+    }));
+  }
+
+  @Test
+  public void test_mapping_props_json_without_defaults() throws URISyntaxException, IOException {
+    Properties props = Props.load(read("/config1_without_defaults.properties"));
+    Cluster fromJson = json.readValue(read("/config1.json"), Cluster.class);
+    Cluster fromProps = new ClusterFactory().create(props);
+
+    assertThat(fromJson, is(equalTo(fromProps)));
+    assertThat(
+        Props.toString(fromJson.toProperties(false, false)),
+        fromJson.toProperties(false, false),
+        is(equalTo(props)));
+    assertThat(
+        Props.toString(fromJson.toProperties(false, false)),
+        fromJson.toProperties(false, false),
+        is(equalTo(fromProps.toProperties(false, false))));
+    assertThat(
+        json.writerWithDefaultPrettyPrinter().writeValueAsString(fromProps),
+        fromProps,
+        is(equalTo(fromJson)));
+  }
+
+  @Test
+  public void test_mapping_props_json_with_defaults() throws URISyntaxException, IOException {
+    Properties props = Props.load(read("/config1_with_defaults.properties"));
+    Cluster fromJson = json.readValue(read("/config1.json"), Cluster.class);
+    Cluster fromProps = new ClusterFactory().create(props);
+
+    assertThat(fromJson, is(equalTo(fromProps)));
+    assertThat(
+        Props.toString(fromJson.toProperties(false, true)),
+        fromJson.toProperties(false, true),
+        is(equalTo(props)));
+    assertThat(
+        Props.toString(fromJson.toProperties(false, true)),
+        fromJson.toProperties(false, true),
+        is(equalTo(fromProps.toProperties(false, true))));
+    assertThat(
+        json.writerWithDefaultPrettyPrinter().writeValueAsString(fromProps),
+        fromProps,
+        is(equalTo(fromJson)));
+  }
+
+  public static <T> Consumer<T> rethrow(EConsumer<T> c) {
+    return t -> {
+      try {
+        c.accept(t);
+      } catch (Exception e) {
+        if (e instanceof RuntimeException) {
+          throw (RuntimeException) e;
+        }
+        throw new RuntimeException(e);
+      }
+    };
+  }
+
+  @FunctionalInterface
+  public interface EConsumer<T> {
+    void accept(T t) throws Exception;
+  }
+
+  private String read(String resource) throws URISyntaxException, IOException {
+    Path path = Paths.get(getClass().getResource(resource).toURI());
+    String data = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    return isWindows() ? data.replace("\r\n", "\n").replace("\n", "\r\n").replace("/", "\\\\") : data;
+  }
+
+  private Properties fixPaths(Properties props) {
+    if (File.separatorChar == '\\') {
+      props.entrySet().forEach(e -> e.setValue(e.getValue().toString().replace('/', '\\')));
+    }
+    return props;
+  }
+
+  private static boolean isWindows() {
+    return System.getProperty("os.name").toLowerCase().startsWith("windows");
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

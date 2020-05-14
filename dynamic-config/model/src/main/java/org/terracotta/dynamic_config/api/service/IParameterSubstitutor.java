@@ -17,7 +17,6 @@ package org.terracotta.dynamic_config.api.service;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
 
 @FunctionalInterface
 public interface IParameterSubstitutor {
@@ -36,13 +35,5 @@ public interface IParameterSubstitutor {
   default Path substitute(Path source) {
     if (source == null) return null;
     return Paths.get(substitute(source.toString()));
-  }
-
-  static boolean containsSubstitutionParams(String source) {
-    // Tries to find in the string some characters to be substituted
-    // See org.terracotta.config.util.ParameterSubstitutor.substitute(source) for the supported variables
-    return source != null && Stream.of("d", "D", "h", "c", "i", "H", "n", "o", "a", "v", "t", "(")
-        .map(c -> "%" + c)
-        .anyMatch(source::contains);
   }
 }

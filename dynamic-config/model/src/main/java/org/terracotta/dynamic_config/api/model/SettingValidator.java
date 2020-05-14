@@ -20,7 +20,6 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
-import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 
 import java.nio.file.Paths;
 import java.util.function.BiConsumer;
@@ -61,7 +60,7 @@ class SettingValidator {
   static final BiConsumer<String, Tuple2<String, String>> NODE_NAME_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
     Setting s = Setting.fromName(setting);
-    if (IParameterSubstitutor.containsSubstitutionParams(kv.t2)) {
+    if (Substitutor.containsSubstitutionParams(kv.t2)) {
       throw new IllegalArgumentException(setting + " cannot contain substitution parameters");
     }
   };

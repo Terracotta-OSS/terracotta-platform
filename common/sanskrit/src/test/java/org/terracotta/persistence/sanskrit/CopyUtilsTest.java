@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.terracotta.json.Json;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -31,7 +30,7 @@ public class CopyUtilsTest {
   private SanskritVisitor visitor1;
   @Mock
   private SanskritVisitor visitor2;
-  private ObjectMapper objectMapper = Json.copyObjectMapper();
+  private ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
   public void copyEmpty() {

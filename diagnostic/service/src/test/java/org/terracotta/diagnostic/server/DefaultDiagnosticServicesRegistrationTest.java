@@ -20,6 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 import org.terracotta.diagnostic.server.api.Expose;
+import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.server.ServerMBean;
 
 import javax.management.InstanceNotFoundException;
 
@@ -30,7 +32,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
-import org.terracotta.server.ServerMBean;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -38,7 +39,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class DefaultDiagnosticServicesRegistrationTest {
 
-  DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices();
+  DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices(new ObjectMapperFactory());
 
   @Before
   public void setUp() throws Exception {

@@ -43,6 +43,7 @@ import org.terracotta.dynamic_config.server.configuration.nomad.processor.MultiS
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.NodeAdditionNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.NodeRemovalNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.processor.SettingNomadChangeProcessor;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.persistence.sanskrit.SanskritException;
@@ -60,6 +61,8 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.availabil
 public class NomadServerManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerManager.class);
 
+  private final ObjectMapperFactory objectMapperFactory;
+  private final NomadServerFactory nomadServerFactory;
   private final IParameterSubstitutor parameterSubstitutor;
   private final ConfigChangeHandlerManager configChangeHandlerManager;
   private final LicenseService licenseService;
@@ -70,7 +73,9 @@ public class NomadServerManager {
   private volatile DynamicConfigServiceImpl dynamicConfigService;
   private volatile RoutingNomadChangeProcessor routingNomadChangeProcessor;
 
-  public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseService licenseService) {
+  public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseService licenseService, ObjectMapperFactory objectMapperFactory) {
+    this.objectMapperFactory = requireNonNull(objectMapperFactory);
+    this.nomadServerFactory = new NomadServerFactory(objectMapperFactory);
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.configChangeHandlerManager = requireNonNull(configChangeHandlerManager);
     this.licenseService = requireNonNull(licenseService);
@@ -125,12 +130,12 @@ public class NomadServerManager {
     this.configurationManager.createDirectories();
 
     try {
-      this.nomadServer = NomadServerFactory.createServer(configurationManager, null, nodeName.get(), dynamicConfigListener);
+      this.nomadServer = nomadServerFactory.createServer(configurationManager, null, nodeName.get(), dynamicConfigListener);
     } catch (SanskritException | NomadException e) {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
-    this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this);
+    this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory);
 
     LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(configPath.toString()));
   }

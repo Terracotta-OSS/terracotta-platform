@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
-import org.terracotta.json.Json;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
@@ -138,7 +137,7 @@ public class SanskritNomadServerState<T> implements NomadServerState<T> {
       T newConfiguration = configStorage.getConfig(version);
       String actualHash = hashComputer.computeHash(newConfiguration);
       if (!actualHash.equals(expectedHash)) {
-        throw new NomadException("Bad hash for change: " + changeUuid + ". Hash: " + actualHash + ". Expected: " + expectedHash + ". Loaded configuration:\n" + Json.toPrettyJson(newConfiguration));
+        throw new NomadException("Bad hash for change: " + changeUuid + ". Hash: " + actualHash + ". Expected: " + expectedHash + ". Loaded configuration: " + newConfiguration);
       }
 
       return new ChangeRequest<>(state, version, prevChangeUuid, change, newConfiguration, creationHost, creationUser, creationTimestamp);

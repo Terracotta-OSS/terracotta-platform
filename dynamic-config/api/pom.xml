@@ -31,13 +31,8 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-inet-support</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-structures</artifactId>
+      <groupId>org.terracotta.dynamic-config</groupId>
+      <artifactId>dynamic-config-model</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -45,21 +40,28 @@
       <artifactId>common-nomad</artifactId>
       <version>${project.version}</version>
     </dependency>
+
+    <!-- for json mapping module -->
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-json-support</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.terracotta.common</groupId>
       <artifactId>common-test-utilities</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-json-support</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

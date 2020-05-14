@@ -15,9 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
@@ -33,7 +30,6 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
-@JsonTypeName("SettingNomadChange")
 public class SettingNomadChange extends FilteredNomadChange {
 
   private final Operation operation;
@@ -41,12 +37,11 @@ public class SettingNomadChange extends FilteredNomadChange {
   private final String name;
   private final String value;
 
-  @JsonCreator
-  private SettingNomadChange(@JsonProperty(value = "applicability", required = true) Applicability applicability,
-                             @JsonProperty(value = "operation", required = true) Operation operation,
-                             @JsonProperty(value = "setting", required = true) Setting setting,
-                             @JsonProperty(value = "name") String name,
-                             @JsonProperty(value = "value") String value) {
+  protected SettingNomadChange(Applicability applicability,
+                             Operation operation,
+                             Setting setting,
+                             String name,
+                             String value) {
     super(applicability);
     this.operation = requireNonNull(operation);
     this.setting = requireNonNull(setting);

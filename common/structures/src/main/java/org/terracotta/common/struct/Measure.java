@@ -15,12 +15,6 @@
  */
 package org.terracotta.common.struct;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -32,11 +26,6 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
 
   private final BigInteger quantity;
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
-  @JsonSubTypes({
-      @JsonSubTypes.Type(name = "TIME", value = TimeUnit.class),
-      @JsonSubTypes.Type(name = "MEMORY", value = MemoryUnit.class),
-  })
   private final T unit;
 
   public static <U extends Enum<U> & Unit<U>> Measure<U> of(long quantity, U type) {
@@ -117,9 +106,7 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
     return Measure.of(quantity, unit);
   }
 
-  @JsonCreator
-  private Measure(@JsonProperty(value = "quantity", required = true) BigInteger quantity,
-                  @JsonProperty(value = "unit", required = true) T unit) {
+  protected Measure(BigInteger quantity, T unit) {
     this.quantity = quantity;
     this.unit = requireNonNull(unit);
     if (quantity.signum() == -1) {
@@ -127,7 +114,6 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
     }
   }
 
-  @JsonIgnore
   public long getQuantity() {
     return quantity.longValueExact();
   }
@@ -136,7 +122,6 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
     return unit.convert(this.quantity, this.unit).longValueExact();
   }
 
-  @JsonProperty("quantity")
   public BigInteger getExactQuantity() {
     return quantity;
   }

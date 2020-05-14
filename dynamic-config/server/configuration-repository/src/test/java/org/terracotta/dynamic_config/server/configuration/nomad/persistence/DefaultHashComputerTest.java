@@ -16,13 +16,13 @@
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
 
@@ -36,8 +36,8 @@ import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 public class DefaultHashComputerTest {
   @Test
   public void computeHash() throws IOException {
-    ObjectMapper om = Json.copyObjectMapper(true).configure(SerializationFeature.INDENT_OUTPUT, false);
-    HashComputer<NodeContext> hashComputer = new DefaultHashComputer(Json.copyObjectMapper(true));
+    ObjectMapper om = new ObjectMapperFactory().pretty().withModule(new DynamicConfigApiJsonModule()).create();
+    HashComputer<NodeContext> hashComputer = new DefaultHashComputer(om);
 
     Node node = newDefaultNode("foo", "localhost");
     NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node)), 1, "foo");

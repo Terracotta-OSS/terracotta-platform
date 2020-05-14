@@ -23,6 +23,8 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 import org.terracotta.diagnostic.server.api.Expose;
+import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.server.ServerMBean;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanInfo;
@@ -37,7 +39,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.reset;
-import org.terracotta.server.ServerMBean;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -49,7 +50,7 @@ public class DefaultDiagnosticServicesTest {
   @Spy MyService1Impl service1;
   @Spy MyServiceImpl service2;
 
-  DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices();
+  DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices(new ObjectMapperFactory());
 
   @Before
   public void setUp() throws Exception {

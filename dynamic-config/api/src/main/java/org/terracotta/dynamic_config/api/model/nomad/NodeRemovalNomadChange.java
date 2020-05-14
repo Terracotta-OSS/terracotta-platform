@@ -15,9 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 
@@ -26,13 +23,11 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author Mathieu Carbou
  */
-@JsonTypeName("NodeRemovalNomadChange")
 public class NodeRemovalNomadChange extends NodeNomadChange {
 
-  @JsonCreator
-  public NodeRemovalNomadChange(@JsonProperty(value = "cluster", required = true) Cluster cluster,
-                                @JsonProperty(value = "stripeId", required = true) int stripeId,
-                                @JsonProperty(value = "node", required = true) Node node) {
+  public NodeRemovalNomadChange(Cluster cluster,
+                                int stripeId,
+                                Node node) {
     super(cluster, stripeId, node);
   }
 

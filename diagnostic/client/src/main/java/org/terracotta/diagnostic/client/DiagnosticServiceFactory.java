@@ -20,6 +20,7 @@ import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.ConnectionService;
+import org.terracotta.connection.Diagnostics;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodec;
@@ -27,13 +28,13 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
-import org.terracotta.connection.Diagnostics;
 
 /**
  * @author Mathieu Carbou
@@ -46,11 +47,12 @@ public class DiagnosticServiceFactory {
                                         String connectionName,
                                         Duration connectTimeout,
                                         Duration diagnosticInvokeTimeout,
-                                        String securityRootDirectory) throws ConnectionException {
+                                        String securityRootDirectory,
+                                        ObjectMapperFactory objectMapperFactory) throws ConnectionException {
     Properties properties = buildProperties(connectionName, connectTimeout, securityRootDirectory);
     Connection connection = ConnectionFactory.connect(Collections.singletonList(nodeAddress), properties);
     try {
-      return fetch(connection, diagnosticInvokeTimeout);
+      return fetch(connection, diagnosticInvokeTimeout, objectMapperFactory);
     } catch (EntityException e) {
       try {
         connection.close();
@@ -67,11 +69,12 @@ public class DiagnosticServiceFactory {
                                         String connectionName,
                                         Duration connectionTimeout,
                                         Duration diagnosticInvokeTimeout,
-                                        String securityRootDirectory) throws ConnectionException {
+                                        String securityRootDirectory,
+                                        ObjectMapperFactory objectMapperFactory) throws ConnectionException {
     Properties properties = buildProperties(connectionName, connectionTimeout, securityRootDirectory);
     Connection connection = connectionService.connect(Collections.singletonList(nodeAddress), properties);
     try {
-      return fetch(connection, diagnosticInvokeTimeout);
+      return fetch(connection, diagnosticInvokeTimeout, objectMapperFactory);
     } catch (EntityException e) {
       try {
         connection.close();
@@ -84,23 +87,23 @@ public class DiagnosticServiceFactory {
 
   }
 
-  public static DiagnosticService getDiagnosticService(Connection connection, Diagnostics delegate) {
+  public static DiagnosticService getDiagnosticService(Connection connection, Diagnostics delegate, ObjectMapperFactory objectMapperFactory) {
     // We could default to the JavaDiagnosticCodec also, or a runnel codec if we want to get rid of Json and only do serialization.
     // The codec needs to be the same on client-side and server-side of course.
-    return getDiagnosticService(connection, delegate, new JsonDiagnosticCodec());
+    return getDiagnosticService(connection, delegate, new JsonDiagnosticCodec(objectMapperFactory));
   }
 
   public static DiagnosticService getDiagnosticService(Connection connection, Diagnostics delegate, DiagnosticCodec<?> codec) {
     return new DiagnosticServiceImpl(connection, delegate, codec);
   }
 
-  private static DiagnosticService fetch(Connection connection, Duration diagnosticInvokeTimeout)
+  private static DiagnosticService fetch(Connection connection, Duration diagnosticInvokeTimeout, ObjectMapperFactory objectMapperFactory)
       throws EntityNotProvidedException, EntityVersionMismatchException, EntityNotFoundException {
     EntityRef<Diagnostics, Object, Properties> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
     Properties properties = new Properties();
     properties.setProperty("request.timeout", String.valueOf(diagnosticInvokeTimeout.toMillis()));
     Diagnostics delegate = ref.fetchEntity(properties);
-    return getDiagnosticService(connection, delegate);
+    return getDiagnosticService(connection, delegate, objectMapperFactory);
   }
 
   private static Properties buildProperties(String connectionName, Duration connectionTimeout, String securityRootDirectory) {

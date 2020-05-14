@@ -18,17 +18,12 @@ package org.terracotta.dynamic_config.system_tests.activation;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
-import org.terracotta.diagnostic.client.DiagnosticService;
-import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.net.InetSocketAddress;
 import java.util.concurrent.TimeoutException;
 
-import static java.time.Duration.ofSeconds;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -72,11 +67,10 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
     waitForActive(1, 1);
 
-    // TDB-4726
-    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(InetSocketAddress.createUnresolved("localhost", getNodePort()), "diag", ofSeconds(10), ofSeconds(10), null)) {
-      NodeContext runtimeNodeContext = diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext();
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
       assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
-    }
+    });
   }
 
   @Test

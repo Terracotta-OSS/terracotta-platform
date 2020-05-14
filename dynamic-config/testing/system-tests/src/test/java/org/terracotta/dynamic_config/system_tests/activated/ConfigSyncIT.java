@@ -23,7 +23,6 @@ import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.json.Json;
 import org.terracotta.persistence.sanskrit.JsonUtils;
 import org.terracotta.persistence.sanskrit.MutableSanskritObject;
 import org.terracotta.persistence.sanskrit.SanskritException;
@@ -236,9 +235,9 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
   }
 
-  private static List<SanskritObject> getChanges(Path pathToAppendLog) throws SanskritException {
+  private List<SanskritObject> getChanges(Path pathToAppendLog) throws SanskritException {
+    ObjectMapper objectMapper = objectMapperFactory.create();
     List<SanskritObject> res = new ArrayList<>();
-    ObjectMapper objectMapper = Json.copyObjectMapper();
     new SanskritImpl(new FileBasedFilesystemDirectory(pathToAppendLog), objectMapper) {
       @Override
       public void onNewRecord(String timeStamp, String json) throws SanskritException {

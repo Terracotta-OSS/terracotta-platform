@@ -15,15 +15,12 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class License {
+public class License {
 
   // Mapping between capability name and corresponding limit value
   // Value as 0 means absent and > 0 means present and represents its limit.
@@ -32,9 +29,8 @@ public final class License {
   // Expiry date of the license in UTC.
   private final LocalDate expiryDate;
 
-  @JsonCreator
-  public License(@JsonProperty(value = "capabilities", required = true) Map<String, Long> capabilityLimitMap,
-                 @JsonProperty(value = "expiryDate", required = true) LocalDate expiryDate) {
+  public License(Map<String, Long> capabilityLimitMap,
+                 LocalDate expiryDate) {
     this.capabilityLimitMap = Collections.unmodifiableMap(new HashMap<>(capabilityLimitMap));
     this.expiryDate = expiryDate;
   }

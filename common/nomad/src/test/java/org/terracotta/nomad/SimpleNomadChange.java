@@ -17,14 +17,12 @@ package org.terracotta.nomad;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
-@JsonTypeName("SimpleNomadChange")
 public class SimpleNomadChange implements NomadChange {
   private final String change;
   private final String summary;

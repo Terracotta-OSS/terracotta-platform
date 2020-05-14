@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.dynamic_config.api.model.Scope;
 
 import java.util.Objects;
@@ -44,10 +42,9 @@ public class Applicability {
     return new Applicability(NODE, stripeId, requireNonNull(nodeName));
   }
 
-  @JsonCreator
-  private Applicability(@JsonProperty(value = "scope", required = true) Scope scope,
-                        @JsonProperty("stripeId") Integer stripeId,
-                        @JsonProperty("nodeName") String nodeName) {
+  protected Applicability(Scope scope,
+                          Integer stripeId,
+                          String nodeName) {
     this.scope = requireNonNull(scope);
     this.stripeId = stripeId;
     this.nodeName = nodeName;

@@ -25,8 +25,8 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
-import org.terracotta.json.Json;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -120,7 +120,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   }
 
   @Test
-  public void test_attach_node_ok() {
+  public void test_attach_node_ok() throws IOException {
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
@@ -138,7 +138,10 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(2));
     assertThat(allValues.get(0), is(equalTo(allValues.get(1))));
-    assertThat(Json.toPrettyJson(allValues.get(0)), allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster1.json"), Cluster.class))));
+    assertThat(
+        objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(allValues.get(0)),
+        allValues.get(0),
+        is(equalTo(objectMapper.readValue(getClass().getResource("/cluster1.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));
@@ -175,7 +178,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   }
 
   @Test
-  public void test_attach_stripe_ok() {
+  public void test_attach_stripe_ok() throws IOException {
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
@@ -193,7 +196,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(2));
     assertThat(allValues.get(0), is(equalTo(allValues.get(1))));
-    assertThat(allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster2.json"), Cluster.class))));
+    assertThat(
+        allValues.get(0),
+        is(equalTo(objectMapper.readValue(getClass().getResource("/cluster2.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(2));

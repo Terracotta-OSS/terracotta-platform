@@ -25,7 +25,7 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.File
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.InitialConfigStorage;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.SanskritNomadServerState;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
@@ -42,12 +42,20 @@ import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
 public class NomadServerFactory {
-  public static UpgradableNomadServer<NodeContext> createServer(NomadConfigurationManager configurationManager,
-                                                                ChangeApplicator<NodeContext> changeApplicator,
-                                                                String nodeName,
-                                                                DynamicConfigListener listener) throws SanskritException, NomadException {
-    ObjectMapper objectMapper = Json.copyObjectMapper(true);
+
+  private final ObjectMapperFactory objectMapperFactory;
+
+  public NomadServerFactory(ObjectMapperFactory objectMapperFactory) {
+    this.objectMapperFactory = objectMapperFactory;
+  }
+
+  public UpgradableNomadServer<NodeContext> createServer(NomadConfigurationManager configurationManager,
+                                                         ChangeApplicator<NodeContext> changeApplicator,
+                                                         String nodeName,
+                                                         DynamicConfigListener listener) throws SanskritException, NomadException {
+
     FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(configurationManager.getChangesPath());
+    ObjectMapper objectMapper = objectMapperFactory.create();
     Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapper);
 
     InitialConfigStorage<NodeContext> configStorage = new InitialConfigStorage<>(new ConfigStorageAdapter<NodeContext>(new FileConfigStorage(configurationManager.getClusterPath(), nodeName)) {

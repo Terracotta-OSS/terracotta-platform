@@ -15,7 +15,10 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.text.PrettyPrintable;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
@@ -34,7 +37,7 @@ import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.monitoring.PlatformService;
 
 import java.io.File;
@@ -66,14 +69,16 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
+  private final ObjectMapper objectMapper;
 
-  StartupConfiguration(NodeContext nodeContext, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor) {
+  StartupConfiguration(NodeContext nodeContext, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory) {
     this.nodeContext = requireNonNull(nodeContext);
     this.unConfigured = unConfigured;
     this.repairMode = repairMode;
     this.classLoader = requireNonNull(classLoader);
-    this.pathResolver = pathResolver;
-    this.substitutor = substitutor;
+    this.pathResolver = requireNonNull(pathResolver);
+    this.substitutor = requireNonNull(substitutor);
+    this.objectMapper = objectMapperFactory.create();
   }
 
   @Override
@@ -169,7 +174,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     startupConfig.addState("unConfigured", unConfigured);
     startupConfig.addState("repairMode", repairMode);
     startupConfig.addState("partialConfig", isPartialConfiguration());
-    startupConfig.addState("startupNodeContext", Json.parse(Json.toJson(nodeContext), new TypeReference<Map<String, ?>>() {}));
+    startupConfig.addState("startupNodeContext", toMap(nodeContext));
 
     StateDumpCollector platformConfig = collector.subStateDumpCollector(PlatformConfiguration.class.getName());
     addStateTo(platformConfig);
@@ -181,6 +186,16 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
         .forEach(sd -> sd.addStateTo(serviceProviderConfigurations.subStateDumpCollector(sd.getClass().getName())));
 
     return main;
+  }
+
+  private Map<String, ?> toMap(Object o) {
+    try {
+      JsonNode node = objectMapper.valueToTree(o);
+      JsonParser jsonParser = objectMapper.treeAsTokens(node);
+      return jsonParser.readValueAs(new TypeReference<Map<String, ?>>() {});
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   private StateDumpCollector createCollector(String name, Map<String, Object> map) {

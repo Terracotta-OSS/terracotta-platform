@@ -21,8 +21,8 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.SettingName;
+import org.terracotta.dynamic_config.api.model.Substitutor;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
-import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.cli.config_converter.xml.TcConfigMapper;
 import org.terracotta.dynamic_config.cli.config_converter.xml.TcConfigMapperDiscovery;
 
@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
-import static org.terracotta.dynamic_config.api.service.IParameterSubstitutor.containsSubstitutionParams;
 
 public class ConfigConverter {
 
@@ -103,12 +102,12 @@ public class ConfigConverter {
 
   private List<String> checkPlaceHolders(org.terracotta.dynamic_config.api.model.Node node) {
     List<String> placeHolders = new ArrayList<>();
-    node.getDataDirs().values().stream().map(Path::toString).filter(IParameterSubstitutor::containsSubstitutionParams).findAny().ifPresent(path -> placeHolders.add(SettingName.DATA_DIRS));
-    ofNullable(node.getNodeBackupDir()).filter(path -> containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_BACKUP_DIR));
-    ofNullable(node.getNodeLogDir()).filter(path -> containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_LOG_DIR));
-    ofNullable(node.getNodeMetadataDir()).filter(path -> containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_METADATA_DIR));
-    ofNullable(node.getSecurityDir()).filter(path -> containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.SECURITY_DIR));
-    ofNullable(node.getSecurityAuditLogDir()).filter(path -> containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.SECURITY_AUDIT_LOG_DIR));
+    node.getDataDirs().values().stream().map(Path::toString).filter(Substitutor::containsSubstitutionParams).findAny().ifPresent(path -> placeHolders.add(SettingName.DATA_DIRS));
+    ofNullable(node.getNodeBackupDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_BACKUP_DIR));
+    ofNullable(node.getNodeLogDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_LOG_DIR));
+    ofNullable(node.getNodeMetadataDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_METADATA_DIR));
+    ofNullable(node.getSecurityDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.SECURITY_DIR));
+    ofNullable(node.getSecurityAuditLogDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.SECURITY_AUDIT_LOG_DIR));
 
     return placeHolders;
   }

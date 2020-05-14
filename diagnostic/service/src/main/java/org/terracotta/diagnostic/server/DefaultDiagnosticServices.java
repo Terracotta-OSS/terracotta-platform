@@ -21,6 +21,8 @@ import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodec;
 import org.terracotta.diagnostic.server.api.DiagnosticServices;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
+import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.server.ServerMBean;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
@@ -28,6 +30,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import javax.management.StandardMBean;
 import java.io.Closeable;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -41,9 +44,7 @@ import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import javax.management.StandardMBean;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
-import org.terracotta.server.ServerMBean;
 
 /**
  * Common manager holding all diagnostic services registered on a server
@@ -58,8 +59,8 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
 
   private final DiagnosticRequestHandler handler;
 
-  public DefaultDiagnosticServices() {
-    this(new JsonDiagnosticCodec(false));
+  public DefaultDiagnosticServices(ObjectMapperFactory objectMapperFactory) {
+    this(new JsonDiagnosticCodec(objectMapperFactory));
   }
 
   public DefaultDiagnosticServices(DiagnosticCodec<String> codec) {
