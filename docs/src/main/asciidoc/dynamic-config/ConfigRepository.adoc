@@ -124,8 +124,7 @@ attribute and ```tsa-port``` element. Then traverse the ```<cluster>``` element 
 to find out the stripe in which the current server belongs to.
 ** pass:q[*<u>sanskrit</u>*]
 *** Contains append log and other metadata files.
-**** There will be a file called ```state.log``` which is used as an append log. There will be two files called ```hash0``` and ```hash1``` which contain hash information based on recent records in
-```state.log``` to resist tampering where records are removed from the end of the append log.
+**** There will be a file called ```state.log``` which is used as an append log. There will be two files called ```hash0``` and ```hash1``` which contain hash information based on recent records in ```state.log``` to resist tampering where records are removed from the end of the append log.
 
 ===== Note :
 ** Each node will have private repository location. Repository location can be passed from command line.
@@ -140,8 +139,7 @@ Whenever we generate a tamper-resistant hash, we will use SHA-512 truncated to 1
 represented using 40 lowercase hex characters (i.e. 0 to 9 and a to f).
 
 We will have a static byte array in a Java class containing 64 bytes that we will append to any input to the hash
-function. These 64 bytes must not change. They should be randomly generated in advance and then hard-coded in a
-```.java``` file.
+function. These 64 bytes must not change. They should be randomly generated in advance and then hard-coded in a ```.java``` file.
 
 ==== Newlines
 
@@ -174,8 +172,7 @@ A newline appears between records.
 
 ==== Timestamp
 
-The timestamp will appear on its own line. It will be formatted using the ISO standard. For example:
-```2018-10-18T16:52:28```. The timestamp will be in UTC.
+The timestamp will appear on its own line. It will be formatted using the ISO standard. For example: ```2018-10-18T16:52:28```. The timestamp will be in UTC.
 
 ==== JSON
 
