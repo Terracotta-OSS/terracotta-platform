@@ -1,6 +1,17 @@
 ////
- Copyright (c) 2011-2020 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.
- Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG.
+    Copyright Terracotta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 ////
 :toc:
 :toclevels: 5
@@ -83,39 +94,37 @@ Options:
  -u,--upgrade-compatiblity     enable rolling upgrade compatiblity mode
 
 Dynamic Configuration Options:
+    -u, --audit-log-dir
+    -z, --authc
+    -b, --backup-dir
+    -a, --bind-address               (Default: 0.0.0.0)
     -i, --client-lease-duration      (Default: 150s)
     -R, --client-reconnect-window    (Default: 120s)
     -N, --cluster-name
+    -r, --config-dir                 (Default: %H/terracotta/config)
     -f, --config-file
     -d, --data-dirs                  (Default: main:%H/terracotta/user-data/main)
     -y, --failover-priority
-    -l, --license-file
-    -b, --backup-dir
-    -a, --bind-address               (Default: 0.0.0.0)
     -A, --group-bind-address         (Default: 0.0.0.0)
     -g, --group-port                 (Default: 9430)
     -s, --hostname                   (Default: %h)
+    -l, --license-file
     -L, --log-dir                    (Default: %H/terracotta/logs)
     -m, --metadata-dir               (Default: %H/terracotta/metadata)
     -n, --name                       (Default: <randomly-generated>)
+    -o, --offheap-resources          (Default: main:512MB)
     -p, --port                       (Default: 9410)
     -S, --public-hostname
     -P, --public-port
-    -r, --config-dir             (Default: %H/terracotta/config)
-    -o, --offheap-resources          (Default: main:512MB)
     -D, --repair-mode
-    -u, --audit-log-dir
-    -z, --authc
     -x, --security-dir
-    -t, --ssl-tls           (Default: false)
-    -w, --whitelist         (Default: false)
+    -t, --ssl-tls                    (Default: false)
     -T, --tc-properties
+    -w, --whitelist                  (Default: false)
 ----
 
-A node can directly start in activated state if:
-
-. `--config-file` option along with `--license-file` is provided, and the config properties file contains information of a single stripe.
-. It was started with a fully-formed config directory, obtained from <<config-converter-tool, config converter tool>>,
+A node can directly start in activated state if it was started with a fully-formed config directory,
+obtained from <<config-converter-tool, config converter tool>>,
 or formed after <<config-tool-activate, config tool `activate`>> was executed in a previous run.
 
 Otherwise, <<config-tool-activate, config tool `activate`>> command will need to be run after the cluster topology has
@@ -184,14 +193,15 @@ Note that not all settings (e.g. node's hostname) can be unset using this comman
 
 [[migration-steps]]
 == Steps to be followed for migration of an existing Terracotta 10.x (10.5 and older) cluster
-IMPORTANT: This sequence doesn't work currently. To be updated once TDB-4975 is fixed
-
 . Shut down all Terracotta clients and ensure no critical operations (like backup) are running on the cluster.
 Note down the hosts the nodes are running on.
 . Use the cluster tool `shutdown` command to shut down the Terracotta cluster.
 . Use the <<config-converter-tool, config converter tool>> to convert tc-config.xml files to config directory format.
 . Copy the config directories generated from the step above to the hosts from the first step.
 . Start the nodes using <<startup-script, startup script>> with option `-r`, supplying the config directory path.
-All persisted data prior to shutdown from the first step will be restored upon node startup.
+
++
+IMPORTANT: 10.7 server cannot be started with a 10.5 server data yet. Work for the same is underway in TDB-4975.
+
 . Replace the old client jars with 10.7 jars in the client classpath.
 . Connect the clients back with the cluster.
