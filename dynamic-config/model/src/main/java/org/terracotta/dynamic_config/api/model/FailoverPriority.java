@@ -15,9 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
-
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
@@ -36,7 +33,7 @@ public class FailoverPriority {
 
   public enum Type {AVAILABILITY, CONSISTENCY}
 
-  private FailoverPriority(Type type, Integer voters) {
+  protected FailoverPriority(Type type, Integer voters) {
     this.type = type;
     this.voters = voters;
   }
@@ -63,7 +60,6 @@ public class FailoverPriority {
     return Objects.hash(getType(), getVoters());
   }
 
-  @JsonValue
   @Override
   public String toString() {
     return type == AVAILABILITY ? AVAILABILITY.name().toLowerCase() :
@@ -86,7 +82,6 @@ public class FailoverPriority {
     return new FailoverPriority(Type.CONSISTENCY, voters);
   }
 
-  @JsonCreator
   public static FailoverPriority valueOf(String str) {
     requireNonNull(str);
     if ("availability".equals(str)) {

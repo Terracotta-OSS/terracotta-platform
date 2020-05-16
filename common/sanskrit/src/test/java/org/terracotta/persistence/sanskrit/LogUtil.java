@@ -15,7 +15,7 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-import org.terracotta.json.Json;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class LogUtil {
 
     for (Map<String, Object> record : records) {
       String timestamp = Instant.now().toString();
-      String json = Json.toPrettyJson(record);
+      String json = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(record);
 
       String entryString = timestamp + LS + json;
 

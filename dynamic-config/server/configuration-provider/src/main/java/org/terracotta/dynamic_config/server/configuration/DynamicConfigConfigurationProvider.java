@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesHolder;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
@@ -45,6 +46,7 @@ import org.terracotta.dynamic_config.server.configuration.startup.StartupConfigu
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
 import org.terracotta.dynamic_config.server.configuration.sync.Require;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServer;
@@ -65,6 +67,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   private volatile DynamicConfigurationPassiveSync dynamicConfigurationPassiveSync;
   private volatile NomadServerManager nomadServerManager;
+  private volatile DynamicConfigSyncData.Codec synCodec;
   private volatile StartupConfiguration configuration;
 
   @Override
@@ -94,12 +97,16 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // optional service enabling license parsing
       LicenseService licenseService = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseService::unsupported);
 
+      // initialize the json system
+      ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+
       // Service used to manage and initialize the Nomad 2PC system
-      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService);
+      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory);
+      synCodec = new DynamicConfigSyncData.Codec(objectMapperFactory);
 
       // Configuration generator class
       // Initialized when processing the CLI depending oin the user input, and called to generate a configuration
-      ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver);
+      ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver, objectMapperFactory);
 
       // CLI parsing
       Options options = parseCommandLineOrExit(args);
@@ -125,6 +132,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration = configurationGeneratorVisitor.generateConfiguration();
 
       //  exposes services through org.terracotta.entity.PlatformConfiguration
+      configuration.registerExtendedConfiguration(ObjectMapperFactory.class, objectMapperFactory);
       configuration.registerExtendedConfiguration(IParameterSubstitutor.class, parameterSubstitutor);
       configuration.registerExtendedConfiguration(ConfigChangeHandlerManager.class, configChangeHandlerManager);
       configuration.registerExtendedConfiguration(DynamicConfigEventService.class, dynamicConfigService);
@@ -167,7 +175,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   @Override
   public byte[] getSyncData() {
-    return dynamicConfigurationPassiveSync != null ? dynamicConfigurationPassiveSync.getSyncData().encode() : new byte[0];
+    return dynamicConfigurationPassiveSync == null ? new byte[0] : synCodec.encode(dynamicConfigurationPassiveSync.getSyncData());
   }
 
   @Override
@@ -176,7 +184,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
       Set<Require> requires;
       try {
-        requires = dynamicConfigurationPassiveSync.sync(DynamicConfigSyncData.decode(bytes));
+        DynamicConfigSyncData data = synCodec.decode(bytes);
+        requires = dynamicConfigurationPassiveSync.sync(data);
       } catch (NomadException n) {
         // rely on the server to stop based on uncaught exception
         throw new RuntimeException(n);

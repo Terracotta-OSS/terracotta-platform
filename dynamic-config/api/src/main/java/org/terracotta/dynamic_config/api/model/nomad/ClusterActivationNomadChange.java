@@ -15,9 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.terracotta.dynamic_config.api.model.Cluster;
 
 import static java.util.Objects.requireNonNull;
@@ -27,11 +24,9 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
-@JsonTypeName("ClusterActivationNomadChange")
 public class ClusterActivationNomadChange extends TopologyNomadChange {
 
-  @JsonCreator
-  public ClusterActivationNomadChange(@JsonProperty(value = "cluster", required = true) Cluster cluster) {
+  public ClusterActivationNomadChange(Cluster cluster) {
     super(cluster, Applicability.cluster());
     requireNonNull(cluster.getName());
   }

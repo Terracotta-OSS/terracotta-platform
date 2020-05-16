@@ -16,15 +16,18 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
@@ -48,6 +51,8 @@ public abstract class TopologyCommand extends RemoteCommand {
 
   @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
+
+  @Inject public ObjectMapperFactory objectMapperFactory;
 
   protected Map<InetSocketAddress, LogicalServerState> destinationOnlineNodes;
   protected boolean destinationClusterActivated;
@@ -104,7 +109,11 @@ public abstract class TopologyCommand extends RemoteCommand {
     new ClusterValidator(result).validate();
 
     if (logger.isDebugEnabled()) {
-      logger.debug("Updated topology:{}{}.", lineSeparator(), Json.toPrettyJson(result));
+      try {
+        logger.debug("Updated topology:{}{}.", lineSeparator(), objectMapperFactory.create().writerWithDefaultPrettyPrinter().writeValueAsString(result));
+      } catch (JsonProcessingException e) {
+        throw new UncheckedIOException(e);
+      }
     }
 
     // push the updated topology to all the addresses

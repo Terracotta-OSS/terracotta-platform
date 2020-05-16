@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodec;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.util.function.Function;
 
@@ -37,7 +38,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class DiagnosticRequestHandlerTest {
 
-  private final JsonDiagnosticCodec codec = new JsonDiagnosticCodec();
+  private final JsonDiagnosticCodec codec = new JsonDiagnosticCodec(new ObjectMapperFactory());
   private final DiagnosticRequestHandler handler = DiagnosticRequestHandler.withCodec(codec);
 
   private final Runnable noop = () -> {

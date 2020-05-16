@@ -15,9 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.net.InetSocketAddress;
@@ -37,10 +34,9 @@ public class NodeContext implements Cloneable {
   private final String nodeName;
   private final Node node;
 
-  @JsonCreator
-  public NodeContext(@JsonProperty(value = "cluster", required = true) Cluster cluster,
-                     @JsonProperty(value = "stripeId", required = true) int stripeId,
-                     @JsonProperty(value = "nodeName", required = true) String nodeName) {
+  public NodeContext(Cluster cluster,
+                     int stripeId,
+                     String nodeName) {
     this.cluster = requireNonNull(cluster);
     this.stripeId = stripeId;
     this.nodeName = requireNonNull(nodeName);
@@ -89,13 +85,11 @@ public class NodeContext implements Cloneable {
     return nodeName;
   }
 
-  @JsonIgnore
   public Node getNode() {
     return node;
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
-  @JsonIgnore
   public Stripe getStripe() {
     return cluster.getStripe(stripeId).get();
   }

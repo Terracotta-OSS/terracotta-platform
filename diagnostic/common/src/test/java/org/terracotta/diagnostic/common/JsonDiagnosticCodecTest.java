@@ -19,11 +19,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
-import org.terracotta.json.Json;
+import org.terracotta.common.struct.json.StructJsonModule;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.Closeable;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -39,7 +43,7 @@ import static org.terracotta.common.struct.Tuple2.tuple2;
 public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
 
   public JsonDiagnosticCodecTest() {
-    super("Json", new JsonDiagnosticCodec(false));
+    super("Json", new JsonDiagnosticCodec(new ObjectMapperFactory().withModule(new StructJsonModule())));
   }
 
   @Test
@@ -128,7 +132,11 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
   }
 
   private String jsonFile(String filename) {
-    return Json.parse(getClass().getResource(filename)).toString();
+    try {
+      return new ObjectMapper().readTree(getClass().getResource(filename)).toString();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   public static abstract class Vegie<T extends CookingManual> {

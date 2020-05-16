@@ -15,24 +15,24 @@
  */
 package org.terracotta.persistence.sanskrit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
-import org.terracotta.json.Json;
 
 import static org.junit.Assert.assertEquals;
 
 public class JsonSanskritChangeVisitorTest {
   @Test
   public void empty() throws Exception {
-    JsonSanskritChangeVisitor visitor = new JsonSanskritChangeVisitor(Json.copyObjectMapper());
+    JsonSanskritChangeVisitor visitor = new JsonSanskritChangeVisitor(new ObjectMapper());
     assertEquals("{}", visitor.getJson());
   }
 
   @Test
   public void someData() throws Exception {
-    SanskritObjectImpl object = new SanskritObjectImpl(Json.copyObjectMapper());
+    SanskritObjectImpl object = new SanskritObjectImpl(new ObjectMapper());
     object.setString("E", "e");
 
-    JsonSanskritChangeVisitor visitor = new JsonSanskritChangeVisitor(Json.copyObjectMapper());
+    JsonSanskritChangeVisitor visitor = new JsonSanskritChangeVisitor(new ObjectMapper());
     visitor.setString("A", "a");
     visitor.setLong("B", 1L);
     visitor.setObject("C", object);

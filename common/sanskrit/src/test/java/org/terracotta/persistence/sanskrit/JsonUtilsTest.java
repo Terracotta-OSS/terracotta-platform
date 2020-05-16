@@ -15,8 +15,8 @@
  */
 package org.terracotta.persistence.sanskrit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
-import org.terracotta.json.Json;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -27,8 +27,8 @@ public class JsonUtilsTest {
   public void parseEmpty() throws Exception {
     String input = "{}";
 
-    SanskritObjectImpl result = new SanskritObjectImpl(Json.copyObjectMapper());
-    JsonUtils.parse(Json.copyObjectMapper(), input, result);
+    SanskritObjectImpl result = new SanskritObjectImpl(new ObjectMapper());
+    JsonUtils.parse(new ObjectMapper(), input, result);
 
     assertNull(result.getString("A"));
   }
@@ -44,8 +44,8 @@ public class JsonUtilsTest {
         "  \"D\" : null" + LS +
         "}";
 
-    SanskritObjectImpl result = new SanskritObjectImpl(Json.copyObjectMapper());
-    JsonUtils.parse(Json.copyObjectMapper(), input, result);
+    SanskritObjectImpl result = new SanskritObjectImpl(new ObjectMapper());
+    JsonUtils.parse(new ObjectMapper(), input, result);
 
     assertEquals("a", result.getString("A"));
     assertEquals(1L, (long) result.getLong("B"));

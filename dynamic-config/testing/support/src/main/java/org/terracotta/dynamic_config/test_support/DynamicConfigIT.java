@@ -38,11 +38,13 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.TmpDir;
 
@@ -102,6 +104,8 @@ public class DynamicConfigIT {
   protected final TmpDir tmpDir;
   protected final AngelaRule angela;
   protected final long timeout;
+
+  protected final ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
   @Rule public RuleChain rules;
 
@@ -277,12 +281,12 @@ public class DynamicConfigIT {
         .clusterName("tc-cluster")
         .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
         .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT
-                .withJavaOpts("-Xms32m -Xmx256m")
-                .withJavaHome(System.getProperty("java.home")))
+            .withJavaOpts("-Xms32m -Xmx256m")
+            .withJavaHome(System.getProperty("java.home")))
         .terracottaCommandLineEnvironment(TsaConfigurationContext.TerracottaCommandLineEnvironmentKeys.CONFIG_TOOL,
             TerracottaCommandLineEnvironment.DEFAULT
-                    .withJavaOpts("-Xms8m -Xmx128m")
-                    .withJavaHome(System.getProperty("java.home")))
+                .withJavaOpts("-Xms8m -Xmx128m")
+                .withJavaHome(System.getProperty("java.home")))
         .topology(new Topology(
             getDistribution(),
             dynamicCluster(
@@ -496,7 +500,8 @@ public class DynamicConfigIT {
         getClass().getSimpleName(),
         getConnectionTimeout(),
         getConnectionTimeout(),
-        null)) {
+        null,
+        objectMapperFactory)) {
       return fn.apply(diagnosticService.getProxy(TopologyService.class));
     }
   }

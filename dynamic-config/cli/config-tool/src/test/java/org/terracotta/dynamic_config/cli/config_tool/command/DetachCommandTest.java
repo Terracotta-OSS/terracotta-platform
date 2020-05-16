@@ -24,8 +24,8 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.json.Json;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -84,7 +84,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   }
 
   @Test
-  public void test_detach_nodes_from_stripe() {
+  public void test_detach_nodes_from_stripe() throws IOException {
     TopologyCommand command = newCommand()
         .setOperationType(NODE)
         .setDestination("localhost", 9410)
@@ -97,7 +97,10 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
-    assertThat(Json.toJson(allValues.get(0)), allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster3.json"), Cluster.class))));
+    assertThat(
+        objectMapper.writeValueAsString(allValues.get(0)),
+        allValues.get(0),
+        is(equalTo(objectMapper.readValue(getClass().getResource("/cluster3.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(2));
@@ -108,7 +111,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   }
 
   @Test
-  public void test_detach_stripe() {
+  public void test_detach_stripe() throws IOException {
     TopologyCommand command = newCommand()
         .setOperationType(STRIPE)
         .setDestination("localhost", 9410)
@@ -121,7 +124,10 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
-    assertThat(Json.toJson(allValues.get(0)), allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster4.json"), Cluster.class))));
+    assertThat(
+        objectMapper.writeValueAsString(allValues.get(0)),
+        allValues.get(0),
+        is(equalTo(objectMapper.readValue(getClass().getResource("/cluster4.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));

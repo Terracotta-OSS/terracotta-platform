@@ -15,11 +15,11 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.json.Json;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -46,7 +46,9 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
-    Cluster cluster = Json.parse(Paths.get("target", OUTPUT_JSON_FILE), Cluster.class);
+    ObjectMapper objectMapper = objectMapperFactory.create();
+
+    Cluster cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));
 
@@ -55,7 +57,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
-    cluster = Json.parse(Paths.get("target", OUTPUT_JSON_FILE), Cluster.class);
+    cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
@@ -64,7 +66,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
-    cluster = Json.parse(Paths.get("target", OUTPUT_JSON_FILE), Cluster.class);
+    cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(2));
     assertThat(cluster.getNodeAddresses(), hasSize(3));
 
@@ -73,7 +75,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
-    cluster = Json.parse(Paths.get("target", OUTPUT_JSON_FILE), Cluster.class);
+    cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
@@ -82,7 +84,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
-    cluster = Json.parse(Paths.get("target", OUTPUT_JSON_FILE), Cluster.class);
+    cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(1));
   }

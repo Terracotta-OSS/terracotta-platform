@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.configuration.service.ConfigChangeHandlerManagerImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.dynamic_config.server.configuration.service.ParameterSubstitutor;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.nio.file.Paths;
 
@@ -41,9 +42,10 @@ public class ConfigurationGeneratorVisitorTest {
   private static final ParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
   private static final ConfigurationGeneratorVisitor STARTUP_MANAGER = new ConfigurationGeneratorVisitor(
       PARAMETER_SUBSTITUTOR,
-      new NomadServerManager(PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl(), mock(LicenseService.class)),
+      new NomadServerManager(PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl(), mock(LicenseService.class), new ObjectMapperFactory()),
       ConfigurationGeneratorVisitorTest.class.getClassLoader(),
-      new PathResolver(Paths.get("%(user.dir)")));
+      new PathResolver(Paths.get("%(user.dir)")),
+      new ObjectMapperFactory());
 
   private static final String CONFIG_FILE = "/path/to/config-file";
 

@@ -15,9 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
@@ -59,15 +56,13 @@ public class Cluster implements Cloneable, PropertyHolder {
   private FailoverPriority failoverPriority = FailoverPriority.availability();
   private final Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
 
-  @JsonCreator
-  Cluster(@JsonProperty("name") String name,
-          @JsonProperty(value = "stripes", required = true) List<Stripe> stripes) {
+  protected Cluster(String name,
+                    List<Stripe> stripes) {
     this.stripes = new CopyOnWriteArrayList<>(requireNonNull(stripes));
     this.name = name;
   }
 
   @Override
-  @JsonIgnore
   public Scope getScope() {
     return CLUSTER;
   }
@@ -188,7 +183,6 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  @JsonIgnore
   public boolean isEmpty() {
     return stripes.isEmpty() || getNodeAddresses().isEmpty();
   }
@@ -197,12 +191,10 @@ public class Cluster implements Cloneable, PropertyHolder {
    * @return The only node (if available) in the only stripe of this cluster.
    * @throws IllegalStateException if the cluster has more than 1 stripe or more than 1 node
    */
-  @JsonIgnore
   public Optional<Node> getSingleNode() throws IllegalStateException {
     return getSingleStripe().flatMap(Stripe::getSingleNode);
   }
 
-  @JsonIgnore
   public Optional<Stripe> getSingleStripe() {
     if (stripes.size() > 1) {
       throw new IllegalStateException();
@@ -260,7 +252,6 @@ public class Cluster implements Cloneable, PropertyHolder {
         .findAny();
   }
 
-  @JsonIgnore
   public Collection<InetSocketAddress> getNodeAddresses() {
     return stripes.stream().flatMap(stripe -> stripe.getNodes().stream()).map(Node::getNodeAddress).collect(toList());
   }
@@ -361,17 +352,14 @@ public class Cluster implements Cloneable, PropertyHolder {
     return Optional.of(stripes.get(stripeId - 1));
   }
 
-  @JsonIgnore
   public int getNodeCount() {
     return stripes.stream().mapToInt(Stripe::getNodeCount).sum();
   }
 
-  @JsonIgnore
   public int getStripeCount() {
     return stripes.size();
   }
 
-  @JsonIgnore
   public Collection<Node> getNodes() {
     return stripes.stream().flatMap(s -> s.getNodes().stream()).collect(toList());
   }
@@ -415,7 +403,6 @@ public class Cluster implements Cloneable, PropertyHolder {
     return properties;
   }
 
-  @JsonIgnore
   public Collection<String> getDataDirNames() {
     return getNodes().stream().flatMap(node -> node.getDataDirs().keySet().stream()).collect(toSet());
   }

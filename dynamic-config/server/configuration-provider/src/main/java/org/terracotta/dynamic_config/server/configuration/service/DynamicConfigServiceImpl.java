@@ -15,7 +15,10 @@
  */
 package org.terracotta.dynamic_config.server.configuration.service;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -35,7 +38,7 @@ import org.terracotta.dynamic_config.server.api.InvalidLicenseException;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -72,17 +75,19 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private final NomadServerManager nomadServerManager;
   private final List<DynamicConfigListener> listeners = new CopyOnWriteArrayList<>();
   private final Path licensePath;
+  private final ObjectMapper objectMapper;
 
   private volatile NodeContext upcomingNodeContext;
   private volatile NodeContext runtimeNodeContext;
   private volatile boolean clusterActivated;
 
-  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager) {
+  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, ObjectMapperFactory objectMapperFactory) {
     this.upcomingNodeContext = requireNonNull(nodeContext);
     this.runtimeNodeContext = requireNonNull(nodeContext);
     this.licenseService = requireNonNull(licenseService);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.licensePath = nomadServerManager.getConfigurationManager().getLicensePath().resolve(LICENSE_FILE_NAME);
+    this.objectMapper = objectMapperFactory.create();
     if (hasLicenseFile()) {
       validateAgainstLicense(upcomingNodeContext.getCluster());
     }
@@ -124,8 +129,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     stateDumpCollector.addState("configurationDir", nomadServerManager.getConfigurationManager().getConfigurationDirectory().toString());
     stateDumpCollector.addState("activated", isActivated());
     stateDumpCollector.addState("mustBeRestarted", mustBeRestarted());
-    stateDumpCollector.addState("runtimeNodeContext", Json.parse(Json.toJson(getRuntimeNodeContext()), new TypeReference<Map<String, ?>>() {}));
-    stateDumpCollector.addState("upcomingNodeContext", Json.parse(Json.toJson(getUpcomingNodeContext()), new TypeReference<Map<String, ?>>() {}));
+    stateDumpCollector.addState("runtimeNodeContext", toMap(getRuntimeNodeContext()));
+    stateDumpCollector.addState("upcomingNodeContext", toMap(getUpcomingNodeContext()));
     StateDumpCollector nomad = stateDumpCollector.subStateDumpCollector("Nomad");
     try {
       DiscoverResponse<NodeContext> discoverResponse = nomadServerManager.getNomadServer().discover();
@@ -375,6 +380,16 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     licenseService.validate(licensePath, cluster);
     LOGGER.debug("License is valid for cluster: {}", cluster.toShapeString());
     return true;
+  }
+
+  private Map<String, ?> toMap(Object o) {
+    try {
+      JsonNode node = objectMapper.valueToTree(o);
+      JsonParser jsonParser = objectMapper.treeAsTokens(node);
+      return jsonParser.readValueAs(new TypeReference<Map<String, ?>>() {});
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   private synchronized void installLicense(String licenseContent) {

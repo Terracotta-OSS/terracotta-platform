@@ -15,9 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.net.InetSocketAddress;
@@ -41,8 +38,7 @@ import static java.util.stream.Collectors.toList;
 public class Stripe implements Cloneable, PropertyHolder {
   private final List<Node> nodes;
 
-  @JsonCreator
-  public Stripe(@JsonProperty(value = "nodes", required = true) List<Node> nodes) {
+  public Stripe(List<Node> nodes) {
     this.nodes = new CopyOnWriteArrayList<>(requireNonNull(nodes));
   }
 
@@ -82,12 +78,10 @@ public class Stripe implements Cloneable, PropertyHolder {
     return "( " + nodes.stream().map(node -> node.getNodeName() + "@" + node.getNodeAddress()).collect(joining(", ")) + " )";
   }
 
-  @JsonIgnore
   public Collection<InetSocketAddress> getNodeAddresses() {
     return getNodes().stream().map(Node::getNodeAddress).collect(toList());
   }
 
-  @JsonIgnore
   public Optional<Node> getSingleNode() throws IllegalStateException {
     if (nodes.size() > 1) {
       throw new IllegalStateException();
@@ -119,7 +113,6 @@ public class Stripe implements Cloneable, PropertyHolder {
     return nodes.removeIf(node -> node.hasAddress(address));
   }
 
-  @JsonIgnore
   public boolean isEmpty() {
     return nodes.isEmpty();
   }
@@ -161,7 +154,6 @@ public class Stripe implements Cloneable, PropertyHolder {
             });
   }
 
-  @JsonIgnore
   public int getNodeCount() {
     return nodes.size();
   }
@@ -208,7 +200,6 @@ public class Stripe implements Cloneable, PropertyHolder {
     return properties;
   }
 
-  @JsonIgnore
   @Override
   public Scope getScope() {
     return Scope.STRIPE;

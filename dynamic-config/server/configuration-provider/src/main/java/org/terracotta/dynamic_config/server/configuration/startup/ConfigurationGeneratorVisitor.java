@@ -28,6 +28,7 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Noma
 import org.terracotta.dynamic_config.server.configuration.service.DynamicConfigServiceImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.inet.InetSocketAddressUtils;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -55,6 +56,7 @@ public class ConfigurationGeneratorVisitor {
   private final NomadServerManager nomadServerManager;
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
+  private final ObjectMapperFactory objectMapperFactory;
 
   private NodeContext nodeContext;
   private boolean repairMode;
@@ -63,11 +65,13 @@ public class ConfigurationGeneratorVisitor {
   public ConfigurationGeneratorVisitor(IParameterSubstitutor parameterSubstitutor,
                                        NomadServerManager nomadServerManager,
                                        ClassLoader classLoader,
-                                       PathResolver pathResolver) {
+                                       PathResolver pathResolver,
+                                       ObjectMapperFactory objectMapperFactory) {
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
+    this.objectMapperFactory = requireNonNull(objectMapperFactory);
   }
 
   public boolean isUnConfiguredMode() {
@@ -84,7 +88,7 @@ public class ConfigurationGeneratorVisitor {
 
     if (unConfiguredMode) {
       // in diagnostic / unconfigured node mode, make sure we make platform think that the node is alone...
-      return new StartupConfiguration(nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor);
+      return new StartupConfiguration(nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
     }
 
     NodeContext nodeContext = nomadServerManager.getConfiguration()
@@ -98,7 +102,7 @@ public class ConfigurationGeneratorVisitor {
       nodeContext = nodeContext.alone();
     }
 
-    return new StartupConfiguration(nodeContext, unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor);
+    return new StartupConfiguration(nodeContext, unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
   }
 
   void startUnconfigured(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {

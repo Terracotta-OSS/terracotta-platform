@@ -49,7 +49,8 @@ public class DiagnosticIT extends DynamicConfigIT {
         getClass().getSimpleName(),
         Duration.ofSeconds(5),
         Duration.ofSeconds(5),
-        null)
+        null,
+        objectMapperFactory)
     ) {
       assertThat(diagnosticService.getLogicalServerState(), is(equalTo(LogicalServerState.STARTING)));
     }

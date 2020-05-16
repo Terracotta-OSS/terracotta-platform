@@ -15,10 +15,8 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.event.Level;
-import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
@@ -56,11 +54,10 @@ public class Node implements Cloneable, PropertyHolder {
   private final Map<String, Level> nodeLoggerOverrides = new ConcurrentHashMap<>();
   private final Map<String, Path> dataDirs = new ConcurrentHashMap<>();
 
-  Node() {
+  protected Node() {
   }
 
   @Override
-  @JsonIgnore
   public Scope getScope() {
     return NODE;
   }
@@ -262,25 +259,22 @@ public class Node implements Cloneable, PropertyHolder {
         getNodePublicAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
   }
 
-  @JsonIgnore
   public InetSocketAddress getNodeAddress() {
     return getNodePublicAddress().orElseGet(this::getNodeInternalAddress);
   }
 
-  @JsonIgnore
   public InetSocketAddress getNodeInternalAddress() {
-    if (nodeHostname == null || IParameterSubstitutor.containsSubstitutionParams(nodeHostname)) {
+    if (nodeHostname == null || Substitutor.containsSubstitutionParams(nodeHostname)) {
       throw new AssertionError("Node " + nodeName + " is not correctly defined with internal address: " + nodeHostname + ":" + nodePort);
     }
     return InetSocketAddress.createUnresolved(nodeHostname, nodePort);
   }
 
-  @JsonIgnore
   public Optional<InetSocketAddress> getNodePublicAddress() {
     if (nodePublicHostname == null || nodePublicPort == null) {
       return Optional.empty();
     }
-    if (IParameterSubstitutor.containsSubstitutionParams(nodePublicHostname)) {
+    if (Substitutor.containsSubstitutionParams(nodePublicHostname)) {
       throw new AssertionError("Node " + nodeName + " is not correctly defined with public address: " + nodePublicHostname + ":" + nodePublicPort);
     }
     return Optional.of(InetSocketAddress.createUnresolved(nodePublicHostname, nodePublicPort));

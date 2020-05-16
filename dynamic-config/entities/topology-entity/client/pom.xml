@@ -35,11 +35,6 @@
       <artifactId>dynamic-config-topology-entity-common</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <!-- provided by client runtime -->
     <dependency>
@@ -49,18 +44,4 @@
     </dependency>
   </dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <failOnWarning>false</failOnWarning>
-          <compilerArgs>
-            <arg>-Xlint:all</arg>
-          </compilerArgs>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>

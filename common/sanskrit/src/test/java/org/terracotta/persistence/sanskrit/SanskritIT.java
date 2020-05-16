@@ -15,10 +15,10 @@
  */
 package org.terracotta.persistence.sanskrit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.terracotta.json.Json;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
 import java.nio.file.Path;
@@ -34,21 +34,21 @@ public class SanskritIT {
     Path root = folder.newFolder().toPath();
     FilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(root);
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, new ObjectMapper())) {
       sanskrit.setString("configHash", "49e1ceea34a674b42cd70b1764a5477227d1ffcd");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, new ObjectMapper())) {
       assertEquals("49e1ceea34a674b42cd70b1764a5477227d1ffcd", sanskrit.getString("configHash"));
       sanskrit.setString("configHash", "019eddbd529da0184ba78422db59539454ddc55f");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, new ObjectMapper())) {
       assertEquals("019eddbd529da0184ba78422db59539454ddc55f", sanskrit.getString("configHash"));
       sanskrit.setString("configHash", "b5da3b7595c55a5d241e567d576c5b59711dc95a");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, new ObjectMapper())) {
       assertEquals("b5da3b7595c55a5d241e567d576c5b59711dc95a", sanskrit.getString("configHash"));
     }
   }
@@ -59,8 +59,8 @@ public class SanskritIT {
     Path root = folder.newFolder().toPath();
     FilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(root);
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, Json.copyObjectMapper())) {
-      Sanskrit.init(filesystemDirectory, Json.copyObjectMapper());
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, new ObjectMapper())) {
+      Sanskrit.init(filesystemDirectory, new ObjectMapper());
     }
   }
 }

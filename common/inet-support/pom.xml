@@ -29,4 +29,14 @@
   <artifactId>common-inet-support</artifactId>
   <name>Common :: Inet Support</name>
 
+  <dependencies>
+
+    <!-- for json mapping module -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
 </project>

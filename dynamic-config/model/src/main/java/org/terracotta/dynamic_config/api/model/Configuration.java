@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -304,7 +302,7 @@ public class Configuration {
         throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " cannot be set at " + scope + " level");
       }
       // check the value if we have one
-      if (!IParameterSubstitutor.containsSubstitutionParams(value)) {
+      if (!Substitutor.containsSubstitutionParams(value)) {
         try {
           setting.validate(key, value);
         } catch (RuntimeException e) {
@@ -335,7 +333,7 @@ public class Configuration {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
         }
         // ensure that properties requiring an eager resolve are resolved
-        if (setting.mustBeResolved() && IParameterSubstitutor.containsSubstitutionParams(value)) {
+        if (setting.mustBeResolved() && Substitutor.containsSubstitutionParams(value)) {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Placeholders are not allowed");
         }
         break;
