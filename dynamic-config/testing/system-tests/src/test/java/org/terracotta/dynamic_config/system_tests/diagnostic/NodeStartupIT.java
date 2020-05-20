@@ -44,23 +44,30 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
-  public void testStartingWithNonExistentRepo() throws TimeoutException {
+  public void testStartingWithNonExistentRepo() {
     startSingleNode("-r", getNodeConfigDir(1, 1).toString());
     waitForDiagnostic(1, 1);
   }
 
   @Test
-  public void testStartingWithSingleNodeConfigFile() throws TimeoutException {
+  public void testStartingWithSingleNodeConfigFile() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
     waitForDiagnostic(1, 1);
   }
 
   @Test
-  public void testStartingWithSingleNodeConfigFileWithHostPort() throws TimeoutException {
+  public void testStartingWithSingleNodeConfigFileWithHostPort() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", port, "--config-dir", "config/stripe1/node-1");
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testStartingWithSingleNodeConfigFileWithNodeName() {
+    Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
+    startNode(1, 1, "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", "config/stripe1/node-1");
     waitForDiagnostic(1, 1);
   }
 
@@ -74,7 +81,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_nonExistentFile() throws TimeoutException {
+  public void testFailedStartupConfigFile_nonExistentFile() {
     Path configurationFile = Paths.get(".").resolve("blah");
     try {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
@@ -85,7 +92,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidPort() throws TimeoutException {
+  public void testFailedStartupConfigFile_invalidPort() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid1.properties");
     try {
@@ -97,7 +104,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidSecurity() throws TimeoutException {
+  public void testFailedStartupConfigFile_invalidSecurity() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid2.properties");
     try {
@@ -109,29 +116,29 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidCliParams() throws TimeoutException {
+  public void testFailedStartupConfigFile_invalidCliParams() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     try {
       startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--hostname', '--port' and '--config-dir' parameters"));
+      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
     }
   }
 
   @Test
-  public void testFailedStartupConfigFile_invalidCliParams_2() throws TimeoutException {
+  public void testFailedStartupConfigFile_invalidCliParams_2() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     try {
       startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--hostname', '--port' and '--config-dir' parameters"));
+      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
     }
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidAuthc() throws TimeoutException {
+  public void testFailedStartupCliParams_invalidAuthc() {
     try {
       startSingleNode("--authc=blah", "-r", getNodeConfigDir(1, 1).toString());
       fail();
@@ -141,7 +148,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidHostname() throws TimeoutException {
+  public void testFailedStartupCliParams_invalidHostname() {
     try {
       startNode(1, 1, "--hostname=:::", "-r", getNodeConfigDir(1, 1).toString());
       fail();
@@ -151,7 +158,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidFailoverPriority() throws TimeoutException {
+  public void testFailedStartupCliParams_invalidFailoverPriority() {
     try {
       startSingleNode("--failover-priority", "blah", "-r", getNodeConfigDir(1, 1).toString());
       fail();
@@ -161,7 +168,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParams_invalidSecurity() throws TimeoutException {
+  public void testFailedStartupCliParams_invalidSecurity() {
     try {
       startSingleNode("--audit-log-dir", "audit-dir", "-r", getNodeConfigDir(1, 1).toString());
       fail();
@@ -171,7 +178,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testSuccessfulStartupCliParams() throws TimeoutException {
+  public void testSuccessfulStartupCliParams() {
     startSingleNode("-p", String.valueOf(getNodePort()), "-r", getNodeConfigDir(1, 1).toString());
     waitForDiagnostic(1, 1);
   }
@@ -189,7 +196,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailedStartupCliParamsWithConfigFileAndConfigDir() throws TimeoutException {
+  public void testFailedStartupCliParamsWithConfigFileAndConfigDir() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     try {
@@ -201,7 +208,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       );
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--repair-mode', '--license-file', '--hostname', '--port' and '--config-dir' parameters"));
+      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
     }
   }
 
@@ -221,7 +228,6 @@ public class NodeStartupIT extends DynamicConfigIT {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
         "--failover-priority", "availability",
-        "--name", getNodeName(1, 1),
         "--hostname", "localhost",
         "--log-dir", getNodePath(1, 1).resolve("logs").toString(),
         "--backup-dir", getNodePath(1, 1).resolve("backup").toString(),
@@ -231,10 +237,6 @@ public class NodeStartupIT extends DynamicConfigIT {
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {
       throw new AssertionError("Do not use -n. use --name instead");
-    }
-    if (provided.contains("--name")) {
-      defaultArgs.remove("--name");
-      defaultArgs.remove(getNodeName(1, 1));
     }
     if (provided.contains("-s") || provided.contains("--hostname")) {
       defaultArgs.remove("--hostname");

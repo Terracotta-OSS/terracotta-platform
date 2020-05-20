@@ -136,7 +136,7 @@ public class Options {
   @Parameter(names = {"-N", "--" + CLUSTER_NAME})
   private String clusterName;
 
-  @Parameter(names = {"-l", "--" + LICENSE_FILE})
+  @Parameter(names = {"-l", "--" + LICENSE_FILE}, hidden = true)
   private String licenseFile;
 
   @Parameter(names = {"-D", "--" + REPAIR_MODE})
@@ -164,7 +164,6 @@ public class Options {
    * as the key and user-specified-value as the value.
    *
    * @param jCommander jCommander instance
-   * @return the constructed map
    */
   private void extractTopologyOptions(CustomJCommander jCommander) {
     Collection<String> userSpecifiedOptions = jCommander.getUserSpecifiedOptions();
@@ -188,30 +187,34 @@ public class Options {
   }
 
   private void validateOptions(CustomJCommander jCommander) {
-    if (configFile == null) {
-      // when using CLI parameters
-
-      if (licenseFile != null && clusterName == null) {
-        throw new ParameterException("'" + addDashDash(LICENSE_FILE) + "' parameter must be used with '" + addDashDash(CLUSTER_NAME) + "' parameter");
+    if (configFile != null) {
+      if (nodeName != null && (nodePort != null || nodeHostname != null)) {
+        throw new ParameterException("'" + addDashDash(NODE_NAME) + "' parameter cannot be used with '"
+            + addDashDash(NODE_HOSTNAME) + "' or '" + addDashDash(NODE_PORT) + "' parameter");
       }
 
-    } else {
-      // when using config file
-
       Set<String> filteredOptions = new HashSet<>(jCommander.getUserSpecifiedOptions());
-      filteredOptions.remove("-f");
-      filteredOptions.remove("-l");
-      filteredOptions.remove("-s");
-      filteredOptions.remove("-p");
-      filteredOptions.remove("-r");
-
       filteredOptions.remove(addDashDash(AUTO_ACTIVATE));
       filteredOptions.remove(addDashDash(REPAIR_MODE));
+      filteredOptions.remove("-D");
+
       filteredOptions.remove(addDashDash(CONFIG_FILE));
+      filteredOptions.remove("-f");
+
       filteredOptions.remove(addDashDash(LICENSE_FILE));
+      filteredOptions.remove("-l");
+
       filteredOptions.remove(addDashDash(NODE_HOSTNAME));
+      filteredOptions.remove("-s");
+
       filteredOptions.remove(addDashDash(NODE_PORT));
+      filteredOptions.remove("-p");
+
+      filteredOptions.remove(addDashDash(NODE_NAME));
+      filteredOptions.remove("-n");
+
       filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
+      filteredOptions.remove("-r");
 
       if (filteredOptions.size() != 0) {
         throw new ParameterException(
@@ -219,12 +222,23 @@ public class Options {
                 "'%s' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
                 addDashDash(CONFIG_FILE),
                 addDashDash(REPAIR_MODE),
-                addDashDash(LICENSE_FILE),
+                addDashDash(NODE_NAME),
                 addDashDash(NODE_HOSTNAME),
                 addDashDash(NODE_PORT),
                 addDashDash(NODE_CONFIG_DIR)
             )
         );
+      }
+    } else {
+      // when using CLI parameters
+      if (licenseFile != null) {
+        if (clusterName == null) {
+          throw new ParameterException("'" + addDashDash(LICENSE_FILE) + "' parameter must be used with '" + addDashDash(CLUSTER_NAME) + "' parameter");
+        }
+
+        if (!allowsAutoActivation) {
+          throw new ParameterException("'" + addDashDash(LICENSE_FILE) + "' parameter must be used with '" + addDashDash(AUTO_ACTIVATE) + "' parameter");
+        }
       }
     }
   }
@@ -235,6 +249,10 @@ public class Options {
 
   public String getNodePort() {
     return nodePort;
+  }
+
+  public String getNodeName() {
+    return nodeName;
   }
 
   public String getNodeConfigDir() {

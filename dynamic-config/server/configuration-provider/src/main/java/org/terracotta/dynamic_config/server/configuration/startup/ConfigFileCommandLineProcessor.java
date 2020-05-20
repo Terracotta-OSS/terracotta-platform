@@ -55,7 +55,12 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
     LOGGER.info("Starting node from config file: {}", substitutedConfigFile);
     Cluster cluster = clusterCreator.create(substitutedConfigFile);
 
-    Node node = configurationGeneratorVisitor.getMatchingNodeFromConfigFile(options.getNodeHostname(), options.getNodePort(), options.getConfigFile(), cluster);
+    Node node;
+    if (options.getNodeName() != null) {
+      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(options.getNodeName(), options.getConfigFile(), cluster);
+    } else {
+      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(options.getNodeHostname(), options.getNodePort(), options.getConfigFile(), cluster);
+    }
 
     if (options.allowsAutoActivation()) {
       configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getNodeAddress()), options.getLicenseFile(), options.getNodeConfigDir());

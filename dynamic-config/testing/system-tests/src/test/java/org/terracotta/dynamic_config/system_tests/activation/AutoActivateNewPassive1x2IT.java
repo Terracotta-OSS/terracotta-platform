@@ -33,14 +33,14 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
-  public void test_auto_activation_success_for_1x1_cluster() throws Exception {
+  public void test_auto_activation_success_for_1x1_cluster() {
     Path configurationFile = copyConfigProperty("/config-property-files/1x1.properties");
-    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort()), "--config-dir", "config/stripe1/1-1");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "--config-dir", "config/stripe1/1-1");
     waitForActive(1, 1);
   }
 
   @Test
-  public void test_auto_activation_failure_for_different_1x2_cluster() throws Exception {
+  public void test_auto_activation_failure_for_different_1x2_cluster() {
     startNode(1, 1, "--auto-activate", "-f", copyConfigProperty("/config-property-files/1x2.properties").toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/1-1");
     waitForActive(1, 1);
 
@@ -57,12 +57,22 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_auto_activation_success_for_1x2_cluster() throws Exception {
+  public void test_auto_activation_success_for_1x2_cluster() {
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
     startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/1-1");
     waitForActive(1, 1);
 
     startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--config-dir", "config/stripe1/1-2");
+    waitForPassive(1, 2);
+  }
+
+  @Test
+  public void test_auto_activation_success_for_1x2_cluster_usingNodeName() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", "config/stripe1/1-1");
+    waitForActive(1, 1);
+
+    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-2", "--config-dir", "config/stripe1/1-2");
     waitForPassive(1, 2);
   }
 }
