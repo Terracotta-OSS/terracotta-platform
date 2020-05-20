@@ -118,12 +118,12 @@ public class CommandLineProcessorChainTest {
     when(options.getNodePort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
-    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
     cluster.setName(CLUSTER_NAME);
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
+    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
@@ -131,7 +131,7 @@ public class CommandLineProcessorChainTest {
   }
 
   @Test
-  public void testPreactivatedWithConfigFile_ok() {
+  public void testPreactivatedWithConfigFileUsingHostPort_ok() {
     when(options.allowsAutoActivation()).thenReturn(true);
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
@@ -139,14 +139,34 @@ public class CommandLineProcessorChainTest {
     when(options.getNodePort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
-    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
     cluster.setName(CLUSTER_NAME);
 
     mainCommandLineProcessor.process();
 
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
-    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
+    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
+    verify(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
+    verifyNoMoreInteractions(configurationGeneratorVisitor);
+  }
+
+  @Test
+  public void testPreactivatedWithConfigFileUsingNodeName_ok() {
+    when(options.allowsAutoActivation()).thenReturn(true);
+    when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
+    when(options.getConfigFile()).thenReturn(CONFIG_FILE);
+    when(options.getNodeName()).thenReturn(NODE_NAME);
+    when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(NODE_NAME, CONFIG_FILE, cluster)).thenReturn(node1);
+    cluster.setName(CLUSTER_NAME);
+
+    mainCommandLineProcessor.process();
+
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
+    verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
+    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFileUsingNodeName(NODE_NAME, CONFIG_FILE, cluster);
     verify(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
   }
@@ -160,7 +180,7 @@ public class CommandLineProcessorChainTest {
     when(options.getNodePort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
-    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
     cluster.addStripe(new Stripe(node2));
     cluster.setName(CLUSTER_NAME);
 
@@ -172,7 +192,7 @@ public class CommandLineProcessorChainTest {
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
+    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
@@ -180,18 +200,36 @@ public class CommandLineProcessorChainTest {
   }
 
   @Test
-  public void testUnconfiguredWithConfigFile() {
+  public void testUnconfiguredWithConfigFileUsingHostPort() {
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
     when(options.getNodeHostname()).thenReturn(HOST_NAME);
     when(options.getNodePort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
-    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
     cluster.getSingleStripe().get().attachNode(node2);
 
     mainCommandLineProcessor.process();
 
-    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFile(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
+    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
+    verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
+    verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
+    verify(configurationGeneratorVisitor).startUnconfigured(nodeContext, null);
+    verifyNoMoreInteractions(configurationGeneratorVisitor);
+  }
+
+  @Test
+  public void testUnconfiguredWithConfigFileUsingNodeName() {
+    when(options.getConfigFile()).thenReturn(CONFIG_FILE);
+    when(options.getNodeName()).thenReturn(NODE_NAME);
+    when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
+    when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
+    when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(NODE_NAME, CONFIG_FILE, cluster)).thenReturn(node1);
+    cluster.getSingleStripe().get().attachNode(node2);
+
+    mainCommandLineProcessor.process();
+
+    verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFileUsingNodeName(NODE_NAME, CONFIG_FILE, cluster);
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUnconfigured(nodeContext, null);
