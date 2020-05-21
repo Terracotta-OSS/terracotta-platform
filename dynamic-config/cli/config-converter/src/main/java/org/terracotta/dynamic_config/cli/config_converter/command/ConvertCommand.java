@@ -40,7 +40,7 @@ import static org.terracotta.dynamic_config.cli.config_converter.ConversionForma
 import static org.terracotta.dynamic_config.cli.config_converter.ConversionFormat.PROPERTIES;
 
 @Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration directory format")
-@Usage("convert -c <tc-config>,<tc-config>... ( -t configRepository [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
+@Usage("convert -c <tc-config>,<tc-config>... ( -t directory [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
 public class ConvertCommand extends Command {
   @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
   private List<Path> tcConfigFiles;
