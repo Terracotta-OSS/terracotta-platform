@@ -74,8 +74,8 @@ public class ActivateCommandTest extends BaseTest {
           newDefaultNode("node1", "localhost", 9411)
       ),
       new Stripe(
-          newDefaultNode("node1", "localhost", 9421),
-          newDefaultNode("node2", "localhost", 9422)
+          newDefaultNode("node2", "localhost", 9421),
+          newDefaultNode("node3", "localhost", 9422)
       ));
   private final int[] ports = cluster.getNodeAddresses().stream().mapToInt(InetSocketAddress::getPort).toArray();
 

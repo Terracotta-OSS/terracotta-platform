@@ -42,7 +42,7 @@ public class ClusterValidatorTest {
     Node node1 = Node.newDefaultNode("foo", "localhost1");
     Node node2 = Node.newDefaultNode("foo", "localhost2");
 
-    assertClusterValidationFails("Found duplicate node name: foo in stripe 1", Cluster.newDefaultCluster(new Stripe(node1, node2)));
+    assertClusterValidationFails("Found duplicate node name: foo", Cluster.newDefaultCluster(new Stripe(node1, node2)));
   }
 
   @Test
@@ -50,8 +50,7 @@ public class ClusterValidatorTest {
     Node node1 = Node.newDefaultNode("foo", "localhost1");
     Node node2 = Node.newDefaultNode("foo", "localhost2");
 
-    // but this is OK in different stripes
-    new ClusterValidator(Cluster.newDefaultCluster(new Stripe(node1), new Stripe(node2))).validate();
+    assertClusterValidationFails("Found duplicate node name: foo", Cluster.newDefaultCluster(new Stripe(node1, node2)));
   }
 
   @Test

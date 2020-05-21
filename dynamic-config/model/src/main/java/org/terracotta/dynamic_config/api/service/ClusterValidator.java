@@ -76,28 +76,29 @@ public class ClusterValidator {
     }
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   private void validateNodeName() {
-    for (int i = 0; i < cluster.getStripeCount(); i++) {
-      int stripeId = i + 1;
-      cluster.getStripe(stripeId).get().getNodes()
-          .stream()
-          .map(Node::getNodeName)
-          .filter(Objects::nonNull)
-          .collect(groupingBy(identity(), counting()))
-          .entrySet()
-          .stream()
-          .filter(e -> e.getValue() > 1)
-          .map(Map.Entry::getKey)
-          .findAny()
-          .ifPresent(nodeName -> {
-            throw new MalformedClusterException("Found duplicate node name: " + nodeName + " in stripe " + stripeId);
-          });
-    }
+    cluster.getNodes()
+        .stream()
+        .map(Node::getNodeName)
+        .filter(Objects::nonNull)
+        .collect(groupingBy(identity(), counting()))
+        .entrySet()
+        .stream()
+        .filter(e -> e.getValue() > 1)
+        .map(Map.Entry::getKey)
+        .findAny()
+        .ifPresent(nodeName -> {
+          throw new MalformedClusterException("Found duplicate node name: " + nodeName);
+        });
   }
 
   private void validateServerSettings() {
-    validate(node -> node.getDataDirs().keySet(), "Data directory names of all nodes should match");
+    Collection<Object> settings = cluster.getNodes().stream()
+        .map((Function<? super Node, Object>) node -> node.getDataDirs().keySet())
+        .collect(Collectors.toSet());
+    if (settings.size() > 1) { // 0 means no node has the setting, 1 means all nodes have the same setting
+      throw new MalformedClusterException("Data directory names of all nodes should match, but found the following mismatches: " + settings);
+    }
   }
 
   private void validateSecurityDir() {
@@ -116,14 +117,5 @@ public class ClusterValidator {
         throw new MalformedClusterException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
       }
     });
-  }
-
-  private void validate(Function<? super Node, Object> function, String errorMsg) {
-    Collection<Object> settings = cluster.getNodes().stream()
-        .map(function)
-        .collect(Collectors.toSet());
-    if (settings.size() > 1) { // 0 means no node has the setting, 1 means all nodes have the same setting
-      throw new MalformedClusterException(errorMsg + ", but found the following mismatches: " + settings);
-    }
   }
 }

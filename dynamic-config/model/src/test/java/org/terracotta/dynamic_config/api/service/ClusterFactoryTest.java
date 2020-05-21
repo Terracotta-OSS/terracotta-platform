@@ -123,9 +123,9 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.hostname=localhost1",
             "stripe.1.node.2.name=node2",
             "stripe.1.node.2.hostname=localhost2",
-            "stripe.2.node.1.name=node1",
+            "stripe.2.node.1.name=node3",
             "stripe.2.node.1.hostname=localhost3",
-            "stripe.2.node.2.name=node2",
+            "stripe.2.node.2.name=node4",
             "stripe.2.node.2.hostname=localhost4"
         ),
         Cluster.newDefaultCluster(
@@ -133,8 +133,8 @@ public class ClusterFactoryTest {
                 Node.newDefaultNode("node1", "localhost1"),
                 Node.newDefaultNode("node2", "localhost2")),
             new Stripe(
-                Node.newDefaultNode("node1", "localhost3"),
-                Node.newDefaultNode("node2", "localhost4"))
+                Node.newDefaultNode("node3", "localhost3"),
+                Node.newDefaultNode("node4", "localhost4"))
         ));
 
     assertConfigEquals(
@@ -225,7 +225,14 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.hostname=localhost1", "stripe.1.node.1.name=foo",
             "stripe.1.node.2.hostname=localhost2", "stripe.1.node.2.name=foo"
         ),
-        "Found duplicate node name: foo in stripe 1");
+        "Found duplicate node name: foo");
+    assertConfigFail(
+        config(
+            "failover-priority=availability",
+            "stripe.1.node.1.hostname=localhost1", "stripe.1.node.1.name=foo",
+            "stripe.2.node.1.hostname=localhost2", "stripe.2.node.1.name=foo"
+        ),
+        "Found duplicate node name: foo");
 
     // Note: all possible failures (including those above) are already tested in ClusterValidatorTest
     // ClusterFactory being much more a wiring class, we do not repeat all tests
