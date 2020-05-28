@@ -64,16 +64,30 @@ public class CustomJCommander extends JCommander {
   private void appendOptions(JCommander jCommander, StringBuilder out, String indent) {
     List<ParameterDescription> sorted = jCommander.getParameters();
     sorted.sort(Comparator.comparing(ParameterDescription::getLongestName));
+    boolean containsRequiredOption = sorted.stream().anyMatch(pd -> pd.getParameter().required());
     int maxParamLength = sorted.stream().map(pd -> pd.getNames().length()).max(Integer::compareTo).get();
+    String requiredHint = " (required)";
+    if (containsRequiredOption) {
+      maxParamLength += requiredHint.length();
+    }
 
     // Display all the names and descriptions
     if (sorted.size() > 0) {
-      out.append(indent).append("Dynamic Configuration Options:").append(lineSeparator());
       for (ParameterDescription pd : sorted) {
         if (pd.getParameter().hidden()) continue;
 
         WrappedParameter parameter = pd.getParameter();
-        out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "");
+        out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? requiredHint : "");
+        out.append(indent).append("    ");
+
+        int spaces = maxParamLength - pd.getNames().length();
+        if (parameter.required()) {
+          spaces -= requiredHint.length();
+        }
+        for (int i = 0; i < spaces; i++) {
+          out.append(" ");
+        }
+        out.append(pd.getDescription());
         Optional<Setting> settingOptional = Setting.findSetting(ConsoleParamsUtils.stripDashDash(pd.getLongestName()));
         if (settingOptional.isPresent()) {
           Setting setting = settingOptional.get();
@@ -85,11 +99,7 @@ public class CustomJCommander extends JCommander {
           }
 
           if (defaultValue != null) {
-            out.append(indent).append("    ");
-            for (int i = 0; i < maxParamLength - pd.getNames().length(); i++) {
-              out.append(" ");
-            }
-            out.append("(Default: ").append(defaultValue).append(")");
+            out.append(". Default: ").append(defaultValue);
           }
         }
         out.append(lineSeparator());

@@ -167,7 +167,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   @Override
   public String getConfigurationParamsDescription() {
-    StringBuilder out = new StringBuilder(System.lineSeparator());
+    StringBuilder out = new StringBuilder();
     CustomJCommander jCommander = new CustomJCommander(new Options());
     jCommander.usage(out);
     return out.toString();
