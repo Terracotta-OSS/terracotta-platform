@@ -19,6 +19,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.WrappedParameter;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.server.configuration.service.ParameterSubstitutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -53,12 +54,19 @@ public class CustomJCommander extends JCommander {
   @Override
   public void usage(StringBuilder out, String indent) {
     appendOptions(this, out, indent);
+    appendSubstitutionParamsSection(out, indent);
   }
 
   @Override
   public Map<String, JCommander> getCommands() {
     // force an ordering of commands by name
     return new TreeMap<>(super.getCommands());
+  }
+
+  private void appendSubstitutionParamsSection(StringBuilder out, String indent) {
+    out.append(lineSeparator()).append(indent).append("Allowed substitution parameters:").append(lineSeparator());
+    Map<String, String> allParams = ParameterSubstitutor.getAllParams();
+    allParams.forEach((param, explanation) -> out.append(indent).append("    ").append(param).append("    ").append(explanation).append(lineSeparator()));
   }
 
   private void appendOptions(JCommander jCommander, StringBuilder out, String indent) {
