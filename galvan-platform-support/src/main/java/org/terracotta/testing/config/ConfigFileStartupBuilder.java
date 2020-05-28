@@ -35,7 +35,7 @@ public class ConfigFileStartupBuilder extends StartupCommandBuilder {
     if (builtCommand == null) {
       try {
         installServer();
-        Path configFile = convertToConfigFile().resolve("null.properties");
+        Path configFile = convertToConfigFile().resolve("cluster.properties");
         configFileStartupCommand(configFile);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
