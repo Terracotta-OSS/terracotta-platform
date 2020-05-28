@@ -82,7 +82,7 @@ public class NodeStartupIT extends DynamicConfigIT {
 
   @Test
   public void testFailedStartupConfigFile_nonExistentFile() {
-    Path configurationFile = Paths.get(".").resolve("blah");
+    Path configurationFile = Paths.get(".").resolve("blah.properties");
     try {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
       fail();

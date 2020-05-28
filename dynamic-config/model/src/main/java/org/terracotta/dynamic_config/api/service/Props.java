@@ -15,6 +15,8 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,6 +33,8 @@ import java.util.Enumeration;
 import java.util.Properties;
 import java.util.TreeSet;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Utility class used to write a property file without the date header and with the properties sorted
  *
@@ -42,7 +46,13 @@ public class Props {
     return load(new StringReader(content));
   }
 
+  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public static Properties load(Path propertiesFile) {
+    requireNonNull(propertiesFile);
+    if (propertiesFile.getFileName() == null || !propertiesFile.getFileName().toString().endsWith(".properties")) {
+      throw new IllegalArgumentException("Expected a properties file, but got " + propertiesFile.getFileName());
+    }
+
     Properties props = new Properties();
     try (Reader in = new InputStreamReader(Files.newInputStream(propertiesFile), StandardCharsets.UTF_8)) {
       props.load(in);
