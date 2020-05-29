@@ -84,7 +84,7 @@ public class ExportCommand extends RemoteCommand {
         } else {
           // try to create the parent directories
           Path dir = outputFile.toAbsolutePath().getParent();
-          if (dir != null) {
+          if (dir != null && !Files.exists(dir)) {
             Files.createDirectories(dir);
           }
         }
