@@ -19,41 +19,17 @@
 <configuration debug="false">
 
   <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
-
-  <!--
-    Default appender which will be used to log lines in normal mode
-  -->
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>INFO</level>
-    </filter>
     <layout class="ch.qos.logback.classic.PatternLayout">
       <pattern>%msg%n</pattern>
     </layout>
   </appender>
 
-  <!--
-    If verbose is activated, the STDOUT appender will be disabled and this one will
-    be set to accept levels between TRACE and INFO
-  -->
-  <appender name="STDOUT-DETAIL" class="ch.qos.logback.core.ConsoleAppender">
-    <layout class="ch.qos.logback.classic.PatternLayout">
-      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n</pattern>
-    </layout>
-  </appender>
-
-  <root level="WARN">
+  <root level="OFF">
     <appender-ref ref="STDOUT"/>
-    <appender-ref ref="STDOUT-DETAIL"/>
   </root>
 
-  <logger name="org.terracotta" level="WARN"/>
-  <logger name="com.terracottatech" level="WARN"/>
-  <logger name="com.tc" level="WARN"/>
-
-  <logger name="org.terracotta.dynamic_config" level="INFO"/>
-  <logger name="org.terracotta.nomad" level="INFO"/>
-  <logger name="org.terracotta.persistence.sanskrit" level="INFO"/>
-  <logger name="org.terracotta.diagnostic" level="INFO"/>
-
+  <logger name="org.terracotta.dynamic_config.cli" level="INFO" additivity="false">
+    <appender-ref ref="STDOUT"/>
+  </logger>
 </configuration>

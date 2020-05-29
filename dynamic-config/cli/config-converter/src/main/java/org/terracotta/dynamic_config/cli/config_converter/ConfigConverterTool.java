@@ -34,14 +34,9 @@ public class ConfigConverterTool {
       ConfigConverterTool.start(args);
     } catch (Exception e) {
       String message = e.getMessage();
-      if (message == null || message.isEmpty()) {
-        // an unexpected error without message
-        LOGGER.error("Internal error:", e);
-      } else if (LOGGER.isDebugEnabled()) {
-        // equivalent to verbose mode
+      if (LOGGER.isDebugEnabled() || (message == null || message.isEmpty())) {
         LOGGER.error("Error:", e);
       } else {
-        // normal mode: only display message
         LOGGER.error("Error: {}", message);
       }
       System.exit(1);
