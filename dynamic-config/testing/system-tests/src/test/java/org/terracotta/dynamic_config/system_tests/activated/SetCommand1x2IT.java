@@ -20,6 +20,7 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
@@ -34,5 +35,16 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
         allOf(hasExitStatus(0), containsOutput("client-reconnect-window=10s")));
+  }
+
+  @Test
+  public void testCluster_setDataDirs_postActivation() throws Exception {
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.data-dirs.foo=foo/node-1-1",
+        "-c", "stripe.1.node.2.data-dirs.foo=foo/node-1-2"
+    ), is(successful()));
+
+    assertThat(getRuntimeCluster(1, 1).getNode(1, 1).get().getDataDirs(), hasKey("foo"));
+    assertThat(getRuntimeCluster(1, 1).getNode(1, 2).get().getDataDirs(), hasKey("foo"));
   }
 }

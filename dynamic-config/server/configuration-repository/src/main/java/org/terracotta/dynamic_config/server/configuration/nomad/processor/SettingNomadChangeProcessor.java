@@ -21,7 +21,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
@@ -62,9 +61,6 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
       // validate through external handlers
       ConfigChangeHandler configChangeHandler = getConfigChangeHandlerManager(change);
       configChangeHandler.validate(baseConfig, configuration);
-
-      Cluster updated = change.apply(original);
-      new ClusterValidator(updated).validate();
     } catch (InvalidConfigChangeException | RuntimeException e) {
       throw new NomadException("Error when trying to apply setting change '" + change.getSummary() + "': " + e.getMessage(), e);
     }
