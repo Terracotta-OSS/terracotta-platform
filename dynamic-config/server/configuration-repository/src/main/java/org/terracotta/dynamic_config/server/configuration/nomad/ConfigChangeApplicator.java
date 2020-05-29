@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeApplicator;
@@ -60,6 +61,8 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
       Cluster updated = dynamicConfigNomadChange.apply(original);
       if (updated == null) {
         throw new AssertionError();
+      } else {
+        new ClusterValidator(updated).validate();
       }
 
       return PotentialApplicationResult.allow(newConfiguration(baseConfig, updated));

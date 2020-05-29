@@ -35,4 +35,12 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
         allOf(hasExitStatus(0), containsOutput("client-reconnect-window=10s")));
   }
+
+  @Test
+  public void testCluster_setDataDirs_postActivation() throws Exception {
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.data-dirs.foo=foo/node-1-1",
+        "-c", "stripe.1.node.2.data-dirs.foo=foo/node-1-2"
+    ), is(successful()));
+  }
 }
