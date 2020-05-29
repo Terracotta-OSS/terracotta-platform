@@ -44,7 +44,7 @@ public class ActivateCommand extends RemoteCommand {
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-f"}, description = "Configuration file", converter = PathConverter.class)
+  @Parameter(names = {"-f"}, description = "Configuration properties file containing nodes to be activated", converter = PathConverter.class)
   private Path configPropertiesFile;
 
   @Parameter(names = {"-n"}, description = "Cluster name")

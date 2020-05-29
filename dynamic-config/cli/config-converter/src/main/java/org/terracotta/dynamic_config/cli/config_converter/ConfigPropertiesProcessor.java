@@ -30,11 +30,11 @@ import static java.nio.file.StandardOpenOption.CREATE;
 
 public class ConfigPropertiesProcessor {
   private final Path outputDir;
-  private final String clusterName;
+  private final String fileName;
 
-  public ConfigPropertiesProcessor(Path outputDir, String clusterName) {
+  public ConfigPropertiesProcessor(Path outputDir, String fileName) {
     this.outputDir = outputDir;
-    this.clusterName = clusterName;
+    this.fileName = fileName == null ? "cluster" : fileName;
   }
 
   public void process(Cluster cluster) {
@@ -42,7 +42,7 @@ public class ConfigPropertiesProcessor {
     try (StringWriter out = new StringWriter()) {
       Props.store(out, properties, "Converted cluster configuration:");
       Files.createDirectories(outputDir);
-      Files.write(outputDir.resolve(clusterName + ".properties"), out.toString().getBytes(UTF_8), CREATE);
+      Files.write(outputDir.resolve(fileName + ".properties"), out.toString().getBytes(UTF_8), CREATE);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }

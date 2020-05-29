@@ -22,6 +22,7 @@ import com.beust.jcommander.WrappedParameter;
 import com.beust.jcommander.internal.Lists;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +36,7 @@ import static java.util.function.Predicate.isEqual;
  */
 public class CustomJCommander extends JCommander {
   private final CommandRepository commandRepository;
-  private String toolName;
+  private final String toolName;
 
   public CustomJCommander(String toolName, CommandRepository commandRepository, Command command) {
     super(command);
@@ -81,26 +82,8 @@ public class CustomJCommander extends JCommander {
 
     out.append(lineSeparator());
     appendOptions(this, out, indent);
-
-    // Show Commands
-    if (hasCommands) {
-      out.append(lineSeparator()).append(lineSeparator()).append("Commands:").append(lineSeparator());
-      for (Map.Entry<String, JCommander> command : commands.entrySet()) {
-        Object arg = command.getValue().getObjects().get(0);
-        Parameters p = arg.getClass().getAnnotation(Parameters.class);
-        String name = command.getKey();
-        if (p == null || !p.hidden()) {
-          String description = getCommandDescription(name);
-          out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator());
-          appendUsage(commandRepository.getCommand(name), out, indent + "    ");
-
-          // Options for this command
-          JCommander jc = command.getValue();
-          appendOptions(jc, out, "    ");
-          out.append(lineSeparator());
-        }
-      }
-    }
+    appendDefinitions(out, indent);
+    appendCommands(out, indent, commands, hasCommands);
   }
 
   @Override
@@ -141,6 +124,53 @@ public class CustomJCommander extends JCommander {
       out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "").append(lineSeparator());
       out.append(indent).append("        ").append(pd.getDescription());
       out.append(lineSeparator());
+    }
+  }
+
+  private void appendDefinitions(StringBuilder out, String indent) {
+    out.append(indent).append(lineSeparator()).append("Definitions:").append(lineSeparator());
+    out.append(indent).append("    ").append("namespace").append(lineSeparator());
+    Map<String, String> nameSpaces = new LinkedHashMap<>();
+    nameSpaces.put("stripe.<stripeId>.node.<nodeId>", "to apply a change only on a specific node");
+    nameSpaces.put("stripe.<stripeId>", "to apply a change only on a specific stripe");
+    nameSpaces.put("'' (empty namespace)", "to apply a change only on all nodes of the cluster");
+
+    int maxNamespaceLength = Integer.MIN_VALUE;
+    for (String nameSpace : nameSpaces.keySet()) {
+      if (nameSpace.length() > maxNamespaceLength) {
+        maxNamespaceLength = nameSpace.length();
+      }
+    }
+
+    for (Map.Entry<String, String> entry : nameSpaces.entrySet()) {
+      String key = entry.getKey();
+      String value = entry.getValue();
+      out.append(indent).append("        ").append(key);
+      for (int i = 0; i < maxNamespaceLength - key.length() + 4; i++) {
+        out.append(" ");
+      }
+      out.append(value).append(lineSeparator());
+    }
+  }
+
+  private void appendCommands(StringBuilder out, String indent, Map<String, JCommander> commands, boolean hasCommands) {
+    if (hasCommands) {
+      out.append(lineSeparator()).append("Commands:").append(lineSeparator());
+      for (Map.Entry<String, JCommander> command : commands.entrySet()) {
+        Object arg = command.getValue().getObjects().get(0);
+        Parameters p = arg.getClass().getAnnotation(Parameters.class);
+        String name = command.getKey();
+        if (p == null || !p.hidden()) {
+          String description = getCommandDescription(name);
+          out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator());
+          appendUsage(commandRepository.getCommand(name), out, indent + "    ");
+
+          // Options for this command
+          JCommander jc = command.getValue();
+          appendOptions(jc, out, "    ");
+          out.append(lineSeparator());
+        }
+      }
     }
   }
 }

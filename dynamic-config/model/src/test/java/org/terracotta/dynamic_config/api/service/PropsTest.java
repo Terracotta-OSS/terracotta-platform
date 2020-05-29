@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.StringWriter;
+import java.nio.file.Paths;
 import java.util.Properties;
 
 import static java.lang.System.lineSeparator;
@@ -80,4 +81,8 @@ public class PropsTest {
     )));
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testLoadForInvalidFileFormat() {
+    Props.load(Paths.get("tc-config.xml"));
+  }
 }
