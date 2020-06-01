@@ -24,6 +24,7 @@ import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 
 import static java.util.Objects.requireNonNull;
+import org.terracotta.server.ServerEnv;
 
 public class ConsoleCommandLineProcessor implements CommandLineProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleCommandLineProcessor.class);
@@ -46,7 +47,7 @@ public class ConsoleCommandLineProcessor implements CommandLineProcessor {
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
   public void process() {
-    LOGGER.info("Starting node from command-line parameters");
+    ServerEnv.getServer().console("Starting node from command-line parameters");
     Cluster cluster = clusterCreator.create(options.getTopologyOptions(), parameterSubstitutor);
     Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
 

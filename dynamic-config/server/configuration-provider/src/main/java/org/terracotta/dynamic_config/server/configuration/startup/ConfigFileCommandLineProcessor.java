@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.terracotta.server.ServerEnv;
 
 public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFileCommandLineProcessor.class);
@@ -52,7 +53,7 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
     }
 
     Path substitutedConfigFile = Paths.get(parameterSubstitutor.substitute(options.getConfigFile()));
-    LOGGER.info("Starting node from config file: {}", substitutedConfigFile);
+    ServerEnv.getServer().console("Starting node from config file: {}", substitutedConfigFile);
     Cluster cluster = clusterCreator.create(substitutedConfigFile);
 
     Node node;
