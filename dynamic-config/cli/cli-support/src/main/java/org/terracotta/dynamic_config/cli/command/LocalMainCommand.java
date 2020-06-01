@@ -38,8 +38,7 @@ public class LocalMainCommand extends Command {
     Logger rootLogger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
 
     if (verbose) {
-      ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getLoggerContext()
-          .getLogger("org.terracotta.dynamic_config.cli").getAppender("STDOUT");
+      ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("STDOUT");
       PatternLayoutEncoder ple = new PatternLayoutEncoder();
       ple.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n");
       ple.setContext(appender.getContext());
