@@ -55,6 +55,7 @@ import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PORT;
+import org.terracotta.server.ServerEnv;
 
 public class ConfigurationGeneratorVisitor {
   private static final Logger logger = LoggerFactory.getLogger(ConfigurationGeneratorVisitor.class);
@@ -147,7 +148,7 @@ public class ConfigurationGeneratorVisitor {
   }
 
   void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode) {
-    logger.info("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
+    ServerEnv.getServer().console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
     nomadServerManager.init(nodeConfigurationDir, nodeName);
 
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();

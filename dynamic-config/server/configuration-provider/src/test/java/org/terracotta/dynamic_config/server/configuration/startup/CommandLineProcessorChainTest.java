@@ -42,6 +42,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.terracotta.dynamic_config.api.service.IParameterSubstitutor.identity;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 public class CommandLineProcessorChainTest {
   private static final String LICENSE_FILE = "/path/to/license-file";
@@ -72,6 +74,7 @@ public class CommandLineProcessorChainTest {
 
   @Before
   public void setUp() {
+    ServerEnv.setDefaultServer(mock(Server.class));
     options = mock(Options.class);
     paramValueMap = new HashMap<>();
     clusterCreator = mock(ClusterFactory.class);
