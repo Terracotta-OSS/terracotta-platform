@@ -97,7 +97,8 @@ public class ClusterValidator {
         .map((Function<? super Node, Object>) node -> node.getDataDirs().keySet())
         .collect(Collectors.toSet());
     if (settings.size() > 1) { // 0 means no node has the setting, 1 means all nodes have the same setting
-      throw new MalformedClusterException("Data directory names of all nodes should match, but found the following mismatches: " + settings);
+      String message = " If using -c option to add data dirs, use it multiple times to do for every node in cluster";
+      throw new MalformedClusterException("Data directory names need to match across the cluster, but found the following mismatches: " + settings + message);
     }
   }
 

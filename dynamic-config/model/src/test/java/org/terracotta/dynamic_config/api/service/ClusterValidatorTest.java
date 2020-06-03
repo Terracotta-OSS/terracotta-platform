@@ -76,7 +76,7 @@ public class ClusterValidatorTest {
     node1.setDataDir("dir-1", Paths.get("data"));
     node2.setDataDir("dir-2", Paths.get("data"));
 
-    assertClusterValidationFails("Data directory names of all nodes should match", Cluster.newDefaultCluster(new Stripe(node1, node2)));
+    assertClusterValidationFails("Data directory names need to match across the cluster", Cluster.newDefaultCluster(new Stripe(node1, node2)));
   }
 
   @Test
