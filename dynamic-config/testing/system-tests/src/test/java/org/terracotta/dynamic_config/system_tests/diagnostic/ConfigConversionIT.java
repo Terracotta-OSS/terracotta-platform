@@ -24,7 +24,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.Props;
-import org.terracotta.dynamic_config.cli.config_converter.ConfigConverterTool;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
 import org.terracotta.testing.TmpDir;
 
 import java.nio.file.Files;
