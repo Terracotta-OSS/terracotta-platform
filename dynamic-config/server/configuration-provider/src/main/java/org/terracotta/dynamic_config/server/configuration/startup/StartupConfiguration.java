@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -63,7 +64,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   private final Collection<Tuple2<Class<?>, Object>> extendedConfigurations = new CopyOnWriteArrayList<>();
   private final Collection<ServiceProviderConfiguration> serviceProviderConfigurations = new CopyOnWriteArrayList<>();
 
-  private final NodeContext nodeContext;
+  private final Supplier<NodeContext> nodeContextSupplier;
   private final boolean unConfigured;
   private final boolean repairMode;
   private final ClassLoader classLoader;
@@ -71,8 +72,8 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   private final IParameterSubstitutor substitutor;
   private final ObjectMapper objectMapper;
 
-  StartupConfiguration(NodeContext nodeContext, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory) {
-    this.nodeContext = requireNonNull(nodeContext);
+  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory) {
+    this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
     this.unConfigured = unConfigured;
     this.repairMode = repairMode;
     this.classLoader = requireNonNull(classLoader);
@@ -109,12 +110,12 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public ServerConfiguration getServerConfiguration() {
-    return toServerConfiguration(nodeContext.getNode());
+    return toServerConfiguration(nodeContextSupplier.get().getNode());
   }
 
   @Override
   public List<ServerConfiguration> getServerConfigurations() {
-    return nodeContext.getStripe().getNodes().stream().map(this::toServerConfiguration).collect(toList());
+    return nodeContextSupplier.get().getStripe().getNodes().stream().map(this::toServerConfiguration).collect(toList());
   }
 
   /**
@@ -126,9 +127,10 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
    */
   @Override
   public String getRawConfiguration() {
+    NodeContext nodeContext = nodeContextSupplier.get();
     Cluster cluster = nodeContext.getCluster();
     Properties nonDefaults = cluster.toProperties(false, false);
-    substitute(nonDefaults);
+    substitute(nodeContext, nonDefaults);
     try (StringWriter out = new StringWriter()) {
       Props.store(out, nonDefaults, "User-defined configurations for node '" + nodeContext.getNodeName() + "' in stripe ID " + nodeContext.getStripeId());
       return out.toString();
@@ -148,13 +150,13 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   @Override
   public Properties getTcProperties() {
     Properties copy = new Properties();
-    copy.putAll(nodeContext.getNode().getTcProperties());
+    copy.putAll(nodeContextSupplier.get().getNode().getTcProperties());
     return copy;
   }
 
   @Override
   public FailoverBehavior getFailoverPriority() {
-    final FailoverPriority failoverPriority = nodeContext.getCluster().getFailoverPriority();
+    final FailoverPriority failoverPriority = nodeContextSupplier.get().getCluster().getFailoverPriority();
     switch (failoverPriority.getType()) {
       case CONSISTENCY:
         return new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, failoverPriority.getVoters());
@@ -174,7 +176,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     startupConfig.addState("unConfigured", unConfigured);
     startupConfig.addState("repairMode", repairMode);
     startupConfig.addState("partialConfig", isPartialConfiguration());
-    startupConfig.addState("startupNodeContext", toMap(nodeContext));
+    startupConfig.addState("startupNodeContext", toMap(nodeContextSupplier.get()));
 
     StateDumpCollector platformConfig = collector.subStateDumpCollector(PlatformConfiguration.class.getName());
     addStateTo(platformConfig);
@@ -229,17 +231,17 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public String getServerName() {
-    return nodeContext.getNodeName();
+    return nodeContextSupplier.get().getNodeName();
   }
 
   @Override
   public String getHost() {
-    return nodeContext.getNode().getNodeHostname();
+    return nodeContextSupplier.get().getNode().getNodeHostname();
   }
 
   @Override
   public int getTsaPort() {
-    return nodeContext.getNode().getNodePort();
+    return nodeContextSupplier.get().getNode().getNodePort();
   }
 
   @Override
@@ -263,7 +265,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     }
   }
 
-  private void substitute(Properties properties) {
+  private void substitute(NodeContext nodeContext, Properties properties) {
     int stripeId = nodeContext.getStripeId();
     int nodeId = nodeContext.getNodeId();
     String prefix = "stripe." + stripeId + ".node." + nodeId + ".";
@@ -273,6 +275,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   }
 
   private ServerConfiguration toServerConfiguration(Node node) {
+    NodeContext nodeContext = nodeContextSupplier.get();
     return new ServerConfiguration() {
       @Override
       public InetSocketAddress getTsaPort() {
