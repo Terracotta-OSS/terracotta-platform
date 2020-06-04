@@ -35,28 +35,27 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition (autoActivate = true)
 public class DiagnosticsIT extends DynamicConfigIT {
-    @Test
-    public void testGetConfigByAddingOffheapResource() throws Exception {
-        final String newOffheapName = "new-test-offheap-resource";
+  @Test
+  public void testGetConfigByAddingOffheapResource() throws Exception {
+    final String newOffheapName = "new-test-offheap-resource";
 
-        Properties properties = new Properties();
-        properties.setProperty(ConnectionPropertyNames.CONNECTION_TYPE, "diagnostic");
+    Properties properties = new Properties();
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TYPE, "diagnostic");
 
-        try (Connection connection =
-                     ConnectionFactory.connect(singletonList(getNodeAddress(1, 1)), properties)) {
-            EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
-            Diagnostics diagnostics = ref.fetchEntity(null);
-            assertThat(diagnostics.getConfig(), not(containsString(newOffheapName)));
-        }
-
-
-        assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=" + newOffheapName + ":1GB"), is(successful()));
-
-        try (Connection connection =
-                     ConnectionFactory.connect(singletonList(getNodeAddress(1, 1)), properties)) {
-            EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
-            Diagnostics diagnostics = ref.fetchEntity(null);
-            assertThat(diagnostics.getConfig(), containsString(newOffheapName));
-        }
+    try (Connection connection =
+             ConnectionFactory.connect(singletonList(getNodeAddress(1, 1)), properties)) {
+      EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
+      Diagnostics diagnostics = ref.fetchEntity(null);
+      assertThat(diagnostics.getConfig(), not(containsString(newOffheapName)));
     }
+
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=" + newOffheapName + ":1GB"), is(successful()));
+
+    try (Connection connection =
+             ConnectionFactory.connect(singletonList(getNodeAddress(1, 1)), properties)) {
+      EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
+      Diagnostics diagnostics = ref.fetchEntity(null);
+      assertThat(diagnostics.getConfig(), containsString(newOffheapName));
+    }
+  }
 }
