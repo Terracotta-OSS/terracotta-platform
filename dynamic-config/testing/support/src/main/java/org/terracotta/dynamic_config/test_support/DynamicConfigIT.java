@@ -395,7 +395,7 @@ public class DynamicConfigIT {
     });
     LOGGER.debug("Generating cluster node configuration directories into: {}", configDirs);
     fn.accept(clusterGenerator);
-    org.terracotta.utilities.io.Files.copy(configDirs.resolve("stripe-" + stripeId).resolve("node-" + nodeId), nodeConfigurationDir, RECURSIVE);
+    org.terracotta.utilities.io.Files.copy(configDirs.resolve("stripe-" + stripeId).resolve("node-" + stripeId + "-" + nodeId), nodeConfigurationDir, RECURSIVE);
     LOGGER.debug("Created node configuration directory into: {}", nodeConfigurationDir);
     return nodeConfigurationDir;
   }
