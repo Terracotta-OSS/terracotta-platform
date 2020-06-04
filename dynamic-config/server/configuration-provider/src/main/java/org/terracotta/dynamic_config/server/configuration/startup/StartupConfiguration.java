@@ -312,7 +312,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
       @Override
       public File getLogsLocation() {
-        return substitutor.substitute(pathResolver.resolve(node.getNodeLogDir())).toFile();
+        return (unConfigured) ? null : substitutor.substitute(pathResolver.resolve(node.getNodeLogDir())).toFile();
       }
 
       @Override
