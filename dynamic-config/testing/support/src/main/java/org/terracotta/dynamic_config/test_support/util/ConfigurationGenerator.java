@@ -15,8 +15,8 @@
  */
 package org.terracotta.dynamic_config.test_support.util;
 
-import org.terracotta.dynamic_config.cli.config_converter.ConfigConverter;
-import org.terracotta.dynamic_config.cli.config_converter.ConfigRepoProcessor;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverter;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigRepoProcessor;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

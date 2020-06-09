@@ -53,7 +53,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>config-converter-oss</artifactId>
+      <artifactId>upgrade-tools-oss</artifactId>
       <version>${project.version}</version>
     </dependency>
 
