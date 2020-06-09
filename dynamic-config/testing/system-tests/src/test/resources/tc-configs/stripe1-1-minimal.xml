@@ -33,7 +33,7 @@
     </config>
   </plugins>
   <servers>
-    <server host="localhost" name="node-1">
+    <server host="localhost" name="node-1-1">
       <logs>%(user.dir)/logs/stripe1/node-1</logs>
       <tsa-port>${PORT-1}</tsa-port>
       <tsa-group-port>${GROUP-PORT-1}</tsa-group-port>
