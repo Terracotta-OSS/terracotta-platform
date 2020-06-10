@@ -130,7 +130,7 @@
     </dependencySet>
 
     <dependencySet>
-      <outputDirectory>tools/common/lib</outputDirectory>
+      <outputDirectory>tools/lib</outputDirectory>
       <includes>
         <include>org.terracotta:terracotta-utilities-tools</include>
         <include>org.terracotta.common:common-inet-support</include>
@@ -168,7 +168,7 @@
     </dependencySet>
 
     <dependencySet>
-      <outputDirectory>tools/config-tool/lib</outputDirectory>
+      <outputDirectory>tools/lib</outputDirectory>
       <includes>
         <include>org.terracotta.internal:client-runtime</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-tool</include>
