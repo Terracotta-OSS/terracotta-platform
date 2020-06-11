@@ -29,6 +29,10 @@
     <appender-ref ref="STDOUT"/>
   </root>
 
+  <logger name="com.terracottatech.tools" level="INFO" additivity="false">
+    <appender-ref ref="STDOUT"/>
+  </logger>
+
   <logger name="org.terracotta.dynamic_config.cli" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
