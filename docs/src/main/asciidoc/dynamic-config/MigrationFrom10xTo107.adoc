@@ -86,41 +86,51 @@ Here's the full list of supported options along with default values, obtained fr
 [source,bash]
 ----
 > ./start-tc-server.sh -h
-Usage: start-tc-server [options]
-Options:
- -c,--consistency-on-startup   ensure that data consistency is preserved
-                               on startup
- -h,--help
- -u,--upgrade-compatiblity     enable rolling upgrade compatiblity mode
+usage: start-tc-server [options]
+Startup options:
+    -c,--consistency-on-startup    preserve data consistency on startup
+    -h,--help                      display help
 
-Dynamic Configuration Options:
-    -u, --audit-log-dir
-    -z, --authc
-    -b, --backup-dir
-    -a, --bind-address               (Default: 0.0.0.0)
-    -i, --client-lease-duration      (Default: 150s)
-    -R, --client-reconnect-window    (Default: 120s)
-    -N, --cluster-name
-    -r, --config-dir                 (Default: %H/terracotta/config)
-    -f, --config-file
-    -d, --data-dirs                  (Default: main:%H/terracotta/user-data/main)
-    -y, --failover-priority
-    -A, --group-bind-address         (Default: 0.0.0.0)
-    -g, --group-port                 (Default: 9430)
-    -s, --hostname                   (Default: %h)
-    -l, --license-file
-    -L, --log-dir                    (Default: %H/terracotta/logs)
-    -m, --metadata-dir               (Default: %H/terracotta/metadata)
-    -n, --name                       (Default: <randomly-generated>)
-    -o, --offheap-resources          (Default: main:512MB)
-    -p, --port                       (Default: 9410)
-    -S, --public-hostname
-    -P, --public-port
-    -D, --repair-mode
-    -x, --security-dir
-    -t, --ssl-tls                    (Default: false)
-    -T, --tc-properties
-    -w, --whitelist                  (Default: false)
+Configuration options:
+    -u, --audit-log-dir              security audit log directory
+    -z, --authc                      security authentication setting (file|ldap|certificate)
+    -b, --backup-dir                 node backup directory
+    -a, --bind-address               node bind address for port. Default: 0.0.0.0
+    -i, --client-lease-duration      client lease duration. Default: 150s
+    -R, --client-reconnect-window    client reconnect window. Default: 120s
+    -N, --cluster-name               cluster name
+    -r, --config-dir                 node configuration directory. Default: %H/terracotta/config
+    -f, --config-file                configuration properties file
+    -d, --data-dirs                  data directory. Default: main:%H/terracotta/user-data/main
+    -y, --failover-priority          failover priority setting (availability|consistency)
+    -A, --group-bind-address         node bind address for group port. Default: 0.0.0.0
+    -g, --group-port                 node port used for intra-stripe communication. Default: 9430
+    -s, --hostname                   node host name. Default: %h
+    -L, --log-dir                    node log directory. Default: %H/terracotta/logs
+    -m, --metadata-dir               node metadata directory. Default: %H/terracotta/metadata
+    -n, --name                       node name. Default: <randomly-generated>
+    -o, --offheap-resources          offheap resources. Default: main:512MB
+    -p, --port                       node port. Default: 9410
+    -S, --public-hostname            public node host name
+    -P, --public-port                public node port
+    -D, --repair-mode                node repair mode (true|false)
+    -x, --security-dir               security root directory
+    -t, --ssl-tls                    ssl-tls setting (true|false). Default: false
+    -T, --tc-properties              tc-properties
+    -w, --whitelist                  security whitelist (true|false). Default: false
+
+Allowed substitution parameters:
+    %v    version of the operating system. Same as java 'os.version' property
+    %h    host name of the machine
+    %H    home directory of the user. Same as java 'user.home' property
+    %i    IP address of the machine corresponding to localhost
+    %n    username of the user. Same as java 'user.name' property
+    %o    name of the operating system. Same as java 'os.name' property
+    %a    architecture of the machine. Same as java 'os.arch' property
+    %c    canonical host name of the machine
+    %t    temporary directory of the machine. Same as java 'java.io.tmpdir' property
+    %d    unique temporary directory
+    %D    date stamp corresponding to current time
 ----
 
 A node can directly start in activated state if it was started with a fully-formed config directory,
