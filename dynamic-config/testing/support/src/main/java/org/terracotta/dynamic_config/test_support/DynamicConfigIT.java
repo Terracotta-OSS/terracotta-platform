@@ -130,7 +130,7 @@ public class DynamicConfigIT {
     this.timeout = testTimeout.toMillis();
     this.rules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled()), clusterDef.autoStart(), clusterDef.autoActivate()) {
+        .around(angela = new AutoActivatingAngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled()), clusterDef.autoStart(), clusterDef.autoActivateNodes(), this::getBaseDir) {
           @Override
           public void startNode(int stripeId, int nodeId) {
             // let the subclasses control the node startup
@@ -155,15 +155,8 @@ public class DynamicConfigIT {
                     }
                   });
                 });
-            // wait for server startup if auto-activated
-            if (clusterDef.autoStart() && clusterDef.autoActivate()) {
-              for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
-                waitForActive(stripeId);
-                waitForPassives(stripeId);
               }
-            }
-          }
-        });
+            });
   }
 
   // =========================================

@@ -23,7 +23,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
-@ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
+@ClusterDefinition(nodesPerStripe = 2, autoActivateNodes = {})
 public class SetCommand1x2IT extends DynamicConfigIT {
   @Test
   public void testCluster_setClientReconnectWindow() {

@@ -56,7 +56,7 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
-@ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
+@ClusterDefinition(nodesPerStripe = 2, autoActivateNodes = {})
 public class ConfigSyncIT extends DynamicConfigIT {
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();

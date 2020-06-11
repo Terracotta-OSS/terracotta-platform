@@ -31,7 +31,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
-@ClusterDefinition(nodesPerStripe = 4, autoStart = false)
+@ClusterDefinition(nodesPerStripe = 4, autoActivateNodes = {3})
 public class AttachInConsistency1x4IT extends DynamicConfigIT {
 
   public AttachInConsistency1x4IT() {
@@ -41,31 +41,6 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency();
-  }
-
-  @Before
-  public void setup() throws Exception {
-    startNode(1, 1);
-    waitForDiagnostic(1, 1);
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-
-    // start the second node
-    startNode(1, 2);
-    waitForDiagnostic(1, 2);
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
-
-    // start the third node
-    startNode(1, 3);
-    waitForDiagnostic(1, 3);
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
-
-    //attach the second node
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
-    //attach the third node
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3));
-    //Activate cluster
-    activateCluster();
-    waitForNPassives(1, 2);
   }
 
   @Test

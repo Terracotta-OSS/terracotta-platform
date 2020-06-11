@@ -31,7 +31,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-@ClusterDefinition(nodesPerStripe = 3, autoStart = false)
+@ClusterDefinition(nodesPerStripe = 3, autoActivateNodes = {2})
 public class AttachInConsistency1x3IT extends DynamicConfigIT {
   @Rule
   public final NodeOutputRule out = new NodeOutputRule();
@@ -43,26 +43,6 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency();
-  }
-
-  @Before
-  public void setup() throws Exception {
-    startNode(1, 1);
-    waitForDiagnostic(1, 1);
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-
-    // start the second node
-    startNode(1, 2);
-    waitForDiagnostic(1, 2);
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
-
-    //attach the second node
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
-
-    //Activate cluster
-    activateCluster();
-    waitForActive(1);
-    waitForNPassives(1, 1);
   }
 
   @Test

@@ -31,30 +31,11 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(nodesPerStripe = 3, autoStart = false)
+@ClusterDefinition(nodesPerStripe = 3, autoActivateNodes = {2})
 public class AttachCommand1x3IT extends DynamicConfigIT {
 
   public AttachCommand1x3IT() {
     super(Duration.ofSeconds(180));
-  }
-
-  @Before
-  public void setup() throws Exception {
-    startNode(1, 1);
-    waitForDiagnostic(1, 1);
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-
-    // start the second node
-    startNode(1, 2);
-    waitForDiagnostic(1, 2);
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
-
-    //attach the second node
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
-
-    //Activate cluster
-    activateCluster();
-    waitForNPassives(1, 1);
   }
 
   @Test

@@ -34,7 +34,7 @@ import static org.hamcrest.Matchers.nullValue;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(autoActivate = true)
+@ClusterDefinition(autoActivateNodes = {})
 public class DynamicTopologyEntityIT extends DynamicConfigIT {
   @Test
   public void test_topology_entity() throws Exception {

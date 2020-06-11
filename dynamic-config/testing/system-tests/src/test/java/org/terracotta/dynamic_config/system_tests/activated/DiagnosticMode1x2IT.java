@@ -31,7 +31,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.conta
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
+@ClusterDefinition(nodesPerStripe = 2, autoActivateNodes = {})
 public class DiagnosticMode1x2IT extends DynamicConfigIT {
 
   public DiagnosticMode1x2IT() {

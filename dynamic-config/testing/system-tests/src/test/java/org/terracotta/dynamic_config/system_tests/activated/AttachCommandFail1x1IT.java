@@ -25,17 +25,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-@ClusterDefinition(nodesPerStripe = 2, autoStart = false)
+@ClusterDefinition(nodesPerStripe = 2, autoActivateNodes = {1})
 public class AttachCommandFail1x1IT extends DynamicConfigIT {
 
   @Test
   public void attachFailAtPrepareOnlyActiveInStripe() throws Exception {
-    // activate a 1x1 cluster
-    startNode(1, 1);
-    waitForDiagnostic(1, 1);
-    activateCluster();
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-
     // start a second node
     startNode(1, 2);
     waitForDiagnostic(1, 2);

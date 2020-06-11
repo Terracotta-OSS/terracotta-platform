@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
-@ClusterDefinition(nodesPerStripe = 2, autoStart = false)
+@ClusterDefinition(nodesPerStripe = 2, autoActivateNodes = {1})
 public class AttachInConsistency1x2IT extends DynamicConfigIT {
   @Rule
   public final NodeOutputRule out = new NodeOutputRule();
@@ -47,12 +47,6 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
 
   @Test
   public void test_attach_to_activated_cluster() throws Exception {
-    // activate a 1x1 cluster
-    startNode(1, 1);
-    waitForDiagnostic(1, 1);
-    activateCluster();
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-
     // start a second node
     startNode(1, 2);
     waitForDiagnostic(1, 2);
@@ -79,10 +73,6 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
   @Test
   public void test_attach_to_activated_cluster_requiring_restart() throws Exception {
     String destination = "localhost:" + getNodePort();
-
-    // activate a 1x1 cluster
-    startNode(1, 1);
-    activateCluster();
 
     // do a change requiring a restart
     assertThat(

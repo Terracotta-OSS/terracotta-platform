@@ -35,7 +35,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
+@ClusterDefinition(nodesPerStripe = 2, autoActivateNodes = {})
 public class DetachCommand1x2IT extends DynamicConfigIT {
 
   public DetachCommand1x2IT() {

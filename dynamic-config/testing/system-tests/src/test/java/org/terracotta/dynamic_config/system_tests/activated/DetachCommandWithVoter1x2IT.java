@@ -30,7 +30,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 
-@ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
+@ClusterDefinition(nodesPerStripe = 2, autoActivateNodes = {})
 public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
 
   public DetachCommandWithVoter1x2IT() {

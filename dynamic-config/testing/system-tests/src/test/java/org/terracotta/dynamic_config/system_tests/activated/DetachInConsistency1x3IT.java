@@ -29,7 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-@ClusterDefinition(nodesPerStripe = 3)
+@ClusterDefinition(nodesPerStripe = 3, autoActivateNodes = {})
 public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
   public DetachInConsistency1x3IT() {
@@ -39,16 +39,6 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency();
-  }
-
-  @Before
-  public void setUp() {
-    // Angela limitation causing to attach explicitly and create cluster
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3));
-    invokeConfigTool("activate", "-n", "mycluster", "-s", "localhost:" + getNodePort(1, 1));
-    waitForActive(1);
-    waitForNPassives(1, 2);
   }
 
   @Test

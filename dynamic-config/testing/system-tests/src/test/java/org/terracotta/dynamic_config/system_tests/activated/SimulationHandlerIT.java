@@ -24,7 +24,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(autoActivate = true)
+@ClusterDefinition(autoActivateNodes = {})
 public class SimulationHandlerIT extends DynamicConfigIT {
   @Test
   public void test_missing_value() {

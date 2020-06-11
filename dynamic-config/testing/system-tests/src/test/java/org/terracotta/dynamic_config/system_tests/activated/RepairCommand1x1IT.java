@@ -40,7 +40,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(autoActivate = true)
+@ClusterDefinition(autoActivateNodes = {})
 public class RepairCommand1x1IT extends DynamicConfigIT {
 
   public RepairCommand1x1IT() {

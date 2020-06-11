@@ -22,7 +22,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
-@ClusterDefinition(autoActivate = true)
+@ClusterDefinition(autoActivateNodes = {})
 public class GetCommand1x1IT extends DynamicConfigIT {
 
   @Test

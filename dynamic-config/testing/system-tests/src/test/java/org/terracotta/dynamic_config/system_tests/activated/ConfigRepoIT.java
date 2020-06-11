@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 
-@ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
+@ClusterDefinition(nodesPerStripe = 2, autoActivateNodes = {})
 public class ConfigRepoIT extends DynamicConfigIT {
   @Test
   public void ensure_created_config_repo_are_the_same_regardless_of_applicability() throws Exception {

@@ -26,7 +26,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(stripes = 2, nodesPerStripe = 1, autoActivate = true)
+@ClusterDefinition(stripes = 2, nodesPerStripe = 1, autoActivateNodes = {})
 public class DetachCommand2x1IT extends DynamicConfigIT {
 
   public DetachCommand2x1IT() {
