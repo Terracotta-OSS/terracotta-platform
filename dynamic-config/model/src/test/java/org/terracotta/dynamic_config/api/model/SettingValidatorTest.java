@@ -343,9 +343,6 @@ public class SettingValidatorTest {
     assertThat(
         () -> NODE_LOGGER_OVERRIDES.validate("com.foo", "FATAL"),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides.com.foo is invalid: Bad level: FATAL")))));
-    assertThat(
-        () -> NODE_LOGGER_OVERRIDES.validate("com.foo", "OFF"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides.com.foo is invalid: Bad level: OFF")))));
   }
 
   private void validateDefaults(Setting setting) {

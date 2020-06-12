@@ -139,7 +139,7 @@ class SettingValidator {
     }
   };
 
-  private static final Set<String> LEGAL_LOGGER_LEVELS = unmodifiableSet(new HashSet<>(asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR")));
+  private static final Set<String> LEGAL_LOGGER_LEVELS = unmodifiableSet(new HashSet<>(asList("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF")));
   static final BiConsumer<String, Tuple2<String, String>> LOGGER_LEVEL_VALIDATOR = (setting, kv) -> {
     if (kv.t2 != null) {
       // we have a value, we want to set:
