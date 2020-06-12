@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import org.slf4j.event.Level;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
@@ -27,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -275,10 +275,10 @@ public enum Setting {
           // tuple.t2 != null
           // complete reset of all entries
           node.clearNodeLoggerOverrides();
-          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setNodeLoggerOverride(kv[0], Level.valueOf(kv[1].toUpperCase())));
+          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setNodeLoggerOverride(kv[0], kv[1].toUpperCase(Locale.ROOT)));
         } else {
           // tuple.t1 != null && tuple.t2 != null
-          node.setNodeLoggerOverride(tuple.t1, Level.valueOf(tuple.t2.toUpperCase()));
+          node.setNodeLoggerOverride(tuple.t1, tuple.t2.toUpperCase(Locale.ROOT));
         }
       }),
       of(GET, SET, UNSET, CONFIG),

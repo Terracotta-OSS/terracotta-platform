@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.api.model;
 
 import org.junit.Test;
-import org.slf4j.event.Level;
 import org.terracotta.common.struct.Measure;
 
 import java.nio.file.Paths;
@@ -190,34 +189,34 @@ public class SetSettingTest {
 
   @Test
   public void test_setProperty_NODE_LOGGER_OVERRIDES() {
-    Node node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", Level.TRACE);
+    Node node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", "TRACE");
     assertThat(node.getNodeLoggerOverrides().size(), is(equalTo(1)));
 
     NODE_LOGGER_OVERRIDES.setProperty(node, null);
     assertThat(node.getNodeLoggerOverrides().size(), is(equalTo(0)));
 
-    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("foo", Level.TRACE);
+    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, null, null);
     assertThat(node.getNodeLoggerOverrides().size(), is(equalTo(0)));
 
-    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", Level.TRACE);
+    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, "com.foo", null);
     assertThat(node.getNodeLoggerOverrides().size(), is(equalTo(0)));
 
-    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", Level.TRACE);
+    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, "com.foo", "INFO");
     assertThat(node.getNodeLoggerOverrides().size(), is(equalTo(1)));
-    assertThat(node.getNodeLoggerOverrides().get("com.foo"), is(equalTo(Level.INFO)));
+    assertThat(node.getNodeLoggerOverrides().get("com.foo"), is("INFO"));
 
-    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", Level.TRACE);
+    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, null, "com.foo:INFO");
     assertThat(node.getNodeLoggerOverrides().size(), is(equalTo(1)));
-    assertThat(node.getNodeLoggerOverrides().get("com.foo"), is(equalTo(Level.INFO)));
+    assertThat(node.getNodeLoggerOverrides().get("com.foo"), is("INFO"));
 
-    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", Level.TRACE);
+    node = Node.newDefaultNode("localhost").setNodeLoggerOverride("com.foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, null, "com.foo:INFO,com.bar:WARN");
     assertThat(node.getNodeLoggerOverrides().size(), is(equalTo(2)));
-    assertThat(node.getNodeLoggerOverrides().get("com.foo"), is(equalTo(Level.INFO)));
-    assertThat(node.getNodeLoggerOverrides().get("com.bar"), is(equalTo(Level.WARN)));
+    assertThat(node.getNodeLoggerOverrides().get("com.foo"), is("INFO"));
+    assertThat(node.getNodeLoggerOverrides().get("com.bar"), is("WARN"));
   }
 }
