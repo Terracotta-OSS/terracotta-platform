@@ -32,7 +32,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.slf4j.event.Level.DEBUG;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
 /**
@@ -67,8 +66,8 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
             containsOutput("Attempting an automatic repair of the configuration"),
             containsOutput("Configuration is repaired")));
 
-    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getNodeLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", DEBUG));
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", DEBUG));
+    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getNodeLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -118,7 +117,7 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
 
     // ensure that the server has started with the last committed config
     assertThat(getRuntimeCluster("localhost", getNodePort()), is(not(equalTo(initialCluster))));
-    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getNodeLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", DEBUG));
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", DEBUG));
+    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getNodeLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
   }
 }

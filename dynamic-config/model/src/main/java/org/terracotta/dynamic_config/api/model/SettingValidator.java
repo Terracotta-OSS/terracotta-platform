@@ -15,15 +15,19 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import org.slf4j.event.Level;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.inet.HostAndIpValidator.isValidHost;
 import static org.terracotta.inet.HostAndIpValidator.isValidIPv4;
@@ -135,15 +139,14 @@ class SettingValidator {
     }
   };
 
+  private static final Set<String> LEGAL_LOGGER_LEVELS = unmodifiableSet(new HashSet<>(asList("ALL", "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF")));
   static final BiConsumer<String, Tuple2<String, String>> LOGGER_LEVEL_VALIDATOR = (setting, kv) -> {
     if (kv.t2 != null) {
       // we have a value, we want to set:
       // - set loggers=com.foo.bar:TRACE
       // - set loggers.com.foo.bar=TRACE
       validateMappings(kv, setting + " should be specified in the format <logger>:<level>,<logger>:<level>...", (k, v) -> {
-        try {
-          Level.valueOf(v.toUpperCase());
-        } catch (RuntimeException e) {
+        if (!LEGAL_LOGGER_LEVELS.contains(v.toUpperCase(Locale.ROOT))) {
           throw new IllegalArgumentException(setting + "." + k + " is invalid: Bad level: " + v);
         }
       });

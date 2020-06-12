@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.api.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.slf4j.event.Level;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
@@ -51,7 +50,7 @@ public class Node implements Cloneable, PropertyHolder {
   private Path securityDir;
   private Path securityAuditLogDir;
   private final Map<String, String> tcProperties = new ConcurrentHashMap<>();
-  private final Map<String, Level> nodeLoggerOverrides = new ConcurrentHashMap<>();
+  private final Map<String, String> nodeLoggerOverrides = new ConcurrentHashMap<>();
   private final Map<String, Path> dataDirs = new ConcurrentHashMap<>();
 
   protected Node() {
@@ -118,16 +117,16 @@ public class Node implements Cloneable, PropertyHolder {
     return Collections.unmodifiableMap(dataDirs);
   }
 
-  public Map<String, Level> getNodeLoggerOverrides() {
+  public Map<String, String> getNodeLoggerOverrides() {
     return Collections.unmodifiableMap(nodeLoggerOverrides);
   }
 
-  public Node setNodeLoggerOverrides(Map<String, Level> nodeLoggerOverrides) {
+  public Node setNodeLoggerOverrides(Map<String, String> nodeLoggerOverrides) {
     this.nodeLoggerOverrides.putAll(nodeLoggerOverrides);
     return this;
   }
 
-  public Node setNodeLoggerOverride(String logger, Level level) {
+  public Node setNodeLoggerOverride(String logger, String level) {
     this.nodeLoggerOverrides.put(logger, level);
     return this;
   }
