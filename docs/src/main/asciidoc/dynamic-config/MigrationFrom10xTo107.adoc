@@ -77,6 +77,15 @@ When the output format is config properties (i.e. `-t properties`), the generate
 information from all the tc-config XML files, and can also be used to start up the nodes.
 However, an additional cluster activation step may be required after the migrated cluster is started using this config properties file.
 
+[[create-permanent-entity-script]]
+== Permanent Entity Creation Script
+If you want to use old data with 10.7 server, you need to run this script. Here -s option must contain one hostport per stripe to ensure that missing entities are created across all the stripes.
+
+[source,bash]
+----
+> create-permanent-entities.(bat|sh) -s <hostname[:port]>,...
+----
+
 [[startup-script]]
 == Updates to the `start-tc-server` script
 The `start-tc-server` script does not support tc-config XML files anymore. Instead, it supports several options which let
@@ -209,9 +218,6 @@ Note down the hosts the nodes are running on.
 . Use the <<config-converter-tool, config converter tool>> to convert tc-config.xml files to config directory format.
 . Copy the config directories generated from the step above to the hosts from the first step.
 . Start the nodes using <<startup-script, startup script>> with option `-r`, supplying the config directory path.
-
-+
-IMPORTANT: 10.7 server cannot be started with a 10.5 server data yet. Work for the same is underway in TDB-4975.
-
+. Use the <<create-permanent-entity-script, create-permanent-entity-script>> in case you want to use the old data with 10.7 server. Ensure that you run this script before connecting any clients.
 . Replace the old client jars with 10.7 jars in the client classpath.
 . Connect the clients back with the cluster.
