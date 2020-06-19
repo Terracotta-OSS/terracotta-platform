@@ -146,6 +146,11 @@ public class DynamicTopologyEntityFactory {
           LOGGER.warn("Error closing entity connection: {}", e.getMessage(), e);
         }
       }
+      
+      @Override
+      public void asyncClose() throws IOException {
+        entity.asyncClose();
+      }
     };
   }
 }

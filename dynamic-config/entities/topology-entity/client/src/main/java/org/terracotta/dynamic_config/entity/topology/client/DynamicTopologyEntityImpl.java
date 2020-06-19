@@ -30,8 +30,10 @@ import org.terracotta.entity.InvokeFuture;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -98,6 +100,20 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
     endpoint.close();
   }
 
+  @Override
+  public void asyncClose() throws IOException {
+    final Future<?> close = releaseEntity();
+    try {
+      close.get(10, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      throw new IOException(e.getCause());
+    } catch (TimeoutException e) {
+      LOGGER.warn("Couldn't close cleanly DynamicTopologyEntity within 10s");
+    }
+  }
+  
   @Override
   public void setListener(Listener listener) {
     this.listener = listener == null ? new Listener() {} : listener;
