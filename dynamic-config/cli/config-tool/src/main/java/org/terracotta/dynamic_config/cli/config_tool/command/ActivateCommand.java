@@ -154,7 +154,7 @@ public class ActivateCommand extends RemoteCommand {
   private Optional<Cluster> loadTopologyFromNode() {
     return Optional.ofNullable(node).map(node -> {
       Cluster cluster = getUpcomingCluster(node);
-      logger.info("Cluster topology loaded node: " + cluster.toShapeString());
+      logger.debug("Cluster topology loaded from node: " + cluster.toShapeString());
       return cluster;
     });
   }
