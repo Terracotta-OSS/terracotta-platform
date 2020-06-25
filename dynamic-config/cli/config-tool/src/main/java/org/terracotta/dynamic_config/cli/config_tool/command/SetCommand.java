@@ -69,7 +69,7 @@ public class SetCommand extends ConfigurationMutationCommand {
   public void run() {
     if (licenseFile != null) {
       Collection<InetSocketAddress> peers = findRuntimePeers(node);
-      logger.info("Importing license: {} on nodes: {}", licenseFile, toString(peers));
+      logger.debug("Importing license: {} on nodes: {}", licenseFile, toString(peers));
       upgradeLicense(peers, licenseFile);
     }
     // then let the super class run to apply eventual other settings in the CLI
