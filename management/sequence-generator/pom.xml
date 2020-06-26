@@ -31,27 +31,6 @@
 
   <build>
     <plugins>
-      <!--
-        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section.
-        This section is used when running tests from Maven CLI
-        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
-      -->
-      <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
-        <configuration>
-          <reuseForks>false</reuseForks>
-          <argLine>
-            -Dorg.terracotta.management.sequence.NodeIdSource=org.terracotta.management.sequence.MyNodeIdSource
-            -Dorg.terracotta.management.sequence.TimeSource=org.terracotta.management.sequence.MyTimeSource
-          </argLine>
-        </configuration>
-      </plugin>
-      <!--
-        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section
-        This section is used when running tests from the IDE
-        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
-      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
