@@ -56,7 +56,7 @@ public class DiagnosticIT extends AbstractSingleTest {
         Diagnostics diagnostics = ref.fetchEntity(null);
         String dump = diagnostics.getClusterState();
 //      System.out.println(dump);
-        try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
+        try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/state-dump-partial.txt").toURI()))) {
           if (lines.allMatch(line -> containsString(line).matches(dump))) {
             return;
           }
@@ -75,7 +75,7 @@ public class DiagnosticIT extends AbstractSingleTest {
       Diagnostics diagnostics = ref.fetchEntity(null);
       String dump = diagnostics.getClusterState();
 //      System.out.println(dump);
-      try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
+      try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/state-dump-partial.txt").toURI()))) {
         lines.forEach(line -> {
           //System.out.println(line);
           assertThat("Did not find line '" + line + "' in the dump", dump, containsString(line));

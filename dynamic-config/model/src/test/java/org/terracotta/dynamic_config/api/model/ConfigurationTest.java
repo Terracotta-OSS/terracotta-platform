@@ -65,7 +65,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_PERMIT_LIST;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -120,7 +120,7 @@ public class ConfigurationTest {
         SECURITY_AUTHC,
         SECURITY_DIR,
         SECURITY_SSL_TLS,
-        SECURITY_WHITELIST,
+        SECURITY_PERMIT_LIST,
         TC_PROPERTIES
     ).forEach(setting -> {
       Configuration configuration = Configuration.valueOf(setting);
@@ -158,7 +158,7 @@ public class ConfigurationTest {
         OFFHEAP_RESOURCES,
         SECURITY_AUTHC,
         SECURITY_SSL_TLS,
-        SECURITY_WHITELIST
+        SECURITY_PERMIT_LIST
     ).forEach(setting -> assertThat(
         setting.toString(),
         () -> Configuration.valueOf(setting, 1),
@@ -226,7 +226,7 @@ public class ConfigurationTest {
         OFFHEAP_RESOURCES,
         SECURITY_AUTHC,
         SECURITY_SSL_TLS,
-        SECURITY_WHITELIST
+        SECURITY_PERMIT_LIST
     ).forEach(setting -> assertThat(
         setting.toString(),
         () -> Configuration.valueOf(setting, 1, 1),
@@ -351,7 +351,7 @@ public class ConfigurationTest {
           tuple2(FAILOVER_PRIORITY, "availability"),
           tuple2(CLIENT_LEASE_DURATION, "20s"),
           tuple2(SECURITY_SSL_TLS, "true"),
-          tuple2(SECURITY_WHITELIST, "true")
+          tuple2(SECURITY_PERMIT_LIST, "true")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
         rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: " + tuple.t1 + " requires a value");
@@ -648,7 +648,7 @@ public class ConfigurationTest {
         tuple2(FAILOVER_PRIORITY, "availability"),
         tuple2(CLIENT_LEASE_DURATION, "20s"),
         tuple2(SECURITY_SSL_TLS, "true"),
-        tuple2(SECURITY_WHITELIST, "true")
+        tuple2(SECURITY_PERMIT_LIST, "true")
     ).forEach(tuple -> {
       allow(GET, tuple.t1.toString());
       reject(UNSET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow operation unset at cluster level");

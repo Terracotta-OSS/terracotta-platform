@@ -71,7 +71,7 @@ public class ClusterTest {
       .setFailoverPriority(availability())
       .setSecurityAuthc("ldap")
       .setSecuritySslTls(true)
-      .setSecurityWhitelist(true);
+      .setSecurityPermitList(true);
 
   @Test
   public void test_isEmpty() {

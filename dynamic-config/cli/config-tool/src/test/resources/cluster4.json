@@ -61,5 +61,5 @@
     }
   },
   "securitySslTls": false,
-  "securityWhitelist": false
+  "securityPermitList": false
 }

@@ -23,7 +23,7 @@
     }
   },
   "securitySslTls": false,
-  "securityWhitelist": false,
+  "securityPermitList": false,
   "stripes": [
     {
       "nodes": [

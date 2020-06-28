@@ -46,8 +46,8 @@
         "type": "MEMORY"
       }
     },
-    "securitySslTls": false,
-    "securityWhitelist": false
+    "securityPermitList": false,
+    "securitySslTls": false
   },
   "applicability": {
     "scope": "CLUSTER"

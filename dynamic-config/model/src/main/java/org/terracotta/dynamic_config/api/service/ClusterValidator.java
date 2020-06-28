@@ -32,7 +32,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_PERMIT_LIST;
 
 /**
  * This class expects all the fields to be first validated by {@link Setting#validate(String)}.
@@ -111,11 +111,11 @@ public class ClusterValidator {
       if ((cluster.getSecurityAuthc() != null && node.getSecurityDir() == null)
           || (node.getSecurityAuditLogDir() != null && node.getSecurityDir() == null)
           || (cluster.isSecuritySslTls() && node.getSecurityDir() == null)
-          || (cluster.isSecurityWhitelist() && node.getSecurityDir() == null)) {
+          || (cluster.isSecurityPermitList() && node.getSecurityDir() == null)) {
         throw new MalformedClusterException(SECURITY_DIR + " is mandatory for any of the security configuration");
       }
-      if (node.getSecurityDir() != null && !cluster.isSecuritySslTls() && cluster.getSecurityAuthc() == null && !cluster.isSecurityWhitelist()) {
-        throw new MalformedClusterException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
+      if (node.getSecurityDir() != null && !cluster.isSecuritySslTls() && cluster.getSecurityAuthc() == null && !cluster.isSecurityPermitList()) {
+        throw new MalformedClusterException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_PERMIT_LIST + " is required for security configuration");
       }
     });
   }

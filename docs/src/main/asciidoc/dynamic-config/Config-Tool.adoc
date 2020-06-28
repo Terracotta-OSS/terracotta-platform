@@ -89,7 +89,7 @@ Node startup script:
   --audit-log-dir=%H/terracotta/audit \
   --authc=file|ldap|certificate \
   --ssl-tls=true \
-  --whitelist=true \
+  --permit-list=true \
   --failover-priority=availability|consistency:<N> \
   --client-reconnect-window=120s \
   --client-lease-duration=20s \
@@ -301,7 +301,7 @@ If the script cannot find the node settings in the configuration file, an error 
   --audit-log-dir=%H/terracotta/audit \
   --authc=file|ldap|certificate \
   --ssl-tls=true \
-  --whitelist=true \
+  --permit-list=true \
   --failover-priority=availability|consistency:<N> \
   --client-reconnect-window=120s \
   --client-lease-duration=20s \
@@ -421,10 +421,10 @@ Requires `security-dir` to be set
 
 Requires `security-dir` to be set
 
-| `whitelist`
+| `permit-list`
 | BOOLEAN
 |
-| Activate the use of the whitelist file if the parameter is set to `true`.
+| Activate the use of the permit-list file if the parameter is set to `true`.
 
 Requires `security-dir` to be set
 
@@ -1072,7 +1072,7 @@ failover-priority=consistency:3
 offheap-resources=main:512MB
 authc=file
 ssl-tls=true
-whitelist=true
+permit-list=true
 #[...]
 stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main
 stripe.1.node.1.backup-dir=%H/terracotta/backup
@@ -1358,7 +1358,7 @@ Some settings can only be applied on a specific node, but not on all nodes on th
 | `ALL NODES` up
 |
 
-|`whitelist=true`
+|`permit-list=true`
 | BOOLEAN
 |`RUNTIME`
 | `CLUSTER`
@@ -1823,7 +1823,7 @@ In the example, we assume the security directory will be at the same location fo
                       -c my-cluster:audit-log-dir=%H/terracotta/audit \
                       -c my-cluster:authc=file \
                       -c my-cluster:ssl-tls=true \
-                      -c my-cluster:whitelist=true
+                      -c my-cluster:permit-list=true
 ----
 
 Once security is activated, we can change dynamically the security configuration like this example:
@@ -1831,7 +1831,7 @@ Once security is activated, we can change dynamically the security configuration
 [source,bash]
 ----
 > config-tool.sh set -d 10.0.0.1 \
-                      -c my-cluster:whitelist=10.0.0.100 \
+                      -c my-cluster:permit-list=10.0.0.100 \
                       -c my-cluster:auth.users.dave.password-hash=$2a$10$UoM85/5I4SnIbrOQuFZ43ekffuQKSxZmL93bR9VMcdr2URmPyjyX2 \
                       -c my-cluster:auth.users.dave.roles=admin,support
 ----

@@ -55,7 +55,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUDIT
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_SSL_TLS;
-import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_PERMIT_LIST;
 import static org.terracotta.dynamic_config.api.model.SettingName.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils.addDashDash;
 
@@ -106,11 +106,11 @@ public class Options {
   @Parameter(names = {"-z", "--" + SECURITY_AUTHC}, description = "security authentication setting (file|ldap|certificate)")
   private String securityAuthc;
 
-  @Parameter(names = {"-t", "--" + SECURITY_SSL_TLS}, description = "ssl-tls setting (true|false)")
+  @Parameter(names = {"-t", "--" + SECURITY_SSL_TLS}, description = "enable ssl/tls (true|false)")
   private String securitySslTls;
 
-  @Parameter(names = {"-w", "--" + SECURITY_WHITELIST}, description = "security whitelist (true|false)")
-  private String securityWhitelist;
+  @Parameter(names = {"-w", "--" + SECURITY_PERMIT_LIST}, description = "enable permit list (true|false)")
+  private String securityPermitList;
 
   @Parameter(names = {"-y", "--" + FAILOVER_PRIORITY}, description = "failover priority setting (availability|consistency)")
   private String failoverPriority;

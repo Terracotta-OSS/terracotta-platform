@@ -390,12 +390,12 @@ public enum Setting {
       of(ALL_NODES_ONLINE, RESTART),
       asList("true", "false")
   ),
-  SECURITY_WHITELIST(SettingName.SECURITY_WHITELIST,
+  SECURITY_PERMIT_LIST(SettingName.SECURITY_PERMIT_LIST,
       false,
       "false",
       CLUSTER,
-      fromCluster(Cluster::isSecurityWhitelist),
-      intoCluster((cluster, value) -> cluster.setSecurityWhitelist(Boolean.parseBoolean(value))),
+      fromCluster(Cluster::isSecurityPermitList),
+      intoCluster((cluster, value) -> cluster.setSecurityPermitList(Boolean.parseBoolean(value))),
       of(GET, SET, CONFIG),
       of(ALL_NODES_ONLINE, RESTART),
       asList("true", "false")

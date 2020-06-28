@@ -52,7 +52,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   private Measure<TimeUnit> clientLeaseDuration;
   private String securityAuthc;
   private boolean securitySslTls = Boolean.parseBoolean(Setting.SECURITY_SSL_TLS.getDefaultValue());
-  private boolean securityWhitelist = Boolean.parseBoolean(Setting.SECURITY_WHITELIST.getDefaultValue());
+  private boolean securityPermitList = Boolean.parseBoolean(Setting.SECURITY_PERMIT_LIST.getDefaultValue());
   private FailoverPriority failoverPriority = FailoverPriority.availability();
   private final Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
 
@@ -75,8 +75,8 @@ public class Cluster implements Cloneable, PropertyHolder {
     return securitySslTls;
   }
 
-  public boolean isSecurityWhitelist() {
-    return securityWhitelist;
+  public boolean isSecurityPermitList() {
+    return securityPermitList;
   }
 
   public FailoverPriority getFailoverPriority() {
@@ -105,8 +105,8 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public Cluster setSecurityWhitelist(boolean securityWhitelist) {
-    this.securityWhitelist = securityWhitelist;
+  public Cluster setSecurityPermitList(boolean securityPermitList) {
+    this.securityPermitList = securityPermitList;
     return this;
   }
 
@@ -213,7 +213,7 @@ public class Cluster implements Cloneable, PropertyHolder {
     return Objects.equals(stripes, that.stripes) &&
         Objects.equals(name, that.name) &&
         securitySslTls == that.securitySslTls &&
-        securityWhitelist == that.securityWhitelist &&
+        securityPermitList == that.securityPermitList &&
         Objects.equals(securityAuthc, that.securityAuthc) &&
         Objects.equals(failoverPriority, that.failoverPriority) &&
         Objects.equals(clientReconnectWindow, that.clientReconnectWindow) &&
@@ -223,7 +223,7 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   @Override
   public int hashCode() {
-    return Objects.hash(stripes, name, securityAuthc, securitySslTls, securityWhitelist,
+    return Objects.hash(stripes, name, securityAuthc, securitySslTls, securityPermitList,
         failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources);
   }
 
@@ -233,7 +233,7 @@ public class Cluster implements Cloneable, PropertyHolder {
         "name='" + name + '\'' +
         ", securityAuthc='" + securityAuthc + '\'' +
         ", securitySslTls=" + securitySslTls +
-        ", securityWhitelist=" + securityWhitelist +
+        ", securityPermitlist=" + securityPermitList +
         ", failoverPriority='" + failoverPriority + '\'' +
         ", clientReconnectWindow=" + clientReconnectWindow +
         ", clientLeaseDuration=" + clientLeaseDuration +
@@ -275,7 +275,7 @@ public class Cluster implements Cloneable, PropertyHolder {
         .setOffheapResources(offheapResources)
         .setSecurityAuthc(securityAuthc)
         .setSecuritySslTls(securitySslTls)
-        .setSecurityWhitelist(securityWhitelist);
+        .setSecurityPermitList(securityPermitList);
   }
 
   public Cluster attachStripe(Stripe stripe) {

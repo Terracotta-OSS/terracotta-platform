@@ -101,7 +101,7 @@ public class ClusterValidatorTest {
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
         .setSecurityAuthc("file")
         .setSecuritySslTls(true)
-        .setSecurityWhitelist(false)
+        .setSecurityPermitList(false)
         .setOffheapResource("main", 1L, GB)
         .setFailoverPriority(consistency())
         .setClientReconnectWindow(100L, SECONDS)
@@ -118,7 +118,7 @@ public class ClusterValidatorTest {
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
         .setSecuritySslTls(false)
-        .setSecurityWhitelist(true);
+        .setSecurityPermitList(true);
     new ClusterValidator(cluster).validate();
   }
 
@@ -130,7 +130,7 @@ public class ClusterValidatorTest {
     }).toArray(Node[]::new);
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
-        .setSecurityWhitelist(true);
+        .setSecurityPermitList(true);
     new ClusterValidator(cluster).validate();
   }
 
@@ -164,7 +164,7 @@ public class ClusterValidatorTest {
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
         .setSecuritySslTls(true)
         .setSecurityAuthc("certificate")
-        .setSecurityWhitelist(true);
+        .setSecurityPermitList(true);
     new ClusterValidator(cluster).validate();
   }
 
@@ -246,7 +246,7 @@ public class ClusterValidatorTest {
     Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes))
-        .setSecurityWhitelist(true);
+        .setSecurityPermitList(true);
 
     assertClusterValidationFails("security-dir is mandatory for any of the security configuration", cluster);
   }
@@ -259,7 +259,7 @@ public class ClusterValidatorTest {
 
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(nodes));
 
-    assertClusterValidationFails("One of ssl-tls, authc, or whitelist is required for security configuration", cluster);
+    assertClusterValidationFails("One of ssl-tls, authc, or permit-list is required for security configuration", cluster);
   }
 
   private String generateAddress() {

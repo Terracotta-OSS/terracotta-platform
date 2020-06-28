@@ -126,7 +126,7 @@ Configuration options:
     -x, --security-dir               security root directory
     -t, --ssl-tls                    ssl-tls setting (true|false). Default: false
     -T, --tc-properties              tc-properties
-    -w, --whitelist                  security whitelist (true|false). Default: false
+    -w, --permit-list                security permit list (true|false). Default: false
 
 Allowed substitution parameters:
     %v    version of the operating system. Same as java 'os.version' property

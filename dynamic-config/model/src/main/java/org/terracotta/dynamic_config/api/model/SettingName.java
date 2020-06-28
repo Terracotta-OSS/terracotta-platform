@@ -38,7 +38,7 @@ public class SettingName {
   public static final String SECURITY_AUDIT_LOG_DIR = "audit-log-dir";
   public static final String SECURITY_AUTHC = "authc";
   public static final String SECURITY_SSL_TLS = "ssl-tls";
-  public static final String SECURITY_WHITELIST = "whitelist";
+  public static final String SECURITY_PERMIT_LIST = "permit-list";
   public static final String FAILOVER_PRIORITY = "failover-priority";
   public static final String CLIENT_RECONNECT_WINDOW = "client-reconnect-window";
   public static final String CLIENT_LEASE_DURATION = "client-lease-duration";

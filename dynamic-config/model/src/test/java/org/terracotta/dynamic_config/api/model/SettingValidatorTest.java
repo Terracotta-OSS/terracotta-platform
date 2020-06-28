@@ -46,7 +46,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_PERMIT_LIST;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -205,7 +205,7 @@ public class SettingValidatorTest {
 
   @Test
   public void test_booleans() {
-    Stream.of(SECURITY_SSL_TLS, SECURITY_WHITELIST).forEach(setting -> {
+    Stream.of(SECURITY_SSL_TLS, SECURITY_PERMIT_LIST).forEach(setting -> {
       validateDefaults(setting);
       setting.validate("true");
       setting.validate("false");
