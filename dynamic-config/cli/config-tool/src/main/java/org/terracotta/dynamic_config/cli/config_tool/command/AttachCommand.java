@@ -20,6 +20,7 @@ import com.beust.jcommander.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
@@ -35,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static java.lang.System.lineSeparator;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
@@ -106,7 +108,17 @@ public class AttachCommand extends TopologyCommand {
     // building the list of nodes
     if (operationType == NODE) {
       // we attach only a node
-      newOnlineNodes.put(source, getUpcomingCluster(source));
+      newOnlineNodes.put(source, sourceCluster);
+      FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
+      if (failoverPriority.equals(consistency()) && destinationClusterActivated) {
+        int voterCount = failoverPriority.getVoters();
+        int nodeCount = destinationCluster.getNodes().size();
+        int sum = voterCount + nodeCount;
+        if (sum > 1 && sum % 2 != 0) {
+          logger.warn("WARNING: The sum of voter count ({}) and number of nodes ({}) in this stripe is an odd number," +
+              " but will become even with the addition of node {}", voterCount, nodeCount, source);
+        }
+      }
     } else {
       // we attach a whole stripe
       sourceCluster.getStripe(source).get().getNodeAddresses().forEach(addr -> newOnlineNodes.put(addr, getUpcomingCluster(addr)));
