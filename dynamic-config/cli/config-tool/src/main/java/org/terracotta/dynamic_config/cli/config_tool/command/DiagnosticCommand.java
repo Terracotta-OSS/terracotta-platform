@@ -129,11 +129,11 @@ public class DiagnosticCommand extends RemoteCommand {
       if (onlineNodes.contains(nodeAddress)) {
 
         sb.append(" - Node restart required: ")
-            .append(mustBeRestarted(node) ?
+            .append(mustBeRestarted(nodeAddress) ?
                 "YES" :
                 "NO")
             .append(lineSeparator());
-        sb.append(" - Node configuration change in progress: ").append(hasIncompleteChange(node) ?
+        sb.append(" - Node configuration change in progress: ").append(hasIncompleteChange(nodeAddress) ?
             "YES" :
             "NO")
             .append(lineSeparator());

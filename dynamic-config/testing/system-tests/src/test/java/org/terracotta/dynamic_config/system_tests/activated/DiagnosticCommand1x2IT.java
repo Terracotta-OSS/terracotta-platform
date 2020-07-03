@@ -26,8 +26,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static java.util.stream.Collectors.toList;
+import static org.hamcrest.CoreMatchers.allOf;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLinesInOrderStartingWith;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -87,4 +90,36 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic4.txt").toURI())).collect(toList())));
   }
 
+  @Test
+  public void test_diagnostic_on_cluster_after_setting_change_requiring_restart() throws Exception {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/node-1-1");
+    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--config-dir", "config/stripe1/node-1-2");
+    waitForActive(1);
+    waitForPassives(1);
+
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "cluster-name=new-cluster-name"),
+        allOf(containsOutput("restart of the cluster is required"), successful()));
+
+    // Diagnostic result from all nodes must be the same
+    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic6-1.txt").toURI())).collect(toList())));
+    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic6-1.txt").toURI())).collect(toList())));
+
+    // The restart status should be cleared upon restart
+    stopNode(1, 1);
+    stopNode(1, 2);
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/node-1-1");
+    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--config-dir", "config/stripe1/node-1-2");
+    waitForActive(1);
+    waitForPassives(1);
+
+    // Diagnostic result from all nodes must be the same
+    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic6-2.txt").toURI())).collect(toList())));
+    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic6-2.txt").toURI())).collect(toList())));
+
+  }
 }
