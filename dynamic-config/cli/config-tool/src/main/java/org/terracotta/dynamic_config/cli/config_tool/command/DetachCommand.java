@@ -20,17 +20,20 @@ import com.beust.jcommander.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
+import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 
 /**
@@ -78,10 +81,20 @@ public class DetachCommand extends TopologyCommand {
           "Use -f to force the node removal by the detach command: the nodes will first reset and stop before being detached");
     }
 
-    if(operationType == NODE) {
+    if (operationType == NODE) {
       Stripe stripe = destinationCluster.getStripe(source).get();
       if (stripe.getNodeCount() == 1) {
         throw new IllegalStateException("Unable to detach since destination stripe contains only 1 node");
+      }
+
+      FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
+      if (failoverPriority.equals(consistency()) && destinationClusterActivated) {
+        int voterCount = failoverPriority.getVoters();
+        int nodeCount = destinationCluster.getNodes().size();
+        if ((voterCount + nodeCount) % 2 != 0) {
+          logger.warn("WARNING: The sum of voter count ({}) and number of nodes ({}) in this stripe is an odd number," +
+              " but will become even with the removal of node {}", voterCount, nodeCount, source);
+        }
       }
     }
   }
