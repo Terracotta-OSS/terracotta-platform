@@ -167,8 +167,10 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   public void onSettingChanged(SettingNomadChange change, Cluster updated) {
     if (change.canApplyAtRuntime()) {
       LOGGER.info("Configuration change: {} applied at runtime", change.getSummary());
+      LOGGER.info("New cluster configuration: {}", runtimeNodeContext.getCluster().toProperties(true, true));
     } else {
       LOGGER.info("Configuration change: {} will be applied after restart", change.getSummary());
+      LOGGER.info("Pending cluster configuration: {}", upcomingNodeContext.getCluster().toProperties(true, true));
     }
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onSettingChanged(change, updated));
