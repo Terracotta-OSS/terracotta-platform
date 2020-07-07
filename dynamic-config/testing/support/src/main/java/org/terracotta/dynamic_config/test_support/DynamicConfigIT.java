@@ -298,9 +298,7 @@ public class DynamicConfigIT {
   }
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
-    String symbolicName = "node-" + stripeId + "-" + nodeId;
-    // note: node port and group port will be automatically set
-    return server(symbolicName, "localhost")
+    return server(getNodeName(stripeId, nodeId), "localhost")
         .configRepo(getNodePath(stripeId, nodeId).resolve("config").toString())
         .logs(getNodePath(stripeId, nodeId).resolve("logs").toString())
         .dataDir("main:" + getNodePath(stripeId, nodeId).resolve("data-dir").toString())
@@ -317,11 +315,11 @@ public class DynamicConfigIT {
     return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
   }
 
-  protected final String getNodeName(int stripeId, int nodeId) {
+  protected String getNodeName(int stripeId, int nodeId) {
     return "node-" + stripeId + "-" + nodeId;
   }
 
-  protected final Path getNodePath(int stripeId, int nodeId) {
+  protected Path getNodePath(int stripeId, int nodeId) {
     return Paths.get(getNodeName(stripeId, nodeId));
   }
 
