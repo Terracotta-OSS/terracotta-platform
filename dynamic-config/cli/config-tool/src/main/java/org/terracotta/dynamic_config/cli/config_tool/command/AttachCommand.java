@@ -62,6 +62,10 @@ public class AttachCommand extends TopologyCommand {
   public void validate() {
     super.validate();
 
+    if (destinationClusterActivated && operationType == STRIPE) {
+      throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
+    }
+
     validateAddress(source);
 
     sourceCluster = getUpcomingCluster(source);
