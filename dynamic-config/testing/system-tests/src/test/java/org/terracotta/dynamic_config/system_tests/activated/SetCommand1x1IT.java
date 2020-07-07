@@ -242,4 +242,18 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
         allOf(hasExitStatus(0), containsOutput("logger-overrides=org.terracotta:TRACE")));
   }
+
+  @Test
+  public void change_cluster_name_back() throws Exception {
+    // TDB-5067
+    String clusterName = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getCluster().getName());
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=new-name"),
+        allOf(is(successful()), containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
+    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        allOf(containsOutput("Node restart required: YES"), containsOutput("Node last configuration change details: set cluster-name=new-name")));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=" + clusterName),
+        allOf(is(successful()), not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"))));
+    assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        allOf(containsOutput("Node restart required: NO"), containsOutput("Node last configuration change details: set cluster-name=" + clusterName)));
+  }
 }
