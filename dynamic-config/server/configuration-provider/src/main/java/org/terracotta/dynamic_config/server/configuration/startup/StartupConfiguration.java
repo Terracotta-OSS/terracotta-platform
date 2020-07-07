@@ -306,11 +306,6 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
       }
 
       @Override
-      public void setClientReconnectWindow(int value) {
-        nodeContext.getCluster().setClientReconnectWindow(value, TimeUnit.SECONDS);
-      }
-
-      @Override
       public File getLogsLocation() {
         String sanitizedNodeName = node.getNodeName().replace(":", "-"); // Sanitize for path
         return (unConfigured) ? null : substitutor.substitute(pathResolver.resolve(node.getNodeLogDir().resolve(sanitizedNodeName))).toFile();
