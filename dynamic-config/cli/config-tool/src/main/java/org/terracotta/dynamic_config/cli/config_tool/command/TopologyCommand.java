@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static java.lang.System.lineSeparator;
-import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
 /**
  * @author Mathieu Carbou
@@ -94,9 +93,6 @@ public abstract class TopologyCommand extends RemoteCommand {
     if (destinationClusterActivated) {
       ensureNodesAreEitherActiveOrPassive(destinationOnlineNodes);
       ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
-      if (operationType == STRIPE) {
-        throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
-      }
     }
   }
 

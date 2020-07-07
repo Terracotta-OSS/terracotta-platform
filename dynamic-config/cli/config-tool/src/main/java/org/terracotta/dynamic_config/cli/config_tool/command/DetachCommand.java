@@ -26,7 +26,6 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
-import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -35,6 +34,7 @@ import java.util.Collection;
 
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
+import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
 /**
  * @author Mathieu Carbou
@@ -74,13 +74,6 @@ public class DetachCommand extends TopologyCommand {
     // compute the list of online nodes to detach if requested
     onlineNodesToRemove.retainAll(destinationOnlineNodes.keySet());
 
-    // if the nodes are activated, the user must first stop them becasue they are part of a working cluster
-    if (!onlineNodesToRemove.isEmpty() && areAllNodesActivated(onlineNodesToRemove)) {
-      validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to detach: " + toString(onlineNodesToRemove) + " are online. " +
-          "The nodes should be safely shutdown first. " +
-          "Use -f to force the node removal by the detach command: the nodes will first reset and stop before being detached");
-    }
-
     if (operationType == NODE) {
       Stripe stripe = destinationCluster.getStripe(source).get();
       if (stripe.getNodeCount() == 1) {
@@ -96,6 +89,22 @@ public class DetachCommand extends TopologyCommand {
               " but will become even with the removal of node {}", voterCount, nodeCount, source);
         }
       }
+    }
+
+    if (operationType == STRIPE && destinationClusterActivated) {
+
+      if (destinationCluster.getStripeId(source).orElse(-1) == 1) {
+        throw new IllegalStateException("Removing the leading stripe is not allowed");
+      }
+
+      throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
+    }
+
+    // if the nodes are activated, the user must first stop them because they are part of a working cluster
+    if (!onlineNodesToRemove.isEmpty() && areAllNodesActivated(onlineNodesToRemove)) {
+      validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to detach: " + toString(onlineNodesToRemove) + " are online. " +
+          "The nodes should be safely shutdown first. " +
+          "Use -f to force the node removal by the detach command: the nodes will first reset and stop before being detached");
     }
   }
 
