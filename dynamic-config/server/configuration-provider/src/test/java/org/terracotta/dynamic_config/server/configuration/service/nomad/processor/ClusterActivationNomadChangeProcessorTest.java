@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.server.configuration.nomad.processor;
+package org.terracotta.dynamic_config.server.configuration.service.nomad.processor;
 
 import org.junit.Before;
 import org.junit.Rule;
