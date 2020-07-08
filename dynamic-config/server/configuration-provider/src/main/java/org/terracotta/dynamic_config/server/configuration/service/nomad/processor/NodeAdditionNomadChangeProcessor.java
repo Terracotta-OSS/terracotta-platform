@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.server.configuration.nomad.processor;
+package org.terracotta.dynamic_config.server.configuration.service.nomad.processor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
@@ -37,21 +37,21 @@ import static java.util.Objects.requireNonNull;
 /**
  * @author Mathieu Carbou
  */
-public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<NodeRemovalNomadChange> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(NodeRemovalNomadChangeProcessor.class);
-  private static final String PLATFORM_MBEAN_OPERATION_NAME = "removePassive";
+public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<NodeAdditionNomadChange> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(NodeAdditionNomadChangeProcessor.class);
+  private static final String PLATFORM_MBEAN_OPERATION_NAME = "addPassive";
 
   private final TopologyService topologyService;
   private final DynamicConfigListener listener;
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
-  public NodeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigListener listener) {
+  public NodeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigListener listener) {
     this.topologyService = requireNonNull(topologyService);
     this.listener = requireNonNull(listener);
   }
 
   @Override
-  public void validate(NodeContext baseConfig, NodeRemovalNomadChange change) throws NomadException {
+  public void validate(NodeContext baseConfig, NodeAdditionNomadChange change) throws NomadException {
     LOGGER.info("Validating change: {}", change.getSummary());
     if (baseConfig == null) {
       throw new NomadException("Existing config must not be null");
@@ -66,14 +66,14 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
   }
 
   @Override
-  public final void apply(NodeRemovalNomadChange change) throws NomadException {
+  public final void apply(NodeAdditionNomadChange change) throws NomadException {
     Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
-    if (!runtime.containsNode(change.getNode().getNodeAddress())) {
+    if (runtime.containsNode(change.getNodeAddress())) {
       return;
     }
 
     try {
-      LOGGER.info("Removing node: {} from stripe ID: {}", change.getNodeAddress(), change.getStripeId());
+      LOGGER.info("Adding node: {} to stripe ID: {}", change.getNodeAddress(), change.getStripeId());
 
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
@@ -82,7 +82,7 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
           new String[]{String.class.getName()}
       );
 
-      listener.onNodeRemoval(change.getStripeId(), change.getNode());
+      listener.onNodeAddition(change.getStripeId(), change.getNode());
     } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
@@ -99,7 +99,7 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
       canCall = false;
     }
     if (!canCall) {
-      throw new IllegalStateException("Unable to invoke MBean operation to detach a node");
+      throw new IllegalStateException("Unable to invoke MBean operation to attach a node");
     }
   }
 }
