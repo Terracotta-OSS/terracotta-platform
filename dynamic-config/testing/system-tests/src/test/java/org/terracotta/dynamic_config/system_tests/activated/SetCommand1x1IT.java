@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.nio.file.Path;
+
 import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -255,5 +257,20 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         allOf(is(successful()), not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"))));
     assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         allOf(containsOutput("Node restart required: NO"), containsOutput("Node last configuration change details: set cluster-name=" + clusterName)));
+  }
+
+  @Test
+  public void metadata_dir_cannot_be_changed() throws Exception {
+    // TDB-5092
+    Path metadataDir = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeMetadataDir());
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "metadata-dir=foo"),
+        containsOutput("Unable to apply this change: metadata-dir=foo"));
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.metadata-dir=foo"),
+        containsOutput("Unable to apply this change: stripe.1.metadata-dir=foo"));
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir=foo"),
+        containsOutput("Unable to apply this change: stripe.1.node.1.metadata-dir=foo"));
   }
 }
