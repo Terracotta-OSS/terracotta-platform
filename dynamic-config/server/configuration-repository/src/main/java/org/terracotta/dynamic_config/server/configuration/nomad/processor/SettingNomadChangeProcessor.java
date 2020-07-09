@@ -62,7 +62,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
       ConfigChangeHandler configChangeHandler = getConfigChangeHandlerManager(change);
       configChangeHandler.validate(baseConfig, configuration);
     } catch (InvalidConfigChangeException | RuntimeException e) {
-      throw new NomadException("Error when trying to apply setting change '" + change.getSummary() + "': " + e.getMessage(), e);
+      throw new NomadException("'" + change.getSummary() + "': " + e.getMessage(), e);
     }
   }
 

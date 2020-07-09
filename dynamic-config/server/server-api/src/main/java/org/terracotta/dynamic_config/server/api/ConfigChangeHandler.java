@@ -42,7 +42,7 @@ public interface ConfigChangeHandler {
     return new ConfigChangeHandler() {
       @Override
       public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
-        throw new InvalidConfigChangeException("Unable to apply this change: " + change);
+        throw new InvalidConfigChangeException("Setting '" + change.getSetting().getName() + "' cannot be changed once a node is activated");
       }
 
       @Override

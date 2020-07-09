@@ -104,7 +104,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         allOf(
             not(hasExitStatus(0)),
             containsOutput("Prepare rejected"),
-            containsOutput("Reason: Error when trying to apply setting change 'set data-dirs.first=node-1-1/data-dir': Data directory: first overlaps with: main")));
+            containsOutput("Reason: 'set data-dirs.first=node-1-1/data-dir': Data directory: first overlaps with: main")));
 
     // prepare change should be rolled back
     withTopologyService(1, 1, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
@@ -119,7 +119,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         allOf(
             not(hasExitStatus(0)),
             containsOutput("Prepare rejected"),
-            containsOutput("Reason: Error when trying to apply setting change 'set data-dirs.third=user-data/main/stripe1-node1-data-dir-1': Data directory: third overlaps with: second")));
+            containsOutput("Reason: 'set data-dirs.third=user-data/main/stripe1-node1-data-dir-1': Data directory: third overlaps with: second")));
 
     // prepare change should be rolled back
     withTopologyService(1, 1, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
@@ -143,7 +143,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         allOf(
             not(hasExitStatus(0)),
             containsOutput("Prepare rejected"),
-            containsOutput("Reason: Error when trying to apply setting change 'set data-dirs.third=user-data/main/stripe1-node1-data-dir-1': Data directory: third overlaps with: second")));
+            containsOutput("Reason: 'set data-dirs.third=user-data/main/stripe1-node1-data-dir-1': Data directory: third overlaps with: second")));
 
     // prepare change should be rolled back
     withTopologyService(1, 1, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
@@ -265,12 +265,12 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     Path metadataDir = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeMetadataDir());
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "metadata-dir=foo"),
-        containsOutput("Unable to apply this change: metadata-dir=foo"));
+        containsOutput("Reason: 'set metadata-dir=foo': Setting 'metadata-dir' cannot be changed once a node is activated"));
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.metadata-dir=foo"),
-        containsOutput("Unable to apply this change: stripe.1.metadata-dir=foo"));
+        containsOutput("Reason: 'set metadata-dir=foo (stripe ID: 1)': Setting 'metadata-dir' cannot be changed once a node is activated"));
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir=foo"),
-        containsOutput("Unable to apply this change: stripe.1.node.1.metadata-dir=foo"));
+        containsOutput("Reason: 'set metadata-dir=foo (stripe ID: 1, node: node-1-1)': Setting 'metadata-dir' cannot be changed once a node is activated"));
   }
 }
