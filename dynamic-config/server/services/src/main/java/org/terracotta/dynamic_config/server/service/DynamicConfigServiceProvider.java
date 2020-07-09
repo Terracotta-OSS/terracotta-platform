@@ -111,6 +111,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     NomadPermissionChangeProcessor permissions = find(platformConfiguration, NomadPermissionChangeProcessor.class);
     if (permissions != null) {
       permissions.addCheck(new DisallowSettingChanges());
+      permissions.addCheck(new ServerStateCheck());
     }
 
     return true;
