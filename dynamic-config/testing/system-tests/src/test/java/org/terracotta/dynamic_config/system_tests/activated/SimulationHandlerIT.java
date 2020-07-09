@@ -45,7 +45,7 @@ public class SimulationHandlerIT extends DynamicConfigIT {
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=TRACE"),
         allOf(
             not(hasExitStatus(0)),
-            containsOutput("Prepare rejected for node localhost:" + getNodePort() + ". Reason: Error when trying to apply setting change 'set logger-overrides.org.terracotta.dynamic-config.simulate=TRACE (stripe ID: 1, node: node-1-1)': Simulate prepare failure")));
+            containsOutput("Prepare rejected for node localhost:" + getNodePort() + ". Reason: 'set logger-overrides.org.terracotta.dynamic-config.simulate=TRACE (stripe ID: 1, node: node-1-1)': Simulate prepare failure")));
   }
 
   @Test
