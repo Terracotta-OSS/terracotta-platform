@@ -15,11 +15,24 @@
  */
 package org.terracotta.dynamic_config.server.api;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.nomad.server.NomadException;
 
 /**
+ * Processor which can accept some rules about rejecting or accepting a PREPARE phase based on some server states
+ *
  * @author Mathieu Carbou
  */
-public interface RoutingNomadChangeProcessor {
-  <T extends DynamicConfigNomadChange> void register(Class<? extends T> changeType, NomadChangeProcessor<T> processor);
+public interface NomadPermissionChangeProcessor {
+  void addCheck(Check check);
+
+  void removeCheck(Check check);
+
+  interface Check {
+    /**
+     * Validate that we can go forward. If not, throw a NomadException with the reason.
+     */
+    void check(NodeContext config, DynamicConfigNomadChange change) throws NomadException;
+  }
 }

@@ -18,7 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.service.nomad.process
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
-import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.NomadException;
 
@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Routes the incoming Nomad change to the right processor based on the Nomad change type
  */
-public class DefaultRoutingNomadChangeProcessor implements NomadChangeProcessor<DynamicConfigNomadChange>, RoutingNomadChangeProcessor {
+public class DefaultNomadRoutingChangeProcessor implements NomadChangeProcessor<DynamicConfigNomadChange>, NomadRoutingChangeProcessor {
 
   private final Map<Class<? extends NomadChange>, NomadChangeProcessor<DynamicConfigNomadChange>> processors = new HashMap<>();
 

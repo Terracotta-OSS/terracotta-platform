@@ -64,7 +64,7 @@ public class DiagnosticIT extends AbstractSingleTest {
       }
 
       try {
-        Thread.sleep(1_00);
+        Thread.sleep(1_000);
       } catch (InterruptedException e) {
         fail("interrupted");
       }

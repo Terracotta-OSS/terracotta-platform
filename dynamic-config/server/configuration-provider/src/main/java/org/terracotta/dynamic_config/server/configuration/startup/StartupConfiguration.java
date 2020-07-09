@@ -61,7 +61,7 @@ import static org.terracotta.common.struct.Tuple2.tuple2;
 
 public class StartupConfiguration implements Configuration, PrettyPrintable, StateDumpable, PlatformConfiguration, DynamicConfigExtension.Registrar {
 
-  private final Collection<Tuple2<Class<?>, Object>> extendedConfigurations = new CopyOnWriteArrayList<>();
+  private final Collection<Tuple2<Class<?>, Supplier<?>>> extendedConfigurations = new CopyOnWriteArrayList<>();
   private final Collection<ServiceProviderConfiguration> serviceProviderConfigurations = new CopyOnWriteArrayList<>();
 
   private final Supplier<NodeContext> nodeContextSupplier;
@@ -86,12 +86,18 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   public <T> List<T> getExtendedConfiguration(Class<T> type) {
     requireNonNull(type);
     List<T> out = new ArrayList<>(1);
-    for (Tuple2<Class<?>, Object> extendedConfiguration : extendedConfigurations) {
+    for (Tuple2<Class<?>, Supplier<?>> extendedConfiguration : extendedConfigurations) {
       if (extendedConfiguration.t1 == type) {
-        out.add(type.cast(extendedConfiguration.t2));
-      } else if (extendedConfiguration.t1 == null && type.isInstance(extendedConfiguration.t2)) {
-        out.add(type.cast(extendedConfiguration.t2));
-      } else if (extendedConfiguration.t1 != null && extendedConfiguration.t1.getName().equals(type.getName())) {
+        Object o = extendedConfiguration.t2.get();
+        if (o != null) {
+          out.add(type.cast(o));
+        }
+      } else if (extendedConfiguration.t1 == null) {
+        Object o = extendedConfiguration.t2.get();
+        if (type.isInstance(o)) {
+          out.add(type.cast(o));
+        }
+      } else if (extendedConfiguration.t1.getName().equals(type.getName())) {
         throw new IllegalArgumentException("Requested service type " + type + " from classloader " + type.getClassLoader() + " but has service " + extendedConfiguration.t1 + " from classlaoder " + extendedConfiguration.t1.getClassLoader());
       }
     }
@@ -223,7 +229,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     stateDumpCollector.addState("tsaPort", getTsaPort());
     StateDumpCollector extendedConfigurations = stateDumpCollector.subStateDumpCollector("ExtendedConfigs");
     this.extendedConfigurations.stream()
-        .map(Tuple2::getT2)
+        .map(tuple -> tuple.getT2().get())
         .filter(StateDumpable.class::isInstance)
         .map(StateDumpable.class::cast)
         .forEach(sd -> sd.addStateTo(extendedConfigurations.subStateDumpCollector(sd.getClass().getName())));
@@ -250,8 +256,8 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   }
 
   @Override
-  public <T> void registerExtendedConfiguration(Class<T> type, T implementation) {
-    extendedConfigurations.add(tuple2(type, implementation));
+  public <T> void registerExtendedConfigurationSupplier(Class<T> type, Supplier<T> supplier) {
+    extendedConfigurations.add(tuple2(type, supplier));
   }
 
   @Override

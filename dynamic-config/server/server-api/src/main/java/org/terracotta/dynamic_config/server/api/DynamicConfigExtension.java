@@ -18,6 +18,8 @@ package org.terracotta.dynamic_config.server.api;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
+import java.util.function.Supplier;
+
 /**
  * Extension to implement as a META-INF/services to provide extensions on the servers
  *
@@ -47,7 +49,11 @@ public interface DynamicConfigExtension {
     /**
      * Register an extended configuration which will only be available when the user asks for a specific class
      */
-    <T> void registerExtendedConfiguration(Class<T> type, T implementation);
+    default <T> void registerExtendedConfiguration(Class<T> type, T implementation) {
+      registerExtendedConfigurationSupplier(type, () -> implementation);
+    }
+
+    <T> void registerExtendedConfigurationSupplier(Class<T> type, Supplier<T> implementation);
 
     /**
      * Register an extended configuration which will be available when the user asks for any super type
