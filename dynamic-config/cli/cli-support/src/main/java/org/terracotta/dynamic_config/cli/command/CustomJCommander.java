@@ -22,7 +22,6 @@ import com.beust.jcommander.WrappedParameter;
 import com.beust.jcommander.internal.Lists;
 
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -92,6 +91,10 @@ public class CustomJCommander extends JCommander {
     return new TreeMap<>(super.getCommands());
   }
 
+  protected void appendDefinitions(StringBuilder out, String indent) {
+
+  }
+
   private void appendUsage(Command command, StringBuilder out, String indent) {
     out.append(indent).append("Usage:").append(lineSeparator());
     out.append(indent).append("    ").append(Metadata.getUsage(command).replace(lineSeparator(), lineSeparator() + "    " + indent)).append(lineSeparator());
@@ -124,32 +127,6 @@ public class CustomJCommander extends JCommander {
       out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "").append(lineSeparator());
       out.append(indent).append("        ").append(pd.getDescription());
       out.append(lineSeparator());
-    }
-  }
-
-  private void appendDefinitions(StringBuilder out, String indent) {
-    out.append(indent).append(lineSeparator()).append("Definitions:").append(lineSeparator());
-    out.append(indent).append("    ").append("namespace").append(lineSeparator());
-    Map<String, String> nameSpaces = new LinkedHashMap<>();
-    nameSpaces.put("stripe.<stripeId>.node.<nodeId>", "to apply a change only on a specific node");
-    nameSpaces.put("stripe.<stripeId>", "to apply a change only on a specific stripe");
-    nameSpaces.put("'' (empty namespace)", "to apply a change only on all nodes of the cluster");
-
-    int maxNamespaceLength = Integer.MIN_VALUE;
-    for (String nameSpace : nameSpaces.keySet()) {
-      if (nameSpace.length() > maxNamespaceLength) {
-        maxNamespaceLength = nameSpace.length();
-      }
-    }
-
-    for (Map.Entry<String, String> entry : nameSpaces.entrySet()) {
-      String key = entry.getKey();
-      String value = entry.getValue();
-      out.append(indent).append("        ").append(key);
-      for (int i = 0; i < maxNamespaceLength - key.length() + 4; i++) {
-        out.append(" ");
-      }
-      out.append(value).append(lineSeparator());
     }
   }
 

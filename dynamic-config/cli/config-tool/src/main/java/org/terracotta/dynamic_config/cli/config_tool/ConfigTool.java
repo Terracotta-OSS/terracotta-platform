@@ -50,6 +50,10 @@ import org.terracotta.nomad.entity.client.NomadEntityProvider;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import static java.lang.System.lineSeparator;
 
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
@@ -147,7 +151,35 @@ public class ConfigTool {
   }
 
   private static CustomJCommander parseArguments(CommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
-    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand);
+    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand) {
+      @Override
+      public void appendDefinitions(StringBuilder out, String indent) {
+        out.append(indent).append(lineSeparator()).append("Definitions:").append(lineSeparator());
+        out.append(indent).append("    ").append("namespace").append(lineSeparator());
+        Map<String, String> nameSpaces = new LinkedHashMap<>();
+        nameSpaces.put("stripe.<stripeId>.node.<nodeId>", "to apply a change only on a specific node");
+        nameSpaces.put("stripe.<stripeId>", "to apply a change only on a specific stripe");
+        nameSpaces.put("'' (empty namespace)", "to apply a change only on all nodes of the cluster");
+
+        int maxNamespaceLength = Integer.MIN_VALUE;
+        for (String nameSpace : nameSpaces.keySet()) {
+          if (nameSpace.length() > maxNamespaceLength) {
+            maxNamespaceLength = nameSpace.length();
+          }
+        }
+
+        for (Map.Entry<String, String> entry : nameSpaces.entrySet()) {
+          String key = entry.getKey();
+          String value = entry.getValue();
+          out.append(indent).append("        ").append(key);
+          for (int i = 0; i < maxNamespaceLength - key.length() + 4; i++) {
+            out.append(" ");
+          }
+          out.append(value).append(lineSeparator());
+        }
+      }
+    };
+
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {
