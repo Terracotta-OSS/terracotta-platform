@@ -54,7 +54,7 @@ public class SimulationHandlerIT extends DynamicConfigIT {
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
         allOf(
             not(hasExitStatus(0)),
-            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set logger-overrides.org.terracotta.dynamic-config.simulate=INFO (stripe ID: 1, node: node-1-1)': Simulate permanent commit failure")));
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=INFO (stripe ID: 1, node: node-1-1)': Simulate permanent commit failure")));
   }
 
   @Test
@@ -63,6 +63,6 @@ public class SimulationHandlerIT extends DynamicConfigIT {
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         allOf(
             not(hasExitStatus(0)),
-            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (stripe ID: 1, node: node-1-1)': Simulate temporary commit failure")));
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (stripe ID: 1, node: node-1-1)': Simulate temporary commit failure")));
   }
 }

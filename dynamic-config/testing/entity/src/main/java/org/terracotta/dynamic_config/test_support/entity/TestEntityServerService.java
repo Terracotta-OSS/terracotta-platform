@@ -24,7 +24,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
-import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.test_support.handler.GroupPortSimulateHandler;
 import org.terracotta.dynamic_config.test_support.handler.SimulationHandler;
@@ -96,19 +96,19 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
   protected void wireChangeHandler(ServiceRegistry serviceRegistry) {
     try {
       ConfigChangeHandlerManager manager = serviceRegistry.getService(new BasicServiceConfiguration<>(ConfigChangeHandlerManager.class));
-      RoutingNomadChangeProcessor routingNomadChangeProcessor = serviceRegistry.getService(new BasicServiceConfiguration<>(RoutingNomadChangeProcessor.class));
+      NomadRoutingChangeProcessor nomadRoutingChangeProcessor = serviceRegistry.getService(new BasicServiceConfiguration<>(NomadRoutingChangeProcessor.class));
       TopologyService topologyService = serviceRegistry.getService(new BasicServiceConfiguration<>(TopologyService.class));
       DynamicConfigListener dynamicConfigListener = serviceRegistry.getService(new BasicServiceConfiguration<>(DynamicConfigListener.class));
       PlatformService platformService = serviceRegistry.getService(new BasicServiceConfiguration<>(PlatformService.class));
-      requireNonNull(routingNomadChangeProcessor);
+      requireNonNull(nomadRoutingChangeProcessor);
       requireNonNull(topologyService);
       requireNonNull(dynamicConfigListener);
 
-      routingNomadChangeProcessor.register(
+      nomadRoutingChangeProcessor.register(
           NodeAdditionNomadChange.class,
           new MyDummyNomadAdditionChangeProcessor(topologyService, dynamicConfigListener, platformService));
 
-      routingNomadChangeProcessor.register(
+      nomadRoutingChangeProcessor.register(
           NodeRemovalNomadChange.class,
           new MyDummyNomadRemovalChangeProcessor(topologyService, dynamicConfigListener, platformService));
       

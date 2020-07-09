@@ -31,8 +31,9 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.LicenseParserDiscovery;
 import org.terracotta.dynamic_config.server.api.LicenseService;
+import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
+import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
 import org.terracotta.dynamic_config.server.api.PathResolver;
-import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.ConfigChangeHandlerManagerImpl;
 import org.terracotta.dynamic_config.server.configuration.service.DynamicConfigServiceImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
@@ -143,8 +144,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration.registerExtendedConfiguration(UpgradableNomadServer.class, nomadServer);
       configuration.registerExtendedConfiguration(LicenseService.class, licenseService);
       configuration.registerExtendedConfiguration(PathResolver.class, userDirResolver);
-      nomadServerManager.getRoutingNomadChangeProcessor()
-          .ifPresent(routingNomadChangeProcessor -> configuration.registerExtendedConfiguration(RoutingNomadChangeProcessor.class, routingNomadChangeProcessor));
+      configuration.registerExtendedConfiguration(NomadRoutingChangeProcessor.class, nomadServerManager.getNomadRoutingChangeProcessor());
+      configuration.registerExtendedConfiguration(NomadPermissionChangeProcessor.class, nomadServerManager.getNomadPermissionChangeProcessor());
 
       // discover the dynamic config extensions (offheap, dataroot, lease, etc)
       configuration.discoverExtensions();
