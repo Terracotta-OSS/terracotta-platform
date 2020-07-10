@@ -30,10 +30,13 @@ import java.time.Clock;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.TreeSet;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * @author Mathieu Carbou
@@ -57,10 +60,14 @@ public class DiagnosticCommand extends RemoteCommand {
     Map<InetSocketAddress, LogicalServerState> allNodes = findRuntimePeersStatus(node);
 
     ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = analyzeNomadConsistency(allNodes);
-    Collection<InetSocketAddress> onlineNodes = consistencyAnalyzer.getOnlineNodes().keySet();
-    Collection<InetSocketAddress> onlineActivatedNodes = consistencyAnalyzer.getOnlineActivatedNodes().keySet();
-    Collection<InetSocketAddress> onlineInConfigurationNodes = consistencyAnalyzer.getOnlineInConfigurationNodes().keySet();
-    Collection<InetSocketAddress> onlineInRepairNodes = consistencyAnalyzer.getOnlineInRepairNodes().keySet();
+    Collection<InetSocketAddress> onlineNodes = sort(consistencyAnalyzer.getOnlineNodes().keySet());
+    Collection<InetSocketAddress> onlineActivatedNodes = sort(consistencyAnalyzer.getOnlineActivatedNodes().keySet());
+    Collection<InetSocketAddress> onlineInConfigurationNodes = sort(consistencyAnalyzer.getOnlineInConfigurationNodes().keySet());
+    Collection<InetSocketAddress> onlineInRepairNodes = sort(consistencyAnalyzer.getOnlineInRepairNodes().keySet());
+    Collection<InetSocketAddress> nodesPendingRestart = sort(allNodes.keySet().stream()
+        .filter(onlineNodes::contains)
+        .filter(this::mustBeRestarted)
+        .collect(toSet()));
 
     Clock clock = Clock.systemDefaultZone();
     ZoneId zoneId = clock.getZone();
@@ -77,21 +84,29 @@ public class DiagnosticCommand extends RemoteCommand {
     sb.append("[Cluster]")
         .append(lineSeparator());
     sb.append(" - Nodes: ")
-        .append(consistencyAnalyzer.getNodeCount())
+        .append(allNodes.size())
+        .append(details(allNodes.keySet()))
         .append(lineSeparator());
     sb.append(" - Nodes online: ")
         .append(onlineNodes.size())
+        .append(details(onlineNodes))
         .append(lineSeparator());
     sb.append(" - Nodes online, configured and activated: ")
         .append(onlineActivatedNodes.size())
+        .append(details(onlineActivatedNodes))
         .append(lineSeparator());
     sb.append(" - Nodes online, configured and in repair: ")
         .append(onlineInRepairNodes.size())
+        .append(details(onlineInRepairNodes))
         .append(lineSeparator());
     sb.append(" - Nodes online, new and being configured: ")
         .append(onlineInConfigurationNodes.size())
+        .append(details(onlineInConfigurationNodes))
         .append(lineSeparator());
-
+    sb.append(" - Nodes pending restart: ")
+        .append(nodesPendingRestart.size())
+        .append(details(nodesPendingRestart))
+        .append(lineSeparator());
     sb.append(" - Configuration state: ")
         .append(meaningOf(consistencyAnalyzer))
         .append(lineSeparator());
@@ -129,7 +144,7 @@ public class DiagnosticCommand extends RemoteCommand {
       if (onlineNodes.contains(nodeAddress)) {
 
         sb.append(" - Node restart required: ")
-            .append(mustBeRestarted(nodeAddress) ?
+            .append(nodesPendingRestart.contains(nodeAddress) ?
                 "YES" :
                 "NO")
             .append(lineSeparator());
@@ -186,6 +201,16 @@ public class DiagnosticCommand extends RemoteCommand {
       }
     });
     logger.info(sb.toString());
+  }
+
+  private static String details(Collection<InetSocketAddress> addresses) {
+    return addresses.isEmpty() ? "" : " (" + toString(addresses) + ")";
+  }
+
+  private static Collection<InetSocketAddress> sort(Collection<InetSocketAddress> addrs) {
+    TreeSet<InetSocketAddress> sorted = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+    sorted.addAll(addrs);
+    return sorted;
   }
 
   private static String meaningOf(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
