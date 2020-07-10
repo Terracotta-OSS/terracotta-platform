@@ -297,10 +297,6 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     NomadChange change = message.getChange();
 
     PotentialApplicationResult<T> result = changeApplicator.tryApply(existing, change);
-    if (!result.isAllowed()) {
-      String rejectionMessage = result.getRejectionReason();
-      return reject(UNACCEPTABLE, rejectionMessage);
-    }
 
     long versionNumber = message.getVersionNumber();
     T newConfiguration = result.getNewConfiguration();
@@ -325,7 +321,12 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
         .createChange(changeUuid, changeRequest)
     );
 
-    return accept();
+    if (!result.isAllowed()) {
+      String rejectionMessage = result.getRejectionReason();
+      return reject(UNACCEPTABLE, rejectionMessage);
+    } else {
+      return accept();
+    }
   }
 
   public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
