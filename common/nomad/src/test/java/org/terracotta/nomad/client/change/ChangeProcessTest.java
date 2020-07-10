@@ -285,6 +285,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     when(server1.rollback(any(RollbackMessage.class))).thenReturn(accept());
     when(server2.discover()).thenReturn(discovery(COMMITTED));
     when(server2.prepare(any(PrepareMessage.class))).thenReturn(reject(UNACCEPTABLE, "reason", "lastMutationHost", "lastMutationUser"));
+    when(server2.rollback(any(RollbackMessage.class))).thenReturn(accept());
 
     runTest();
 
@@ -302,6 +303,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).endPrepare();
     verify(results).startRollback();
     verify(results).rolledBack(address1);
+    verify(results).rolledBack(address2);
     verify(results).endRollback();
     verify(results).done(CONSISTENT);
   }

@@ -28,6 +28,7 @@ import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 import org.terracotta.dynamic_config.cli.config_tool.NomadTestHelper;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
+import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
@@ -173,6 +174,7 @@ public class ActivateCommandTest extends BaseTest {
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(reject(UNACCEPTABLE, "error", "host", "user"));
+      when(mock.rollback(any(RollbackMessage.class))).thenReturn(accept());
     }));
 
     command.validate();
@@ -192,6 +194,7 @@ public class ActivateCommandTest extends BaseTest {
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
       verify(mock, times(1)).prepare(any(PrepareMessage.class));
+      verify(mock, times(1)).rollback(any(RollbackMessage.class));
       verifyNoMoreInteractions(mock);
     }));
 
