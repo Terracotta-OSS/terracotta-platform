@@ -201,7 +201,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
     Instant now = clock.instant();
 
-    for (NomadEndpoint<T> server : preparedServers) {
+    for (NomadEndpoint<T> server : servers) {
       long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
       runSync(
           () -> server.rollback(

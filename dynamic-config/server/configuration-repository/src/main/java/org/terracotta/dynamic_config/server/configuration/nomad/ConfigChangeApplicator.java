@@ -46,29 +46,29 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
   @Override
   public PotentialApplicationResult<NodeContext> tryApply(NodeContext baseConfig, NomadChange change) {
     if (!(change instanceof DynamicConfigNomadChange)) {
-      return reject("Not a " + DynamicConfigNomadChange.class.getSimpleName() + ": " + change.getClass().getName());
+      return reject(baseConfig,"Not a " + DynamicConfigNomadChange.class.getSimpleName() + ": " + change.getClass().getName());
     }
 
     DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) change;
 
+    // if the change is valid, we apply it on the topology, for all the nodes,
+    // to generate a configuration directory that is the same everywhere
+    Cluster original = baseConfig == null ? null : baseConfig.getCluster();
+    Cluster updated = dynamicConfigNomadChange.apply(original);
+    if (updated == null) {
+      throw new AssertionError();
+    }
+
+    NodeContext newConfiguration = newConfiguration(baseConfig, updated);
+
     try {
+      new ClusterValidator(updated).validate();
       // validate the change thanks to external processors
       processor.validate(baseConfig, dynamicConfigNomadChange);
-
-      // if the change is valid, we apply it on the topology, for all the nodes,
-      // to generate a configuration directory that is the same everywhere
-      Cluster original = baseConfig == null ? null : baseConfig.getCluster();
-      Cluster updated = dynamicConfigNomadChange.apply(original);
-      if (updated == null) {
-        throw new AssertionError();
-      } else {
-        new ClusterValidator(updated).validate();
-      }
-
-      return PotentialApplicationResult.allow(newConfiguration(baseConfig, updated));
+      return PotentialApplicationResult.allow(newConfiguration);
     } catch (RuntimeException | NomadException e) {
       LOGGER.warn("Nomad change: {} rejected with error: {}", change.getSummary(), e.getMessage(), e);
-      return reject(e.getMessage());
+      return reject(newConfiguration, e.getMessage());
     }
   }
 

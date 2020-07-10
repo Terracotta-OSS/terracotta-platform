@@ -396,7 +396,7 @@ public class NomadServerTest {
 
   @Test
   public void prepareUnacceptableChange() throws Exception {
-    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.reject("fail"));
+    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.reject(null, "fail"));
 
     DiscoverResponse<String> discoverResponse = server.discover();
 

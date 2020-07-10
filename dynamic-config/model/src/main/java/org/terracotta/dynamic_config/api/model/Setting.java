@@ -206,7 +206,7 @@ public enum Setting {
       fromNode(Node::getNodeMetadataDir),
       intoNode((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
       of(GET, SET, UNSET, CONFIG),
-      noneOf(Requirement.class),
+      of(ACTIVES_ONLINE),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_METADATA_DIR, tuple2(key, value))

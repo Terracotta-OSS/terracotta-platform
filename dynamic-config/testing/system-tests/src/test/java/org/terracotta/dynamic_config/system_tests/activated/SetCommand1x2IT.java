@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.nio.file.Path;
+
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.is;
@@ -54,5 +56,28 @@ public class SetCommand1x2IT extends DynamicConfigIT {
         "-c", "stripe.1.node.1.data-dirs.foo=foo/node-1-1"),
         containsOutput("Data directory names need to match across the cluster, but found the following mismatches: [[main], [main, foo]] " +
             "If using -c option to add data dirs, use it multiple times to do for every node in cluster"));
+  }
+
+  @Test
+  public void testFailedConfigChangedDoesntFailPassiveSync() throws Exception {
+    int passiveId = findPassives(1)[0];
+    Path metadataDir = usingTopologyService(1, passiveId, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeMetadataDir());
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir=foo"),
+        containsOutput("Setting 'metadata-dir' cannot be changed once a node is activated"));
+
+    // kill active and wait for passive to become active
+    stopNode(1, passiveId == 1 ? 2 : 1);
+    waitForActive(1);
+
+    // Verify that old passive can successfully start as passive
+    startNode(1, passiveId == 1 ? 2 : 1);
+    waitForPassives(1);
+
+    // Finally ensure that metadata-dir has remain unchanged
+    assertThat(
+        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir"),
+        containsOutput(metadataDir.toString()));
+
   }
 }
