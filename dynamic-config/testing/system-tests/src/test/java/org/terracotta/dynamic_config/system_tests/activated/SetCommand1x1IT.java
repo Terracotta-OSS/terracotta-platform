@@ -259,6 +259,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void metadata_dir_cannot_be_changed() throws Exception {
+    // TDB-5092
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "metadata-dir=foo"),
         containsOutput("Reason: 'set metadata-dir=foo': Setting 'metadata-dir' cannot be changed once a node is activated"));

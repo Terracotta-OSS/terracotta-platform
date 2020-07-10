@@ -310,6 +310,12 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     }
     ChangeRequest<T> changeRequest = new ChangeRequest<>(ChangeRequestState.PREPARED, versionNumber, prevChangeId, change, newConfiguration, mutationHost, mutationUser, mutationTimestamp);
 
+    // All nodes must have the same append log.
+    // So we always run `applyStateChange` regardless of the result, which will "sync" sanskrit state with the prepared change
+    // Then, the response is sent back to the client and the client might rollback in case of rejection.
+    // This is required so that a failover happening just after a prepare + rollback ensures that the active nodes that will restart
+    // will all have the same prepared / rollback sequence in their append log.
+
     applyStateChange(state.newStateChange()
         .setRequest(NomadServerRequest.PREPARE)
         .setMode(NomadServerMode.PREPARED)
@@ -321,12 +327,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
         .createChange(changeUuid, changeRequest)
     );
 
-    if (!result.isAllowed()) {
-      String rejectionMessage = result.getRejectionReason();
-      return reject(UNACCEPTABLE, rejectionMessage);
-    } else {
-      return accept();
-    }
+    return result.isAllowed() ? accept() : reject(UNACCEPTABLE, result.getRejectionReason());
   }
 
   public AcceptRejectResponse commit(CommitMessage message) throws NomadException {

@@ -71,7 +71,11 @@ public class ExceptionMatcher extends TypeSafeMatcher<ExceptionMatcher.Closure> 
       return false;
     } catch (Throwable e) {
       failure = e;
-      return typeMatcher.matches(e) && messageMatcher.matches(e.getMessage()) && causeMatcher.matches(e.getCause());
+      boolean match = typeMatcher.matches(e) && messageMatcher.matches(e.getMessage()) && causeMatcher.matches(e.getCause());
+      if (!match) {
+        e.printStackTrace();
+      }
+      return match;
     }
   }
 

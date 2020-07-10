@@ -39,4 +39,12 @@ public class ChangeMessageSender<T> extends NomadMessageSender<T> {
     super.prepared(server);
     registerPreparedServer(server);
   }
+
+  @Override
+  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
+    // See comment in NomadServerImpl
+    // a node is prepared if its change has been written on disk but not yet committed,
+    // regardless of the change was accepted or rejected
+    registerPreparedServer(server);
+  }
 }

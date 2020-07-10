@@ -206,7 +206,7 @@ public enum Setting {
       fromNode(Node::getNodeMetadataDir),
       intoNode((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
       of(GET, SET, UNSET, CONFIG),
-      of(ACTIVES_ONLINE),
+      noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_METADATA_DIR, tuple2(key, value))
@@ -539,10 +539,6 @@ public enum Setting {
     this.allowedValues = Collections.unmodifiableSet(new LinkedHashSet<>(allowedValues));
     this.allowedUnits = Collections.unmodifiableSet(new LinkedHashSet<>(allowedUnits));
     this.validator = validator;
-
-    if ((operations.contains(SET) || operations.contains(UNSET)) && !requirements.contains(ACTIVES_ONLINE) && !requirements.contains(ALL_NODES_ONLINE)) {
-      throw new AssertionError("Invalid definition of setting " + name + ": settings supporting mutative operations require either " + ACTIVES_ONLINE + " or " + ALL_NODES_ONLINE);
-    }
 
     if (scope == STRIPE) {
       throw new AssertionError("Invalid scope for setting definition: " + name + ". Must be " + NODE + " or " + CLUSTER);

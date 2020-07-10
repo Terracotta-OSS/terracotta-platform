@@ -225,6 +225,7 @@ public class NomadIT {
     verify(changeResults).endPrepare();
     verify(changeResults).startRollback();
     verify(changeResults).rolledBack(address1);
+    verify(changeResults).rolledBack(address2);
     verify(changeResults).rolledBack(address3);
     verify(changeResults).endRollback();
     verify(changeResults).done(CONSISTENT);

@@ -404,6 +404,8 @@ public class NomadServerTest {
 
     assertFalse(server.hasIncompleteChange());
 
+    assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null, null);
+
     AcceptRejectResponse response = server.prepare(new PrepareMessage(
         discoverResponse.getMutativeMessageCount(),
         "testhost",
@@ -414,10 +416,11 @@ public class NomadServerTest {
         new SimpleNomadChange("change", "summary")
     ));
 
-    assertFalse(server.hasIncompleteChange());
+    assertTrue(server.hasIncompleteChange());
 
-    assertRejection(response, UNACCEPTABLE, "fail", null, null);
-    assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null, null);
+    assertRejection(response, UNACCEPTABLE, "fail", "testhost", "testuser");
+    assertState(PREPARED, 2L, "testhost", "testuser", uuid, 0L, 1L, ChangeRequestState.PREPARED, 1L, null, "change", null, "testhost", "testuser", "summary");
+
     verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
   }
 
