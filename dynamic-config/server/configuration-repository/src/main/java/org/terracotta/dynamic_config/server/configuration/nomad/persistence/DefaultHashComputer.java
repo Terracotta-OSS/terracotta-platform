@@ -17,7 +17,6 @@ package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -32,8 +31,7 @@ public class DefaultHashComputer implements HashComputer<NodeContext> {
   private final ObjectMapper mapper;
 
   public DefaultHashComputer(ObjectMapper mapper) {
-    this.mapper = mapper.copy();
-    this.mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+    this.mapper = mapper;
   }
 
   @Override
