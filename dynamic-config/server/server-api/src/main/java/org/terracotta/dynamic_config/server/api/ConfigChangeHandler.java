@@ -38,11 +38,11 @@ public interface ConfigChangeHandler {
   /**
    * Handler that will return null to reject a change
    */
-  static ConfigChangeHandler reject() {
+  static ConfigChangeHandler reject(String reason) {
     return new ConfigChangeHandler() {
       @Override
       public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
-        throw new InvalidConfigChangeException("Setting '" + change.getSetting().getName() + "' cannot be changed once a node is activated");
+        throw new InvalidConfigChangeException(reason);
       }
 
       @Override
