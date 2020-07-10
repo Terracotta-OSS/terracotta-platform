@@ -90,7 +90,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
         listener.onSettingChanged(change, upcoming);
       }
     } catch (RuntimeException e) {
-      throw new NomadException("Error when applying setting change '" + change.getSummary() + "': " + e.getMessage(), e);
+      throw new NomadException("Error when applying setting change: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
   }
 

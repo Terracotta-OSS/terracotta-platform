@@ -50,17 +50,12 @@ import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.server.api.ConfigChangeHandler.accept;
-import static org.terracotta.dynamic_config.server.api.ConfigChangeHandler.reject;
 
 @BuiltinService
 public class DynamicConfigServiceProvider implements ServiceProvider {
@@ -109,19 +104,13 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
           .selector(Configuration::getKey)
           .fallback(accept()));
 
-      // ensure to reject these changes
-      addToManager(configChangeHandlerManager, reject(), NODE_NAME);
-      addToManager(configChangeHandlerManager, reject(), NODE_HOSTNAME);
-      addToManager(configChangeHandlerManager, reject(), NODE_PORT);
-      addToManager(configChangeHandlerManager, reject(), NODE_METADATA_DIR);
-
       // initialize the config handlers that need do to something at startup
       loggerOverrideConfigChangeHandler.init();
     }
 
     NomadPermissionChangeProcessor permissions = find(platformConfiguration, NomadPermissionChangeProcessor.class);
     if (permissions != null) {
-      //permissions.addCheck(...);
+      permissions.addCheck(new DisallowSettingChanges());
     }
 
     return true;

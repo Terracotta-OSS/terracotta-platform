@@ -258,16 +258,16 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void metadata_dir_cannot_be_changed() throws Exception {
+  public void immutable_settings_after_activation() throws Exception {
     // TDB-5092
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "metadata-dir=foo"),
-        containsOutput("Reason: 'set metadata-dir=foo': Setting 'metadata-dir' cannot be changed once a node is activated"));
+        containsOutput("Reason: Error when applying setting change: 'set metadata-dir=foo': Setting 'metadata-dir' cannot be changed once a node is activated"));
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.metadata-dir=foo"),
-        containsOutput("Reason: 'set metadata-dir=foo (stripe ID: 1)': Setting 'metadata-dir' cannot be changed once a node is activated"));
+        containsOutput("Reason: Error when applying setting change: 'set metadata-dir=foo (stripe ID: 1)': Setting 'metadata-dir' cannot be changed once a node is activated"));
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir=foo"),
-        containsOutput("Reason: 'set metadata-dir=foo (stripe ID: 1, node: node-1-1)': Setting 'metadata-dir' cannot be changed once a node is activated"));
+        containsOutput("Reason: Error when applying setting change: 'set metadata-dir=foo (stripe ID: 1, node: node-1-1)': Setting 'metadata-dir' cannot be changed once a node is activated"));
   }
 }
