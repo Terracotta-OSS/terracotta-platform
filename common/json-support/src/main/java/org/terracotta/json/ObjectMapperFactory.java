@@ -21,8 +21,6 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +34,6 @@ import static java.util.Collections.emptyList;
  * @author Mathieu Carbou
  */
 public class ObjectMapperFactory {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ObjectMapperFactory.class);
 
   private final boolean pretty;
   private final List<Module> modules;
