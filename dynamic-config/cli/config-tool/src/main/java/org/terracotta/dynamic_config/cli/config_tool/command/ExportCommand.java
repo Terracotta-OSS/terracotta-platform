@@ -21,7 +21,6 @@ import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.PathConverter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
@@ -101,8 +100,7 @@ public class ExportCommand extends RemoteCommand {
     switch (outputFormat) {
       case JSON:
         try {
-          return objectMapperFactory.create()
-              .configure(SerializationFeature.INDENT_OUTPUT, true)
+          return objectMapperFactory.pretty().create()
               // shows optional values that are unset
               .setSerializationInclusion(JsonInclude.Include.ALWAYS)
               .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)

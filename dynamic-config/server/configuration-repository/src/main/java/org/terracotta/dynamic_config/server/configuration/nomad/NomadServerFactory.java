@@ -15,6 +15,8 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad;
 
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
@@ -55,7 +57,15 @@ public class NomadServerFactory {
                                                          DynamicConfigListener listener) throws SanskritException, NomadException {
 
     FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(configurationManager.getChangesPath());
-    ObjectMapper objectMapper = objectMapperFactory.create();
+
+    // Creates a json mapper with indentation for human readability, but forcing all EOL to be LF like Sanskrit
+    // The sanskrit files should be portable from Lin to Win and still work.
+    ObjectMapper objectMapper = objectMapperFactory.pretty().create();
+    DefaultIndenter indent = new DefaultIndenter("  ", "\n");
+    objectMapper.writer(new DefaultPrettyPrinter()
+        .withObjectIndenter(indent)
+        .withArrayIndenter(indent));
+
     Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapper);
 
     InitialConfigStorage<NodeContext> configStorage = new InitialConfigStorage<>(new ConfigStorageAdapter<NodeContext>(new FileConfigStorage(configurationManager.getClusterPath(), nodeName)) {
