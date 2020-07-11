@@ -18,8 +18,11 @@ package org.terracotta.dynamic_config.server.configuration.nomad;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ClusterConfigFilename;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageAdapter;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.DefaultHashComputer;
@@ -43,7 +46,10 @@ import org.terracotta.persistence.sanskrit.Sanskrit;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
+import java.nio.file.Path;
+
 public class NomadServerFactory {
+  private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerFactory.class);
 
   private final ObjectMapperFactory objectMapperFactory;
 
@@ -68,7 +74,8 @@ public class NomadServerFactory {
 
     Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapper);
 
-    InitialConfigStorage<NodeContext> configStorage = new InitialConfigStorage<>(new ConfigStorageAdapter<NodeContext>(new FileConfigStorage(configurationManager.getClusterPath(), nodeName)) {
+    Path clusterDir = configurationManager.getClusterPath();
+    InitialConfigStorage<NodeContext> configStorage = new InitialConfigStorage<>(new ConfigStorageAdapter<NodeContext>(new FileConfigStorage(clusterDir, nodeName)) {
       @Override
       public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
         super.saveConfig(version, config);
@@ -77,6 +84,11 @@ public class NomadServerFactory {
     });
 
     SanskritNomadServerState<NodeContext> serverState = new SanskritNomadServerState<>(sanskrit, configStorage, new DefaultHashComputer(objectMapper));
+    long currentVersion = serverState.getCurrentVersion();
+    if (currentVersion != 0) {
+      String filename = ClusterConfigFilename.with(nodeName, currentVersion).getFilename();
+      LOGGER.info("Loading version: {} of saved configuration from: {}", currentVersion, clusterDir.resolve(filename));
+    }
 
     return new SingleThreadedNomadServer<>(new UpgradableNomadServerAdapter<NodeContext>(new NomadServerImpl<>(serverState, changeApplicator)) {
       @Override
