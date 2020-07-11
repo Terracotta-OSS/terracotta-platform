@@ -15,16 +15,13 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.server.ServerEnv;
 
 import java.nio.file.Path;
 import java.util.Optional;
 
 public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigRepoCommandLineProcessor.class);
-
   private final Options options;
   private final CommandLineProcessor nextStarter;
   private final ConfigurationGeneratorVisitor configurationGeneratorVisitor;
@@ -42,12 +39,14 @@ public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
     Path configPath = configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(options.getNodeConfigDir());
     Optional<String> nodeName = configurationGeneratorVisitor.findNodeName(configPath, parameterSubstitutor);
     if (nodeName.isPresent()) {
+      ServerEnv.getServer().console("Found configuration directory at: {}. Other parameters will be ignored",
+          parameterSubstitutor.substitute(configPath));
       configurationGeneratorVisitor.startUsingConfigRepo(configPath, nodeName.get(), options.wantsRepairMode());
       return;
     }
 
-    LOGGER.info("Did not find configuration directory at: " + parameterSubstitutor.substitute(configPath));
     // Couldn't start node - pass the responsibility to the next starter
+    ServerEnv.getServer().console("Did not find configuration directory at: {}", parameterSubstitutor.substitute(configPath));
     nextStarter.process();
   }
 }

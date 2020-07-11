@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -33,6 +31,7 @@ import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
+import org.terracotta.server.ServerEnv;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -56,11 +55,8 @@ import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PORT;
-import org.terracotta.server.ServerEnv;
 
 public class ConfigurationGeneratorVisitor {
-  private static final Logger logger = LoggerFactory.getLogger(ConfigurationGeneratorVisitor.class);
-
   private final IParameterSubstitutor parameterSubstitutor;
   private final NomadServerManager nomadServerManager;
   private final ClassLoader classLoader;
@@ -116,7 +112,7 @@ public class ConfigurationGeneratorVisitor {
 
   void startUnconfigured(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {
     String nodeName = nodeContext.getNodeName();
-    logger.info("Starting unconfigured node: {}", nodeName);
+    ServerEnv.getServer().console("Starting unconfigured node: {}", nodeName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
@@ -134,9 +130,9 @@ public class ConfigurationGeneratorVisitor {
     }
 
     String nodeName = nodeContext.getNodeName();
-    logger.info("Starting node: {} in cluster: {}", nodeName, nodeContext.getCluster().getName());
+    ServerEnv.getServer().console("Starting node: {} in cluster: {}", nodeName, nodeContext.getCluster().getName());
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirectoryFromCLI);
-    logger.debug("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
+    ServerEnv.getServer().console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
@@ -160,7 +156,7 @@ public class ConfigurationGeneratorVisitor {
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the TcConfig created will be stripped to make platform think this node is alone
-      logger.warn(lineSeparator() + lineSeparator()
+      ServerEnv.getServer().console(lineSeparator() + lineSeparator()
           + "=================================================================================================================" + lineSeparator()
           + "Node is starting in repair mode. This mode is used to manually repair a broken configuration on a node.      " + lineSeparator()
           + "No further configuration change can happen on the cluster while this node is in repair mode and not repaired." + lineSeparator()
@@ -196,10 +192,10 @@ public class ConfigurationGeneratorVisitor {
     Node node;
     // See if we find a match for a node based on the specified logParams. If not, we see if the config file contains just one node
     if (!isHostnameSpecified && !isPortSpecified && allNodes.size() == 1) {
-      logger.info("Found only one node information in config file: {}", configFilePath);
+      ServerEnv.getServer().console("Found only one node information in config file: {}", configFilePath);
       node = allNodes.iterator().next();
     } else if (matchingNode.isPresent()) {
-      logger.info(log("Found matching node entry", configFilePath, logParams));
+      ServerEnv.getServer().console(log("Found matching node entry", configFilePath, logParams));
       node = matchingNode.get();
     } else {
       throw new IllegalArgumentException(log("Did not find a matching node entry", configFilePath, logParams));
@@ -219,7 +215,7 @@ public class ConfigurationGeneratorVisitor {
     HashMap<String, String> logParams = new HashMap<>();
     logParams.put(NODE_NAME, specifiedNodeName);
     if (matchingNodes.size() == 1) {
-      logger.info(log("Found matching node entry", configFilePath, logParams));
+      ServerEnv.getServer().console(log("Found matching node entry", configFilePath, logParams));
       return matchingNodes.get(0);
     } else if (matchingNodes.size() > 1) {
       throw new IllegalArgumentException(log("Found multiple matching node entries", configFilePath, logParams));
@@ -253,7 +249,6 @@ public class ConfigurationGeneratorVisitor {
       nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
       failureRecorder.reThrow();
     }
-    logger.debug("Nomad activation run successful");
   }
 
   private String read(String path) {

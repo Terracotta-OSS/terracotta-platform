@@ -150,7 +150,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidHostname() {
     try {
-      startNode(1, 1, "--hostname=:::", "-r", getNodeConfigDir(1, 1).toString());
+      startNode(1, 1, "-y", "availability", "--hostname=:::", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
       waitUntil(out.getLog(1, 1), containsLog("<address> specified in hostname=<address> must be a valid hostname or IP address"));
