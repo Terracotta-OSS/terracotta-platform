@@ -243,6 +243,10 @@ public class Options {
     }
   }
 
+  public String getFailoverPriority() {
+    return failoverPriority;
+  }
+
   public String getNodeHostname() {
     return nodeHostname;
   }
