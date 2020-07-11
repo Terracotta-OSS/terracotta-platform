@@ -26,11 +26,18 @@ public abstract class Command implements Runnable {
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  @Parameter(names = {"-h", "--help"}, description = "Help", help = true)
+  @Parameter(names = "-help", description = "Help", help = true)
   private boolean help;
+
+  @Parameter(names = {"-h", "-deprecated-help"}, description = "Deprecated help", help = true)
+  private boolean deprecatedHelp;
 
   public boolean isHelp() {
     return help;
+  }
+
+  public boolean isDeprecatedHelp() {
+    return deprecatedHelp;
   }
 
   /**

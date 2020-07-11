@@ -19,6 +19,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
@@ -42,10 +44,12 @@ import static java.util.stream.Collectors.toSet;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "diagnostic", commandDescription = "Diagnose a cluster configuration")
-@Usage("diagnostic -s <hostname[:port]>")
+@DeprecatedUsage("diagnostic -s <hostname[:port]>")
+@Usage("diagnostic -connect-to <hostname[:port]>")
 public class DiagnosticCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
+  @DeprecatedParameter(names = "-s", description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
+  @Parameter(names = "-connect-to", description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
   @Override

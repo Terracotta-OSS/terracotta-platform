@@ -20,6 +20,7 @@ import com.beust.jcommander.ParameterException;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
 import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
@@ -33,10 +34,12 @@ import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 
 public abstract class ConfigurationCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
+  @DeprecatedParameter(names = "-s", description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
+  @Parameter(names = "-connect-to", description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
+  @DeprecatedParameter(names = "-c", description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
+  @Parameter(names = "-setting", description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
   List<Configuration> configurations;
 
   protected final Operation operation;

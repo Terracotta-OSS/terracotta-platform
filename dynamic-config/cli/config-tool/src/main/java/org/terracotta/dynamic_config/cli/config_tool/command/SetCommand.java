@@ -19,6 +19,7 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
 
 import java.net.InetSocketAddress;
@@ -31,7 +32,8 @@ import static java.util.Optional.empty;
 import static org.terracotta.dynamic_config.api.model.Setting.LICENSE_FILE;
 
 @Parameters(commandNames = "set", commandDescription = "Set configuration properties")
-@Usage("set -s <hostname[:port]> -c <[namespace:]property=value>,<[namespace:]property=value>...")
+@DeprecatedUsage("set -s <hostname[:port]> -c <[namespace:]property=value>,<[namespace:]property=value>...")
+@Usage("set -connect-to <hostname[:port]> -setting <[namespace:]setting=value>,<[namespace:]setting=value>...")
 public class SetCommand extends ConfigurationMutationCommand {
 
   private Path licenseFile;

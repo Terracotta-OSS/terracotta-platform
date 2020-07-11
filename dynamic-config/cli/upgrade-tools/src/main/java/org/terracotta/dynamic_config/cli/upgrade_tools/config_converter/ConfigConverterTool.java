@@ -71,6 +71,13 @@ public class ConfigConverterTool {
         jCommander.printUsage();
         return true;
       }
+
+      // check for deprecated help
+      if (command.isDeprecatedHelp()) {
+        jCommander.printDeprecatedUsage();
+        return true;
+      }
+
       // validate the real command
       command.validate();
       // run the real command

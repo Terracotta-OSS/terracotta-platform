@@ -20,6 +20,8 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverter;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigPropertiesProcessor;
@@ -40,24 +42,32 @@ import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.C
 import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat.PROPERTIES;
 
 @Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration directory format")
-@Usage("convert -c <tc-config>,<tc-config>... ( -t directory [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
+@DeprecatedUsage("convert -c <tc-config>,<tc-config>... ( -t directory [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
+@Usage("convert -tc-config <tc-config>,<tc-config>... ( -conversion-type directory [-license-file <license-file>] -cluster-name <new-cluster-name>" +
+    " | -conversion-type properties [-cluster-name <new-cluster-name>]) [-destination-dir <destination-dir>] [-f]")
 public class ConvertCommand extends Command {
-  @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
+  @DeprecatedParameter(names = "-c", required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
+  @Parameter(names = "-tc-config", required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
   private List<Path> tcConfigFiles;
 
-  @Parameter(names = {"-l"}, description = "Path to license file", converter = PathConverter.class)
+  @DeprecatedParameter(names = "-l", description = "Path to license file", converter = PathConverter.class)
+  @Parameter(names = "-license-file", description = "Path to license file", converter = PathConverter.class)
   private Path licensePath;
 
-  @Parameter(names = {"-d"}, description = "Destination directory to store converted config. Should not exist. Default: ${current-directory}/converted-configs", converter = PathConverter.class)
+  @DeprecatedParameter(names = "-d", description = "Destination directory to store converted config. Should not exist. Default: ${CURRENT_DIR}/converted-configs", converter = PathConverter.class)
+  @Parameter(names = "-destination-dir", description = "Destination directory to store converted config. Should not exist. Default: ${CURRENT_DIR}/converted-configs", converter = PathConverter.class)
   private Path destinationDir = Paths.get(".").resolve("converted-configs");
 
-  @Parameter(names = {"-n"}, description = "New cluster name")
+  @DeprecatedParameter(names = "-n", description = "New cluster name")
+  @Parameter(names = "-cluster-name", description = "New cluster name")
   private String newClusterName;
 
-  @Parameter(names = {"-t"}, description = "Conversion type (directory|properties). Default: directory", converter = ConversionFormat.FormatConverter.class)
+  @DeprecatedParameter(names = "-t", description = "Conversion type (directory|properties). Default: directory", converter = ConversionFormat.FormatConverter.class)
+  @Parameter(names = "-conversion-type", description = "Conversion type (directory|properties). Default: directory", converter = ConversionFormat.FormatConverter.class)
   private ConversionFormat conversionFormat = DIRECTORY;
 
-  @Parameter(names = {"-f"}, description = "Force a config conversion, ignoring warnings, if any. Default: false")
+  @DeprecatedParameter(names = "-f", description = "Force a config conversion, ignoring warnings, if any. Default: false")
+  @Parameter(names = "-force", description = "Force a config conversion, ignoring warnings, if any. Default: false")
   private boolean force;
 
   @Override

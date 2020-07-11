@@ -21,6 +21,7 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
@@ -41,16 +42,17 @@ import static java.lang.System.lineSeparator;
  * @author Mathieu Carbou
  */
 public abstract class TopologyCommand extends RemoteCommand {
-  @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = OperationType.TypeConverter.class)
+  @DeprecatedParameter(names = "-t", description = "Determine if the sources are nodes or stripes. Default: node", converter = OperationType.TypeConverter.class)
   protected OperationType operationType = OperationType.NODE;
 
-  @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
+  @DeprecatedParameter(names = "-d", description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress destination;
 
-  @Parameter(required = true, names = {"-s"}, description = "Source node or stripe", converter = InetSocketAddressConverter.class)
+  @DeprecatedParameter(names = "-s", description = "Source node or stripe", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress source;
 
-  @Parameter(names = {"-f"}, description = "Force the operation")
+  @DeprecatedParameter(names = "-f", description = "Force the operation")
+  @Parameter(names = "-force", description = "Force the operation")
   protected boolean force;
 
   @Inject public ObjectMapperFactory objectMapperFactory;

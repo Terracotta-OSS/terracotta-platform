@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
@@ -28,7 +29,10 @@ import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterConfigMismatchException;
 import org.terracotta.dynamic_config.api.service.MutualClusterValidator;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
 
@@ -47,13 +51,29 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "attach", commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
-@Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
+@DeprecatedUsage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
+@Usage("attach (-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>)" +
+    "[-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>] [-force]")
 public class AttachCommand extends TopologyCommand {
 
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  @Parameter(names = "-to-cluster", description = "Destination cluster", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress toCluster;
+
+  @Parameter(names = "-to-stripe", description = "Destination stripe", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress toStripe;
+
+  @Parameter(names = "-stripe", description = "Source stripe", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress sourceStripe;
+
+  @Parameter(names = "-node", description = "Source node", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress sourceNode;
+
+  @DeprecatedParameter(names = "-W", description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  @Parameter(names = "-restart-wait-time", description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
+  @DeprecatedParameter(names = "-D", description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
+  @Parameter(names = "-restart-delay", description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   // list of new nodes to add with their backup topology
@@ -63,6 +83,24 @@ public class AttachCommand extends TopologyCommand {
 
   @Override
   public void validate() {
+    if (toCluster != null && toStripe != null) {
+      throw new ParameterException("-to-cluster and -to-stripe cannot be specified together");
+    }
+    if (sourceStripe != null && sourceNode != null) {
+      throw new ParameterException("-node and -stripe cannot be specified together");
+    }
+    if (toCluster != null && sourceNode != null) {
+      throw new ParameterException("-to-cluster and -node cannot be specified together");
+    }
+    if (toStripe != null && sourceNode != null) {
+      throw new ParameterException("-to-stripe and -stripe cannot be specified together");
+    }
+
+    // Translate the new options to the deprecated options
+    destination = toCluster != null ? toCluster : toStripe;
+    source = sourceNode != null ? sourceNode : sourceStripe;
+    operationType = toCluster != null ? STRIPE : NODE;
+
     super.validate();
 
     sourceCluster = getUpcomingCluster(source);

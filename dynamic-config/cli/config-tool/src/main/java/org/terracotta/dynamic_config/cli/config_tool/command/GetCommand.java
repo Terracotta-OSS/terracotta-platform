@@ -21,16 +21,20 @@ import com.beust.jcommander.converters.BooleanConverter;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
 
 import java.util.Map;
 import java.util.TreeMap;
 
 @Parameters(commandNames = "get", commandDescription = "Read configuration properties")
-@Usage("get -s <hostname[:port]> [-r] -c <[namespace:]property>,<[namespace:]property>...")
+@DeprecatedUsage("get -s <hostname[:port]> [-r] -c <[namespace:]property>,<[namespace:]property>...")
+@Usage("get -connect-to <hostname[:port]> [-runtime] -setting <[namespace:]setting>,<[namespace:]setting>...")
 public class GetCommand extends ConfigurationCommand {
 
-  @Parameter(names = {"-r"}, description = "Read the properties from the current runtime configuration instead of reading them from the last configuration saved on disk", converter = BooleanConverter.class)
+  @DeprecatedParameter(names = "-r", description = "Read the runtime configuration instead of the last configuration saved on disk", converter = BooleanConverter.class)
+  @Parameter(names = "-runtime", description = "Read the runtime configuration instead of the last configuration saved on disk", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
   public GetCommand() {

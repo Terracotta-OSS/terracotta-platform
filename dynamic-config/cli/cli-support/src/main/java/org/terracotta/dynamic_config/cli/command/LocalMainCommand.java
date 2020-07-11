@@ -30,7 +30,8 @@ import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 public class LocalMainCommand extends Command {
   public static final String NAME = "main";
 
-  @Parameter(names = {"-v", "--verbose"}, description = "Verbose mode. Default: false")
+  @DeprecatedParameter(names = {"-v", "--verbose"}, description = "Verbose mode. Default: false")
+  @Parameter(names = "-verbose", description = "Verbose mode. Default: false")
   private boolean verbose = false;
 
   @Override

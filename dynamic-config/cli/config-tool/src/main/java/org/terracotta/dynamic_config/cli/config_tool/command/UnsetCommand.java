@@ -17,13 +17,15 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
 
 /**
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "unset", commandDescription = "Unset configuration properties")
-@Usage("unset -s <hostname[:port]> -c <[namespace:]property>,<[namespace:]property>...")
+@DeprecatedUsage("unset -s <hostname[:port]> -c <[namespace:]property>,<[namespace:]property>...")
+@Usage("unset -connect-to <hostname[:port]> -setting <[namespace:]setting>,<[namespace:]setting>...")
 public class UnsetCommand extends ConfigurationMutationCommand {
   public UnsetCommand() {
     super(Operation.UNSET);

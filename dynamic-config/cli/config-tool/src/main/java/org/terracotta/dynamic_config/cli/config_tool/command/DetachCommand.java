@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
@@ -25,7 +26,10 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
@@ -42,19 +46,53 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
+@DeprecatedUsage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
+@Usage("detach (-from-cluster <hostname[:port]> -stripe <hostname[:port]> | -from-stripe <hostname[:port]> -node <hostname[:port]>)" +
+    " [-force] [-stop-wait-time <stop-wait-time>] [-stop-delay <stop-delay>]")
 public class DetachCommand extends TopologyCommand {
 
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to stop. Default: 60s", converter = TimeUnitConverter.class)
+  @Parameter(names = "-from-cluster", description = "Cluster to detach the stripe from", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress destCluster;
+
+  @Parameter(names = "-from-stripe", description = "Stripe to detach the node from", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress destStripe;
+
+  @Parameter(names = "-stripe", description = "Stripe to detach", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress sourceStripe;
+
+  @Parameter(names = "-node", description = "Node to detach", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress sourceNode;
+
+  @DeprecatedParameter(names = "-W", description = "Maximum time to wait for the nodes to stop. Default: 60s", converter = TimeUnitConverter.class)
+  @Parameter(names = "-stop-wait-time", description = "Maximum time to wait for the nodes to stop. Default: 60s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> stopWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-D"}, description = "Delay before the server stops itself. Default: 2s", converter = TimeUnitConverter.class)
+  @DeprecatedParameter(names = "-D", description = "Delay before the server stops itself. Default: 2s", converter = TimeUnitConverter.class)
+  @Parameter(names = "-stop-delay", description = "Delay before the server stops itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> stopDelay = Measure.of(2, TimeUnit.SECONDS);
 
   private final Collection<InetSocketAddress> onlineNodesToRemove = new ArrayList<>(1);
 
   @Override
   public void validate() {
+    if (destCluster != null && destStripe != null) {
+      throw new ParameterException("-from-cluster and -from-stripe cannot be specified together");
+    }
+    if (sourceStripe != null && sourceNode != null) {
+      throw new ParameterException("-node and -stripe cannot be specified together");
+    }
+    if (destCluster != null && sourceNode != null) {
+      throw new ParameterException("-from-cluster and -node cannot be specified together");
+    }
+    if (destStripe != null && sourceNode != null) {
+      throw new ParameterException("-from-stripe and -stripe cannot be specified together");
+    }
+
+    // Translate the new options to the deprecated options
+    destination = destCluster != null ? destCluster : destStripe;
+    source = sourceNode != null ? sourceNode : sourceStripe;
+    operationType = destCluster != null ? STRIPE : NODE;
+
     super.validate();
 
     if (destinationCluster.getNodeCount() == 1) {

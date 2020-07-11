@@ -123,21 +123,27 @@ public class ConfigTool {
         stopService, objectMapperFactory, nomadEntityProvider);
 
     jCommander.getAskedCommand().map(command -> {
-      // check for help
-      if (command.isHelp()) {
-        jCommander.printUsage();
-        return true;
-      }
-      // validate the real command
+      if (showHelp(command, jCommander)) return true;
+
       command.validate();
-      // run the real command
       command.run();
       return true;
     }).orElseGet(() -> {
       // If no command is provided, process help command
-      jCommander.usage();
+      showHelp(mainCommand, jCommander);
       return false;
     });
+  }
+
+  private static boolean showHelp(Command command, CustomJCommander jCommander) {
+    if (command.isDeprecatedHelp()) {
+      jCommander.printDeprecatedUsage();
+      return true;
+    } else if (command.isHelp()) {
+      jCommander.usage();
+      return true;
+    }
+    return false;
   }
 
   private static CustomJCommander parseArguments(CommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
