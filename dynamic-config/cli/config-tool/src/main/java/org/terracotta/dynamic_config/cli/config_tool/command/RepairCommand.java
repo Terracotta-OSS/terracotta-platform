@@ -19,6 +19,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.converter.RepairAction;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
@@ -38,13 +40,16 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "repair", commandDescription = "Repair a cluster configuration")
-@Usage("repair -s <hostname[:port]> [-f commit|rollback|reset]")
+@DeprecatedUsage("repair -s <hostname[:port]> [-f commit|rollback|reset]")
+@Usage("repair -connect-to <hostname[:port]> [-force commit|rollback|reset]")
 public class RepairCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
+  @DeprecatedParameter(names = "-s", description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
+  @Parameter(names = "-connect-to", description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-f"}, description = "Repair action to force: commit, rollback, reset", converter = RepairAction.RepairActionConverter.class)
+  @DeprecatedParameter(names = "-f", description = "Repair action to force: commit, rollback, reset", converter = RepairAction.RepairActionConverter.class)
+  @Parameter(names = "-force", description = "Repair action to force: commit, rollback, reset", converter = RepairAction.RepairActionConverter.class)
   RepairAction forcedRepairAction;
 
   @Override

@@ -24,6 +24,8 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
@@ -38,28 +40,37 @@ import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
-@Usage("activate (-s <hostname[:port]> | -f <config-file>) [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
+@DeprecatedUsage("activate (-s <hostname[:port]> | -f <config-file>) [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
+@Usage("activate (-connect-to <hostname[:port]> | -config-file <config-file>) [-cluster-name <cluster-name>]" +
+    " [-license-file <license-file>] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>] [-restrict]")
 public class ActivateCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
+  @DeprecatedParameter(names = "-s", description = "Node to connect to", converter = InetSocketAddressConverter.class)
+  @Parameter(names = "-connect-to", description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-f"}, description = "Configuration properties file containing nodes to be activated", converter = PathConverter.class)
+  @DeprecatedParameter(names = "-f", description = "Configuration properties file containing nodes to be activated", converter = PathConverter.class)
+  @Parameter(names = "-config-file", description = "Configuration properties file containing nodes to be activated", converter = PathConverter.class)
   private Path configPropertiesFile;
 
-  @Parameter(names = {"-n"}, description = "Cluster name")
+  @DeprecatedParameter(names = "-n", description = "Cluster name")
+  @Parameter(names = "-cluster-name", description = "Cluster name")
   private String clusterName;
 
-  @Parameter(names = {"-l"}, description = "License file", converter = PathConverter.class)
+  @DeprecatedParameter(names = "-l", description = "License file", converter = PathConverter.class)
+  @Parameter(names = "-license-file", description = "License file", converter = PathConverter.class)
   private Path licenseFile;
 
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  @DeprecatedParameter(names = "-W", description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  @Parameter(names = "-restart-wait-time", description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
+  @DeprecatedParameter(names = "-D", description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
+  @Parameter(names = "-restart-delay", description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-R"}, description = "Restrict the activation process to the node only")
+  @DeprecatedParameter(names = "-R", description = "Restrict the activation process to the node only")
+  @Parameter(names = "-restrict", description = "Restrict the activation process to the node only")
   protected boolean restrictedActivation = false;
 
   private Cluster cluster;

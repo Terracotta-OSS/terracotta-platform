@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OutputFormat;
@@ -41,21 +43,26 @@ import java.util.Properties;
 import static java.lang.System.lineSeparator;
 
 @Parameters(commandNames = "export", commandDescription = "Export a cluster configuration")
-@Usage("export -s <hostname[:port]> [-f <config-file>] [-i] [-r]")
+@DeprecatedUsage("export -s <hostname[:port]> [-f <config-file>] [-i] [-r]")
+@Usage("export -connect-to <hostname[:port]> [-config-file <output-config-file>] [-include-defaults] [-runtime]")
 public class ExportCommand extends RemoteCommand {
-  @Parameter(names = {"-s"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
+  @DeprecatedParameter(names = "-s", required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
+  @Parameter(names = "-connect-to", required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-f"}, description = "Output configuration file", converter = PathConverter.class)
+  @DeprecatedParameter(names = "-f", description = "Output configuration file", converter = PathConverter.class)
+  @Parameter(names = "-config-file", description = "Output configuration file", converter = PathConverter.class)
   private Path outputFile;
 
-  @Parameter(names = {"-i"}, description = "Include default values. Default: false", converter = BooleanConverter.class)
+  @DeprecatedParameter(names = "-i", description = "Include default values. Default: false", converter = BooleanConverter.class)
+  @Parameter(names = "-include-defaults", description = "Include default values. Default: false", converter = BooleanConverter.class)
   private boolean includeDefaultValues;
 
-  @Parameter(names = {"-r"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
+  @DeprecatedParameter(names = "-r", description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
+  @Parameter(names = "-runtime", description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
-  @Parameter(names = {"-t"}, hidden = true, description = "Output type (properties|json). Default: properties", converter = OutputFormat.FormatConverter.class)
+  @Parameter(names = "-output-format", hidden = true, description = "Output type (properties|json). Default: properties", converter = OutputFormat.FormatConverter.class)
   private OutputFormat outputFormat = OutputFormat.PROPERTIES;
 
   @Inject public ObjectMapperFactory objectMapperFactory;

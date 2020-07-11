@@ -37,4 +37,12 @@ public class Metadata {
     }
     return "";
   }
+
+  public static String getDeprecatedUsage(Command command) {
+    DeprecatedUsage annotation = command.getClass().getAnnotation(DeprecatedUsage.class);
+    if (annotation != null) {
+      return annotation.value();
+    }
+    return "";
+  }
 }

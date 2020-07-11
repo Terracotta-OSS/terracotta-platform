@@ -23,6 +23,8 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.cli.command.DeprecatedParameter;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
@@ -37,13 +39,16 @@ import static java.lang.System.lineSeparator;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "import", commandDescription = "Import a cluster configuration")
-@Usage("import -f <config-file> [-s <hostname[:port]>]")
+@DeprecatedUsage("import -f <config-file> [-s <hostname[:port]>]")
+@Usage("import -config-file <config-file> [-node <hostname[:port]>]")
 public class ImportCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
+  @DeprecatedParameter(names = "-s", description = "Node to connect to", converter = InetSocketAddressConverter.class)
+  @Parameter(names = "-node", description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
-  @Parameter(names = {"-f"}, description = "Configuration file", required = true, converter = PathConverter.class)
+  @DeprecatedParameter(names = "-f", description = "Configuration file", required = true, converter = PathConverter.class)
+  @Parameter(names = "-config-file", description = "Configuration file", required = true, converter = PathConverter.class)
   private Path configPropertiesFile;
 
   private Cluster cluster;

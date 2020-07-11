@@ -25,6 +25,7 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.CommandRepository;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
@@ -133,21 +134,27 @@ public class ConfigTool {
     commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, objectMapperFactory);
 
     jCommander.getAskedCommand().map(command -> {
-      // check for help
-      if (command.isHelp()) {
-        jCommander.printUsage();
-        return true;
-      }
-      // validate the real command
+      if (showHelp(command, jCommander)) return true;
+
       command.validate();
-      // run the real command
       command.run();
       return true;
     }).orElseGet(() -> {
       // If no command is provided, process help command
-      jCommander.usage();
+      showHelp(mainCommand, jCommander);
       return false;
     });
+  }
+
+  private static boolean showHelp(Command command, CustomJCommander jCommander) {
+    if (command.isDeprecatedHelp()) {
+      jCommander.printDeprecatedUsage();
+      return true;
+    } else if (command.isHelp()) {
+      jCommander.usage();
+      return true;
+    }
+    return false;
   }
 
   private static CustomJCommander parseArguments(CommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
