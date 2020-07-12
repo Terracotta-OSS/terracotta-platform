@@ -168,7 +168,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("nodeHostname", removedNode.getNodeHostname());
           data.put("nodeAddress", removedNode.getNodeAddress().toString());
           data.put("nodeInternalAddress", removedNode.getNodeInternalAddress().toString());
-          data.put("nodePublicAddress", removedNode.getNodePublicAddress().toString());
+          removedNode.getNodePublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_REMOVED", data));
         }
 
@@ -180,7 +180,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("nodeHostname", addedNode.getNodeHostname());
           data.put("nodeAddress", addedNode.getNodeAddress().toString());
           data.put("nodeInternalAddress", addedNode.getNodeInternalAddress().toString());
-          data.put("nodePublicAddress", addedNode.getNodePublicAddress().toString());
+          addedNode.getNodePublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
         }
       });
