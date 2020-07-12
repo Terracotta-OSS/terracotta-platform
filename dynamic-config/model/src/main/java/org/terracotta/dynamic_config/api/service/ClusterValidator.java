@@ -19,7 +19,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -55,18 +54,50 @@ public class ClusterValidator {
   }
 
   private void validateAddresses() {
+    checkDuplicateInternalAddresses();
+    validatePublicAddresses();
+    checkDuplicatePublicAddresses();
+  }
+
+  private void validatePublicAddresses() {
     cluster.getStripes()
         .stream()
-        .flatMap(s -> s.getNodes().stream().map(Node::getNodeAddress))
-        .collect(groupingBy(identity(), counting()))
+        .flatMap(s -> s.getNodes().stream())
+        .filter(node -> (node.getNodePublicHostname() != null && node.getNodePublicPort() == null) || (node.getNodePublicHostname() == null && node.getNodePublicPort() != null))
+        .findFirst()
+        .ifPresent(node -> {
+          throw new MalformedClusterException("Public address: '" + (node.getNodePublicHostname() + ":" + node.getNodePublicPort())
+              + "' of node with name: " + node.getNodeName() + " isn't well-formed. Public hostname and port need to be set together");
+        });
+  }
+
+  private void checkDuplicateInternalAddresses() {
+    cluster.getStripes()
+        .stream()
+        .flatMap(s -> s.getNodes().stream())
+        .collect(groupingBy(Node::getNodeInternalAddress, Collectors.toList()))
         .entrySet()
         .stream()
-        .filter(e -> e.getValue() > 1)
-        .map(Map.Entry::getKey)
-        .map(InetSocketAddress::toString)
-        .reduce((result, addr) -> result + ", " + addr)
-        .ifPresent(duplicates -> {
-          throw new MalformedClusterException("Duplicate node addresses found: " + duplicates);
+        .filter(e -> e.getValue().size() > 1)
+        .findAny()
+        .ifPresent(entry -> {
+          throw new MalformedClusterException("Nodes with names: " + entry.getValue().stream().map(Node::getNodeName).collect(Collectors.joining(", ")) +
+              " have the same address: '" + entry.getKey() + "'");
+        });
+  }
+
+  private void checkDuplicatePublicAddresses() {
+    cluster.getStripes()
+        .stream()
+        .flatMap(s -> s.getNodes().stream())
+        .collect(groupingBy(Node::getNodePublicAddress, Collectors.toList()))
+        .entrySet()
+        .stream()
+        .filter(e -> e.getKey().isPresent() && e.getValue().size() > 1)
+        .findAny()
+        .ifPresent(entry -> {
+          throw new MalformedClusterException("Nodes with names: " + entry.getValue().stream().map(Node::getNodeName).collect(Collectors.joining(", ")) +
+              " have the same public address: '" + entry.getKey().get() + "'");
         });
   }
 
