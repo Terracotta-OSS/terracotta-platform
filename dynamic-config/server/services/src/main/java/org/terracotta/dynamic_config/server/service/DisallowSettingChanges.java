@@ -24,6 +24,9 @@ import org.terracotta.nomad.server.NomadException;
 
 import java.util.EnumSet;
 
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
@@ -34,7 +37,15 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
  */
 class DisallowSettingChanges implements NomadPermissionChangeProcessor.Check {
 
-  private static final EnumSet<Setting> DISALLOWED = EnumSet.of(NODE_NAME, NODE_HOSTNAME, NODE_PORT, NODE_METADATA_DIR);
+  private static final EnumSet<Setting> DISALLOWED = EnumSet.of(
+      NODE_NAME,
+      NODE_HOSTNAME,
+      NODE_PORT,
+      NODE_BIND_ADDRESS,
+      NODE_GROUP_PORT,
+      NODE_GROUP_BIND_ADDRESS,
+      NODE_METADATA_DIR
+  );
 
   @Override
   public void check(NodeContext config, DynamicConfigNomadChange change) throws NomadException {

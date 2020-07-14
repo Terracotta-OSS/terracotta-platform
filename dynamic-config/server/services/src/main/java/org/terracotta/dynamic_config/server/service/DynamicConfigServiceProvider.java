@@ -47,9 +47,6 @@ import java.util.Collection;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
@@ -81,12 +78,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       // server attributes
       ConfigChangeHandler serverAttributeConfigChangeHandler = new ServerAttributeConfigChangeHandler();
       addToManager(configChangeHandlerManager, serverAttributeConfigChangeHandler, NODE_LOG_DIR);
-      addToManager(configChangeHandlerManager, serverAttributeConfigChangeHandler, NODE_BIND_ADDRESS);
-      addToManager(configChangeHandlerManager, serverAttributeConfigChangeHandler, NODE_GROUP_BIND_ADDRESS);
 
       // settings applied directly without any config handler but which require a restart
       addToManager(configChangeHandlerManager, accept(), FAILOVER_PRIORITY);
-      addToManager(configChangeHandlerManager, accept(), NODE_GROUP_PORT);
 
       // public hostname/port
       addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);
