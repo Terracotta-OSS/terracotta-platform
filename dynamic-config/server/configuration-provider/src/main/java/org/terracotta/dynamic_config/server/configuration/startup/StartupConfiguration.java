@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.text.PrettyPrintable;
+import com.tc.util.ManagedServiceLoader;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
@@ -32,6 +33,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
+import org.terracotta.dynamic_config.server.api.GroupPortMapper;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -71,6 +73,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
   private final ObjectMapper objectMapper;
+  private final GroupPortMapper groupPortMapper;
 
   StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory) {
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
@@ -80,6 +83,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
     this.objectMapper = objectMapperFactory.create();
+    this.groupPortMapper = ManagedServiceLoader.loadServices(GroupPortMapper.class, this.classLoader).stream().findFirst().get();
   }
 
   @Override
@@ -290,7 +294,9 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
       @Override
       public InetSocketAddress getGroupPort() {
-        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getNodeGroupBindAddress()), node.getNodeGroupPort());
+        Node currentNode = nodeContext.getNode();
+        int groupPort = groupPortMapper.getPeerGroupPort(node, currentNode);
+        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getNodeGroupBindAddress()), groupPort);
       }
 
       @Override
