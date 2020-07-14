@@ -144,7 +144,7 @@ public enum Setting {
       fromNode(Node::getNodeGroupPort),
       intoNode((node, value) -> node.setNodeGroupPort(Integer.parseInt(value))),
       of(GET, SET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_GROUP_PORT, tuple2(key, value))
@@ -156,7 +156,7 @@ public enum Setting {
       fromNode(Node::getNodeBindAddress),
       intoNode(Node::setNodeBindAddress),
       of(GET, SET, CONFIG),
-      of(ACTIVES_ONLINE, RESTART),
+      noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> ADDRESS_VALIDATOR.accept(SettingName.NODE_BIND_ADDRESS, tuple2(key, value))
@@ -168,7 +168,7 @@ public enum Setting {
       fromNode(Node::getNodeGroupBindAddress),
       intoNode(Node::setNodeGroupBindAddress),
       of(GET, SET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> ADDRESS_VALIDATOR.accept(SettingName.NODE_GROUP_BIND_ADDRESS, tuple2(key, value))

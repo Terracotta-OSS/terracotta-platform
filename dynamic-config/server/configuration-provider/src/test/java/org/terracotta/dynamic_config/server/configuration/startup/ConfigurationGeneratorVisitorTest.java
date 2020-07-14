@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -26,6 +27,8 @@ import org.terracotta.dynamic_config.server.configuration.service.ConfigChangeHa
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.dynamic_config.server.configuration.service.ParameterSubstitutor;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 import java.nio.file.Paths;
 
@@ -48,6 +51,11 @@ public class ConfigurationGeneratorVisitorTest {
       new ObjectMapperFactory());
 
   private static final String CONFIG_FILE = "/path/to/config-file";
+
+  @BeforeClass
+  public static void beforeClass() throws Exception {
+    ServerEnv.setDefaultServer(mock(Server.class));
+  }
 
   @Test
   public void testConfigFileContainsOneNode_noNodeHostPortSpecified() {

@@ -197,20 +197,23 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void setNodeBindAddress_postActivation() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "bind-address=127.0.0.1"),
-        containsOutput("restart of the cluster is required"));
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.bind-address=127.0.0.1"),
+        containsOutput("Setting 'bind-address' cannot be changed once a node is activated"));
+  }
 
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "bind-address"),
-        containsOutput("stripe.1.node.1.bind-address=127.0.0.1"));
+  @Test
+  public void setNodeGroupPort_postActivation() {
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port=1024"),
+        containsOutput("Setting 'group-port' cannot be changed once a node is activated"));
   }
 
   @Test
   public void setNodeGroupBindAddress_postActivation() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "group-bind-address=127.0.0.1"),
-        allOf(hasExitStatus(0), containsOutput("restart of the cluster is required")));
-
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "group-bind-address"),
-        containsOutput("stripe.1.node.1.group-bind-address=127.0.0.1"));
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-bind-address=127.0.0.1"),
+        containsOutput("Setting 'group-bind-address' cannot be changed once a node is activated"));
   }
 
   @Test
@@ -258,7 +261,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void immutable_settings_after_activation() throws Exception {
+  public void setNodeMetadataDir_postActivation() throws Exception {
     // TDB-5092
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "metadata-dir=foo"),
