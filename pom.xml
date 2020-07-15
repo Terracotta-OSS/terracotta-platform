@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.16</version>
+    <version>5.18</version>
   </parent>
 
   <artifactId>platform-root</artifactId>
@@ -428,28 +428,8 @@
     <repository>
       <id>terracotta-releases</id>
       <url>https://www.terracotta.org/download/reflector/releases</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
     </repository>
   </repositories>
-
-  <distributionManagement>
-    <repository>
-      <id>terracotta-os-releases</id>
-      <name>Terracotta OS Releases Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
-    </repository>
-    <snapshotRepository>
-      <id>terracotta-os-snapshots</id>
-      <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta OS Snapshots Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
 
   <scm>
     <connection>scm:git:https://github.com/Terracotta-OSS/terracotta-platform.git</connection>
