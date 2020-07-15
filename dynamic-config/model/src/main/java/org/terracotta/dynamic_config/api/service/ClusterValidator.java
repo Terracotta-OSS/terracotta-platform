@@ -19,10 +19,9 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
@@ -48,7 +47,7 @@ public class ClusterValidator {
   public void validate() throws MalformedClusterException {
     validateNodeName();
     validateAddresses();
-    validateServerSettings();
+    validateDataDirs();
     validateSecurityDir();
     validateFailoverSetting();
   }
@@ -123,13 +122,14 @@ public class ClusterValidator {
         });
   }
 
-  private void validateServerSettings() {
-    Collection<Object> settings = cluster.getNodes().stream()
-        .map((Function<? super Node, Object>) node -> node.getDataDirs().keySet())
+  private void validateDataDirs() {
+    Set<Set<String>> uniqueDataDirNames = cluster.getNodes().stream()
+        .map(node -> node.getDataDirs().keySet())
         .collect(Collectors.toSet());
-    if (settings.size() > 1) { // 0 means no node has the setting, 1 means all nodes have the same setting
-      String message = " If using -c option to add data dirs, use it multiple times to do for every node in cluster";
-      throw new MalformedClusterException("Data directory names need to match across the cluster, but found the following mismatches: " + settings + message);
+    if (uniqueDataDirNames.size() > 1) {
+      throw new MalformedClusterException("Data directory names need to match across the cluster," +
+          " but found the following mismatches: " + uniqueDataDirNames + ". " +
+          "Mutative operations on data dirs must be done simultaneously on every node in cluster");
     }
   }
 
