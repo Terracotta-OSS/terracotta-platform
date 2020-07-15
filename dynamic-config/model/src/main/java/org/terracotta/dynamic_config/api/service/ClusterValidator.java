@@ -19,6 +19,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
@@ -54,11 +56,25 @@ public class ClusterValidator {
 
   private void validateAddresses() {
     checkDuplicateInternalAddresses();
-    validatePublicAddresses();
+    checkPublicAddressContent();
     checkDuplicatePublicAddresses();
+    checkAllOrNoPublicAddresses();
   }
 
-  private void validatePublicAddresses() {
+  private void checkAllOrNoPublicAddresses() {
+    List<String> nodesWithNoPublicAddresses = cluster.getStripes()
+        .stream()
+        .flatMap(s -> s.getNodes().stream())
+        .filter(node -> !node.getNodePublicAddress().isPresent())
+        .map(Node::getNodeName)
+        .collect(toList());
+    if (nodesWithNoPublicAddresses.size() != 0 && nodesWithNoPublicAddresses.size() != cluster.getNodeCount()) {
+      throw new MalformedClusterException("Nodes with names: " + nodesWithNoPublicAddresses + " don't have public addresses " +
+          "defined, but other nodes in the cluster do. Public addresses, if configured, need to be defined on all nodes in the cluster");
+    }
+  }
+
+  private void checkPublicAddressContent() {
     cluster.getStripes()
         .stream()
         .flatMap(s -> s.getNodes().stream())
