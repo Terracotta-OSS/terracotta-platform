@@ -30,10 +30,11 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
 import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
-import org.terracotta.dynamic_config.server.service.handler.ServerAttributeConfigChangeHandler;
+import org.terracotta.dynamic_config.server.service.handler.NodeLogDirChangeHandler;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -65,6 +66,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     this.platformConfiguration = platformConfiguration;
 
+    IParameterSubstitutor parameterSubstitutor = platformConfiguration.getExtendedConfiguration(IParameterSubstitutor.class).iterator().next();
+    PathResolver pathResolver = platformConfiguration.getExtendedConfiguration(PathResolver.class).iterator().next();
+
     ConfigChangeHandlerManager configChangeHandlerManager = find(platformConfiguration, ConfigChangeHandlerManager.class);
     TopologyService topologyService = find(platformConfiguration, TopologyService.class);
 
@@ -75,9 +79,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
       ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler();
       addToManager(configChangeHandlerManager, clientReconnectWindowHandler, CLIENT_RECONNECT_WINDOW);
 
-      // server attributes
-      ConfigChangeHandler serverAttributeConfigChangeHandler = new ServerAttributeConfigChangeHandler();
-      addToManager(configChangeHandlerManager, serverAttributeConfigChangeHandler, NODE_LOG_DIR);
+      // log-dir
+      ConfigChangeHandler nodeLogDirChangeHandler = new NodeLogDirChangeHandler(parameterSubstitutor, pathResolver);
+      addToManager(configChangeHandlerManager, nodeLogDirChangeHandler, NODE_LOG_DIR);
 
       // settings applied directly without any config handler but which require a restart
       addToManager(configChangeHandlerManager, accept(), FAILOVER_PRIORITY);

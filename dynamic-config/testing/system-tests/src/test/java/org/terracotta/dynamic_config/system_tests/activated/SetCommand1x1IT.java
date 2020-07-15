@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.io.File;
+
 import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -63,7 +65,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setOffheapResources_addResources_sane_new_keys_and_lower_value() throws Exception {
+  public void setOffheapResources_addResources_sane_new_keys_and_lower_value() {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(),
             "-c", "offheap-resources.foo=1GB",
@@ -124,7 +126,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setDataDir_addMultipleNonExistentDataDirs_same_keys() throws Exception {
+  public void setDataDir_addMultipleNonExistentDataDirs_same_keys() {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(),
             "-c", "data-dirs.foo=user-data/main/stripe1-node1-data-dir-1",
@@ -187,37 +189,52 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setNodeLogDir_postActivation() {
+  public void setNodeLogDir() {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=logs/stripe1"),
         containsOutput("restart of the cluster is required"));
 
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),
         allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.log-dir=logs" + separator + "stripe1")));
+
+    // Restart node and verify that the change has taken effect
+    stopNode(1, 1);
+    startNode(1,1);
+
+    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-r", "-c", "log-dir"),
+        allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.log-dir=logs" + separator + "stripe1")));
   }
 
   @Test
-  public void setNodeBindAddress_postActivation() {
+  public void setNodeLogDir_pathAtDestinationIsAFile() throws Exception {
+    File toUpload = new File(SetCommand1x1IT.class.getResource("/dummy.txt").toURI());
+    angela.tsa().browse(getNode(1, 1), ".").upload(toUpload);
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=dummy.txt"),
+        allOf(not(hasExitStatus(0)), containsOutput("FileAlreadyExistsException")));
+  }
+
+  @Test
+  public void setNodeBindAddress() {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.bind-address=127.0.0.1"),
         containsOutput("Setting 'bind-address' cannot be changed once a node is activated"));
   }
 
   @Test
-  public void setNodeGroupPort_postActivation() {
+  public void setNodeGroupPort() {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port=1024"),
         containsOutput("Setting 'group-port' cannot be changed once a node is activated"));
   }
 
   @Test
-  public void setNodeGroupBindAddress_postActivation() {
+  public void setNodeGroupBindAddress() {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-bind-address=127.0.0.1"),
         containsOutput("Setting 'group-bind-address' cannot be changed once a node is activated"));
   }
 
   @Test
-  public void testTcProperty_postActivation() {
+  public void testTcProperty() {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo=bar"),
         allOf(hasExitStatus(0), containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
 
@@ -261,7 +278,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setNodeMetadataDir_postActivation() throws Exception {
+  public void setNodeMetadataDir() {
     // TDB-5092
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "metadata-dir=foo"),
