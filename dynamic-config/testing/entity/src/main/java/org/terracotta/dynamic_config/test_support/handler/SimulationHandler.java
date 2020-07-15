@@ -48,7 +48,7 @@ public class SimulationHandler implements ConfigChangeHandler {
     LOGGER.info("Received: {}", change);
 
     if (change.getValue() == null) {
-      throw new InvalidConfigChangeException("Invalid change: " + change);
+      throw new InvalidConfigChangeException("Operation not supported: " + change);
     }
 
     if ("TRACE".equals(change.getValue())) {

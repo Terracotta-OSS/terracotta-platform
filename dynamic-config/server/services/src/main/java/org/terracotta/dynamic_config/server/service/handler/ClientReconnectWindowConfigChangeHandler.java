@@ -28,7 +28,7 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
   @Override
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
-      throw new InvalidConfigChangeException("Invalid change: " + change);
+      throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
 
     try {
