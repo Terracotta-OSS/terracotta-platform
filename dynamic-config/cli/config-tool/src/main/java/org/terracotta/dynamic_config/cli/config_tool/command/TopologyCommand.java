@@ -19,7 +19,7 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
@@ -117,7 +117,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     // This is done in the DynamicConfigService#setUpcomingCluster() method
 
     if (destinationClusterActivated) {
-      NodeNomadChange nomadChange = buildNomadChange(result);
+      TopologyNomadChange nomadChange = buildNomadChange(result);
       licenseValidation(destination, nomadChange.getCluster());
       onNomadChangeReady(nomadChange);
       logger.info("Sending the topology change");
@@ -182,13 +182,13 @@ public abstract class TopologyCommand extends RemoteCommand {
     }
   }
 
-  protected void onNomadChangeReady(NodeNomadChange nomadChange) {
+  protected void onNomadChangeReady(TopologyNomadChange nomadChange) {
   }
 
-  protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
+  protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
   }
 
-  protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
+  protected void onNomadChangeFailure(TopologyNomadChange nomadChange, RuntimeException error) {
     throw error;
   }
 
@@ -196,5 +196,5 @@ public abstract class TopologyCommand extends RemoteCommand {
 
   protected abstract Cluster updateTopology();
 
-  protected abstract NodeNomadChange buildNomadChange(Cluster result);
+  protected abstract TopologyNomadChange buildNomadChange(Cluster result);
 }

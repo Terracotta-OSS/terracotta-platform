@@ -28,7 +28,7 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -123,7 +123,7 @@ public class NomadManager<T> {
     }
   }
 
-  public void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, NodeNomadChange change, ChangeResultReceiver<T> results) {
+  public void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, TopologyNomadChange change, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to apply topology change: {} on cluster {}", change, destinationCluster);
     checkServerStates(onlineNodes);
     try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {

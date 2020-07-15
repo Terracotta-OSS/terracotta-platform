@@ -30,6 +30,7 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
@@ -37,6 +38,8 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.inet.json.InetJsonModule;
 import org.terracotta.json.TerracottaJsonModule;
 import org.terracotta.nomad.json.NomadJsonModule;
@@ -61,7 +64,9 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
         new NamedType(NodeAdditionNomadChange.class, "NodeAdditionNomadChange"),
         new NamedType(ClusterActivationNomadChange.class, "ClusterActivationNomadChange"),
         new NamedType(NodeRemovalNomadChange.class, "NodeRemovalNomadChange"),
-        new NamedType(SettingNomadChange.class, "SettingNomadChange"));
+        new NamedType(SettingNomadChange.class, "SettingNomadChange"),
+        new NamedType(StripeAdditionNomadChange.class, "StripeAdditionNomadChange"),
+        new NamedType(StripeRemovalNomadChange.class, "StripeRemovalNomadChange"));
 
     setMixInAnnotation(NodeNomadChange.class, NodeNomadChangeMixin.class);
     setMixInAnnotation(Applicability.class, ApplicabilityMixin.class);
@@ -70,6 +75,8 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     setMixInAnnotation(NodeAdditionNomadChange.class, NodeAdditionNomadChangeMixin.class);
     setMixInAnnotation(NodeRemovalNomadChange.class, NodeRemovalNomadChangeMixin.class);
     setMixInAnnotation(SettingNomadChange.class, SettingNomadChangeMixin.class);
+    setMixInAnnotation(StripeAdditionNomadChange.class, StripeAdditionNomadChangeMixin.class);
+    setMixInAnnotation(StripeRemovalNomadChange.class, StripeRemovalNomadChangeMixin.class);
   }
 
   @Override
@@ -157,6 +164,22 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
                                       @JsonProperty(value = "name") String name,
                                       @JsonProperty(value = "value") String value) {
       super(applicability, operation, setting, name, value);
+    }
+  }
+
+  public static class StripeAdditionNomadChangeMixin extends StripeAdditionNomadChange {
+    @JsonCreator
+    public StripeAdditionNomadChangeMixin(@JsonProperty(value = "cluster", required = true) Cluster cluster,
+                                         @JsonProperty(value = "stripe", required = true) Stripe stripe) {
+      super(cluster, stripe);
+    }
+  }
+
+  public static class StripeRemovalNomadChangeMixin extends StripeRemovalNomadChange {
+    @JsonCreator
+    public StripeRemovalNomadChangeMixin(@JsonProperty(value = "cluster", required = true) Cluster cluster,
+                                         @JsonProperty(value = "stripe", required = true) Stripe stripe) {
+      super(cluster, stripe);
     }
   }
 }
