@@ -51,11 +51,10 @@ public class SetCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testNode_setDataDirs_postActivationFails() throws Exception {
+  public void testNode_setDataDirs_postActivationFails() {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(),
         "-c", "stripe.1.node.1.data-dirs.foo=foo/node-1-1"),
-        containsOutput("Data directory names need to match across the cluster, but found the following mismatches: [[main], [main, foo]] " +
-            "If using -c option to add data dirs, use it multiple times to do for every node in cluster"));
+        containsOutput("Data directory names need to match across the cluster, but found the following mismatches: [[main], [main, foo]]"));
   }
 
   @Test
