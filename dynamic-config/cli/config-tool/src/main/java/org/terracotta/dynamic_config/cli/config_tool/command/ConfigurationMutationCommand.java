@@ -79,7 +79,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       ensureActivesAreAllOnline(originalCluster, onlineNodes);
       logger.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodes.keySet()));
       MultiSettingNomadChange changes = getNomadChanges(updatedCluster);
-      runConfigurationChange(onlineNodes, changes);
+      runConfigurationChange(updatedCluster, onlineNodes, changes);
 
       // do we need to restart to apply the changes ?
       if (mustBeRestarted(node)) {

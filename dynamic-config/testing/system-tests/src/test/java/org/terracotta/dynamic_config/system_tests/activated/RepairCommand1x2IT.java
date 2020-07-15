@@ -55,9 +55,16 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
 
+    // triggers a failure during Nomad commit phase on all servers
+    // active entity will return the failure to the nomad client (commit phase done through entity)
+    // passive entity will fail and restart
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         containsOutput("Commit failed for node"));
+
+    waitForPassiveReplication(1, passiveId);
+
+    waitForPassive(1, passiveId);
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));

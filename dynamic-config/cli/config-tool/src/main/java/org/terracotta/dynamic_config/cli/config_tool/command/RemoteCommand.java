@@ -182,10 +182,10 @@ public abstract class RemoteCommand extends Command {
    * <p>
    * Nodes are expected to be online.
    */
-  protected final void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange change) {
+  protected final void runConfigurationChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange change) {
     logger.trace("runConfigurationChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
-    nomadManager.runConfigurationChange(onlineNodes, change, failures);
+    nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
     failures.reThrow();
   }
 

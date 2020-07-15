@@ -104,11 +104,10 @@ public class NomadManager<T> {
     }
   }
 
-  public void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
+  public void runConfigurationChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, onlineNodes);
     checkServerStates(onlineNodes);
-    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(onlineNodes);
-    try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
+    try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {
       client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), changes);
     }
   }
@@ -125,11 +124,14 @@ public class NomadManager<T> {
   public void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, NodeNomadChange change, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to apply topology change: {} on cluster {}", change, destinationCluster);
     checkServerStates(onlineNodes);
-    try (NomadClient<T> client = createTopologyChangeNomadClient(destinationCluster, onlineNodes)) {
+    try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {
       client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), change);
     }
   }
 
+  /**
+   * create a nomad client that is preparing through diagnostic port and committing through diagnostic port
+   */
   private NomadClient<T> createDiagnosticNomadClient(List<InetSocketAddress> expectedOnlineNodes) {
     LOGGER.trace("createDiagnosticNomadClient({})", expectedOnlineNodes);
     // create normal diagnostic endpoints
@@ -141,8 +143,11 @@ public class NomadManager<T> {
     return new NomadClient<>(nomadEndpoints, host, user, clock);
   }
 
-  private NomadClient<T> createTopologyChangeNomadClient(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
-    LOGGER.trace("createPassiveChangeNomadClient({}, {})", destinationCluster, onlineNodes);
+  /**
+   * create a nomad client that is preparing through diagnostic port and committing through entity channel
+   */
+  private NomadClient<T> createBiChannelNomadClient(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+    LOGGER.trace("createBiChannelNomadClient({}, {})", destinationCluster, onlineNodes);
 
     checkServerStates(onlineNodes);
 

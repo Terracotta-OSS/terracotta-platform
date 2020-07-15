@@ -71,7 +71,11 @@ class NomadEntityImpl<T> implements NomadEntity<T> {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new NomadException(e);
-    } catch (MessageCodecException | EntityException | TimeoutException e) {
+    } catch (EntityException e) {
+      // unwrap the execution exception eventually thrown by nomad in the server entity
+      Throwable t = e.getCause() == null ? e : e.getCause();
+      throw new NomadException(t.getMessage(), t);
+    } catch (MessageCodecException | TimeoutException e) {
       throw new NomadException(e);
     }
   }

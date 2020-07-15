@@ -90,7 +90,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // Passive is already stopped, so only shutdown and restart the active
     stopNode(1, activeNodeId);
     assertThat(angela.tsa().getStopped().size(), is(2));
-    assertContentsBeforeOrAfterSync(5, 3);
+    assertContentsAfterRestart(5, 3);
     angela.tsa().start(getNode(1, activeNodeId));
     assertThat(angela.tsa().getActives().size(), is(1));
 
@@ -101,7 +101,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     angela.tsa().stopAll();
-    assertContentsBeforeOrAfterSync(5, 5);
+    assertContentsAfterRestart(5, 5);
   }
 
   @Test
@@ -109,17 +109,19 @@ public class ConfigSyncIT extends DynamicConfigIT {
     stopNode(1, passiveNodeId);
     assertThat(angela.tsa().getStopped().size(), is(1));
 
-    // trigger commit failure on active
-    // the passive should zap when restarting
+    // triggers a permanent failure during Nomad commit phase only on active node
+    // active entity will return with the failure
+    // passive entity will not fail and commit
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
         not(hasExitStatus(0)));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
+    stopNode(1, passiveNodeId);
     stopNode(1, activeNodeId);
     assertThat(angela.tsa().getStopped().size(), is(2));
-    assertContentsBeforeOrAfterSync(4, 3);
+    assertContentsAfterRestart(4, 3);
     angela.tsa().start(getNode(1, activeNodeId));
     assertThat(angela.tsa().getActives().size(), is(1));
 
@@ -128,7 +130,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     angela.tsa().stopAll();
-    assertContentsBeforeOrAfterSync(4, 4);
+    assertContentsAfterRestart(4, 4);
   }
 
   @Test
@@ -144,7 +146,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     stopNode(1, passiveNodeId);
     stopNode(1, activeNodeId);
     assertThat(angela.tsa().getStopped().size(), is(2));
-    assertContentsBeforeOrAfterSync(4, 5);
+    assertContentsAfterRestart(4, 5);
     // Start only the former active for now (the passive startup would be done later, and should fail)
     angela.tsa().start(getNode(1, activeNodeId));
     assertThat(angela.tsa().getActives().size(), is(1));
@@ -159,25 +161,29 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     angela.tsa().stopAll();
-    assertContentsBeforeOrAfterSync(4, 5);
+    assertContentsAfterRestart(4, 5);
   }
 
   @Test
   public void testPassiveCanSyncAndRepairIfLatestChangeNotCommitted() throws Exception {
-    // run a non committed configuration change on the passive
-    // the active is OK
-    // the passive should restart fine
+    // triggers a failure during Nomad commit phase only on passive node
+    // active entity will return with no failure
+    // passive entity will fail and restart the passive server
+    // passive server will sync and repair itself
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, passiveNodeId), "-c", "stripe.1.node." + passiveNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
-        not(hasExitStatus(0)));
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + passiveNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        is(successful()));
+
+    waitForPassiveReplication(1, passiveNodeId);
+
+    waitForPassive(1, passiveNodeId);
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     stopNode(1, passiveNodeId);
     stopNode(1, activeNodeId);
     assertThat(angela.tsa().getStopped().size(), is(2));
-    assertContentsBeforeOrAfterSync(5, 4);
+    assertContentsAfterRestart(5, 5);
     angela.tsa().start(getNode(1, activeNodeId));
-
     angela.tsa().start(getNode(1, passiveNodeId));
     waitForPassive(1, passiveNodeId);
 
@@ -185,10 +191,10 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     angela.tsa().stopAll();
-    assertContentsBeforeOrAfterSync(5, 5);
+    assertContentsAfterRestart(5, 5);
   }
 
-  private void assertContentsBeforeOrAfterSync(int activeChangesSize, int passiveChangesSize) throws SanskritException, IOException {
+  private void assertContentsAfterRestart(int activeChangesSize, int passiveChangesSize) throws SanskritException, IOException {
     TerracottaServer active = getNode(1, activeNodeId);
     TerracottaServer passive = getNode(1, passiveNodeId);
 

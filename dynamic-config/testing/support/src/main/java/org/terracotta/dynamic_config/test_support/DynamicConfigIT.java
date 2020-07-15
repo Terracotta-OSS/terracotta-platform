@@ -457,6 +457,13 @@ public class DynamicConfigIT {
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
   }
 
+  protected void waitForPassiveReplication(int stripeId, int nodeId) throws Exception {
+    // this is ugly, but I do not know how we could otherwise wait until replication message gets processed by the passive server, which is causing a restart
+    // Angela is not able to observe a server restart
+    // This wait time is to ensure the passive server got the replicated message, processes it and restarted itself
+    Thread.sleep(15_000);
+  }
+
   protected final Cluster getUpcomingCluster(int stripeId, int nodeId) throws Exception {
     return getUpcomingCluster("localhost", getNodePort(stripeId, nodeId));
   }
