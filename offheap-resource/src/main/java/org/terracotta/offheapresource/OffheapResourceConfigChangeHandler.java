@@ -43,7 +43,7 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
   @Override
   public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
     if (change.getValue() == null) {
-      throw new InvalidConfigChangeException("Invalid change: " + change);
+      throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
 
     try {
