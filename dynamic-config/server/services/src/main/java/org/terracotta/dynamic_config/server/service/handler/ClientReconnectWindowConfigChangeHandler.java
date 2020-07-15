@@ -34,7 +34,7 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
     try {
       Measure.parse(change.getValue(), TimeUnit.class);
     } catch (RuntimeException e) {
-      throw new InvalidConfigChangeException(e.getMessage(), e);
+      throw new InvalidConfigChangeException(e.toString(), e);
     }
   }
 }

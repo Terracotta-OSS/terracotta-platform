@@ -41,7 +41,7 @@ class DataDirectoriesWithServerName implements DataDirectories {
         wrapped.ensureDirectory(resolved);
         lockDirectory(dataRoot, resolved);
       } catch (IOException e) {
-        throw new DataDirectoriesConfigurationException("Unable to create data directory: " + resolved, e);
+        throw new DataDirectoriesConfigurationException(e.toString(), e);
       }
     }
   }

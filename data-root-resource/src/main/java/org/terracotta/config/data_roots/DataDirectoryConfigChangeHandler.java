@@ -53,7 +53,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
     }
 
     Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs();
-    LOGGER.trace("Validating change: {} against node data directories: {}", change, dataDirs);
+    LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
 
     String dataDirectoryName = change.getKey();
     Path dataDirectoryPath = Paths.get(change.getValue());
@@ -71,7 +71,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
     try {
       ensureDirectory(dataDirectoryPath);
     } catch (IOException e) {
-      throw new InvalidConfigChangeException("Unable to create data directory: " + dataDirectoryName + ": " + e.getMessage(), e);
+      throw new InvalidConfigChangeException(e.toString(), e);
     }
   }
 
@@ -98,7 +98,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
       Files.createDirectories(directory);
     } else {
       if (!Files.isDirectory(directory)) {
-        throw new InvalidConfigChangeException("A file with configured data directory: " + directory + " already exists!");
+        throw new InvalidConfigChangeException(directory.getFileName() + " exists under " + directory.getParent() + " but is not a directory");
       }
     }
   }
