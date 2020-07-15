@@ -79,4 +79,23 @@ public class SetCommand1x2IT extends DynamicConfigIT {
         containsOutput(metadataDir.toString()));
 
   }
+
+  @Test
+  public void testTargetOfflineNode() {
+    int activeId = findActive(1).getAsInt();
+    int passiveId = findPassives(1)[0];
+    stopNode(1, passiveId);
+
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node." + passiveId + ".log-dir=foo"),
+        containsOutput("Error: Some nodes that are targeted by the change are not reachable and cannot validate. Please ensure these nodes are online, or remove them from the request"));
+
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.log-dir=foo"),
+        containsOutput("Error: Some nodes that are targeted by the change are not reachable and cannot validate. Please ensure these nodes are online, or remove them from the request"));
+
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "log-dir=foo"),
+        containsOutput("Error: Some nodes that are targeted by the change are not reachable and cannot validate. Please ensure these nodes are online, or remove them from the request"));
+  }
 }

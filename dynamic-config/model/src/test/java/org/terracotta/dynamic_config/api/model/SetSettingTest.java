@@ -81,9 +81,8 @@ public class SetSettingTest {
         () -> LICENSE_FILE.setProperty(node, null),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("license-file cannot be null")))));
 
-    assertThat(
-        () -> LICENSE_FILE.setProperty(node, "a.xml"),
-        is(throwing(instanceOf(UnsupportedOperationException.class))));
+    // not throwing - noop
+    LICENSE_FILE.setProperty(node, "a.xml");
   }
 
   @Test

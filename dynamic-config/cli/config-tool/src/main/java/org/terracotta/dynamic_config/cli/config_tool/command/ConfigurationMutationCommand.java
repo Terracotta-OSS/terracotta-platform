@@ -20,13 +20,18 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.TreeSet;
 
 import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
@@ -46,9 +51,19 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     Cluster originalCluster = getUpcomingCluster(node);
     Cluster updatedCluster = originalCluster.clone();
 
+    // will keep track of teh targeted nodes for the changes of a node setting
+    Collection<InetSocketAddress> missingTargetedNodes = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
-      c.apply(updatedCluster);
+      Collection<NodeContext> targeted = c.apply(updatedCluster);
+
+      // if the setting is a node setting, keep track of the node targeted by this configuration line
+      // remember: a node setting can be set using a cluster or stripe namespace to target several nodes at once
+      // Note: this validation is only for node-specific settings
+      if (c.getSetting().getScope() == Scope.NODE) {
+        targeted.stream().map(nodeContext -> nodeContext.getNode().getNodeAddress()).forEach(missingTargetedNodes::add);
+      }
     }
     new ClusterValidator(updatedCluster).validate();
 
@@ -61,6 +76,12 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
     if (allOnlineNodesActivated) {
       licenseValidation(node, updatedCluster);
+    }
+
+    // ensure that the nodes targeted by the set or unset command in the namespaces are all online so that they can validate the change
+    missingTargetedNodes.removeAll(onlineNodes.keySet());
+    if (!missingTargetedNodes.isEmpty()) {
+      throw new IllegalStateException("Some nodes that are targeted by the change are not reachable and cannot validate. Please ensure these nodes are online, or remove them from the request: " + toString(missingTargetedNodes));
     }
 
     logger.debug("New configuration change(s) can be sent");
