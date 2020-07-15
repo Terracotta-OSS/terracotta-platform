@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.terracotta.dynamic_config.api.model.Operation.CONFIG;
 import static org.terracotta.dynamic_config.api.model.Operation.GET;
@@ -417,42 +418,14 @@ public class Configuration {
     return true;
   }
 
-  /**
-   * Apply the value in this configuration in the given cluster
-   */
-  public void apply(Cluster cluster) {
-    Stream<NodeContext> targetContexts;
-    switch (scope) {
-      case CLUSTER:
-        targetContexts = cluster.nodeContexts();
-        break;
-      case STRIPE:
-        targetContexts = cluster.getStripe(stripeId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"))
-            .getNodes().stream().map(node -> new NodeContext(cluster, stripeId, node.getNodeName()));
-        break;
-      case NODE:
-        targetContexts = Stream.of(new NodeContext(cluster, stripeId, cluster.getStripe(stripeId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"))
-            .getNode(nodeId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid node ID: " + nodeId + ". Stripe ID: " + stripeId + " contains: " + cluster.getStripe(stripeId).get().getNodeCount() + " node(s)"))
-            .getNodeName()));
-        break;
-      default:
-        throw new AssertionError(scope);
-    }
-
+  public Collection<NodeContext> apply(Cluster cluster) {
+    Collection<NodeContext> targets = getTargets(cluster);
     if (value == null) {
-      targetContexts.forEach(ctx -> setting.getProperty(ctx).ifPresent(value -> setting.setProperty(ctx, key, null)));
-
+      targets.forEach(ctx -> setting.getProperty(ctx).ifPresent(value -> setting.setProperty(ctx, key, null)));
     } else {
-      if (setting == Setting.LICENSE_FILE) {
-        // do nothing, this is handled elsewhere to install a new license
-        return;
-      }
-
-      targetContexts.forEach(ctx -> setting.setProperty(ctx, key, value));
+      targets.forEach(ctx -> setting.setProperty(ctx, key, value));
     }
+    return targets;
   }
 
   public void apply(Node node) {
@@ -479,6 +452,32 @@ public class Configuration {
   @Override
   public String toString() {
     return rawInput;
+  }
+
+  private Collection<NodeContext> getTargets(Cluster cluster) {
+    Collection<NodeContext> targetContexts;
+    switch (scope) {
+      case CLUSTER:
+        targetContexts = cluster.nodeContexts().collect(toList());
+        break;
+      case STRIPE:
+        targetContexts = cluster.getStripe(stripeId)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"))
+            .getNodes().stream().map(node -> new NodeContext(cluster, stripeId, node.getNodeName()))
+            .collect(toList()); ;
+        break;
+      case NODE:
+        targetContexts = Stream.of(new NodeContext(cluster, stripeId, cluster.getStripe(stripeId)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"))
+            .getNode(nodeId)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid node ID: " + nodeId + ". Stripe ID: " + stripeId + " contains: " + cluster.getStripe(stripeId).get().getNodeCount() + " node(s)"))
+            .getNodeName()))
+            .collect(toList()); ;
+        break;
+      default:
+        throw new AssertionError(scope);
+    }
+    return targetContexts;
   }
 
   /**

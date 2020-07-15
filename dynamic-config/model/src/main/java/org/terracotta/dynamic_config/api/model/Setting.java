@@ -192,7 +192,7 @@ public enum Setting {
       node -> {
         throw new UnsupportedOperationException("Unable to get the configuration directory of a node");
       },
-      unsupported(),
+      noop(),
       noneOf(Operation.class),
       noneOf(Requirement.class),
       emptyList(),
@@ -336,7 +336,7 @@ public enum Setting {
       o -> {
         throw new UnsupportedOperationException("Unable to get a license file");
       },
-      unsupported(),
+      noop(),
       of(SET),
       of(ACTIVES_ONLINE),
       emptyList(),
@@ -829,9 +829,8 @@ public enum Setting {
     return (cluster, tuple) -> setter.accept((Cluster) cluster, tuple2(tuple.t1, tuple.t2 == null || tuple.t2.trim().isEmpty() ? null : tuple.t2.trim()));
   }
 
-  private static <U, V> BiConsumer<U, V> unsupported() {
+  private static <U, V> BiConsumer<U, V> noop() {
     return (u, v) -> {
-      throw new UnsupportedOperationException();
     };
   }
 }
