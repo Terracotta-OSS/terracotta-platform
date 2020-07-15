@@ -75,6 +75,19 @@ public class ClusterValidatorTest {
   }
 
   @Test
+  public void testSamePublicAndPrivateAddressOnSameNode() {
+    Node node = Node.newDefaultNode("foo1", "host").setNodePort(9410).setNodePublicHostname("host").setNodePublicPort(9410);
+    new ClusterValidator(newDefaultCluster(new Stripe(node))).validate();
+  }
+
+  @Test
+  public void testSamePublicAndPrivateAddressAcrossNodes() {
+    Node node1 = Node.newDefaultNode("foo1", "host1").setNodePort(9410).setNodePublicHostname("host2").setNodePublicPort(9410);
+    Node node2 = Node.newDefaultNode("foo2", "host2").setNodePort(9410).setNodePublicHostname("host1").setNodePublicPort(9410);
+    new ClusterValidator(newDefaultCluster(new Stripe(node1, node2))).validate();
+  }
+
+  @Test
   public void testDuplicatePrivateAddressWithDifferentPublicAddresses() {
     Node node1 = Node.newDefaultNode("foo1", "localhost").setNodePublicHostname("public-host1").setNodePublicPort(9510);
     Node node2 = Node.newDefaultNode("foo2", "localhost").setNodePublicHostname("public-host2").setNodePublicPort(9510);
