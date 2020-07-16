@@ -67,15 +67,15 @@ public class DetachCommand extends TopologyCommand {
         throw new IllegalStateException("Source node: " + source + " is not present in the same stripe as destination: " + destination);
       }
 
-      Stripe stripe = destinationCluster.getStripe(source).get();
-      if (stripe.getNodeCount() == 1) {
+      Stripe destinationStripe = destinationCluster.getStripe(destination).get();
+      if (destinationStripe.getNodeCount() == 1) {
         throw new IllegalStateException("Unable to detach since destination stripe contains only 1 node");
       }
 
       FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
       if (failoverPriority.equals(consistency()) && destinationClusterActivated) {
         int voterCount = failoverPriority.getVoters();
-        int nodeCount = destinationCluster.getNodes().size();
+        int nodeCount = destinationStripe.getNodes().size();
         if ((voterCount + nodeCount) % 2 != 0) {
           logger.warn("WARNING: The sum of voter count ({}) and number of nodes ({}) in this stripe is an odd number," +
               " but will become even with the removal of node {}", voterCount, nodeCount, source);
