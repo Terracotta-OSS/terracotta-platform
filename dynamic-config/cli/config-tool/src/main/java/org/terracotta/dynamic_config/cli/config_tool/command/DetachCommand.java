@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 
@@ -76,9 +77,14 @@ public class DetachCommand extends TopologyCommand {
       if (failoverPriority.equals(consistency()) && destinationClusterActivated) {
         int voterCount = failoverPriority.getVoters();
         int nodeCount = destinationStripe.getNodes().size();
-        if ((voterCount + nodeCount) % 2 != 0) {
-          logger.warn("WARNING: The sum of voter count ({}) and number of nodes ({}) in this stripe is an odd number," +
-              " but will become even with the removal of node {}", voterCount, nodeCount, source);
+        int sum = voterCount + nodeCount;
+        if (sum % 2 != 0) {
+          logger.warn(lineSeparator() +
+              "==============================================================================" + lineSeparator() +
+              "WARNING: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes " +
+              "(" + nodeCount + ") in this stripe " + lineSeparator() +
+              "is an odd number, but will become even with the removal of node " + source + lineSeparator() +
+              "==============================================================================" + lineSeparator());
         }
       }
 
@@ -110,9 +116,8 @@ public class DetachCommand extends TopologyCommand {
 
     // if the nodes are activated, the user must first stop them because they are part of a working cluster
     if (!onlineNodesToRemove.isEmpty() && areAllNodesActivated(onlineNodesToRemove)) {
-      validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to detach: " + toString(onlineNodesToRemove) + " are online. " +
-          "The nodes should be safely shutdown first. " +
-          "Use -f to force the node removal by the detach command: the nodes will first reset and stop before being detached");
+      validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to be detached: " + toString(onlineNodesToRemove) + " are online. " +
+          "Safely shutdown the nodes first, or use the force option to reset and stop the target nodes before detaching them");
     }
   }
 
