@@ -21,9 +21,14 @@ package org.terracotta.dynamic_config.api.model;
 public enum Requirement {
 
   /**
-   * Setting change needs a restart
+   * Setting change needs a restart of all the nodes
    */
-  RESTART,
+  CLUSTER_RESTART,
+
+  /**
+   * Setting change needs a restart of only the impacted nodes
+   */
+  NODE_RESTART,
 
   /**
    * Setting change needs only active servers to be online plus eventually some passive servers, but not all
@@ -34,4 +39,21 @@ public enum Requirement {
    * Setting change needs all nodes online (active and passives)
    */
   ALL_NODES_ONLINE,
+
+  /**
+   * A setting that must be eagerly resolved (placeholders) on server-side as soon as possible before any configuration parsing.
+   * Settings requering that are those used to identify nodes such as hostname and port.
+   */
+  RESOLVE_EAGERLY,
+
+  /**
+   * A setting requiring a resolve is a setting that is needed and either we can use a default or the user has to set it.
+   * But at the end of the configuration parsing, the value MUST be present in the topology
+   */
+  PRESENCE,
+
+  /**
+   * A setting that requires the user to provide a value for it in the configuration or CLI. It cannot be left blank.
+   */
+  CONFIG
 }

@@ -37,7 +37,9 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.terracotta.dynamic_config.api.model.Operation.CONFIG;
+import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
+import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
+import static org.terracotta.dynamic_config.api.model.Requirement.RESOLVE_EAGERLY;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
@@ -77,7 +79,7 @@ class ConfigurationParser {
       // those that are scoped CLUSTER and that have not been defined by the user
       Stream.of(values())
           .filter(setting -> setting.isScope(CLUSTER))
-          .filter(setting -> setting.allowsOperation(CONFIG))
+          .filter(setting -> setting.allows(IMPORT))
           .filter(setting -> !defined.contains(setting))
           .map(Configuration::valueOf)
           .forEach(configuration -> {
@@ -93,7 +95,7 @@ class ConfigurationParser {
           .map(Configuration::getSetting)
           .collect(toSet());
       final Set<Setting> expected = Stream.of(values())
-          .filter(setting -> setting.allowsOperation(CONFIG))
+          .filter(setting -> setting.allows(IMPORT))
           .filter(setting -> setting.isScope(CLUSTER))
           .collect(toSet());
       if (actual.size() > expected.size()) {
@@ -160,7 +162,7 @@ class ConfigurationParser {
           // those that are scoped NODE and that have not been defined by the user
           Stream.of(values())
               .filter(setting -> setting.isScope(NODE))
-              .filter(setting -> setting.allowsOperation(CONFIG))
+              .filter(setting -> setting.allows(IMPORT))
               .filter(setting -> !defined.contains(setting))
               .map(setting -> Configuration.valueOf(setting, stripeId, nodeId))
               .forEach(configuration -> {
@@ -179,7 +181,7 @@ class ConfigurationParser {
               .map(Configuration::getSetting)
               .collect(toSet());
           final Set<Setting> expected = Stream.of(values())
-              .filter(setting -> setting.allowsOperation(CONFIG))
+              .filter(setting -> setting.allows(IMPORT))
               .filter(setting -> setting.isScope(NODE))
               .collect(toSet());
           if (actual.size() > expected.size()) {
@@ -198,7 +200,7 @@ class ConfigurationParser {
     {
       configurations.forEach(configuration -> {
         // verify that the line is a supported config
-        if (!configuration.getSetting().allowsOperation(CONFIG)) {
+        if (!configuration.getSetting().allows(IMPORT)) {
           throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Reason: now allowed");
         }
         // verify that we only have cluster or node scope
@@ -206,7 +208,7 @@ class ConfigurationParser {
           throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Reason: stripe level configuration not allowed");
         }
         // validate the config object
-        configuration.validate(CONFIG);
+        configuration.validate(CONFIGURING, IMPORT);
       });
     }
 
@@ -276,7 +278,7 @@ class ConfigurationParser {
 
     // node hostname, port and name are eagerly resolved in CLI
     Stream.of(Setting.values())
-        .filter(Setting::mustBeResolved)
+        .filter(setting -> setting.requires(RESOLVE_EAGERLY))
         .forEach(s -> eagerlyResolve(parameterSubstitutor, defaultAddedListener, properties, s));
 
     // delegate back to the parsing of a config file

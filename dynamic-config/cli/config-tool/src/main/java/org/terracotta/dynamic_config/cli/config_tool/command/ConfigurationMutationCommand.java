@@ -22,7 +22,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Operation;
-import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -36,6 +35,7 @@ import java.util.TreeSet;
 import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Requirement.ALL_NODES_ONLINE;
+import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 
 public abstract class ConfigurationMutationCommand extends ConfigurationCommand {
 
@@ -61,7 +61,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       // if the setting is a node setting, keep track of the node targeted by this configuration line
       // remember: a node setting can be set using a cluster or stripe namespace to target several nodes at once
       // Note: this validation is only for node-specific settings
-      if (c.getSetting().getScope() == Scope.NODE) {
+      if (c.getSetting().isScope(NODE)) {
         targeted.stream().map(nodeContext -> nodeContext.getNode().getNodeAddress()).forEach(missingTargetedNodes::add);
       }
     }
@@ -127,7 +127,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     // MultiSettingNomadChange will apply to whole change set given by the user as an atomic operation
     return new MultiSettingNomadChange(configurations.stream()
         .map(configuration -> {
-          configuration.validate(operation);
+          configuration.validate(clusterState, operation);
           return SettingNomadChange.fromConfiguration(configuration, operation, cluster);
         })
         .collect(toList()));

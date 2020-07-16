@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 import static java.io.File.separator;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static java.util.EnumSet.noneOf;
 import static java.util.EnumSet.of;
 import static java.util.function.Predicate.isEqual;
@@ -46,13 +47,20 @@ import static org.terracotta.common.struct.TimeUnit.MILLISECONDS;
 import static org.terracotta.common.struct.TimeUnit.MINUTES;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
 import static org.terracotta.common.struct.Tuple2.tuple2;
-import static org.terracotta.dynamic_config.api.model.Operation.CONFIG;
+import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
+import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 import static org.terracotta.dynamic_config.api.model.Operation.GET;
+import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Operation.SET;
 import static org.terracotta.dynamic_config.api.model.Operation.UNSET;
+import static org.terracotta.dynamic_config.api.model.Permission.Builder.when;
 import static org.terracotta.dynamic_config.api.model.Requirement.ACTIVES_ONLINE;
 import static org.terracotta.dynamic_config.api.model.Requirement.ALL_NODES_ONLINE;
-import static org.terracotta.dynamic_config.api.model.Requirement.RESTART;
+import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
+import static org.terracotta.dynamic_config.api.model.Requirement.CONFIG;
+import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
+import static org.terracotta.dynamic_config.api.model.Requirement.PRESENCE;
+import static org.terracotta.dynamic_config.api.model.Requirement.RESOLVE_EAGERLY;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
@@ -69,7 +77,61 @@ import static org.terracotta.dynamic_config.api.model.SettingValidator.PROPS_VAL
 import static org.terracotta.dynamic_config.api.model.SettingValidator.TIME_VALIDATOR;
 
 /**
- * See API doc Config-tool.adoc
+ * <pre>
+ *  Here is below a summary of all the settings and their permissions, which can be generated with the following code:
+ *
+ *  Stream.of(Setting.values()).collect(Collectors.groupingBy(Setting::getPermissions)).entrySet().forEach(System.out::println);
+ *
+ *  config-dir
+ *  No permission
+ *
+ *  license-file
+ *  Permission: when: [activated, configuring] allow: [set] at levels: [cluster]
+ *
+ *  metadata-dir
+ *    * Permission: when: [configuring] allow: [import] at levels: [node],
+ *    * Permission: when: [configuring] allow: [set, get] at levels: [node, stripe, cluster],
+ *    * Permission: when: [activated] allow: [get] at levels: [node, stripe, cluster]
+ *
+ *  hostname, port
+ *    * Permission: when: [activated, configuring] allow: [get] at levels: [node, stripe, cluster],
+ *    * Permission: when: [configuring] allow: [import] at levels: [node]
+ *
+ *  group-port, bind-address, group-bind-address
+ *    * Permission: when: [activated, configuring] allow: [get] at levels: [node, stripe, cluster],
+ *    * Permission: when: [configuring] allow: [set] at levels: [node, stripe, cluster],
+ *    * Permission: when: [configuring] allow: [import] at levels: [node]
+ *
+ *  data-dirs
+ *    * Permission: when: [configuring] allow: [import] at levels: [node]
+ *    * Permission: when: [configuring] allow: [set, get, unset] at levels: [node, stripe, cluster]
+ *    * Permission: when: [activated, configuring] allow: [set, get] at levels: [node, stripe, cluster]
+ *
+ *  name
+ *    * Permission: when: [activated, configuring] allow: [get] at levels: [node, stripe, cluster],
+ *    * Permission: when: [configuring] allow: [set, import] at levels: [node]
+ *
+ *  public-hostname, public-port, backup-dir, tc-properties, logger-overrides, security-dir, audit-log-dir
+ *    * Permission: when: [configuring] allow: [import] at levels: [node],
+ *    * Permission: when: [activated, configuring] allow: [set, get, unset] at levels: [node, stripe, cluster]
+ *
+ *  authc
+ *    * Permission: when: [configuring] allow: [import] at levels: [cluster],
+ *    * Permission: when: [activated, configuring] allow: [set, get, unset] at levels: [cluster]
+ *
+ *  client-reconnect-window, failover-priority, client-lease-duration, ssl-tls, whitelist
+ *    * Permission: when: [configuring] allow: [import] at levels: [cluster],
+ *    * Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster]
+ *
+ *  log-dir
+ *    * Permission: when: [configuring] allow: [import] at levels: [node],
+ *    * Permission: when: [configuring] allow: [set, get] at levels: [node, stripe, cluster],
+ *    * Permission: when: [activated] allow: [set, get] at levels: [node, stripe, cluster]
+ *
+ *  cluster-name, offheap-resources
+ *    * Permission: when: [configuring] allow: [set, get, import, unset] at levels: [cluster],
+ *    * Permission: when: [activated] allow: [set, get] at levels: [cluster]
+ * </pre>
  *
  * @author Mathieu Carbou
  */
@@ -83,8 +145,11 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodeName),
       intoNode(Node::setNodeName),
-      of(GET, CONFIG),
-      noneOf(Requirement.class),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+          when(CONFIGURING).allow(SET, IMPORT).atLevel(NODE)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> NODE_NAME_VALIDATOR.accept(SettingName.NODE_NAME, tuple2(key, value))
@@ -95,23 +160,14 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodeHostname),
       intoNode(Node::setNodeHostname),
-      of(GET, CONFIG),
-      noneOf(Requirement.class),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> HOST_VALIDATOR.accept(SettingName.NODE_HOSTNAME, tuple2(key, value))
-  ),
-  NODE_PUBLIC_HOSTNAME(SettingName.NODE_PUBLIC_HOSTNAME,
-      false,
-      null,
-      NODE,
-      fromNode(Node::getNodePublicHostname),
-      intoNode(Node::setNodePublicHostname),
-      of(GET, SET, UNSET, CONFIG),
-      of(ACTIVES_ONLINE),
-      emptyList(),
-      emptyList(),
-      (key, value) -> HOST_VALIDATOR.accept(SettingName.NODE_PUBLIC_HOSTNAME, tuple2(key, value))
   ),
   NODE_PORT(SettingName.NODE_PORT,
       false,
@@ -119,11 +175,29 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodePort),
       intoNode((node, value) -> node.setNodePort(Integer.parseInt(value))),
-      of(GET, CONFIG),
-      noneOf(Requirement.class),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_PORT, tuple2(key, value))
+  ),
+  NODE_PUBLIC_HOSTNAME(SettingName.NODE_PUBLIC_HOSTNAME,
+      false,
+      null,
+      NODE,
+      fromNode(Node::getNodePublicHostname),
+      intoNode(Node::setNodePublicHostname),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+      ),
+      of(ACTIVES_ONLINE),
+      emptyList(),
+      emptyList(),
+      (key, value) -> HOST_VALIDATOR.accept(SettingName.NODE_PUBLIC_HOSTNAME, tuple2(key, value))
   ),
   NODE_PUBLIC_PORT(SettingName.NODE_PUBLIC_PORT,
       false,
@@ -131,7 +205,10 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodePublicPort),
       intoNode((node, value) -> node.setNodePublicPort(value == null ? null : Integer.parseInt(value))),
-      of(GET, SET, UNSET, CONFIG),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+      ),
       of(ACTIVES_ONLINE),
       emptyList(),
       emptyList(),
@@ -143,8 +220,12 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodeGroupPort),
       intoNode((node, value) -> node.setNodeGroupPort(Integer.parseInt(value))),
-      of(GET, SET, CONFIG),
-      noneOf(Requirement.class),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+          when(CONFIGURING).allow(SET).atAnyLevels(),
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      ),
+      of(PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_GROUP_PORT, tuple2(key, value))
@@ -155,8 +236,12 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodeBindAddress),
       intoNode(Node::setNodeBindAddress),
-      of(GET, SET, CONFIG),
-      noneOf(Requirement.class),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+          when(CONFIGURING).allow(SET).atAnyLevels(),
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      ),
+      of(PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> ADDRESS_VALIDATOR.accept(SettingName.NODE_BIND_ADDRESS, tuple2(key, value))
@@ -167,8 +252,12 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodeGroupBindAddress),
       intoNode(Node::setNodeGroupBindAddress),
-      of(GET, SET, CONFIG),
-      noneOf(Requirement.class),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+          when(CONFIGURING).allow(SET).atAnyLevels(),
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      ),
+      of(PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> ADDRESS_VALIDATOR.accept(SettingName.NODE_GROUP_BIND_ADDRESS, tuple2(key, value))
@@ -182,8 +271,11 @@ public enum Setting {
       CLUSTER,
       fromCluster(Cluster::getName),
       intoCluster(Cluster::setName),
-      of(GET, SET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART)
+      asList(
+          when(CONFIGURING).allowAnyOperations().atLevel(CLUSTER),
+          when(ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+      ),
+      of(ALL_NODES_ONLINE)
   ),
   NODE_CONFIG_DIR(SettingName.NODE_CONFIG_DIR,
       false,
@@ -193,8 +285,8 @@ public enum Setting {
         throw new UnsupportedOperationException("Unable to get the configuration directory of a node");
       },
       noop(),
-      noneOf(Operation.class),
-      noneOf(Requirement.class),
+      emptyList(),
+      of(PRESENCE, CONFIG),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_CONFIG_DIR, tuple2(key, value))
@@ -205,7 +297,11 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodeMetadataDir),
       intoNode((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
-      of(GET, SET, UNSET, CONFIG),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING).allow(GET, SET).atAnyLevels(),
+          when(ACTIVATED).allow(GET).atAnyLevels()
+      ),
       noneOf(Requirement.class),
       emptyList(),
       emptyList(),
@@ -217,8 +313,12 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodeLogDir),
       intoNode((node, value) -> node.setNodeLogDir(Paths.get(value))),
-      of(GET, SET, CONFIG),
-      of(ACTIVES_ONLINE, RESTART),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING).allow(GET, SET).atAnyLevels(),
+          when(ACTIVATED).allow(GET, SET).atAnyLevels()
+      ),
+      of(ACTIVES_ONLINE, NODE_RESTART, PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_LOG_DIR, tuple2(key, value))
@@ -229,7 +329,10 @@ public enum Setting {
       NODE,
       fromNode(Node::getNodeBackupDir),
       intoNode((node, value) -> node.setNodeBackupDir(value == null ? null : Paths.get(value))),
-      of(GET, SET, UNSET, CONFIG),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+      ),
       of(ACTIVES_ONLINE),
       emptyList(),
       emptyList(),
@@ -255,8 +358,11 @@ public enum Setting {
           node.setTcProperty(tuple.t1, tuple.t2);
         }
       }),
-      of(GET, SET, UNSET, CONFIG),
-      of(ACTIVES_ONLINE, RESTART),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+      ),
+      of(ACTIVES_ONLINE, CLUSTER_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PROPS_VALIDATOR.accept(SettingName.TC_PROPERTIES, tuple2(key, value))
@@ -281,7 +387,10 @@ public enum Setting {
           node.setNodeLoggerOverride(tuple.t1, tuple.t2.toUpperCase(Locale.ROOT));
         }
       }),
-      of(GET, SET, UNSET, CONFIG),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+      ),
       of(ACTIVES_ONLINE),
       emptyList(),
       emptyList(),
@@ -293,8 +402,11 @@ public enum Setting {
       CLUSTER,
       fromCluster(Cluster::getClientReconnectWindow),
       intoCluster((cluster, value) -> cluster.setClientReconnectWindow(Measure.parse(value, TimeUnit.class))),
-      of(GET, SET, CONFIG),
-      of(ACTIVES_ONLINE),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+      ),
+      of(ACTIVES_ONLINE, PRESENCE),
       emptyList(),
       asList(SECONDS, MINUTES, HOURS),
       (key, value) -> TIME_VALIDATOR.accept(SettingName.CLIENT_RECONNECT_WINDOW, tuple2(key, value))
@@ -305,8 +417,11 @@ public enum Setting {
       CLUSTER,
       fromCluster(Cluster::getFailoverPriority),
       intoCluster((cluster, value) -> cluster.setFailoverPriority(FailoverPriority.valueOf(value))),
-      of(GET, SET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+      ),
+      of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE, CONFIG),
       emptyList(),
       emptyList(),
       (key, value) -> DEFAULT_VALIDATOR.andThen((k, v) -> FailoverPriority.valueOf(v.t2)).accept(SettingName.FAILOVER_PRIORITY, tuple2(key, value))
@@ -320,8 +435,11 @@ public enum Setting {
       CLUSTER,
       fromCluster(Cluster::getClientLeaseDuration),
       intoCluster((cluster, value) -> cluster.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
-      of(GET, SET, CONFIG),
-      of(ACTIVES_ONLINE),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+      ),
+      of(ACTIVES_ONLINE, PRESENCE),
       emptyList(),
       asList(MILLISECONDS, SECONDS, MINUTES, HOURS),
       (key, value) -> TIME_VALIDATOR.accept(SettingName.CLIENT_LEASE_DURATION, tuple2(key, value))
@@ -337,7 +455,9 @@ public enum Setting {
         throw new UnsupportedOperationException("Unable to get a license file");
       },
       noop(),
-      of(SET),
+      singletonList(
+          when(CONFIGURING, ACTIVATED).allow(SET).atLevel(CLUSTER)
+      ),
       of(ACTIVES_ONLINE),
       emptyList(),
       emptyList(),
@@ -352,8 +472,11 @@ public enum Setting {
       NODE,
       fromNode(Node::getSecurityDir),
       intoNode((node, value) -> node.setSecurityDir(value == null ? null : Paths.get(value))),
-      of(GET, SET, UNSET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+      ),
+      of(ALL_NODES_ONLINE, CLUSTER_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_DIR, tuple2(key, value))
@@ -364,8 +487,11 @@ public enum Setting {
       NODE,
       fromNode(Node::getSecurityAuditLogDir),
       intoNode((node, value) -> node.setSecurityAuditLogDir(value == null ? null : Paths.get(value))),
-      of(GET, SET, UNSET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
+      ),
+      of(ALL_NODES_ONLINE, CLUSTER_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_AUDIT_LOG_DIR, tuple2(key, value))
@@ -376,8 +502,11 @@ public enum Setting {
       CLUSTER,
       fromCluster(Cluster::getSecurityAuthc),
       intoCluster(Cluster::setSecurityAuthc),
-      of(GET, SET, UNSET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
+      ),
+      of(ALL_NODES_ONLINE, CLUSTER_RESTART),
       asList("file", "ldap", "certificate")
   ),
   SECURITY_SSL_TLS(SettingName.SECURITY_SSL_TLS,
@@ -386,8 +515,11 @@ public enum Setting {
       CLUSTER,
       fromCluster(Cluster::isSecuritySslTls),
       intoCluster((cluster, value) -> cluster.setSecuritySslTls(Boolean.parseBoolean(value))),
-      of(GET, SET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+      ),
+      of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("true", "false")
   ),
   SECURITY_WHITELIST(SettingName.SECURITY_WHITELIST,
@@ -396,8 +528,11 @@ public enum Setting {
       CLUSTER,
       fromCluster(Cluster::isSecurityWhitelist),
       intoCluster((cluster, value) -> cluster.setSecurityWhitelist(Boolean.parseBoolean(value))),
-      of(GET, SET, CONFIG),
-      of(ALL_NODES_ONLINE, RESTART),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
+          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+      ),
+      of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("true", "false")
   ),
 
@@ -423,7 +558,10 @@ public enum Setting {
           cluster.setOffheapResource(tuple.t1, Measure.parse(tuple.t2, MemoryUnit.class));
         }
       }),
-      of(GET, SET, UNSET, CONFIG),
+      asList(
+          when(CONFIGURING).allowAnyOperations().atLevel(CLUSTER),
+          when(ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+      ),
       of(ACTIVES_ONLINE),
       emptyList(),
       asList(MemoryUnit.values()),
@@ -452,7 +590,11 @@ public enum Setting {
           node.setDataDir(tuple.t1, Paths.get(tuple.t2));
         }
       }),
-      of(GET, SET, UNSET, CONFIG),
+      asList(
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE),
+          when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
+          when(ACTIVATED, CONFIGURING).allow(GET, SET).atAnyLevels()
+      ),
       of(ACTIVES_ONLINE),
       emptyList(),
       emptyList(),
@@ -464,7 +606,7 @@ public enum Setting {
   private final String defaultValue;
   private final Scope scope;
   private final Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor;
-  private final Collection<Operation> operations;
+  private final Collection<Permission> permissions;
   private final Collection<Requirement> requirements;
   private final Collection<String> allowedValues;
   private final Collection<? extends Enum<?>> allowedUnits;
@@ -477,19 +619,9 @@ public enum Setting {
           Scope scope,
           Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
-          EnumSet<Operation> operations) {
-    this(name, map, defaultValue, scope, extractor, setter, operations, noneOf(Requirement.class));
-  }
-
-  Setting(String name,
-          boolean map,
-          String defaultValue,
-          Scope scope,
-          Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
-          BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
-          EnumSet<Operation> operations,
+          Collection<Permission> permissions,
           EnumSet<Requirement> requirements) {
-    this(name, map, defaultValue, scope, extractor, setter, operations, requirements, emptyList(), emptyList());
+    this(name, map, defaultValue, scope, extractor, setter, permissions, requirements, emptyList(), emptyList());
   }
 
   Setting(String name,
@@ -498,10 +630,10 @@ public enum Setting {
           Scope scope,
           Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
-          EnumSet<Operation> operations,
+          Collection<Permission> permissions,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues) {
-    this(name, map, defaultValue, scope, extractor, setter, operations, requirements, allowedValues, emptyList());
+    this(name, map, defaultValue, scope, extractor, setter, permissions, requirements, allowedValues, emptyList());
   }
 
   Setting(String name,
@@ -510,11 +642,11 @@ public enum Setting {
           Scope scope,
           Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
-          EnumSet<Operation> operations,
+          Collection<Permission> permissions,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues,
           Collection<? extends Enum<?>> allowedUnits) {
-    this(name, map, defaultValue, scope, extractor, setter, operations, requirements, allowedValues, allowedUnits, (key, value) -> DEFAULT_VALIDATOR.accept(name, tuple2(key, value)));
+    this(name, map, defaultValue, scope, extractor, setter, permissions, requirements, allowedValues, allowedUnits, (key, value) -> DEFAULT_VALIDATOR.accept(name, tuple2(key, value)));
   }
 
   Setting(String name,
@@ -523,7 +655,7 @@ public enum Setting {
           Scope scope,
           Function<PropertyHolder, Stream<Tuple2<String, String>>> extractor,
           BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
-          EnumSet<Operation> operations,
+          Collection<Permission> permissions,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues,
           Collection<? extends Enum<?>> allowedUnits,
@@ -531,17 +663,20 @@ public enum Setting {
     this.name = name;
     this.map = map;
     this.defaultValue = defaultValue;
+    this.scope = scope;
     this.extractor = extractor;
     this.setter = setter;
-    this.operations = operations;
-    this.scope = scope;
+    this.permissions = new LinkedHashSet<>(permissions);
     this.requirements = requirements;
     this.allowedValues = Collections.unmodifiableSet(new LinkedHashSet<>(allowedValues));
     this.allowedUnits = Collections.unmodifiableSet(new LinkedHashSet<>(allowedUnits));
     this.validator = validator;
 
-    if (scope == STRIPE) {
-      throw new AssertionError("Invalid scope for setting definition: " + name + ". Must be " + NODE + " or " + CLUSTER);
+    if (scope == CLUSTER && permissions.stream().anyMatch(permission -> permission.allows(NODE) || permission.allows(STRIPE))) {
+      throw new AssertionError("Scope error for setting " + name + ": " + permissions);
+    }
+    if (scope == STRIPE && permissions.stream().anyMatch(permission -> permission.allows(NODE))) {
+      throw new AssertionError("Scope error for setting " + name + ": " + permissions);
     }
   }
 
@@ -550,23 +685,12 @@ public enum Setting {
     return name;
   }
 
-  public String getName() {
-    return name;
+  public Collection<Permission> getPermissions() {
+    return permissions;
   }
 
   public boolean isMap() {
     return map;
-  }
-
-  public Scope getScope() {
-    return scope;
-  }
-
-  public void fillDefault(PropertyHolder o) {
-    String v = getDefaultValue();
-    if (v != null && !getProperty(o).isPresent()) {
-      setProperty(o, v);
-    }
   }
 
   public String getDefaultValue() {
@@ -590,58 +714,60 @@ public enum Setting {
     return requirements.contains(requirement);
   }
 
+  public boolean isRestartRequired() {
+    return requires(CLUSTER_RESTART) || requires(NODE_RESTART);
+  }
+
   /**
    * @return true if this setting supports some operations (get, set, unset, config) to be called with a scope passed as parameter.
    * Example: name is defined as scope NODE, but we could execute "get name"
    */
-  public boolean allowsAnyOperationInScope(Scope scope) {
-    if (operations.isEmpty()) {
-      return false;
-    }
-    if (allowsOperation(SET) || allowsOperation(UNSET) || allowsOperation(GET)) {
-      if (this.scope == CLUSTER) {
-        // if the setting scope is CLUSTER, we only allow commands to work at the same level
-        return scope == CLUSTER;
-      }
-      if (this.scope == NODE) {
-        // if a setting is at node scope, we allow "batch" get or set of settings over all the cluster or stripe
-        return true;
-      }
-    } else if (allowsOperation(CONFIG)) {
-      return scope == this.scope;
-    }
-    // this.scope cannot be STRIPE (validation in constructor)
-    throw new AssertionError("Invalid scope for setting definition: " + this + ". Must be " + NODE + " or " + CLUSTER);
+  public boolean allows(Scope scope) {
+    return permissions.stream().anyMatch(permission -> permission.allows(scope));
   }
 
-  public boolean allowsOperation(Operation operation) {
-    return this.operations.contains(operation);
+  public boolean allows(Operation operation) {
+    return permissions.stream().anyMatch(permission -> permission.allows(operation));
   }
 
-  public boolean allowsOperationInScope(Operation operation, Scope scope) {
-    if (!allowsOperation(operation) || !allowsAnyOperationInScope(scope)) {
-      return false;
-    }
-    switch (operation) {
-      case GET:
-        return true; // allow any scope for get
-      case CONFIG:
-        return scope == this.scope;
-      case SET:
-      case UNSET:
-        return this.scope == CLUSTER ? scope == CLUSTER : this.scope == NODE; // note: this.scope cannot be STRIPE
-      default:
-        throw new AssertionError(operation);
-    }
+  public boolean allows(ClusterState clusterState) {
+    return permissions.stream().anyMatch(permission -> permission.allows(clusterState));
   }
 
-  public boolean isRequired() {
-    //TODO [DYNAMIC-CONFIG]: TDB-4898 - correctly handle required settings
-    return this == FAILOVER_PRIORITY || !allowsOperation(UNSET) && (!allowsOperation(CONFIG) || getDefaultValue() != null);
+  public boolean allows(Operation operation, Scope scope) {
+    return permissions.stream().anyMatch(permissions -> permissions.allows(operation) && permissions.allows(scope));
   }
 
-  public boolean isReadOnly() {
-    return !allowsOperation(SET) && !allowsOperation(CONFIG) && !allowsOperation(UNSET);
+  public boolean allows(ClusterState clusterState, Operation operation) {
+    return permissions.stream().anyMatch(permissions -> permissions.allows(operation) && permissions.allows(clusterState));
+  }
+
+  public boolean allows(ClusterState clusterState, Operation operation, Scope scope) {
+    return permissions.stream().anyMatch(permissions -> permissions.allows(clusterState) && permissions.allows(operation) && permissions.allows(scope));
+  }
+
+  private boolean isExportable() {
+    return permissions.stream().anyMatch(Permission::isExportable);
+  }
+
+  public boolean mustBePresent() {
+    return requires(PRESENCE);
+  }
+
+  public boolean mustBeProvided() {
+    return requires(CONFIG);
+  }
+
+  public boolean canBeCleared(Scope scope) {
+    return allows(ACTIVATED, UNSET, scope) || allows(CONFIGURING, UNSET, scope) || getDefaultValue() != null;
+  }
+
+  public boolean isWritable() {
+    return isWritableWhen(CONFIGURING) || isWritableWhen(ACTIVATED);
+  }
+
+  public boolean isWritableWhen(ClusterState clusterState) {
+    return permissions.stream().anyMatch(permission -> permission.isWritableWhen(clusterState));
   }
 
   public boolean isScope(Scope scope) {
@@ -650,7 +776,7 @@ public enum Setting {
 
   public void validate(String key, String value) {
     // do not validate if value is null and setting optional
-    if (key == null && value == null && !isRequired()) {
+    if (key == null && value == null && !mustBePresent()) {
       return;
     }
     validator.accept(key, value);
@@ -691,8 +817,8 @@ public enum Setting {
   }
 
   public void setProperty(PropertyHolder node, String key, String value) {
-    if (isReadOnly()) {
-      throw new IllegalArgumentException("Setting: " + this + " is read-only");
+    if (!isWritable()) {
+      throw new IllegalArgumentException("Setting: " + this + " is not writable");
     }
     validate(key, value);
     this.setter.accept(node, tuple2(key, value));
@@ -704,7 +830,8 @@ public enum Setting {
     String defaultValue = getDefaultValue();
     boolean exclude = !includeDefaultValues && currentValue == null && defaultValue == null // property is optional and has no default - we exclude
         || !includeDefaultValues && defaultValue != null && Objects.equals(defaultValue, currentValue) // property has a default which is equal to the current value and we want to hide defaults
-        || !includeDefaultValues && currentValue == null && isRequired(); // current value is not set for a property that is required and has a default, and we want to exclude default
+        //TODO [DYNAMIC-CONFIG]: TDB-4898 - correctly handle required settings
+        || !includeDefaultValues && currentValue == null && mustBePresent(); // current value is not set for a property that is required and has a default, and we want to exclude default
     if (!exclude) {
       if (currentValue == null || !expanded || !isMap()) {
         properties.setProperty(name, currentValue != null ? currentValue : "");
@@ -719,8 +846,11 @@ public enum Setting {
     return this.allowedValues.isEmpty() || this.allowedValues.contains(value);
   }
 
-  public boolean mustBeResolved() {
-    return this == NODE_HOSTNAME || this == NODE_PORT || this == NODE_NAME;
+  private void fillDefault(PropertyHolder o) {
+    String v = getDefaultValue();
+    if (v != null && !getProperty(o).isPresent()) {
+      setProperty(o, v);
+    }
   }
 
   private PropertyHolder getTarget(NodeContext nodeContext) {
@@ -742,7 +872,7 @@ public enum Setting {
         .filter(isEqual(CLUSTER_NAME).negate())
         .filter(isEqual(LICENSE_FILE).negate())
         .filter(s -> s.isScope(o.getScope()))
-        .filter(Setting::isRequired)
+        .filter(Setting::mustBePresent)
         .forEach(setting -> setting.fillDefault(o));
     return o;
   }
@@ -761,7 +891,7 @@ public enum Setting {
   public static Properties modelToProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues) {
     Properties properties = new Properties();
     Stream.of(Setting.values())
-        .filter(setting -> setting.allowsOperation(Operation.CONFIG))
+        .filter(Setting::isExportable)
         .filter(setting -> setting.isScope(o.getScope()))
         .forEach(setting -> properties.putAll(setting.toProperties(o, expanded, includeDefaultValues)));
     return properties;

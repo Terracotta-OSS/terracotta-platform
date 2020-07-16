@@ -10,7 +10,7 @@ Diagnostic result:
  - Node online, configured and activated: YES
  - Node online, configured and in repair: NO
  - Node online, new and being configured: NO
- - Node restart required: YES
+ - Node restart required: NO
  - Node configuration change in progress: NO
  - Node can accept new changes: YES
  - Node current configuration version: 2
@@ -28,7 +28,7 @@ Diagnostic result:
  - Node online, configured and activated: YES
  - Node online, configured and in repair: NO
  - Node online, new and being configured: NO
- - Node restart required: YES
+ - Node restart required: NO
  - Node configuration change in progress: NO
  - Node can accept new changes: YES
  - Node current configuration version: 2

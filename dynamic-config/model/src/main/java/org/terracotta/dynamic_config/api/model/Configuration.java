@@ -29,10 +29,11 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.terracotta.dynamic_config.api.model.Operation.CONFIG;
 import static org.terracotta.dynamic_config.api.model.Operation.GET;
+import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Operation.SET;
 import static org.terracotta.dynamic_config.api.model.Operation.UNSET;
+import static org.terracotta.dynamic_config.api.model.Requirement.RESOLVE_EAGERLY;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
@@ -266,7 +267,7 @@ public class Configuration {
 
   private void preValidate(String rawValue) {
     if (!setting.isMap() && key != null) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " is not a map and must not have a key");
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' is not a map and must not have a key");
     }
     if (stripeId != null && stripeId <= 0) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected stripe ID to be greater than 0");
@@ -274,33 +275,30 @@ public class Configuration {
     if (nodeId != null && nodeId <= 0) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected node ID to be greater than 0");
     }
-    if (!setting.allowsAnyOperationInScope(scope)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " does not allow any operation at " + scope + " level");
+    if (!setting.allows(scope)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' does not allow any operation at " + scope + " level");
     }
     if (rawValue == null) {
       // equivalent to a get or unset command - we do not know yet, so we cannot pre-validate
       // byt if the setting is not supporting both get and unset, then fail
-      if (!setting.allowsOperation(GET) && !setting.allowsOperation(UNSET)) {
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " cannot be read or cleared");
+      if (!setting.allows(GET) && !setting.allows(UNSET)) {
+        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be read or cleared");
       }
     } else if (rawValue.isEmpty()) {
       // equivalent to an unset or config because no value after equal sign
       // - cluster-name= (in config file)
       // - unset backup-dir=
       // - set backup-dir=
-      if (setting.isRequired()) {
-        // unset is not supported at all
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " requires a value");
-      } else if (!setting.allowsOperationInScope(UNSET, scope) && !setting.allowsOperationInScope(CONFIG, scope)) {
-        // unset is not supported in the given scope
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " cannot be cleared at " + scope + " level");
+      if (setting.mustBePresent() || !setting.canBeCleared(scope)) {
+        // cannot unset a required value
+        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' requires a value");
       }
     } else {
       // equivalent to a set because we have a value
-      if (!setting.allowsOperation(SET) && !setting.allowsOperation(CONFIG)) {
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " cannot be set");
-      } else if (!setting.allowsOperationInScope(SET, scope) && !setting.allowsOperationInScope(CONFIG, scope)) {
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " cannot be set at " + scope + " level");
+      if (!setting.allows(SET) && !setting.allows(IMPORT)) {
+        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set");
+      } else if (!setting.allows(SET, scope) && !setting.allows(IMPORT, scope)) {
+        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set at " + scope + " level");
       }
       // check the value if we have one
       if (!Substitutor.containsSubstitutionParams(value)) {
@@ -313,9 +311,18 @@ public class Configuration {
     }
   }
 
-  public void validate(Operation operation) {
-    if (!setting.allowsOperationInScope(operation, scope)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + setting + " does not allow operation " + operation + " at " + scope + " level");
+  public void validate(ClusterState clusterState, Operation operation) {
+    if (!clusterState.supports(operation)) {
+      throw new AssertionError("Programmatic mistake: tried to validate operation " + operation + " when " + clusterState);
+    }
+    if (!setting.allows(operation)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation);
+    }
+    if (!setting.allows(clusterState, operation)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " when " + clusterState);
+    }
+    if (!setting.allows(clusterState, operation, scope)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " at " + scope + " level when " + clusterState);
     }
     switch (operation) {
       case GET:
@@ -329,12 +336,12 @@ public class Configuration {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
         }
         break;
-      case CONFIG:
-        if (value == null && setting.isRequired()) {
+      case IMPORT:
+        if (value == null && setting.mustBePresent()) {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
         }
         // ensure that properties requiring an eager resolve are resolved
-        if (setting.mustBeResolved() && Substitutor.containsSubstitutionParams(value)) {
+        if (setting.requires(RESOLVE_EAGERLY) && Substitutor.containsSubstitutionParams(value)) {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Placeholders are not allowed");
         }
         break;

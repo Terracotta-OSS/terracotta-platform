@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -102,5 +103,12 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
         allOf(hasExitStatus(0), containsOutput("client-reconnect-window=10s")));
+  }
+
+  @Test
+  public void setDuplicateNodeName() {
+    MatcherAssert.assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.name=node-1-2"),
+        containsOutput("Error: Found duplicate node name: node-1-2"));
   }
 }

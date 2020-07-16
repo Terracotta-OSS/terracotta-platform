@@ -59,6 +59,7 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster(1, 1).getNode(1, 1).get().getDataDirs(), hasKey("foo"));
     assertThat(getRuntimeCluster(1, 1).getNode(1, 2).get().getDataDirs(), hasKey("foo"));
   }
+
   @Test
   public void testCluster_setDataDirs() throws Exception {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(),
@@ -82,7 +83,7 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     Path metadataDir = usingTopologyService(1, passiveId, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeMetadataDir());
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir=foo"),
-        containsOutput("Setting 'metadata-dir' cannot be changed once a node is activated"));
+        containsOutput("Setting 'metadata-dir' cannot be set when node is activated"));
 
     // kill active and wait for passive to become active
     stopNode(1, passiveId == 1 ? 2 : 1);

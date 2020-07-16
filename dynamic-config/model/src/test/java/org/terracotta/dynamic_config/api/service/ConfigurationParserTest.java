@@ -189,7 +189,7 @@ public class ConfigurationParserTest {
     ), "Invalid input: 'stripe.1.node.2.hostname=%h'. Placeholders are not allowed");
 
     // scope
-    assertConfigFail(config("failover-priority=availability", "hostname=foo"), "Invalid input: 'hostname=foo'. Reason: hostname cannot be set at cluster level");
+    assertConfigFail(config("failover-priority=availability", "hostname=foo"), "Invalid input: 'hostname=foo'. Reason: Setting 'hostname' cannot be set at cluster level");
     assertConfigFail(config(
         "failover-priority=availability",
         "stripe.1.node.1.hostname=localhost",
@@ -204,7 +204,7 @@ public class ConfigurationParserTest {
         "failover-priority=availability",
         "stripe.1.node.1.hostname=localhost",
         "stripe.1.node.1.failover-priority=availability"
-    ), "Invalid input: 'stripe.1.node.1.failover-priority=availability'. Reason: failover-priority does not allow any operation at node level");
+    ), "Invalid input: 'stripe.1.node.1.failover-priority=availability'. Reason: Setting 'failover-priority' does not allow any operation at node level");
 
     // node and stripe ids
     assertConfigFail(config("failover-priority=availability", "stripe.1.node.2.hostname=localhost"), "Node ID must start at 1 in stripe 1");
@@ -227,7 +227,7 @@ public class ConfigurationParserTest {
         "failover-priority=availability",
         "stripe.1.node.1.hostname=localhost",
         "stripe.1.node.1.config-dir=foo/bar"
-    ), "Invalid input: 'stripe.1.node.1.config-dir=foo/bar'. Reason: config-dir does not allow any operation at node level");
+    ), "Invalid input: 'stripe.1.node.1.config-dir=foo/bar'. Reason: Setting 'config-dir' does not allow any operation at node level");
     assertConfigFail(config(
         "failover-priority=availability",
         "stripe.1.node.1.hostname=localhost",
