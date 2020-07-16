@@ -167,7 +167,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
       configToolInvocation("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId));
     }
 
-    // all nodes of teh destination cluster now have the updated topology
+    // all nodes of the destination cluster now have the updated topology
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(4)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId1)).getNodeCount(), is(equalTo(4)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(4)));

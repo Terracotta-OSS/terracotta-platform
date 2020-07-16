@@ -51,7 +51,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     Cluster originalCluster = getUpcomingCluster(node);
     Cluster updatedCluster = originalCluster.clone();
 
-    // will keep track of teh targeted nodes for the changes of a node setting
+    // will keep track of the targeted nodes for the changes of a node setting
     Collection<InetSocketAddress> missingTargetedNodes = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
 
     // applying the set/unset operation to the cluster in memory for validation
