@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.api;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
+import java.util.Collection;
 import java.util.function.Supplier;
 
 /**
@@ -44,6 +45,22 @@ public interface DynamicConfigExtension {
    * @param platformConfiguration The platform configuration object from where to retrieve useful services that could help creating the configurations
    */
   void configure(Registrar registrar, PlatformConfiguration platformConfiguration);
+
+  default <T> T findService(PlatformConfiguration platformConfiguration, Class<T> type) {
+    Collection<T> services = platformConfiguration.getExtendedConfiguration(type);
+    if (services.isEmpty()) {
+      throw new AssertionError("No instance of service " + type + " found");
+    }
+
+    if (services.size() == 1) {
+      T instance = services.iterator().next();
+      if (instance == null) {
+        throw new AssertionError("Instance of service " + type + " found to be null");
+      }
+      return instance;
+    }
+    throw new AssertionError("Multiple instances of service " + type + " found");
+  }
 
   interface Registrar {
     /**

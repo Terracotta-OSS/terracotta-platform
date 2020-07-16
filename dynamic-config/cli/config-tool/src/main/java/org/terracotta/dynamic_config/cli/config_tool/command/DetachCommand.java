@@ -101,7 +101,7 @@ public class DetachCommand extends TopologyCommand {
         throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }
 
-      // when we want tO detach a stripe, we detach all the nodes of the stripe
+      // when we want to detach a stripe, we detach all the nodes of the stripe
       onlineNodesToRemove.addAll(destinationCluster.getStripe(source).get().getNodeAddresses());
     }
 
