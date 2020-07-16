@@ -26,10 +26,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static java.util.stream.Collectors.toList;
-import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLinesInOrderStartingWith;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
@@ -98,8 +97,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     waitForActive(1);
     waitForPassives(1);
 
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "cluster-name=new-cluster-name"),
-        allOf(containsOutput("restart of the cluster is required"), successful()));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "cluster-name=new-cluster-name"), is(successful()));
 
     // Diagnostic result from all nodes must be the same
     assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),

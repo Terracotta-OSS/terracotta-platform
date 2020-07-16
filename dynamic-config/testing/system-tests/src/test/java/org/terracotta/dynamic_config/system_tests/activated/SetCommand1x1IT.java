@@ -198,7 +198,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
     // Restart node and verify that the change has taken effect
     stopNode(1, 1);
-    startNode(1,1);
+    startNode(1, 1);
 
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-r", "-c", "log-dir"),
         allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.log-dir=logs" + separator + "stripe1")));
@@ -216,21 +216,28 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void setNodeBindAddress() {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.bind-address=127.0.0.1"),
-        containsOutput("Setting 'bind-address' cannot be changed once a node is activated"));
+        containsOutput("Reason: Setting 'bind-address' cannot be set when node is activated"));
+  }
+
+  @Test
+  public void setNodeName() {
+    assertThat(
+        configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.name=foo"),
+        containsOutput("Error: Invalid input: 'stripe.1.node.1.name=foo'. Reason: Setting 'name' cannot be set when node is activated"));
   }
 
   @Test
   public void setNodeGroupPort() {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port=1024"),
-        containsOutput("Setting 'group-port' cannot be changed once a node is activated"));
+        containsOutput("Reason: Setting 'group-port' cannot be set when node is activated"));
   }
 
   @Test
   public void setNodeGroupBindAddress() {
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-bind-address=127.0.0.1"),
-        containsOutput("Setting 'group-bind-address' cannot be changed once a node is activated"));
+        containsOutput("Reason: Setting 'group-bind-address' cannot be set when node is activated"));
   }
 
   @Test
@@ -268,9 +275,9 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     // TDB-5067
     String clusterName = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getCluster().getName());
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=new-name"),
-        allOf(is(successful()), containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
+        allOf(is(successful()), not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"))));
     assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
-        allOf(containsOutput("Node restart required: YES"), containsOutput("Node last configuration change details: set cluster-name=new-name")));
+        allOf(containsOutput("Node restart required: NO"), containsOutput("Node last configuration change details: set cluster-name=new-name")));
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=" + clusterName),
         allOf(is(successful()), not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"))));
     assertThat(configToolInvocation("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
@@ -282,12 +289,12 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     // TDB-5092
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "metadata-dir=foo"),
-        containsOutput("Reason: Error when applying setting change: 'set metadata-dir=foo': Setting 'metadata-dir' cannot be changed once a node is activated"));
+        containsOutput("Error: Invalid input: 'metadata-dir=foo'. Reason: Setting 'metadata-dir' cannot be set when node is activated"));
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.metadata-dir=foo"),
-        containsOutput("Reason: Error when applying setting change: 'set metadata-dir=foo (stripe ID: 1)': Setting 'metadata-dir' cannot be changed once a node is activated"));
+        containsOutput("Error: Invalid input: 'stripe.1.metadata-dir=foo'. Reason: Setting 'metadata-dir' cannot be set when node is activated"));
     assertThat(
         configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir=foo"),
-        containsOutput("Reason: Error when applying setting change: 'set metadata-dir=foo (stripe ID: 1, node: node-1-1)': Setting 'metadata-dir' cannot be changed once a node is activated"));
+        containsOutput("Error: Invalid input: 'stripe.1.node.1.metadata-dir=foo'. Reason: Setting 'metadata-dir' cannot be set when node is activated"));
   }
 }

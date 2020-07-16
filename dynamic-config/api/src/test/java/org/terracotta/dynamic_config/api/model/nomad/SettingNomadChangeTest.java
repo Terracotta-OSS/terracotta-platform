@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
@@ -79,8 +80,8 @@ public class SettingNomadChangeTest {
     assertThat(change.getOperation(), is(equalTo(Operation.UNSET)));
 
     assertThat(
-        () -> fromConfiguration(Configuration.valueOf("backup-dir"), Operation.CONFIG, Cluster.newDefaultCluster()),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Operation config cannot be converted to a Nomad change for an active cluster")))));
+        () -> fromConfiguration(Configuration.valueOf("backup-dir"), IMPORT, Cluster.newDefaultCluster()),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Operation import cannot be converted to a Nomad change for an active cluster")))));
     assertThat(
         () -> fromConfiguration(Configuration.valueOf("backup-dir"), Operation.GET, Cluster.newDefaultCluster()),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Operation get cannot be converted to a Nomad change for an active cluster")))));

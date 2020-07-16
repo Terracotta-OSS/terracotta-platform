@@ -36,9 +36,9 @@ public enum Operation {
   UNSET,
 
   /**
-   * Property config loading
+   * <pre>config-tool import</pre> command (equivalent to property config loading, importing, startup script, etc)
    */
-  CONFIG;
+  IMPORT;
 
   @Override
   public String toString() {

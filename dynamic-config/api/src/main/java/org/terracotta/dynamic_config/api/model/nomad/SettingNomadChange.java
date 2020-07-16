@@ -18,12 +18,12 @@ package org.terracotta.dynamic_config.api.model.nomad;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
-import org.terracotta.dynamic_config.api.model.Requirement;
 import org.terracotta.dynamic_config.api.model.Setting;
 
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
 
 /**
  * Nomad change that supports any dynamic config change (see Cluster-tool.adoc)
@@ -38,10 +38,10 @@ public class SettingNomadChange extends FilteredNomadChange {
   private final String value;
 
   protected SettingNomadChange(Applicability applicability,
-                             Operation operation,
-                             Setting setting,
-                             String name,
-                             String value) {
+                               Operation operation,
+                               Setting setting,
+                               String name,
+                               String value) {
     super(applicability);
     this.operation = requireNonNull(operation);
     this.setting = requireNonNull(setting);
@@ -69,14 +69,14 @@ public class SettingNomadChange extends FilteredNomadChange {
   public Cluster apply(Cluster original) {
     Cluster updated = original.clone();
     Configuration configuration = toConfiguration(updated);
-    configuration.validate(getOperation());
+    configuration.validate(ACTIVATED, getOperation());
     configuration.apply(updated);
     return updated;
   }
 
   @Override
   public boolean canApplyAtRuntime() {
-    return !getSetting().requires(Requirement.RESTART);
+    return !getSetting().isRestartRequired();
   }
 
   public String getName() {

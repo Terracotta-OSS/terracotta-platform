@@ -49,7 +49,7 @@ class SettingValidator {
     requireNonNull(kv);
     requireNull(s, kv.t1);
     // prevent null if property is required
-    if (s.isRequired() && kv.t2 == null) {
+    if (s.mustBePresent() && kv.t2 == null) {
       throw new IllegalArgumentException(s + " cannot be null");
     }
     // whether required or optional, prevent empty strings

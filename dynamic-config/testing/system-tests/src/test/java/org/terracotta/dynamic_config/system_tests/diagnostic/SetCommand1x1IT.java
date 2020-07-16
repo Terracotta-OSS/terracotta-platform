@@ -23,6 +23,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
@@ -90,5 +91,12 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main"),
         allOf(hasExitStatus(0), containsOutput("offheap-resources.main=1GB"), containsOutput("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir")));
+  }
+
+  @Test
+  public void setNodeName() throws Exception {
+    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeName()), is(equalTo("node-1-1")));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.name=foo"), is(successful()));
+    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeName()), is(equalTo("foo")));
   }
 }

@@ -57,6 +57,15 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  public void changeNodeNameAndActivate() throws Exception {
+    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeName()), is(equalTo("node-1-1")));
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.name=foo"), is(successful()));
+    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeName()), is(equalTo("foo")));
+    activateCluster();
+    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeName()), is(equalTo("foo")));
+  }
+
+  @Test
   public void testSingleNodeActivationWithConfigFile() throws Exception {
     assertThat(
         configToolInvocation("activate", "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString(), "-n", "my-cluster"),

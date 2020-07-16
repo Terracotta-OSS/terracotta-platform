@@ -22,36 +22,17 @@ import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
-import java.util.EnumSet;
-
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
+import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
 
 /**
  * @author Mathieu Carbou
  */
 class DisallowSettingChanges implements NomadPermissionChangeProcessor.Check {
-
-  private static final EnumSet<Setting> DISALLOWED = EnumSet.of(
-      NODE_NAME,
-      NODE_HOSTNAME,
-      NODE_PORT,
-      NODE_BIND_ADDRESS,
-      NODE_GROUP_PORT,
-      NODE_GROUP_BIND_ADDRESS,
-      NODE_METADATA_DIR
-  );
-
   @Override
   public void check(NodeContext config, DynamicConfigNomadChange change) throws NomadException {
     if (change instanceof SettingNomadChange) {
       Setting setting = ((SettingNomadChange) change).getSetting();
-      if (DISALLOWED.contains(setting)) {
+      if (!setting.isWritableWhen(ACTIVATED)) {
         throw new NomadException("Error when applying setting change: '" + change.getSummary() + "': " + "Setting '" + setting + "' cannot be changed once a node is activated");
       }
     }

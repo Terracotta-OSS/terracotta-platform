@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
@@ -27,6 +28,8 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
+import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 
 public abstract class ConfigurationCommand extends RemoteCommand {
 
@@ -38,6 +41,9 @@ public abstract class ConfigurationCommand extends RemoteCommand {
 
   protected final Operation operation;
 
+  protected boolean isActivated;
+  protected ClusterState clusterState;
+
   protected ConfigurationCommand(Operation operation) {
     this.operation = operation;
   }
@@ -47,9 +53,12 @@ public abstract class ConfigurationCommand extends RemoteCommand {
     requireNonNull(node);
     requireNonNull(configurations);
 
+    isActivated = isActivated(node);
+    clusterState = isActivated ? ACTIVATED : CONFIGURING;
+
     // validate all configurations passes on CLI
     for (Configuration configuration : configurations) {
-      configuration.validate(operation);
+      configuration.validate(clusterState, operation);
     }
 
     // once valid, check for duplicates
