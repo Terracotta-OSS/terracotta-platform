@@ -15,26 +15,42 @@
  */
 package org.terracotta.dynamic_config.server.service.handler;
 
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHandler {
+public class NodeLogDirChangeHandler implements ConfigChangeHandler {
+  private final IParameterSubstitutor parameterSubstitutor;
+  private final PathResolver pathResolver;
+
+  public NodeLogDirChangeHandler(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
+    this.parameterSubstitutor = parameterSubstitutor;
+    this.pathResolver = pathResolver;
+  }
 
   @Override
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
-    if (change.getValue() == null) {
+    String logPath = change.getValue();
+    if (logPath == null) {
       throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
 
     try {
-      Measure.parse(change.getValue(), TimeUnit.class);
-    } catch (RuntimeException e) {
+      Path substituted = substitute(Paths.get(logPath));
+      Files.createDirectories(substituted);
+    } catch (Exception e) {
       throw new InvalidConfigChangeException(e.toString(), e);
     }
+  }
+
+  private Path substitute(Path path) {
+    return parameterSubstitutor.substitute(pathResolver.resolve(path)).normalize();
   }
 }

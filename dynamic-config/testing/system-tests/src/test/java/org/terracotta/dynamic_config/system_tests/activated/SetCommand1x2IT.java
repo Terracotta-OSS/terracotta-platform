@@ -32,7 +32,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class SetCommand1x2IT extends DynamicConfigIT {
   @Test
-  public void testCluster_setClientReconnectWindow_postActivation() throws Exception {
+  public void testCluster_setClientReconnectWindow() {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s"), is(successful()));
 
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
@@ -40,10 +40,10 @@ public class SetCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testCluster_setDataDirs_postActivation() throws Exception {
+  public void testNode_setDataDirs() throws Exception {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.data-dirs.foo=foo/node-1-1",
-        "-c", "stripe.1.node.2.data-dirs.foo=foo/node-1-2"
+        "-c", "stripe.1.node.1.data-dirs=foo:data-dir",
+        "-c", "stripe.1.node.2.data-dirs=foo:data-dir"
     ), is(successful()));
 
     assertThat(getRuntimeCluster(1, 1).getNode(1, 1).get().getDataDirs(), hasKey("foo"));
@@ -51,9 +51,28 @@ public class SetCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testNode_setDataDirs_postActivationFails() {
+  public void testStripe_setDataDirs() throws Exception {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(),
-        "-c", "stripe.1.node.1.data-dirs.foo=foo/node-1-1"),
+        "-c", "stripe.1.data-dirs=foo:data-dir"
+    ), is(successful()));
+
+    assertThat(getRuntimeCluster(1, 1).getNode(1, 1).get().getDataDirs(), hasKey("foo"));
+    assertThat(getRuntimeCluster(1, 1).getNode(1, 2).get().getDataDirs(), hasKey("foo"));
+  }
+  @Test
+  public void testCluster_setDataDirs() throws Exception {
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(),
+        "-c", "data-dirs=foo:data-dir"
+    ), is(successful()));
+
+    assertThat(getRuntimeCluster(1, 1).getNode(1, 1).get().getDataDirs(), hasKey("foo"));
+    assertThat(getRuntimeCluster(1, 1).getNode(1, 2).get().getDataDirs(), hasKey("foo"));
+  }
+
+  @Test
+  public void testNode_setDataDirsFails() {
+    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(),
+        "-c", "stripe.1.node.1.data-dirs=foo:data-dir"),
         containsOutput("Data directory names need to match across the cluster, but found the following mismatches: [[main], [main, foo]]"));
   }
 

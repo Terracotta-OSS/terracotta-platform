@@ -35,7 +35,7 @@ public class LeaseConfigChangeHandler implements ConfigChangeHandler {
     try {
       Measure.parse(change.getValue(), TimeUnit.class);
     } catch (Exception e) {
-      throw new InvalidConfigChangeException(e.getMessage(), e);
+      throw new InvalidConfigChangeException(e.toString(), e);
     }
   }
 

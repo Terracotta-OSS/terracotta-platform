@@ -30,10 +30,11 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
 import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
-import org.terracotta.dynamic_config.server.service.handler.ServerAttributeConfigChangeHandler;
+import org.terracotta.dynamic_config.server.service.handler.NodeLogDirChangeHandler;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -65,55 +66,51 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     this.platformConfiguration = platformConfiguration;
 
-    ConfigChangeHandlerManager configChangeHandlerManager = find(platformConfiguration, ConfigChangeHandlerManager.class);
-    TopologyService topologyService = find(platformConfiguration, TopologyService.class);
+    IParameterSubstitutor parameterSubstitutor = findService(platformConfiguration, IParameterSubstitutor.class);
+    PathResolver pathResolver = findService(platformConfiguration, PathResolver.class);
+    ConfigChangeHandlerManager configChangeHandlerManager = findService(platformConfiguration, ConfigChangeHandlerManager.class);
+    TopologyService topologyService = findService(platformConfiguration, TopologyService.class);
 
-    // If the server is started without the startup manager, with the old script but not with not start-node.sh, then the diagnostic services won't be there.
-    if (configChangeHandlerManager != null) {
+    // client-reconnect-window
+    ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler();
+    addToManager(configChangeHandlerManager, clientReconnectWindowHandler, CLIENT_RECONNECT_WINDOW);
 
-      // client-reconnect-window
-      ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler();
-      addToManager(configChangeHandlerManager, clientReconnectWindowHandler, CLIENT_RECONNECT_WINDOW);
+    // log-dir
+    ConfigChangeHandler nodeLogDirChangeHandler = new NodeLogDirChangeHandler(parameterSubstitutor, pathResolver);
+    addToManager(configChangeHandlerManager, nodeLogDirChangeHandler, NODE_LOG_DIR);
 
-      // server attributes
-      ConfigChangeHandler serverAttributeConfigChangeHandler = new ServerAttributeConfigChangeHandler();
-      addToManager(configChangeHandlerManager, serverAttributeConfigChangeHandler, NODE_LOG_DIR);
+    // settings applied directly without any config handler but which require a restart
+    addToManager(configChangeHandlerManager, accept(), FAILOVER_PRIORITY);
 
-      // settings applied directly without any config handler but which require a restart
-      addToManager(configChangeHandlerManager, accept(), FAILOVER_PRIORITY);
+    // public hostname/port
+    addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);
+    addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_PORT);
 
-      // public hostname/port
-      addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);
-      addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_PORT);
+    // cluster name
+    addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);
 
-      // cluster name
-      addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);
+    // tc-logging
+    LoggerOverrideConfigChangeHandler loggerOverrideConfigChangeHandler = new LoggerOverrideConfigChangeHandler(topologyService);
+    addToManager(configChangeHandlerManager, loggerOverrideConfigChangeHandler, NODE_LOGGER_OVERRIDES);
 
-      // tc-logging
-      LoggerOverrideConfigChangeHandler loggerOverrideConfigChangeHandler = new LoggerOverrideConfigChangeHandler(topologyService);
-      addToManager(configChangeHandlerManager, loggerOverrideConfigChangeHandler, NODE_LOGGER_OVERRIDES);
+    // tc-properties
+    configChangeHandlerManager.set(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
+        .selector(Configuration::getKey)
+        .fallback(accept()));
 
-      // tc-properties
-      configChangeHandlerManager.set(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
-          .selector(Configuration::getKey)
-          .fallback(accept()));
+    // initialize the config handlers that need do to something at startup
+    loggerOverrideConfigChangeHandler.init();
 
-      // initialize the config handlers that need do to something at startup
-      loggerOverrideConfigChangeHandler.init();
-    }
-
-    NomadPermissionChangeProcessor permissions = find(platformConfiguration, NomadPermissionChangeProcessor.class);
-    if (permissions != null) {
-      permissions.addCheck(new DisallowSettingChanges());
-      permissions.addCheck(new ServerStateCheck());
-    }
+    NomadPermissionChangeProcessor permissions = findService(platformConfiguration, NomadPermissionChangeProcessor.class);
+    permissions.addCheck(new DisallowSettingChanges());
+    permissions.addCheck(new ServerStateCheck());
 
     return true;
   }
 
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
-    return find(platformConfiguration, configuration.getServiceType());
+    return findService(platformConfiguration, configuration.getServiceType());
   }
 
   @Override
@@ -145,14 +142,19 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     }
   }
 
-  private <T> T find(PlatformConfiguration platformConfiguration, Class<T> type) {
+  private <T> T findService(PlatformConfiguration platformConfiguration, Class<T> type) {
     final Collection<T> services = platformConfiguration.getExtendedConfiguration(type);
     if (services.isEmpty()) {
-      return null;
+      throw new AssertionError("No instance of service " + type + " found");
     }
+
     if (services.size() == 1) {
-      return services.iterator().next();
+      T instance = services.iterator().next();
+      if (instance == null) {
+        throw new AssertionError("Instance of service " + type + " found to be null");
+      }
+      return instance;
     }
-    throw new IllegalStateException("Multiple instance of service " + type + " found");
+    throw new AssertionError("Multiple instances of service " + type + " found");
   }
 }

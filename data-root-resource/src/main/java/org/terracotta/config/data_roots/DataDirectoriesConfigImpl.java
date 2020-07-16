@@ -160,7 +160,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
       try {
         ensureDirectory(dataDirectory);
       } catch (IOException e) {
-        throw new RuntimeException("Unable to create data directory: " + dataDirectory, e);
+        throw new RuntimeException(e.toString(), e);
       }
     }
   }
@@ -233,7 +233,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
       Files.createDirectories(directory);
     } else {
       if (!Files.isDirectory(directory)) {
-        throw new RuntimeException("A file with configured data directory: " + directory + " already exists!");
+        throw new RuntimeException(directory.getFileName() + " exists under " + directory.getParent() + " but is not a directory");
       }
     }
   }

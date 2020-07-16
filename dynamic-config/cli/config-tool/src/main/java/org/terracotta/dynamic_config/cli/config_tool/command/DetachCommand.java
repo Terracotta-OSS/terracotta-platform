@@ -34,7 +34,6 @@ import java.util.Collection;
 
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
-import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
 /**
  * @author Mathieu Carbou
@@ -59,22 +58,15 @@ public class DetachCommand extends TopologyCommand {
       throw new IllegalStateException("Unable to detach since destination cluster contains only 1 node");
     }
 
-    if (!destinationCluster.containsNode(source)) {
-      throw new IllegalStateException("Source node: " + source + " is not part of cluster at: " + destination);
-    }
-
     if (operationType == NODE) {
-      // when we want to detach a node
-      onlineNodesToRemove.add(source);
-    } else {
-      // when we want tp detach a stripe, we detach all the nodes of the stripe
-      onlineNodesToRemove.addAll(destinationCluster.getStripe(source).get().getNodeAddresses());
-    }
+      if (!destinationCluster.containsNode(source)) {
+        throw new IllegalStateException("Source node: " + source + " is not part of cluster at: " + destination);
+      }
 
-    // compute the list of online nodes to detach if requested
-    onlineNodesToRemove.retainAll(destinationOnlineNodes.keySet());
+      if (destinationCluster.getStripeId(source).getAsInt() != destinationCluster.getStripeId(destination).getAsInt()) {
+        throw new IllegalStateException("Source node: " + source + " is not present in the same stripe as destination: " + destination);
+      }
 
-    if (operationType == NODE) {
       Stripe stripe = destinationCluster.getStripe(source).get();
       if (stripe.getNodeCount() == 1) {
         throw new IllegalStateException("Unable to detach since destination stripe contains only 1 node");
@@ -89,16 +81,32 @@ public class DetachCommand extends TopologyCommand {
               " but will become even with the removal of node {}", voterCount, nodeCount, source);
         }
       }
-    }
 
-    if (operationType == STRIPE && destinationClusterActivated) {
-
-      if (destinationCluster.getStripeId(source).orElse(-1) == 1) {
-        throw new IllegalStateException("Removing the leading stripe is not allowed");
+      // when we want to detach a node
+      onlineNodesToRemove.add(source);
+    } else {
+      if (!destinationCluster.containsNode(source)) {
+        throw new IllegalStateException("Source stripe: " + source + " is not part of cluster at: " + destination);
       }
 
-      throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
+      if (destinationCluster.getStripeId(source).getAsInt() == destinationCluster.getStripeId(destination).getAsInt()) {
+        throw new IllegalStateException("Source node: " + source + " and destination node: " + destination + " are part of the same stripe");
+      }
+
+      if (destinationClusterActivated) {
+        if (destinationCluster.getStripeId(source).getAsInt() == 1) {
+          throw new IllegalStateException("Removing the leading stripe is not allowed");
+        }
+
+        throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
+      }
+
+      // when we want to detach a stripe, we detach all the nodes of the stripe
+      onlineNodesToRemove.addAll(destinationCluster.getStripe(source).get().getNodeAddresses());
     }
+
+    // compute the list of online nodes to detach if requested
+    onlineNodesToRemove.retainAll(destinationOnlineNodes.keySet());
 
     // if the nodes are activated, the user must first stop them because they are part of a working cluster
     if (!onlineNodesToRemove.isEmpty() && areAllNodesActivated(onlineNodesToRemove)) {
