@@ -106,8 +106,12 @@ public class AttachCommand extends TopologyCommand {
         int nodeCount = destinationStripe.getNodes().size();
         int sum = voterCount + nodeCount;
         if (sum > 1 && sum % 2 != 0) {
-          logger.warn("WARNING: The sum of voter count ({}) and number of nodes ({}) in this stripe is an odd number," +
-              " but will become even with the addition of node {}", voterCount, nodeCount, source);
+          logger.warn(lineSeparator() +
+              "==============================================================================" + lineSeparator() +
+              "WARNING: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes " +
+              "(" + nodeCount + ") in this stripe " + lineSeparator() +
+              "is an odd number, but will become even with the addition of node " + source + lineSeparator() +
+              "==============================================================================" + lineSeparator());
         }
       }
     }
