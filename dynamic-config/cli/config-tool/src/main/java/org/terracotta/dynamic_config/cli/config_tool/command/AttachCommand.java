@@ -98,6 +98,18 @@ public class AttachCommand extends TopologyCommand {
           "Source node: " + source + " is part of a stripe containing more than 1 nodes. " +
               "It must be detached first before being attached to a new stripe. " +
               "You can run the command with -f option to force the attachment at the risk of breaking the cluster from where the node is taken.");
+
+      Stripe destinationStripe = destinationCluster.getStripe(destination).get();
+      FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
+      if (failoverPriority.equals(consistency()) && destinationClusterActivated) {
+        int voterCount = failoverPriority.getVoters();
+        int nodeCount = destinationStripe.getNodes().size();
+        int sum = voterCount + nodeCount;
+        if (sum > 1 && sum % 2 != 0) {
+          logger.warn("WARNING: The sum of voter count ({}) and number of nodes ({}) in this stripe is an odd number," +
+              " but will become even with the addition of node {}", voterCount, nodeCount, source);
+        }
+      }
     }
 
     if (operationType == STRIPE) {
@@ -113,16 +125,6 @@ public class AttachCommand extends TopologyCommand {
     if (operationType == NODE) {
       // we attach only a node
       newOnlineNodes.put(source, sourceCluster);
-      FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
-      if (failoverPriority.equals(consistency()) && destinationClusterActivated) {
-        int voterCount = failoverPriority.getVoters();
-        int nodeCount = destinationCluster.getNodes().size();
-        int sum = voterCount + nodeCount;
-        if (sum > 1 && sum % 2 != 0) {
-          logger.warn("WARNING: The sum of voter count ({}) and number of nodes ({}) in this stripe is an odd number," +
-              " but will become even with the addition of node {}", voterCount, nodeCount, source);
-        }
-      }
     } else {
       // we attach a whole stripe
       sourceCluster.getStripe(source).get().getNodeAddresses().forEach(addr -> newOnlineNodes.put(addr, getUpcomingCluster(addr)));
