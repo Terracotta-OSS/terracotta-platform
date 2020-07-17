@@ -19,11 +19,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.service.ClusterConfigMismatchException;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 
 import java.io.IOException;
@@ -40,6 +40,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
@@ -59,14 +60,11 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
       .setDataDir("cache", Paths.get("/data/cache3"));
 
   NodeContext nodeContext0 = new NodeContext(
-      Cluster.newDefaultCluster(new Stripe(node0))
-          .setOffheapResource("foo", 1, MemoryUnit.GB),
+      Cluster.newDefaultCluster(new Stripe(node0)),
       node0.getNodeAddress());
 
   NodeContext nodeContext1 = new NodeContext(
-      Cluster.newDefaultCluster(new Stripe(node1))
-          .setOffheapResource("foo", 1, MemoryUnit.GB)
-          .setOffheapResource("bar", 1, MemoryUnit.GB),
+      Cluster.newDefaultCluster(new Stripe(node1)),
       node1.getNodeAddress());
 
   @Captor ArgumentCaptor<Cluster> newCluster;
@@ -117,6 +115,22 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     assertThat(
         command::validate,
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("is part of a stripe containing more than 1 nodes")))));
+  }
+
+  @Test
+  public void test_attach_node_validation_fail_clusterSettingsMismatch() {
+    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node1)).setFailoverPriority(consistency()), node1.getNodeAddress());
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
+
+    TopologyCommand command = newCommand()
+        .setOperationType(NODE)
+        .setDestination("localhost", 9410)
+        .setSource(createUnresolved("localhost", 9411));
+
+    assertThat(
+        command::validate,
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(
+            "Mismatch found in failover-priority setting")))));
   }
 
   @Test
@@ -205,5 +219,21 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     assertThat(cluster.getStripes().get(0).getNodes(), hasSize(1));
     assertThat(cluster.getStripes().get(1).getNodes(), hasSize(1));
     assertThat(cluster.getNodeAddresses(), hasSize(2));
+  }
+
+  @Test
+  public void test_attach_stripe_validation_fail_clusterSettingsMismatch() {
+    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node1)).setFailoverPriority(consistency()), node1.getNodeAddress());
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
+
+    TopologyCommand command = newCommand()
+        .setOperationType(STRIPE)
+        .setDestination("localhost", 9410)
+        .setSource(createUnresolved("localhost", 9411));
+
+    assertThat(
+        command::validate,
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(
+            "Mismatch found in failover-priority setting")))));
   }
 }

@@ -175,7 +175,7 @@ public abstract class TopologyCommand extends RemoteCommand {
   protected final void validateLogOrFail(Supplier<Boolean> expectedCondition, String error) {
     if (!expectedCondition.get()) {
       if (force) {
-        logger.warn("Following validation has been bypassed with -f:{} - {}", lineSeparator(), error);
+        logger.warn("Following validation has been bypassed with the force option:{} - {}", lineSeparator(), error);
       } else {
         throw new IllegalArgumentException(error);
       }
