@@ -278,33 +278,12 @@ public class Cluster implements Cloneable, PropertyHolder {
         .setSecurityWhitelist(securityWhitelist);
   }
 
-  public Cluster attachStripe(Stripe stripe) {
-    if (isEmpty()) {
-      throw new IllegalStateException("Empty cluster.");
-    }
-
-    List<String> duplicates = stripe.getNodes().stream()
-        .map(Node::getNodeAddress)
-        .filter(this::containsNode)
-        .map(InetSocketAddress::toString)
-        .collect(toList());
-    if (!duplicates.isEmpty()) {
-      throw new IllegalArgumentException("Nodes are already in the cluster: " + String.join(", ", duplicates) + ".");
-    }
-
-    Node aNode = stripes.iterator().next().getNodes().iterator().next();
-    Stripe newStripe = stripe.cloneForAttachment(aNode);
-    stripes.add(newStripe);
-
-    return this;
-  }
-
-  public boolean detachStripe(Stripe stripe) {
+  public boolean removeStripe(Stripe stripe) {
     return stripes.remove(stripe);
   }
 
-  public boolean detachNode(InetSocketAddress address) {
-    boolean detached = stripes.stream().anyMatch(stripe -> stripe.detachNode(address));
+  public boolean removeNode(InetSocketAddress address) {
+    boolean detached = stripes.stream().anyMatch(stripe -> stripe.removeNode(address));
     if (detached) {
       stripes.removeIf(Stripe::isEmpty);
     }

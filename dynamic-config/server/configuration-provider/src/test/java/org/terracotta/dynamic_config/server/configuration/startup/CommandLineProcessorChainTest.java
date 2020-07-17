@@ -218,7 +218,7 @@ public class CommandLineProcessorChainTest {
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
-    cluster.getSingleStripe().get().attachNode(node2);
+    cluster.getSingleStripe().get().addNode(node2);
 
     mainCommandLineProcessor.process();
 
@@ -236,7 +236,7 @@ public class CommandLineProcessorChainTest {
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(NODE_NAME, CONFIG_FILE, cluster)).thenReturn(node1);
-    cluster.getSingleStripe().get().attachNode(node2);
+    cluster.getSingleStripe().get().addNode(node2);
 
     mainCommandLineProcessor.process();
 

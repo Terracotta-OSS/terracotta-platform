@@ -48,19 +48,6 @@ public class NodeTest {
       .setSecurityAuditLogDir(Paths.get("audit"))
       .setSecurityDir(Paths.get("sec"));
 
-  Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
-      .setDataDir("data", Paths.get("data"))
-      .setNodeBackupDir(Paths.get("backup"))
-      .setNodeBindAddress("0.0.0.0")
-      .setNodeGroupBindAddress("0.0.0.0")
-      .setNodeGroupPort(9430)
-      .setNodeLogDir(Paths.get("log"))
-      .setNodeMetadataDir(Paths.get("metadata"))
-      .setSecurityAuditLogDir(Paths.get("audit"));
-
-  Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
-      .setDataDir("data", Paths.get("/data/cache2"));
-
   Node node3 = Node.newDefaultNode("node3", "localhost", 9410)
       .setNodeGroupPort(9430)
       .setNodeBindAddress("0.0.0.0")
@@ -150,38 +137,5 @@ public class NodeTest {
             .setNodePublicHostname("foo").setNodePublicPort(1234)
             .hasAddress(InetSocketAddress.createUnresolved("foo", 1234)),
         is(true));
-  }
-
-  @Test
-  public void test_cloneForAttachment() {
-    // attaching a non-secured node to secured nodes
-    node1.setSecurityDir(Paths.get("sec"));
-    assertThat(
-        () -> node2.cloneForAttachment(node1),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9411 must be started with a security directory.")))));
-
-    // attaching a secured node to a non-secured nodes
-    node1.setSecurityDir(null);
-    node2.setSecurityDir(Paths.get("sec"));
-    Node clone = node2.cloneForAttachment(node1);
-    assertThat(clone.getSecurityDir(), is(nullValue()));
-
-    node1.setDataDir("other", Paths.get("other"));
-    assertThat(
-        () -> node2.cloneForAttachment(node1),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9411 must declare the following data directories: other.")))));
-    node1.removeDataDir("other");
-
-    node2.setDataDir("other", Paths.get("other"));
-    assertThat(
-        () -> node2.cloneForAttachment(node1),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9411 must not declare the following data directories: other.")))));
-    node2.removeDataDir("other");
-
-    // attaching
-    node1.setSecurityDir(null);
-    node2.setSecurityDir(Paths.get("Sec2"));
-    clone = node2.cloneForAttachment(node1);
-    assertThat(clone.getSecurityDir(), is(equalTo(null)));
   }
 }
