@@ -41,7 +41,7 @@ public class NodeRemovalNomadChange extends NodeNomadChange {
       throw new IllegalArgumentException("Node with address: " + getNodeAddress() + " is not in cluster: " + original);
     }
     Cluster updated = original.clone();
-    updated.detachNode(getNodeAddress());
+    updated.removeNode(getNodeAddress());
     return updated;
   }
 

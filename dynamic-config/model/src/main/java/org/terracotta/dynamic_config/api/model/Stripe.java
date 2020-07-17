@@ -107,9 +107,7 @@ public class Stripe implements Cloneable, PropertyHolder {
     return new Stripe(nodes.stream().map(Node::clone).collect(toList()));
   }
 
-  // please keep this package-local:
-  // detachment of a node should be handled by cluster object
-  boolean detachNode(InetSocketAddress address) {
+  public boolean removeNode(InetSocketAddress address) {
     return nodes.removeIf(node -> node.hasAddress(address));
   }
 
@@ -117,41 +115,9 @@ public class Stripe implements Cloneable, PropertyHolder {
     return nodes.isEmpty();
   }
 
-  /**
-   * Attach a node to this stripe.
-   * <p>
-   * The node parameters are expected to be validated before.
-   * <p>
-   * Also, we cannot attach a node to an empty stripe: this is impossible since
-   * attachment needs a source and destination node, which belongs to a non-empty stripe
-   */
-  public Stripe attachNode(Node source) {
-    if (containsNode(source.getNodeAddress())) {
-      throw new IllegalArgumentException("Node " + source.getNodeAddress() + " is already in the stripe.");
-    }
-    if (isEmpty()) {
-      throw new IllegalStateException("Empty stripe.");
-    }
-    Node aNode = nodes.iterator().next();
-    Node newNode = source.cloneForAttachment(aNode);
-    addNode(newNode);
-    return this;
-  }
-
   public Stripe addNode(Node source) {
     nodes.add(source);
     return this;
-  }
-
-  public Stripe cloneForAttachment(Node aNodeFromTargetCluster) {
-    return nodes.stream()
-        .map(node -> node.cloneForAttachment(aNodeFromTargetCluster))
-        .reduce(
-            new Stripe(),
-            Stripe::addNode,
-            (s1, s2) -> {
-              throw new UnsupportedOperationException();
-            });
   }
 
   public int getNodeCount() {

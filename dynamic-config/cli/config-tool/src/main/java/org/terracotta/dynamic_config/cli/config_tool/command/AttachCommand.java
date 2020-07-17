@@ -145,14 +145,14 @@ public class AttachCommand extends TopologyCommand {
         logger.info("Attaching node: {} to stripe: {}", source, destination);
         Stripe stripe = cluster.getStripe(destination).get();
         Node node = sourceCluster.getNode(this.source).get();
-        stripe.attachNode(node);
+        stripe.addNode(node.clone());
         break;
       }
 
       case STRIPE: {
         Stripe stripe = sourceCluster.getStripe(source).get();
         logger.info("Attaching a new stripe formed with nodes: {} to cluster: {}", toString(stripe.getNodeAddresses()), destination);
-        cluster.attachStripe(stripe);
+        cluster.addStripe(stripe.clone());
         break;
       }
 

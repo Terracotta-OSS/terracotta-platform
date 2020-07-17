@@ -25,8 +25,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
@@ -352,38 +350,6 @@ public class Node implements Cloneable, PropertyHolder {
         ", securityAuditLogDir='" + securityAuditLogDir + '\'' +
         ", dataDirs=" + dataDirs +
         '}';
-  }
-
-  public Node cloneForAttachment(Node aNodeFromTargetCluster) {
-    // validate security folder
-    if (aNodeFromTargetCluster.getSecurityDir() != null && securityDir == null) {
-      throw new IllegalArgumentException("Node " + getNodeAddress() + " must be started with a security directory.");
-    }
-
-    // Validate the user data directories.
-    // We validate that the node we want to attach has EXACTLY the same user data directories ID as the destination cluster.
-    Set<String> requiredDataDirs = new TreeSet<>(aNodeFromTargetCluster.getDataDirs().keySet());
-    Set<String> dataDirs = new TreeSet<>(this.dataDirs.keySet());
-    if (!dataDirs.containsAll(requiredDataDirs)) {
-      // case where the attached node would not have all the required IDs
-      requiredDataDirs.removeAll(dataDirs);
-      throw new IllegalArgumentException("Node " + getNodeAddress() + " must declare the following data directories: " + String.join(", ", requiredDataDirs) + ".");
-    }
-    if (dataDirs.size() > requiredDataDirs.size()) {
-      // case where the attached node would have more than the required IDs
-      dataDirs.removeAll(requiredDataDirs);
-      throw new IllegalArgumentException("Node " + getNodeAddress() + " must not declare the following data directories: " + String.join(", ", dataDirs) + ".");
-    }
-
-    // create a copy of the node
-    Node thisCopy = clone();
-
-    if (aNodeFromTargetCluster.getSecurityDir() == null && securityDir != null) {
-      // node was started with a security directory but destination cluster is not secured so we do not need one
-      thisCopy.setSecurityDir(null);
-    }
-
-    return thisCopy;
   }
 
   /**

@@ -48,7 +48,7 @@ public class NodeAdditionNomadChange extends NodeNomadChange {
       throw new IllegalArgumentException("Node with address: " + getNodeAddress() + " already exists in cluster: " + original);
     }
     Cluster updated = original.clone();
-    updated.getStripe(getStripeId()).get().attachNode(getNode());
+    updated.getStripe(getStripeId()).get().addNode(getNode().clone());
     return updated;
   }
 

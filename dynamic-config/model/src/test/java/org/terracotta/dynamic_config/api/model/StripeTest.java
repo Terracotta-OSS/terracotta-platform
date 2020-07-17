@@ -23,7 +23,6 @@ import static java.net.InetSocketAddress.createUnresolved;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -63,68 +62,17 @@ public class StripeTest {
   }
 
   @Test
-  public void test_detach() {
-    assertFalse(stripe.detachNode(createUnresolved("127.0.0.1", 9410)));
-    assertTrue(stripe.detachNode(createUnresolved("localhost", 9410)));
+  public void test_removeNode() {
+    assertFalse(stripe.removeNode(createUnresolved("127.0.0.1", 9410)));
+    assertTrue(stripe.removeNode(createUnresolved("localhost", 9410)));
     assertFalse(stripe.containsNode(createUnresolved("localhost", 9410)));
   }
 
   @Test
   public void test_isEmpty() {
     assertFalse(stripe.isEmpty());
-    stripe.detachNode(createUnresolved("localhost", 9410));
+    stripe.removeNode(createUnresolved("localhost", 9410));
     assertTrue(stripe.isEmpty());
-  }
-
-  @Test
-  public void test_attach() {
-    assertThat(
-        () -> stripe.attachNode(Node.newDefaultNode("localhost", 9410)),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9410 is already in the stripe.")))));
-
-    assertThat(
-        () -> new Stripe().attachNode(Node.newDefaultNode("localhost", 9410)),
-        is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Empty stripe.")))));
-
-    // attaching a non-secured node to secured nodes
-    node1.setSecurityDir(Paths.get("sec"));
-    assertThat(
-        () -> stripe.attachNode(node2),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9411 must be started with a security directory.")))));
-
-    // attaching a secured node to a non-secured nodes
-    node1.setSecurityDir(null);
-    node2.setSecurityDir(Paths.get("sec"));
-    stripe.attachNode(node2);
-    assertThat(stripe.getNode(createUnresolved("localhost", 9411)).get().getSecurityDir(), is(nullValue()));
-    stripe.detachNode(createUnresolved("localhost", 9411));
-
-    node1.setDataDir("other", Paths.get("other"));
-    assertThat(
-        () -> stripe.attachNode(node2),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9411 must declare the following data directories: other.")))));
-    node1.removeDataDir("other");
-
-    node2.setDataDir("other", Paths.get("other"));
-    assertThat(
-        () -> stripe.attachNode(node2),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9411 must not declare the following data directories: other.")))));
-    node2.removeDataDir("other");
-
-    // attaching
-    node1.setSecurityDir(Paths.get("Sec1"));
-    node2.setSecurityDir(Paths.get("Sec2"));
-    stripe.attachNode(node2);
-    assertThat(stripe.getNodeCount(), is(2));
-    assertThat(stripe.getNode("node1").get().getSecurityDir(), is(Paths.get("Sec1")));
-    assertThat(stripe.getNode("node2").get().getSecurityDir(), is(Paths.get("Sec2")));
-  }
-
-  @Test
-  public void test_cloneForAttachment() {
-    Stripe newStripe = new Stripe(node2.setSecurityDir(Paths.get("Sec1"))).cloneForAttachment(node1.setSecurityDir(null));
-    Node newNode = newStripe.getNodes().iterator().next();
-    assertThat(newNode.getSecurityDir(), is(equalTo(null)));
   }
 
   @Test
@@ -154,15 +102,15 @@ public class StripeTest {
   public void test_getSingleNode() {
     assertThat(stripe.getSingleNode().get(), is(sameInstance(node1)));
 
-    stripe.attachNode(node2);
+    stripe.addNode(node2);
     assertThat(() -> stripe.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
 
     // back to normal
-    stripe.detachNode(node2.getNodeAddress());
+    stripe.removeNode(node2.getNodeAddress());
     assertThat(stripe.getSingleNode().get(), is(sameInstance(node1)));
 
     // empty
-    stripe.detachNode(node1.getNodeAddress());
+    stripe.removeNode(node1.getNodeAddress());
     assertThat(stripe.getSingleNode().isPresent(), is(false));
   }
 }

@@ -165,7 +165,7 @@ public class NodeContext implements Cloneable {
    */
   public NodeContext withOnlyNode(Node node) {
     Cluster cluster = getCluster().clone().removeStripes();
-    cluster.addStripe(new Stripe(node));
+    cluster.addStripe(new Stripe(node).clone());
     return new NodeContext(cluster, node.getNodeAddress());
   }
 }
