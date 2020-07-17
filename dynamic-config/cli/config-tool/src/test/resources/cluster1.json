@@ -49,11 +49,6 @@
   },
   "failoverPriority": "availability",
   "offheapResources": {
-    "foo": {
-      "quantity": 1,
-      "unit": "GB",
-      "type": "MEMORY"
-    },
     "main": {
       "quantity": 512,
       "unit": "MB",
