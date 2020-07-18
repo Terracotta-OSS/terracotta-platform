@@ -25,7 +25,6 @@ import java.time.Duration;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -39,20 +38,16 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
 
   @Before
   public void setUp() throws Exception {
-    assertThat(configToolInvocation("attach",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
   }
 
   @Test
   public void test_detach() throws Exception {
-    assertThat(configToolInvocation("detach",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+    invokeConfigTool("detach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
   }
@@ -60,10 +55,8 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_detach_offline() throws Exception {
     stopNode(1, 2);
-    assertThat(configToolInvocation("detach",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+    invokeConfigTool("detach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
   }
 }

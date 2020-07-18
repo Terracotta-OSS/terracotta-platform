@@ -25,7 +25,6 @@ import java.nio.file.Paths;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
 /**
  * @author Mathieu Carbou
@@ -62,7 +61,7 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
 
     // attach
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
-        containsOutput("Found duplicate node name: foo"));
+        () -> invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
+        exceptionMatcher("Found duplicate node name: foo"));
   }
 }

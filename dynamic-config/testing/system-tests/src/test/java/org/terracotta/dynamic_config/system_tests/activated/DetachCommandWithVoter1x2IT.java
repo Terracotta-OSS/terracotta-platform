@@ -28,9 +28,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
@@ -56,7 +54,7 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
       Thread.sleep(10000);
 
       stopNode(1, passiveId);
-      assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      invokeConfigTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));
 
       String[] nodes = new String[]{getNode(1, activeId).getHostPort()};
 
@@ -78,7 +76,7 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
       // To ensure voter connects to all the servers 
       Thread.sleep(10000);
 
-      assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));
 
       String[] nodes = new String[]{getNode(1, activeId).getHostPort()};
 
@@ -88,7 +86,7 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
       startNode(1, passiveId);
       waitForDiagnostic(1, passiveId);
 
-      assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));
 
       nodes = new String[]{
           getNode(1, activeId).getHostPort(),

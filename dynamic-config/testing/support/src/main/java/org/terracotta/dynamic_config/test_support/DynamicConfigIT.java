@@ -45,6 +45,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.testing.ExceptionMatcher;
 import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.TmpDir;
 
@@ -67,13 +68,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.Properties;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.util.stream.IntStream.rangeClosed;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
@@ -90,11 +92,13 @@ import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
+import static org.terracotta.testing.ExceptionMatcher.throwing;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
   protected static final boolean WIN = System.getProperty("os.name").toLowerCase().startsWith("windows");
+  protected static final String CLUSTER_NAME = "tc-cluster";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final Duration DEFAULT_TEST_TIMEOUT = Duration.ofMinutes(2);
@@ -132,7 +136,7 @@ public class DynamicConfigIT {
         .around(Timeout.millis(testTimeout.toMillis()))
         .around(new ExtendedTestRule() {
           @Override
-          protected void before(Description description) throws Throwable {
+          protected void before(Description description) {
             // upload tc logging config, but ONLY IF EXISTS !
             URL tcLoggingConfig = this.getClass().getResource("/tc-logback.xml");
             if (tcLoggingConfig != null) {
@@ -214,21 +218,21 @@ public class DynamicConfigIT {
     return InetSocketAddress.createUnresolved("localhost", getNodePort(stripeId, nodeId));
   }
 
-  protected ConfigToolExecutionResult activateCluster() throws TimeoutException {
-    return activateCluster("tc-cluster");
+  protected ConfigToolExecutionResult activateCluster() {
+    return activateCluster(CLUSTER_NAME);
   }
 
-  protected ConfigToolExecutionResult activateCluster(String name) throws TimeoutException {
+  protected ConfigToolExecutionResult activateCluster(String name) {
     Path licensePath = getLicensePath();
     ConfigToolExecutionResult result = licensePath == null ?
-        configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
-        configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
+        invokeConfigTool("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
+        invokeConfigTool("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
     assertThat(result, is(successful()));
     waitForActive(1);
     return result;
   }
 
-  protected ConfigToolExecutionResult configToolInvocation(String... cli) {
+  protected ConfigToolExecutionResult invokeConfigTool(String... cli) {
     List<String> enhancedCli = new ArrayList<>(cli.length);
     List<String> configToolOptions = getConfigToolOptions(cli);
 
@@ -278,7 +282,7 @@ public class DynamicConfigIT {
 
   protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe) {
     return customConfigurationContext().tsa(tsa -> tsa
-        .clusterName("tc-cluster")
+        .clusterName(CLUSTER_NAME)
         .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
         .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT
             .withJavaOpts("-Xms32m -Xmx256m")
@@ -304,7 +308,8 @@ public class DynamicConfigIT {
         .dataDir("main:" + getNodePath(stripeId, nodeId).resolve("data-dir").toString())
         .offheap("main:512MB,foo:1GB")
         .metaData(getNodePath(stripeId, nodeId).resolve("metadata").toString())
-        .failoverPriority(getFailoverPriority().toString());
+        .failoverPriority(getFailoverPriority().toString())
+        .clusterName(CLUSTER_NAME);
   }
 
   protected FailoverPriority getFailoverPriority() {
@@ -457,7 +462,7 @@ public class DynamicConfigIT {
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
   }
 
-  protected void waitForPassiveReplication(int stripeId, int nodeId) throws Exception {
+  protected void waitForPassiveReplication() throws Exception {
     // this is ugly, but I do not know how we could otherwise wait until replication message gets processed by the passive server, which is causing a restart
     // Angela is not able to observe a server restart
     // This wait time is to ensure the passive server got the replicated message, processes it and restarted itself
@@ -517,5 +522,9 @@ public class DynamicConfigIT {
 
   protected Duration getAssertTimeout() {
     return ASSERT_TIMEOUT;
+  }
+
+  protected Matcher<ExceptionMatcher.Closure> exceptionMatcher(String message) {
+    return is(throwing(instanceOf(RuntimeException.class)).andMessage(containsString(message)));
   }
 }

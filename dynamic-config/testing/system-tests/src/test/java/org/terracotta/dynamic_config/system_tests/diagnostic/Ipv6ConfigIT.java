@@ -23,12 +23,9 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 
 import java.nio.file.Path;
-import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class Ipv6ConfigIT extends DynamicConfigIT {
@@ -36,12 +33,12 @@ public class Ipv6ConfigIT extends DynamicConfigIT {
   @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
-  public void testStartupFromConfigFileAndExportCommand() throws TimeoutException {
+  public void testStartupFromConfigFileAndExportCommand() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_multi-node_ipv6.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "[::1]", "-p", String.valueOf(getNodePort()), "-r", "config/stripe1/node-1-1");
     waitForDiagnostic(1, 1);
 
-    assertThat(configToolInvocation("export", "-s", "[::1]:" + getNodePort(), "-f", "output.json", "-t", "json"), is(successful()));
+    invokeConfigTool("export", "-s", "[::1]:" + getNodePort(), "-f", "output.json", "-t", "json");
     stopNode(1, 1);
 
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "::1", "-p", String.valueOf(getNodePort()), "-r", "config/stripe1/node-1-1");
@@ -54,6 +51,8 @@ public class Ipv6ConfigIT extends DynamicConfigIT {
     startNode(1, 1, "--config-dir", configurationRepo.toString());
     waitForActive(1, 1);
 
-    assertThat(configToolInvocation("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"), containsOutput("offheap-resources.main=512MB"));
+    assertThat(
+        invokeConfigTool("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"),
+        containsOutput("offheap-resources.main=512MB"));
   }
 }

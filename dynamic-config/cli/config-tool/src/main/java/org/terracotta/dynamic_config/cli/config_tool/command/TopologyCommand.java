@@ -79,7 +79,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     validateLogOrFail(
         () -> !mustBeRestarted(destination),
         "Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes. " +
-            "You can run the command with -f option to force the comment but at the risk of breaking this cluster configuration consistency. " +
+            "You can run the command with the force option to force the commit, but at the risk of breaking this cluster configuration consistency. " +
             "The newly added node will be restarted, but not the existing ones.");
 
     destinationCluster = getUpcomingCluster(destination);

@@ -26,9 +26,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -43,7 +41,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
 
   @Test
   public void test_attach_detach_with_unconfigured_nodes() throws Exception {
-    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
+    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
     downloadToLocal();
 
     ObjectMapper objectMapper = objectMapperFactory.create();
@@ -53,8 +51,8 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(cluster.getNodeAddresses(), hasSize(1));
 
     // add a node
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
+    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
+    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
     downloadToLocal();
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
@@ -62,8 +60,8 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // add a stripe
-    assertThat(configToolInvocation("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
-    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
+    invokeConfigTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
+    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
     downloadToLocal();
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
@@ -71,8 +69,8 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(cluster.getNodeAddresses(), hasSize(3));
 
     // remove the previously added stripe
-    assertThat(configToolInvocation("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
-    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
+    invokeConfigTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
+    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
     downloadToLocal();
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
@@ -80,8 +78,8 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(cluster.getNodeAddresses(), hasSize(2));
 
     // remove the previously added node
-    assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    assertThat(configToolInvocation("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
+    invokeConfigTool("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
+    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
     downloadToLocal();
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
