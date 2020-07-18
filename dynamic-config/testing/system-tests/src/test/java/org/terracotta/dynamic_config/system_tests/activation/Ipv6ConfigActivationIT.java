@@ -38,6 +38,8 @@ public class Ipv6ConfigActivationIT extends DynamicConfigIT {
     startNode(1, 1, "--config-dir", configurationRepo.toString());
     waitForActive(1, 1);
 
-    assertThat(configToolInvocation("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"), containsOutput("offheap-resources.main=512MB"));
+    assertThat(
+        invokeConfigTool("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"),
+        containsOutput("offheap-resources.main=512MB"));
   }
 }

@@ -24,8 +24,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AttachCommandFail1x1IT extends DynamicConfigIT {
@@ -44,13 +42,12 @@ public class AttachCommandFail1x1IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //create prepare failure
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure");
 
     // attach failure (forcing attach otherwise we have to restart cluster)
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, 1),
-            "-s", "localhost:" + getNodePort(1, 2)),
-        containsOutput("Two-Phase commit failed"));
+        () -> invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)),
+        exceptionMatcher("Two-Phase commit failed"));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 

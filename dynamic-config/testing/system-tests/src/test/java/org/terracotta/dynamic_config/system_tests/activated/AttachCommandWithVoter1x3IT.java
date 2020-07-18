@@ -32,7 +32,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 3)
 public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
@@ -58,7 +57,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
 
     //Activate cluster
     activateCluster();
@@ -78,7 +77,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
       waitForDiagnostic(1, 3);
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
-      assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+      invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3));
 
       String[] nodes = new String[]{
           getNode(1, activeId).getHostPort(),
@@ -90,7 +89,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
 
       // kill the old passive and detach it from cluster
       stopNode(1, passiveId);
-      assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      invokeConfigTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));
 
       nodes = new String[]{
           getNode(1, activeId).getHostPort(),
@@ -120,7 +119,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
       stopNode(1, activeId);
       waitForActive(1, passiveId);
 
-      assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+      invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 3));
 
       String[] nodes = new String[]{
           getNode(1, activeId).getHostPort(),
@@ -145,7 +144,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
       waitForDiagnostic(1, 3);
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
-      assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+      invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3));
 
       String[] nodes = new String[]{
           getNode(1, activeId).getHostPort(),

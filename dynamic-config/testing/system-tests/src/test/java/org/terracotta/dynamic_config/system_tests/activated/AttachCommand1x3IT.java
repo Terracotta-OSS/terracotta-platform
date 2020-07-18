@@ -27,8 +27,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -52,7 +50,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
 
     //Activate cluster
     activateCluster();
@@ -75,7 +73,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     // attach
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3));
     waitForPassive(1, 3);
 
     // verify that the active node topology has 3 nodes
@@ -98,7 +96,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
   @Test
   public void attachNodeFailAtPrepare() throws Exception {
     //create prepare failure 
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure");
 
     startNode(1, 3);
     waitForDiagnostic(1, 3);
@@ -106,9 +104,8 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
 
     // attach failure (forcing attach otherwise we have to restart cluster)
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, 1),
-            "-s", "localhost:" + getNodePort(1, 3)),
-        containsOutput("Two-Phase commit failed"));
+        () -> invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)),
+        exceptionMatcher("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
@@ -130,12 +127,11 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
 
     //create failover in prepare phase for active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-prepare";
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
 
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, 3)),
-        containsOutput("Two-Phase commit failed"));
+        () -> invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)),
+        exceptionMatcher("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
@@ -155,12 +151,8 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     //setup for failover in commit phase on active
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
-
-    assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, 3)),
-        is(successful()));
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
+    invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3));
 
     waitForPassive(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
