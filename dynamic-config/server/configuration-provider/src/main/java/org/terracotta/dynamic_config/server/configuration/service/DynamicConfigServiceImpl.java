@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
@@ -197,6 +198,20 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.info("Added node:{} to stripe ID: {}", addedNode.getNodeAddress(), stripeId);
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onNodeAddition(stripeId, addedNode));
+  }
+
+  @Override
+  public void onStripeAddition(Stripe addedStripe) {
+    LOGGER.info("Added stripe:{} to cluster: {}", addedStripe, runtimeNodeContext.getCluster().getName());
+    // do not fire events within a synchronized block
+    listeners.forEach(c -> c.onStripeAddition(addedStripe));
+  }
+
+  @Override
+  public void onStripeRemoval(Stripe removedStripe) {
+    LOGGER.info("Removed stripe:{} from cluster: {}", removedStripe, runtimeNodeContext.getCluster().getName());
+    // do not fire events within a synchronized block
+    listeners.forEach(c -> c.onStripeRemoval(removedStripe));
   }
 
   @Override

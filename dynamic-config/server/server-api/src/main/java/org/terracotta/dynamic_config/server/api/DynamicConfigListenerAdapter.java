@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.api;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -76,6 +77,16 @@ public class DynamicConfigListenerAdapter implements DynamicConfigListener {
   @Override
   public void onNodeAddition(int stripeId, Node addedNode) {
     getDelegate().ifPresent(listener -> listener.onNodeAddition(stripeId, addedNode));
+  }
+
+  @Override
+  public void onStripeAddition(Stripe addedStripe) {
+    getDelegate().ifPresent(listener -> listener.onStripeAddition(addedStripe));
+  }
+
+  @Override
+  public void onStripeRemoval(Stripe removedStripe) {
+    getDelegate().ifPresent(listener -> listener.onStripeRemoval(removedStripe));
   }
 
   private Optional<DynamicConfigListener> getDelegate() {

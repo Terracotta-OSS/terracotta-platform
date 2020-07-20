@@ -23,6 +23,7 @@ import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
@@ -33,10 +34,12 @@ public class StripeAdditionNomadChangeProcessor implements NomadChangeProcessor<
 
   private final TopologyService topologyService;
   private final DynamicConfigListener listener;
+  private final LicenseService licenseService;
 
-  public StripeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigListener listener) {
+  public StripeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigListener listener, LicenseService licenseService) {
     this.topologyService = requireNonNull(topologyService);
     this.listener = requireNonNull(listener);
+    this.licenseService = requireNonNull(licenseService);
   }
 
   @Override
@@ -48,6 +51,7 @@ public class StripeAdditionNomadChangeProcessor implements NomadChangeProcessor<
     try {
       Cluster updated = change.apply(baseConfig.getCluster());
       new ClusterValidator(updated).validate();
+      topologyService.getLicense().ifPresent(l -> licenseService.validate(l, updated));
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
@@ -62,8 +66,7 @@ public class StripeAdditionNomadChangeProcessor implements NomadChangeProcessor<
 
     try {
       LOGGER.info("Adding stripe: {} to cluster: {}", change.getStripe(), change.getCluster().getName());
-      // TODO
-      // listener.onNodeAddition(change.getStripeId(), change.getNode());
+      listener.onStripeAddition(change.getStripe());
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

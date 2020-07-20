@@ -174,7 +174,7 @@ public class NomadServerManager {
     router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
     router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
     router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
-    router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
+    router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener, licenseService));
     router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
 
     nomadServer.setChangeApplicator(

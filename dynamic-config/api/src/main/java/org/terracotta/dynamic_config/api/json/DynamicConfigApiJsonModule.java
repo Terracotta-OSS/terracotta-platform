@@ -170,7 +170,7 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
   public static class StripeAdditionNomadChangeMixin extends StripeAdditionNomadChange {
     @JsonCreator
     public StripeAdditionNomadChangeMixin(@JsonProperty(value = "cluster", required = true) Cluster cluster,
-                                         @JsonProperty(value = "stripe", required = true) Stripe stripe) {
+                                          @JsonProperty(value = "stripe", required = true) Stripe stripe) {
       super(cluster, stripe);
     }
   }
