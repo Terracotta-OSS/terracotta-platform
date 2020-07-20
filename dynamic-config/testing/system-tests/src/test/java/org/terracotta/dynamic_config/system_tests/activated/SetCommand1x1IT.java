@@ -308,4 +308,19 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir=foo"),
         exceptionMatcher("Error: Invalid input: 'stripe.1.node.1.metadata-dir=foo'. Reason: Setting 'metadata-dir' cannot be set when node is activated"));
   }
+
+  @Test
+  public void testPublicHostPort() {
+    assertThat(
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.public-hostname", "-c", "stripe.1.node.1.public-port"),
+        allOf(containsOutput("stripe.1.node.1.public-hostname="), containsOutput("stripe.1.node.1.public-port=")));
+
+    String publicHostname = "127.0.0.1";
+    int publicPort = getNodePort();
+    invokeConfigTool("set", "-s", "localhost:" + publicPort, "-c", "stripe.1.node.1.public-hostname=" + publicHostname, "-c", "stripe.1.node.1.public-port=" + publicPort);
+
+    assertThat(
+        invokeConfigTool("get", "-s", publicHostname + ":" + getNodePort(), "-c", "stripe.1.node.1.public-hostname", "-c", "stripe.1.node.1.public-port"),
+        allOf(containsOutput("stripe.1.node.1.public-hostname=" + publicHostname), containsOutput("stripe.1.node.1.public-port=" + publicPort)));
+  }
 }

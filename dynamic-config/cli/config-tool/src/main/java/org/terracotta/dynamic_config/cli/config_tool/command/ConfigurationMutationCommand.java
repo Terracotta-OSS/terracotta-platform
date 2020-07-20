@@ -62,7 +62,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       // remember: a node setting can be set using a cluster or stripe namespace to target several nodes at once
       // Note: this validation is only for node-specific settings
       if (c.getSetting().isScope(NODE)) {
-        targeted.stream().map(nodeContext -> nodeContext.getNode().getNodeAddress()).forEach(missingTargetedNodes::add);
+        targeted.stream().map(nodeContext -> nodeContext.getNode().getNodeAddress()).filter(originalCluster::containsNode).forEach(missingTargetedNodes::add);
       }
     }
     new ClusterValidator(updatedCluster).validate();
@@ -73,7 +73,6 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     logger.debug("Online nodes: {}", onlineNodes);
 
     boolean allOnlineNodesActivated = areAllNodesActivated(onlineNodes.keySet());
-
     if (allOnlineNodesActivated) {
       licenseValidation(node, updatedCluster);
     }
@@ -81,7 +80,8 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     // ensure that the nodes targeted by the set or unset command in the namespaces are all online so that they can validate the change
     missingTargetedNodes.removeAll(onlineNodes.keySet());
     if (!missingTargetedNodes.isEmpty()) {
-      throw new IllegalStateException("Some nodes that are targeted by the change are not reachable and cannot validate. Please ensure these nodes are online, or remove them from the request: " + toString(missingTargetedNodes));
+      throw new IllegalStateException("Some nodes that are targeted by the change are not reachable and thus cannot be validated. " +
+          "Please ensure these nodes are online, or remove them from the request: " + toString(missingTargetedNodes));
     }
 
     logger.debug("New configuration change(s) can be sent");

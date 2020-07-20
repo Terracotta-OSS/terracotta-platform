@@ -24,6 +24,7 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
@@ -54,6 +55,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -153,7 +155,9 @@ public class NomadManager<T> {
 
     // collect all online addresses by stripe
     List<List<InetSocketAddress>> onlineNodesPerStripe = destinationCluster.getStripes().stream().map(stripe -> {
-      List<InetSocketAddress> stripeNodes = new ArrayList<>(stripe.getNodeAddresses());
+      List<InetSocketAddress> stripeNodes = new ArrayList<>();
+      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getNodeInternalAddress).collect(toList()));
+      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getNodePublicAddress).filter(Optional::isPresent).map(Optional::get).collect(toList()));
       stripeNodes.retainAll(onlineNodes.keySet());
       return stripeNodes;
     }).collect(toList());
