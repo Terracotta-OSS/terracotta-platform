@@ -97,14 +97,14 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node." + passiveId + ".log-dir=foo"),
-        exceptionMatcher("Error: Some nodes that are targeted by the change are not reachable and cannot validate"));
+        exceptionMatcher("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
 
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.log-dir=foo"),
-        exceptionMatcher("Error: Some nodes that are targeted by the change are not reachable and cannot validate"));
+        exceptionMatcher("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
 
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "log-dir=foo"),
-        exceptionMatcher("Error: Some nodes that are targeted by the change are not reachable and cannot validate"));
+        exceptionMatcher("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
   }
 }
