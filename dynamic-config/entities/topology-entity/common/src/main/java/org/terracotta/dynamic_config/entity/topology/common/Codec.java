@@ -41,6 +41,8 @@ import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_ADDITION;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_HAS_INCOMPLETE_CHANGE;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_LICENSE;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_MUST_BE_RESTARTED;
@@ -66,6 +68,8 @@ public class Codec implements MessageCodec<Message, Response> {
           .mapping(EVENT_NODE_ADDITION, 6)
           .mapping(EVENT_NODE_REMOVAL, 7)
           .mapping(EVENT_SETTING_CHANGED, 8)
+          .mapping(EVENT_STRIPE_ADDITION, 9)
+          .mapping(EVENT_STRIPE_REMOVAL, 10)
           .build())
       .struct(REQ_LICENSE.name(), 20, newStructBuilder()
           .string("date", 10)
@@ -90,6 +94,8 @@ public class Codec implements MessageCodec<Message, Response> {
           .string("configuration", 10)
           .string("cluster", 20)
           .build())
+      .string(EVENT_STRIPE_ADDITION.name(), 100)
+      .string(EVENT_STRIPE_REMOVAL.name(), 110)
       .build();
 
   @Override
@@ -156,6 +162,11 @@ public class Codec implements MessageCodec<Message, Response> {
               .string("cluster", encodeCluster((Cluster) oo.get(1)));
           break;
         }
+        case EVENT_STRIPE_ADDITION:
+        case EVENT_STRIPE_REMOVAL: {
+          encoder.string(type.name(), encodeStripe(response.getPayload()));
+          break;
+        }
         default:
           throw new UnsupportedOperationException(type.name());
       }
@@ -201,6 +212,9 @@ public class Codec implements MessageCodec<Message, Response> {
               decodeConfiguration(event.string("configuration")),
               decodeCluster(event.string("cluster"))));
         }
+        case EVENT_STRIPE_ADDITION:
+        case EVENT_STRIPE_REMOVAL:
+          return new Response(type, decodeStripe(decoder.string(type.name())));
         default:
           throw new UnsupportedOperationException(type.name());
       }
@@ -232,6 +246,18 @@ public class Codec implements MessageCodec<Message, Response> {
     requireNonNull(payload);
     return new ClusterFactory().create(Props.load(payload), configuration -> {
     }).getSingleNode().orElseThrow(() -> new AssertionError("node must be there"));
+  }
+
+  private String encodeStripe(Stripe stripe) {
+    requireNonNull(stripe);
+    Cluster container = Cluster.newDefaultCluster(stripe);
+    return Props.toString(container.toProperties(false, true));
+  }
+
+  private Stripe decodeStripe(String payload) {
+    requireNonNull(payload);
+    return new ClusterFactory().create(Props.load(payload), configuration -> {
+    }).getSingleStripe().orElseThrow(() -> new AssertionError("stripe must be there"));
   }
 
   private String encodeConfiguration(Configuration configuration) {

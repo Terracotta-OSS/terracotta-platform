@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.entity.topology.common.Message;
@@ -46,6 +47,8 @@ import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_ADDITION;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_REMOVAL;
 
 
 public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Message, Response> {
@@ -141,6 +144,16 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Mes
         @Override
         public void onNodeRemoval(int stripeId, Node removedNode) {
           fire(new Response(EVENT_NODE_REMOVAL, asList(stripeId, removedNode)));
+        }
+
+        @Override
+        public void onStripeAddition(Stripe addedStripe) {
+          fire(new Response(EVENT_STRIPE_ADDITION, addedStripe));
+        }
+
+        @Override
+        public void onStripeRemoval(Stripe removedStripe) {
+          fire(new Response(EVENT_STRIPE_REMOVAL, removedStripe));
         }
 
         @Override

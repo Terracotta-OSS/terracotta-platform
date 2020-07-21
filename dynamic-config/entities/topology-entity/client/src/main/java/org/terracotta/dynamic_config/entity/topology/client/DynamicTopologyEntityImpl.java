@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.entity.topology.common.Message;
 import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.dynamic_config.entity.topology.common.Type;
@@ -74,6 +75,16 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
           case EVENT_SETTING_CHANGED: {
             List<Object> payload = messageFromServer.getPayload();
             listener.onSettingChange((Configuration) payload.get(0), (Cluster) payload.get(1));
+            break;
+          }
+          case EVENT_STRIPE_ADDITION: {
+            List<Object> payload = messageFromServer.getPayload();
+            listener.onStripeAddition((Stripe) payload.get(0));
+            break;
+          }
+          case EVENT_STRIPE_REMOVAL: {
+            List<Object> payload = messageFromServer.getPayload();
+            listener.onStripeRemoval((Stripe) payload.get(0));
             break;
           }
           default:

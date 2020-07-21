@@ -24,7 +24,8 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterConfigMismatchException;
 import org.terracotta.dynamic_config.api.service.MutualClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Usage;
@@ -63,10 +64,6 @@ public class AttachCommand extends TopologyCommand {
   @Override
   public void validate() {
     super.validate();
-
-    if (destinationClusterActivated && operationType == STRIPE) {
-      throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
-    }
 
     validateAddress(source);
 
@@ -175,12 +172,12 @@ public class AttachCommand extends TopologyCommand {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
-  protected NodeNomadChange buildNomadChange(Cluster result) {
+  protected TopologyNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
         return new NodeAdditionNomadChange(result, result.getStripeId(destination).getAsInt(), result.getNode(source).get());
       case STRIPE: {
-        throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
+        return new StripeAdditionNomadChange(result, result.getStripe(source).get());
       }
       default: {
         throw new UnsupportedOperationException(operationType.name());
@@ -189,21 +186,21 @@ public class AttachCommand extends TopologyCommand {
   }
 
   @Override
-  protected void onNomadChangeReady(NodeNomadChange nomadChange) {
+  protected void onNomadChangeReady(TopologyNomadChange nomadChange) {
     setUpcomingCluster(newOnlineNodes.keySet(), nomadChange.getCluster());
   }
 
   @Override
-  protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
+  protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
     Cluster result = nomadChange.getCluster();
     activate(newOnlineNodes.keySet(), result, null, restartDelay, restartWaitTime);
   }
 
   @Override
-  protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
+  protected void onNomadChangeFailure(TopologyNomadChange nomadChange, RuntimeException error) {
     logger.error("An error occurred during the attach transaction." + lineSeparator() +
-        "The node information may still be added to the destination cluster: you will need to run the diagnostic / export command to check the state of the transaction." + lineSeparator() +
-        "The nodes to attach won't be activated and restarted, and their topology will be rolled back to their initial value."
+        "The node/stripe information may still be added to the destination cluster: you will need to run the diagnostic / export command to check the state of the transaction." + lineSeparator() +
+        "The node/stripe to attach won't be activated and restarted, and their topology will be rolled back to their initial value."
     );
     newOnlineNodes.forEach((addr, cluster) -> {
       logger.info("Rollback topology of node: {}", addr);

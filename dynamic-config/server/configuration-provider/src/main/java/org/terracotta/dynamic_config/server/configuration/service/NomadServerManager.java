@@ -26,6 +26,8 @@ import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChang
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
@@ -45,6 +47,8 @@ import org.terracotta.dynamic_config.server.configuration.service.nomad.processo
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.NodeRemovalNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.NomadPermissionChangeProcessorImpl;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.SettingNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.StripeAdditionNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.StripeRemovalNomadChangeProcessor;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.UpgradableNomadServer;
@@ -170,6 +174,8 @@ public class NomadServerManager {
     router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
     router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
     router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
+    router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener, licenseService));
+    router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
 
     nomadServer.setChangeApplicator(
         new ConfigChangeApplicator(stripeId, nodeName,

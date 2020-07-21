@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.api;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
@@ -79,4 +80,8 @@ public interface DynamicConfigListener {
   void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo);
 
   void onNomadRollback(RollbackMessage message, AcceptRejectResponse response);
+
+  void onStripeAddition(Stripe addedStripe);
+
+  void onStripeRemoval(Stripe removedStripe);
 }

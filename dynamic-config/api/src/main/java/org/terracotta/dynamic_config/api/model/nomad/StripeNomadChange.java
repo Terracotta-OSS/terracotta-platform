@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.entity.topology.common;
+package org.terracotta.dynamic_config.api.model.nomad;
 
-/**
- * @author Mathieu Carbou
- */
-public enum Type {
-  REQ_UPCOMING_CLUSTER,
-  REQ_RUNTIME_CLUSTER,
-  REQ_MUST_BE_RESTARTED,
-  REQ_HAS_INCOMPLETE_CHANGE,
-  REQ_LICENSE,
-  EVENT_NODE_ADDITION,
-  EVENT_NODE_REMOVAL,
-  EVENT_SETTING_CHANGED,
-  EVENT_STRIPE_ADDITION,
-  EVENT_STRIPE_REMOVAL
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Stripe;
+
+public abstract class StripeNomadChange extends TopologyNomadChange {
+
+  private final Stripe stripe;
+
+  public StripeNomadChange(Cluster cluster, Stripe stripe) {
+    super(cluster, Applicability.cluster());
+    this.stripe = stripe;
+  }
+
+  public Stripe getStripe() {
+    return stripe;
+  }
 }

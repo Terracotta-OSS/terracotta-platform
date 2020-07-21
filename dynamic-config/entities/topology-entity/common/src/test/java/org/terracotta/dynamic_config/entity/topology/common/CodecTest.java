@@ -34,6 +34,8 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_ADDITION;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_HAS_INCOMPLETE_CHANGE;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_LICENSE;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_MUST_BE_RESTARTED;
@@ -47,7 +49,9 @@ public class CodecTest {
   @Test
   public void test_encode_decode() throws MessageCodecException {
     Node node = Node.newDefaultNode("foo", "localhost", 9410);
-    Cluster cluster = Cluster.newDefaultCluster("bar", new Stripe(node));
+    Node node2 = Node.newDefaultNode("foo2", "localhost", 9411);
+    Stripe stripe = new Stripe(node, node2);
+    Cluster cluster = Cluster.newDefaultCluster("bar", stripe);
 
     test(REQ_LICENSE, null);
     test(REQ_LICENSE, new License(emptyMap(), LocalDate.of(2020, 1, 1)));
@@ -63,6 +67,9 @@ public class CodecTest {
     test(EVENT_NODE_REMOVAL, asList(1, node));
 
     test(EVENT_SETTING_CHANGED, asList(Configuration.valueOf("cluster-name=foo"), cluster));
+
+    test(EVENT_STRIPE_ADDITION, stripe);
+    test(EVENT_STRIPE_REMOVAL, stripe);
   }
 
   private static void test(Type type, Object payload) throws MessageCodecException {

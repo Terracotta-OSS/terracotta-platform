@@ -22,8 +22,9 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
@@ -149,12 +150,12 @@ public class DetachCommand extends TopologyCommand {
   }
 
   @Override
-  protected NodeNomadChange buildNomadChange(Cluster result) {
+  protected TopologyNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
         return new NodeRemovalNomadChange(result, destinationCluster.getStripeId(source).getAsInt(), destinationCluster.getNode(source).get());
       case STRIPE: {
-        throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
+        return new StripeRemovalNomadChange(result, destinationCluster.getStripe(source).get());
       }
       default: {
         throw new UnsupportedOperationException(operationType.name());
@@ -163,7 +164,7 @@ public class DetachCommand extends TopologyCommand {
   }
 
   @Override
-  protected void onNomadChangeReady(NodeNomadChange nomadChange) {
+  protected void onNomadChangeReady(TopologyNomadChange nomadChange) {
     if (!onlineNodesToRemove.isEmpty()) {
 
       logger.info("Reset nodes: {}", toString(onlineNodesToRemove));

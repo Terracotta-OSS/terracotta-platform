@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
@@ -42,9 +43,11 @@ import org.terracotta.nomad.server.NomadChangeInfo;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class ManagementCommonEntity implements CommonServerEntity<EntityMessage, EntityResponse> {
 
@@ -182,6 +185,22 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("nodeInternalAddress", addedNode.getNodeInternalAddress().toString());
           addedNode.getNodePublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
+        }
+
+        @Override
+        public void onStripeAddition(Stripe addedStripe) {
+          Map<String, String> data = new TreeMap<>();
+          data.put("nodeNames", addedStripe.getNodes().stream().map(Node::getNodeName).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_ADDED", data));
+        }
+
+        @Override
+        public void onStripeRemoval(Stripe removedStripe) {
+          Map<String, String> data = new TreeMap<>();
+          data.put("nodeNames", removedStripe.getNodes().stream().map(Node::getNodeName).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_REMOVED", data));
         }
       });
 
