@@ -124,6 +124,11 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
+  public synchronized String getLicenseString() {
+    return getLicenseContent().orElse(null);
+  }
+
+  @Override
   public void addStateTo(StateDumpCollector stateDumpCollector) {
     stateDumpCollector.addState("licensePath", licensePath.toString());
     stateDumpCollector.addState("hasLicenseFile", hasLicenseFile());

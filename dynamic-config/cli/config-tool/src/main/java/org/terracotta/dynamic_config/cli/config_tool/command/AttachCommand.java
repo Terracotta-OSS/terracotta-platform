@@ -193,7 +193,11 @@ public class AttachCommand extends TopologyCommand {
   @Override
   protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
     Cluster result = nomadChange.getCluster();
-    activate(newOnlineNodes.keySet(), result, null, restartDelay, restartWaitTime);
+    if (nomadChange instanceof StripeAdditionNomadChange) {
+      activateStripe(newOnlineNodes.keySet(), result, destination, restartDelay, restartWaitTime);
+    } else {
+      activate(newOnlineNodes.keySet(), result, null, restartDelay, restartWaitTime);
+    }
   }
 
   @Override

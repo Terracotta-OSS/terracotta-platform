@@ -102,19 +102,24 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void activate(Collection<InetSocketAddress> newNodes, Cluster cluster, Path licenseFile, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  private void installLicenseTo(Collection<InetSocketAddress> newNodes, Cluster cluster, String licenseContent) {
     logger.info("Activating nodes: {}", toString(newNodes));
 
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
       dynamicConfigServices(diagnosticServices)
-          .map(Tuple2::getT2)
-          .forEach(service -> service.activate(cluster, read(licenseFile)));
-      if (licenseFile == null) {
+        .map(Tuple2::getT2)
+        .forEach(service -> service.activate(cluster, licenseContent));
+      if (licenseContent == null) {
         logger.info("No license installed. If you are attaching a node, the license will be synced.");
       } else {
         logger.info("License installation successful");
       }
     }
+  }
+
+  protected final void activate(Collection<InetSocketAddress> newNodes, Cluster cluster, Path licenseFile, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+    String licenseContent = read(licenseFile);
+    installLicenseTo(newNodes, cluster, licenseContent);
 
     runClusterActivation(newNodes, cluster);
     logger.debug("Configuration directories have been created for all nodes");
@@ -129,6 +134,34 @@ public abstract class RemoteCommand extends Command {
         // and has consequently bootstrapped the configuration from Nomad.
         EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
     logger.info("All nodes came back up");
+  }
+
+  protected final void activateStripe(Collection<InetSocketAddress> newNodes, Cluster cluster, InetSocketAddress destination,
+                                      Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+    String licenseContent = getLicenseContentFrom(destination);
+    installLicenseTo(newNodes, cluster, licenseContent);
+
+    runClusterActivation(newNodes, cluster);
+    logger.debug("Configuration directories have been created for all nodes");
+
+    logger.info("Restarting nodes: {}", toString(newNodes));
+    restartNodes(
+      newNodes,
+      Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+      Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
+      // these are the list of states tha twe allow to consider a server has restarted
+      // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
+      // and has consequently bootstrapped the configuration from Nomad.
+      EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
+    logger.info("All nodes came back up");
+  }
+
+  private String getLicenseContentFrom(InetSocketAddress node) {
+    logger.info("getLicenseContent({})", node);
+    System.out.println("getLicenseContent(" + node + ")");
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
+      return diagnosticService.getProxy(DynamicConfigService.class).getLicenseString();
+    }
   }
 
   /**

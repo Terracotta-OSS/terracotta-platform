@@ -69,4 +69,6 @@ public interface DynamicConfigService {
    * This method will zap and stop the node.
    */
   void stop(Duration delay);
+
+  String getLicenseString();
 }
