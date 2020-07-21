@@ -34,7 +34,7 @@ public class TopologyIT extends AbstractSingleTest {
     Cluster cluster = nmsService.readTopology();
     JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
     JsonNode expected = readJson("topology.json");
-    assertEquals(expected, actual);
+    assertEquals(actual.toPrettyString(), expected, actual);
   }
 
   @Test

@@ -34,8 +34,8 @@ public class NodeRemovalNomadChange extends NodeNomadChange {
   @Override
   public Cluster apply(Cluster original) {
     requireNonNull(original);
-    if (!original.containsNode(getStripeId(), getNode().getNodeName())) {
-      throw new IllegalArgumentException("Node name: " + getNode().getNodeName() + " is not in stripe ID: " + getStripeId() + " in cluster: " + original);
+    if (!original.containsNode(getStripeId(), getNode().getName())) {
+      throw new IllegalArgumentException("Node name: " + getNode().getName() + " is not in stripe ID: " + getStripeId() + " in cluster: " + original);
     }
     if (!original.containsNode(getNodeAddress())) {
       throw new IllegalArgumentException("Node with address: " + getNodeAddress() + " is not in cluster: " + original);

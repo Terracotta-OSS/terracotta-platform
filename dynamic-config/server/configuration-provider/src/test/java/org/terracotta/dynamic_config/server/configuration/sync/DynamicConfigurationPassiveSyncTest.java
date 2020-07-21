@@ -19,11 +19,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
@@ -59,7 +58,7 @@ public class DynamicConfigurationPassiveSyncTest {
   @Rule
   public ExpectedException exceptionRule = ExpectedException.none();
   private Instant now = Instant.now();
-  private NodeContext startupTopology = new NodeContext(Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("bar", "localhost"))), 1, "bar");
+  private NodeContext startupTopology = new NodeContext(Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("bar", "localhost"))), 1, "bar");
   private NomadChangeInfo activation = new NomadChangeInfo(UUID.randomUUID(), new ClusterActivationNomadChange(startupTopology.getCluster()), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now);
   private DynamicConfigSyncData.Codec codec = new DynamicConfigSyncData.Codec(new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()));
 

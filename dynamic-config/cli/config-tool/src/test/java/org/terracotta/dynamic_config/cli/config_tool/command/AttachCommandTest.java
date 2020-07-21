@@ -23,7 +23,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.service.ClusterConfigMismatchException;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 
 import java.io.IOException;
@@ -50,22 +50,22 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
-  Node node0 = Node.newDefaultNode("node0", "localhost", 9410)
+  Node node0 = Testing.newTestNode("node0", "localhost", 9410)
       .setDataDir("cache", Paths.get("/data/cache1"));
 
-  Node node1 = Node.newDefaultNode("node1", "localhost", 9411)
+  Node node1 = Testing.newTestNode("node1", "localhost", 9411)
       .setDataDir("cache", Paths.get("/data/cache2"));
 
-  Node node2 = Node.newDefaultNode("node2", "localhost", 9412)
+  Node node2 = Testing.newTestNode("node2", "localhost", 9412)
       .setDataDir("cache", Paths.get("/data/cache3"));
 
   NodeContext nodeContext0 = new NodeContext(
-      Cluster.newDefaultCluster(new Stripe(node0)),
-      node0.getNodeAddress());
+      Testing.newTestCluster(new Stripe(node0)),
+      node0.getAddress());
 
   NodeContext nodeContext1 = new NodeContext(
-      Cluster.newDefaultCluster(new Stripe(node1)),
-      node1.getNodeAddress());
+      Testing.newTestCluster(new Stripe(node1)),
+      node1.getAddress());
 
   @Captor ArgumentCaptor<Cluster> newCluster;
 
@@ -104,7 +104,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_node_validation_fail_src_multiNodeStripe() {
-    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node1, node2)), node1.getNodeAddress());
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster(new Stripe(node1, node2)), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -119,7 +119,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_node_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node1)).setFailoverPriority(consistency()), node1.getNodeAddress());
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster(new Stripe(node1)).setFailoverPriority(consistency()), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -178,7 +178,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe_validation_fail_src_multiStripeCluster() {
-    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node1), new Stripe(node2)), node1.getNodeAddress());
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster(new Stripe(node1), new Stripe(node2)), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -223,7 +223,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node1)).setFailoverPriority(consistency()), node1.getNodeAddress());
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster(new Stripe(node1)).setFailoverPriority(consistency()), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()

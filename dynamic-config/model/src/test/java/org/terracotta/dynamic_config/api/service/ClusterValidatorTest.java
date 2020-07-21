@@ -21,6 +21,7 @@ import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 
 import java.nio.file.Paths;
 import java.util.Random;
@@ -28,7 +29,6 @@ import java.util.stream.Stream;
 
 import static org.terracotta.common.struct.MemoryUnit.GB;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
-import static org.terracotta.dynamic_config.api.model.Cluster.newDefaultCluster;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 
 public class ClusterValidatorTest {
@@ -40,117 +40,117 @@ public class ClusterValidatorTest {
 
   @Test
   public void testDuplicateNodeNameSameStripe() {
-    Node node1 = Node.newDefaultNode("foo", "localhost1");
-    Node node2 = Node.newDefaultNode("foo", "localhost2");
+    Node node1 = Testing.newTestNode("foo", "localhost1");
+    Node node2 = Testing.newTestNode("foo", "localhost2");
 
-    assertClusterValidationFails("Found duplicate node name: foo", newDefaultCluster(new Stripe(node1, node2)));
+    assertClusterValidationFails("Found duplicate node name: foo", Testing.newTestCluster(new Stripe(node1, node2)));
   }
 
   @Test
   public void testDuplicateNodeNameDifferentStripe() {
-    Node node1 = Node.newDefaultNode("foo", "localhost1");
-    Node node2 = Node.newDefaultNode("foo", "localhost2");
+    Node node1 = Testing.newTestNode("foo", "localhost1");
+    Node node2 = Testing.newTestNode("foo", "localhost2");
 
-    assertClusterValidationFails("Found duplicate node name: foo", newDefaultCluster(new Stripe(node1), new Stripe(node2)));
+    assertClusterValidationFails("Found duplicate node name: foo", new Cluster(new Stripe(node1), new Stripe(node2)));
   }
 
   @Test
   public void testDuplicateAddress() {
-    Node node1 = Node.newDefaultNode("foo1", "localhost");
-    Node node2 = Node.newDefaultNode("foo2", "localhost");
+    Node node1 = Testing.newTestNode("foo1", "localhost");
+    Node node2 = Testing.newTestNode("foo2", "localhost");
 
     assertClusterValidationFails(
         "Nodes with names: foo1, foo2 have the same address: 'localhost:9410'",
-        newDefaultCluster(new Stripe(node1, node2)));
+        Testing.newTestCluster(new Stripe(node1, node2)));
   }
 
   @Test
   public void testDuplicatePublicAddress() {
-    Node node1 = Node.newDefaultNode("foo1", "host1").setNodePublicHostname("public-host").setNodePublicPort(9510);
-    Node node2 = Node.newDefaultNode("foo2", "host2").setNodePublicHostname("public-host").setNodePublicPort(9510);
+    Node node1 = Testing.newTestNode("foo1", "host1").setPublicHostname("public-host").setPublicPort(9510);
+    Node node2 = Testing.newTestNode("foo2", "host2").setPublicHostname("public-host").setPublicPort(9510);
 
     assertClusterValidationFails(
         "Nodes with names: foo1, foo2 have the same public address: 'public-host:9510'",
-        newDefaultCluster(new Stripe(node1, node2)));
+        Testing.newTestCluster(new Stripe(node1, node2)));
   }
 
   @Test
   public void testNotAllNodesHavePublicAddress() {
-    Node node1 = Node.newDefaultNode("foo1", "host1").setNodePublicHostname("public-host").setNodePublicPort(9510);
-    Node node2 = Node.newDefaultNode("foo2", "host2");
+    Node node1 = Testing.newTestNode("foo1", "host1").setPublicHostname("public-host").setPublicPort(9510);
+    Node node2 = Testing.newTestNode("foo2", "host2");
 
     assertClusterValidationFails(
         "Nodes with names: [foo2] don't have public addresses defined",
-        newDefaultCluster(new Stripe(node1, node2)));
+        Testing.newTestCluster(new Stripe(node1, node2)));
   }
 
   @Test
   public void testSamePublicAndPrivateAddressOnSameNode() {
-    Node node = Node.newDefaultNode("foo1", "host").setNodePort(9410).setNodePublicHostname("host").setNodePublicPort(9410);
-    new ClusterValidator(newDefaultCluster(new Stripe(node))).validate();
+    Node node = Testing.newTestNode("foo1", "host").setPort(9410).setPublicHostname("host").setPublicPort(9410);
+    new ClusterValidator(Testing.newTestCluster(new Stripe(node))).validate();
   }
 
   @Test
   public void testSamePublicAndPrivateAddressAcrossNodes() {
-    Node node1 = Node.newDefaultNode("foo1", "host1").setNodePort(9410).setNodePublicHostname("host2").setNodePublicPort(9410);
-    Node node2 = Node.newDefaultNode("foo2", "host2").setNodePort(9410).setNodePublicHostname("host1").setNodePublicPort(9410);
-    new ClusterValidator(newDefaultCluster(new Stripe(node1, node2))).validate();
+    Node node1 = Testing.newTestNode("foo1", "host1").setPort(9410).setPublicHostname("host2").setPublicPort(9410);
+    Node node2 = Testing.newTestNode("foo2", "host2").setPort(9410).setPublicHostname("host1").setPublicPort(9410);
+    new ClusterValidator(Testing.newTestCluster(new Stripe(node1, node2))).validate();
   }
 
   @Test
   public void testDuplicatePrivateAddressWithDifferentPublicAddresses() {
-    Node node1 = Node.newDefaultNode("foo1", "localhost").setNodePublicHostname("public-host1").setNodePublicPort(9510);
-    Node node2 = Node.newDefaultNode("foo2", "localhost").setNodePublicHostname("public-host2").setNodePublicPort(9510);
+    Node node1 = Testing.newTestNode("foo1", "localhost").setPublicHostname("public-host1").setPublicPort(9510);
+    Node node2 = Testing.newTestNode("foo2", "localhost").setPublicHostname("public-host2").setPublicPort(9510);
 
     assertClusterValidationFails(
         "Nodes with names: foo1, foo2 have the same address: 'localhost:9410'",
-        newDefaultCluster(new Stripe(node1, node2)));
+        Testing.newTestCluster(new Stripe(node1, node2)));
   }
 
   @Test
   public void testMalformedPublicAddress_missingPublicPort() {
-    Node node = Node.newDefaultNode("foo", "localhost").setNodePublicHostname("public-host");
+    Node node = Testing.newTestNode("foo", "localhost").setPublicHostname("public-host");
     assertClusterValidationFails("Public address: 'public-host:null' of node with name: foo isn't well-formed",
-        newDefaultCluster(new Stripe(node)));
+        Testing.newTestCluster(new Stripe(node)));
   }
 
   @Test
   public void testMalformedPublicAddress_missingPublicHostname() {
-    Node node = Node.newDefaultNode("foo", "localhost").setNodePublicPort(9410);
+    Node node = Testing.newTestNode("foo", "localhost").setPublicPort(9410);
     assertClusterValidationFails("Public address: 'null:9410' of node with name: foo isn't well-formed",
-        newDefaultCluster(new Stripe(node)));
+        Testing.newTestCluster(new Stripe(node)));
   }
 
   @Test
   public void testDifferingDataDirectoryNames() {
-    Node node1 = Node.newDefaultNode("localhost1");
-    Node node2 = Node.newDefaultNode("localhost2");
+    Node node1 = Testing.newTestNode("localhost1");
+    Node node2 = Testing.newTestNode("localhost2");
     node1.setDataDir("dir-1", Paths.get("data"));
     node2.setDataDir("dir-2", Paths.get("data"));
 
-    assertClusterValidationFails("Data directory names need to match across the cluster", newDefaultCluster(new Stripe(node1, node2)));
+    assertClusterValidationFails("Data directory names need to match across the cluster", Testing.newTestCluster(new Stripe(node1, node2)));
   }
 
   @Test
   public void testValidCluster() {
     Node[] nodes = Stream.of(
-        Node.newDefaultNode("localhost1"),
-        Node.newDefaultNode("localhost2")
+        Testing.newTestNode("localhost1"),
+        Testing.newTestNode("localhost2")
     ).map(node -> node
         .setSecurityAuditLogDir(Paths.get("audit-" + random.nextInt()))
         .setSecurityDir(Paths.get("security-root" + random.nextInt()))
         .setDataDir("dir-1", Paths.get("some-path" + random.nextInt()))
-        .setNodeBackupDir(Paths.get("backup-" + random.nextInt()))
-        .setNodeMetadataDir(Paths.get("metadata-" + random.nextInt()))
-        .setNodeLogDir(Paths.get("logs-" + random.nextInt()))
-        .setNodeName("-" + random.nextInt())
-        .setNodeHostname("host-" + random.nextInt())
-        .setNodePort(1 + random.nextInt(65500))
-        .setNodeGroupPort(1 + random.nextInt(65500))
-        .setNodeBindAddress(generateAddress())
-        .setNodeGroupBindAddress(generateAddress())
+        .setBackupDir(Paths.get("backup-" + random.nextInt()))
+        .setMetadataDir(Paths.get("metadata-" + random.nextInt()))
+        .setLogDir(Paths.get("logs-" + random.nextInt()))
+        .setName("-" + random.nextInt())
+        .setHostname("host-" + random.nextInt())
+        .setPort(1 + random.nextInt(65500))
+        .setGroupPort(1 + random.nextInt(65500))
+        .setBindAddress(generateAddress())
+        .setGroupBindAddress(generateAddress())
     ).toArray(Node[]::new);
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecurityAuthc("file")
         .setSecuritySslTls(true)
         .setSecurityWhitelist(false)
@@ -163,12 +163,12 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_1() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-dir"));
       node.setSecurityAuditLogDir(Paths.get("security-audit-dir"));
     }).toArray(Node[]::new);
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(false)
         .setSecurityWhitelist(true);
     new ClusterValidator(cluster).validate();
@@ -176,31 +176,31 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_2() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-dir"));
       node.setSecurityAuditLogDir(Paths.get("security-audit-dir"));
     }).toArray(Node[]::new);
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecurityWhitelist(true);
     new ClusterValidator(cluster).validate();
   }
 
   @Test
   public void testGoodSecurity_3() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).toArray(Node[]::new);
+    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).toArray(Node[]::new);
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes));
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes));
     new ClusterValidator(cluster).validate();
   }
 
   @Test
   public void testGoodSecurity_4() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-root-dir"));
     }).toArray(Node[]::new);
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(true)
         .setSecurityAuthc("certificate");
     new ClusterValidator(cluster).validate();
@@ -208,12 +208,12 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_5() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-root-dir"));
       node.setSecurityAuditLogDir(Paths.get("security-audit-dir"));
     }).toArray(Node[]::new);
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(true)
         .setSecurityAuthc("certificate")
         .setSecurityWhitelist(true);
@@ -222,29 +222,29 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_6() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(false);
     new ClusterValidator(cluster).validate();
   }
 
   @Test
   public void testGoodSecurity_7() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-root-dir"));
     }).toArray(Node[]::new);
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecurityAuthc("file");
     new ClusterValidator(cluster).validate();
   }
 
   @Test
   public void testBadSecurity_1() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(false)
         .setSecurityAuthc("certificate");
 
@@ -253,9 +253,9 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_2() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(true)
         .setSecurityAuthc("certificate");
 
@@ -264,9 +264,9 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_3() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(true);
 
     assertClusterValidationFails("security-dir is mandatory for any of the security configuration", cluster);
@@ -274,9 +274,9 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_4() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecurityAuthc("file");
 
     assertClusterValidationFails("security-dir is mandatory for any of the security configuration", cluster);
@@ -284,20 +284,20 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_5() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
       node.setSecurityAuditLogDir(Paths.get("."));
     }).toArray(Node[]::new);
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes));
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes));
 
     assertClusterValidationFails("security-dir is mandatory for any of the security configuration", cluster);
   }
 
   @Test
   public void testBadSecurity_6() {
-    Node[] nodes = new Node[]{Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes))
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecurityWhitelist(true);
 
     assertClusterValidationFails("security-dir is mandatory for any of the security configuration", cluster);
@@ -305,11 +305,11 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_7() {
-    Node[] nodes = Stream.of(Node.newDefaultNode("localhost1"), Node.newDefaultNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("."));
     }).toArray(Node[]::new);
 
-    Cluster cluster = newDefaultCluster(new Stripe(nodes));
+    Cluster cluster = Testing.newTestCluster(new Stripe(nodes));
 
     assertClusterValidationFails("One of ssl-tls, authc, or whitelist is required for security configuration", cluster);
   }

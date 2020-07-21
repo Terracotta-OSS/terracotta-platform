@@ -65,8 +65,8 @@ public class ClusterValidator {
     List<String> nodesWithNoPublicAddresses = cluster.getStripes()
         .stream()
         .flatMap(s -> s.getNodes().stream())
-        .filter(node -> !node.getNodePublicAddress().isPresent())
-        .map(Node::getNodeName)
+        .filter(node -> !node.getPublicAddress().isPresent())
+        .map(Node::getName)
         .collect(toList());
     if (nodesWithNoPublicAddresses.size() != 0 && nodesWithNoPublicAddresses.size() != cluster.getNodeCount()) {
       throw new MalformedClusterException("Nodes with names: " + nodesWithNoPublicAddresses + " don't have public addresses " +
@@ -78,11 +78,11 @@ public class ClusterValidator {
     cluster.getStripes()
         .stream()
         .flatMap(s -> s.getNodes().stream())
-        .filter(node -> (node.getNodePublicHostname() != null && node.getNodePublicPort() == null) || (node.getNodePublicHostname() == null && node.getNodePublicPort() != null))
+        .filter(node -> (node.getPublicHostname() != null && node.getPublicPort() == null) || (node.getPublicHostname() == null && node.getPublicPort() != null))
         .findFirst()
         .ifPresent(node -> {
-          throw new MalformedClusterException("Public address: '" + (node.getNodePublicHostname() + ":" + node.getNodePublicPort())
-              + "' of node with name: " + node.getNodeName() + " isn't well-formed. Public hostname and port need to be set together");
+          throw new MalformedClusterException("Public address: '" + (node.getPublicHostname() + ":" + node.getPublicPort())
+              + "' of node with name: " + node.getName() + " isn't well-formed. Public hostname and port need to be set together");
         });
   }
 
@@ -90,13 +90,13 @@ public class ClusterValidator {
     cluster.getStripes()
         .stream()
         .flatMap(s -> s.getNodes().stream())
-        .collect(groupingBy(Node::getNodeInternalAddress, Collectors.toList()))
+        .collect(groupingBy(Node::getInternalAddress, Collectors.toList()))
         .entrySet()
         .stream()
         .filter(e -> e.getValue().size() > 1)
         .findAny()
         .ifPresent(entry -> {
-          throw new MalformedClusterException("Nodes with names: " + entry.getValue().stream().map(Node::getNodeName).collect(Collectors.joining(", ")) +
+          throw new MalformedClusterException("Nodes with names: " + entry.getValue().stream().map(Node::getName).collect(Collectors.joining(", ")) +
               " have the same address: '" + entry.getKey() + "'");
         });
   }
@@ -105,13 +105,13 @@ public class ClusterValidator {
     cluster.getStripes()
         .stream()
         .flatMap(s -> s.getNodes().stream())
-        .collect(groupingBy(Node::getNodePublicAddress, Collectors.toList()))
+        .collect(groupingBy(Node::getPublicAddress, Collectors.toList()))
         .entrySet()
         .stream()
         .filter(e -> e.getKey().isPresent() && e.getValue().size() > 1)
         .findAny()
         .ifPresent(entry -> {
-          throw new MalformedClusterException("Nodes with names: " + entry.getValue().stream().map(Node::getNodeName).collect(Collectors.joining(", ")) +
+          throw new MalformedClusterException("Nodes with names: " + entry.getValue().stream().map(Node::getName).collect(Collectors.joining(", ")) +
               " have the same public address: '" + entry.getKey().get() + "'");
         });
   }
@@ -125,7 +125,7 @@ public class ClusterValidator {
   private void validateNodeName() {
     cluster.getNodes()
         .stream()
-        .map(Node::getNodeName)
+        .map(Node::getName)
         .filter(Objects::nonNull)
         .collect(groupingBy(identity(), counting()))
         .entrySet()

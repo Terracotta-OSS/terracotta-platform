@@ -25,9 +25,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +51,6 @@ import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.lenient;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
-import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -79,9 +78,9 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_create_cli() {
-    assertCliEquals(cli("failover-priority=availability"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))));
+    assertCliEquals(cli("failover-priority=availability"), Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost.home"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "foo"))));
   }
 
   @Test
@@ -106,7 +105,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.hostname=foo"
         ),
-        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("real", "foo"))));
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("real", "foo"))));
 
     assertConfigEquals(
         config(
@@ -114,7 +113,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost"
         ),
-        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost"))));
 
     assertConfigEquals(
         config(
@@ -128,13 +127,13 @@ public class ClusterFactoryTest {
             "stripe.2.node.2.name=node4",
             "stripe.2.node.2.hostname=localhost4"
         ),
-        Cluster.newDefaultCluster(
+        Testing.newTestCluster(
             new Stripe(
-                Node.newDefaultNode("node1", "localhost1"),
-                Node.newDefaultNode("node2", "localhost2")),
+                Testing.newTestNode("node1", "localhost1"),
+                Testing.newTestNode("node2", "localhost2")),
             new Stripe(
-                Node.newDefaultNode("node3", "localhost3"),
-                Node.newDefaultNode("node4", "localhost4"))
+                Testing.newTestNode("node3", "localhost3"),
+                Testing.newTestNode("node4", "localhost4"))
         ));
 
     assertConfigEquals(
@@ -161,7 +160,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost"))));
 
     assertConfigEquals(
         config(
@@ -187,7 +186,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost"))));
   }
 
   @Test
@@ -240,11 +239,11 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_toProperties() {
-    Cluster cluster = Cluster.newDefaultCluster("my-cluster", new Stripe(
-        newDefaultNode("node-1", "localhost")
+    Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe(
+        Testing.newTestNode("node-1", "localhost")
             .setDataDir("foo", Paths.get("%H/tc1/foo"))
             .setDataDir("bar", Paths.get("%H/tc1/bar")),
-        newDefaultNode("node-2", "localhost")
+        Testing.newTestNode("node-2", "localhost")
             .setDataDir("foo", Paths.get("%H/tc2/foo"))
             .setDataDir("bar", Paths.get("%H/tc2/bar"))
             .setTcProperty("server.entity.processor.threads", "64")
@@ -347,10 +346,10 @@ public class ClusterFactoryTest {
 
     // since node name is generated when not given,
     // this is a hack that will reset to null only the node names that have been generated
-    String nodeName = built.getSingleNode().get().getNodeName();
+    String nodeName = built.getSingleNode().get().getName();
     cluster.getSingleNode()
-        .filter(node -> node.getNodeName().equals("<GENERATED>"))
-        .ifPresent(node -> node.setNodeName(nodeName));
+        .filter(node -> node.getName().equals("<GENERATED>"))
+        .ifPresent(node -> node.setName(nodeName));
 
     assertThat(built, Matchers.is(equalTo(cluster)));
   }

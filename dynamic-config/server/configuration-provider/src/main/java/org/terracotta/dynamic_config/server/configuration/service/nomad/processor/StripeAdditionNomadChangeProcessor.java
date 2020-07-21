@@ -65,7 +65,7 @@ public class StripeAdditionNomadChangeProcessor implements NomadChangeProcessor<
     }
 
     try {
-      LOGGER.info("Adding stripe: {} to cluster: {}", change.getStripe(), change.getCluster().getName());
+      LOGGER.info("Adding stripe: {} to cluster: {}", change.getStripe().toShapeString(), change.getCluster().toShapeString());
       listener.onStripeAddition(change.getStripe());
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);

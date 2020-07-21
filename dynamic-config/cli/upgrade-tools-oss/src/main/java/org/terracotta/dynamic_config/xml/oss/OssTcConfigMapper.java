@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.xml.oss;
 import org.terracotta.config.Server;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.data.config.DataRootMapping;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.conversion.AbstractTcConfigMapper;
@@ -55,21 +56,20 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
       Map<Class<?>, List<Object>> xmlPlugins = commonMapper.parsePlugins(xml, tcConfig);
       List<Server> servers = tcConfig.getServers().getServer();
       List<org.terracotta.dynamic_config.api.model.Node> nodes = new ArrayList<>();
-      servers.forEach(server -> nodes.add(
-          org.terracotta.dynamic_config.api.model.Node.empty()
-              .setNodeName(server.getName())
-              .setNodeHostname(server.getHost())
-              .setNodePort(server.getTsaPort().getValue())
-              .setNodeBindAddress(commonMapper.moreRestrictive(server.getTsaPort().getBind(), server.getBind()))
-              .setNodeGroupPort(server.getTsaGroupPort().getValue())
-              .setNodeGroupBindAddress(commonMapper.moreRestrictive(server.getTsaGroupPort().getBind(), server.getBind()))
-              .setNodeLogDir(Paths.get(server.getLogs()))
-              .setTcProperties(commonMapper.toProperties(tcConfig))
-              .setNodeMetadataDir(null)
-              .setDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true))
-              .setNodeBackupDir(null)
+      servers.forEach(server -> nodes.add(new org.terracotta.dynamic_config.api.model.Node()
+          .setName(server.getName())
+          .setHostname(server.getHost())
+          .setPort(server.getTsaPort().getValue())
+          .setBindAddress(commonMapper.moreRestrictive(server.getTsaPort().getBind(), server.getBind()))
+          .setGroupPort(server.getTsaGroupPort().getValue())
+          .setGroupBindAddress(commonMapper.moreRestrictive(server.getTsaGroupPort().getBind(), server.getBind()))
+          .setLogDir(Paths.get(server.getLogs()))
+          .setTcProperties(commonMapper.toProperties(tcConfig))
+          .setMetadataDir(commonMapper.toDataDirs(xmlPlugins, DataRootMapping::isUseForPlatform).values().stream().findFirst().orElse(null))
+          .setDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true))
+          .setBackupDir(null)
       ));
-      return Cluster.newCluster(new Stripe(nodes))
+      return new Cluster(new Stripe(nodes))
           .setClientLeaseDuration(commonMapper.toClientLeaseDuration(xmlPlugins))
           .setOffheapResources(commonMapper.toOffheapResources(xmlPlugins))
           .setClientReconnectWindow(commonMapper.toClientReconnectWindow(tcConfig))

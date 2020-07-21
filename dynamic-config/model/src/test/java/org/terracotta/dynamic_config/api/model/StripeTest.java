@@ -34,17 +34,17 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class StripeTest {
 
-  Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
+  Node node1 = Testing.newTestNode("node1", "localhost", 9410)
       .setDataDir("data", Paths.get("data"))
-      .setNodeBackupDir(Paths.get("backup"))
-      .setNodeBindAddress("0.0.0.0")
-      .setNodeGroupBindAddress("0.0.0.0")
-      .setNodeGroupPort(9430)
-      .setNodeLogDir(Paths.get("log"))
-      .setNodeMetadataDir(Paths.get("metadata"))
+      .setBackupDir(Paths.get("backup"))
+      .setBindAddress("0.0.0.0")
+      .setGroupBindAddress("0.0.0.0")
+      .setGroupPort(9430)
+      .setLogDir(Paths.get("log"))
+      .setMetadataDir(Paths.get("metadata"))
       .setSecurityAuditLogDir(Paths.get("audit"));
 
-  Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
+  Node node2 = Testing.newTestNode("node2", "localhost", 9411)
       .setDataDir("data", Paths.get("/data/cache2"));
 
   Stripe stripe = new Stripe(node1);
@@ -85,8 +85,8 @@ public class StripeTest {
     assertThat(stripe.getNode("node1").get(), is(equalTo(node1)));
     assertThat(stripe.getNode("foo").isPresent(), is(false));
 
-    assertThat(stripe.getNode(node1.getNodeAddress()).get(), is(equalTo(node1)));
-    assertThat(stripe.getNode(node2.getNodeAddress()).isPresent(), is(false));
+    assertThat(stripe.getNode(node1.getAddress()).get(), is(equalTo(node1)));
+    assertThat(stripe.getNode(node2.getAddress()).isPresent(), is(false));
   }
 
   @Test
@@ -94,8 +94,8 @@ public class StripeTest {
     assertThat(stripe.getNodeId("node1").getAsInt(), is(equalTo(1)));
     assertThat(stripe.getNodeId("foo").isPresent(), is(false));
 
-    assertThat(stripe.getNodeId(node1.getNodeAddress()).getAsInt(), is(equalTo(1)));
-    assertThat(stripe.getNodeId(node2.getNodeAddress()).isPresent(), is(false));
+    assertThat(stripe.getNodeId(node1.getAddress()).getAsInt(), is(equalTo(1)));
+    assertThat(stripe.getNodeId(node2.getAddress()).isPresent(), is(false));
   }
 
   @Test
@@ -106,11 +106,11 @@ public class StripeTest {
     assertThat(() -> stripe.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
 
     // back to normal
-    stripe.removeNode(node2.getNodeAddress());
+    stripe.removeNode(node2.getAddress());
     assertThat(stripe.getSingleNode().get(), is(sameInstance(node1)));
 
     // empty
-    stripe.removeNode(node1.getNodeAddress());
+    stripe.removeNode(node1.getAddress());
     assertThat(stripe.getSingleNode().isPresent(), is(false));
   }
 }

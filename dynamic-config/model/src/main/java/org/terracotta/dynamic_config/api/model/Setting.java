@@ -143,8 +143,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      fromNode(Node::getNodeName),
-      intoNode(Node::setNodeName),
+      fromNode(Node::getName),
+      intoNode(Node::setName),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
           when(CONFIGURING).allow(SET, IMPORT).atLevel(NODE)
@@ -158,8 +158,8 @@ public enum Setting {
       false,
       "%h",
       NODE,
-      fromNode(Node::getNodeHostname),
-      intoNode(Node::setNodeHostname),
+      fromNode(Node::getHostname),
+      intoNode(Node::setHostname),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
           when(CONFIGURING).allow(IMPORT).atLevel(NODE)
@@ -173,8 +173,8 @@ public enum Setting {
       false,
       "9410",
       NODE,
-      fromNode(Node::getNodePort),
-      intoNode((node, value) -> node.setNodePort(Integer.parseInt(value))),
+      fromNode(Node::getPort),
+      intoNode((node, value) -> node.setPort(Integer.parseInt(value))),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
           when(CONFIGURING).allow(IMPORT).atLevel(NODE)
@@ -188,8 +188,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      fromNode(Node::getNodePublicHostname),
-      intoNode(Node::setNodePublicHostname),
+      fromNode(Node::getPublicHostname),
+      intoNode(Node::setPublicHostname),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
@@ -203,8 +203,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      fromNode(Node::getNodePublicPort),
-      intoNode((node, value) -> node.setNodePublicPort(value == null ? null : Integer.parseInt(value))),
+      fromNode(Node::getPublicPort),
+      intoNode((node, value) -> node.setPublicPort(value == null ? null : Integer.parseInt(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
@@ -218,8 +218,8 @@ public enum Setting {
       false,
       "9430",
       NODE,
-      fromNode(Node::getNodeGroupPort),
-      intoNode((node, value) -> node.setNodeGroupPort(Integer.parseInt(value))),
+      fromNode(Node::getGroupPort),
+      intoNode((node, value) -> node.setGroupPort(Integer.parseInt(value))),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
           when(CONFIGURING).allow(SET).atAnyLevels(),
@@ -234,8 +234,8 @@ public enum Setting {
       false,
       "0.0.0.0",
       NODE,
-      fromNode(Node::getNodeBindAddress),
-      intoNode(Node::setNodeBindAddress),
+      fromNode(Node::getBindAddress),
+      intoNode(Node::setBindAddress),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
           when(CONFIGURING).allow(SET).atAnyLevels(),
@@ -250,8 +250,8 @@ public enum Setting {
       false,
       "0.0.0.0",
       NODE,
-      fromNode(Node::getNodeGroupBindAddress),
-      intoNode(Node::setNodeGroupBindAddress),
+      fromNode(Node::getGroupBindAddress),
+      intoNode(Node::setGroupBindAddress),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
           when(CONFIGURING).allow(SET).atAnyLevels(),
@@ -295,14 +295,14 @@ public enum Setting {
       false,
       "%H" + separator + "terracotta" + separator + "metadata",
       NODE,
-      fromNode(Node::getNodeMetadataDir),
-      intoNode((node, value) -> node.setNodeMetadataDir(Paths.get(value))),
+      fromNode(Node::getMetadataDir),
+      intoNode((node, value) -> node.setMetadataDir(Paths.get(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING).allow(GET, SET).atAnyLevels(),
           when(ACTIVATED).allow(GET).atAnyLevels()
       ),
-      noneOf(Requirement.class),
+      Boolean.getBoolean("terracotta.metadata.required") ? of(PRESENCE) : noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_METADATA_DIR, tuple2(key, value))
@@ -311,8 +311,8 @@ public enum Setting {
       false,
       "%H" + separator + "terracotta" + separator + "logs",
       NODE,
-      fromNode(Node::getNodeLogDir),
-      intoNode((node, value) -> node.setNodeLogDir(Paths.get(value))),
+      fromNode(Node::getLogDir),
+      intoNode((node, value) -> node.setLogDir(Paths.get(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING).allow(GET, SET).atAnyLevels(),
@@ -327,8 +327,8 @@ public enum Setting {
       false,
       null,
       NODE,
-      fromNode(Node::getNodeBackupDir),
-      intoNode((node, value) -> node.setNodeBackupDir(value == null ? null : Paths.get(value))),
+      fromNode(Node::getBackupDir),
+      intoNode((node, value) -> node.setBackupDir(value == null ? null : Paths.get(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
@@ -371,20 +371,20 @@ public enum Setting {
       true,
       null,
       NODE,
-      fromNode(Node::getNodeLoggerOverrides),
+      fromNode(Node::getLoggerOverrides),
       intoNodeMap((node, tuple) -> {
         if (tuple.allNulls()) {
-          node.clearNodeLoggerOverrides();
+          node.clearLoggerOverrides();
         } else if (tuple.t1 != null && tuple.t2 == null) {
-          node.removeNodeLoggerOverride(tuple.t1);
+          node.removeLoggerOverride(tuple.t1);
         } else if (tuple.t1 == null) {
           // tuple.t2 != null
           // complete reset of all entries
-          node.clearNodeLoggerOverrides();
-          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setNodeLoggerOverride(kv[0], kv[1].toUpperCase(Locale.ROOT)));
+          node.clearLoggerOverrides();
+          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setLoggerOverride(kv[0], kv[1].toUpperCase(Locale.ROOT)));
         } else {
           // tuple.t1 != null && tuple.t2 != null
-          node.setNodeLoggerOverride(tuple.t1, tuple.t2.toUpperCase(Locale.ROOT));
+          node.setLoggerOverride(tuple.t1, tuple.t2.toUpperCase(Locale.ROOT));
         }
       }),
       asList(
@@ -846,7 +846,7 @@ public enum Setting {
     return this.allowedValues.isEmpty() || this.allowedValues.contains(value);
   }
 
-  private void fillDefault(PropertyHolder o) {
+  public void fillDefault(PropertyHolder o) {
     String v = getDefaultValue();
     if (v != null && !getProperty(o).isPresent()) {
       setProperty(o, v);
@@ -865,6 +865,7 @@ public enum Setting {
     return Stream.of(values()).filter(setting -> setting.name.equals(name)).findAny();
   }
 
+  //TODO [DYNAMIC-CONFIG]: TDB-4898 - remove this
   public static <T extends PropertyHolder> T fillRequiredSettings(T o) {
     Stream.of(Setting.values())
         .filter(isEqual(NODE_HOSTNAME).negate())
@@ -873,17 +874,6 @@ public enum Setting {
         .filter(isEqual(LICENSE_FILE).negate())
         .filter(s -> s.isScope(o.getScope()))
         .filter(Setting::mustBePresent)
-        .forEach(setting -> setting.fillDefault(o));
-    return o;
-  }
-
-  public static <T extends PropertyHolder> T fillSettings(T o) {
-    Stream.of(Setting.values())
-        .filter(isEqual(NODE_HOSTNAME).negate())
-        .filter(isEqual(NODE_CONFIG_DIR).negate())
-        .filter(isEqual(CLUSTER_NAME).negate())
-        .filter(isEqual(LICENSE_FILE).negate())
-        .filter(s -> s.isScope(o.getScope()))
         .forEach(setting -> setting.fillDefault(o));
     return o;
   }

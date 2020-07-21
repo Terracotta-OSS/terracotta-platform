@@ -28,6 +28,7 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProviderExce
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 
@@ -58,7 +59,6 @@ import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNINITIALIZED;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
-import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 
 /**
  * @author Mathieu Carbou
@@ -77,17 +77,17 @@ public class RestartServiceTest extends BaseTest {
   public void setUp() throws Exception {
     super.setUp();
     restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing());
-    cluster = Cluster.newDefaultCluster(
+    cluster = Testing.newTestCluster(
         "my-cluster",
         new Stripe(
-            newDefaultNode("node1", "localhost", PORTS[0]),
-            newDefaultNode("node2", "localhost", PORTS[1]),
-            newDefaultNode("node3", "localhost", PORTS[2])
+            Testing.newTestNode("node1", "localhost", PORTS[0]),
+            Testing.newTestNode("node2", "localhost", PORTS[1]),
+            Testing.newTestNode("node3", "localhost", PORTS[2])
         ),
         new Stripe(
-            newDefaultNode("node1", "localhost", PORTS[3]),
-            newDefaultNode("node2", "localhost", PORTS[4]),
-            newDefaultNode("node3", "localhost", PORTS[5])
+            Testing.newTestNode("node1", "localhost", PORTS[3]),
+            Testing.newTestNode("node2", "localhost", PORTS[4]),
+            Testing.newTestNode("node3", "localhost", PORTS[5])
         ));
   }
 

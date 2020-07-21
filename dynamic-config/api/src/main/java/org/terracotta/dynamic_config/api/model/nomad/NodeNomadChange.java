@@ -39,7 +39,7 @@ public abstract class NodeNomadChange extends TopologyNomadChange {
   }
 
   public InetSocketAddress getNodeAddress() {
-    return getNode().getNodeAddress();
+    return getNode().getAddress();
   }
 
   public Node getNode() {

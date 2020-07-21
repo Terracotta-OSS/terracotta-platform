@@ -18,17 +18,16 @@ package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 
 /**
  * @author Mathieu Carbou
@@ -39,8 +38,8 @@ public class DefaultHashComputerTest {
     ObjectMapper om = new ObjectMapperFactory().pretty().withModule(new DynamicConfigApiJsonModule()).create();
     HashComputer<NodeContext> hashComputer = new DefaultHashComputer(om);
 
-    Node node = newDefaultNode("foo", "localhost");
-    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node)), 1, "foo");
+    Node node = Testing.newTestNode("foo", "localhost");
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster(new Stripe(node)), 1, "foo");
 
     String hash = hashComputer.computeHash(nodeContext);
     String json = om.writeValueAsString(nodeContext);

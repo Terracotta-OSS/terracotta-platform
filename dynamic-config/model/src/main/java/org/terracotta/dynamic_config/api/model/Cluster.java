@@ -36,7 +36,6 @@ import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -51,15 +50,17 @@ public class Cluster implements Cloneable, PropertyHolder {
   private Measure<TimeUnit> clientReconnectWindow;
   private Measure<TimeUnit> clientLeaseDuration;
   private String securityAuthc;
-  private boolean securitySslTls = Boolean.parseBoolean(Setting.SECURITY_SSL_TLS.getDefaultValue());
-  private boolean securityWhitelist = Boolean.parseBoolean(Setting.SECURITY_WHITELIST.getDefaultValue());
-  private FailoverPriority failoverPriority = FailoverPriority.availability();
+  private Boolean securitySslTls;
+  private Boolean securityWhitelist;
+  private FailoverPriority failoverPriority;
   private final Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
 
-  protected Cluster(String name,
-                    List<Stripe> stripes) {
+  public Cluster(List<Stripe> stripes) {
     this.stripes = new CopyOnWriteArrayList<>(requireNonNull(stripes));
-    this.name = name;
+  }
+
+  public Cluster(Stripe... stripes) {
+    this(Arrays.asList(stripes));
   }
 
   @Override
@@ -67,15 +68,19 @@ public class Cluster implements Cloneable, PropertyHolder {
     return CLUSTER;
   }
 
+  public String getName() {
+    return name;
+  }
+
   public String getSecurityAuthc() {
     return securityAuthc;
   }
 
-  public boolean isSecuritySslTls() {
+  public Boolean isSecuritySslTls() {
     return securitySslTls;
   }
 
-  public boolean isSecurityWhitelist() {
+  public Boolean isSecurityWhitelist() {
     return securityWhitelist;
   }
 
@@ -100,12 +105,12 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public Cluster setSecuritySslTls(boolean securitySslTls) {
+  public Cluster setSecuritySslTls(Boolean securitySslTls) {
     this.securitySslTls = securitySslTls;
     return this;
   }
 
-  public Cluster setSecurityWhitelist(boolean securityWhitelist) {
+  public Cluster setSecurityWhitelist(Boolean securityWhitelist) {
     this.securityWhitelist = securityWhitelist;
     return this;
   }
@@ -174,10 +179,6 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public String getName() {
-    return name;
-  }
-
   public Cluster setName(String name) {
     this.name = name;
     return this;
@@ -212,8 +213,8 @@ public class Cluster implements Cloneable, PropertyHolder {
     Cluster that = (Cluster) o;
     return Objects.equals(stripes, that.stripes) &&
         Objects.equals(name, that.name) &&
-        securitySslTls == that.securitySslTls &&
-        securityWhitelist == that.securityWhitelist &&
+        Objects.equals(securitySslTls, that.securitySslTls) &&
+        Objects.equals(securityWhitelist, that.securityWhitelist) &&
         Objects.equals(securityAuthc, that.securityAuthc) &&
         Objects.equals(failoverPriority, that.failoverPriority) &&
         Objects.equals(clientReconnectWindow, that.clientReconnectWindow) &&
@@ -253,7 +254,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Collection<InetSocketAddress> getNodeAddresses() {
-    return stripes.stream().flatMap(stripe -> stripe.getNodes().stream()).map(Node::getNodeAddress).collect(toList());
+    return stripes.stream().flatMap(stripe -> stripe.getNodes().stream()).map(Node::getAddress).collect(toList());
   }
 
   public boolean containsNode(InetSocketAddress address) {
@@ -268,7 +269,8 @@ public class Cluster implements Cloneable, PropertyHolder {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Cluster clone() {
-    return new Cluster(name, stripes.stream().map(Stripe::clone).collect(toList()))
+    return new Cluster(stripes.stream().map(Stripe::clone).collect(toList()))
+        .setName(name)
         .setClientLeaseDuration(clientLeaseDuration)
         .setClientReconnectWindow(clientReconnectWindow)
         .setFailoverPriority(failoverPriority)
@@ -315,7 +317,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   public OptionalInt getNodeId(int stripeId, String nodeName) {
     return getStripe(stripeId)
         .map(stripe -> IntStream.range(0, stripe.getNodeCount())
-            .filter(idx -> nodeName.equals(stripe.getNodes().get(idx).getNodeName()))
+            .filter(idx -> nodeName.equals(stripe.getNodes().get(idx).getName()))
             .map(idx -> idx + 1)
             .findAny())
         .orElse(OptionalInt.empty());
@@ -356,7 +358,7 @@ public class Cluster implements Cloneable, PropertyHolder {
         .boxed()
         .flatMap(stripeId -> stripes.get(stripeId - 1).getNodes()
             .stream()
-            .map(Node::getNodeName)
+            .map(Node::getName)
             .map(name -> new NodeContext(this, stripeId, name)));
   }
 
@@ -390,35 +392,8 @@ public class Cluster implements Cloneable, PropertyHolder {
     return Setting.fillRequiredSettings(this);
   }
 
-  private Cluster fillSettings() {
-    return Setting.fillSettings(this);
-  }
-
   public Cluster removeStripes() {
     stripes.clear();
     return this;
-  }
-
-  public static Cluster newDefaultCluster() {
-    return newDefaultCluster((String) null);
-  }
-
-  public static Cluster newDefaultCluster(String name) {
-    return new Cluster(name, emptyList())
-        .fillSettings();
-  }
-
-  public static Cluster newDefaultCluster(Stripe... stripes) {
-    return newCluster(stripes)
-        .fillSettings();
-  }
-
-  public static Cluster newDefaultCluster(String name, Stripe... stripes) {
-    return new Cluster(name, Arrays.asList(stripes))
-        .fillSettings();
-  }
-
-  public static Cluster newCluster(Stripe... stripes) {
-    return new Cluster(null, Arrays.asList(stripes));
   }
 }

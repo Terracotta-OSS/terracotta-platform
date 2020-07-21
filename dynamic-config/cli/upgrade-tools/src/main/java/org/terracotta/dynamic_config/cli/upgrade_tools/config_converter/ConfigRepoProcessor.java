@@ -55,7 +55,7 @@ public class ConfigRepoProcessor {
   private void saveToNomad(Cluster cluster) {
 
     List<NomadEndpoint<NodeContext>> endpoints = cluster.nodeContexts()
-        .map(nodeContext -> new NomadEndpoint<>(nodeContext.getNode().getNodeAddress(), getNomadServer(nodeContext.getStripeId(), nodeContext.getNodeName())))
+        .map(nodeContext -> new NomadEndpoint<>(nodeContext.getNode().getAddress(), getNomadServer(nodeContext.getStripeId(), nodeContext.getNodeName())))
         .collect(Collectors.toList());
 
     NomadEnvironment environment = new NomadEnvironment();

@@ -31,11 +31,11 @@ public class TestGroupPortMapper implements GroupPortMapper {
       for (int i = 0; i < nodeIdGroupPorts.length; ++i) {
         nodeIdGroupPorts[i] = nodeIdGroupPorts[i].replaceAll("\"", "");
         String[] idPortPair = nodeIdGroupPorts[i].split("->");
-        if (idPortPair[0].equals(peerNode.getNodeName())) {
+        if (idPortPair[0].equals(peerNode.getName())) {
           return Integer.parseInt(idPortPair[1]);
         }
       }
     }
-    return peerNode.getNodeGroupPort();
+    return peerNode.getGroupPort();
   }
 }

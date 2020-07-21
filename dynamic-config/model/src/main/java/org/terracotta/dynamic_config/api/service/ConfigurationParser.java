@@ -213,12 +213,12 @@ class ConfigurationParser {
     }
 
     // build the cluster
-    Cluster cluster = Cluster.newCluster();
+    Cluster cluster = new Cluster();
     configurationMap.forEach((stripeId, nodeConfigurations) -> {
       Stripe stripe = new Stripe();
       nodeConfigurations.forEach((nodeId, configurations) -> {
         // create the node and eagerly initialize the basic fields
-        Node node = Node.empty();
+        Node node = new Node();
         stripe.addNode(node);
         if (stripe.getNodeCount() != nodeId) {
           throw new AssertionError("Expected node count to be: " + nodeId + " but was: " + stripe.getNodeCount());

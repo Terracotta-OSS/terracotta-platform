@@ -73,7 +73,7 @@ public class LoggerOverrideConfigChangeHandler implements ConfigChangeHandler {
 
   public void init() {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-    topologyService.getUpcomingNodeContext().getNode().getNodeLoggerOverrides()
+    topologyService.getUpcomingNodeContext().getNode().getLoggerOverrides()
         .forEach((name, level) -> loggerContext.getLogger(name).setLevel(Level.valueOf(level)));
   }
 }

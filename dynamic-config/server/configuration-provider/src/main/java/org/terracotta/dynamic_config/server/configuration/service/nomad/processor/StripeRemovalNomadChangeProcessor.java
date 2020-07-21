@@ -61,7 +61,7 @@ public class StripeRemovalNomadChangeProcessor implements NomadChangeProcessor<S
     }
 
     try {
-      LOGGER.info("Removing stripe: {} from cluster: {}", change.getStripe(), change.getCluster().getName());
+      LOGGER.info("Removing stripe: {} from cluster: {}", change.getStripe().toShapeString(), change.getCluster().toShapeString());
       listener.onStripeRemoval(change.getStripe());
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);

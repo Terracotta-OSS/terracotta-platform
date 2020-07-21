@@ -55,7 +55,7 @@ public class NodeContext implements Cloneable {
     this.cluster = requireNonNull(cluster);
     this.node = cluster.getNode(nodeAddress)
         .orElseThrow(() -> new IllegalArgumentException("Node " + nodeAddress + " not found"));
-    this.nodeName = requireNonNull(node.getNodeName());
+    this.nodeName = requireNonNull(node.getName());
     this.stripeId = cluster.getStripeId(nodeAddress).getAsInt();
     this.nodeId = cluster.getNodeId(nodeAddress).getAsInt();
   }
@@ -66,7 +66,7 @@ public class NodeContext implements Cloneable {
     this.nodeId = nodeId;
     this.node = cluster.getNode(stripeId, nodeId)
         .orElseThrow(() -> new IllegalArgumentException("Node ID " + nodeId + " in stripe ID " + stripeId + " not found"));
-    this.nodeName = requireNonNull(node.getNodeName());
+    this.nodeName = requireNonNull(node.getName());
   }
 
   public Cluster getCluster() {
@@ -166,6 +166,6 @@ public class NodeContext implements Cloneable {
   public NodeContext withOnlyNode(Node node) {
     Cluster cluster = getCluster().clone().removeStripes();
     cluster.addStripe(new Stripe(node).clone());
-    return new NodeContext(cluster, node.getNodeAddress());
+    return new NodeContext(cluster, node.getAddress());
   }
 }

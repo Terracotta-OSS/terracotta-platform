@@ -167,11 +167,11 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         public void onNodeRemoval(int stripeId, Node removedNode) {
           Map<String, String> data = new TreeMap<>();
           data.put("stripeId", String.valueOf(stripeId));
-          data.put("nodeName", removedNode.getNodeName());
-          data.put("nodeHostname", removedNode.getNodeHostname());
-          data.put("nodeAddress", removedNode.getNodeAddress().toString());
-          data.put("nodeInternalAddress", removedNode.getNodeInternalAddress().toString());
-          removedNode.getNodePublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
+          data.put("nodeName", removedNode.getName());
+          data.put("nodeHostname", removedNode.getHostname());
+          data.put("nodeAddress", removedNode.getAddress().toString());
+          data.put("nodeInternalAddress", removedNode.getInternalAddress().toString());
+          removedNode.getPublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_REMOVED", data));
         }
 
@@ -179,27 +179,27 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         public void onNodeAddition(int stripeId, Node addedNode) {
           Map<String, String> data = new TreeMap<>();
           data.put("stripeId", String.valueOf(stripeId));
-          data.put("nodeName", addedNode.getNodeName());
-          data.put("nodeHostname", addedNode.getNodeHostname());
-          data.put("nodeAddress", addedNode.getNodeAddress().toString());
-          data.put("nodeInternalAddress", addedNode.getNodeInternalAddress().toString());
-          addedNode.getNodePublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
+          data.put("nodeName", addedNode.getName());
+          data.put("nodeHostname", addedNode.getHostname());
+          data.put("nodeAddress", addedNode.getAddress().toString());
+          data.put("nodeInternalAddress", addedNode.getInternalAddress().toString());
+          addedNode.getPublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
         }
 
         @Override
         public void onStripeAddition(Stripe addedStripe) {
           Map<String, String> data = new TreeMap<>();
-          data.put("nodeNames", addedStripe.getNodes().stream().map(Node::getNodeName).collect(Collectors.joining(",")));
-          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          data.put("nodeNames", addedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_ADDED", data));
         }
 
         @Override
         public void onStripeRemoval(Stripe removedStripe) {
           Map<String, String> data = new TreeMap<>();
-          data.put("nodeNames", removedStripe.getNodes().stream().map(Node::getNodeName).collect(Collectors.joining(",")));
-          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getNodeAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          data.put("nodeNames", removedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_REMOVED", data));
         }
       });

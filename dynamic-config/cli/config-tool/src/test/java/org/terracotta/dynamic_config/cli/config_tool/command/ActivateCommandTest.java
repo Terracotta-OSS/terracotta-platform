@@ -23,6 +23,7 @@ import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 import org.terracotta.dynamic_config.cli.config_tool.NomadTestHelper;
@@ -54,7 +55,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
-import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 import static org.terracotta.dynamic_config.cli.command.Injector.inject;
 import static org.terracotta.nomad.messages.AcceptRejectResponse.accept;
 import static org.terracotta.nomad.messages.AcceptRejectResponse.reject;
@@ -69,14 +69,14 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class ActivateCommandTest extends BaseTest {
 
   private Path config;
-  private final Cluster cluster = Cluster.newDefaultCluster(
+  private final Cluster cluster = Testing.newTestCluster(
       "my-cluster",
       new Stripe(
-          newDefaultNode("node1", "localhost", 9411)
+          Testing.newTestNode("node1", "localhost", 9411)
       ),
       new Stripe(
-          newDefaultNode("node2", "localhost", 9421),
-          newDefaultNode("node3", "localhost", 9422)
+          Testing.newTestNode("node2", "localhost", 9421),
+          Testing.newTestNode("node3", "localhost", 9422)
       ));
   private final int[] ports = cluster.getNodeAddresses().stream().mapToInt(InetSocketAddress::getPort).toArray();
 

@@ -187,7 +187,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public void onNodeRemoval(int stripeId, Node removedNode) {
-    InetSocketAddress addr = removedNode.getNodeAddress();
+    InetSocketAddress addr = removedNode.getAddress();
     LOGGER.info("Removed node: {} from stripe ID: {}", addr, stripeId);
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onNodeRemoval(stripeId, removedNode));
@@ -195,21 +195,21 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public void onNodeAddition(int stripeId, Node addedNode) {
-    LOGGER.info("Added node:{} to stripe ID: {}", addedNode.getNodeAddress(), stripeId);
+    LOGGER.info("Added node:{} to stripe ID: {}", addedNode.getAddress(), stripeId);
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onNodeAddition(stripeId, addedNode));
   }
 
   @Override
   public void onStripeAddition(Stripe addedStripe) {
-    LOGGER.info("Added stripe:{} to cluster: {}", addedStripe, runtimeNodeContext.getCluster().getName());
+    LOGGER.info("Added stripe:{} to cluster: {}", addedStripe.toShapeString(), runtimeNodeContext.getCluster().toShapeString());
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onStripeAddition(addedStripe));
   }
 
   @Override
   public void onStripeRemoval(Stripe removedStripe) {
-    LOGGER.info("Removed stripe:{} from cluster: {}", removedStripe, runtimeNodeContext.getCluster().getName());
+    LOGGER.info("Removed stripe:{} from cluster: {}", removedStripe.toShapeString(), runtimeNodeContext.getCluster().toShapeString());
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onStripeRemoval(removedStripe));
   }
@@ -291,7 +291,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public synchronized void setUpcomingCluster(Cluster updatedCluster) {
     if (isActivated()) {
-      throw new IllegalStateException("Use Nomad instead to change the topology of activated node: " + runtimeNodeContext.getNode().getNodeAddress());
+      throw new IllegalStateException("Use Nomad instead to change the topology of activated node: " + runtimeNodeContext.getNode().getAddress());
     }
 
     requireNonNull(updatedCluster);
@@ -304,11 +304,11 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (newMe != null) {
       // we have updated the topology and I am still part of this cluster
       LOGGER.info("Set upcoming topology to: {}", updatedCluster.toShapeString());
-      this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getNodeAddress());
+      this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getAddress());
     } else {
       // We have updated the topology and I am not part anymore of the cluster
       // So we just reset the cluster object so that this node is alone
-      LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster.toShapeString());
+      LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getName(), oldMe.getAddress(), updatedCluster.toShapeString());
       this.upcomingNodeContext = this.upcomingNodeContext.withOnlyNode(oldMe);
     }
 
@@ -456,8 +456,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
    */
   private synchronized Node findMe(Cluster updatedCluster) {
     final Node me = upcomingNodeContext.getNode();
-    return updatedCluster.getNode(me.getNodeInternalAddress()) // important to use the internal address
-        .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getNodeName())
+    return updatedCluster.getNode(me.getInternalAddress()) // important to use the internal address
+        .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getName())
             .orElse(null));
   }
 

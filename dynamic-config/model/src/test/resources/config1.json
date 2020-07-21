@@ -25,15 +25,15 @@
       "nodes": [
         {
           "dataDirs": {},
-          "nodeBindAddress": "0.0.0.0",
-          "nodeGroupBindAddress": "0.0.0.0",
-          "nodeGroupPort": 23634,
-          "nodeHostname": "localhost",
-          "nodeLogDir": "stripe1/testServer0/logs",
-          "nodeLoggerOverrides": {},
-          "nodeMetadataDir": "%H/terracotta/metadata",
-          "nodeName": "testServer0",
-          "nodePort": 23633,
+          "bindAddress": "0.0.0.0",
+          "groupBindAddress": "0.0.0.0",
+          "groupPort": 23634,
+          "hostname": "localhost",
+          "logDir": "stripe1/testServer0/logs",
+          "loggerOverrides": {},
+          "metadataDir": "%H/terracotta/metadata",
+          "name": "testServer0",
+          "port": 23633,
           "tcProperties": {
             "terracotta.management.assert": "true"
           }

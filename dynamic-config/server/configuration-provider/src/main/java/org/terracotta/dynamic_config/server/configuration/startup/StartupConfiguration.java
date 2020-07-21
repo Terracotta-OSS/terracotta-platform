@@ -246,12 +246,12 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public String getHost() {
-    return nodeContextSupplier.get().getNode().getNodeHostname();
+    return nodeContextSupplier.get().getNode().getHostname();
   }
 
   @Override
   public int getTsaPort() {
-    return nodeContextSupplier.get().getNode().getNodePort();
+    return nodeContextSupplier.get().getNode().getPort();
   }
 
   @Override
@@ -289,27 +289,27 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     return new ServerConfiguration() {
       @Override
       public InetSocketAddress getTsaPort() {
-        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getNodeBindAddress()), node.getNodePort());
+        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getBindAddress()), node.getPort());
       }
 
       @Override
       public InetSocketAddress getGroupPort() {
         Node currentNode = nodeContext.getNode();
         int groupPort = groupPortMapper.getPeerGroupPort(node, currentNode);
-        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getNodeGroupBindAddress()), groupPort);
+        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getGroupBindAddress()), groupPort);
       }
 
       @Override
       public String getHost() {
         // substitutions not allowed on hostname since hostname-port is a key to identify a node
         // any substitution is allowed but resolved eagerly when parsing the CLI
-        return node.getNodeHostname();
+        return node.getHostname();
       }
 
       @Override
       public String getName() {
         // substitutions not allowed on name since stripe ID / name is a key to identify a node
-        return node.getNodeName();
+        return node.getName();
       }
 
       @Override
@@ -319,13 +319,13 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
       @Override
       public File getLogsLocation() {
-        String sanitizedNodeName = node.getNodeName().replace(":", "-"); // Sanitize for path
-        return (unConfigured) ? null : substitutor.substitute(pathResolver.resolve(node.getNodeLogDir().resolve(sanitizedNodeName))).toFile();
+        String sanitizedNodeName = node.getName().replace(":", "-"); // Sanitize for path
+        return (unConfigured) ? null : substitutor.substitute(pathResolver.resolve(node.getLogDir().resolve(sanitizedNodeName))).toFile();
       }
 
       @Override
       public String toString() {
-        return node.getNodeName() + "@" + node.getNodeAddress();
+        return node.getName() + "@" + node.getAddress();
       }
     };
   }

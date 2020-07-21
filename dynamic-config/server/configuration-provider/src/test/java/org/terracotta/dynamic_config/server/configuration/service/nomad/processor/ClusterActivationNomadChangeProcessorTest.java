@@ -22,10 +22,9 @@ import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.nomad.server.NomadException;
 
@@ -42,7 +41,7 @@ public class ClusterActivationNomadChangeProcessorTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   private ClusterActivationNomadChangeProcessor processor;
-  private NodeContext topology = new NodeContext(Cluster.newDefaultCluster("bar", new Stripe(Node.newDefaultNode("foo", "localhost"))), 1, "foo");
+  private NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe(Testing.newTestNode("foo", "localhost"))), 1, "foo");
 
   @Before
   public void setUp() {
@@ -60,8 +59,8 @@ public class ClusterActivationNomadChangeProcessorTest {
 
   @Test
   public void testCanApplyWithNonNullBaseConfig() throws Exception {
-    ClusterActivationNomadChange change = new ClusterActivationNomadChange(Cluster.newDefaultCluster("cluster"));
-    NodeContext topology = new NodeContext(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("foo", "localhost"))), 1, "foo");
+    ClusterActivationNomadChange change = new ClusterActivationNomadChange(Testing.newTestCluster("cluster"));
+    NodeContext topology = new NodeContext(Testing.newTestCluster(new Stripe(Testing.newTestNode("foo", "localhost"))), 1, "foo");
 
     expectedException.expect(NomadException.class);
     expectedException.expectMessage("Found an existing configuration: " + topology);

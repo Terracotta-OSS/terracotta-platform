@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.system_tests.diagnostic;
+package org.terracotta.dynamic_config.system_tests;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -62,14 +62,14 @@ public class ConfigConversionIT {
     assertThat(cluster.getClientReconnectWindow(), is(Measure.of(120, TimeUnit.SECONDS)));
     assertThat(cluster.getStripeCount(), is(1));
     assertThat(cluster.getNodes().size(), is(2));
-    assertThat(cluster.getNode(1, 1).get().getNodeName(), is("node-1"));
-    assertThat(cluster.getNode(1, 1).get().getNodeHostname(), is("localhost"));
-    assertThat(cluster.getNode(1, 1).get().getNodePort(), is(9410));
-    assertThat(cluster.getNode(1, 1).get().getNodeGroupPort(), is(9430));
-    assertThat(cluster.getNode(1, 2).get().getNodeName(), is("node-2"));
-    assertThat(cluster.getNode(1, 2).get().getNodeHostname(), is("localhost"));
-    assertThat(cluster.getNode(1, 2).get().getNodePort(), is(9510));
-    assertThat(cluster.getNode(1, 2).get().getNodeGroupPort(), is(9530));
+    assertThat(cluster.getNode(1, 1).get().getName(), is("node-1"));
+    assertThat(cluster.getNode(1, 1).get().getHostname(), is("localhost"));
+    assertThat(cluster.getNode(1, 1).get().getPort(), is(9410));
+    assertThat(cluster.getNode(1, 1).get().getGroupPort(), is(9430));
+    assertThat(cluster.getNode(1, 2).get().getName(), is("node-2"));
+    assertThat(cluster.getNode(1, 2).get().getHostname(), is("localhost"));
+    assertThat(cluster.getNode(1, 2).get().getPort(), is(9510));
+    assertThat(cluster.getNode(1, 2).get().getGroupPort(), is(9530));
   }
 
   @Test
@@ -104,8 +104,8 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getNodeLogDir(), is(Paths.get("%h-logs")));
-    assertThat(cluster.getNode(1, 2).get().getNodeLogDir(), is(Paths.get("%h-logs")));
+    assertThat(cluster.getNode(1, 1).get().getLogDir(), is(Paths.get("%h-logs")));
+    assertThat(cluster.getNode(1, 2).get().getLogDir(), is(Paths.get("%h-logs")));
   }
 
   @Test
@@ -203,7 +203,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getNodePort(), is(9411));
+    assertThat(cluster.getNode(1, 1).get().getPort(), is(9411));
   }
 
   @Test
@@ -217,7 +217,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getNodeBindAddress(), is("1.1.1.1"));
+    assertThat(cluster.getNode(1, 1).get().getBindAddress(), is("1.1.1.1"));
   }
 
   @Test
@@ -231,7 +231,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getNodeGroupPort(), is(9431));
+    assertThat(cluster.getNode(1, 1).get().getGroupPort(), is(9431));
   }
 
   @Test
@@ -245,7 +245,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getNodeGroupBindAddress(), is("2.2.2.2"));
+    assertThat(cluster.getNode(1, 1).get().getGroupBindAddress(), is("2.2.2.2"));
   }
 
   @Test
@@ -259,7 +259,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getNodeLogDir(), is(Paths.get("abcd")));
+    assertThat(cluster.getNode(1, 1).get().getLogDir(), is(Paths.get("abcd")));
   }
 
   @Test

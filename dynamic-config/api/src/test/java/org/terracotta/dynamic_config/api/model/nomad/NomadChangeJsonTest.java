@@ -21,8 +21,8 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.change.NomadChange;
 
@@ -46,7 +46,7 @@ public class NomadChangeJsonTest {
 
   ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
 
-  private Cluster cluster = Cluster.newDefaultCluster("myClusterName", new Stripe(Node.newDefaultNode("foo", "localhost", 9410)))
+  private Cluster cluster = Testing.newTestCluster("myClusterName", new Stripe(Testing.newTestNode("foo", "localhost", 9410)))
       .setClientReconnectWindow(60, TimeUnit.SECONDS)
       .setOffheapResource("foo", 1, MemoryUnit.GB);
 

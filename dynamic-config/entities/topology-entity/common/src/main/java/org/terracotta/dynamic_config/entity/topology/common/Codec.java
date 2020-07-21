@@ -35,9 +35,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.IntStream.rangeClosed;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
@@ -227,6 +229,7 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeCluster(Cluster cluster) {
     requireNonNull(cluster);
+    //TODO [DYNAMIC-CONFIG]: TDB-4898 - switch to false
     return Props.toString(cluster.toProperties(false, true));
   }
 
@@ -238,26 +241,36 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeNode(Node node) {
     requireNonNull(node);
-    Cluster container = Cluster.newDefaultCluster(new Stripe(node));
-    return Props.toString(container.toProperties(false, true));
+    //TODO [DYNAMIC-CONFIG]: TDB-4898 - switch to false
+    return Props.toString(node.toProperties(false, true));
   }
 
   private Node decodeNode(String payload) {
     requireNonNull(payload);
-    return new ClusterFactory().create(Props.load(payload), configuration -> {
-    }).getSingleNode().orElseThrow(() -> new AssertionError("node must be there"));
+    Properties properties = Props.load(payload);
+    Node node = new Node().fillRequiredSettings();
+    Cluster cluster = new Cluster(new Stripe(node));
+    properties.stringPropertyNames().forEach(key -> Configuration.valueOf("stripe.1.node.1." + key, properties.getProperty(key)).apply(cluster));
+    return node;
   }
 
   private String encodeStripe(Stripe stripe) {
     requireNonNull(stripe);
-    Cluster container = Cluster.newDefaultCluster(stripe);
-    return Props.toString(container.toProperties(false, true));
+    //TODO [DYNAMIC-CONFIG]: TDB-4898 - switch to false
+    final Properties props = stripe.toProperties(false, true);
+    props.setProperty("nodes", String.valueOf(stripe.getNodeCount()));
+    return Props.toString(props);
   }
 
   private Stripe decodeStripe(String payload) {
     requireNonNull(payload);
-    return new ClusterFactory().create(Props.load(payload), configuration -> {
-    }).getSingleStripe().orElseThrow(() -> new AssertionError("stripe must be there"));
+    final Properties properties = Props.load(payload);
+    final int count = Integer.parseInt(properties.remove("nodes").toString());
+    final Stripe stripe = new Stripe();
+    final Cluster cluster = new Cluster(stripe);
+    rangeClosed(1, count).forEach(idx -> stripe.addNode(new Node().fillRequiredSettings()));
+    properties.stringPropertyNames().forEach(key -> Configuration.valueOf("stripe.1." + key, properties.getProperty(key)).apply(cluster));
+    return stripe;
   }
 
   private String encodeConfiguration(Configuration configuration) {

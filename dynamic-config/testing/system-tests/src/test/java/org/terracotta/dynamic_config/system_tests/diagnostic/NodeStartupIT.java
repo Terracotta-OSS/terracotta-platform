@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -77,7 +76,7 @@ public class NodeStartupIT extends DynamicConfigIT {
     startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
 
     waitForDiagnostic(1, 1);
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(equalTo("localhost")));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getHostname(), is(equalTo("localhost")));
   }
 
   @Test
@@ -192,7 +191,7 @@ public class NodeStartupIT extends DynamicConfigIT {
         "--hostname", "%c"
     );
     waitForDiagnostic(1, 1);
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(InetAddress.getLocalHost().getCanonicalHostName()));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getHostname(), is(InetAddress.getLocalHost().getCanonicalHostName()));
   }
 
   @Test
