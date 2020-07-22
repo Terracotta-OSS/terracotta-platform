@@ -89,7 +89,7 @@ public class DynamicConfigNomadSynchronizer {
       // Check if this node has been incorrectly activated with the wrong cluster.
       // This should never happen.
       if (pos == -1) {
-        throw new IllegalStateException("Unable to find any change in the source node matching the topology used to activate this this node: " + currentCluster);
+        throw new IllegalStateException("Unable to find any change in the source node matching the topology used to activate this node: " + currentCluster);
       }
 
       // reset the node's changes
