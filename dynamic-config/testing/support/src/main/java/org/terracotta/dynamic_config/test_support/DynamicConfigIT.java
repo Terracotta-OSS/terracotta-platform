@@ -32,6 +32,7 @@ import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
 import org.terracotta.angela.common.distribution.Distribution;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
+import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.angela.common.topology.Topology;
 import org.terracotta.common.struct.Measure;
@@ -66,6 +67,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -120,13 +122,13 @@ public class DynamicConfigIT {
   public DynamicConfigIT(Duration testTimeout) {
     this(testTimeout, Paths.get(System.getProperty("user.dir"), "target", "test-data"));
   }
-
+  
   public DynamicConfigIT(Duration testTimeout, Path parentTmpDir) {
     ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.timeout = testTimeout.toMillis();
     this.rules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe()), clusterDef.autoStart(), clusterDef.autoActivate()) {
+        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled()), clusterDef.autoStart(), clusterDef.autoActivate()) {
           @Override
           public void startNode(int stripeId, int nodeId) {
             // let the subclasses control the node startup
@@ -280,7 +282,7 @@ public class DynamicConfigIT {
   // node and topology construction
   // =========================================
 
-  protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe) {
+  protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe, boolean netDisruptionEnabled) {
     return customConfigurationContext().tsa(tsa -> tsa
         .clusterName(CLUSTER_NAME)
         .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
@@ -293,6 +295,7 @@ public class DynamicConfigIT {
                 .withJavaHome(System.getProperty("java.home")))
         .topology(new Topology(
             getDistribution(),
+            netDisruptionEnabled,
             dynamicCluster(
                 rangeClosed(1, stripes)
                     .mapToObj(stripeId -> stripe(rangeClosed(1, nodesPerStripe)
@@ -526,5 +529,27 @@ public class DynamicConfigIT {
 
   protected Matcher<ExceptionMatcher.Closure> exceptionMatcher(String message) {
     return is(throwing(instanceOf(RuntimeException.class)).andMessage(containsString(message)));
+  }
+
+  protected void setServerDisruptionLinks(int stripeId, int size) {
+    angela.tsa().setServerToServerDisruptionLinks(stripeId, size);
+  }
+
+  private boolean isServerBlocked(TerracottaServer server) {
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
+        InetSocketAddress.createUnresolved(server.getHostName(), server.getTsaPort()),
+        getClass().getSimpleName(),
+        getConnectionTimeout(),
+        getConnectionTimeout(),
+        null,
+        objectMapperFactory)) {
+      return diagnosticService.isBlocked();
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  protected void waitForServerBlocked(TerracottaServer server) {
+    waitUntil(() -> isServerBlocked(server), is(true));
   }
 }
