@@ -37,6 +37,7 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.dynamic_config.server.api.InvalidLicenseException;
 import org.terracotta.dynamic_config.server.api.LicenseService;
+import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigNomadSynchronizer;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.ObjectMapperFactory;
@@ -58,6 +59,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -124,8 +126,15 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public synchronized String getLicenseString() {
-    return getLicenseContent().orElse(null);
+  public void resetAndSync(NomadChangeInfo[] nomadChanges) {
+    DynamicConfigNomadSynchronizer nomadSynchronizer = new DynamicConfigNomadSynchronizer(
+      nomadServerManager.getConfiguration().orElse(null), nomadServerManager.getNomadServer());
+
+    try {
+      nomadSynchronizer.syncNomadChanges(Arrays.asList(nomadChanges));
+    } catch (NomadException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

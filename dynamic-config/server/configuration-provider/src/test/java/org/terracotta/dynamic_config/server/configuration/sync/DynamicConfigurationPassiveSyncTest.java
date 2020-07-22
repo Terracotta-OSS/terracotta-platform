@@ -95,7 +95,7 @@ public class DynamicConfigurationPassiveSyncTest {
 
     DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(startupTopology, nomadServer, mock(DynamicConfigService.class), () -> null);
     exceptionRule.expect(IllegalStateException.class);
-    exceptionRule.expectMessage("Passive has more configuration changes");
+    exceptionRule.expectMessage("Node has more configuration changes");
     syncManager.sync(codec.decode(active));
   }
 
@@ -145,7 +145,7 @@ public class DynamicConfigurationPassiveSyncTest {
 
     DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(startupTopology, nomadServer, mock(DynamicConfigService.class), () -> null);
     exceptionRule.expect(IllegalStateException.class);
-    exceptionRule.expectMessage("Passive cannot sync because the configuration change history does not match");
+    exceptionRule.expectMessage("Node cannot sync because the configuration change history does not match");
     syncManager.sync(codec.decode(active));
   }
 

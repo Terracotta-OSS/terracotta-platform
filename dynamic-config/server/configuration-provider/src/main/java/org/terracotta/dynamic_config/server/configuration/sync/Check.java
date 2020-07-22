@@ -46,45 +46,45 @@ class Check {
     }
   }
 
-  static int lastIndexOfSameCommittedActiveTopologyChange(List<NomadChangeInfo> activeNomadChanges, Cluster passiveCluster) {
-    // lookup active changes (reverse order) to find the latest change in force that contains the passive topology
-    for (int i = activeNomadChanges.size() - 1; i >= 0; i--) {
-      NomadChangeInfo changeInfo = activeNomadChanges.get(i);
+  static int lastIndexOfSameCommittedSourceTopologyChange(List<NomadChangeInfo> sourceNomadChanges, Cluster currentCluster) {
+    // lookup source changes (reverse order) to find the latest change in force that contains the current topology
+    for (int i = sourceNomadChanges.size() - 1; i >= 0; i--) {
+      NomadChangeInfo changeInfo = sourceNomadChanges.get(i);
       if (changeInfo.getChangeRequestState() == COMMITTED
           && changeInfo.getNomadChange() instanceof TopologyNomadChange
-          && ((TopologyNomadChange) changeInfo.getNomadChange()).getCluster().equals(passiveCluster)) {
-        // we have found the last topology change in the active node matching the topology used to activate the passive node
+          && ((TopologyNomadChange) changeInfo.getNomadChange()).getCluster().equals(currentCluster)) {
+        // we have found the last topology change in the source node matching the topology used to activate the current node
         return i;
       }
     }
     return -1;
   }
 
-  static void requireEquals(List<NomadChangeInfo> passiveNomadChanges, List<NomadChangeInfo> activeNomadChanges, int from, int count) {
-    int to = min(min(from + count, passiveNomadChanges.size()), activeNomadChanges.size());
+  static void requireEquals(List<NomadChangeInfo> nomadChanges, List<NomadChangeInfo> sourceNomadChanges, int from, int count) {
+    int to = min(min(from + count, nomadChanges.size()), sourceNomadChanges.size());
     for (; from < to; from++) {
-      NomadChangeInfo passiveChange = passiveNomadChanges.get(from);
-      NomadChangeInfo activeChange = activeNomadChanges.get(from);
-      if (!passiveChange.equals(activeChange)) {
-        throw new IllegalStateException("Passive cannot sync because the configuration change history does not match: no match on active for this change on passive:" + passiveChange);
+      NomadChangeInfo nomadChange = nomadChanges.get(from);
+      NomadChangeInfo sourceChange = sourceNomadChanges.get(from);
+      if (!nomadChange.equals(sourceChange)) {
+        throw new IllegalStateException("Node cannot sync because the configuration change history does not match: no match on source node for this change on the node:" + nomadChange);
       }
     }
   }
 
-  static boolean canRepair(List<NomadChangeInfo> passiveNomadChanges, List<NomadChangeInfo> activeNomadChanges) {
-    int last = passiveNomadChanges.size() - 1;
-    NomadChangeInfo lastPassiveChange = passiveNomadChanges.get(last);
-    NomadChangeInfo activeChange = activeNomadChanges.get(last);
-    return lastPassiveChange.getChangeUuid().equals(activeChange.getChangeUuid())
-        && lastPassiveChange.getChangeRequestState() == ChangeRequestState.PREPARED
-        && activeChange.getChangeRequestState() != ChangeRequestState.PREPARED;
+  static boolean canRepair(List<NomadChangeInfo> nomadChanges, List<NomadChangeInfo> sourceNomadChanges) {
+    int last = nomadChanges.size() - 1;
+    NomadChangeInfo lastNomadChange = nomadChanges.get(last);
+    NomadChangeInfo sourceChange = sourceNomadChanges.get(last);
+    return lastNomadChange.getChangeUuid().equals(sourceChange.getChangeUuid())
+        && lastNomadChange.getChangeRequestState() == ChangeRequestState.PREPARED
+        && sourceChange.getChangeRequestState() != ChangeRequestState.PREPARED;
   }
 
-  static boolean isPassiveMew(List<NomadChangeInfo> passiveNomadChanges) {
-    return passiveNomadChanges.size() == 1;
+  static boolean isNodeNew(List<NomadChangeInfo> nomadChanges) {
+    return nomadChanges.size() == 1;
   }
 
-  static boolean isJointActivation(List<NomadChangeInfo> passiveNomadChanges, List<NomadChangeInfo> activeNomadChanges) {
-    return passiveNomadChanges.get(0).equals(activeNomadChanges.get(0));
+  static boolean isJointActivation(List<NomadChangeInfo> nomadChanges, List<NomadChangeInfo> sourceNomadChanges) {
+    return nomadChanges.get(0).equals(sourceNomadChanges.get(0));
   }
 }
