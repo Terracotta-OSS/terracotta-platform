@@ -26,6 +26,7 @@ import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
 import org.terracotta.diagnostic.model.LogicalServerState;
 
 import java.lang.reflect.Proxy;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
@@ -203,7 +204,11 @@ class DiagnosticServiceImpl implements DiagnosticService {
     response.getError().map(DiagnosticOperationExecutionException::new).ifPresent(e -> {
       throw e;
     });
-    return returnType.isPrimitive() ? response.getBody() : returnType.cast(response.getBody());
+    return returnType.isPrimitive() ?
+      response.getBody() :
+      returnType.cast(returnType == Optional.class ?
+        Optional.ofNullable(response.getBody()) :
+        response.getBody());
   }
 
   private String execute(Supplier<String> execution) throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
