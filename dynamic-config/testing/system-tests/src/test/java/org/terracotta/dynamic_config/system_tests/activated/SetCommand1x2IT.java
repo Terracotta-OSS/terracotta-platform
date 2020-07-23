@@ -70,7 +70,7 @@ public class SetCommand1x2IT extends DynamicConfigIT {
   @Test
   public void testFailedConfigChangedDoesntFailPassiveSync() throws Exception {
     int passiveId = findPassives(1)[0];
-    Path metadataDir = usingTopologyService(1, passiveId, topologyService -> topologyService.getUpcomingNodeContext().getNode().getNodeMetadataDir());
+    Path metadataDir = usingTopologyService(1, passiveId, topologyService -> topologyService.getUpcomingNodeContext().getNode().getMetadataDir());
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir=foo"),
         exceptionMatcher("Setting 'metadata-dir' cannot be set when node is activated"));

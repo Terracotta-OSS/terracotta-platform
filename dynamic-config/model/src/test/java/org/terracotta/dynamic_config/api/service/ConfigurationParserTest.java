@@ -22,9 +22,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 
 import java.io.File;
 import java.util.AbstractMap;
@@ -74,7 +74,7 @@ public class ConfigurationParserTest {
     // node name should be resolved from default value (%h) if not given
     assertCliEquals(
         cli("failover-priority=availability"),
-        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))),
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost"))),
         "stripe.1.node.1.hostname=localhost",
         "cluster-name=",
         "client-reconnect-window=120s",
@@ -110,7 +110,7 @@ public class ConfigurationParserTest {
     // placeholder in node name should be resolved eagerly
     assertCliEquals(
         cli("failover-priority=availability", "hostname=%c"),
-        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))),
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost.home"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
@@ -145,7 +145,7 @@ public class ConfigurationParserTest {
     // node name without placeholder triggers no resolve
     assertCliEquals(
         cli("failover-priority=availability", "hostname=foo"),
-        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))),
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "foo"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
@@ -247,7 +247,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.hostname=foo"
         ),
-        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("real", "foo"))),
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("real", "foo"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
@@ -282,7 +282,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost"
         ),
-        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))),
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost"))),
         "cluster-name=",
         "client-reconnect-window=120s",
         "client-lease-duration=150s",
@@ -321,13 +321,13 @@ public class ConfigurationParserTest {
             "stripe.2.node.2.name=node2",
             "stripe.2.node.2.hostname=localhost"
         ),
-        Cluster.newDefaultCluster(
+        Testing.newTestCluster(
             new Stripe(
-                Node.newDefaultNode("node1", "localhost"),
-                Node.newDefaultNode("node2", "localhost")),
+                Testing.newTestNode("node1", "localhost"),
+                Testing.newTestNode("node2", "localhost")),
             new Stripe(
-                Node.newDefaultNode("node1", "localhost"),
-                Node.newDefaultNode("node2", "localhost"))
+                Testing.newTestNode("node1", "localhost"),
+                Testing.newTestNode("node2", "localhost"))
         ),
         "cluster-name=",
         "client-reconnect-window=120s",
@@ -426,13 +426,13 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost"))));
     verifyNoMoreInteractions(substitutor);
   }
 
   @Test
   public void test_setting_with_default_can_be_ommitted() {
-    final Properties properties = Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost")))
+    final Properties properties = Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost")))
         .setClientLeaseDuration(null)
         .toProperties(false, false);
     assertThat(properties, not(hasKey("client-lease-duration")));
@@ -463,7 +463,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))),
+        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost"))),
         "client-lease-duration=150s");
 
     assertConfigEquals(
@@ -493,7 +493,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost"))));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -502,10 +502,10 @@ public class ConfigurationParserTest {
 
     // since node name is generated when not given,
     // this is a hack that will reset to null only the node names that have been generated
-    String nodeName = built.getSingleNode().get().getNodeName();
+    String nodeName = built.getSingleNode().get().getName();
     cluster.getSingleNode()
-        .filter(node -> node.getNodeName().equals("<GENERATED>"))
-        .ifPresent(node -> node.setNodeName(nodeName));
+        .filter(node -> node.getName().equals("<GENERATED>"))
+        .ifPresent(node -> node.setName(nodeName));
 
     Configuration[] configurations = Stream.of(addedConfigurations)
         .map(string -> string.replace("<GENERATED>", nodeName))

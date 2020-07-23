@@ -127,6 +127,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     JsonNode expected = readJson("stats.json");
     queryAllRemoteStatsUntil(stats -> {
       JsonNode actual = removeRandomValues(toJson(stats));
+      System.out.println(actual.toPrettyString());
       return actual.equals(expected);
     });
 

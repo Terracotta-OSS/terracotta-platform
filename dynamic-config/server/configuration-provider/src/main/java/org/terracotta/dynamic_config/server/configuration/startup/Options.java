@@ -62,40 +62,40 @@ import static org.terracotta.dynamic_config.server.configuration.startup.Console
 @Parameters(separators = "=")
 public class Options {
   @Parameter(names = {"-s", "--" + NODE_HOSTNAME}, description = "node host name")
-  private String nodeHostname;
+  private String hostname;
 
   @Parameter(names = {"-S", "--" + NODE_PUBLIC_HOSTNAME}, description = "public node host name")
-  private String nodePublicHostname;
+  private String publicHostname;
 
   @Parameter(names = {"-p", "--" + NODE_PORT}, description = "node port")
-  private String nodePort;
+  private String port;
 
   @Parameter(names = {"-P", "--" + NODE_PUBLIC_PORT}, description = "public node port")
-  private String nodePublicPort;
+  private String publicPort;
 
   @Parameter(names = {"-g", "--" + NODE_GROUP_PORT}, description = "node port used for intra-stripe communication")
-  private String nodeGroupPort;
+  private String groupPort;
 
   @Parameter(names = {"-n", "--" + NODE_NAME}, description = "node name")
   private String nodeName;
 
   @Parameter(names = {"-a", "--" + NODE_BIND_ADDRESS}, description = "node bind address for port")
-  private String nodeBindAddress;
+  private String bindAddress;
 
   @Parameter(names = {"-A", "--" + NODE_GROUP_BIND_ADDRESS}, description = "node bind address for group port")
-  private String nodeGroupBindAddress;
+  private String groupBindAddress;
 
   @Parameter(names = {"-r", "--" + NODE_CONFIG_DIR}, description = "node configuration directory")
-  private String nodeConfigDir;
+  private String configDir;
 
   @Parameter(names = {"-m", "--" + NODE_METADATA_DIR}, description = "node metadata directory")
-  private String nodeMetadataDir;
+  private String metadataDir;
 
   @Parameter(names = {"-L", "--" + NODE_LOG_DIR}, description = "node log directory")
-  private String nodeLogDir;
+  private String logDir;
 
   @Parameter(names = {"-b", "--" + NODE_BACKUP_DIR}, description = "node backup directory")
-  private String nodeBackupDir;
+  private String backupDir;
 
   @Parameter(names = {"-x", "--" + SECURITY_DIR}, description = "security root directory")
   private String securityDir;
@@ -188,7 +188,7 @@ public class Options {
 
   private void validateOptions(CustomJCommander jCommander) {
     if (configFile != null) {
-      if (nodeName != null && (nodePort != null || nodeHostname != null)) {
+      if (nodeName != null && (port != null || hostname != null)) {
         throw new ParameterException("'" + addDashDash(NODE_NAME) + "' parameter cannot be used with '"
             + addDashDash(NODE_HOSTNAME) + "' or '" + addDashDash(NODE_PORT) + "' parameter");
       }
@@ -247,20 +247,20 @@ public class Options {
     return failoverPriority;
   }
 
-  public String getNodeHostname() {
-    return nodeHostname;
+  public String getHostname() {
+    return hostname;
   }
 
-  public String getNodePort() {
-    return nodePort;
+  public String getPort() {
+    return port;
   }
 
   public String getNodeName() {
     return nodeName;
   }
 
-  public String getNodeConfigDir() {
-    return nodeConfigDir;
+  public String getConfigDir() {
+    return configDir;
   }
 
   public String getClusterName() {

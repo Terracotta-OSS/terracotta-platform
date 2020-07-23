@@ -94,9 +94,8 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
 
   public static class ClusterMixin extends Cluster {
     @JsonCreator
-    protected ClusterMixin(@JsonProperty("name") String name,
-                           @JsonProperty(value = "stripes", required = true) List<Stripe> stripes) {
-      super(name, stripes);
+    protected ClusterMixin(@JsonProperty(value = "stripes", required = true) List<Stripe> stripes) {
+      super(stripes);
     }
 
     @JsonIgnore
@@ -200,20 +199,20 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
 
     @JsonIgnore
     @Override
-    public InetSocketAddress getNodeAddress() {
-      return super.getNodeAddress();
+    public InetSocketAddress getAddress() {
+      return super.getAddress();
     }
 
     @JsonIgnore
     @Override
-    public InetSocketAddress getNodeInternalAddress() {
-      return super.getNodeInternalAddress();
+    public InetSocketAddress getInternalAddress() {
+      return super.getInternalAddress();
     }
 
     @JsonIgnore
     @Override
-    public Optional<InetSocketAddress> getNodePublicAddress() {
-      return super.getNodePublicAddress();
+    public Optional<InetSocketAddress> getPublicAddress() {
+      return super.getPublicAddress();
     }
   }
 

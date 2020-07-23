@@ -805,7 +805,7 @@ public class ConfigurationTest {
 
   @Test
   public void test_apply() {
-    Cluster cluster = Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost")));
+    Cluster cluster = Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost")));
 
     // cluster wide override
     assertThat(cluster.getOffheapResources().size(), is(equalTo(1)));
@@ -821,9 +821,9 @@ public class ConfigurationTest {
     assertThat(cluster.getOffheapResources(), hasKey("second"));
 
     // stripe wide
-    assertThat(cluster.getSingleNode().get().getNodeBackupDir(), is(nullValue()));
+    assertThat(cluster.getSingleNode().get().getBackupDir(), is(nullValue()));
     Configuration.valueOf("stripe.1:backup-dir=foo/bar").apply(cluster);
-    assertThat(cluster.getSingleNode().get().getNodeBackupDir(), is(equalTo(Paths.get("foo/bar"))));
+    assertThat(cluster.getSingleNode().get().getBackupDir(), is(equalTo(Paths.get("foo/bar"))));
 
     // node level
     assertThat(cluster.getSingleNode().get().getSecurityDir(), is(nullValue()));

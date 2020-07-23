@@ -17,8 +17,8 @@ package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -53,13 +53,13 @@ public class TopologyServiceIT extends DynamicConfigIT {
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
-      assertThat(pendingCluster, is(equalTo(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node-1-1", "localhost", getNodePort())
-          .setNodeGroupPort(getNodeGroupPort(1, 1))
-          .setNodeBindAddress("0.0.0.0")
-          .setNodeGroupBindAddress("0.0.0.0")
-          .setNodeMetadataDir(Paths.get("metadata", "stripe1"))
-          .setNodeLogDir(Paths.get("logs", "stripe1", "node-1-1"))
-          .setNodeBackupDir(Paths.get("backup", "stripe1"))
+      assertThat(pendingCluster, is(equalTo(Testing.newTestCluster(new Stripe(Testing.newTestNode("node-1-1", "localhost", getNodePort())
+          .setGroupPort(getNodeGroupPort(1, 1))
+          .setBindAddress("0.0.0.0")
+          .setGroupBindAddress("0.0.0.0")
+          .setMetadataDir(Paths.get("metadata", "stripe1"))
+          .setLogDir(Paths.get("logs", "stripe1", "node-1-1"))
+          .setBackupDir(Paths.get("backup", "stripe1"))
           .setDataDir("main", Paths.get("user-data", "main", "stripe1"))
       ))
           .setClientReconnectWindow(120, SECONDS)

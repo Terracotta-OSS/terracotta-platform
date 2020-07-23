@@ -32,7 +32,7 @@ public class TestGroupPortMapperTest {
     TestGroupPortMapper testGroupPortMapper = new TestGroupPortMapper();
     Node peerNodeMock = mock(Node.class);
     Node currentNodeMock = mock(Node.class);
-    when(peerNodeMock.getNodeGroupPort()).thenReturn(1234);
+    when(peerNodeMock.getGroupPort()).thenReturn(1234);
     @SuppressWarnings("unchecked")
     Map<String, String> map = mock(Map.class);
     when(currentNodeMock.getTcProperties()).thenReturn(map);
@@ -50,8 +50,8 @@ public class TestGroupPortMapperTest {
     when(map.get("test-proxy-group-port")).thenReturn("node-1->2345");
     when(currentNodeMock.getTcProperties()).thenReturn(map);
     when(currentNodeMock.getTcProperties().containsKey(any())).thenReturn(true);
-    when(peerNodeMock.getNodeName()).thenReturn("node-1");
-    when(peerNodeMock.getNodeGroupPort()).thenReturn(1234);
+    when(peerNodeMock.getName()).thenReturn("node-1");
+    when(peerNodeMock.getGroupPort()).thenReturn(1234);
     assertThat(testGroupPortMapper.getPeerGroupPort(peerNodeMock, currentNodeMock), is(2345));
   }
 

@@ -470,7 +470,7 @@ public class Configuration {
       case STRIPE:
         targetContexts = cluster.getStripe(stripeId)
             .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"))
-            .getNodes().stream().map(node -> new NodeContext(cluster, stripeId, node.getNodeName()))
+            .getNodes().stream().map(node -> new NodeContext(cluster, stripeId, node.getName()))
             .collect(toList()); ;
         break;
       case NODE:
@@ -478,13 +478,17 @@ public class Configuration {
             .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"))
             .getNode(nodeId)
             .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid node ID: " + nodeId + ". Stripe ID: " + stripeId + " contains: " + cluster.getStripe(stripeId).get().getNodeCount() + " node(s)"))
-            .getNodeName()))
+            .getName()))
             .collect(toList()); ;
         break;
       default:
         throw new AssertionError(scope);
     }
     return targetContexts;
+  }
+
+  public static Configuration valueOf(String key, String value) {
+    return valueOf(key + "=" + (value == null ? "" : value));
   }
 
   /**

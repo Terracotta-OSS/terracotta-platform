@@ -87,7 +87,7 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
   @Override
   public void apply(NodeRemovalNomadChange change) throws NomadException {
     Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
-    if (!runtime.containsNode(change.getNode().getNodeAddress())) {
+    if (!runtime.containsNode(change.getNode().getAddress())) {
       return;
     }
 

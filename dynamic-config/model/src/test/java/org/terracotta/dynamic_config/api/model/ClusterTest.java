@@ -51,21 +51,21 @@ public class ClusterTest {
   ObjectMapper json = new ObjectMapper()
       .registerModule(new DynamicConfigModelJsonModule());
 
-  Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
+  Node node1 = Testing.newTestNode("node1", "localhost", 9410)
       .setDataDir("data", Paths.get("data"))
-      .setNodeBackupDir(Paths.get("backup"))
-      .setNodeBindAddress("0.0.0.0")
-      .setNodeGroupBindAddress("0.0.0.0")
-      .setNodeGroupPort(9430)
-      .setNodeLogDir(Paths.get("log"))
-      .setNodeMetadataDir(Paths.get("metadata"))
+      .setBackupDir(Paths.get("backup"))
+      .setBindAddress("0.0.0.0")
+      .setGroupBindAddress("0.0.0.0")
+      .setGroupPort(9430)
+      .setLogDir(Paths.get("log"))
+      .setMetadataDir(Paths.get("metadata"))
       .setSecurityAuditLogDir(Paths.get("audit"));
 
-  Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
+  Node node2 = Testing.newTestNode("node2", "localhost", 9411)
       .setDataDir("data", Paths.get("/data/cache2"));
 
   Stripe stripe1 = new Stripe(node1);
-  Cluster cluster = Cluster.newDefaultCluster("c", stripe1)
+  Cluster cluster = Testing.newTestCluster("c", stripe1)
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
       .setFailoverPriority(availability())
@@ -76,8 +76,8 @@ public class ClusterTest {
   @Test
   public void test_isEmpty() {
     assertFalse(cluster.isEmpty());
-    assertTrue(Cluster.newCluster().isEmpty());
-    assertTrue(Cluster.newCluster(new Stripe()).isEmpty());
+    assertTrue(new Cluster().isEmpty());
+    assertTrue(new Cluster(new Stripe()).isEmpty());
   }
 
   @Test
@@ -153,18 +153,18 @@ public class ClusterTest {
     assertThat(() -> cluster.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
 
     // back to normal
-    stripe1.removeNode(node2.getNodeAddress());
+    stripe1.removeNode(node2.getAddress());
     assertThat(cluster.getSingleNode().get(), is(sameInstance(node1)));
 
     cluster.addStripe(new Stripe(node2));
     assertThat(() -> cluster.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
 
     // back to normal
-    cluster.removeNode(node2.getNodeAddress());
+    cluster.removeNode(node2.getAddress());
     assertThat(cluster.getSingleNode().get(), is(sameInstance(node1)));
 
     // empty
-    stripe1.removeNode(node1.getNodeAddress());
+    stripe1.removeNode(node1.getAddress());
     assertThat(cluster.getSingleNode().isPresent(), is(false));
   }
 
@@ -187,20 +187,20 @@ public class ClusterTest {
 
   @Test
   public void test_getStripeId() {
-    assertThat(cluster.getStripeId(node1.getNodeAddress()).getAsInt(), is(equalTo(1)));
-    assertThat(cluster.getStripeId(node2.getNodeAddress()).isPresent(), is(false));
+    assertThat(cluster.getStripeId(node1.getAddress()).getAsInt(), is(equalTo(1)));
+    assertThat(cluster.getStripeId(node2.getAddress()).isPresent(), is(false));
 
     cluster.addStripe(new Stripe(node2));
-    assertThat(cluster.getStripeId(node2.getNodeAddress()).getAsInt(), is(2));
+    assertThat(cluster.getStripeId(node2.getAddress()).getAsInt(), is(2));
   }
 
   @Test
   public void test_getNodeId() {
-    assertThat(cluster.getNodeId(node1.getNodeAddress()).getAsInt(), is(equalTo(1)));
-    assertThat(cluster.getNodeId(node2.getNodeAddress()).isPresent(), is(false));
+    assertThat(cluster.getNodeId(node1.getAddress()).getAsInt(), is(equalTo(1)));
+    assertThat(cluster.getNodeId(node2.getAddress()).isPresent(), is(false));
 
     cluster.addStripe(new Stripe(node2));
-    assertThat(cluster.getNodeId(node2.getNodeAddress()).getAsInt(), is(1));
+    assertThat(cluster.getNodeId(node2.getAddress()).getAsInt(), is(1));
 
     assertThat(cluster.getNodeId(1, "node1").getAsInt(), is(1));
     assertThat(cluster.getNodeId(1, "node-foo").isPresent(), is(false));

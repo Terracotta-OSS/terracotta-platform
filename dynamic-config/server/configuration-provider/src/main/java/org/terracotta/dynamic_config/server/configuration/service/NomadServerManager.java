@@ -17,11 +17,7 @@ package org.terracotta.dynamic_config.server.configuration.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Setting;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
@@ -59,7 +55,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
-import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 
 /**
  * @author Mathieu Carbou
@@ -113,19 +108,15 @@ public class NomadServerManager {
     return dynamicConfigListener;
   }
 
-  public void init(Path configPath, String nodeName) throws UncheckedNomadException {
+  public void init(Path configPath, String nodeName, NodeContext alternate) throws UncheckedNomadException {
     // Case where Nomad is bootstrapped from an existing configuration directory.
     // We only know the node name.
     // getConfiguration() can be empty in case the repo has been created
-    // but not yet populated with some Nomad entries, or it was reset.
-    // In these cases, node will start in diagnostic mode and use an existing
-    // repo structure. So we create an empty cluster / node topology
+    // but not yet populated with some Nomad entries, or it was reset, or tx was prepared but not committed.
+    // In these cases, node will start in diagnostic mode and use an alternate topology.
     init(configPath,
         () -> nodeName,
-        () -> getConfiguration().orElseGet(
-            () -> new NodeContext(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue()))))
-                //TODO [DYNAMIC-CONFIG]: TDB-4898 - correctly handle required settings
-                .setFailoverPriority(availability()), 1, nodeName)));
+        () -> getConfiguration().orElse(alternate));
   }
 
   public void init(Path configPath, NodeContext nodeContext) throws UncheckedNomadException {

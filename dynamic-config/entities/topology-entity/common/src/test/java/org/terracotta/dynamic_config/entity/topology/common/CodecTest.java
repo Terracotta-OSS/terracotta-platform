@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.entity.MessageCodecException;
 
 import java.time.LocalDate;
@@ -48,10 +49,10 @@ import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_UPCO
 public class CodecTest {
   @Test
   public void test_encode_decode() throws MessageCodecException {
-    Node node = Node.newDefaultNode("foo", "localhost", 9410);
-    Node node2 = Node.newDefaultNode("foo2", "localhost", 9411);
+    Node node = Testing.newTestNode("foo", "localhost", 9410);
+    Node node2 = Testing.newTestNode("foo2", "localhost", 9411);
     Stripe stripe = new Stripe(node, node2);
-    Cluster cluster = Cluster.newDefaultCluster("bar", stripe);
+    Cluster cluster = Testing.newTestCluster("bar", stripe);
 
     test(REQ_LICENSE, null);
     test(REQ_LICENSE, new License(emptyMap(), LocalDate.of(2020, 1, 1)));

@@ -60,7 +60,7 @@ public class DiagnosticIT extends AbstractSingleTest {
           if (lines.allMatch(line -> {
             boolean match = containsString(line).matches(dump);
             if (!match) {
-//              System.out.println("==> MISSING: " + line);
+              System.out.println("==> MISSING: " + line);
             }
             return match;
           })) {

@@ -34,73 +34,70 @@ public class Node implements Cloneable, PropertyHolder {
   // Note: primitive fields need to be initialized with their default value,
   // otherwise we will wrongly detect that they have been initialized (Setting.getPropertyValue will return 0 for a port for example)
 
-  private String nodeName;
-  private String nodeHostname;
-  private String nodePublicHostname;
-  private int nodePort = Integer.parseInt(Setting.NODE_PORT.getDefaultValue());
-  private Integer nodePublicPort;
-  private int nodeGroupPort = Integer.parseInt(Setting.NODE_GROUP_PORT.getDefaultValue());
-  private String nodeBindAddress;
-  private String nodeGroupBindAddress;
-  private Path nodeMetadataDir;
-  private Path nodeLogDir;
-  private Path nodeBackupDir;
+  private String name;
+  private String hostname;
+  private String publicHostname;
+  private Integer port;
+  private Integer publicPort;
+  private Integer groupPort;
+  private String bindAddress;
+  private String groupBindAddress;
+  private Path metadataDir;
+  private Path logDir;
+  private Path backupDir;
   private Path securityDir;
   private Path securityAuditLogDir;
   private final Map<String, String> tcProperties = new ConcurrentHashMap<>();
-  private final Map<String, String> nodeLoggerOverrides = new ConcurrentHashMap<>();
+  private final Map<String, String> loggerOverrides = new ConcurrentHashMap<>();
   private final Map<String, Path> dataDirs = new ConcurrentHashMap<>();
-
-  protected Node() {
-  }
 
   @Override
   public Scope getScope() {
     return NODE;
   }
 
-  public String getNodeName() {
-    return nodeName;
+  public String getName() {
+    return name;
   }
 
-  public String getNodeHostname() {
-    return nodeHostname;
+  public String getHostname() {
+    return hostname;
   }
 
-  public String getNodePublicHostname() {
-    return nodePublicHostname;
+  public String getPublicHostname() {
+    return publicHostname;
   }
 
-  public int getNodePort() {
-    return nodePort;
+  public Integer getPort() {
+    return port;
   }
 
-  public Integer getNodePublicPort() {
-    return nodePublicPort;
+  public Integer getPublicPort() {
+    return publicPort;
   }
 
-  public int getNodeGroupPort() {
-    return nodeGroupPort;
+  public Integer getGroupPort() {
+    return groupPort;
   }
 
-  public String getNodeBindAddress() {
-    return nodeBindAddress;
+  public String getBindAddress() {
+    return bindAddress;
   }
 
-  public String getNodeGroupBindAddress() {
-    return nodeGroupBindAddress;
+  public String getGroupBindAddress() {
+    return groupBindAddress;
   }
 
-  public Path getNodeMetadataDir() {
-    return nodeMetadataDir;
+  public Path getMetadataDir() {
+    return metadataDir;
   }
 
-  public Path getNodeLogDir() {
-    return nodeLogDir;
+  public Path getLogDir() {
+    return logDir;
   }
 
-  public Path getNodeBackupDir() {
-    return nodeBackupDir;
+  public Path getBackupDir() {
+    return backupDir;
   }
 
   public Path getSecurityDir() {
@@ -115,27 +112,27 @@ public class Node implements Cloneable, PropertyHolder {
     return Collections.unmodifiableMap(dataDirs);
   }
 
-  public Map<String, String> getNodeLoggerOverrides() {
-    return Collections.unmodifiableMap(nodeLoggerOverrides);
+  public Map<String, String> getLoggerOverrides() {
+    return Collections.unmodifiableMap(loggerOverrides);
   }
 
-  public Node setNodeLoggerOverrides(Map<String, String> nodeLoggerOverrides) {
-    this.nodeLoggerOverrides.putAll(nodeLoggerOverrides);
+  public Node setLoggerOverrides(Map<String, String> loggerOverrides) {
+    this.loggerOverrides.putAll(loggerOverrides);
     return this;
   }
 
-  public Node setNodeLoggerOverride(String logger, String level) {
-    this.nodeLoggerOverrides.put(logger, level);
+  public Node setLoggerOverride(String logger, String level) {
+    this.loggerOverrides.put(logger, level);
     return this;
   }
 
-  public Node removeNodeLoggerOverride(String logger) {
-    this.nodeLoggerOverrides.remove(logger);
+  public Node removeLoggerOverride(String logger) {
+    this.loggerOverrides.remove(logger);
     return this;
   }
 
-  public Node clearNodeLoggerOverrides() {
-    nodeLoggerOverrides.clear();
+  public Node clearLoggerOverrides() {
+    loggerOverrides.clear();
     return this;
   }
 
@@ -158,58 +155,58 @@ public class Node implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public Node setNodeName(String nodeName) {
-    this.nodeName = nodeName;
+  public Node setName(String name) {
+    this.name = name;
     return this;
   }
 
-  public Node setNodeHostname(String nodeHostname) {
-    this.nodeHostname = nodeHostname;
+  public Node setHostname(String hostname) {
+    this.hostname = hostname;
     return this;
   }
 
-  public Node setNodePublicHostname(String nodePublicHostname) {
-    this.nodePublicHostname = nodePublicHostname;
+  public Node setPublicHostname(String publicHostname) {
+    this.publicHostname = publicHostname;
     return this;
   }
 
-  public Node setNodePort(int nodePort) {
-    this.nodePort = nodePort;
+  public Node setPort(Integer port) {
+    this.port = port;
     return this;
   }
 
-  public Node setNodePublicPort(Integer nodePublicPort) {
-    this.nodePublicPort = nodePublicPort;
+  public Node setPublicPort(Integer publicPort) {
+    this.publicPort = publicPort;
     return this;
   }
 
-  public Node setNodeGroupPort(int nodeGroupPort) {
-    this.nodeGroupPort = nodeGroupPort;
+  public Node setGroupPort(Integer groupPort) {
+    this.groupPort = groupPort;
     return this;
   }
 
-  public Node setNodeBindAddress(String nodeBindAddress) {
-    this.nodeBindAddress = nodeBindAddress;
+  public Node setBindAddress(String bindAddress) {
+    this.bindAddress = bindAddress;
     return this;
   }
 
-  public Node setNodeGroupBindAddress(String nodeGroupBindAddress) {
-    this.nodeGroupBindAddress = nodeGroupBindAddress;
+  public Node setGroupBindAddress(String groupBindAddress) {
+    this.groupBindAddress = groupBindAddress;
     return this;
   }
 
-  public Node setNodeMetadataDir(Path nodeMetadataDir) {
-    this.nodeMetadataDir = nodeMetadataDir;
+  public Node setMetadataDir(Path metadataDir) {
+    this.metadataDir = metadataDir;
     return this;
   }
 
-  public Node setNodeLogDir(Path nodeLogDir) {
-    this.nodeLogDir = nodeLogDir;
+  public Node setLogDir(Path logDir) {
+    this.logDir = logDir;
     return this;
   }
 
-  public Node setNodeBackupDir(Path nodeBackupDir) {
-    this.nodeBackupDir = nodeBackupDir;
+  public Node setBackupDir(Path backupDir) {
+    this.backupDir = backupDir;
     return this;
   }
 
@@ -252,29 +249,29 @@ public class Node implements Cloneable, PropertyHolder {
    * @return true if this node has this public or internal address
    */
   public boolean hasAddress(InetSocketAddress address) {
-    return InetSocketAddressUtils.areEqual(address, getNodeInternalAddress()) ||
-        getNodePublicAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
+    return InetSocketAddressUtils.areEqual(address, getInternalAddress()) ||
+        getPublicAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
   }
 
-  public InetSocketAddress getNodeAddress() {
-    return getNodePublicAddress().orElseGet(this::getNodeInternalAddress);
+  public InetSocketAddress getAddress() {
+    return getPublicAddress().orElseGet(this::getInternalAddress);
   }
 
-  public InetSocketAddress getNodeInternalAddress() {
-    if (nodeHostname == null || Substitutor.containsSubstitutionParams(nodeHostname)) {
-      throw new AssertionError("Node " + nodeName + " is not correctly defined with internal address: " + nodeHostname + ":" + nodePort);
+  public InetSocketAddress getInternalAddress() {
+    if (hostname == null || Substitutor.containsSubstitutionParams(hostname)) {
+      throw new AssertionError("Node " + name + " is not correctly defined with internal address: " + hostname + ":" + port);
     }
-    return InetSocketAddress.createUnresolved(nodeHostname, nodePort);
+    return InetSocketAddress.createUnresolved(hostname, port);
   }
 
-  public Optional<InetSocketAddress> getNodePublicAddress() {
-    if (nodePublicHostname == null || nodePublicPort == null) {
+  public Optional<InetSocketAddress> getPublicAddress() {
+    if (publicHostname == null || publicPort == null) {
       return Optional.empty();
     }
-    if (Substitutor.containsSubstitutionParams(nodePublicHostname)) {
-      throw new AssertionError("Node " + nodeName + " is not correctly defined with public address: " + nodePublicHostname + ":" + nodePublicPort);
+    if (Substitutor.containsSubstitutionParams(publicHostname)) {
+      throw new AssertionError("Node " + name + " is not correctly defined with public address: " + publicHostname + ":" + publicPort);
     }
-    return Optional.of(InetSocketAddress.createUnresolved(nodePublicHostname, nodePublicPort));
+    return Optional.of(InetSocketAddress.createUnresolved(publicHostname, publicPort));
   }
 
   @Override
@@ -283,19 +280,19 @@ public class Node implements Cloneable, PropertyHolder {
   public Node clone() {
     return new Node()
         .setDataDirs(dataDirs)
-        .setNodeBackupDir(nodeBackupDir)
-        .setNodeBindAddress(nodeBindAddress)
-        .setNodeGroupBindAddress(nodeGroupBindAddress)
-        .setNodeGroupPort(nodeGroupPort)
-        .setNodeHostname(nodeHostname)
-        .setNodePublicHostname(nodePublicHostname)
-        .setNodeLogDir(nodeLogDir)
-        .setNodeMetadataDir(nodeMetadataDir)
-        .setNodeName(nodeName)
-        .setNodePort(nodePort)
-        .setNodePublicPort(nodePublicPort)
+        .setBackupDir(backupDir)
+        .setBindAddress(bindAddress)
+        .setGroupBindAddress(groupBindAddress)
+        .setGroupPort(groupPort)
+        .setHostname(hostname)
+        .setPublicHostname(publicHostname)
+        .setLogDir(logDir)
+        .setMetadataDir(metadataDir)
+        .setName(name)
+        .setPort(port)
+        .setPublicPort(publicPort)
         .setTcProperties(tcProperties)
-        .setNodeLoggerOverrides(nodeLoggerOverrides)
+        .setLoggerOverrides(loggerOverrides)
         .setSecurityAuditLogDir(securityAuditLogDir)
         .setSecurityDir(securityDir);
   }
@@ -305,18 +302,18 @@ public class Node implements Cloneable, PropertyHolder {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Node node = (Node) o;
-    return nodePort == node.nodePort &&
-        nodeGroupPort == node.nodeGroupPort &&
-        Objects.equals(nodeName, node.nodeName) &&
-        Objects.equals(nodeHostname, node.nodeHostname) &&
-        Objects.equals(nodePublicHostname, node.nodePublicHostname) &&
-        Objects.equals(nodePublicPort, node.nodePublicPort) &&
-        Objects.equals(nodeBindAddress, node.nodeBindAddress) &&
-        Objects.equals(nodeGroupBindAddress, node.nodeGroupBindAddress) &&
-        Objects.equals(nodeMetadataDir, node.nodeMetadataDir) &&
-        Objects.equals(nodeLogDir, node.nodeLogDir) &&
-        Objects.equals(nodeBackupDir, node.nodeBackupDir) &&
-        Objects.equals(nodeLoggerOverrides, node.nodeLoggerOverrides) &&
+    return Objects.equals(port, node.port) &&
+        Objects.equals(groupPort, node.groupPort) &&
+        Objects.equals(name, node.name) &&
+        Objects.equals(hostname, node.hostname) &&
+        Objects.equals(publicHostname, node.publicHostname) &&
+        Objects.equals(publicPort, node.publicPort) &&
+        Objects.equals(bindAddress, node.bindAddress) &&
+        Objects.equals(groupBindAddress, node.groupBindAddress) &&
+        Objects.equals(metadataDir, node.metadataDir) &&
+        Objects.equals(logDir, node.logDir) &&
+        Objects.equals(backupDir, node.backupDir) &&
+        Objects.equals(loggerOverrides, node.loggerOverrides) &&
         Objects.equals(tcProperties, node.tcProperties) &&
         Objects.equals(securityDir, node.securityDir) &&
         Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
@@ -325,26 +322,26 @@ public class Node implements Cloneable, PropertyHolder {
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeName, nodeHostname, nodePublicHostname, nodePort, nodePublicPort, nodeGroupPort,
-        nodeBindAddress, nodeGroupBindAddress, tcProperties, nodeLoggerOverrides, nodeMetadataDir, nodeLogDir, nodeBackupDir,
+    return Objects.hash(name, hostname, publicHostname, port, publicPort, groupPort,
+        bindAddress, groupBindAddress, tcProperties, loggerOverrides, metadataDir, logDir, backupDir,
         securityDir, securityAuditLogDir, dataDirs);
   }
 
   @Override
   public String toString() {
     return "Node{" +
-        "nodeName='" + nodeName + '\'' +
-        ", nodeHostname='" + nodeHostname + '\'' +
-        ", nodePort=" + nodePort +
-        ", nodePublicHostname='" + nodePublicHostname + '\'' +
-        ", nodePublicPort=" + nodePublicPort +
-        ", nodeGroupPort=" + nodeGroupPort +
-        ", nodeBindAddress='" + nodeBindAddress + '\'' +
-        ", nodeGroupBindAddress='" + nodeGroupBindAddress + '\'' +
-        ", nodeMetadataDir='" + nodeMetadataDir + '\'' +
-        ", nodeLogDir='" + nodeLogDir + '\'' +
-        ", nodeBackupDir='" + nodeBackupDir + '\'' +
-        ", nodeLoggers='" + nodeLoggerOverrides + '\'' +
+        "name='" + name + '\'' +
+        ", hostname='" + hostname + '\'' +
+        ", port=" + port +
+        ", publicHostname='" + publicHostname + '\'' +
+        ", publicPort=" + publicPort +
+        ", groupPort=" + groupPort +
+        ", bindAddress='" + bindAddress + '\'' +
+        ", groupBindAddress='" + groupBindAddress + '\'' +
+        ", metadataDir='" + metadataDir + '\'' +
+        ", logDir='" + logDir + '\'' +
+        ", backupDir='" + backupDir + '\'' +
+        ", loggers='" + loggerOverrides + '\'' +
         ", tcProperties='" + tcProperties + '\'' +
         ", securityDir='" + securityDir + '\'' +
         ", securityAuditLogDir='" + securityAuditLogDir + '\'' +
@@ -362,41 +359,5 @@ public class Node implements Cloneable, PropertyHolder {
 
   public Node fillRequiredSettings() {
     return Setting.fillRequiredSettings(this);
-  }
-
-  private Node fillSettings() {
-    return Setting.fillSettings(this);
-  }
-
-  public static Node newDefaultNode(String hostname) {
-    return new Node()
-        .fillSettings()
-        .setNodeHostname(hostname);
-  }
-
-  public static Node newDefaultNode(String name, String hostname) {
-    return new Node()
-        .fillSettings()
-        .setNodeName(name)
-        .setNodeHostname(hostname);
-  }
-
-  public static Node newDefaultNode(String hostname, int port) {
-    return new Node()
-        .fillSettings()
-        .setNodePort(port)
-        .setNodeHostname(hostname);
-  }
-
-  public static Node newDefaultNode(String name, String hostname, int port) {
-    return new Node()
-        .fillSettings()
-        .setNodeName(name)
-        .setNodePort(port)
-        .setNodeHostname(hostname);
-  }
-
-  public static Node empty() {
-    return new Node();
   }
 }

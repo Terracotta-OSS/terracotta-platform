@@ -17,10 +17,9 @@ package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.testing.TmpDir;
 
@@ -46,7 +45,7 @@ public class FileConfigStorageTest {
   public void saveAndRetrieve() throws Exception {
     Path root = temporaryFolder.getRoot();
 
-    NodeContext topology = new NodeContext(Cluster.newDefaultCluster("bar", new Stripe(Node.newDefaultNode("node-1", "localhost"))), 1, "node-1");
+    NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
     Properties properties = Props.load(new StringReader(new String(Files.readAllBytes(Paths.get(getClass().getResource("/config.properties").toURI())), StandardCharsets.UTF_8).replace("\\", "/")));
 
     FileConfigStorage storage = new FileConfigStorage(root, "node-1");

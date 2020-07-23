@@ -81,7 +81,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     Cluster cluster = nmsService.readTopology();
     JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
     JsonNode expected = readJson("topology-before-reconfigure.json");
-    assertEquals(expected, actual);
+    assertEquals(actual.toPrettyString(), expected, actual);
 
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
     factory0.reconfigure("pet-clinic/pets", "pet-clinic/clients");
@@ -89,7 +89,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     cluster = nmsService.readTopology();
     actual = removeRandomValues(toJson(cluster.toMap()));
     expected = readJson("topology-reconfigured.json");
-    assertEquals(expected, actual);
+    assertEquals(actual.toPrettyString(), expected, actual);
   }
 
   @Test
@@ -106,7 +106,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     JsonNode actual = removeRandomValues(toJson(notifs));
     JsonNode expected = readJson("notifications-after-reconfigure.json");
 
-    assertEquals(expected, actual);
+    assertEquals(actual.toPrettyString(), expected, actual);
   }
 
 }

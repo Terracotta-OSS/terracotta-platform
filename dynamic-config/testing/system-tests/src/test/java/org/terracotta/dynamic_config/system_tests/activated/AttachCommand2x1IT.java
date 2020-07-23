@@ -49,7 +49,7 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
     activateCluster();
     withTopologyService(1, 1, topologyService -> {
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getNodeCount(), is(equalTo(1)));
-      assertThat(topologyService.getUpcomingNodeContext().getCluster().getSingleNode().get().getNodeName(), is(equalTo("foo")));
+      assertThat(topologyService.getUpcomingNodeContext().getCluster().getSingleNode().get().getName(), is(equalTo("foo")));
     });
 
     // start a second node with same name
@@ -57,7 +57,7 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
     waitForDiagnostic(2, 1);
     withTopologyService(2, 1, topologyService -> {
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getNodeCount(), is(equalTo(1)));
-      assertThat(topologyService.getUpcomingNodeContext().getCluster().getSingleNode().get().getNodeName(), is(equalTo("foo")));
+      assertThat(topologyService.getUpcomingNodeContext().getCluster().getSingleNode().get().getName(), is(equalTo("foo")));
     });
 
     // attach

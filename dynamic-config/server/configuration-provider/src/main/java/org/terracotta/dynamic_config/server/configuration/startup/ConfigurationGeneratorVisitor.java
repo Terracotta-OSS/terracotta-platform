@@ -144,9 +144,9 @@ public class ConfigurationGeneratorVisitor {
     this.unConfiguredMode = false;
   }
 
-  void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode) {
+  void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode, NodeContext alternate) {
     ServerEnv.getServer().console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
-    nomadServerManager.init(nodeConfigurationDir, nodeName);
+    nomadServerManager.init(nodeConfigurationDir, nodeName, alternate);
 
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
     if (!repairMode) {
@@ -182,7 +182,7 @@ public class ConfigurationGeneratorVisitor {
 
     Collection<Node> allNodes = cluster.getNodes();
     Optional<Node> matchingNode = allNodes.stream()
-        .filter(node1 -> InetSocketAddressUtils.areEqual(node1.getNodeInternalAddress(), specifiedSockAddr))
+        .filter(node1 -> InetSocketAddressUtils.areEqual(node1.getInternalAddress(), specifiedSockAddr))
         .findAny();
 
     HashMap<String, String> logParams = new HashMap<>();
@@ -209,7 +209,7 @@ public class ConfigurationGeneratorVisitor {
 
     Collection<Node> allNodes = cluster.getNodes();
     List<Node> matchingNodes = allNodes.stream()
-        .filter(node -> node.getNodeName().equals(specifiedNodeName))
+        .filter(node -> node.getName().equals(specifiedNodeName))
         .collect(Collectors.toList());
 
     HashMap<String, String> logParams = new HashMap<>();
@@ -244,7 +244,7 @@ public class ConfigurationGeneratorVisitor {
   private void runNomadActivation(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeConfigurationDir) {
     requireNonNull(nodeConfigurationDir);
     NomadEnvironment environment = new NomadEnvironment();
-    try (NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getNodeAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC())) {
+    try (NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC())) {
       NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
       nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
       failureRecorder.reThrow();

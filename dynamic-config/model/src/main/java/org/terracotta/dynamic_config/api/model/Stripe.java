@@ -75,11 +75,11 @@ public class Stripe implements Cloneable, PropertyHolder {
   }
 
   public String toShapeString() {
-    return "( " + nodes.stream().map(node -> node.getNodeName() + "@" + node.getNodeAddress()).collect(joining(", ")) + " )";
+    return "( " + nodes.stream().map(node -> node.getName() + "@" + node.getAddress()).collect(joining(", ")) + " )";
   }
 
   public Collection<InetSocketAddress> getNodeAddresses() {
-    return getNodes().stream().map(Node::getNodeAddress).collect(toList());
+    return getNodes().stream().map(Node::getAddress).collect(toList());
   }
 
   public Optional<Node> getSingleNode() throws IllegalStateException {
@@ -125,7 +125,7 @@ public class Stripe implements Cloneable, PropertyHolder {
   }
 
   public Optional<Node> getNode(String nodeName) {
-    return nodes.stream().filter(node -> node.getNodeName().equals(nodeName)).findAny();
+    return nodes.stream().filter(node -> node.getName().equals(nodeName)).findAny();
   }
 
   public Optional<Node> getNode(int nodeId) {
@@ -140,7 +140,7 @@ public class Stripe implements Cloneable, PropertyHolder {
 
   public OptionalInt getNodeId(String nodeName) {
     return IntStream.range(0, nodes.size())
-        .filter(idx -> nodeName.equals(nodes.get(idx).getNodeName()))
+        .filter(idx -> nodeName.equals(nodes.get(idx).getName()))
         .map(idx -> idx + 1)
         .findAny();
   }

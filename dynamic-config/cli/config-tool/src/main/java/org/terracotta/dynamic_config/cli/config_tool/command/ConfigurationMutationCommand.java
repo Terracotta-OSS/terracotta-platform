@@ -62,7 +62,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       // remember: a node setting can be set using a cluster or stripe namespace to target several nodes at once
       // Note: this validation is only for node-specific settings
       if (c.getSetting().isScope(NODE)) {
-        targeted.stream().map(nodeContext -> nodeContext.getNode().getNodeAddress()).filter(originalCluster::containsNode).forEach(missingTargetedNodes::add);
+        targeted.stream().map(nodeContext -> nodeContext.getNode().getAddress()).filter(originalCluster::containsNode).forEach(missingTargetedNodes::add);
       }
     }
     new ClusterValidator(updatedCluster).validate();

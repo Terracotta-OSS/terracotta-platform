@@ -197,7 +197,7 @@ public class SettingNomadChange extends FilteredNomadChange {
   private static Applicability toApplicability(Configuration configuration, Cluster cluster) {
     switch (configuration.getScope()) {
       case NODE:
-        return Applicability.node(configuration.getStripeId(), cluster.getNode(configuration.getStripeId(), configuration.getNodeId()).get().getNodeName());
+        return Applicability.node(configuration.getStripeId(), cluster.getNode(configuration.getStripeId(), configuration.getNodeId()).get().getName());
       case STRIPE:
         return Applicability.stripe(configuration.getStripeId());
       case CLUSTER:

@@ -81,7 +81,7 @@ public class ConfigConverter {
         } else {
           String settingName = containsRelativePaths(node);
           if (settingName != null) {
-            throw new RuntimeException("The config: " + settingName + " for server: " + node.getNodeName() +
+            throw new RuntimeException("The config: " + settingName + " for server: " + node.getName() +
                 " in stripe: " + nodeContext.getStripeId() + " contains relative paths, which will not work as intended" +
                 " after config conversion. Use absolute paths instead.");
           }
@@ -103,9 +103,9 @@ public class ConfigConverter {
   private List<String> checkPlaceHolders(org.terracotta.dynamic_config.api.model.Node node) {
     List<String> placeHolders = new ArrayList<>();
     node.getDataDirs().values().stream().map(Path::toString).filter(Substitutor::containsSubstitutionParams).findAny().ifPresent(path -> placeHolders.add(SettingName.DATA_DIRS));
-    ofNullable(node.getNodeBackupDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_BACKUP_DIR));
-    ofNullable(node.getNodeLogDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_LOG_DIR));
-    ofNullable(node.getNodeMetadataDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_METADATA_DIR));
+    ofNullable(node.getBackupDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_BACKUP_DIR));
+    ofNullable(node.getLogDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_LOG_DIR));
+    ofNullable(node.getMetadataDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_METADATA_DIR));
     ofNullable(node.getSecurityDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.SECURITY_DIR));
     ofNullable(node.getSecurityAuditLogDir()).filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.SECURITY_AUDIT_LOG_DIR));
 
@@ -117,15 +117,15 @@ public class ConfigConverter {
       return SettingName.DATA_DIRS;
     }
 
-    if (node.getNodeBackupDir() != null && !node.getNodeBackupDir().isAbsolute()) {
+    if (node.getBackupDir() != null && !node.getBackupDir().isAbsolute()) {
       return SettingName.NODE_BACKUP_DIR;
     }
 
-    if (node.getNodeLogDir() != null && !node.getNodeLogDir().isAbsolute()) {
+    if (node.getLogDir() != null && !node.getLogDir().isAbsolute()) {
       return SettingName.NODE_LOG_DIR;
     }
 
-    if (node.getNodeMetadataDir() != null && !node.getNodeMetadataDir().isAbsolute()) {
+    if (node.getMetadataDir() != null && !node.getMetadataDir().isAbsolute()) {
       return SettingName.NODE_METADATA_DIR;
     }
 

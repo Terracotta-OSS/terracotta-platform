@@ -64,7 +64,7 @@ public class StripeNamedIT extends AbstractSingleTest {
     JsonNode actual = removeRandomValues(toJson(nmsService.readTopology().toMap()));
     JsonNode expected = readJson("topology-renamed.json");
 
-    assertEquals(expected, actual);
+    assertEquals(actual.toPrettyString(), expected, actual);
 
     // clear previous notifs
     nmsService.readMessages();

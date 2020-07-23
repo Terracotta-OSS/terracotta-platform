@@ -156,8 +156,8 @@ public class NomadManager<T> {
     // collect all online addresses by stripe
     List<List<InetSocketAddress>> onlineNodesPerStripe = destinationCluster.getStripes().stream().map(stripe -> {
       List<InetSocketAddress> stripeNodes = new ArrayList<>();
-      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getNodeInternalAddress).collect(toList()));
-      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getNodePublicAddress).filter(Optional::isPresent).map(Optional::get).collect(toList()));
+      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getInternalAddress).collect(toList()));
+      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getPublicAddress).filter(Optional::isPresent).map(Optional::get).collect(toList()));
       stripeNodes.retainAll(onlineNodes.keySet());
       return stripeNodes;
     }).collect(toList());

@@ -22,10 +22,10 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.server.ServerEnv;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.terracotta.server.ServerEnv;
 
 public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFileCommandLineProcessor.class);
@@ -60,13 +60,13 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
     if (options.getNodeName() != null) {
       node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(options.getNodeName(), options.getConfigFile(), cluster);
     } else {
-      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(options.getNodeHostname(), options.getNodePort(), options.getConfigFile(), cluster);
+      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(options.getHostname(), options.getPort(), options.getConfigFile(), cluster);
     }
 
     if (options.allowsAutoActivation()) {
-      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getNodeAddress()), options.getLicenseFile(), options.getNodeConfigDir());
+      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getAddress()), options.getLicenseFile(), options.getConfigDir());
     } else {
-      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getNodeAddress()), options.getNodeConfigDir());
+      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getAddress()), options.getConfigDir());
     }
   }
 }
