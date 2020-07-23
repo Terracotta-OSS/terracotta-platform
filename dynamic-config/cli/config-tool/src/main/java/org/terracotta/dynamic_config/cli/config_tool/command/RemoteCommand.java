@@ -132,12 +132,11 @@ public abstract class RemoteCommand extends Command {
     logger.info("All nodes came back up");
   }
 
-  protected final void activate(Collection<InetSocketAddress> newNodes, Cluster cluster, Path licenseFile,
-                                Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  protected final void activateNodes(Collection<InetSocketAddress> newNodes, Cluster cluster, Path licenseFile,
+                                     Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
     activateNomadSystem(newNodes, cluster, read(licenseFile));
 
     runClusterActivation(newNodes, cluster);
-    logger.debug("Configuration directories have been created for all nodes");
 
     restartNodes(newNodes, restartDelay, restartWaitTime);
   }
@@ -147,7 +146,6 @@ public abstract class RemoteCommand extends Command {
     activateNomadSystem(newNodes, cluster, getLicenseContentFrom(destination).orElse(null));
 
     runClusterActivation(newNodes, cluster);
-    logger.debug("Configuration directories have been created for all nodes");
 
     syncNomadChangesTo(newNodes, getAllNomadChangesFrom(destination));
 
@@ -254,6 +252,7 @@ public abstract class RemoteCommand extends Command {
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runClusterActivation(expectedOnlineNodes, cluster, failures);
     failures.reThrow();
+    logger.debug("Configuration directories have been created for all nodes");
   }
 
   protected final LogicalServerState getState(InetSocketAddress expectedOnlineNode) {

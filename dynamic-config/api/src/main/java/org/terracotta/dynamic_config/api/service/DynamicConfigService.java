@@ -72,7 +72,14 @@ public interface DynamicConfigService {
    */
   void stop(Duration delay);
 
+  /**
+   * Get the content of the installed license if any
+   */
   Optional<String> getLicenseContent();
 
+  /**
+   * Reset and sync this node's append log with the provided nomad changes and update the its configurations accordingly.
+   * @param nomadChanges
+   */
   void resetAndSync(NomadChangeInfo[] nomadChanges);
 }

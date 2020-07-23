@@ -49,6 +49,7 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.server.ServerEnv;
 
 import java.io.IOException;
@@ -127,13 +128,27 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public void resetAndSync(NomadChangeInfo[] nomadChanges) {
+    UpgradableNomadServer<NodeContext> nomadServer = nomadServerManager.getNomadServer();
     DynamicConfigNomadSynchronizer nomadSynchronizer = new DynamicConfigNomadSynchronizer(
-      nomadServerManager.getConfiguration().orElse(null), nomadServerManager.getNomadServer());
+      nomadServerManager.getConfiguration().orElse(null), nomadServer);
+
+    List<NomadChangeInfo> backup;
+    try {
+      backup = nomadServer.getAllNomadChanges();
+    } catch (NomadException e) {
+      throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
+    }
 
     try {
       nomadSynchronizer.syncNomadChanges(Arrays.asList(nomadChanges));
     } catch (NomadException e) {
-      throw new RuntimeException(e);
+      try {
+        nomadServer.reset();
+        nomadSynchronizer.syncNomadChanges(backup);
+      } catch (NomadException nomadException) {
+        e.addSuppressed(nomadException);
+      }
+      throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
     }
   }
 
