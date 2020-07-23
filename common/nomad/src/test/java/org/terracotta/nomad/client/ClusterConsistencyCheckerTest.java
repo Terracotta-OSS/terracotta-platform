@@ -25,6 +25,7 @@ import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import java.net.InetSocketAddress;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -35,6 +36,10 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterConsistencyCheckerTest {
+
+  UUID uuid1 = UUID.randomUUID();
+  UUID uuid2 = UUID.randomUUID();
+
   @Mock
   private DiscoverResultsReceiver<String> results;
 
@@ -86,10 +91,22 @@ public class ClusterConsistencyCheckerTest {
 
   @Test
   public void differentUuids() {
-    consistencyChecker.discovered(address1, discovery(COMMITTED));
-    consistencyChecker.discovered(address2, discovery(ROLLED_BACK));
+    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1));
+    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2));
 
     consistencyChecker.checkClusterConsistency(results);
+
+    verify(results).discoverClusterDesynchronized(any());
+  }
+
+  @Test
+  public void differentCommittedUuids() {
+    consistencyChecker.discovered(address1, discovery(COMMITTED, UUID.randomUUID()));
+    consistencyChecker.discovered(address2, discovery(COMMITTED, UUID.randomUUID()));
+
+    consistencyChecker.checkClusterConsistency(results);
+
+    verify(results).discoverClusterDesynchronized(any());
   }
 
   @Test

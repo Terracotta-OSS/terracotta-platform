@@ -232,6 +232,9 @@ public class DiagnosticCommand extends RemoteCommand {
             + " is committed on " + toString(consistencyAnalyzer.getCommittedNodes())
             + " and rolled back on " + toString(consistencyAnalyzer.getRolledBackNodes());
 
+      case DESYNCHRONIZED:
+        return "Cluster configuration is desynchronized: Different last changes UUIDs found: " + consistencyAnalyzer.getLastChangeUuids().keySet();
+
       case PREPARED:
         return "A new  cluster configuration has been prepared but not yet committed or rolled back on all nodes."
             + " No further configuration change can be done until the 'repair' command is run to finalize the configuration change.";
