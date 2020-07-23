@@ -27,6 +27,7 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadException;
 
+import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.util.UUID;
 
@@ -51,6 +52,10 @@ import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 public class ChangeProcessTest extends NomadClientProcessTest {
+
+  UUID uuid1 = UUID.randomUUID();
+  UUID uuid2 = UUID.randomUUID();
+
   @Mock
   private ChangeResultReceiver<String> results;
 
@@ -62,10 +67,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   @SuppressWarnings("unchecked")
   @Test
   public void makeChange() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server1.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server1.commit(any(CommitMessage.class))).thenReturn(accept());
-    when(server2.discover()).thenReturn(discovery(COMMITTED));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server2.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server2.commit(any(CommitMessage.class))).thenReturn(accept());
 
@@ -142,6 +147,63 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).done(UNRECOVERABLY_INCONSISTENT);
   }
 
+  @Test
+  @SuppressWarnings("unchecked")
+  public void discoverDesynchronizedCluster_commits() throws Exception {
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid2));
+
+    runTest();
+
+    verify(results).startDiscovery(withItems(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
+    verify(results).endDiscovery();
+    verify(results).startSecondDiscovery();
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
+    verify(results).discoverClusterDesynchronized(any());
+    verify(results).endSecondDiscovery();
+    verify(results).done(UNRECOVERABLY_INCONSISTENT);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void discoverDesynchronizedCluster_rollbacks() throws Exception {
+    when(server1.discover()).thenReturn(discovery(ROLLED_BACK, uuid1));
+    when(server2.discover()).thenReturn(discovery(ROLLED_BACK, uuid2));
+
+    runTest();
+
+    verify(results).startDiscovery(withItems(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
+    verify(results).endDiscovery();
+    verify(results).startSecondDiscovery();
+    verify(results).discoverRepeated(address1);
+    verify(results).discoverRepeated(address2);
+    verify(results).discoverClusterDesynchronized(any());
+    verify(results).endSecondDiscovery();
+    verify(results).done(UNRECOVERABLY_INCONSISTENT);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void discoverAlreadyPrepared_diff_uuids() throws Exception {
+    when(server1.discover()).thenReturn(discovery(PREPARED, uuid1));
+    when(server2.discover()).thenReturn(discovery(PREPARED, uuid2));
+
+    runTest();
+
+    verify(results).startDiscovery(withItems(address1, address2));
+    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
+    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
+    verify(results).endDiscovery();
+    verify(results).discoverAlreadyPrepared(InetSocketAddress.createUnresolved("localhost", 9410), uuid1, "testCreationHost", "testCreationUser");
+    verify(results).discoverAlreadyPrepared(InetSocketAddress.createUnresolved("localhost", 9411), uuid2, "testCreationHost", "testCreationUser");
+    verify(results).done(UNKNOWN_BUT_NO_CHANGE);
+  }
+
   @SuppressWarnings("unchecked")
   @Test
   public void discoverOtherClient() throws Exception {
@@ -164,10 +226,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   @SuppressWarnings("unchecked")
   @Test
   public void prepareFail() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server1.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server1.rollback(any(RollbackMessage.class))).thenReturn(accept());
-    when(server2.discover()).thenReturn(discovery(COMMITTED));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server2.prepare(any(PrepareMessage.class))).thenThrow(NomadException.class);
 
     runTest();
@@ -193,10 +255,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   @SuppressWarnings("unchecked")
   @Test
   public void prepareFailRollbackFail() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server1.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server1.rollback(any(RollbackMessage.class))).thenThrow(NomadException.class);
-    when(server2.discover()).thenReturn(discovery(COMMITTED));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server2.prepare(any(PrepareMessage.class))).thenThrow(NomadException.class);
 
     runTest();
@@ -222,10 +284,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   @SuppressWarnings("unchecked")
   @Test
   public void prepareFailRollbackOtherClient() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server1.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server1.rollback(any(RollbackMessage.class))).thenReturn(reject(DEAD, "lastMutationHost", "lastMutationUser"));
-    when(server2.discover()).thenReturn(discovery(COMMITTED));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server2.prepare(any(PrepareMessage.class))).thenThrow(NomadException.class);
 
     runTest();
@@ -251,10 +313,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   @SuppressWarnings("unchecked")
   @Test
   public void prepareOtherClient() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server1.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server1.rollback(any(RollbackMessage.class))).thenReturn(accept());
-    when(server2.discover()).thenReturn(discovery(COMMITTED));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server2.prepare(any(PrepareMessage.class))).thenReturn(reject(DEAD, "lastMutationHost", "lastMutationUser"));
 
     runTest();
@@ -280,10 +342,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   @SuppressWarnings("unchecked")
   @Test
   public void prepareChangeUnacceptable() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server1.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server1.rollback(any(RollbackMessage.class))).thenReturn(accept());
-    when(server2.discover()).thenReturn(discovery(COMMITTED));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server2.prepare(any(PrepareMessage.class))).thenReturn(reject(UNACCEPTABLE, "reason", "lastMutationHost", "lastMutationUser"));
     when(server2.rollback(any(RollbackMessage.class))).thenReturn(accept());
 
@@ -311,10 +373,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   @SuppressWarnings("unchecked")
   @Test
   public void commitFail() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server1.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server1.commit(any(CommitMessage.class))).thenThrow(NomadException.class);
-    when(server2.discover()).thenReturn(discovery(COMMITTED));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server2.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server2.commit(any(CommitMessage.class))).thenReturn(accept());
 
@@ -342,10 +404,10 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   @SuppressWarnings("unchecked")
   @Test
   public void commitOtherClient() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server1.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server1.commit(any(CommitMessage.class))).thenReturn(reject(DEAD, "lastMutationHost", "lastMutationUser"));
-    when(server2.discover()).thenReturn(discovery(COMMITTED));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid1));
     when(server2.prepare(any(PrepareMessage.class))).thenReturn(accept());
     when(server2.commit(any(CommitMessage.class))).thenReturn(accept());
 

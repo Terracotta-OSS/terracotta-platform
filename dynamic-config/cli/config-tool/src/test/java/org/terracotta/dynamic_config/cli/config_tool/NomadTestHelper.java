@@ -36,6 +36,10 @@ public class NomadTestHelper {
     return discovery(changeState, mutativeMessageCount, UUID.randomUUID());
   }
 
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, UUID lastChangeUUID) {
+    return discovery(changeState, 1L, lastChangeUUID);
+  }
+
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid) {
     return new DiscoverResponse<>(
         changeState == PREPARED ? NomadServerMode.PREPARED : NomadServerMode.ACCEPTING,

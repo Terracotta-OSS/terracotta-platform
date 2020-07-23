@@ -36,6 +36,7 @@ import org.terracotta.nomad.server.NomadServer;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
@@ -168,11 +169,13 @@ public class ActivateCommandTest extends BaseTest {
     ActivateCommand command = command()
         .setConfigPropertiesFile(config);
 
+    UUID lastChangeUUID = UUID.randomUUID();
+
     IntStream.of(ports).forEach(rethrow(port -> {
       when(topologyServiceMock("localhost", port).isActivated()).thenReturn(false);
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
-      doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
+      doReturn(NomadTestHelper.discovery(COMMITTED, lastChangeUUID)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(reject(UNACCEPTABLE, "error", "host", "user"));
       when(mock.rollback(any(RollbackMessage.class))).thenReturn(accept());
     }));
@@ -206,11 +209,13 @@ public class ActivateCommandTest extends BaseTest {
     ActivateCommand command = command()
         .setConfigPropertiesFile(config);
 
+    UUID lastChangeUUID = UUID.randomUUID();
+
     IntStream.of(ports).forEach(rethrow(port -> {
       when(topologyServiceMock("localhost", port).isActivated()).thenReturn(false);
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
-      doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
+      doReturn(NomadTestHelper.discovery(COMMITTED, lastChangeUUID)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenThrow(new NomadException("an error"));
     }));
@@ -263,13 +268,15 @@ public class ActivateCommandTest extends BaseTest {
   }
 
   private void doRunAndVerify(String clusterName, ActivateCommand command) {
+    UUID lastChangeUUID = UUID.randomUUID();
+
     IntStream.of(ports).forEach(rethrow(port -> {
       TopologyService topologyService = topologyServiceMock("localhost", port);
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       DiagnosticService diagnosticService = diagnosticServiceMock("localhost", port);
 
       when(topologyService.isActivated()).thenReturn(false);
-      doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
+      doReturn(NomadTestHelper.discovery(COMMITTED, lastChangeUUID)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenReturn(accept());
       when(diagnosticService.getLogicalServerState()).thenReturn(PASSIVE);
