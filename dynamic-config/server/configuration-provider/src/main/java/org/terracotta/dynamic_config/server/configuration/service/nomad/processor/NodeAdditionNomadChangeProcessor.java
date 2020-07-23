@@ -78,7 +78,7 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
           PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{change.getNodeAddress().toString()},
+          new Object[]{change.getNode().getInternalAddress().toString()},
           new String[]{String.class.getName()}
       );
 
