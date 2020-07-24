@@ -28,9 +28,9 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
-public class AttachStripeIT extends DynamicConfigIT {
+public class DetachStripeIT extends DynamicConfigIT {
 
-  public AttachStripeIT() {
+  public DetachStripeIT() {
     super(Duration.ofSeconds(180));
   }
 
@@ -39,26 +39,14 @@ public class AttachStripeIT extends DynamicConfigIT {
     startNode(1, 1);
     waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
-
     // start the second node
     startNode(1, 2);
     waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
-
     //attach the second node
     assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
-    //Activate cluster
-    activateCluster();
-    waitForNPassives(1, 1);
-  }
-
-  @Test
-  public void test_attach_stripe_to_activated_cluster() throws Exception {
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
-
-    // start a 2 node stripe
+    // stripe-2
     startNode(2, 1);
     waitForDiagnostic(2, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getNodeCount(), is(equalTo(1)));
@@ -67,26 +55,29 @@ public class AttachStripeIT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 2)).getNodeCount(), is(equalTo(1)));
     assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
 
-    // attach the new stripe to the activated 1x2 cluster to form a 2x2 cluster
+    // attach the two stripes to form a 2x2 cluster
     assertThat(invokeConfigTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+
+    //Activate cluster
+    activateCluster();
+    waitForNPassives(1, 1);
     waitForNPassives(2, 1);
+  }
+
+  @Test
+  public void test_detach_stripe_from_activated_cluster() throws Exception {
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(4)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getStripeCount(), is(equalTo(2)));
+
+    // detach second stripe from the activated 2x2 cluster to form a 1x2 cluster
+    assertThat(invokeConfigTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
 
     // verify the #nodes in the new topology of the cluster
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(4)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(4)));
-    assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getNodeCount(), is(equalTo(4)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(2, 2)).getNodeCount(), is(equalTo(4)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
 
     // verify the #stripes in the new topology of the cluster
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getStripeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getStripeCount(), is(equalTo(2)));
-    assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getStripeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(2, 2)).getStripeCount(), is(equalTo(2)));
-
-    // verify the #nodesperstripe in the new topology of the cluster
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getStripe(2).get().getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getStripe(2).get().getNodeCount(), is(equalTo(2)));
-    assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getStripe(1).get().getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(2, 2)).getStripe(1).get().getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getStripeCount(), is(equalTo(1)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getStripeCount(), is(equalTo(1)));
   }
 }
