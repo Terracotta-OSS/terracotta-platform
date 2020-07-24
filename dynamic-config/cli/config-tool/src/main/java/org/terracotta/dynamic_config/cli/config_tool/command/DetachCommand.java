@@ -36,6 +36,7 @@ import java.util.Collection;
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
+import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
 /**
  * @author Mathieu Carbou
@@ -104,8 +105,6 @@ public class DetachCommand extends TopologyCommand {
         if (destinationCluster.getStripeId(source).getAsInt() == 1) {
           throw new IllegalStateException("Removing the leading stripe is not allowed");
         }
-
-        throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }
 
       // when we want to detach a stripe, we detach all the nodes of the stripe
@@ -115,10 +114,13 @@ public class DetachCommand extends TopologyCommand {
     // compute the list of online nodes to detach if requested
     onlineNodesToRemove.retainAll(destinationOnlineNodes.keySet());
 
-    // if the nodes are activated, the user must first stop them because they are part of a working cluster
-    if (!onlineNodesToRemove.isEmpty() && areAllNodesActivated(onlineNodesToRemove)) {
-      validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to be detached: " + toString(onlineNodesToRemove) + " are online. " +
-          "Safely shutdown the nodes first, or use the force option to reset and stop the target nodes before detaching them");
+    // When the operation type is node, the nodes being detached should be stopped first manually
+    // But if the operation type is stripe, the stripes being detached are stopped automatically after they're removed
+    if (operationType == NODE) {
+      if (!onlineNodesToRemove.isEmpty() && areAllNodesActivated(onlineNodesToRemove)) {
+        validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to be detached: " + toString(onlineNodesToRemove) + " are online. " +
+            "Safely shutdown the nodes first, or use the force option to reset and stop the target nodes before detaching them");
+      }
     }
   }
 
@@ -165,6 +167,28 @@ public class DetachCommand extends TopologyCommand {
 
   @Override
   protected void onNomadChangeReady(TopologyNomadChange nomadChange) {
+    // When the operation type is node, the nodes being detached should be stopped first manually
+    // But if the operation type is stripe, the stripes being detached are stopped automatically after they're removed
+    if (operationType == NODE) {
+      resetAndStopNodesToRemove();
+    }
+  }
+
+  @Override
+  protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
+    // When the operation type is node, the nodes being detached should be stopped first manually
+    // But if the operation type is stripe, the stripes being detached are stopped automatically after they're removed
+    if (operationType == STRIPE) {
+      resetAndStopNodesToRemove();
+    }
+  }
+
+  @Override
+  protected Collection<InetSocketAddress> getAllOnlineSourceNodes() {
+    return onlineNodesToRemove;
+  }
+
+  private void resetAndStopNodesToRemove() {
     if (!onlineNodesToRemove.isEmpty()) {
 
       logger.info("Reset nodes: {}", toString(onlineNodesToRemove));
@@ -190,10 +214,5 @@ public class DetachCommand extends TopologyCommand {
       // if a failover happened, make sure we get the new server states
       destinationOnlineNodes.entrySet().forEach(e -> e.setValue(getState(e.getKey())));
     }
-  }
-
-  @Override
-  protected Collection<InetSocketAddress> getAllOnlineSourceNodes() {
-    return onlineNodesToRemove;
   }
 }
