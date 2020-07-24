@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.test_support;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matcher;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
@@ -66,6 +67,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -532,10 +534,21 @@ public class DynamicConfigIT {
     return is(throwing(instanceOf(RuntimeException.class)).andMessage(containsString(message)));
   }
 
-  protected void setServerDisruptionLinks(int stripeId, int size) {
-    angela.tsa().setServerToServerDisruptionLinks(stripeId, size);
+  protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {
+    stripeServer.forEach((k, v) -> angela.tsa().setServerToServerDisruptionLinks(k, v));
   }
 
+  protected void setClientServerDisruptionLinks(Map<Integer, Integer> stripeServerNumMap) {
+    for (Map.Entry<Integer, Integer> entry : stripeServerNumMap.entrySet()) {
+      int stripeId = entry.getKey();
+      int serverList = entry.getValue();
+      for (int i = 1; i <= serverList; ++i) {
+        TerracottaServer terracottaServer = getNode(stripeId, i);
+        angela.tsa().setClientToServerDisruptionLinks(terracottaServer);
+      }
+    }
+  }
+  
   private boolean isServerBlocked(TerracottaServer server) {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(server.getHostName(), server.getTsaPort()),
@@ -552,5 +565,23 @@ public class DynamicConfigIT {
 
   protected void waitForServerBlocked(TerracottaServer server) {
     waitUntil(() -> isServerBlocked(server), is(true));
+  }
+
+  protected TerracottaServer isActive(TerracottaServer... servers) {
+    waitUntil(() -> Arrays.stream(servers).anyMatch(server -> angela.tsa().getState(server) == STARTED_AS_ACTIVE), is(true));
+    TerracottaServer active = Arrays.stream(servers)
+        .filter(server -> angela.tsa().getState(server) == STARTED_AS_ACTIVE)
+        .findFirst()
+        .get();
+    TerracottaServer[] passives = ArrayUtils.removeElements(servers, active);
+    if (passives.length == 0 || isPassive(passives)) {
+      return active;
+    }
+    return null;
+  }
+
+  protected boolean isPassive(TerracottaServer... servers) {
+    waitUntil(() -> Arrays.stream(servers).allMatch(server -> angela.tsa().getState(server) == STARTED_AS_PASSIVE), is(true));
+    return true;
   }
 }
