@@ -41,6 +41,7 @@ import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
+import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -57,6 +58,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiPredicate;
@@ -102,33 +104,77 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void activate(Collection<InetSocketAddress> newNodes, Cluster cluster, Path licenseFile, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  private void activateNomadSystem(Collection<InetSocketAddress> newNodes, Cluster cluster, String licenseContent) {
     logger.info("Activating nodes: {}", toString(newNodes));
 
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
       dynamicConfigServices(diagnosticServices)
-          .map(Tuple2::getT2)
-          .forEach(service -> service.activate(cluster, read(licenseFile)));
-      if (licenseFile == null) {
+        .map(Tuple2::getT2)
+        .forEach(service -> service.activate(cluster, licenseContent));
+      if (licenseContent == null) {
         logger.info("No license installed. If you are attaching a node, the license will be synced.");
       } else {
         logger.info("License installation successful");
       }
     }
+  }
 
-    runClusterActivation(newNodes, cluster);
-    logger.debug("Configuration directories have been created for all nodes");
-
+  private void restartNodes(Collection<InetSocketAddress> newNodes, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
     logger.info("Restarting nodes: {}", toString(newNodes));
     restartNodes(
-        newNodes,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-        // these are the list of states tha twe allow to consider a server has restarted
-        // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
-        // and has consequently bootstrapped the configuration from Nomad.
-        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
+      newNodes,
+      Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+      Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
+      // these are the list of states tha twe allow to consider a server has restarted
+      // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
+      // and has consequently bootstrapped the configuration from Nomad.
+      EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
     logger.info("All nodes came back up");
+  }
+
+  protected final void activateNodes(Collection<InetSocketAddress> newNodes, Cluster cluster, Path licenseFile,
+                                     Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+    activateNomadSystem(newNodes, cluster, read(licenseFile));
+
+    runClusterActivation(newNodes, cluster);
+
+    restartNodes(newNodes, restartDelay, restartWaitTime);
+  }
+
+  protected final void activateStripe(Collection<InetSocketAddress> newNodes, Cluster cluster, InetSocketAddress destination,
+                                      Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+    activateNomadSystem(newNodes, cluster, getLicenseContentFrom(destination).orElse(null));
+
+    runClusterActivation(newNodes, cluster);
+
+    syncNomadChangesTo(newNodes, getAllNomadChangesFrom(destination));
+
+    restartNodes(newNodes, restartDelay, restartWaitTime);
+  }
+
+  private Optional<String> getLicenseContentFrom(InetSocketAddress node) {
+    logger.trace("getLicenseContent({})", node);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
+      return diagnosticService.getProxy(DynamicConfigService.class).getLicenseContent();
+    }
+  }
+
+  private NomadChangeInfo[] getAllNomadChangesFrom(InetSocketAddress node) {
+    logger.trace("getChangeHistory({})", node);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
+      return diagnosticService.getProxy(TopologyService.class).getChangeHistory();
+    }
+  }
+
+  private void syncNomadChangesTo(Collection<InetSocketAddress> newNodes, NomadChangeInfo[] nomadChanges) {
+    logger.info("Sync'ing nomad changes to nodes : {}", toString(newNodes));
+
+    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
+      dynamicConfigServices(diagnosticServices)
+        .map(Tuple2::getT2)
+        .forEach(service -> service.resetAndSync(nomadChanges));
+      logger.info("Nomad changes sync successful");
+    }
   }
 
   /**
@@ -206,6 +252,7 @@ public abstract class RemoteCommand extends Command {
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runClusterActivation(expectedOnlineNodes, cluster, failures);
     failures.reThrow();
+    logger.debug("Configuration directories have been created for all nodes");
   }
 
   protected final LogicalServerState getState(InetSocketAddress expectedOnlineNode) {

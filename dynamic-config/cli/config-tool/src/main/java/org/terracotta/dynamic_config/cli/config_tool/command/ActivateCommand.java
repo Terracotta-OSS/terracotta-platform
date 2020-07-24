@@ -119,7 +119,7 @@ public class ActivateCommand extends RemoteCommand {
 
   @Override
   public final void run() {
-    activate(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
+    activateNodes(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
     logger.info("Command successful!" + lineSeparator());
   }
 

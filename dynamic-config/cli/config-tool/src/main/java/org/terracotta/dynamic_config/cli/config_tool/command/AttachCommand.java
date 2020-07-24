@@ -193,7 +193,14 @@ public class AttachCommand extends TopologyCommand {
   @Override
   protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
     Cluster result = nomadChange.getCluster();
-    activate(newOnlineNodes.keySet(), result, null, restartDelay, restartWaitTime);
+    switch (operationType) {
+      case NODE:
+        activateNodes(newOnlineNodes.keySet(), result, null, restartDelay, restartWaitTime);
+      case STRIPE:
+        activateStripe(newOnlineNodes.keySet(), result, destination, restartDelay, restartWaitTime);
+      default:
+        throw new UnsupportedOperationException(operationType.name());
+    }
   }
 
   @Override

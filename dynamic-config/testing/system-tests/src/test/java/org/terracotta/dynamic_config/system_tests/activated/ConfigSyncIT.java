@@ -155,7 +155,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
       angela.tsa().start(getNode(1, passiveNodeId));
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, passiveNodeId), containsLog("Passive cannot sync because the configuration change history does not match"));
+      waitUntil(out.getLog(1, passiveNodeId), containsLog("Node cannot sync because the configuration change history does not match"));
     }
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows

@@ -37,6 +37,7 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.dynamic_config.server.api.InvalidLicenseException;
 import org.terracotta.dynamic_config.server.api.LicenseService;
+import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigNomadSynchronizer;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.ObjectMapperFactory;
@@ -48,6 +49,7 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.server.ServerEnv;
 
 import java.io.IOException;
@@ -58,6 +60,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -121,6 +124,32 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       }
     }
     return Optional.empty();
+  }
+
+  @Override
+  public void resetAndSync(NomadChangeInfo[] nomadChanges) {
+    UpgradableNomadServer<NodeContext> nomadServer = nomadServerManager.getNomadServer();
+    DynamicConfigNomadSynchronizer nomadSynchronizer = new DynamicConfigNomadSynchronizer(
+      nomadServerManager.getConfiguration().orElse(null), nomadServer);
+
+    List<NomadChangeInfo> backup;
+    try {
+      backup = nomadServer.getAllNomadChanges();
+    } catch (NomadException e) {
+      throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
+    }
+
+    try {
+      nomadSynchronizer.syncNomadChanges(Arrays.asList(nomadChanges));
+    } catch (NomadException e) {
+      try {
+        nomadServer.reset();
+        nomadSynchronizer.syncNomadChanges(backup);
+      } catch (NomadException nomadException) {
+        e.addSuppressed(nomadException);
+      }
+      throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
+    }
   }
 
   @Override

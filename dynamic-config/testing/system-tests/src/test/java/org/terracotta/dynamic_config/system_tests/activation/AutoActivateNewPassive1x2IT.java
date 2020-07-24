@@ -52,7 +52,7 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
           "--config-dir", "config/stripe1/node-1-2");
       fail();
     } catch (Exception e) {
-      assertThat(out.getLog(1, 2), containsLog("Unable to find any change in active node matching the topology used to activate this passive node"));
+      assertThat(out.getLog(1, 2), containsLog("Unable to find any change in the source node matching the topology used to activate this node"));
     }
   }
 
