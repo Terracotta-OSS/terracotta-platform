@@ -196,8 +196,10 @@ public class AttachCommand extends TopologyCommand {
     switch (operationType) {
       case NODE:
         activateNodes(newOnlineNodes.keySet(), result, null, restartDelay, restartWaitTime);
+        break;
       case STRIPE:
         activateStripe(newOnlineNodes.keySet(), result, destination, restartDelay, restartWaitTime);
+        break;
       default:
         throw new UnsupportedOperationException(operationType.name());
     }
