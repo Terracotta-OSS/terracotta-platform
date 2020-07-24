@@ -132,6 +132,35 @@ public class ClusterValidatorTest {
   }
 
   @Test
+  public void testSetSameBackupPath_ok() {
+    Node node1 = Testing.newTestNode("localhost1");
+    Node node2 = Testing.newTestNode("localhost2");
+    node1.setBackupDir(Paths.get("backup"));
+    node2.setBackupDir(Paths.get("backup"));
+    new ClusterValidator(Testing.newTestCluster(new Stripe(node1), new Stripe(node2))).validate();
+  }
+
+  @Test
+  public void testSetDifferentBackupPaths_ok() {
+    Node node1 = Testing.newTestNode("localhost1");
+    Node node2 = Testing.newTestNode("localhost2");
+    node1.setBackupDir(Paths.get("backup-1"));
+    node2.setBackupDir(Paths.get("backup-2"));
+    new ClusterValidator(Testing.newTestCluster(new Stripe(node1), new Stripe(node2))).validate();
+  }
+
+  @Test
+  public void testSetBackupOnOneStripeOnly_fail() {
+    Node node1 = Testing.newTestNode("foo", "localhost1");
+    Node node2 = Testing.newTestNode("localhost2");
+    node1.setBackupDir(Paths.get("backup"));
+
+    assertClusterValidationFails(
+        "Nodes with names: [foo] don't have backup directories defined",
+        Testing.newTestCluster(new Stripe(node1, node2)));
+  }
+
+  @Test
   public void testValidCluster() {
     Node[] nodes = Stream.of(
         Testing.newTestNode("localhost1"),
