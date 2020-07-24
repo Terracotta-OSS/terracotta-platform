@@ -40,6 +40,7 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Noma
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ApplicabilityNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ClusterActivationNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.DefaultNomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockAwareNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.MultiSettingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.NodeAdditionNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.NodeRemovalNomadChangeProcessor;
@@ -210,9 +211,15 @@ public class NomadServerManager {
     router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
 
     getNomadServer().setChangeApplicator(
-        new ConfigChangeApplicator(stripeId, nodeName,
-            new MultiSettingNomadChangeProcessor(nomadPermissionChangeProcessor
-                .then(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)))));
+        new ConfigChangeApplicator(
+            stripeId, nodeName,
+            new LockAwareNomadChangeProcessor(
+                new MultiSettingNomadChangeProcessor(
+                    nomadPermissionChangeProcessor.then(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router))
+                )
+            )
+        )
+    );
 
     LOGGER.debug("Successfully completed upgradeForWrite procedure");
   }

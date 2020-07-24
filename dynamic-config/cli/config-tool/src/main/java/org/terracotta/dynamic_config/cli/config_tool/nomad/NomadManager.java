@@ -27,6 +27,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.nomad.NomadEnvironment;
@@ -102,7 +103,7 @@ public class NomadManager<T> {
   public void runClusterActivation(Collection<InetSocketAddress> nodes, Cluster cluster, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to activate cluster: {}", cluster.toShapeString());
     try (NomadClient<T> client = createDiagnosticNomadClient(new ArrayList<>(nodes))) {
-      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), new ClusterActivationNomadChange(cluster));
+      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), wrapNomadChange(new ClusterActivationNomadChange(cluster)));
     }
   }
 
@@ -110,7 +111,7 @@ public class NomadManager<T> {
     LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, onlineNodes);
     checkServerStates(onlineNodes);
     try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {
-      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), changes);
+      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), wrapNomadChange(changes));
     }
   }
 
@@ -127,8 +128,13 @@ public class NomadManager<T> {
     LOGGER.debug("Attempting to apply topology change: {} on cluster {}", change, destinationCluster);
     checkServerStates(onlineNodes);
     try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {
-      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), change);
+      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), wrapNomadChange(change));
     }
+  }
+
+
+  protected DynamicConfigNomadChange wrapNomadChange(DynamicConfigNomadChange change) {
+    return change;
   }
 
   /**

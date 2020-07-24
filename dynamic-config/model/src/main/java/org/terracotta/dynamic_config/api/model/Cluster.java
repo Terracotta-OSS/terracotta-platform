@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.terracotta.common.struct.LockContext;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
@@ -56,6 +57,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   private final List<Stripe> stripes;
 
   private String name;
+  private LockContext lockContext;
   private Measure<TimeUnit> clientReconnectWindow;
   private Measure<TimeUnit> clientLeaseDuration;
   private String securityAuthc;
@@ -245,6 +247,7 @@ public class Cluster implements Cloneable, PropertyHolder {
     Cluster that = (Cluster) o;
     return Objects.equals(stripes, that.stripes) &&
         Objects.equals(name, that.name) &&
+        Objects.equals(lockContext, that.lockContext) &&
         Objects.equals(securitySslTls, that.securitySslTls) &&
         Objects.equals(securityWhitelist, that.securityWhitelist) &&
         Objects.equals(securityAuthc, that.securityAuthc) &&
@@ -256,14 +259,17 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   @Override
   public int hashCode() {
-    return Objects.hash(stripes, name, securityAuthc, securitySslTls, securityWhitelist,
-        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources);
+    return Objects.hash(
+        stripes, name, securityAuthc, securitySslTls, securityWhitelist,
+        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, lockContext
+    );
   }
 
   @Override
   public String toString() {
     return "Cluster{" +
         "name='" + name + '\'' +
+        ", lockContext='" + lockContext + '\'' +
         ", securityAuthc='" + securityAuthc + '\'' +
         ", securitySslTls=" + securitySslTls +
         ", securityWhitelist=" + securityWhitelist +
@@ -303,6 +309,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   public Cluster clone() {
     return new Cluster(stripes.stream().map(Stripe::clone).collect(toList()))
         .setName(name)
+        .setConfigurationLockContext(lockContext)
         .setClientLeaseDuration(clientLeaseDuration)
         .setClientReconnectWindow(clientReconnectWindow)
         .setFailoverPriority(failoverPriority)
@@ -427,6 +434,15 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   public Cluster removeStripes() {
     stripes.clear();
+    return this;
+  }
+
+  public LockContext getConfigurationLockContext() {
+    return lockContext;
+  }
+
+  public Cluster setConfigurationLockContext(LockContext lockContext) {
+    this.lockContext = lockContext;
     return this;
   }
 }

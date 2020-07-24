@@ -234,7 +234,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       LOGGER.info("Nomad change {} committed: {}", message.getChangeUuid(), dynamicConfigNomadChange.getSummary());
 
       // extract the changes since there can be multiple settings change
-      List<? extends DynamicConfigNomadChange> nomadChanges = MultiSettingNomadChange.extractChanges(dynamicConfigNomadChange);
+      List<? extends DynamicConfigNomadChange> nomadChanges = MultiSettingNomadChange.extractChanges(dynamicConfigNomadChange.unwrap());
 
       // the following code will be executed on all the nodes, regardless of the applicability
       // level to update the config

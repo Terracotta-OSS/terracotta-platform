@@ -39,6 +39,7 @@ import org.terracotta.dynamic_config.cli.config_tool.command.LogCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.RepairCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.SetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.UnsetCommand;
+import org.terracotta.dynamic_config.cli.config_tool.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
@@ -125,7 +126,12 @@ public class ConfigTool {
         // We cannot timeout shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
         new NomadEntity.Settings().setRequestTimeout(entityOperationTimeout),
         mainCommand.getSecurityRootDirectory());
-    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
+    NomadManager<NodeContext> nomadManager;
+    if (mainCommand.getLockToken() != null) {
+      nomadManager = new LockAwareNomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider, mainCommand.getLockToken());
+    } else {
+      nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
+    }
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
     StopService stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
 
