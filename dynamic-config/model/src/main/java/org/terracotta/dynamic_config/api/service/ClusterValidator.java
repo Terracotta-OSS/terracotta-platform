@@ -49,6 +49,7 @@ public class ClusterValidator {
   public void validate() throws MalformedClusterException {
     validateNodeName();
     validateAddresses();
+    validateBackupDirs();
     validateDataDirs();
     validateSecurityDir();
     validateFailoverSetting();
@@ -146,6 +147,17 @@ public class ClusterValidator {
       throw new MalformedClusterException("Data directory names need to match across the cluster," +
           " but found the following mismatches: " + uniqueDataDirNames + ". " +
           "Mutative operations on data dirs must be done simultaneously on every node in cluster");
+    }
+  }
+
+  private void validateBackupDirs() {
+    List<String> nodesWithBackupDirs = cluster.getNodes().stream()
+        .filter(node -> Objects.nonNull(node.getBackupDir()))
+        .map(Node::getName)
+        .collect(toList());
+    if (nodesWithBackupDirs.size() != 0 && nodesWithBackupDirs.size() != cluster.getNodeCount()) {
+      throw new MalformedClusterException("Nodes with names: " + nodesWithBackupDirs + " don't have backup directories " +
+          "defined, but other nodes in the cluster do. Backup directories, if configured, need to be defined on all nodes in the cluster");
     }
   }
 
