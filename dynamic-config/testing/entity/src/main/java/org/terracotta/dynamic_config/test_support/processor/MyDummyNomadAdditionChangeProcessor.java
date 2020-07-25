@@ -57,7 +57,7 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
 
   @Override
   public void validate(NodeContext baseConfig, NodeAdditionNomadChange change) throws NomadException {
-    if (failAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(attachStatusKey))) {
+    if (failAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(attachStatusKey))) {
       throw new NomadException("Invalid addition fail at prepare");
     }
 
@@ -74,7 +74,7 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
     }
 
     // cause failure when in prepare phase
-    if (killAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey))) {
+    if (killAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
       platformService.stopPlatform();
     }
   }
@@ -86,15 +86,13 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
       return;
     }
 
+    // cause failover when in commit phase
+    if (killAtCommit.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
+      platformService.stopPlatform();
+    }
+
     try {
-      LOGGER.info("Adding node: {} to stripe ID: {}", change.getNodeAddress(), change.getStripeId());
-
-      // cause failover when in commit phase
-      if (killAtCommit.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey))) {
-        platformService.stopPlatform();
-      }
-
-      LOGGER.info("Adding node: {} to stripe ID: {}", change.getNode().getInternalAddress(), change.getStripeId());
+      LOGGER.info("Adding node: {} to stripe ID: {}", change.getNode().getName(), change.getStripeId());
 
       InetSocketAddress addr = change.getNode().getInternalAddress();
       LOGGER.debug("Calling mBean {}#{}({}))", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME, addr);
@@ -106,7 +104,6 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
       );
 
       dynamicConfigEventFiring.onNodeAddition(change.getStripeId(), change.getNode());
-
     } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

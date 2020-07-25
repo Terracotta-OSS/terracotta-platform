@@ -39,7 +39,7 @@ public class LeaseConfigChangeHandlerTest {
     LeaseConfiguration leaseConfiguration = new LeaseConfiguration(1000L);
     LeaseConfigChangeHandler leaseConfigChangeHandler = new LeaseConfigChangeHandler(leaseConfiguration);
     leaseConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
-    assertThat(set.apply(topology.getCluster()).getClientLeaseDuration().getQuantity(TimeUnit.SECONDS), is(20L));
+    assertThat(set.apply(topology.getCluster()).getClientLeaseDuration().get().getQuantity(TimeUnit.SECONDS), is(20L));
   }
 
   @Test

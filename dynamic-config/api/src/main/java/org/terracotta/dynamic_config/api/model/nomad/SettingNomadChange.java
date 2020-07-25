@@ -191,7 +191,7 @@ public class SettingNomadChange extends FilteredNomadChange {
     Applicability applicability = toApplicability(configuration, cluster);
     switch (operation) {
       case SET:
-        return SettingNomadChange.set(applicability, configuration.getSetting(), configuration.getKey(), configuration.getValue());
+        return SettingNomadChange.set(applicability, configuration.getSetting(), configuration.getKey(), configuration.getValue().get());
       case UNSET:
         return SettingNomadChange.unset(applicability, configuration.getSetting(), configuration.getKey());
       default:

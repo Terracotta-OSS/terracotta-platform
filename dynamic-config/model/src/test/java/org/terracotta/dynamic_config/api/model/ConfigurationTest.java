@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
@@ -143,9 +144,10 @@ public class ConfigurationTest {
         // node name always generates a random default value
         assertThat(rawInput, rawInput, startsWith("name=node-"));
       } else {
-        String defaultValue = setting.getDefaultValue();
-        assertThat(rawInput, configuration.getValue(), is(equalTo(defaultValue)));
-        assertThat(rawInput, rawInput, is(equalTo(setting + "=" + (defaultValue == null ? "" : defaultValue))));
+        String defaultValue = setting.getDefaultProperty().orElse("");
+        assertThat(rawInput, configuration.getValue().orElse(null), defaultValue.isEmpty() ? is(nullValue()) : is(equalTo(defaultValue)));
+        assertThat(rawInput, rawInput, is(equalTo(setting + "=" + defaultValue)));
+        assertThat(defaultValue, is(not(nullValue())));
       }
     });
   }
@@ -211,9 +213,10 @@ public class ConfigurationTest {
         // node name always generates a random default value
         assertThat(rawInput, rawInput, startsWith("stripe.1.name=node-"));
       } else {
-        String defaultValue = setting.getDefaultValue();
-        assertThat(rawInput, configuration.getValue(), is(equalTo(defaultValue)));
-        assertThat(rawInput, rawInput, is(equalTo("stripe.1." + setting + "=" + (defaultValue == null ? "" : defaultValue))));
+        String defaultValue = setting.getDefaultProperty().orElse("");
+        assertThat(defaultValue, is(not(nullValue())));
+        assertThat(rawInput, configuration.getValue().orElse(null), defaultValue.isEmpty() ? is(nullValue()) : is(equalTo(defaultValue)));
+        assertThat(rawInput, rawInput, is(equalTo("stripe.1." + setting + "=" + defaultValue)));
       }
     });
   }
@@ -270,9 +273,10 @@ public class ConfigurationTest {
         // node name always generates a random default value
         assertThat(rawInput, rawInput, startsWith("stripe.1.node.1.name=node-"));
       } else {
-        String defaultValue = setting.getDefaultValue();
-        assertThat(rawInput, configuration.getValue(), is(equalTo(defaultValue)));
-        assertThat(rawInput, rawInput, is(equalTo("stripe.1.node.1." + setting + "=" + (defaultValue == null ? "" : defaultValue))));
+        String defaultValue = setting.getDefaultProperty().orElse("");
+        assertThat(defaultValue, is(not(nullValue())));
+        assertThat(rawInput, configuration.getValue().orElse(null), defaultValue.isEmpty() ? is(nullValue()) : is(equalTo(defaultValue)));
+        assertThat(rawInput, rawInput, is(equalTo("stripe.1.node.1." + setting + "=" + defaultValue)));
       }
     });
   }
@@ -310,7 +314,8 @@ public class ConfigurationTest {
           tuple2(NODE_GROUP_PORT, "9410"),
           tuple2(NODE_BIND_ADDRESS, "0.0.0.0"),
           tuple2(NODE_GROUP_BIND_ADDRESS, "0.0.0.0"),
-          tuple2(NODE_LOG_DIR, "foo/bar")
+          tuple2(NODE_LOG_DIR, "foo/bar"),
+          tuple2(NODE_METADATA_DIR, "foo/bar")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
         rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
@@ -330,7 +335,6 @@ public class ConfigurationTest {
       // set allowed for all scopes
       Stream.of(
           tuple2(NODE_BACKUP_DIR, "foo/bar"),
-          tuple2(NODE_METADATA_DIR, "foo/bar"),
           tuple2(SECURITY_DIR, "foo/bar"),
           tuple2(SECURITY_AUDIT_LOG_DIR, "foo/bar")
       ).forEach(tuple -> {
@@ -563,7 +567,7 @@ public class ConfigurationTest {
       reject(state, op, "metadata-dir=foo");
       reject(state, op, "stripe.1.metadata-dir=foo");
       allow(state, op, "stripe.1.node.1.metadata-dir=foo");
-      allow(state, op, "stripe.1.node.1.metadata-dir=");
+      reject(state, op, "stripe.1.node.1.metadata-dir=");
     }));
 
     // hostname, port
@@ -808,41 +812,45 @@ public class ConfigurationTest {
     Cluster cluster = Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost")));
 
     // cluster wide override
-    assertThat(cluster.getOffheapResources().size(), is(equalTo(1)));
-    assertThat(cluster.getOffheapResources(), hasKey("main"));
+    assertFalse(cluster.getOffheapResources().isConfigured());
+    assertThat(cluster.getOffheapResources().orDefault().size(), is(equalTo(1)));
+    assertThat(cluster.getOffheapResources().orDefault(), hasKey("main"));
     Configuration.valueOf("offheap-resources=second:1GB").apply(cluster);
-    assertThat(cluster.getOffheapResources().size(), is(equalTo(1)));
-    assertThat(cluster.getOffheapResources(), hasKey("second"));
+    assertTrue(cluster.getOffheapResources().isConfigured());
+    assertThat(cluster.getOffheapResources().orDefault().size(), is(equalTo(1)));
+    assertThat(cluster.getOffheapResources().orDefault(), hasKey("second"));
 
     // cluster wide addition
     Configuration.valueOf("offheap-resources.main=1GB").apply(cluster);
-    assertThat(cluster.getOffheapResources().size(), is(equalTo(2)));
-    assertThat(cluster.getOffheapResources(), hasKey("main"));
-    assertThat(cluster.getOffheapResources(), hasKey("second"));
+    assertThat(cluster.getOffheapResources().get().size(), is(equalTo(2)));
+    assertThat(cluster.getOffheapResources().get(), hasKey("main"));
+    assertThat(cluster.getOffheapResources().get(), hasKey("second"));
 
     // stripe wide
-    assertThat(cluster.getSingleNode().get().getBackupDir(), is(nullValue()));
+    assertFalse(cluster.getSingleNode().get().getBackupDir().isConfigured());
     Configuration.valueOf("stripe.1:backup-dir=foo/bar").apply(cluster);
-    assertThat(cluster.getSingleNode().get().getBackupDir(), is(equalTo(Paths.get("foo/bar"))));
+    assertTrue(cluster.getSingleNode().get().getBackupDir().isConfigured());
+    assertThat(cluster.getSingleNode().get().getBackupDir().get(), is(equalTo(Paths.get("foo/bar"))));
 
     // node level
-    assertThat(cluster.getSingleNode().get().getSecurityDir(), is(nullValue()));
+    assertFalse(cluster.getSingleNode().get().getSecurityDir().isConfigured());
     Configuration.valueOf("stripe.1.node.1:security-dir=foo/bar").apply(cluster);
-    assertThat(cluster.getSingleNode().get().getSecurityDir(), is(equalTo(Paths.get("foo/bar"))));
+    assertTrue(cluster.getSingleNode().get().getSecurityDir().isConfigured());
+    assertThat(cluster.getSingleNode().get().getSecurityDir().get(), is(equalTo(Paths.get("foo/bar"))));
 
     // unset
     Configuration.valueOf("stripe.1.node.1:security-dir=foo/bar").apply(cluster);
     Configuration.valueOf("stripe.1.node.1:security-dir=").apply(cluster);
-    assertThat(cluster.getSingleNode().get().getSecurityDir(), is(nullValue()));
+    assertFalse(cluster.getSingleNode().get().getSecurityDir().isConfigured());
     Configuration.valueOf("stripe.1.node.1:security-dir=foo/bar").apply(cluster);
     Configuration.valueOf("stripe.1.node.1:security-dir").apply(cluster);
-    assertThat(cluster.getSingleNode().get().getSecurityDir(), is(nullValue()));
+    assertFalse(cluster.getSingleNode().get().getSecurityDir().isConfigured());
 
     // special cases
     Configuration.valueOf("license-file=foo/bar").apply(cluster);
-    assertThat(cluster.getName(), is(nullValue()));
+    assertThat(cluster.getName().orDefault(), is(nullValue()));
     Configuration.valueOf("cluster-name=foo").apply(cluster);
-    assertThat(cluster.getName(), is(equalTo("foo")));
+    assertThat(cluster.getName().get(), is(equalTo("foo")));
 
     // bad stripe
     assertThat(
@@ -888,6 +896,37 @@ public class ConfigurationTest {
     assertThat("stripe.1.backup-dir=foo", is(not(duplicating("stripe.1.node.2:backup-dir=bar"))));
     assertThat("offheap-resources.main", is(not(duplicating("offheap-resources.second"))));
     assertThat("offheap-resources.main=1GB", is(not(duplicating("offheap-resources.second=1GB"))));
+  }
+
+  @Test
+  public void test_unset_maps_with_defaults() {
+    Node node = Testing.newTestNode("foo", "localhost");
+    assertFalse(node.getDataDirs().isConfigured());
+    Configuration.valueOf("data-dirs").apply(node);
+    assertTrue(node.getDataDirs().isConfigured());
+    assertThat(node.getDataDirs().get(), is(equalTo(emptyMap())));
+
+    node = Testing.newTestNode("foo", "localhost")
+        .unsetDataDirs()
+        .putDataDir("second", Paths.get("."));
+    assertTrue(node.getDataDirs().isConfigured());
+    Configuration.valueOf("data-dirs").apply(node);
+    assertTrue(node.getDataDirs().isConfigured());
+    assertThat(node.getDataDirs().get(), is(equalTo(emptyMap())));
+  }
+
+  @Test
+  public void test_unset_maps_without_defaults() {
+    Node node = Testing.newTestNode("foo", "localhost");
+    assertFalse(node.getTcProperties().isConfigured());
+    Configuration.valueOf("tc-properties").apply(node);
+    assertTrue(node.getTcProperties().isConfigured());
+
+    node = Testing.newTestNode("foo", "localhost").putTcProperty("second", ".");
+    assertTrue(node.getTcProperties().isConfigured());
+    Configuration.valueOf("tc-properties").apply(node);
+    assertTrue(node.getTcProperties().isConfigured());
+    assertThat(node.getTcProperties().get(), is(equalTo(emptyMap())));
   }
 
   private Matcher<String> duplicating(String value) {
@@ -946,7 +985,7 @@ public class ConfigurationTest {
     assertThat(configuration.getSetting(), is(equalTo(setting)));
     assertThat(configuration.getLevel(), is(equalTo(scope)));
     assertThat(configuration.getKey(), is(equalTo(key)));
-    assertThat(configuration.getValue(), is(equalTo(value)));
+    assertThat(configuration.getValue().orElse(null), is(equalTo(value)));
     if (stripeId != null) {
       assertThat(configuration.getStripeId(), is(equalTo(stripeId)));
     }

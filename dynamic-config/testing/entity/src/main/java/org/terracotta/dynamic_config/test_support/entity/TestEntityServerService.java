@@ -20,11 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.test_support.handler.GroupPortSimulateHandler;
 import org.terracotta.dynamic_config.test_support.handler.SimulationHandler;
@@ -100,6 +102,8 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
       TopologyService topologyService = serviceRegistry.getService(new BasicServiceConfiguration<>(TopologyService.class));
       DynamicConfigEventFiring dynamicConfigEventFiring = serviceRegistry.getService(new BasicServiceConfiguration<>(DynamicConfigEventFiring.class));
       PlatformService platformService = serviceRegistry.getService(new BasicServiceConfiguration<>(PlatformService.class));
+      IParameterSubstitutor parameterSubstitutor = serviceRegistry.getService(new BasicServiceConfiguration<>(IParameterSubstitutor.class));
+      PathResolver pathResolver = serviceRegistry.getService(new BasicServiceConfiguration<>(PathResolver.class));
       requireNonNull(nomadRoutingChangeProcessor);
       requireNonNull(topologyService);
       requireNonNull(dynamicConfigEventFiring);
@@ -110,8 +114,8 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
 
       nomadRoutingChangeProcessor.register(
           NodeRemovalNomadChange.class,
-          new MyDummyNomadRemovalChangeProcessor(topologyService, dynamicConfigEventFiring, platformService));
-      
+          new MyDummyNomadRemovalChangeProcessor(topologyService, dynamicConfigEventFiring, platformService, parameterSubstitutor, pathResolver));
+
       LOGGER.info("Installing: " + SimulationHandler.class.getName());
       ConfigChangeHandler handler = manager.findConfigChangeHandler(NODE_LOGGER_OVERRIDES).get();
       // override the logging handler by hooking into some special properties

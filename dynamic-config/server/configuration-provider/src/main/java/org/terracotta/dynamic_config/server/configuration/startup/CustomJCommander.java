@@ -99,16 +99,14 @@ public class CustomJCommander extends JCommander {
         Optional<Setting> settingOptional = Setting.findSetting(ConsoleParamsUtils.stripDashDash(pd.getLongestName()));
         if (settingOptional.isPresent()) {
           Setting setting = settingOptional.get();
-          String defaultValue = setting.getDefaultValue();
+          Optional<String> defaultValue = setting.getDefaultProperty();
 
           // special handling
           if (setting == NODE_NAME) {
-            defaultValue = "<randomly-generated>";
+            defaultValue = Optional.of("<randomly-generated>");
           }
 
-          if (defaultValue != null) {
-            out.append(". Default: ").append(defaultValue);
-          }
+          defaultValue.ifPresent(s -> out.append(". Default: ").append(s));
         }
         out.append(lineSeparator());
       }

@@ -22,15 +22,10 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import java.io.File;
 
 import static java.io.File.separator;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertFalse;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 @ClusterDefinition(autoActivate = true)
 public class SetCommand1x1IT extends DynamicConfigIT {
@@ -89,91 +84,6 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.second=1GB", "-c", "offheap-resources.main=1MB"),
         exceptionMatcher("should be larger than the old size"));
-  }
-
-  @Test
-  public void setDataDir_updatePath() {
-    assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.main=user-data/main/stripe1-node1-data-dir"),
-        exceptionMatcher("A data directory with name: main already exists"));
-  }
-
-  @Test
-  public void setDataDir_overlappingPaths() throws Exception {
-    assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.first=node-1-1/data-dir"),
-        is(throwing(instanceOf(RuntimeException.class)).andMessage(allOf(
-            containsString("Prepare rejected"),
-            containsString("Reason: 'set data-dirs.first=node-1-1/data-dir': Data directory: first overlaps with: main")))));
-
-    // prepare change should be rolled back
-    withTopologyService(1, 1, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
-  }
-
-  @Test
-  public void setDataDir_addMultipleNonExistentDataDirs_overLappingPaths() throws Exception {
-    assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-1"),
-        is(throwing(instanceOf(RuntimeException.class)).andMessage(allOf(
-            containsString("Prepare rejected"),
-            containsString("Reason: 'set data-dirs.third=user-data/main/stripe1-node1-data-dir-1': Data directory: third overlaps with: second")))));
-
-    // prepare change should be rolled back
-    withTopologyService(1, 1, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
-  }
-
-  @Test
-  public void setDataDir_addMultipleNonExistentDataDirs_same_keys() {
-    assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.foo=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.foo=user-data/main/stripe1-node1-data-dir-2"),
-        exceptionMatcher("Duplicate configurations found: data-dirs.foo=user-data/main/stripe1-node1-data-dir-1 and data-dirs.foo=user-data/main/stripe1-node1-data-dir-2"));
-  }
-
-  @Test
-  public void setDataDir_addMultipleNonExistentDataDirs_overLappingPaths_flavor2() throws Exception {
-    assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-1"),
-        is(throwing(instanceOf(RuntimeException.class)).andMessage(allOf(
-            containsString("Prepare rejected"),
-            containsString("Reason: 'set data-dirs.third=user-data/main/stripe1-node1-data-dir-1': Data directory: third overlaps with: second")))));
-
-    // prepare change should be rolled back
-    withTopologyService(1, 1, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
-  }
-
-  @Test
-  public void setDataDir_addOneNonExistentDataDir() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1");
-
-    assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second"),
-        containsOutput("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
-  }
-
-  @Test
-  public void setDataDir_addMultipleNonExistentDataDirs() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs=second:user-data/main/stripe1-node1-data-dir-1,third:user-data/main/stripe1-node1-data-dir-2");
-
-    assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second"),
-        containsOutput("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
-
-    assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.third"),
-        containsOutput("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2"));
-  }
-
-  @Test
-  public void setDataDir_addMultipleNonExistentDataDirs_flavor2() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second=user-data/main/stripe1-node1-data-dir-1", "-c", "data-dirs.third=user-data/main/stripe1-node1-data-dir-2");
-
-    assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.second"),
-        containsOutput("stripe.1.node.1.data-dirs.second=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-1"));
-
-    assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.third"),
-        containsOutput("stripe.1.node.1.data-dirs.third=user-data" + separator + "main" + separator + "stripe1-node1-data-dir-2"));
   }
 
   @Test
@@ -315,7 +225,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void change_cluster_name_back() throws Exception {
     // TDB-5067
-    String clusterName = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getCluster().getName());
+    String clusterName = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getCluster().getName().get());
     assertThat(
         invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=new-name"),
         not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));

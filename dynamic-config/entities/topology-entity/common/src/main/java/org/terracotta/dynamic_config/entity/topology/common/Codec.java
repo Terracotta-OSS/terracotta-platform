@@ -229,8 +229,7 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeCluster(Cluster cluster) {
     requireNonNull(cluster);
-    //TODO [DYNAMIC-CONFIG]: TDB-4898 - switch to false
-    return Props.toString(cluster.toProperties(false, true));
+    return Props.toString(cluster.toProperties(false, false));
   }
 
   private Cluster decodeCluster(String payload) {
@@ -241,14 +240,13 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeNode(Node node) {
     requireNonNull(node);
-    //TODO [DYNAMIC-CONFIG]: TDB-4898 - switch to false
-    return Props.toString(node.toProperties(false, true));
+    return Props.toString(node.toProperties(false, false));
   }
 
   private Node decodeNode(String payload) {
     requireNonNull(payload);
     Properties properties = Props.load(payload);
-    Node node = new Node().fillRequiredSettings();
+    Node node = new Node();
     Cluster cluster = new Cluster(new Stripe(node));
     properties.stringPropertyNames().forEach(key -> Configuration.valueOf("stripe.1.node.1." + key, properties.getProperty(key)).apply(cluster));
     return node;
@@ -256,8 +254,7 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeStripe(Stripe stripe) {
     requireNonNull(stripe);
-    //TODO [DYNAMIC-CONFIG]: TDB-4898 - switch to false
-    final Properties props = stripe.toProperties(false, true);
+    final Properties props = stripe.toProperties(false, false);
     props.setProperty("nodes", String.valueOf(stripe.getNodeCount()));
     return Props.toString(props);
   }
@@ -268,7 +265,7 @@ public class Codec implements MessageCodec<Message, Response> {
     final int count = Integer.parseInt(properties.remove("nodes").toString());
     final Stripe stripe = new Stripe();
     final Cluster cluster = new Cluster(stripe);
-    rangeClosed(1, count).forEach(idx -> stripe.addNode(new Node().fillRequiredSettings()));
+    rangeClosed(1, count).forEach(idx -> stripe.addNode(new Node()));
     properties.stringPropertyNames().forEach(key -> Configuration.valueOf("stripe.1." + key, properties.getProperty(key)).apply(cluster));
     return stripe;
   }

@@ -95,8 +95,8 @@ public class ClusterFactory {
             toDisplayParams("--", paramValueMap, parameterSubstitutor),
             lineSeparator(),
             toDisplayParams("--", defaultsAdded.stream()
-                    .filter(configuration -> configuration.getValue() != null)
-                    .collect(toMap(Configuration::getSetting, Configuration::getValue)),
+                    .filter(configuration -> configuration.getValue().isPresent())
+                    .collect(toMap(Configuration::getSetting, cfg -> cfg.getValue().get())),
                 parameterSubstitutor)
         )
     );
@@ -141,7 +141,7 @@ public class ClusterFactory {
 
   private String toDisplayParams(Collection<Configuration> configurations) {
     String suppliedParameters = configurations.stream()
-        .filter(c -> c.getValue() != null)
+        .filter(c -> c.getValue().isPresent())
         .map(Configuration::toString)
         .sorted()
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));

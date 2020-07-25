@@ -23,11 +23,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.MemoryUnit;
+import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyMap;
+import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -50,7 +54,14 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.lenient;
 import static org.terracotta.common.struct.Tuple2.tuple2;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -63,8 +74,7 @@ public class ClusterFactoryTest {
 
   @Mock public IParameterSubstitutor substitutor;
 
-  ObjectMapper json = new ObjectMapper()
-      .registerModule(new DynamicConfigModelJsonModule());
+  ObjectMapper json = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
   @Before
   public void setUp() {
@@ -74,6 +84,8 @@ public class ClusterFactoryTest {
     lenient().when(substitutor.substitute("foo")).thenReturn("foo");
     lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
     lenient().when(substitutor.substitute("9410")).thenReturn("9410");
+    lenient().when(substitutor.substitute("")).thenReturn("");
+    lenient().when(substitutor.substitute("availability")).thenReturn("availability");
   }
 
   @Test
@@ -141,26 +153,10 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
-            "client-reconnect-window=120s",
             "failover-priority=availability",
-            "client-lease-duration=150s",
-            "authc=",
-            "ssl-tls=false",
-            "whitelist=false",
-            "offheap-resources=main:512MB",
-            "stripe.1.node.1.port=9410",
-            "stripe.1.node.1.group-port=9430",
-            "stripe.1.node.1.bind-address=0.0.0.0",
-            "stripe.1.node.1.group-bind-address=0.0.0.0",
-            "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
-            "stripe.1.node.1.log-dir=%H/terracotta/logs",
-            "stripe.1.node.1.backup-dir=",
-            "stripe.1.node.1.tc-properties=",
-            "stripe.1.node.1.security-dir=",
-            "stripe.1.node.1.audit-log-dir=",
-            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+            "stripe.1.node.1.tc-properties="
         ),
-        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost").setTcProperties(emptyMap()))));
 
     assertConfigEquals(
         config(
@@ -170,7 +166,6 @@ public class ClusterFactoryTest {
             "client-reconnect-window=120s",
             "failover-priority=availability",
             "client-lease-duration=150s",
-            "authc=",
             "ssl-tls=false",
             "whitelist=false",
             "offheap-resources=main:512MB",
@@ -180,13 +175,26 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.group-bind-address=0.0.0.0",
             "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
             "stripe.1.node.1.log-dir=%H/terracotta/logs",
-            "stripe.1.node.1.backup-dir=",
             "stripe.1.node.1.tc-properties=",
-            "stripe.1.node.1.security-dir=",
-            "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost")
+            .setPort(9410)
+            .setGroupPort(9430)
+            .setBindAddress("0.0.0.0")
+            .setGroupBindAddress("0.0.0.0")
+            .setMetadataDir(Paths.get("%H", "terracotta", "metadata"))
+            .setLogDir(Paths.get("%H", "terracotta", "logs"))
+            .setTcProperties(emptyMap())
+            .putDataDir("main", Paths.get("%H", "terracotta", "user-data", "main"))
+        ))
+            .setClientReconnectWindow(120, TimeUnit.SECONDS)
+            .setFailoverPriority(availability())
+            .setClientLeaseDuration(150, TimeUnit.SECONDS)
+            .setSecuritySslTls(false)
+            .setSecurityWhitelist(false)
+            .putOffheapResource("main", 512, MemoryUnit.MB)
+    );
   }
 
   @Test
@@ -240,14 +248,41 @@ public class ClusterFactoryTest {
   @Test
   public void test_toProperties() {
     Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe(
-        Testing.newTestNode("node-1", "localhost")
+        Testing.newTestNode("node-1", "localhost1")
             .putDataDir("foo", Paths.get("%H/tc1/foo"))
             .putDataDir("bar", Paths.get("%H/tc1/bar")),
-        Testing.newTestNode("node-2", "localhost")
+        Testing.newTestNode("node-2", "localhost2")
             .putDataDir("foo", Paths.get("%H/tc2/foo"))
             .putDataDir("bar", Paths.get("%H/tc2/bar"))
-            .putTcProperty("server.entity.processor.threads", "64")
-            .putTcProperty("topology.validate", "true")))
+            .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
+        .setFailoverPriority(consistency(2))
+        .putOffheapResource("foo", 1, MemoryUnit.GB)
+        .putOffheapResource("bar", 2, MemoryUnit.GB);
+
+    Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", new Stripe(
+        Testing.newTestNode("node-1", "localhost1")
+            .setPort(NODE_PORT.getDefaultValue())
+            .setGroupPort(NODE_GROUP_PORT.getDefaultValue())
+            .setBindAddress(NODE_BIND_ADDRESS.getDefaultValue())
+            .setGroupBindAddress(NODE_GROUP_BIND_ADDRESS.getDefaultValue())
+            .setLogDir(NODE_LOG_DIR.getDefaultValue())
+            .setMetadataDir(NODE_METADATA_DIR.getDefaultValue())
+            .putDataDir("foo", Paths.get("%H/tc1/foo"))
+            .putDataDir("bar", Paths.get("%H/tc1/bar")),
+        Testing.newTestNode("node-2", "localhost2")
+            .setPort(NODE_PORT.getDefaultValue())
+            .setGroupPort(NODE_GROUP_PORT.getDefaultValue())
+            .setBindAddress(NODE_BIND_ADDRESS.getDefaultValue())
+            .setGroupBindAddress(NODE_GROUP_BIND_ADDRESS.getDefaultValue())
+            .setLogDir(NODE_LOG_DIR.getDefaultValue())
+            .setMetadataDir(NODE_METADATA_DIR.getDefaultValue())
+            .putDataDir("foo", Paths.get("%H/tc2/foo"))
+            .putDataDir("bar", Paths.get("%H/tc2/bar"))
+            .setTcProperties(emptyMap()))) // specifically set the map to empty one by teh user
+        .setSecuritySslTls(false)
+        .setSecurityWhitelist(false)
+        .setClientReconnectWindow(120, TimeUnit.SECONDS)
+        .setClientLeaseDuration(150, TimeUnit.SECONDS)
         .setFailoverPriority(consistency(2))
         .putOffheapResource("foo", 1, MemoryUnit.GB)
         .putOffheapResource("bar", 2, MemoryUnit.GB);
@@ -258,15 +293,26 @@ public class ClusterFactoryTest {
         tuple2(cluster.toProperties(true, true), "config_expanded_default.properties"),
         tuple2(cluster.toProperties(true, false), "config_expanded_without_default.properties")
     ).forEach(rethrow(tuple -> {
-      Properties expected = fixPaths(Props.load(Paths.get(getClass().getResource("/config-property-files/" + tuple.t2).toURI())));
-      assertThat("File: " + tuple.t2 + " should perhaps be:\n" + Props.toString(tuple.t1), tuple.t1, is(equalTo(expected)));
+      Properties expectedProps = fixPaths(Props.load(Paths.get(getClass().getResource("/config-property-files/" + tuple.t2).toURI())));
+
+      assertThat(
+          "File: " + tuple.t2 + " should perhaps be:\n" + Props.toString(tuple.t1),
+          tuple.t1,
+          is(equalTo(expectedProps)));
+
+      Cluster expectedCluster = new ClusterFactory().create(expectedProps);
+
+      assertThat(
+          "File: " + tuple.t2,
+          expectedCluster,
+          either(equalTo(cluster)).or(equalTo(clusterWithDefaults)));
     }));
   }
 
   @Test
   public void test_mapping_props_json_without_defaults() throws URISyntaxException, IOException {
     Properties props = Props.load(read("/config1_without_defaults.properties"));
-    Cluster fromJson = json.readValue(read("/config1.json"), Cluster.class);
+    Cluster fromJson = json.readValue(read("/config2.json"), Cluster.class);
     Cluster fromProps = new ClusterFactory().create(props);
 
     assertThat(fromJson, is(equalTo(fromProps)));
@@ -279,7 +325,7 @@ public class ClusterFactoryTest {
         fromJson.toProperties(false, false),
         is(equalTo(fromProps.toProperties(false, false))));
     assertThat(
-        json.writerWithDefaultPrettyPrinter().writeValueAsString(fromProps),
+        json.writeValueAsString(fromProps),
         fromProps,
         is(equalTo(fromJson)));
   }
@@ -300,7 +346,7 @@ public class ClusterFactoryTest {
         fromJson.toProperties(false, true),
         is(equalTo(fromProps.toProperties(false, true))));
     assertThat(
-        json.writerWithDefaultPrettyPrinter().writeValueAsString(fromProps),
+        json.writeValueAsString(fromProps),
         fromProps,
         is(equalTo(fromJson)));
   }

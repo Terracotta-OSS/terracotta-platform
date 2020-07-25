@@ -123,15 +123,14 @@ public class ConfigurationGeneratorVisitor {
   }
 
   void startActivated(NodeContext nodeContext, String optionalLicenseFile, String optionalNodeConfigurationDirectoryFromCLI) {
-    if (nodeContext.getCluster().getName() == null) {
-      throw new IllegalArgumentException("Cluster name is required to pre-activate a node");
-    }
+    final String clusterName = nodeContext.getCluster().getName().orElseThrow(() -> new IllegalArgumentException("Cluster name is required to pre-activate a node"));
+
     if (nodeContext.getCluster().getStripeCount() > 1) {
       throw new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster");
     }
 
     String nodeName = nodeContext.getNodeName();
-    ServerEnv.getServer().console("Starting node: {} in cluster: {}", nodeName, nodeContext.getCluster().getName());
+    ServerEnv.getServer().console("Starting node: {} in cluster: {}", nodeName, clusterName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirectoryFromCLI);
     ServerEnv.getServer().console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
@@ -179,7 +178,7 @@ public class ConfigurationGeneratorVisitor {
     boolean isPortSpecified = specifiedPort != null;
 
     String substitutedHost = parameterSubstitutor.substitute(isHostnameSpecified ? specifiedHostName : Setting.NODE_HOSTNAME.getDefaultValue());
-    int port = Integer.parseInt(isPortSpecified ? specifiedPort : Setting.NODE_PORT.getDefaultValue());
+    int port = isPortSpecified ? Integer.parseInt(specifiedPort) : Setting.NODE_PORT.getDefaultValue();
     InetSocketAddress specifiedSockAddr = InetSocketAddress.createUnresolved(substitutedHost, port);
 
     Collection<Node> allNodes = cluster.getNodes();
@@ -227,7 +226,7 @@ public class ConfigurationGeneratorVisitor {
   }
 
   Path getOrDefaultConfigurationDirectory(String configPath) {
-    return Paths.get(configPath != null ? configPath : Setting.NODE_CONFIG_DIR.getDefaultValue());
+    return configPath != null ? Paths.get(configPath) : Setting.NODE_CONFIG_DIR.getDefaultValue();
   }
 
   Optional<String> findNodeName(Path configPath, IParameterSubstitutor parameterSubstitutor) {

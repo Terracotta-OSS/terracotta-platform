@@ -37,7 +37,7 @@ public class ImportCommand2x1IT extends DynamicConfigIT {
     invokeConfigTool("import", "-f", path.toString());
     TreeMap<Object, Object> after = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true));
     TreeMap<Object, Object> expected = new TreeMap<>(Props.load(path));
-    assertThat(after, is(equalTo(expected)));
+    assertThat(after.toString(), after, is(equalTo(expected)));
     assertThat(before, is(not(equalTo(expected))));
   }
 }

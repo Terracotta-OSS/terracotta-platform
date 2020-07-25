@@ -75,7 +75,7 @@ public class AttachCommand extends TopologyCommand {
     }
 
     if (isActivated(source)) {
-      throw new IllegalArgumentException("Source node: " + source + " cannot be attached since it is part of an existing cluster with name: " + getRuntimeCluster(source).getName());
+      throw new IllegalArgumentException("Source node: " + source + " cannot be attached since it is part of an existing cluster with name: " + getRuntimeCluster(source).getName().get());
     }
 
     MutualClusterValidator mutualClusterValidator = new MutualClusterValidator(destinationCluster, sourceCluster);

@@ -41,7 +41,7 @@ public class LoggerOverrideConfigChangeHandler implements ConfigChangeHandler {
   @Override
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     String logger = change.getKey();
-    String level = change.getValue();
+    String level = change.getValue().orElse(null);
 
     // verify enum
     if (level != null) {
@@ -66,14 +66,14 @@ public class LoggerOverrideConfigChangeHandler implements ConfigChangeHandler {
   public void apply(Configuration change) {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
     String logger = change.getKey();
-    String level = change.getValue();
+    String level = change.getValue().orElse(null);
     // setting the level to null will inherit from the parent
     loggerContext.getLogger(logger).setLevel(level == null ? null : Level.valueOf(level));
   }
 
   public void init() {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-    topologyService.getUpcomingNodeContext().getNode().getLoggerOverrides()
+    topologyService.getUpcomingNodeContext().getNode().getLoggerOverrides().orDefault()
         .forEach((name, level) -> loggerContext.getLogger(name).setLevel(Level.valueOf(level)));
   }
 }

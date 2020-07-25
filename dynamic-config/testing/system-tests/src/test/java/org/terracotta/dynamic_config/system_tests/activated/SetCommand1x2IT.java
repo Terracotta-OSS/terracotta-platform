@@ -21,7 +21,6 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Path;
 
-import static org.hamcrest.Matchers.hasKey;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
@@ -37,40 +36,9 @@ public class SetCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testNode_setDataDirs() throws Exception {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs=foo:data-dir", "-c", "stripe.1.node.2.data-dirs=foo:data-dir");
-
-    assertThat(getRuntimeCluster(1, 1).getNode(1, 1).get().getDataDirs(), hasKey("foo"));
-    assertThat(getRuntimeCluster(1, 1).getNode(1, 2).get().getDataDirs(), hasKey("foo"));
-  }
-
-  @Test
-  public void testStripe_setDataDirs() throws Exception {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.data-dirs=foo:data-dir");
-
-    assertThat(getRuntimeCluster(1, 1).getNode(1, 1).get().getDataDirs(), hasKey("foo"));
-    assertThat(getRuntimeCluster(1, 1).getNode(1, 2).get().getDataDirs(), hasKey("foo"));
-  }
-
-  @Test
-  public void testCluster_setDataDirs() throws Exception {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "data-dirs=foo:data-dir");
-
-    assertThat(getRuntimeCluster(1, 1).getNode(1, 1).get().getDataDirs(), hasKey("foo"));
-    assertThat(getRuntimeCluster(1, 1).getNode(1, 2).get().getDataDirs(), hasKey("foo"));
-  }
-
-  @Test
-  public void testNode_setDataDirsFails() {
-    assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs=foo:data-dir"),
-        exceptionMatcher("Data directory names need to match across the cluster"));
-  }
-
-  @Test
   public void testFailedConfigChangedDoesntFailPassiveSync() throws Exception {
     int passiveId = findPassives(1)[0];
-    Path metadataDir = usingTopologyService(1, passiveId, topologyService -> topologyService.getUpcomingNodeContext().getNode().getMetadataDir());
+    Path metadataDir = usingTopologyService(1, passiveId, topologyService -> topologyService.getUpcomingNodeContext().getNode().getMetadataDir().orDefault());
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir=foo"),
         exceptionMatcher("Setting 'metadata-dir' cannot be set when node is activated"));

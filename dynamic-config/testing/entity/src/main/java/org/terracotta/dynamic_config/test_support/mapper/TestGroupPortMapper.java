@@ -25,8 +25,8 @@ public class TestGroupPortMapper implements GroupPortMapper {
 
   @Override
   public int getPeerGroupPort(Node peerNode, Node thisNode) {
-    if (thisNode.getTcProperties().containsKey(key)) {
-      String proxyGroupPorts = thisNode.getTcProperties().get(key);
+    if (thisNode.getTcProperties().orDefault().containsKey(key)) {
+      String proxyGroupPorts = thisNode.getTcProperties().orDefault().get(key);
       String[] nodeIdGroupPorts = proxyGroupPorts.split("#");
       for (int i = 0; i < nodeIdGroupPorts.length; ++i) {
         nodeIdGroupPorts[i] = nodeIdGroupPorts[i].replaceAll("\"", "");
@@ -36,6 +36,6 @@ public class TestGroupPortMapper implements GroupPortMapper {
         }
       }
     }
-    return peerNode.getGroupPort();
+    return peerNode.getGroupPort().orDefault();
   }
 }

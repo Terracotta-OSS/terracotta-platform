@@ -46,7 +46,7 @@ public class StripeRemovalNomadChange extends StripeNomadChange {
 
   @Override
   public String getSummary() {
-    return "Detaching stripe: " + getStripe().toShapeString() + " from cluster: " + getCluster().getName();
+    return "Detaching stripe: " + getStripe().toShapeString() + " from cluster: " + getCluster().getName().get();
   }
 
   @Override

@@ -95,9 +95,7 @@ public class ActivateCommand extends RemoteCommand {
       cluster.setName(clusterName);
     }
 
-    if (cluster.getName() == null) {
-      throw new IllegalArgumentException("Cluster name is missing");
-    }
+    cluster.getName().orElseThrow(() -> new IllegalArgumentException("Cluster name is missing"));
 
     if (node != null && !cluster.containsNode(node)) {
       throw new IllegalArgumentException("Node: " + node + " is not in cluster: " + cluster.toShapeString());

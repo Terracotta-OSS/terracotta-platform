@@ -20,33 +20,26 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Substitutor;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Requirement.RESOLVE_EAGERLY;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.values;
 
 /**
  * Parses CLI or config file into a Cluster object, but does not validate the cluster object
@@ -72,41 +65,33 @@ class ConfigurationParser {
    * {@link ClusterValidator}
    */
   public Cluster parse() {
-    // adds missing configurations
-    {
-      final Collection<Setting> defined = configurations.stream().map(Configuration::getSetting).collect(toSet());
-      // search amongst all the settings allowed to be set at configuration level,
-      // those that are scoped CLUSTER and that have not been defined by the user
-      Stream.of(values())
-          .filter(setting -> setting.isScope(CLUSTER))
-          .filter(setting -> setting.allows(IMPORT))
-          .filter(setting -> !defined.contains(setting))
-          .map(Configuration::valueOf)
-          .forEach(configuration -> {
-            configurations.add(configuration);
-            defaultAddedListener.accept(configuration);
-          });
-    }
+    Cluster cluster = new Cluster();
 
-    // Supplementary validation that ensures that our configuration list contains all the settings for the cluster, no more, no less
-    {
-      final Set<Setting> actual = configurations.stream()
-          .filter(configuration -> configuration.getLevel() == CLUSTER)
-          .map(Configuration::getSetting)
-          .collect(toSet());
-      final Set<Setting> expected = Stream.of(values())
-          .filter(setting -> setting.allows(IMPORT))
-          .filter(setting -> setting.isScope(CLUSTER))
-          .collect(toSet());
-      if (actual.size() > expected.size()) {
-        actual.removeAll(expected);
-        throw new IllegalArgumentException("Invalid settings found at cluster level: " + actual.stream().map(Objects::toString).collect(Collectors.joining(", ")));
-      }
-      if (actual.size() < expected.size()) {
-        expected.removeAll(actual);
-        throw new IllegalArgumentException("Missing settings at cluster level: " + expected.stream().map(Objects::toString).collect(Collectors.joining(", ")));
-      }
-    }
+    // Find all the settings that are not define and which require to be resolved eagerly.
+    // We cannot have any placeholders now in those settings. They must be previously resolved.
+    // Apply them, or their default.
+    Stream.of(Setting.values())
+        .filter(setting -> setting.requires(RESOLVE_EAGERLY))
+        .filter(setting -> setting.isScope(CLUSTER))
+        .forEach(setting -> {
+          Optional<Configuration> configuration = configurations.stream().filter(cfg -> cfg.getSetting() == setting).findAny();
+          if (configuration.isPresent()) {
+            configuration.get().apply(cluster);
+            // no need to re-apply after
+            configurations.remove(configuration.get());
+          } else {
+            Optional<String> def = setting.getDefaultProperty();
+            if (def.isPresent()) {
+              if (Substitutor.containsSubstitutionParams(def.get())) {
+                throw new IllegalArgumentException("Required setting: '" + setting + "' is missing");
+              }
+              setting.setProperty(cluster, def.get());
+              defaultAddedListener.accept(Configuration.valueOf(setting + "=" + def.get()));
+            } else {
+              throw new IllegalArgumentException("Required setting: '" + setting + "' is missing");
+            }
+          }
+        });
 
     // Determine the number of stripes and nodes.
     // This map gives a configuration list per node and stripe
@@ -149,53 +134,6 @@ class ConfigurationParser {
       });
     }
 
-    for (Map.Entry<Integer, TreeMap<Integer, List<Configuration>>> stripeEntry : configurationMap.entrySet()) {
-      for (Map.Entry<Integer, List<Configuration>> nodeEntry : stripeEntry.getValue().entrySet()) {
-        int stripeId = stripeEntry.getKey();
-        int nodeId = nodeEntry.getKey();
-        List<Configuration> nodeConfigurations = nodeEntry.getValue();
-
-        // add missing node configurations
-        {
-          final Collection<Setting> defined = nodeConfigurations.stream().map(Configuration::getSetting).collect(toSet());
-          // search amongst all the settings allowed to be set at configuration level for a node,
-          // those that are scoped NODE and that have not been defined by the user
-          Stream.of(values())
-              .filter(setting -> setting.isScope(NODE))
-              .filter(setting -> setting.allows(IMPORT))
-              .filter(setting -> !defined.contains(setting))
-              .map(setting -> Configuration.valueOf(setting, stripeId, nodeId))
-              .forEach(configuration -> {
-                // we add the missing configuration to both the global list, plus the temporary list within the map used for validation
-                nodeConfigurations.add(configuration);
-                configurations.add(configuration);
-                defaultAddedListener.accept(configuration);
-              });
-        }
-
-        // Supplementary validation that ensures that our configuration list contains all the settings for the node, no more, no less
-        // Note: we should in theory never throw here: this is a safe check to prevent any programming error
-        {
-          final Set<Setting> actual = nodeConfigurations.stream()
-              .filter(configuration -> configuration.getLevel() == NODE)
-              .map(Configuration::getSetting)
-              .collect(toSet());
-          final Set<Setting> expected = Stream.of(values())
-              .filter(setting -> setting.allows(IMPORT))
-              .filter(setting -> setting.isScope(NODE))
-              .collect(toSet());
-          if (actual.size() > expected.size()) {
-            actual.removeAll(expected);
-            throw new IllegalArgumentException("Invalid settings in config file for stripe ID: " + stripeId + " and node ID: " + nodeId + ": " + actual);
-          }
-          if (actual.size() < expected.size()) {
-            expected.removeAll(actual);
-            throw new IllegalArgumentException("Missing settings in config file for stripe ID: " + stripeId + " and node ID: " + nodeId + ": " + expected);
-          }
-        }
-      }
-    }
-
     // validate each config line
     {
       configurations.forEach(configuration -> {
@@ -213,22 +151,40 @@ class ConfigurationParser {
     }
 
     // build the cluster
-    Cluster cluster = new Cluster();
-    configurationMap.forEach((stripeId, nodeConfigurations) -> {
+    configurationMap.forEach((stripeId, nodeConfigurationsMap) -> {
       Stripe stripe = new Stripe();
-      nodeConfigurations.forEach((nodeId, configurations) -> {
+      nodeConfigurationsMap.forEach((nodeId, nodeConfigurations) -> {
         // create the node and eagerly initialize the basic fields
         Node node = new Node();
         stripe.addNode(node);
         if (stripe.getNodeCount() != nodeId) {
           throw new AssertionError("Expected node count to be: " + nodeId + " but was: " + stripe.getNodeCount());
         }
-        Stream.of(NODE_NAME, NODE_HOSTNAME, NODE_PORT)
-            .map(setting -> configurations.stream()
-                .filter(configuration -> configuration.getSetting() == setting)
-                .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("Required setting missing: '" + setting + "' for node ID: " + nodeId + " in stripe ID: " + stripeId)))
-            .forEach(o -> o.apply(node));
+        // Find all the settings that are not define and which require to be resolved eagerly.
+        // We cannot have any placeholders now in those settings. They must be previously resolved.
+        // Apply them, or their default.
+        Stream.of(Setting.values())
+            .filter(setting -> setting.requires(RESOLVE_EAGERLY))
+            .filter(setting -> setting.isScope(NODE))
+            .forEach(setting -> {
+              Optional<Configuration> configuration = nodeConfigurations.stream().filter(cfg -> cfg.getSetting() == setting).findAny();
+              if (configuration.isPresent()) {
+                configuration.get().apply(node);
+                // no need to re-apply after
+                configurations.remove(configuration.get());
+              } else {
+                Optional<String> def = setting.getDefaultProperty();
+                if (def.isPresent()) {
+                  if (Substitutor.containsSubstitutionParams(def.get())) {
+                    throw new IllegalArgumentException("Required setting: '" + setting + "' is missing for node ID: " + nodeId + " in stripe ID: " + stripeId);
+                  }
+                  setting.setProperty(node, def.get());
+                  defaultAddedListener.accept(Configuration.valueOf("stripe." + stripeId + ".node." + nodeId + "." + setting + "=" + def.get()));
+                } else {
+                  throw new IllegalArgumentException("Required setting: '" + setting + "' is missing for node ID: " + nodeId + " in stripe ID: " + stripeId);
+                }
+              }
+            });
       });
       cluster.addStripe(stripe);
       if (cluster.getStripeCount() != stripeId) {
@@ -276,7 +232,7 @@ class ConfigurationParser {
     Properties properties = new Properties();
     cliParameters.forEach((k, v) -> properties.setProperty(prefixed(k), v));
 
-    // node hostname, port and name are eagerly resolved in CLI
+    // node hostname and name are eagerly resolved in CLI
     Stream.of(Setting.values())
         .filter(setting -> setting.requires(RESOLVE_EAGERLY))
         .forEach(s -> eagerlyResolve(parameterSubstitutor, defaultAddedListener, properties, s));
@@ -291,7 +247,7 @@ class ConfigurationParser {
     if (set == null) {
       // We can't have this setting null during Node construction from the client side (e.g. during parsing a config properties
       // file in activate command). Therefore, this logic is here, and not in Node::fillDefaults
-      set = parameterSubstitutor.substitute(setting.getDefaultValue());
+      set = parameterSubstitutor.substitute(setting.getDefaultProperty().orElse(""));
       defaultAddedListener.accept(Configuration.valueOf(key + "=" + set));
     } else {
       set = parameterSubstitutor.substitute(set);

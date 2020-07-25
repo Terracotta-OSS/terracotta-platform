@@ -36,12 +36,21 @@ import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
+import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
+import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
+import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
+import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 
 public class Cluster implements Cloneable, PropertyHolder {
   private final List<Stripe> stripes;
@@ -53,7 +62,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   private Boolean securitySslTls;
   private Boolean securityWhitelist;
   private FailoverPriority failoverPriority;
-  private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
+  private Map<String, Measure<MemoryUnit>> offheapResources;
 
   public Cluster(List<Stripe> stripes) {
     this.stripes = new CopyOnWriteArrayList<>(requireNonNull(stripes));
@@ -68,36 +77,36 @@ public class Cluster implements Cloneable, PropertyHolder {
     return CLUSTER;
   }
 
-  public String getName() {
-    return name;
+  public OptionalConfig<String> getName() {
+    return OptionalConfig.of(CLUSTER_NAME, name);
   }
 
-  public String getSecurityAuthc() {
-    return securityAuthc;
+  public OptionalConfig<String> getSecurityAuthc() {
+    return OptionalConfig.of(SECURITY_AUTHC, securityAuthc);
   }
 
-  public Boolean isSecuritySslTls() {
-    return securitySslTls;
+  public OptionalConfig<Boolean> getSecuritySslTls() {
+    return OptionalConfig.of(SECURITY_SSL_TLS, securitySslTls);
   }
 
-  public Boolean isSecurityWhitelist() {
-    return securityWhitelist;
+  public OptionalConfig<Boolean> getSecurityWhitelist() {
+    return OptionalConfig.of(SECURITY_WHITELIST, securityWhitelist);
   }
 
   public FailoverPriority getFailoverPriority() {
     return failoverPriority;
   }
 
-  public Measure<TimeUnit> getClientReconnectWindow() {
-    return clientReconnectWindow;
+  public OptionalConfig<Measure<TimeUnit>> getClientReconnectWindow() {
+    return OptionalConfig.of(CLIENT_RECONNECT_WINDOW, clientReconnectWindow);
   }
 
-  public Measure<TimeUnit> getClientLeaseDuration() {
-    return clientLeaseDuration;
+  public OptionalConfig<Measure<TimeUnit>> getClientLeaseDuration() {
+    return OptionalConfig.of(CLIENT_LEASE_DURATION, clientLeaseDuration);
   }
 
-  public Map<String, Measure<MemoryUnit>> getOffheapResources() {
-    return Collections.unmodifiableMap(offheapResources);
+  public OptionalConfig<Map<String, Measure<MemoryUnit>>> getOffheapResources() {
+    return OptionalConfig.of(OFFHEAP_RESOURCES, offheapResources);
   }
 
   public Cluster setSecurityAuthc(String securityAuthc) {
@@ -151,11 +160,13 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Cluster putOffheapResource(String name, Measure<MemoryUnit> measure) {
-    this.offheapResources.put(name, measure);
-    return this;
+    return putOffheapResources(singletonMap(name, measure));
   }
 
   public Cluster putOffheapResources(Map<String, Measure<MemoryUnit>> offheapResources) {
+    if (this.offheapResources == null) {
+      setOffheapResources(Optional.ofNullable(OFFHEAP_RESOURCES.<Map<String, Measure<MemoryUnit>>>getDefaultValue()).orElse(emptyMap()));
+    }
     this.offheapResources.putAll(offheapResources);
     return this;
   }
@@ -166,12 +177,28 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Cluster removeOffheapResource(String key) {
-    this.offheapResources.remove(key);
+    if (this.offheapResources == null) {
+      // this code is handling the removal of any default value set
+      Map<String, Measure<MemoryUnit>> def = OFFHEAP_RESOURCES.getDefaultValue();
+      if (def != null && def.containsKey(key)) {
+        setOffheapResources(def);
+      }
+    }
+    if (this.offheapResources != null) {
+      this.offheapResources.remove(key);
+    }
     return this;
   }
 
-  public Cluster clearOffheapResources() {
-    this.offheapResources.clear();
+  public Cluster unsetOffheapResources() {
+    if (this.offheapResources != null) {
+      setOffheapResources(emptyMap());
+    } else {
+      Map<String, Measure<MemoryUnit>> def = OFFHEAP_RESOURCES.getDefaultValue();
+      if (def != null && !def.isEmpty()) {
+        setOffheapResources(emptyMap());
+      }
+    }
     return this;
   }
 
@@ -395,11 +422,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Collection<String> getDataDirNames() {
-    return getNodes().stream().flatMap(node -> node.getDataDirs().keySet().stream()).collect(toSet());
-  }
-
-  public Cluster fillRequiredSettings() {
-    return Setting.fillRequiredSettings(this);
+    return getNodes().stream().flatMap(node -> node.getDataDirs().orDefault().keySet().stream()).collect(toSet());
   }
 
   public Cluster removeStripes() {

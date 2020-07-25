@@ -50,7 +50,7 @@ class DynamicConfigServerConfiguration implements ServerConfiguration {
 
   @Override
   public InetSocketAddress getTsaPort() {
-    return InetSocketAddress.createUnresolved(substitutor.substitute(node.getBindAddress()), node.getPort());
+    return InetSocketAddress.createUnresolved(substitutor.substitute(node.getBindAddress().orDefault()), node.getPort().orDefault());
   }
 
   @Override
@@ -61,7 +61,7 @@ class DynamicConfigServerConfiguration implements ServerConfiguration {
     // this.node is the node informaiton that was initially used to build this ServerConfiguration
     // it can be the same node we run into but it can also be another node of the stripe
     int groupPort = groupPortMapper.getPeerGroupPort(this.node, currentNode);
-    return InetSocketAddress.createUnresolved(substitutor.substitute(this.node.getGroupBindAddress()), groupPort);
+    return InetSocketAddress.createUnresolved(substitutor.substitute(this.node.getGroupBindAddress().orDefault()), groupPort);
   }
 
   @Override
@@ -79,13 +79,13 @@ class DynamicConfigServerConfiguration implements ServerConfiguration {
 
   @Override
   public int getClientReconnectWindow() {
-    return nodeContextSupplier.get().getCluster().getClientReconnectWindow().getExactQuantity(TimeUnit.SECONDS).intValueExact();
+    return nodeContextSupplier.get().getCluster().getClientReconnectWindow().orDefault().getExactQuantity(TimeUnit.SECONDS).intValueExact();
   }
 
   @Override
   public File getLogsLocation() {
     String sanitizedNodeName = node.getName().replace(":", "-"); // Sanitize for path
-    return unConfigured ? null : substitutor.substitute(pathResolver.resolve(node.getLogDir().resolve(sanitizedNodeName))).toFile();
+    return unConfigured ? null : substitutor.substitute(pathResolver.resolve(node.getLogDir().orDefault().resolve(sanitizedNodeName))).toFile();
   }
 
   @Override
