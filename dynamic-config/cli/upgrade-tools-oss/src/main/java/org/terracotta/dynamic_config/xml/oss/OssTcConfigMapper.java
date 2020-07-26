@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.xml.oss;
 import org.terracotta.config.Server;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
-import org.terracotta.data.config.DataRootMapping;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.conversion.AbstractTcConfigMapper;
@@ -33,6 +32,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.Collections.emptyMap;
 
 /**
  * @author Mathieu Carbou
@@ -64,15 +65,15 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
           .setGroupPort(server.getTsaGroupPort().getValue())
           .setGroupBindAddress(commonMapper.moreRestrictive(server.getTsaGroupPort().getBind(), server.getBind()))
           .setLogDir(Paths.get(server.getLogs()))
-          .putTcProperties(commonMapper.toProperties(tcConfig))
-          .setMetadataDir(commonMapper.toDataDirs(xmlPlugins, DataRootMapping::isUseForPlatform).values().stream().findFirst().orElse(null))
-          .putDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true))
+          .setTcProperties(commonMapper.toProperties(tcConfig).orElse(emptyMap()))
+          .setMetadataDir(commonMapper.toMetadataDir(xmlPlugins).map(Map.Entry::getValue).orElse(null))
+          .setDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true).orElse(emptyMap()))
           .setBackupDir(null)
       ));
       return new Cluster(new Stripe(nodes))
-          .setClientLeaseDuration(commonMapper.toClientLeaseDuration(xmlPlugins))
-          .putOffheapResources(commonMapper.toOffheapResources(xmlPlugins))
-          .setClientReconnectWindow(commonMapper.toClientReconnectWindow(tcConfig))
+          .setClientLeaseDuration(commonMapper.toClientLeaseDuration(xmlPlugins).orElse(null))
+          .setOffheapResources(commonMapper.toOffheapResources(xmlPlugins).orElse(emptyMap()))
+          .setClientReconnectWindow(commonMapper.toClientReconnectWindow(tcConfig).orElse(null))
           .setFailoverPriority(commonMapper.toFailoverPriority(tcConfig.getFailoverPriority()));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
