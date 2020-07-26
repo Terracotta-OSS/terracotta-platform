@@ -134,7 +134,7 @@ public class ConfigurationTest {
       assertThat(rawInput, configuration, is(equalTo(Configuration.valueOf(rawInput))));
 
       // verify parsed attributes
-      assertThat(rawInput, configuration.getScope(), is(equalTo(CLUSTER)));
+      assertThat(rawInput, configuration.getLevel(), is(equalTo(CLUSTER)));
       assertThat(rawInput, configuration.getSetting(), is(setting));
       assertThat(rawInput, configuration.getKey(), is(nullValue()));
 
@@ -202,7 +202,7 @@ public class ConfigurationTest {
       assertThat(rawInput, configuration, is(equalTo(Configuration.valueOf(rawInput))));
 
       // verify parsed attributes
-      assertThat(rawInput, configuration.getScope(), is(equalTo(STRIPE)));
+      assertThat(rawInput, configuration.getLevel(), is(equalTo(STRIPE)));
       assertThat(rawInput, configuration.getSetting(), is(setting));
       assertThat(rawInput, configuration.getKey(), is(nullValue()));
 
@@ -261,7 +261,7 @@ public class ConfigurationTest {
       assertThat(rawInput, configuration, is(equalTo(Configuration.valueOf(rawInput))));
 
       // verify parsed attributes
-      assertThat(rawInput, configuration.getScope(), is(equalTo(NODE)));
+      assertThat(rawInput, configuration.getLevel(), is(equalTo(NODE)));
       assertThat(rawInput, configuration.getSetting(), is(setting));
       assertThat(rawInput, configuration.getKey(), is(nullValue()));
 
@@ -944,7 +944,7 @@ public class ConfigurationTest {
   private void allowInput(String input, Setting setting, Scope scope, Integer stripeId, Integer nodeId, String key, String value) {
     Configuration configuration = Configuration.valueOf(input);
     assertThat(configuration.getSetting(), is(equalTo(setting)));
-    assertThat(configuration.getScope(), is(equalTo(scope)));
+    assertThat(configuration.getLevel(), is(equalTo(scope)));
     assertThat(configuration.getKey(), is(equalTo(key)));
     assertThat(configuration.getValue(), is(equalTo(value)));
     if (stripeId != null) {

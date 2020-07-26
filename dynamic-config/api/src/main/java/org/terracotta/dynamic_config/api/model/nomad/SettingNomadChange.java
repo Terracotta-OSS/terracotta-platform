@@ -201,7 +201,7 @@ public class SettingNomadChange extends FilteredNomadChange {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   private static Applicability toApplicability(Configuration configuration, Cluster cluster) {
-    switch (configuration.getScope()) {
+    switch (configuration.getLevel()) {
       case NODE:
         return Applicability.node(configuration.getStripeId(), cluster.getNode(configuration.getStripeId(), configuration.getNodeId()).get().getName());
       case STRIPE:
@@ -209,7 +209,7 @@ public class SettingNomadChange extends FilteredNomadChange {
       case CLUSTER:
         return Applicability.cluster();
       default:
-        throw new AssertionError(configuration.getScope());
+        throw new AssertionError(configuration.getLevel());
     }
   }
 }

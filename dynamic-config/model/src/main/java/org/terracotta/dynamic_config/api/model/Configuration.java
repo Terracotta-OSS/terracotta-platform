@@ -222,16 +222,16 @@ public class Configuration {
 
   private final String rawInput;
   private final Setting setting;
-  private final Scope scope;
+  private final Scope level;
   private final Integer stripeId;
   private final Integer nodeId;
   private final String key;
   private final String value;
 
-  private Configuration(String rawInput, Setting setting, Scope scope, Integer stripeId, Integer nodeId, String key, String value) {
+  private Configuration(String rawInput, Setting setting, Scope level, Integer stripeId, Integer nodeId, String key, String value) {
     this.rawInput = requireNonNull(rawInput);
     this.setting = requireNonNull(setting);
-    this.scope = requireNonNull(scope);
+    this.level = requireNonNull(level);
     this.stripeId = stripeId;
     this.nodeId = nodeId;
     this.key = key;
@@ -241,8 +241,8 @@ public class Configuration {
     preValidate(value);
   }
 
-  public Scope getScope() {
-    return scope;
+  public Scope getLevel() {
+    return level;
   }
 
   public int getStripeId() {
@@ -275,8 +275,8 @@ public class Configuration {
     if (nodeId != null && nodeId <= 0) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected node ID to be greater than 0");
     }
-    if (!setting.allows(scope)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' does not allow any operation at " + scope + " level");
+    if (!setting.allows(level)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' does not allow any operation at " + level + " level");
     }
     if (rawValue == null) {
       // equivalent to a get or unset command - we do not know yet, so we cannot pre-validate
@@ -289,7 +289,7 @@ public class Configuration {
       // - cluster-name= (in config file)
       // - unset backup-dir=
       // - set backup-dir=
-      if (setting.mustBePresent() || !setting.canBeCleared(scope)) {
+      if (setting.mustBePresent() || !setting.canBeCleared(level)) {
         // cannot unset a required value
         throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' requires a value");
       }
@@ -297,8 +297,8 @@ public class Configuration {
       // equivalent to a set because we have a value
       if (!setting.allows(SET) && !setting.allows(IMPORT)) {
         throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set");
-      } else if (!setting.allows(SET, scope) && !setting.allows(IMPORT, scope)) {
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set at " + scope + " level");
+      } else if (!setting.allows(SET, level) && !setting.allows(IMPORT, level)) {
+        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set at " + level + " level");
       }
       // check the value if we have one
       if (!Substitutor.containsSubstitutionParams(value)) {
@@ -321,8 +321,8 @@ public class Configuration {
     if (!setting.allows(clusterState, operation)) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " when " + clusterState);
     }
-    if (!setting.allows(clusterState, operation, scope)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " at " + scope + " level when " + clusterState);
+    if (!setting.allows(clusterState, operation, level)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " at " + level + " level when " + clusterState);
     }
     switch (operation) {
       case GET:
@@ -365,7 +365,7 @@ public class Configuration {
       // not the same setting
       return false;
     }
-    if (scope != other.scope) {
+    if (level != other.level) {
       // same setting, but different scopes
       return false;
     }
@@ -463,7 +463,7 @@ public class Configuration {
 
   private Collection<NodeContext> getTargets(Cluster cluster) {
     Collection<NodeContext> targetContexts;
-    switch (scope) {
+    switch (level) {
       case CLUSTER:
         targetContexts = cluster.nodeContexts().collect(toList());
         break;
@@ -482,7 +482,7 @@ public class Configuration {
             .collect(toList()); ;
         break;
       default:
-        throw new AssertionError(scope);
+        throw new AssertionError(level);
     }
     return targetContexts;
   }
