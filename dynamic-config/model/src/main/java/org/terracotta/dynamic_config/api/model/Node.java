@@ -47,9 +47,9 @@ public class Node implements Cloneable, PropertyHolder {
   private Path backupDir;
   private Path securityDir;
   private Path securityAuditLogDir;
-  private final Map<String, String> tcProperties = new ConcurrentHashMap<>();
-  private final Map<String, String> loggerOverrides = new ConcurrentHashMap<>();
-  private final Map<String, Path> dataDirs = new ConcurrentHashMap<>();
+  private Map<String, String> tcProperties = new ConcurrentHashMap<>();
+  private Map<String, String> loggerOverrides = new ConcurrentHashMap<>();
+  private Map<String, Path> dataDirs = new ConcurrentHashMap<>();
 
   @Override
   public Scope getScope() {
@@ -116,43 +116,8 @@ public class Node implements Cloneable, PropertyHolder {
     return Collections.unmodifiableMap(loggerOverrides);
   }
 
-  public Node setLoggerOverrides(Map<String, String> loggerOverrides) {
-    this.loggerOverrides.putAll(loggerOverrides);
-    return this;
-  }
-
-  public Node setLoggerOverride(String logger, String level) {
-    this.loggerOverrides.put(logger, level);
-    return this;
-  }
-
-  public Node removeLoggerOverride(String logger) {
-    this.loggerOverrides.remove(logger);
-    return this;
-  }
-
-  public Node clearLoggerOverrides() {
-    loggerOverrides.clear();
-    return this;
-  }
-
   public Map<String, String> getTcProperties() {
     return tcProperties;
-  }
-
-  public Node setTcProperties(Map<String, String> tcProperties) {
-    this.tcProperties.putAll(tcProperties);
-    return this;
-  }
-
-  public Node setTcProperty(String key, String value) {
-    this.tcProperties.put(key, value);
-    return this;
-  }
-
-  public Node removeTcProperty(String key) {
-    this.tcProperties.remove(key);
-    return this;
   }
 
   public Node setName(String name) {
@@ -220,28 +185,78 @@ public class Node implements Cloneable, PropertyHolder {
     return this;
   }
 
+  public Node putLoggerOverride(String logger, String level) {
+    this.loggerOverrides.put(logger, level);
+    return this;
+  }
+
+  public Node putLoggerOverrides(Map<String, String> loggerOverrides) {
+    this.loggerOverrides.putAll(loggerOverrides);
+    return this;
+  }
+
+  public Node setLoggerOverrides(Map<String, String> loggerOverrides) {
+    this.loggerOverrides = loggerOverrides == null ? null : new ConcurrentHashMap<>(loggerOverrides);
+    return this;
+  }
+
+  public Node removeLoggerOverride(String logger) {
+    this.loggerOverrides.remove(logger);
+    return this;
+  }
+
+  public Node clearLoggerOverrides() {
+    loggerOverrides.clear();
+    return this;
+  }
+
+  public Node putTcProperty(String key, String value) {
+    this.tcProperties.put(key, value);
+    return this;
+  }
+
+  public Node putTcProperties(Map<String, String> tcProperties) {
+    this.tcProperties.putAll(tcProperties);
+    return this;
+  }
+
+  public Node setTcProperties(Map<String, String> tcProperties) {
+    this.tcProperties = tcProperties == null ? null : new ConcurrentHashMap<>(tcProperties);
+    return this;
+  }
+
+  public Node removeTcProperty(String key) {
+    this.tcProperties.remove(key);
+    return this;
+  }
+
   public Node clearTcProperties() {
     this.tcProperties.clear();
     return this;
   }
 
-  public Node clearDataDirs() {
-    this.dataDirs.clear();
-    return this;
-  }
-
-  public Node setDataDir(String name, Path path) {
+  public Node putDataDir(String name, Path path) {
     this.dataDirs.put(name, path);
     return this;
   }
 
-  public Node setDataDirs(Map<String, Path> dataDirs) {
+  public Node putDataDirs(Map<String, Path> dataDirs) {
     this.dataDirs.putAll(dataDirs);
+    return this;
+  }
+
+  public Node setDataDirs(Map<String, Path> dataDirs) {
+    this.dataDirs = dataDirs == null ? null : new ConcurrentHashMap<>(dataDirs);
     return this;
   }
 
   public Node removeDataDir(String key) {
     dataDirs.remove(key);
+    return this;
+  }
+
+  public Node clearDataDirs() {
+    this.dataDirs.clear();
     return this;
   }
 

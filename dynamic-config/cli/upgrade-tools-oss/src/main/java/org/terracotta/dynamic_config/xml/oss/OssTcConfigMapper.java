@@ -64,14 +64,14 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
           .setGroupPort(server.getTsaGroupPort().getValue())
           .setGroupBindAddress(commonMapper.moreRestrictive(server.getTsaGroupPort().getBind(), server.getBind()))
           .setLogDir(Paths.get(server.getLogs()))
-          .setTcProperties(commonMapper.toProperties(tcConfig))
+          .putTcProperties(commonMapper.toProperties(tcConfig))
           .setMetadataDir(commonMapper.toDataDirs(xmlPlugins, DataRootMapping::isUseForPlatform).values().stream().findFirst().orElse(null))
-          .setDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true))
+          .putDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true))
           .setBackupDir(null)
       ));
       return new Cluster(new Stripe(nodes))
           .setClientLeaseDuration(commonMapper.toClientLeaseDuration(xmlPlugins))
-          .setOffheapResources(commonMapper.toOffheapResources(xmlPlugins))
+          .putOffheapResources(commonMapper.toOffheapResources(xmlPlugins))
           .setClientReconnectWindow(commonMapper.toClientReconnectWindow(tcConfig))
           .setFailoverPriority(commonMapper.toFailoverPriority(tcConfig.getFailoverPriority()));
     } catch (IOException e) {

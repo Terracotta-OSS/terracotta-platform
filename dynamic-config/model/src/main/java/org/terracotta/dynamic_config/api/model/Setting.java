@@ -352,10 +352,10 @@ public enum Setting {
           // tuple.t2 != null
           // complete reset of all entries
           node.clearTcProperties();
-          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setTcProperty(kv[0], kv[1]));
+          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.putTcProperty(kv[0], kv[1]));
         } else {
           // tuple.t1 != null && tuple.t2 != null
-          node.setTcProperty(tuple.t1, tuple.t2);
+          node.putTcProperty(tuple.t1, tuple.t2);
         }
       }),
       asList(
@@ -381,10 +381,10 @@ public enum Setting {
           // tuple.t2 != null
           // complete reset of all entries
           node.clearLoggerOverrides();
-          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.setLoggerOverride(kv[0], kv[1].toUpperCase(Locale.ROOT)));
+          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> node.putLoggerOverride(kv[0], kv[1].toUpperCase(Locale.ROOT)));
         } else {
           // tuple.t1 != null && tuple.t2 != null
-          node.setLoggerOverride(tuple.t1, tuple.t2.toUpperCase(Locale.ROOT));
+          node.putLoggerOverride(tuple.t1, tuple.t2.toUpperCase(Locale.ROOT));
         }
       }),
       asList(
@@ -552,10 +552,10 @@ public enum Setting {
           // tuple.t2 != null
           // complete reset of all entries
           cluster.clearOffheapResources();
-          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> cluster.setOffheapResource(kv[0], Measure.parse(kv[1], MemoryUnit.class)));
+          Stream.of(tuple.t2.split(",")).map(kv -> kv.split(":")).forEach(kv -> cluster.putOffheapResource(kv[0], Measure.parse(kv[1], MemoryUnit.class)));
         } else {
           // tuple.t1 != null && tuple.t2 != null
-          cluster.setOffheapResource(tuple.t1, Measure.parse(tuple.t2, MemoryUnit.class));
+          cluster.putOffheapResource(tuple.t1, Measure.parse(tuple.t2, MemoryUnit.class));
         }
       }),
       asList(
@@ -583,11 +583,11 @@ public enum Setting {
           node.clearDataDirs();
           Stream.of(tuple.t2.split(",")).forEach(kv -> {
             int firstColon = kv.indexOf(":");
-            node.setDataDir(kv.substring(0, firstColon), Paths.get(kv.substring(firstColon + 1)));
+            node.putDataDir(kv.substring(0, firstColon), Paths.get(kv.substring(firstColon + 1)));
           });
         } else {
           // tuple.t1 != null && tuple.t2 != null
-          node.setDataDir(tuple.t1, Paths.get(tuple.t2));
+          node.putDataDir(tuple.t1, Paths.get(tuple.t2));
         }
       }),
       asList(

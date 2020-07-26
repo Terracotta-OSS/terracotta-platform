@@ -35,7 +35,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class StripeTest {
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9410)
-      .setDataDir("data", Paths.get("data"))
+      .putDataDir("data", Paths.get("data"))
       .setBackupDir(Paths.get("backup"))
       .setBindAddress("0.0.0.0")
       .setGroupBindAddress("0.0.0.0")
@@ -45,7 +45,7 @@ public class StripeTest {
       .setSecurityAuditLogDir(Paths.get("audit"));
 
   Node node2 = Testing.newTestNode("node2", "localhost", 9411)
-      .setDataDir("data", Paths.get("/data/cache2"));
+      .putDataDir("data", Paths.get("/data/cache2"));
 
   Stripe stripe = new Stripe(node1);
 

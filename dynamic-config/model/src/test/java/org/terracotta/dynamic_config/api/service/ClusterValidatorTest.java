@@ -125,8 +125,8 @@ public class ClusterValidatorTest {
   public void testDifferingDataDirectoryNames() {
     Node node1 = Testing.newTestNode("localhost1");
     Node node2 = Testing.newTestNode("localhost2");
-    node1.setDataDir("dir-1", Paths.get("data"));
-    node2.setDataDir("dir-2", Paths.get("data"));
+    node1.putDataDir("dir-1", Paths.get("data"));
+    node2.putDataDir("dir-2", Paths.get("data"));
 
     assertClusterValidationFails("Data directory names need to match across the cluster", Testing.newTestCluster(new Stripe(node1, node2)));
   }
@@ -168,7 +168,7 @@ public class ClusterValidatorTest {
     ).map(node -> node
         .setSecurityAuditLogDir(Paths.get("audit-" + random.nextInt()))
         .setSecurityDir(Paths.get("security-root" + random.nextInt()))
-        .setDataDir("dir-1", Paths.get("some-path" + random.nextInt()))
+        .putDataDir("dir-1", Paths.get("some-path" + random.nextInt()))
         .setBackupDir(Paths.get("backup-" + random.nextInt()))
         .setMetadataDir(Paths.get("metadata-" + random.nextInt()))
         .setLogDir(Paths.get("logs-" + random.nextInt()))
@@ -183,7 +183,7 @@ public class ClusterValidatorTest {
         .setSecurityAuthc("file")
         .setSecuritySslTls(true)
         .setSecurityWhitelist(false)
-        .setOffheapResource("main", 1L, GB)
+        .putOffheapResource("main", 1L, GB)
         .setFailoverPriority(consistency())
         .setClientReconnectWindow(100L, SECONDS)
         .setClientLeaseDuration(100L, SECONDS);

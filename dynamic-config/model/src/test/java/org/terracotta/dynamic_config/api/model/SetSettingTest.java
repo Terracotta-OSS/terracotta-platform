@@ -149,31 +149,31 @@ public class SetSettingTest {
 
   @Test
   public void test_setProperty_TC_PROPERTIES() {
-    Node node = Testing.newTestNode("localhost").setTcProperty("foo", "bar");
+    Node node = Testing.newTestNode("localhost").putTcProperty("foo", "bar");
     assertThat(node.getTcProperties().size(), is(equalTo(1)));
 
     TC_PROPERTIES.setProperty(node, null);
     assertThat(node.getTcProperties().size(), is(equalTo(0)));
 
-    node = Testing.newTestNode("localhost").setTcProperty("foo", "bar");
+    node = Testing.newTestNode("localhost").putTcProperty("foo", "bar");
     TC_PROPERTIES.setProperty(node, null, null);
     assertThat(node.getTcProperties().size(), is(equalTo(0)));
 
-    node = Testing.newTestNode("localhost").setTcProperty("main", "bar");
+    node = Testing.newTestNode("localhost").putTcProperty("main", "bar");
     TC_PROPERTIES.setProperty(node, "main", null);
     assertThat(node.getTcProperties().size(), is(equalTo(0)));
 
-    node = Testing.newTestNode("localhost").setTcProperty("main", "bar");
+    node = Testing.newTestNode("localhost").putTcProperty("main", "bar");
     TC_PROPERTIES.setProperty(node, "main", "baz");
     assertThat(node.getTcProperties().size(), is(equalTo(1)));
     assertThat(node.getTcProperties().get("main"), is(equalTo("baz")));
 
-    node = Testing.newTestNode("localhost").setTcProperty("main", "bar");
+    node = Testing.newTestNode("localhost").putTcProperty("main", "bar");
     TC_PROPERTIES.setProperty(node, null, "main:baz");
     assertThat(node.getTcProperties().size(), is(equalTo(1)));
     assertThat(node.getTcProperties().get("main"), is(equalTo("baz")));
 
-    node = Testing.newTestNode("localhost").setTcProperty("main", "bar");
+    node = Testing.newTestNode("localhost").putTcProperty("main", "bar");
     TC_PROPERTIES.setProperty(node, null, "main:baz1,second:baz1");
     assertThat(node.getTcProperties().size(), is(equalTo(2)));
     assertThat(node.getTcProperties().get("main"), is(equalTo("baz1")));
@@ -182,31 +182,31 @@ public class SetSettingTest {
 
   @Test
   public void test_setProperty_NODE_LOGGER_OVERRIDES() {
-    Node node = Testing.newTestNode("localhost").setLoggerOverride("com.foo", "TRACE");
+    Node node = Testing.newTestNode("localhost").putLoggerOverride("com.foo", "TRACE");
     assertThat(node.getLoggerOverrides().size(), is(equalTo(1)));
 
     NODE_LOGGER_OVERRIDES.setProperty(node, null);
     assertThat(node.getLoggerOverrides().size(), is(equalTo(0)));
 
-    node = Testing.newTestNode("localhost").setLoggerOverride("foo", "TRACE");
+    node = Testing.newTestNode("localhost").putLoggerOverride("foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, null, null);
     assertThat(node.getLoggerOverrides().size(), is(equalTo(0)));
 
-    node = Testing.newTestNode("localhost").setLoggerOverride("com.foo", "TRACE");
+    node = Testing.newTestNode("localhost").putLoggerOverride("com.foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, "com.foo", null);
     assertThat(node.getLoggerOverrides().size(), is(equalTo(0)));
 
-    node = Testing.newTestNode("localhost").setLoggerOverride("com.foo", "TRACE");
+    node = Testing.newTestNode("localhost").putLoggerOverride("com.foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, "com.foo", "INFO");
     assertThat(node.getLoggerOverrides().size(), is(equalTo(1)));
     assertThat(node.getLoggerOverrides().get("com.foo"), is("INFO"));
 
-    node = Testing.newTestNode("localhost").setLoggerOverride("com.foo", "TRACE");
+    node = Testing.newTestNode("localhost").putLoggerOverride("com.foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, null, "com.foo:INFO");
     assertThat(node.getLoggerOverrides().size(), is(equalTo(1)));
     assertThat(node.getLoggerOverrides().get("com.foo"), is("INFO"));
 
-    node = Testing.newTestNode("localhost").setLoggerOverride("com.foo", "TRACE");
+    node = Testing.newTestNode("localhost").putLoggerOverride("com.foo", "TRACE");
     NODE_LOGGER_OVERRIDES.setProperty(node, null, "com.foo:INFO,com.bar:WARN");
     assertThat(node.getLoggerOverrides().size(), is(equalTo(2)));
     assertThat(node.getLoggerOverrides().get("com.foo"), is("INFO"));
