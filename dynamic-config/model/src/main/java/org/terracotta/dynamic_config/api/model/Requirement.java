@@ -42,13 +42,12 @@ public enum Requirement {
 
   /**
    * A setting that must be eagerly resolved (placeholders) on server-side as soon as possible before any configuration parsing.
-   * Settings requering that are those used to identify nodes such as hostname and port.
+   * Settings requiring that are those used to identify nodes such as hostname and port.
    */
   RESOLVE_EAGERLY,
 
   /**
-   * A setting requiring a resolve is a setting that is needed and either we can use a default or the user has to set it.
-   * But at the end of the configuration parsing, the value MUST be present in the topology
+   * A setting that must be set by the user or which must have a default because teh presence of a value is required at runtime
    */
   PRESENCE,
 

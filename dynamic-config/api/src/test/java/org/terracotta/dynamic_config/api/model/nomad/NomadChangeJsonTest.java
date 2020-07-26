@@ -46,7 +46,7 @@ public class NomadChangeJsonTest {
 
   ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
 
-  private Cluster cluster = Testing.newTestCluster("myClusterName", new Stripe(Testing.newTestNode("foo", "localhost", 9410)))
+  private final Cluster cluster = Testing.newTestCluster("myClusterName", new Stripe(Testing.newTestNode("foo", "localhost", 9410)))
       .setClientReconnectWindow(60, TimeUnit.SECONDS)
       .setOffheapResource("foo", 1, MemoryUnit.GB);
 
