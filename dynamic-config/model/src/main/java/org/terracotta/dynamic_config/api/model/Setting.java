@@ -770,6 +770,10 @@ public enum Setting {
     return this.scope == scope;
   }
 
+  public Scope getScope() {
+    return scope;
+  }
+
   public void validate(String key, String value) {
     // do not validate if value is null and setting optional
     if (key == null && value == null && !mustBePresent()) {

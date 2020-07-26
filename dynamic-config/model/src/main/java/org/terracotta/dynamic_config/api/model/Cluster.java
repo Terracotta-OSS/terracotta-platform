@@ -389,6 +389,11 @@ public class Cluster implements Cloneable, PropertyHolder {
     return properties;
   }
 
+  @Override
+  public Stream<? extends PropertyHolder> descendants() {
+    return Stream.concat(stripes.stream(), stripes.stream().flatMap(Stripe::descendants));
+  }
+
   public Collection<String> getDataDirNames() {
     return getNodes().stream().flatMap(node -> node.getDataDirs().keySet().stream()).collect(toSet());
   }

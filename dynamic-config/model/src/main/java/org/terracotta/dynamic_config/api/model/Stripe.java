@@ -29,6 +29,7 @@ import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
@@ -164,6 +165,11 @@ public class Stripe implements Cloneable, PropertyHolder {
       props.stringPropertyNames().forEach(key -> properties.setProperty(prefix + key, props.getProperty(key)));
     }
     return properties;
+  }
+
+  @Override
+  public Stream<? extends PropertyHolder> descendants() {
+    return nodes.stream();
   }
 
   @Override
