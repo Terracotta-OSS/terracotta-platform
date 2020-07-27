@@ -714,10 +714,6 @@ public enum Setting {
     return requirements.contains(requirement);
   }
 
-  public boolean isRestartRequired() {
-    return requires(CLUSTER_RESTART) || requires(NODE_RESTART);
-  }
-
   /**
    * @return true if this setting supports some operations (get, set, unset, config) to be called with a scope passed as parameter.
    * Example: name is defined as scope NODE, but we could execute "get name"

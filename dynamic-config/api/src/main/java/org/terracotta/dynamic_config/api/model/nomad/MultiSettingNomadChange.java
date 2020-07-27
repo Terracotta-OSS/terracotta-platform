@@ -63,7 +63,7 @@ public class MultiSettingNomadChange implements DynamicConfigNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime() {
+  public boolean canApplyAtRuntime(String nodeName) {
     throw new UnsupportedOperationException();
   }
 
