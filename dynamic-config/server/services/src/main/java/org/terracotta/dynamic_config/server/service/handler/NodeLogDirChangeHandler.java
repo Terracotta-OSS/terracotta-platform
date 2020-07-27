@@ -42,11 +42,27 @@ public class NodeLogDirChangeHandler implements ConfigChangeHandler {
       throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
 
-    try {
-      Path substituted = substitute(Paths.get(logPath));
-      Files.createDirectories(substituted);
-    } catch (Exception e) {
-      throw new InvalidConfigChangeException(e.toString(), e);
+    Path substitutedLogPath = substitute(Paths.get(logPath));
+    if (!Files.exists(substitutedLogPath)) {
+      try {
+        Files.createDirectories(substitutedLogPath);
+      } catch (Exception e) {
+        throw new InvalidConfigChangeException(e.toString(), e);
+      }
+    } else {
+      if (!Files.isDirectory(substitutedLogPath)) {
+        throw new InvalidConfigChangeException(substitutedLogPath + " exists, but is not a directory");
+      }
+
+      if (!Files.isReadable(substitutedLogPath)) {
+        throw new InvalidConfigChangeException("Directory: " + substitutedLogPath + " doesn't have read permissions" +
+            " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
+      }
+
+      if (!Files.isWritable(substitutedLogPath)) {
+        throw new InvalidConfigChangeException("Directory: " + substitutedLogPath + " doesn't have write permissions" +
+            " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
+      }
     }
   }
 
