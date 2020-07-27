@@ -18,15 +18,18 @@ package org.terracotta.dynamic_config.api.model.nomad;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
 
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
+import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
+import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
 
 /**
- * Nomad change that supports any dynamic config change (see Cluster-tool.adoc)
+ * Nomad change that supports any dynamic config change
  *
  * @author Mathieu Carbou
  */
@@ -75,8 +78,11 @@ public class SettingNomadChange extends FilteredNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime() {
-    return !getSetting().isRestartRequired();
+  public boolean canApplyAtRuntime(String nodeName) {
+    Setting setting = getSetting();
+    boolean requiresClusterRestart = setting.requires(CLUSTER_RESTART);
+    boolean requiresThisNodeRestart = getApplicability().getScope() == Scope.NODE && getApplicability().getNodeName().equals(nodeName) && setting.requires(NODE_RESTART);
+    return !requiresClusterRestart && !requiresThisNodeRestart;
   }
 
   public String getName() {

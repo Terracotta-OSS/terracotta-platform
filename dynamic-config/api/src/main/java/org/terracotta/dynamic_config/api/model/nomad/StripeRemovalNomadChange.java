@@ -40,7 +40,7 @@ public class StripeRemovalNomadChange extends StripeNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime() {
+  public boolean canApplyAtRuntime(String nodeName) {
     return true;
   }
 

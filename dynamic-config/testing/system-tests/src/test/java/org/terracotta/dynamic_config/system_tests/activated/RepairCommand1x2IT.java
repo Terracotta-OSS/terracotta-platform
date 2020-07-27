@@ -169,7 +169,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
-        containsLinesStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic5.txt").toURI())).collect(toList())));
+        containsLinesStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic5.txt").toURI())).collect(toList())));
 
     assertThat(
         invokeConfigTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),

@@ -26,9 +26,9 @@ import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
 
 public class Applicability {
-  private Scope scope;
-  private String nodeName;
-  private Integer stripeId;
+  private final Scope scope;
+  private final String nodeName;
+  private final Integer stripeId;
 
   public static Applicability cluster() {
     return new Applicability(CLUSTER, null, null);

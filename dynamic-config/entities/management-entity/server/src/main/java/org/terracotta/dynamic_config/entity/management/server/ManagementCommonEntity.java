@@ -101,7 +101,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
       eventRegistration = dynamicConfigEventService.register(new DynamicConfigListenerAdapter() {
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
-          boolean restartRequired = !change.canApplyAtRuntime();
+          boolean restartRequired = !change.canApplyAtRuntime(monitoringService.getServerName());
           Map<String, String> data = new TreeMap<>();
           data.put("change", change.toString());
           data.put("result", topologyToConfig(updated));

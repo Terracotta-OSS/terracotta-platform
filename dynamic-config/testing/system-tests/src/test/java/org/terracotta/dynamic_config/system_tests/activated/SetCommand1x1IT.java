@@ -177,7 +177,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setFailover_Priority_Consistency() {
+  public void setFailoverPriority_Consistency() {
     assertThat(
         invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2"),
         containsOutput("restart of the cluster is required"));
@@ -188,10 +188,43 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
+  public void setClusterAndNodeRestartRequiringChangesInOneCommand() {
+    assertThat(
+        invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2", "-c", "log-dir=new-logs"),
+        allOf(containsOutput("restart of the cluster is required"), not(containsOutput("restart of nodes"))));
+
+    assertThat(
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority", "-c", "log-dir"),
+        allOf(containsOutput("failover-priority=consistency:2"), containsOutput("stripe.1.node.1.log-dir=new-logs")));
+  }
+
+  @Test
+  public void setClusterAndNoRestartRequiringChangesInOneCommand() {
+    assertThat(
+        invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2", "-c", "cluster-name=new-cluster"),
+        allOf(containsOutput("restart of the cluster is required"), not(containsOutput("restart of nodes"))));
+
+    assertThat(
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority", "-c", "cluster-name"),
+        allOf(containsOutput("failover-priority=consistency:2"), containsOutput("cluster-name=new-cluster")));
+  }
+
+  @Test
+  public void setNodeAndNoRestartRequiringChangesInOneCommand() {
+    assertThat(
+        invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=new-logs", "-c", "cluster-name=new-cluster"),
+        allOf(not(containsOutput("restart of the cluster is required")), containsOutput("restart of nodes")));
+
+    assertThat(
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "cluster-name", "-c", "log-dir"),
+        allOf(containsOutput("cluster-name=new-cluster"), containsOutput("stripe.1.node.1.log-dir=new-logs")));
+  }
+
+  @Test
   public void setNodeLogDir() {
     assertThat(
         invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=logs/stripe1"),
-        containsOutput("restart of the cluster is required"));
+        containsOutput("restart of nodes: localhost:" + getNodePort() + " is required"));
 
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),

@@ -43,7 +43,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     waitForDiagnostic(1, 1);
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
-        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic1.txt").toURI())).collect(toList())));
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic1.txt").toURI())).collect(toList())));
   }
 
   @Test
@@ -53,7 +53,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     activateCluster();
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
-        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic2.txt").toURI())).collect(toList())));
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic2.txt").toURI())).collect(toList())));
   }
 
   @Test
@@ -70,7 +70,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     startNode(1, 1, "--repair-mode", "--name", nodeName, "-r", repo);
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
-        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic3.txt").toURI())).collect(toList())));
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic3.txt").toURI())).collect(toList())));
   }
 
   @Test
@@ -88,11 +88,11 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
 
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
-        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic4.txt").toURI())).collect(toList())));
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic4.txt").toURI())).collect(toList())));
   }
 
   @Test
-  public void test_diagnostic_on_cluster_after_setting_change_requiring_restart() throws Exception {
+  public void testChangeRequiringClusterRestart_followedByClusterRestart() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
     startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/node-1-1");
     startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--config-dir", "config/stripe1/node-1-2");
@@ -104,10 +104,10 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     // Diagnostic result from all nodes must be the same
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
-        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic6-1.txt").toURI())).collect(toList())));
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic6-1.txt").toURI())).collect(toList())));
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
-        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic6-1.txt").toURI())).collect(toList())));
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic6-1.txt").toURI())).collect(toList())));
 
     // The restart status should be cleared upon restart
     stopNode(1, 1);
@@ -120,9 +120,28 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     // Diagnostic result from all nodes must be the same
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
-        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic6-2.txt").toURI())).collect(toList())));
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic6-2.txt").toURI())).collect(toList())));
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
-        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic6-2.txt").toURI())).collect(toList())));
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic6-2.txt").toURI())).collect(toList())));
+  }
+
+  @Test
+  public void testChangeRequiringOneNodeRestart() throws Exception {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/node-1-1");
+    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--config-dir", "config/stripe1/node-1-2");
+    waitForActive(1);
+    waitForPassives(1);
+
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.log-dir=new-logs");
+
+    // Diagnostic result from all nodes must be the same
+    assertThat(
+        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic7.txt").toURI())).collect(toList())));
+    assertThat(
+        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
+        containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic7.txt").toURI())).collect(toList())));
   }
 }

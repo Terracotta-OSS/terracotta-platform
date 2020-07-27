@@ -31,5 +31,5 @@ public interface DynamicConfigNomadChange extends NomadChange {
    */
   Cluster apply(Cluster original);
 
-  boolean canApplyAtRuntime();
+  boolean canApplyAtRuntime(String nodeName);
 }

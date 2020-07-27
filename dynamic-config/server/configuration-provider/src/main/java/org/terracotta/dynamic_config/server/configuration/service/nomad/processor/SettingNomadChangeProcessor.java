@@ -69,10 +69,11 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   @Override
   public void apply(SettingNomadChange change) throws NomadException {
     try {
-      if (change.canApplyAtRuntime()) {
+      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
+      if (change.canApplyAtRuntime(runtimeNodeContext.getNodeName())) {
         LOGGER.debug("Applying change at runtime: {}", change.getSummary());
 
-        Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
+        Cluster runtime = runtimeNodeContext.getCluster();
         Configuration configuration = change.toConfiguration(runtime);
 
         // calling handler to apply at runtime

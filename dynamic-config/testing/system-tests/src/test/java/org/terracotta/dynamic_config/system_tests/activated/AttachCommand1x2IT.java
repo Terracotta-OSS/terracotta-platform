@@ -68,7 +68,9 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     activateCluster();
 
     // do a change requiring a restart
-    assertThat(invokeConfigTool("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"), containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
+    assertThat(
+        invokeConfigTool("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"),
+        containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
 
     // start a second node
     startNode(1, 2);

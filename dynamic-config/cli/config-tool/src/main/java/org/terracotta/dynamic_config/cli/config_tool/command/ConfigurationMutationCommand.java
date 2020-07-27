@@ -35,6 +35,8 @@ import java.util.TreeSet;
 import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Requirement.ALL_NODES_ONLINE;
+import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
+import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 
 public abstract class ConfigurationMutationCommand extends ConfigurationCommand {
@@ -53,6 +55,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
     // will keep track of the targeted nodes for the changes of a node setting
     Collection<InetSocketAddress> missingTargetedNodes = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+    Collection<InetSocketAddress> nodesRequiringRestart = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
 
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
@@ -63,6 +66,9 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       // Note: this validation is only for node-specific settings
       if (c.getSetting().isScope(NODE)) {
         targeted.stream().map(nodeContext -> nodeContext.getNode().getAddress()).filter(originalCluster::containsNode).forEach(missingTargetedNodes::add);
+        if (c.getSetting().requires(NODE_RESTART)) {
+          targeted.stream().map(nodeContext -> nodeContext.getNode().getAddress()).filter(originalCluster::containsNode).forEach(nodesRequiringRestart::add);
+        }
       }
     }
     new ClusterValidator(updatedCluster).validate();
@@ -105,11 +111,16 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       }
 
       // do we need to restart to apply the changes ?
-      if (mustBeRestarted(node)) {
+      if (changes.getChanges().stream().map(SettingNomadChange::getSetting).anyMatch(setting -> setting.requires(CLUSTER_RESTART))) {
         logger.warn(lineSeparator() +
             "====================================================================" + lineSeparator() +
             "IMPORTANT: A restart of the cluster is required to apply the changes" + lineSeparator() +
-            "====================================================================" + lineSeparator() + lineSeparator());
+            "====================================================================" + lineSeparator());
+      } else if (!nodesRequiringRestart.isEmpty()){
+        logger.warn(lineSeparator() +
+            "=======================================================================================" + lineSeparator() +
+            "IMPORTANT: A restart of nodes: " + toString(nodesRequiringRestart) + " is required to apply the changes" + lineSeparator() +
+            "=======================================================================================" + lineSeparator());
       }
 
     } else {
