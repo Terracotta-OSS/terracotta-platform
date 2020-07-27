@@ -85,7 +85,8 @@ public class DetachCommand extends TopologyCommand {
               "==============================================================================" + lineSeparator() +
               "WARNING: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes " +
               "(" + nodeCount + ") in this stripe " + lineSeparator() +
-              "is an odd number, but will become even with the removal of node " + source + lineSeparator() +
+              "is an odd number, but will become even with the removal of node " + source + lineSeparator() + ". " +
+              "An even-numbered configuration is more likely to experience split-brain situations." +
               "==============================================================================" + lineSeparator());
         }
       }

@@ -212,7 +212,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     angela.tsa().browse(getNode(1, 1), ".").upload(toUpload);
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=dummy.txt"),
-        exceptionMatcher("FileAlreadyExistsException"));
+        exceptionMatcher("dummy.txt exists, but is not a directory"));
   }
 
   @Test
