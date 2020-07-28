@@ -29,7 +29,6 @@ import org.terracotta.nomad.server.NomadException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
-import java.net.InetSocketAddress;
 import java.util.stream.Stream;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
@@ -79,7 +78,7 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
           PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{InetSocketAddress.createUnresolved(change.getNode().getHostname(), change.getNode().getGroupPort()).toString()},
+          new Object[]{change.getNode().getInternalAddress().toString()},
           new String[]{String.class.getName()}
       );
 
