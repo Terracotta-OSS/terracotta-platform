@@ -85,14 +85,23 @@ public class NomadServerManager {
   }
 
   public UpgradableNomadServer<NodeContext> getNomadServer() {
+    if (nomadServer == null) {
+      throw new AssertionError("Not initialized");
+    }
     return nomadServer;
   }
 
   public DynamicConfigServiceImpl getDynamicConfigService() {
+    if (dynamicConfigService == null) {
+      throw new AssertionError("Not initialized");
+    }
     return dynamicConfigService;
   }
 
   public NomadConfigurationManager getConfigurationManager() {
+    if (configurationManager == null) {
+      throw new AssertionError("Not initialized");
+    }
     return configurationManager;
   }
 
