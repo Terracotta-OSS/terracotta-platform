@@ -15,7 +15,10 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 
@@ -25,10 +28,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.lang.System.lineSeparator;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
@@ -40,6 +45,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST
  * This class will validate the complete cluster object (inter-field checks and dependency checks).
  */
 public class ClusterValidator {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClusterValidator.class);
   private final Cluster cluster;
 
   public ClusterValidator(Cluster cluster) {
@@ -118,8 +124,23 @@ public class ClusterValidator {
   }
 
   private void validateFailoverSetting() {
-    if (cluster.getFailoverPriority() == null) {
+    FailoverPriority failoverPriority = cluster.getFailoverPriority();
+    if (failoverPriority == null) {
       throw new MalformedClusterException(Setting.FAILOVER_PRIORITY + " setting is missing");
+    }
+
+    if (failoverPriority.equals(consistency())) {
+      int voterCount = failoverPriority.getVoters();
+      int nodeCount = cluster.getNodes().size();
+      int sum = voterCount + nodeCount;
+      if (sum % 2 == 0) {
+        LOGGER.warn(lineSeparator() +
+            "========================================================================================" + lineSeparator() +
+            "The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes (" + nodeCount + ") " +
+            "in this stripe is an even number." + lineSeparator() +
+            "An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
+            "========================================================================================" + lineSeparator());
+      }
     }
   }
 
