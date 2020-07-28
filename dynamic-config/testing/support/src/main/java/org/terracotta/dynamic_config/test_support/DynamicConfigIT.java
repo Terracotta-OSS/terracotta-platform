@@ -32,7 +32,6 @@ import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
 import org.terracotta.angela.common.distribution.Distribution;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
-import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.angela.common.topology.Topology;
 import org.terracotta.common.struct.Measure;
@@ -67,12 +66,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.containsString;
@@ -94,6 +93,7 @@ import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
+import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
@@ -122,7 +122,7 @@ public class DynamicConfigIT {
   public DynamicConfigIT(Duration testTimeout) {
     this(testTimeout, Paths.get(System.getProperty("user.dir"), "target", "test-data"));
   }
-  
+
   public DynamicConfigIT(Duration testTimeout, Path parentTmpDir) {
     ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.timeout = testTimeout.toMillis();
@@ -140,18 +140,19 @@ public class DynamicConfigIT {
           @Override
           protected void before(Description description) {
             // upload tc logging config, but ONLY IF EXISTS !
-            URL tcLoggingConfig = this.getClass().getResource("/tc-logback.xml");
-            if (tcLoggingConfig != null) {
-              List<TerracottaServer> servers = angela.tsa().getTsaConfigurationContext().getTopology().getServers();
-              for (TerracottaServer s : servers) {
-                try {
-                  RemoteFolder folder = angela.tsa().browse(s, "");
-                  folder.upload("logback-test.xml", tcLoggingConfig);
-                } catch (IOException exp) {
-                  LOGGER.warn("unable to upload logback configuration", exp);
-                }
-              }
-            }
+            Stream.of(tuple2("tc-logback.xml", "logback-test.xml"), tuple2("logback-ext-test.xml", "logback-ext-test.xml"))
+                .map(loggingConfig -> tuple2(getClass().getResource("/" + loggingConfig.t1), loggingConfig.t2))
+                .filter(tuple -> tuple.t1 != null)
+                .forEach(loggingConfig -> {
+                  angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
+                    try {
+                      RemoteFolder folder = angela.tsa().browse(s, "");
+                      folder.upload(loggingConfig.t2, loggingConfig.t1);
+                    } catch (IOException exp) {
+                      LOGGER.warn("unable to upload logback configuration", exp);
+                    }
+                  });
+                });
             // wait for server startup if auto-activated
             if (clusterDef.autoStart() && clusterDef.autoActivate()) {
               for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
