@@ -107,18 +107,18 @@ public class AttachCommand extends TopologyCommand {
 
       Stripe destinationStripe = destinationCluster.getStripe(destination).get();
       FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
-      if (failoverPriority.equals(consistency()) && destinationClusterActivated) {
+      if (failoverPriority.equals(consistency())) {
         int voterCount = failoverPriority.getVoters();
         int nodeCount = destinationStripe.getNodes().size();
         int sum = voterCount + nodeCount;
-        if (sum > 1 && sum % 2 != 0) {
+        if (sum % 2 != 0) {
           logger.warn(lineSeparator() +
-              "==============================================================================" + lineSeparator() +
-              "WARNING: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes " +
+              "===================================================================================" + lineSeparator() +
+              "IMPORTANT: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes " +
               "(" + nodeCount + ") in this stripe " + lineSeparator() +
-              "is an odd number, but will become even with the addition of node " + source + lineSeparator() + ". " +
-              "An even-numbered configuration is more likely to experience split-brain situations." +
-              "==============================================================================" + lineSeparator());
+              "is an odd number, which will become even with the addition of node " + source + "." +  lineSeparator() +
+              "An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
+              "===================================================================================" + lineSeparator());
         }
       }
     }
