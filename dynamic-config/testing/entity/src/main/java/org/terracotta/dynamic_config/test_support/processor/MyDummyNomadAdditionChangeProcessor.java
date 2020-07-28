@@ -30,6 +30,7 @@ import org.terracotta.nomad.server.NomadException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
+import java.net.InetSocketAddress;
 import java.util.stream.Stream;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
@@ -56,11 +57,8 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
 
   @Override
   public void validate(NodeContext baseConfig, NodeAdditionNomadChange change) throws NomadException {
-    if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(attachStatusKey)) {
-      String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(attachStatusKey);
-      if (failAtPrepare.equals(value)) {
-        throw new NomadException("Invalid addition fail at prepare");
-      }
+    if (failAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(attachStatusKey))) {
+      throw new NomadException("Invalid addition fail at prepare");
     }
 
     LOGGER.info("Validating change: {}", change.getSummary());
@@ -76,11 +74,8 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
     }
 
     // cause failure when in prepare phase
-    if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
-      String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
-      if (killAtPrepare.equals(value)) {
-        platformService.stopPlatform();
-      }
+    if (killAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey))) {
+      platformService.stopPlatform();
     }
   }
 
@@ -95,17 +90,18 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
       LOGGER.info("Adding node: {} to stripe ID: {}", change.getNodeAddress(), change.getStripeId());
 
       // cause failover when in commit phase
-      if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
-        String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
-        if (killAtCommit.equals(value)) {
-          platformService.stopPlatform();
-        }
+      if (killAtCommit.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey))) {
+        platformService.stopPlatform();
       }
 
+      LOGGER.info("Adding node: {} to stripe ID: {}", change.getNode().getInternalAddress(), change.getStripeId());
+
+      InetSocketAddress addr = change.getNode().getInternalAddress();
+      LOGGER.debug("Calling mBean {}#{}({}))", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME, addr);
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
           PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{change.getNodeAddress().toString()},
+          new Object[]{addr.toString()},
           new String[]{String.class.getName()}
       );
 
