@@ -22,7 +22,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
@@ -32,11 +32,11 @@ public class StripeRemovalNomadChangeProcessor implements NomadChangeProcessor<S
   private static final Logger LOGGER = LoggerFactory.getLogger(StripeRemovalNomadChangeProcessor.class);
 
   private final TopologyService topologyService;
-  private final DynamicConfigListener listener;
+  private final DynamicConfigEventFiring dynamicConfigEventFiring;
 
-  public StripeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigListener listener) {
+  public StripeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
     this.topologyService = requireNonNull(topologyService);
-    this.listener = requireNonNull(listener);
+    this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
   }
 
   @Override
@@ -62,7 +62,7 @@ public class StripeRemovalNomadChangeProcessor implements NomadChangeProcessor<S
 
     try {
       LOGGER.info("Removing stripe: {} from cluster: {}", change.getStripe().toShapeString(), change.getCluster().toShapeString());
-      listener.onStripeRemoval(change.getStripe());
+      dynamicConfigEventFiring.onStripeRemoval(change.getStripe());
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

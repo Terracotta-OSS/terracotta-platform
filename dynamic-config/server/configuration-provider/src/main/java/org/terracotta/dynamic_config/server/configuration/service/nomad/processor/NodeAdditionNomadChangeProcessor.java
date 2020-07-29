@@ -22,7 +22,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
@@ -43,12 +43,12 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
   private static final String PLATFORM_MBEAN_OPERATION_NAME = "addPassive";
 
   private final TopologyService topologyService;
-  private final DynamicConfigListener listener;
+  private final DynamicConfigEventFiring dynamicConfigEventFiring;
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
-  public NodeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigListener listener) {
+  public NodeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
     this.topologyService = requireNonNull(topologyService);
-    this.listener = requireNonNull(listener);
+    this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
   }
 
   @Override
@@ -85,7 +85,7 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
           new String[]{String.class.getName()}
       );
 
-      listener.onNodeAddition(change.getStripeId(), change.getNode());
+      dynamicConfigEventFiring.onNodeAddition(change.getStripeId(), change.getNode());
     } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

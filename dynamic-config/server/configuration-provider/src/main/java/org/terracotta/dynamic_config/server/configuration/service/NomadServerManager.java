@@ -24,10 +24,12 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
 import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
@@ -67,13 +69,15 @@ public class NomadServerManager {
   private final IParameterSubstitutor parameterSubstitutor;
   private final ConfigChangeHandlerManager configChangeHandlerManager;
   private final LicenseService licenseService;
-  private final DynamicConfigListener dynamicConfigListener;
   private final DefaultNomadRoutingChangeProcessor router = new DefaultNomadRoutingChangeProcessor();
   private final NomadPermissionChangeProcessorImpl nomadPermissionChangeProcessor = new NomadPermissionChangeProcessorImpl();
 
   private volatile UpgradableNomadServer<NodeContext> nomadServer;
   private volatile NomadConfigurationManager configurationManager;
-  private volatile DynamicConfigServiceImpl dynamicConfigService;
+  private volatile DynamicConfigService dynamicConfigService;
+  private volatile TopologyService topologyService;
+  private volatile DynamicConfigEventService eventRegistrationService;
+  private volatile DynamicConfigEventFiring eventFiringService;
 
   public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseService licenseService, ObjectMapperFactory objectMapperFactory) {
     this.objectMapperFactory = requireNonNull(objectMapperFactory);
@@ -81,7 +85,6 @@ public class NomadServerManager {
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.configChangeHandlerManager = requireNonNull(configChangeHandlerManager);
     this.licenseService = requireNonNull(licenseService);
-    this.dynamicConfigListener = new DynamicConfigListenerAdapter(this::getDynamicConfigService);
   }
 
   public UpgradableNomadServer<NodeContext> getNomadServer() {
@@ -91,11 +94,25 @@ public class NomadServerManager {
     return nomadServer;
   }
 
-  public DynamicConfigServiceImpl getDynamicConfigService() {
+  public DynamicConfigService getDynamicConfigService() {
     if (dynamicConfigService == null) {
       throw new AssertionError("Not initialized");
     }
     return dynamicConfigService;
+  }
+
+  public TopologyService getTopologyService() {
+    if (topologyService == null) {
+      throw new AssertionError("Not initialized");
+    }
+    return topologyService;
+  }
+
+  public DynamicConfigEventService getEventRegistrationService() {
+    if (eventRegistrationService == null) {
+      throw new AssertionError("Not initialized");
+    }
+    return eventRegistrationService;
   }
 
   public NomadConfigurationManager getConfigurationManager() {
@@ -105,16 +122,19 @@ public class NomadServerManager {
     return configurationManager;
   }
 
+  public DynamicConfigEventFiring getEventFiringService() {
+    if (eventFiringService == null) {
+      throw new AssertionError("Not initialized");
+    }
+    return eventFiringService;
+  }
+
   public NomadRoutingChangeProcessor getNomadRoutingChangeProcessor() {
     return router;
   }
 
   public NomadPermissionChangeProcessor getNomadPermissionChangeProcessor() {
     return nomadPermissionChangeProcessor;
-  }
-
-  public DynamicConfigListener getDynamicConfigListener() {
-    return dynamicConfigListener;
   }
 
   public void init(Path configPath, String nodeName, NodeContext alternate) throws UncheckedNomadException {
@@ -140,19 +160,31 @@ public class NomadServerManager {
     this.configurationManager = new NomadConfigurationManager(configPath, parameterSubstitutor);
     this.configurationManager.createDirectories();
 
+    // the eventFiringService is used by callers to fire events
+    // events are received by the DC service, processed, and fired back to the listeners registered in the event service
+    DynamicConfigEventServiceImpl eventService = new DynamicConfigEventServiceImpl();
+    this.eventRegistrationService = eventService;
+    this.eventFiringService = eventService;
+
     try {
-      this.nomadServer = nomadServerFactory.createServer(configurationManager, null, nodeName.get(), dynamicConfigListener);
+      this.nomadServer = nomadServerFactory.createServer(getConfigurationManager(), null, nodeName.get(), getEventFiringService());
     } catch (SanskritException | NomadException e) {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
-    this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory);
+    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory);
+    //TODO: decorate like this: this.dynamicConfigService = new AuditLogDecorator(dynamicConfigService);
+    this.dynamicConfigService = dynamicConfigService;
+    this.topologyService = dynamicConfigService;
+    // DynamicConfigServiceImpl only needs to listen on one event
+    getEventRegistrationService().register(dynamicConfigService);
 
     LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(configPath.toString()));
   }
 
   public void downgradeForRead() {
-    nomadServer.setChangeApplicator(null);
+    getNomadServer().setChangeApplicator(null);
+    getNomadServer().setChangeApplicator(null);
   }
 
   /**
@@ -166,18 +198,18 @@ public class NomadServerManager {
     if (stripeId < 1) {
       throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
     }
-    if (nomadServer.getChangeApplicator() != null) {
+    if (getNomadServer().getChangeApplicator() != null) {
       throw new IllegalStateException("Nomad is already upgraded");
     }
 
-    router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, dynamicConfigListener));
-    router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
-    router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
+    router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(getTopologyService(), configChangeHandlerManager, getEventFiringService()));
+    router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
+    router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService()));
     router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
-    router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener, licenseService));
-    router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
+    router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService));
+    router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
 
-    nomadServer.setChangeApplicator(
+    getNomadServer().setChangeApplicator(
         new ConfigChangeApplicator(stripeId, nodeName,
             new MultiSettingNomadChangeProcessor(nomadPermissionChangeProcessor
                 .then(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)))));
@@ -193,7 +225,7 @@ public class NomadServerManager {
    */
   public Optional<NodeContext> getConfiguration() throws UncheckedNomadException {
     try {
-      return nomadServer.getCurrentCommittedChangeResult();
+      return getNomadServer().getCurrentCommittedChangeResult();
     } catch (NomadException e) {
       throw new UncheckedNomadException("Exception while making discover call to Nomad", e);
     }

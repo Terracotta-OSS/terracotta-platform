@@ -22,7 +22,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.server.NomadException;
@@ -47,13 +47,13 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
   private static final String failoverKey = "failoverDeletion";
   private static final String detachStatusKey = "detachStatus";
   private final TopologyService topologyService;
-  private final DynamicConfigListener listener;
+  private final DynamicConfigEventFiring dynamicConfigEventFiring;
   private final PlatformService platformService;
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
-  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigListener listener, PlatformService platformService) {
+  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, PlatformService platformService) {
     this.topologyService = requireNonNull(topologyService);
-    this.listener = requireNonNull(listener);
+    this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
     this.platformService = platformService;
   }
 
@@ -114,7 +114,7 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
           new String[]{String.class.getName()}
       );
 
-      listener.onNodeRemoval(change.getStripeId(), change.getNode());
+      dynamicConfigEventFiring.onNodeRemoval(change.getStripeId(), change.getNode());
     } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

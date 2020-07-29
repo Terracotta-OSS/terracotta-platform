@@ -20,7 +20,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.json.ObjectMapperFactory;
@@ -91,7 +90,7 @@ public class ConfigRepoProcessor {
     };
 
     try {
-      return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, nodeName, new DynamicConfigListenerAdapter());
+      return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, nodeName, null);
     } catch (SanskritException | NomadException e) {
       throw new RuntimeException(e);
     }

@@ -24,7 +24,7 @@ import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
@@ -42,12 +42,12 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
 
   private final TopologyService topologyService;
   private final ConfigChangeHandlerManager manager;
-  private final DynamicConfigListener listener;
+  private final DynamicConfigEventFiring dynamicConfigEventFiring;
 
-  public SettingNomadChangeProcessor(TopologyService topologyService, ConfigChangeHandlerManager manager, DynamicConfigListener listener) {
+  public SettingNomadChangeProcessor(TopologyService topologyService, ConfigChangeHandlerManager manager, DynamicConfigEventFiring dynamicConfigEventFiring) {
     this.topologyService = requireNonNull(topologyService);
     this.manager = requireNonNull(manager);
-    this.listener = requireNonNull(listener);
+    this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
   }
 
   @Override
@@ -80,7 +80,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
         getConfigChangeHandlerManager(change).apply(configuration);
 
         runtime = change.apply(runtime);
-        listener.onSettingChanged(change, runtime);
+        dynamicConfigEventFiring.onSettingChanged(change, runtime);
 
       } else {
         LOGGER.debug("Change will be applied after restart: {}", change.getSummary());
@@ -88,7 +88,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
         Cluster upcoming = topologyService.getUpcomingNodeContext().getCluster();
 
         upcoming = change.apply(upcoming);
-        listener.onSettingChanged(change, upcoming);
+        dynamicConfigEventFiring.onSettingChanged(change, upcoming);
       }
     } catch (RuntimeException e) {
       throw new NomadException("Error when applying setting change: '" + change.getSummary() + "': " + e.getMessage(), e);

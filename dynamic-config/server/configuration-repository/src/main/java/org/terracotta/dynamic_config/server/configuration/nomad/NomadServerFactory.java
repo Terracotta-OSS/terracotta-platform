@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ClusterConfigFilename;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageAdapter;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
@@ -60,7 +60,7 @@ public class NomadServerFactory {
   public UpgradableNomadServer<NodeContext> createServer(NomadConfigurationManager configurationManager,
                                                          ChangeApplicator<NodeContext> changeApplicator,
                                                          String nodeName,
-                                                         DynamicConfigListener listener) throws SanskritException, NomadException {
+                                                         DynamicConfigEventFiring dynamicConfigEventFiring) throws SanskritException, NomadException {
 
     FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(configurationManager.getChangesPath());
 
@@ -79,7 +79,9 @@ public class NomadServerFactory {
       @Override
       public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
         super.saveConfig(version, config);
-        listener.onNewConfigurationSaved(config, version);
+        if (dynamicConfigEventFiring != null) {
+          dynamicConfigEventFiring.onNewConfigurationSaved(config, version);
+        }
       }
     });
 
@@ -94,7 +96,9 @@ public class NomadServerFactory {
       @Override
       public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
         AcceptRejectResponse response = super.prepare(message);
-        listener.onNomadPrepare(message, response);
+        if (dynamicConfigEventFiring != null) {
+          dynamicConfigEventFiring.onNomadPrepare(message, response);
+        }
         return response;
       }
 
@@ -102,14 +106,18 @@ public class NomadServerFactory {
       public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
         AcceptRejectResponse response = super.commit(message);
         NomadChangeInfo changeInfo = getNomadChange(message.getChangeUuid()).get();
-        listener.onNomadCommit(message, response, changeInfo);
+        if (dynamicConfigEventFiring != null) {
+          dynamicConfigEventFiring.onNomadCommit(message, response, changeInfo);
+        }
         return response;
       }
 
       @Override
       public AcceptRejectResponse rollback(RollbackMessage message) throws NomadException {
         AcceptRejectResponse response = super.rollback(message);
-        listener.onNomadRollback(message, response);
+        if (dynamicConfigEventFiring != null) {
+          dynamicConfigEventFiring.onNomadRollback(message, response);
+        }
         return response;
       }
     });
