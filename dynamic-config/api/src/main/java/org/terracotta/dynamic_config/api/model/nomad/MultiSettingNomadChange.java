@@ -63,7 +63,7 @@ public class MultiSettingNomadChange implements DynamicConfigNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(String nodeName) {
+  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
     throw new UnsupportedOperationException();
   }
 
