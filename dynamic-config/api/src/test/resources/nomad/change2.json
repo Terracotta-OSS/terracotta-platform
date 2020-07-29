@@ -4,8 +4,8 @@
     {
       "type": "SettingNomadChange",
       "applicability": {
+        "level": "NODE",
         "nodeName": "node1",
-        "scope": "NODE",
         "stripeId": 1
       },
       "operation": "SET",
@@ -16,7 +16,7 @@
     {
       "type": "SettingNomadChange",
       "applicability": {
-        "scope": "CLUSTER"
+        "level": "CLUSTER"
       },
       "name": "bar",
       "operation": "SET",

@@ -56,7 +56,7 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<D
       return false;
     }
     Applicability applicability = ((FilteredNomadChange) change).getApplicability();
-    switch (applicability.getScope()) {
+    switch (applicability.getLevel()) {
       case CLUSTER:
         return true;
       case STRIPE:

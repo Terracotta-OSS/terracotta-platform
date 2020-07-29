@@ -175,7 +175,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public void onSettingChanged(SettingNomadChange change, Cluster updated) {
-    if (change.canApplyAtRuntime(runtimeNodeContext.getNodeName())) {
+    if (change.canApplyAtRuntime(runtimeNodeContext.getStripeId(), runtimeNodeContext.getNodeName())) {
       LOGGER.info("Configuration change: {} applied at runtime", change.getSummary());
     } else {
       LOGGER.info("Configuration change: {} will be applied after restart", change.getSummary());
@@ -245,7 +245,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
           upcomingNodeContext = upcomingNodeContext.withCluster(upcomingCluster).orElseGet(upcomingNodeContext::alone);
           // if the change can be applied at runtime, it was previously done in the config change handler.
           // so update also the runtime topology there
-          if (nomadChange.canApplyAtRuntime(upcomingNodeContext.getNodeName())) {
+          if (nomadChange.canApplyAtRuntime(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName())) {
             Cluster runtimeCluster = nomadChange.apply(runtimeNodeContext.getCluster());
             runtimeNodeContext = runtimeNodeContext.withCluster(runtimeCluster).orElseGet(runtimeNodeContext::alone);
           }

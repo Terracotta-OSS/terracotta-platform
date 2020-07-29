@@ -70,7 +70,7 @@ public class SettingNomadChangeProcessor implements NomadChangeProcessor<Setting
   public void apply(SettingNomadChange change) throws NomadException {
     try {
       NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
-      if (change.canApplyAtRuntime(runtimeNodeContext.getNodeName())) {
+      if (change.canApplyAtRuntime(runtimeNodeContext.getStripeId(), runtimeNodeContext.getNodeName())) {
         LOGGER.debug("Applying change at runtime: {}", change.getSummary());
 
         Cluster runtime = runtimeNodeContext.getCluster();

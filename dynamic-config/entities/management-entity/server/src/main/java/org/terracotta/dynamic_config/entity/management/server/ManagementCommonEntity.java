@@ -23,6 +23,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
@@ -57,12 +58,14 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
   final boolean active;
 
   private final DynamicConfigEventService dynamicConfigEventService;
+  private final TopologyService topologyService;
   private volatile EventRegistration eventRegistration;
 
-  public ManagementCommonEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService) {
+  public ManagementCommonEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService, TopologyService topologyService) {
     // these can be null if management is not wired or if dynamic config is not available
     this.managementRegistry = managementRegistry;
     this.dynamicConfigEventService = dynamicConfigEventService;
+    this.topologyService = topologyService;
     this.active = managementRegistry != null && dynamicConfigEventService != null;
   }
 
@@ -101,7 +104,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
       eventRegistration = dynamicConfigEventService.register(new DynamicConfigListener() {
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
-          boolean restartRequired = !change.canApplyAtRuntime(monitoringService.getServerName());
+          boolean restartRequired = !change.canApplyAtRuntime(topologyService.getRuntimeNodeContext().getStripeId(), topologyService.getRuntimeNodeContext().getNodeName());
           Map<String, String> data = new TreeMap<>();
           data.put("change", change.toString());
           data.put("result", topologyToConfig(updated));

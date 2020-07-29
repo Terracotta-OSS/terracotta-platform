@@ -1,8 +1,8 @@
 {
   "type": "SettingNomadChange",
   "applicability": {
+    "level": "NODE",
     "nodeName": "node1",
-    "scope": "NODE",
     "stripeId": 1
   },
   "operation": "SET",

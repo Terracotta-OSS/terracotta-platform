@@ -33,7 +33,7 @@
     }
   },
   "applicability": {
-    "scope": "CLUSTER"
+    "level": "CLUSTER"
   },
   "summary": "Activating cluster"
 }

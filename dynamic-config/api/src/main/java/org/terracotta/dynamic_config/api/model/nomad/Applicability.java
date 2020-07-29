@@ -26,7 +26,7 @@ import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
 
 public class Applicability {
-  private final Scope scope;
+  private final Scope level;
   private final String nodeName;
   private final Integer stripeId;
 
@@ -42,16 +42,16 @@ public class Applicability {
     return new Applicability(NODE, stripeId, requireNonNull(nodeName));
   }
 
-  protected Applicability(Scope scope,
+  protected Applicability(Scope level,
                           Integer stripeId,
                           String nodeName) {
-    this.scope = requireNonNull(scope);
+    this.level = requireNonNull(level);
     this.stripeId = stripeId;
     this.nodeName = nodeName;
   }
 
-  public Scope getScope() {
-    return scope;
+  public Scope getLevel() {
+    return level;
   }
 
   public String getNodeName() {
@@ -67,20 +67,20 @@ public class Applicability {
     if (this == o) return true;
     if (!(o instanceof Applicability)) return false;
     Applicability that = (Applicability) o;
-    return getScope() == that.getScope() &&
+    return getLevel() == that.getLevel() &&
         Objects.equals(getNodeName(), that.getNodeName()) &&
         Objects.equals(getStripeId(), that.getStripeId());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getScope(), getNodeName(), getStripeId());
+    return Objects.hash(getLevel(), getNodeName(), getStripeId());
   }
 
   @Override
   public String toString() {
     return "Applicability{" +
-        "scope=" + scope +
+        "scope=" + level +
         ", nodeName='" + nodeName + '\'' +
         ", stripeId='" + stripeId + '\'' +
         '}';
