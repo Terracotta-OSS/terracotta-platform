@@ -29,6 +29,7 @@ import org.terracotta.nomad.server.NomadException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
+import java.net.InetSocketAddress;
 import java.util.stream.Stream;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
@@ -73,12 +74,14 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
     }
 
     try {
-      LOGGER.info("Removing node: {} from stripe ID: {}", change.getNodeAddress(), change.getStripeId());
+      LOGGER.info("Removing node: {} from stripe ID: {}", change.getNode().getName(), change.getStripeId());
 
+      InetSocketAddress addr = change.getNode().getInternalAddress();
+      LOGGER.debug("Calling mBean {}#{}({}))", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME, addr);
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
           PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{change.getNode().getInternalAddress().toString()},
+          new Object[]{addr.toString()},
           new String[]{String.class.getName()}
       );
 

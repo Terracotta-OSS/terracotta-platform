@@ -60,12 +60,12 @@ public class TopologyServiceIT extends DynamicConfigIT {
           .setMetadataDir(Paths.get("metadata", "stripe1"))
           .setLogDir(Paths.get("logs", "stripe1", "node-1-1"))
           .setBackupDir(Paths.get("backup", "stripe1"))
-          .setDataDir("main", Paths.get("user-data", "main", "stripe1"))
+          .putDataDir("main", Paths.get("user-data", "main", "stripe1"))
       ))
           .setClientReconnectWindow(120, SECONDS)
           .setClientLeaseDuration(20, SECONDS)
           .setFailoverPriority(availability())
-          .setOffheapResource("main", 512, MB))));
+          .putOffheapResource("main", 512, MB))));
     });
   }
 

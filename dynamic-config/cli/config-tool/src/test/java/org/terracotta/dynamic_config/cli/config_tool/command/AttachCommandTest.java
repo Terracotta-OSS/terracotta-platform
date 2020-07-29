@@ -51,13 +51,13 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   Node node0 = Testing.newTestNode("node0", "localhost", 9410)
-      .setDataDir("cache", Paths.get("/data/cache1"));
+      .putDataDir("cache", Paths.get("/data/cache1"));
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9411)
-      .setDataDir("cache", Paths.get("/data/cache2"));
+      .putDataDir("cache", Paths.get("/data/cache2"));
 
   Node node2 = Testing.newTestNode("node2", "localhost", 9412)
-      .setDataDir("cache", Paths.get("/data/cache3"));
+      .putDataDir("cache", Paths.get("/data/cache3"));
 
   NodeContext nodeContext0 = new NodeContext(
       Testing.newTestCluster(new Stripe(node0)),

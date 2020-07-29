@@ -241,16 +241,16 @@ public class ClusterFactoryTest {
   public void test_toProperties() {
     Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe(
         Testing.newTestNode("node-1", "localhost")
-            .setDataDir("foo", Paths.get("%H/tc1/foo"))
-            .setDataDir("bar", Paths.get("%H/tc1/bar")),
+            .putDataDir("foo", Paths.get("%H/tc1/foo"))
+            .putDataDir("bar", Paths.get("%H/tc1/bar")),
         Testing.newTestNode("node-2", "localhost")
-            .setDataDir("foo", Paths.get("%H/tc2/foo"))
-            .setDataDir("bar", Paths.get("%H/tc2/bar"))
-            .setTcProperty("server.entity.processor.threads", "64")
-            .setTcProperty("topology.validate", "true")))
+            .putDataDir("foo", Paths.get("%H/tc2/foo"))
+            .putDataDir("bar", Paths.get("%H/tc2/bar"))
+            .putTcProperty("server.entity.processor.threads", "64")
+            .putTcProperty("topology.validate", "true")))
         .setFailoverPriority(consistency(2))
-        .setOffheapResource("foo", 1, MemoryUnit.GB)
-        .setOffheapResource("bar", 2, MemoryUnit.GB);
+        .putOffheapResource("foo", 1, MemoryUnit.GB)
+        .putOffheapResource("bar", 2, MemoryUnit.GB);
 
     Stream.of(
         tuple2(cluster.toProperties(false, true), "config_with_defaults.properties"),

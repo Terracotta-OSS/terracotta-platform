@@ -53,7 +53,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   private Boolean securitySslTls;
   private Boolean securityWhitelist;
   private FailoverPriority failoverPriority;
-  private final Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
+  private Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
 
   public Cluster(List<Stripe> stripes) {
     this.stripes = new CopyOnWriteArrayList<>(requireNonNull(stripes));
@@ -146,17 +146,22 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public Cluster setOffheapResource(String name, long quantity, MemoryUnit memoryUnit) {
-    return setOffheapResource(name, Measure.of(quantity, memoryUnit));
+  public Cluster putOffheapResource(String name, long quantity, MemoryUnit memoryUnit) {
+    return putOffheapResource(name, Measure.of(quantity, memoryUnit));
   }
 
-  public Cluster setOffheapResource(String name, Measure<MemoryUnit> measure) {
+  public Cluster putOffheapResource(String name, Measure<MemoryUnit> measure) {
     this.offheapResources.put(name, measure);
     return this;
   }
 
-  public Cluster setOffheapResources(Map<String, Measure<MemoryUnit>> offheapResources) {
+  public Cluster putOffheapResources(Map<String, Measure<MemoryUnit>> offheapResources) {
     this.offheapResources.putAll(offheapResources);
+    return this;
+  }
+
+  public Cluster setOffheapResources(Map<String, Measure<MemoryUnit>> offheapResources) {
+    this.offheapResources = offheapResources == null ? null : new ConcurrentHashMap<>(offheapResources);
     return this;
   }
 
@@ -382,6 +387,11 @@ public class Cluster implements Cloneable, PropertyHolder {
       props.stringPropertyNames().forEach(key -> properties.setProperty(prefix + key, props.getProperty(key)));
     }
     return properties;
+  }
+
+  @Override
+  public Stream<? extends PropertyHolder> descendants() {
+    return Stream.concat(stripes.stream(), stripes.stream().flatMap(Stripe::descendants));
   }
 
   public Collection<String> getDataDirNames() {

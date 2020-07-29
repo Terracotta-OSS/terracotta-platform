@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.text.PrettyPrintable;
 import com.tc.util.ManagedServiceLoader;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
@@ -42,11 +41,9 @@ import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.monitoring.PlatformService;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -285,48 +282,6 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   }
 
   private ServerConfiguration toServerConfiguration(Node node) {
-    NodeContext nodeContext = nodeContextSupplier.get();
-    return new ServerConfiguration() {
-      @Override
-      public InetSocketAddress getTsaPort() {
-        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getBindAddress()), node.getPort());
-      }
-
-      @Override
-      public InetSocketAddress getGroupPort() {
-        Node currentNode = nodeContext.getNode();
-        int groupPort = groupPortMapper.getPeerGroupPort(node, currentNode);
-        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getGroupBindAddress()), groupPort);
-      }
-
-      @Override
-      public String getHost() {
-        // substitutions not allowed on hostname since hostname-port is a key to identify a node
-        // any substitution is allowed but resolved eagerly when parsing the CLI
-        return node.getHostname();
-      }
-
-      @Override
-      public String getName() {
-        // substitutions not allowed on name since stripe ID / name is a key to identify a node
-        return node.getName();
-      }
-
-      @Override
-      public int getClientReconnectWindow() {
-        return nodeContext.getCluster().getClientReconnectWindow().getExactQuantity(TimeUnit.SECONDS).intValueExact();
-      }
-
-      @Override
-      public File getLogsLocation() {
-        String sanitizedNodeName = node.getName().replace(":", "-"); // Sanitize for path
-        return (unConfigured) ? null : substitutor.substitute(pathResolver.resolve(node.getLogDir().resolve(sanitizedNodeName))).toFile();
-      }
-
-      @Override
-      public String toString() {
-        return node.getName() + "@" + node.getAddress();
-      }
-    };
+    return new DynamicConfigServerConfiguration(node, nodeContextSupplier, substitutor, groupPortMapper, pathResolver, unConfigured);
   }
 }

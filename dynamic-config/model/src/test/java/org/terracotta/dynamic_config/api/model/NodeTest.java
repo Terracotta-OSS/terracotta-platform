@@ -37,14 +37,14 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class NodeTest {
 
   Node node = Testing.newTestNode("node1", "localhost", 9410)
-      .setDataDir("data", Paths.get("data"))
+      .putDataDir("data", Paths.get("data"))
       .setBackupDir(Paths.get("backup"))
       .setBindAddress("0.0.0.0")
       .setGroupBindAddress("0.0.0.0")
       .setGroupPort(9430)
       .setLogDir(Paths.get("log"))
       .setMetadataDir(Paths.get("metadata"))
-      .setTcProperty("key", "val")
+      .putTcProperty("key", "val")
       .setSecurityAuditLogDir(Paths.get("audit"))
       .setSecurityDir(Paths.get("sec"));
 
@@ -54,7 +54,7 @@ public class NodeTest {
       .setGroupBindAddress("0.0.0.0")
       .setMetadataDir(Paths.get("%H" + separator + "terracotta" + separator + "metadata"))
       .setLogDir(Paths.get("%H" + separator + "terracotta" + separator + "logs"))
-      .setDataDir("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"));
+      .putDataDir("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"));
 
   @Test
   public void test_clone() {

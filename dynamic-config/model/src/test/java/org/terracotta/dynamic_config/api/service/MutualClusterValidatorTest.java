@@ -74,15 +74,15 @@ public class MutualClusterValidatorTest {
 
   @Test
   public void testOffheapNameMismatch() {
-    Cluster one = new Cluster().setOffheapResource("first", 1, GB);
-    Cluster two = new Cluster().setOffheapResource("second", 1, GB);
+    Cluster one = new Cluster().putOffheapResource("first", 1, GB);
+    Cluster two = new Cluster().putOffheapResource("second", 1, GB);
     assertClusterValidationFails("Mismatch found in offheap-resources", one, two);
   }
 
   @Test
   public void testOffheapSizeMismatch() {
-    Cluster one = new Cluster().setOffheapResource("first", 1, GB);
-    Cluster two = new Cluster().setOffheapResource("first", 100, GB);
+    Cluster one = new Cluster().putOffheapResource("first", 1, GB);
+    Cluster two = new Cluster().putOffheapResource("first", 100, GB);
     assertClusterValidationFails("Mismatch found in offheap-resources", one, two);
   }
 

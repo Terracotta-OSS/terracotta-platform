@@ -91,7 +91,7 @@ class ConfigurationParser {
     // Supplementary validation that ensures that our configuration list contains all the settings for the cluster, no more, no less
     {
       final Set<Setting> actual = configurations.stream()
-          .filter(configuration -> configuration.getScope() == CLUSTER)
+          .filter(configuration -> configuration.getLevel() == CLUSTER)
           .map(Configuration::getSetting)
           .collect(toSet());
       final Set<Setting> expected = Stream.of(values())
@@ -111,7 +111,7 @@ class ConfigurationParser {
     // Determine the number of stripes and nodes.
     // This map gives a configuration list per node and stripe
     final TreeMap<Integer, TreeMap<Integer, List<Configuration>>> configurationMap = configurations.stream()
-        .filter(configuration -> configuration.getScope() == NODE)
+        .filter(configuration -> configuration.getLevel() == NODE)
         .collect(
             groupingBy(Configuration::getStripeId, TreeMap::new,
                 groupingBy(Configuration::getNodeId, TreeMap::new,
@@ -177,7 +177,7 @@ class ConfigurationParser {
         // Note: we should in theory never throw here: this is a safe check to prevent any programming error
         {
           final Set<Setting> actual = nodeConfigurations.stream()
-              .filter(configuration -> configuration.getScope() == NODE)
+              .filter(configuration -> configuration.getLevel() == NODE)
               .map(Configuration::getSetting)
               .collect(toSet());
           final Set<Setting> expected = Stream.of(values())
@@ -204,7 +204,7 @@ class ConfigurationParser {
           throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Reason: now allowed");
         }
         // verify that we only have cluster or node scope
-        if (configuration.getScope() == STRIPE) {
+        if (configuration.getLevel() == STRIPE) {
           throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Reason: stripe level configuration not allowed");
         }
         // validate the config object

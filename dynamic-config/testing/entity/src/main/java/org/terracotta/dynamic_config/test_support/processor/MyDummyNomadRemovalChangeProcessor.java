@@ -31,6 +31,7 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.util.stream.Stream;
 
@@ -58,11 +59,8 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
 
   @Override
   public void validate(NodeContext baseConfig, NodeRemovalNomadChange change) throws NomadException {
-    if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(detachStatusKey)) {
-      String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(detachStatusKey);
-      if (failAtPrepare.equals(value)) {
-        throw new NomadException("Invalid addition fail at prepare");
-      }
+    if (failAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(detachStatusKey))) {
+      throw new NomadException("Invalid addition fail at prepare");
     }
     LOGGER.info("Validating change: {}", change.getSummary());
     if (baseConfig == null) {
@@ -76,11 +74,8 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
     // cause failure when in prepare phase
-    if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
-      String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
-      if (killAtPrepare.equals(value)) {
-        platformService.stopPlatform();
-      }
+    if (killAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey))) {
+      platformService.stopPlatform();
     }
   }
 
@@ -95,26 +90,27 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
       LOGGER.info("Removing node: {} from stripe ID: {}", change.getNodeAddress(), change.getStripeId());
 
       // cause failover when in commit phase
-      if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
-        String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
-        if (killAtCommit.equals(value)) {
-          try {
-            // We crate a marker on disk to know that we have triggered the failover once.
-            // When the node will be restarted, and the repair command triggered again to re-execute the commit,
-            // the file will be there, so 'createFile()' will fail and the node won't be killed.
-            // This hack is so only trigger the commit failure once
-            Files.createFile(topologyService.getUpcomingNodeContext().getNode().getDataDirs().get("main").resolve("killed"));
-            platformService.stopPlatform();
-          } catch (IOException ignored) {
-            // ignored
-          }
+      if (killAtCommit.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey))) {
+        try {
+          // We create a marker on disk to know that we have triggered the failover once.
+          // When the node will be restarted, and the repair command triggered again to re-execute the commit,
+          // the file will be there, so 'createFile()' will fail and the node won't be killed.
+          // This hack is so only trigger the commit failure once
+          Files.createFile(topologyService.getUpcomingNodeContext().getNode().getDataDirs().get("main").resolve("killed"));
+          platformService.stopPlatform();
+        } catch (IOException ignored) {
+          // ignored
         }
       }
 
+      LOGGER.info("Removing node: {} from stripe ID: {}", change.getNode().getName(), change.getStripeId());
+
+      InetSocketAddress addr = change.getNode().getInternalAddress();
+      LOGGER.debug("Calling mBean {}#{}({}))", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME, addr);
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
           PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{change.getNodeAddress().toString()},
+          new Object[]{addr.toString()},
           new String[]{String.class.getName()}
       );
 

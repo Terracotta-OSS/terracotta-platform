@@ -20,8 +20,9 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
-import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.api.model.PropertyHolder;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -59,16 +60,22 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
-      Collection<NodeContext> targeted = c.apply(updatedCluster);
+      Collection<? extends PropertyHolder> targets = c.apply(updatedCluster);
 
       // if the setting is a node setting, keep track of the node targeted by this configuration line
       // remember: a node setting can be set using a cluster or stripe namespace to target several nodes at once
       // Note: this validation is only for node-specific settings
       if (c.getSetting().isScope(NODE)) {
-        targeted.stream().map(nodeContext -> nodeContext.getNode().getAddress()).filter(originalCluster::containsNode).forEach(missingTargetedNodes::add);
-        if (c.getSetting().requires(NODE_RESTART)) {
-          targeted.stream().map(nodeContext -> nodeContext.getNode().getAddress()).filter(originalCluster::containsNode).forEach(nodesRequiringRestart::add);
-        }
+        targets.stream()
+            .map(Node.class::cast)
+            .map(Node::getAddress)
+            .filter(originalCluster::containsNode)
+            .forEach(addr -> {
+              missingTargetedNodes.add(addr);
+              if (c.getSetting().requires(NODE_RESTART)) {
+                nodesRequiringRestart.add(addr);
+              }
+            });
       }
     }
     new ClusterValidator(updatedCluster).validate();
@@ -116,7 +123,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
             "====================================================================" + lineSeparator() +
             "IMPORTANT: A restart of the cluster is required to apply the changes" + lineSeparator() +
             "====================================================================" + lineSeparator());
-      } else if (!nodesRequiringRestart.isEmpty()){
+      } else if (!nodesRequiringRestart.isEmpty()) {
         logger.warn(lineSeparator() +
             "=======================================================================================" + lineSeparator() +
             "IMPORTANT: A restart of nodes: " + toString(nodesRequiringRestart) + " is required to apply the changes" + lineSeparator() +

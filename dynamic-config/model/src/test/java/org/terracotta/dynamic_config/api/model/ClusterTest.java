@@ -52,7 +52,7 @@ public class ClusterTest {
       .registerModule(new DynamicConfigModelJsonModule());
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9410)
-      .setDataDir("data", Paths.get("data"))
+      .putDataDir("data", Paths.get("data"))
       .setBackupDir(Paths.get("backup"))
       .setBindAddress("0.0.0.0")
       .setGroupBindAddress("0.0.0.0")
@@ -62,7 +62,7 @@ public class ClusterTest {
       .setSecurityAuditLogDir(Paths.get("audit"));
 
   Node node2 = Testing.newTestNode("node2", "localhost", 9411)
-      .setDataDir("data", Paths.get("/data/cache2"));
+      .putDataDir("data", Paths.get("/data/cache2"));
 
   Stripe stripe1 = new Stripe(node1);
   Cluster cluster = Testing.newTestCluster("c", stripe1)

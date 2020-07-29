@@ -51,22 +51,22 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
   Node node1_1 = Testing.newTestNode("node1_1", "localhost", 9410)
-      .setDataDir("cache", Paths.get("/data/cache1_1"));
+      .putDataDir("cache", Paths.get("/data/cache1_1"));
 
   Node node1_2 = Testing.newTestNode("node1_2", "localhost", 9411)
-      .setDataDir("cache", Paths.get("/data/cache1_2"));
+      .putDataDir("cache", Paths.get("/data/cache1_2"));
 
   Node node2_1 = Testing.newTestNode("node2_1", "localhost", 9412)
-      .setDataDir("cache", Paths.get("/data/cache2_1"));
+      .putDataDir("cache", Paths.get("/data/cache2_1"));
 
   Node node2_2 = Testing.newTestNode("node2_2", "localhost", 9413)
-      .setDataDir("cache", Paths.get("/data/cache2_2"));
+      .putDataDir("cache", Paths.get("/data/cache2_2"));
 
   Node strayNode = Testing.newTestNode("stray-node", "stray-host", 12345)
-      .setDataDir("cache", Paths.get("/data/stray-cache"));
+      .putDataDir("cache", Paths.get("/data/stray-cache"));
 
   Cluster cluster = Testing.newTestCluster(new Stripe(node1_1, node1_2), new Stripe(node2_1, node2_2))
-      .setOffheapResource("foo", 1, MemoryUnit.GB);
+      .putOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Captor
   ArgumentCaptor<Cluster> newCluster;

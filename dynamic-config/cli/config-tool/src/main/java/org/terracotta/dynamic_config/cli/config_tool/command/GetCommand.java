@@ -20,12 +20,10 @@ import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.BooleanConverter;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.cli.command.Usage;
 
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 @Parameters(commandNames = "get", commandDescription = "Read configuration properties")
 @Usage("get -s <hostname[:port]> [-r] -c <[namespace:]property>,<[namespace:]property>...")
@@ -53,7 +51,7 @@ public class GetCommand extends ConfigurationCommand {
         .map(e -> e.getKey() + "=" + e.getValue())
         .sorted()
         .reduce((result, line) -> result + System.lineSeparator() + line)
-        .orElseThrow(() -> new ParameterException("No configuration found for: " + configurations.stream().map(Configuration::toString).collect(Collectors.joining(", "))));
+        .orElseThrow(() -> new ParameterException("No configuration found"));
     logger.info(output);
   }
 

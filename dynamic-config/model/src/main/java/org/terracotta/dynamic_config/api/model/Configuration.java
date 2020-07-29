@@ -222,16 +222,16 @@ public class Configuration {
 
   private final String rawInput;
   private final Setting setting;
-  private final Scope scope;
+  private final Scope level;
   private final Integer stripeId;
   private final Integer nodeId;
   private final String key;
   private final String value;
 
-  private Configuration(String rawInput, Setting setting, Scope scope, Integer stripeId, Integer nodeId, String key, String value) {
+  private Configuration(String rawInput, Setting setting, Scope level, Integer stripeId, Integer nodeId, String key, String value) {
     this.rawInput = requireNonNull(rawInput);
     this.setting = requireNonNull(setting);
-    this.scope = requireNonNull(scope);
+    this.level = requireNonNull(level);
     this.stripeId = stripeId;
     this.nodeId = nodeId;
     this.key = key;
@@ -241,8 +241,8 @@ public class Configuration {
     preValidate(value);
   }
 
-  public Scope getScope() {
-    return scope;
+  public Scope getLevel() {
+    return level;
   }
 
   public int getStripeId() {
@@ -275,8 +275,8 @@ public class Configuration {
     if (nodeId != null && nodeId <= 0) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Expected node ID to be greater than 0");
     }
-    if (!setting.allows(scope)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' does not allow any operation at " + scope + " level");
+    if (!setting.allows(level)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' does not allow any operation at " + level + " level");
     }
     if (rawValue == null) {
       // equivalent to a get or unset command - we do not know yet, so we cannot pre-validate
@@ -289,7 +289,7 @@ public class Configuration {
       // - cluster-name= (in config file)
       // - unset backup-dir=
       // - set backup-dir=
-      if (setting.mustBePresent() || !setting.canBeCleared(scope)) {
+      if (setting.mustBePresent() || !setting.canBeCleared(level)) {
         // cannot unset a required value
         throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' requires a value");
       }
@@ -297,8 +297,8 @@ public class Configuration {
       // equivalent to a set because we have a value
       if (!setting.allows(SET) && !setting.allows(IMPORT)) {
         throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set");
-      } else if (!setting.allows(SET, scope) && !setting.allows(IMPORT, scope)) {
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set at " + scope + " level");
+      } else if (!setting.allows(SET, level) && !setting.allows(IMPORT, level)) {
+        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set at " + level + " level");
       }
       // check the value if we have one
       if (!Substitutor.containsSubstitutionParams(value)) {
@@ -321,8 +321,8 @@ public class Configuration {
     if (!setting.allows(clusterState, operation)) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " when " + clusterState);
     }
-    if (!setting.allows(clusterState, operation, scope)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " at " + scope + " level when " + clusterState);
+    if (!setting.allows(clusterState, operation, level)) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " at " + level + " level when " + clusterState);
     }
     switch (operation) {
       case GET:
@@ -365,7 +365,7 @@ public class Configuration {
       // not the same setting
       return false;
     }
-    if (scope != other.scope) {
+    if (level != other.level) {
       // same setting, but different scopes
       return false;
     }
@@ -425,22 +425,14 @@ public class Configuration {
     return true;
   }
 
-  public Collection<NodeContext> apply(Cluster cluster) {
-    Collection<NodeContext> targets = getTargets(cluster);
+  public Collection<? extends PropertyHolder> apply(PropertyHolder propertyHolder) {
+    Collection<? extends PropertyHolder> targets = findTargets(propertyHolder).collect(toList());
     if (value == null) {
-      targets.forEach(ctx -> setting.getProperty(ctx).ifPresent(value -> setting.setProperty(ctx, key, null)));
+      targets.forEach(target -> setting.getProperty(target).ifPresent(value -> setting.setProperty(target, key, null)));
     } else {
-      targets.forEach(ctx -> setting.setProperty(ctx, key, value));
+      targets.forEach(target -> setting.setProperty(target, key, value));
     }
     return targets;
-  }
-
-  public void apply(Node node) {
-    if (value == null) {
-      setting.getProperty(node).ifPresent(value -> setting.setProperty(node, key, null));
-    } else {
-      setting.setProperty(node, key, value);
-    }
   }
 
   @Override
@@ -461,30 +453,103 @@ public class Configuration {
     return rawInput;
   }
 
-  private Collection<NodeContext> getTargets(Cluster cluster) {
-    Collection<NodeContext> targetContexts;
-    switch (scope) {
+  /**
+   * This method returns all objects targeted by this configuration change depending
+   * on the argument and the type of change and its level (namespace).
+   * <pre>
+   * - If this change's setting scope is NODE, then "Node" will be returned (changing a setting for a node)
+   * - If this change's setting scope is STRIPE, then "Stripe" will be returned (changing a setting for a stripe)
+   * - If this change's setting scope is CLUSTER, then "Cluster" will be returned (changing a setting for a cluster)
+   * - If this change's level is CLUSTER, then:
+   *   * from must be "Cluster"
+   * - If this change's level is STRIPE, then:
+   *   * from must be "Cluster" or "Stripe"
+   * - If this change's level is NODE, then:
+   *   * from must be "Cluster" or "Stripe" or "Node
+   * </pre>
+   */
+  private Stream<? extends PropertyHolder> findTargets(PropertyHolder from) {
+    Stream<? extends PropertyHolder> targets;
+    switch (this.level) {
+
+      // cluster-wide namespace
+      // can only target cluster, stripe and node
       case CLUSTER:
-        targetContexts = cluster.nodeContexts().collect(toList());
+        // we can only apply it on a parameter of type
+        switch (from.getScope()) {
+          case CLUSTER:
+          case STRIPE:
+          case NODE: {
+            targets = Stream.concat(Stream.of(from), from.descendants());
+            break;
+          }
+          default:
+            throw new AssertionError(from.getScope());
+        }
         break;
+
+      // stripe-wide namespace
+      // can only target stripes and nodes
       case STRIPE:
-        targetContexts = cluster.getStripe(stripeId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"))
-            .getNodes().stream().map(node -> new NodeContext(cluster, stripeId, node.getName()))
-            .collect(toList()); ;
+        // we can only apply it on a parameter of type cluster and stripe
+        switch (from.getScope()) {
+          case CLUSTER: {
+            Cluster cluster = (Cluster) from;
+            Stripe stripe = cluster.getStripe(stripeId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"));
+            targets = Stream.concat(Stream.of(stripe), stripe.descendants());
+            break;
+          }
+          case STRIPE:
+          case NODE: {
+            targets = Stream.concat(Stream.of(from), from.descendants());
+            break;
+          }
+          default:
+            throw new AssertionError(from.getScope());
+        }
         break;
+
+      // node namespace
+      // can only target nodes
       case NODE:
-        targetContexts = Stream.of(new NodeContext(cluster, stripeId, cluster.getStripe(stripeId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"))
-            .getNode(nodeId)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid node ID: " + nodeId + ". Stripe ID: " + stripeId + " contains: " + cluster.getStripe(stripeId).get().getNodeCount() + " node(s)"))
-            .getName()))
-            .collect(toList()); ;
+        switch (from.getScope()) {
+          case CLUSTER: {
+            Cluster cluster = (Cluster) from;
+            Stripe stripe = cluster.getStripe(stripeId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"));
+            Node node = stripe.getNode(nodeId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid node ID: " + nodeId + ". Stripe ID: " + stripeId + " contains: " + stripe.getNodeCount() + " node(s)"));
+            targets = Stream.concat(Stream.of(node), node.descendants());
+            break;
+          }
+          case STRIPE: {
+            Stripe stripe = (Stripe) from;
+            Node node = stripe.getNode(nodeId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid node ID: " + nodeId + ". Stripe ID: " + stripeId + " contains: " + stripe.getNodeCount() + " node(s)"));
+            targets = Stream.concat(Stream.of(node), node.descendants());
+            break;
+          }
+          case NODE: {
+            targets = Stream.concat(Stream.of(from), from.descendants());
+            break;
+          }
+          default:
+            throw new AssertionError(from.getScope());
+        }
         break;
+
       default:
-        throw new AssertionError(scope);
+        throw new AssertionError(this.level);
     }
-    return targetContexts;
+
+    // ensure to filter the targets to only chose the roght object type (node, stripe or cluster)
+    // depending on which type of object this setting applies to
+    return targets.filter(ph -> ph.getScope() ==
+
+        getSetting().
+
+            getScope());
   }
 
   public static Configuration valueOf(String key, String value) {

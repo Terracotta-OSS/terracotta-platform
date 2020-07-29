@@ -35,19 +35,19 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class NodeContextTest {
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9410)
-      .setDataDir("foo", Paths.get("%H/tc1/foo"))
-      .setDataDir("bar", Paths.get("%H/tc1/bar"));
+      .putDataDir("foo", Paths.get("%H/tc1/foo"))
+      .putDataDir("bar", Paths.get("%H/tc1/bar"));
 
   Node node2 = Testing.newTestNode("node2", "localhost", 9411)
-      .setDataDir("foo", Paths.get("%H/tc2/foo"))
-      .setDataDir("bar", Paths.get("%H/tc2/bar"))
-      .setTcProperty("server.entity.processor.threads", "64")
-      .setTcProperty("topology.validate", "true");
+      .putDataDir("foo", Paths.get("%H/tc2/foo"))
+      .putDataDir("bar", Paths.get("%H/tc2/bar"))
+      .putTcProperty("server.entity.processor.threads", "64")
+      .putTcProperty("topology.validate", "true");
 
   Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe(node1), new Stripe(node2))
       .setFailoverPriority(consistency(2))
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
-      .setOffheapResource("bar", 2, MemoryUnit.GB);
+      .putOffheapResource("foo", 1, MemoryUnit.GB)
+      .putOffheapResource("bar", 2, MemoryUnit.GB);
 
   @Test
   public void test_ctors() {
