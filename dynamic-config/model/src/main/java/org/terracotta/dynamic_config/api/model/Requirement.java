@@ -54,5 +54,10 @@ public enum Requirement {
   /**
    * A setting that requires the user to provide a value for it in the configuration or CLI. It cannot be left blank.
    */
-  CONFIG
+  CONFIG,
+
+  /**
+   * A system setting that is hidden from the user but should be persisted an reloading in the configuration repository
+   */
+  HIDDEN
 }

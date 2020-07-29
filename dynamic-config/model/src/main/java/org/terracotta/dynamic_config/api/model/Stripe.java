@@ -157,11 +157,11 @@ public class Stripe implements Cloneable, PropertyHolder {
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
   @Override
-  public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
-    Properties properties = new Properties();
+  public Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings) {
+    Properties properties = Setting.modelToProperties(this, expanded, includeDefaultValues, includeHiddenSettings);
     for (int i = 0; i < nodes.size(); i++) {
       String prefix = "node." + (i + 1) + ".";
-      Properties props = nodes.get(i).toProperties(expanded, includeDefaultValues);
+      Properties props = nodes.get(i).toProperties(expanded, includeDefaultValues, includeHiddenSettings);
       props.stringPropertyNames().forEach(key -> properties.setProperty(prefix + key, props.getProperty(key)));
     }
     return properties;

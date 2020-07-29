@@ -406,11 +406,11 @@ public class Cluster implements Cloneable, PropertyHolder {
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
   @Override
-  public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
-    Properties properties = Setting.modelToProperties(this, expanded, includeDefaultValues);
+  public Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings) {
+    Properties properties = Setting.modelToProperties(this, expanded, includeDefaultValues, includeHiddenSettings);
     for (int i = 0; i < stripes.size(); i++) {
       String prefix = "stripe." + (i + 1) + ".";
-      Properties props = stripes.get(i).toProperties(expanded, includeDefaultValues);
+      Properties props = stripes.get(i).toProperties(expanded, includeDefaultValues, includeHiddenSettings);
       props.stringPropertyNames().forEach(key -> properties.setProperty(prefix + key, props.getProperty(key)));
     }
     return properties;
