@@ -25,8 +25,8 @@ import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
 import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
@@ -121,12 +121,13 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         DynamicConfigEventService.class,
         TopologyService.class,
         DynamicConfigService.class,
-        DynamicConfigListener.class,
+        DynamicConfigEventFiring.class,
         NomadServer.class,
         UpgradableNomadServer.class,
         NomadRoutingChangeProcessor.class,
         NomadPermissionChangeProcessor.class,
-        LicenseService.class
+        LicenseService.class,
+        PathResolver.class
     );
   }
 
@@ -143,18 +144,21 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   }
 
   private <T> T findService(PlatformConfiguration platformConfiguration, Class<T> type) {
+    if (!getProvidedServiceTypes().contains(type)) {
+      throw new IllegalArgumentException(String.valueOf(type));
+    }
     final Collection<T> services = platformConfiguration.getExtendedConfiguration(type);
     if (services.isEmpty()) {
-      throw new AssertionError("No instance of service " + type + " found");
+      throw new IllegalArgumentException("No instance of service " + type + " found");
     }
 
     if (services.size() == 1) {
       T instance = services.iterator().next();
       if (instance == null) {
-        throw new AssertionError("Instance of service " + type + " found to be null");
+        throw new IllegalArgumentException("Instance of service " + type + " found to be null");
       }
       return instance;
     }
-    throw new AssertionError("Multiple instances of service " + type + " found");
+    throw new IllegalArgumentException("Multiple instances of service " + type + " found");
   }
 }

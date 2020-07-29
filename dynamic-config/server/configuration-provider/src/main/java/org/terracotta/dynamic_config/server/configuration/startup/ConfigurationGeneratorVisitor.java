@@ -20,10 +20,11 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
-import org.terracotta.dynamic_config.server.configuration.service.DynamicConfigServiceImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.json.ObjectMapperFactory;
@@ -135,7 +136,7 @@ public class ConfigurationGeneratorVisitor {
     ServerEnv.getServer().console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
-    DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
+    DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.activate(nodeContext.getCluster(), optionalLicenseFile == null ? null : read(optionalLicenseFile));
     runNomadActivation(nodeContext.getCluster(), nodeContext.getNode(), nomadServerManager, nodeConfigurationDir);
 
@@ -148,9 +149,10 @@ public class ConfigurationGeneratorVisitor {
     ServerEnv.getServer().console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
     nomadServerManager.init(nodeConfigurationDir, nodeName, alternate);
 
-    DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
+    DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
+    TopologyService topologyService = nomadServerManager.getTopologyService();
     if (!repairMode) {
-      dynamicConfigService.activate();
+      dynamicConfigService.activate(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
     } else {
       // If repair mode mode is ON:
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
@@ -164,7 +166,7 @@ public class ConfigurationGeneratorVisitor {
       );
     }
 
-    this.nodeContext = dynamicConfigService.getRuntimeNodeContext();
+    this.nodeContext = topologyService.getRuntimeNodeContext();
     this.repairMode = repairMode;
     this.unConfiguredMode = false;
 

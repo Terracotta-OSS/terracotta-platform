@@ -24,7 +24,7 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
+import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
@@ -98,7 +98,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
 
       Context source = Context.create("consumerId", String.valueOf(monitoringService.getConsumerId())).with("type", "DynamicConfig");
 
-      eventRegistration = dynamicConfigEventService.register(new DynamicConfigListenerAdapter() {
+      eventRegistration = dynamicConfigEventService.register(new DynamicConfigListener() {
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
           boolean restartRequired = !change.canApplyAtRuntime(monitoringService.getServerName());

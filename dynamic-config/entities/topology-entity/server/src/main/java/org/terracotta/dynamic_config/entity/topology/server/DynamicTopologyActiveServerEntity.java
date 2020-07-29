@@ -26,7 +26,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.entity.topology.common.Message;
 import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
+import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
@@ -135,7 +135,7 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Mes
 
   private void listen() {
     if (eventRegistration == null) {
-      eventRegistration = eventService.register(new DynamicConfigListenerAdapter() {
+      eventRegistration = eventService.register(new DynamicConfigListener() {
         @Override
         public void onNodeAddition(int stripeId, Node addedNode) {
           fire(new Response(EVENT_NODE_ADDITION, asList(stripeId, addedNode)));
