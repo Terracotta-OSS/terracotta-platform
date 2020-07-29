@@ -29,8 +29,8 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void testNode_getOneOffheap_unknownOffheap() {
     assertThat(
-        () -> invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.blah"),
-        exceptionMatcher("No configuration found"));
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.blah"),
+        containsOutput("offheap-resources.blah="));
   }
 
   @Test

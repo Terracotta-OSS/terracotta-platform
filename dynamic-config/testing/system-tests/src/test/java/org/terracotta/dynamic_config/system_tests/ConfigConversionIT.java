@@ -15,6 +15,9 @@
  */
 package org.terracotta.dynamic_config.system_tests;
 
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -30,9 +33,10 @@ import org.terracotta.testing.TmpDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -54,22 +58,63 @@ public class ConfigConversionIT {
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
 
-    assertThat(cluster.getName(), is("my-cluster"));
+    assertThat(cluster.getName().get(), is("my-cluster"));
     assertThat(cluster.getDataDirNames().size(), is(1));
-    assertThat(cluster.getOffheapResources().size(), is(1));
+    assertThat(cluster.getOffheapResources().get().size(), is(1));
     assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
-    assertThat(cluster.getClientLeaseDuration(), is(Measure.of(150, TimeUnit.SECONDS)));
-    assertThat(cluster.getClientReconnectWindow(), is(Measure.of(120, TimeUnit.SECONDS)));
+    assertFalse(cluster.getClientLeaseDuration().isConfigured());
+    assertThat(cluster.getClientLeaseDuration().orDefault(), is(Measure.of(150, TimeUnit.SECONDS)));
+    assertThat(cluster.getClientReconnectWindow().get(), is(Measure.of(120, TimeUnit.SECONDS)));
     assertThat(cluster.getStripeCount(), is(1));
     assertThat(cluster.getNodes().size(), is(2));
     assertThat(cluster.getNode(1, 1).get().getName(), is("node-1"));
     assertThat(cluster.getNode(1, 1).get().getHostname(), is("localhost"));
-    assertThat(cluster.getNode(1, 1).get().getPort(), is(9410));
-    assertThat(cluster.getNode(1, 1).get().getGroupPort(), is(9430));
+    assertThat(cluster.getNode(1, 1).get().getPort().get(), is(9410));
+    assertThat(cluster.getNode(1, 1).get().getGroupPort().get(), is(9430));
     assertThat(cluster.getNode(1, 2).get().getName(), is("node-2"));
     assertThat(cluster.getNode(1, 2).get().getHostname(), is("localhost"));
-    assertThat(cluster.getNode(1, 2).get().getPort(), is(9510));
-    assertThat(cluster.getNode(1, 2).get().getGroupPort(), is(9530));
+    assertThat(cluster.getNode(1, 2).get().getPort().get(), is(9510));
+    assertThat(cluster.getNode(1, 2).get().getGroupPort().get(), is(9530));
+  }
+
+  @Test
+  public void test_server_defaults() {
+    ConfigConverterTool.start("convert",
+        "-c", "src/test/resources/conversion/tc-config-4.xml",
+        "-n", "my-cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
+    assertTrue(Files.exists(config));
+    Cluster cluster = new ClusterFactory().create(config);
+
+    assertThat(cluster.getNode(1, 1).get().getName(), is("node-1"));
+    // IMPORTANT: see NonSubstitutingTCConfigurationParser and TCConfigurationParser
+    // If the server name was given, but not the host name, the host name value was picked from the server name
+    // also, xml parsing was initializing all these settings
+    assertThat(cluster.getNode(1, 1).get().getHostname(), is("node-1"));
+    assertTrue(cluster.getNode(1, 1).get().getPort().isConfigured());
+    assertTrue(cluster.getNode(1, 1).get().getGroupPort().isConfigured());
+    assertTrue(cluster.getNode(1, 1).get().getLogDir().isConfigured());
+    assertTrue(cluster.getNode(1, 1).get().getBindAddress().isConfigured());
+    assertTrue(cluster.getNode(1, 1).get().getGroupBindAddress().isConfigured());
+  }
+
+  @Test
+  public void testWithoutOffheap() {
+    ConfigConverterTool.start("convert",
+        "-c", "src/test/resources/conversion/tc-config-3.xml",
+        "-n", "my-cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
+    assertTrue(Files.exists(config));
+    Cluster cluster = new ClusterFactory().create(config);
+
+    assertTrue(cluster.getOffheapResources().isConfigured());
+    assertThat(cluster.getOffheapResources().get().size(), is(0));
   }
 
   @Test
@@ -104,8 +149,8 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getLogDir(), is(Paths.get("%h-logs")));
-    assertThat(cluster.getNode(1, 2).get().getLogDir(), is(Paths.get("%h-logs")));
+    assertThat(cluster.getNode(1, 1).get().getLogDir().get(), is(Paths.get("%h-logs")));
+    assertThat(cluster.getNode(1, 2).get().getLogDir().get(), is(Paths.get("%h-logs")));
   }
 
   @Test
@@ -119,11 +164,12 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getClientLeaseDuration(), is(Measure.of(150, TimeUnit.SECONDS)));
+    assertFalse(cluster.getClientLeaseDuration().isConfigured());
+    assertThat(cluster.getClientLeaseDuration().orDefault(), is(Measure.of(150, TimeUnit.SECONDS)));
   }
 
   @Test
-  public void testConversionWithFailoverPriorityMissingInConfig() {
+  public void testConversionWithoutFailoverPriority() {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
@@ -137,7 +183,7 @@ public class ConfigConversionIT {
   }
 
   @Test
-  public void testConversionWithClientReconnectWindowMissingInConfig() {
+  public void testConversionWithoutClientReconnectWindow() {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
@@ -147,7 +193,8 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getClientReconnectWindow(), is(Measure.of(120, TimeUnit.SECONDS)));
+    assertFalse(cluster.getClientReconnectWindow().isConfigured());
+    assertThat(cluster.getClientReconnectWindow().orDefault(), is(Measure.of(120, TimeUnit.SECONDS)));
   }
 
   @Test
@@ -161,7 +208,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getClientLeaseDuration(), is(Measure.of(5, TimeUnit.SECONDS)));
+    assertThat(cluster.getClientLeaseDuration().get(), is(Measure.of(5, TimeUnit.SECONDS)));
   }
 
   @Test
@@ -189,7 +236,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getClientReconnectWindow(), is(Measure.of(125, TimeUnit.SECONDS)));
+    assertThat(cluster.getClientReconnectWindow().get(), is(Measure.of(125, TimeUnit.SECONDS)));
   }
 
   @Test
@@ -203,7 +250,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getPort(), is(9411));
+    assertThat(cluster.getNode(1, 1).get().getPort().get(), is(9411));
   }
 
   @Test
@@ -217,7 +264,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getBindAddress(), is("1.1.1.1"));
+    assertThat(cluster.getNode(1, 1).get().getBindAddress().get(), is("1.1.1.1"));
   }
 
   @Test
@@ -231,7 +278,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getGroupPort(), is(9431));
+    assertThat(cluster.getNode(1, 1).get().getGroupPort().get(), is(9431));
   }
 
   @Test
@@ -245,7 +292,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getGroupBindAddress(), is("2.2.2.2"));
+    assertThat(cluster.getNode(1, 1).get().getGroupBindAddress().get(), is("2.2.2.2"));
   }
 
   @Test
@@ -259,7 +306,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getLogDir(), is(Paths.get("abcd")));
+    assertThat(cluster.getNode(1, 1).get().getLogDir().get(), is(Paths.get("abcd")));
   }
 
   @Test
@@ -273,32 +320,56 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getTcProperties().size(), is(1));
-    assertThat(cluster.getNode(1, 1).get().getTcProperties().get("myserver"), is("server"));
+    assertThat(cluster.getNode(1, 1).get().getTcProperties().orDefault().size(), is(1));
+    assertThat(cluster.getNode(1, 1).get().getTcProperties().orDefault().get("myserver"), is("server"));
   }
 
   @Test
-  public void test_conversion_with_explicit_repository_option() {
+  public void test_conversion_with_explicit_repository_option() throws Exception {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
         "-t", "directory",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("stripe-1").resolve("testServer0").resolve("cluster").resolve("testServer0.1.properties");
-    assertTrue(Files.exists(config));
-    assertThat(Props.load(getClass().getResourceAsStream("/conversion/cluster-1.properties")), is(equalTo(Props.load(config))));
+    assertThat(
+        tmpDir.getRoot().resolve("generated-configs").resolve("stripe-1").resolve("testServer0").resolve("cluster").resolve("testServer0.1.properties"),
+        matches("/conversion/cluster-1.properties"));
   }
 
   @Test
-  public void test_conversion_with_repository_option() {
+  public void test_conversion_with_repository_option() throws Exception {
     ConfigConverterTool.start("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
-    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("stripe-1").resolve("testServer0").resolve("cluster").resolve("testServer0.1.properties");
-    assertTrue(Files.exists(config));
-    assertThat(Props.load(getClass().getResourceAsStream("/conversion/cluster-1.properties")), is(equalTo(Props.load(config))));
+    assertThat(
+        tmpDir.getRoot().resolve("generated-configs").resolve("stripe-1").resolve("testServer0").resolve("cluster").resolve("testServer0.1.properties"),
+        matches("/conversion/cluster-1.properties"));
+  }
+
+  private static Matcher<Path> matches(String config) throws Exception {
+    Path configPath = Paths.get(ConfigConversionIT.class.getResource(config).toURI());
+    Properties expectedProps = Props.load(configPath);
+    return new TypeSafeMatcher<Path>() {
+      Path path;
+      Properties props;
+
+      @Override
+      protected boolean matchesSafely(Path path) {
+        this.path = path;
+        this.props = Props.load(path);
+        return props.equals(expectedProps);
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText(path.getFileName() + " to contain:\n\n")
+            .appendText(Props.toString(expectedProps))
+            .appendText("\nbut was:\n\n")
+            .appendText(Props.toString(props));
+      }
+    };
   }
 }

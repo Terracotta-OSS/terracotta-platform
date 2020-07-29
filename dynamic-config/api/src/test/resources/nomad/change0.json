@@ -5,28 +5,13 @@
       {
         "nodes": [
           {
-            "bindAddress": "0.0.0.0",
-            "dataDirs": {
-              "main": "%H/terracotta/user-data/main"
-            },
-            "groupBindAddress": "0.0.0.0",
-            "groupPort": 9430,
             "hostname": "localhost",
-            "logDir": "%H/terracotta/logs",
-            "loggerOverrides": {},
-            "metadataDir": "%H/terracotta/metadata",
             "name": "foo",
-            "port": 9410,
-            "tcProperties": {}
+            "port": 9410
           }
         ]
       }
     ],
-    "clientLeaseDuration": {
-      "quantity": 150,
-      "unit": "SECONDS",
-      "type": "TIME"
-    },
     "clientReconnectWindow": {
       "quantity": 60,
       "unit": "SECONDS",
@@ -45,9 +30,7 @@
         "unit": "MB",
         "type": "MEMORY"
       }
-    },
-    "securitySslTls": false,
-    "securityWhitelist": false
+    }
   },
   "applicability": {
     "scope": "CLUSTER"

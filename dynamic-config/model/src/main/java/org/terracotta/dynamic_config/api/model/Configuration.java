@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -27,6 +28,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.empty;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.terracotta.dynamic_config.api.model.Operation.GET;
@@ -235,7 +237,7 @@ public class Configuration {
     this.stripeId = stripeId;
     this.nodeId = nodeId;
     this.key = key;
-    this.value = value == null || value.trim().isEmpty() ? null : value.trim();
+    this.value = value == null ? "" : value.trim();
 
     // pre-validate with the real value taken from input
     preValidate(value);
@@ -261,8 +263,8 @@ public class Configuration {
     return key;
   }
 
-  public String getValue() {
-    return value;
+  public Optional<String> getValue() {
+    return value == null || value.isEmpty() ? empty() : Optional.of(value);
   }
 
   private void preValidate(String rawValue) {
@@ -327,17 +329,17 @@ public class Configuration {
     switch (operation) {
       case GET:
       case UNSET:
-        if (value != null) {
+        if (getValue().isPresent()) {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " must not have a value");
         }
         break;
       case SET:
-        if (value == null) {
+        if (!getValue().isPresent()) {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
         }
         break;
       case IMPORT:
-        if (value == null && setting.mustBePresent()) {
+        if (!getValue().isPresent() && setting.mustBePresent()) {
           throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
         }
         // ensure that properties requiring an eager resolve are resolved
@@ -427,11 +429,7 @@ public class Configuration {
 
   public Collection<? extends PropertyHolder> apply(PropertyHolder propertyHolder) {
     Collection<? extends PropertyHolder> targets = findTargets(propertyHolder).collect(toList());
-    if (value == null) {
-      targets.forEach(target -> setting.getProperty(target).ifPresent(value -> setting.setProperty(target, key, null)));
-    } else {
-      targets.forEach(target -> setting.setProperty(target, key, value));
-    }
+    targets.forEach(target -> setting.setProperty(target, key, value));
     return targets;
   }
 
@@ -655,29 +653,17 @@ public class Configuration {
   }
 
   public static Configuration valueOf(Setting setting) {
-    String val = setting.getDefaultValue();
-    if (val == null) {
-      // simulate what we would have in a config file, such as: backup-dir=
-      val = "";
-    }
+    String val = setting.getDefaultProperty().orElse("");
     return new Configuration(setting + "=" + val, setting, CLUSTER, null, null, null, val);
   }
 
   public static Configuration valueOf(Setting setting, int stripeId) {
-    String val = setting.getDefaultValue();
-    if (val == null) {
-      // simulate what we would have in a config file, such as: backup-dir=
-      val = "";
-    }
+    String val = setting.getDefaultProperty().orElse("");
     return new Configuration("stripe." + stripeId + "." + setting + "=" + val, setting, STRIPE, stripeId, null, null, val);
   }
 
   public static Configuration valueOf(Setting setting, int stripeId, int nodeId) {
-    String val = setting.getDefaultValue();
-    if (val == null) {
-      // simulate what we would have in a config file, such as: backup-dir=
-      val = "";
-    }
+    String val = setting.getDefaultProperty().orElse("");
     return new Configuration("stripe." + stripeId + ".node." + nodeId + "." + setting + "=" + val, setting, NODE, stripeId, nodeId, null, val);
   }
 }

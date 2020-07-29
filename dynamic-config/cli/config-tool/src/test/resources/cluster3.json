@@ -7,16 +7,9 @@
             "cache": "/data/cache1_1",
             "main": "%H/terracotta/user-data/main"
           },
-          "bindAddress": "0.0.0.0",
-          "groupBindAddress": "0.0.0.0",
-          "groupPort": 9430,
           "hostname": "localhost",
-          "logDir": "%H/terracotta/logs",
-          "loggerOverrides": {},
-          "metadataDir": "%H/terracotta/metadata",
           "name": "node1_1",
-          "port": 9410,
-          "tcProperties": {}
+          "port": 9410
         }
       ]
     },
@@ -27,47 +20,24 @@
             "cache": "/data/cache2_1",
             "main": "%H/terracotta/user-data/main"
           },
-          "bindAddress": "0.0.0.0",
-          "groupBindAddress": "0.0.0.0",
-          "groupPort": 9430,
           "hostname": "localhost",
-          "logDir": "%H/terracotta/logs",
-          "loggerOverrides": {},
-          "metadataDir": "%H/terracotta/metadata",
           "name": "node2_1",
-          "port": 9412,
-          "tcProperties": {}
+          "port": 9412
         },
         {
           "dataDirs": {
             "cache": "/data/cache2_2",
             "main": "%H/terracotta/user-data/main"
           },
-          "bindAddress": "0.0.0.0",
-          "groupBindAddress": "0.0.0.0",
-          "groupPort": 9430,
           "hostname": "localhost",
-          "logDir": "%H/terracotta/logs",
-          "loggerOverrides": {},
-          "metadataDir": "%H/terracotta/metadata",
           "name": "node2_2",
-          "port": 9413,
-          "tcProperties": {}
+          "port": 9413
         }
       ]
     }
   ],
-  "clientLeaseDuration": {
-    "quantity": 150,
-    "unit": "SECONDS",
-    "type": "TIME"
-  },
-  "clientReconnectWindow": {
-    "quantity": 120,
-    "unit": "SECONDS",
-    "type": "TIME"
-  },
   "failoverPriority": "availability",
+  "name": "my-cluster",
   "offheapResources": {
     "foo": {
       "quantity": 1,
@@ -79,7 +49,5 @@
       "unit": "MB",
       "type": "MEMORY"
     }
-  },
-  "securitySslTls": false,
-  "securityWhitelist": false
+  }
 }

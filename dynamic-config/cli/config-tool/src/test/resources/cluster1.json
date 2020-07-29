@@ -7,54 +7,22 @@
             "cache": "/data/cache1",
             "main": "%H/terracotta/user-data/main"
           },
-          "bindAddress": "0.0.0.0",
-          "groupBindAddress": "0.0.0.0",
-          "groupPort": 9430,
           "hostname": "localhost",
-          "logDir": "%H/terracotta/logs",
-          "loggerOverrides": {},
-          "metadataDir": "%H/terracotta/metadata",
           "name": "node0",
-          "port": 9410,
-          "tcProperties": {}
+          "port": 9410
         },
         {
           "dataDirs": {
             "cache": "/data/cache2",
             "main": "%H/terracotta/user-data/main"
           },
-          "bindAddress": "0.0.0.0",
-          "groupBindAddress": "0.0.0.0",
-          "groupPort": 9430,
           "hostname": "localhost",
-          "logDir": "%H/terracotta/logs",
-          "loggerOverrides": {},
-          "metadataDir": "%H/terracotta/metadata",
           "name": "node1",
-          "port": 9411,
-          "tcProperties": {}
+          "port": 9411
         }
       ]
     }
   ],
-  "clientLeaseDuration": {
-    "quantity": 150,
-    "unit": "SECONDS",
-    "type": "TIME"
-  },
-  "clientReconnectWindow": {
-    "quantity": 120,
-    "unit": "SECONDS",
-    "type": "TIME"
-  },
   "failoverPriority": "availability",
-  "offheapResources": {
-    "main": {
-      "quantity": 512,
-      "unit": "MB",
-      "type": "MEMORY"
-    }
-  },
-  "securitySslTls": false,
-  "securityWhitelist": false
+  "name": "my-cluster"
 }

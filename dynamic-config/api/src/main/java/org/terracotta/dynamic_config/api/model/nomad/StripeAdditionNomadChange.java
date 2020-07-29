@@ -50,7 +50,7 @@ public class StripeAdditionNomadChange extends StripeNomadChange {
 
   @Override
   public String getSummary() {
-    return "Attaching stripe: " + getStripe().toShapeString() + " to cluster: " + getCluster().getName();
+    return "Attaching stripe: " + getStripe().toShapeString() + " to cluster: " + getCluster().getName().get();
   }
 
   @Override

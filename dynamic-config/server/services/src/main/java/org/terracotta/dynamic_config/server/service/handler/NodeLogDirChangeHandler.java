@@ -37,7 +37,7 @@ public class NodeLogDirChangeHandler implements ConfigChangeHandler {
 
   @Override
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
-    String logPath = change.getValue();
+    String logPath = change.getValue().orElse(null);
     if (logPath == null) {
       throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }

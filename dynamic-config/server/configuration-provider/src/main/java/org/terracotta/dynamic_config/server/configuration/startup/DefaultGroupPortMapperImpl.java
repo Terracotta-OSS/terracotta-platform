@@ -21,6 +21,6 @@ import org.terracotta.dynamic_config.server.api.GroupPortMapper;
 public class DefaultGroupPortMapperImpl implements GroupPortMapper {
   @Override
   public int getPeerGroupPort(Node peerNode, Node thisNode) {
-    return peerNode.getGroupPort();
+    return peerNode.getGroupPort().orDefault();
   }
 }

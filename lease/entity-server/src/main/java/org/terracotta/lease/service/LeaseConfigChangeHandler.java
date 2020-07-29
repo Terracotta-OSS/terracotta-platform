@@ -33,7 +33,7 @@ public class LeaseConfigChangeHandler implements ConfigChangeHandler {
   @Override
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     try {
-      Measure.parse(change.getValue(), TimeUnit.class);
+      Measure.parse(change.getValue().get(), TimeUnit.class);
     } catch (Exception e) {
       throw new InvalidConfigChangeException(e.toString(), e);
     }
@@ -41,7 +41,7 @@ public class LeaseConfigChangeHandler implements ConfigChangeHandler {
 
   @Override
   public void apply(Configuration change) {
-    Measure<TimeUnit> measure = Measure.parse(change.getValue(), TimeUnit.class);
+    Measure<TimeUnit> measure = Measure.parse(change.getValue().get(), TimeUnit.class);
     long quantity = measure.to(TimeUnit.MILLISECONDS).getQuantity();
     leaseConfiguration.setLeaseLength(quantity);
   }

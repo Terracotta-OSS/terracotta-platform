@@ -22,7 +22,6 @@ import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.server.ServerEnv;
 
-import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.SettingName.FAILOVER_PRIORITY;
 
 public class ConsoleCommandLineProcessor implements CommandLineProcessor {
@@ -53,7 +52,7 @@ public class ConsoleCommandLineProcessor implements CommandLineProcessor {
     Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
 
     if (options.getLicenseFile() != null) {
-      requireNonNull(cluster.getName(), "Cluster name is required with license file");
+      cluster.getName().orElseThrow(() -> new IllegalArgumentException("Cluster name is required with license file"));
     }
     if (options.allowsAutoActivation()) {
       configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getAddress()), options.getLicenseFile(), options.getConfigDir());

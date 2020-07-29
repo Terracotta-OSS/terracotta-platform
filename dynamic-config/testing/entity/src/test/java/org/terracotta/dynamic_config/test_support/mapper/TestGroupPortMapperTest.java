@@ -17,6 +17,8 @@ package org.terracotta.dynamic_config.test_support.mapper;
 
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.OptionalConfig;
+import org.terracotta.dynamic_config.api.model.Setting;
 
 import java.util.Map;
 
@@ -32,11 +34,11 @@ public class TestGroupPortMapperTest {
     TestGroupPortMapper testGroupPortMapper = new TestGroupPortMapper();
     Node peerNodeMock = mock(Node.class);
     Node currentNodeMock = mock(Node.class);
-    when(peerNodeMock.getGroupPort()).thenReturn(1234);
+    when(peerNodeMock.getGroupPort()).thenReturn(OptionalConfig.of(Setting.NODE_GROUP_PORT, 1234));
     @SuppressWarnings("unchecked")
     Map<String, String> map = mock(Map.class);
-    when(currentNodeMock.getTcProperties()).thenReturn(map);
-    when(currentNodeMock.getTcProperties().containsKey(any())).thenReturn(false);
+    when(currentNodeMock.getTcProperties()).thenReturn(OptionalConfig.of(Setting.TC_PROPERTIES, map));
+    when(currentNodeMock.getTcProperties().get().containsKey(any())).thenReturn(false);
     assertThat(testGroupPortMapper.getPeerGroupPort(peerNodeMock, currentNodeMock), is(1234));
   }
 
@@ -48,10 +50,10 @@ public class TestGroupPortMapperTest {
     @SuppressWarnings("unchecked")
     Map<String, String> map = mock(Map.class);
     when(map.get("test-proxy-group-port")).thenReturn("node-1->2345");
-    when(currentNodeMock.getTcProperties()).thenReturn(map);
-    when(currentNodeMock.getTcProperties().containsKey(any())).thenReturn(true);
+    when(currentNodeMock.getTcProperties()).thenReturn(OptionalConfig.of(Setting.TC_PROPERTIES, map));
+    when(currentNodeMock.getTcProperties().get().containsKey(any())).thenReturn(true);
     when(peerNodeMock.getName()).thenReturn("node-1");
-    when(peerNodeMock.getGroupPort()).thenReturn(1234);
+    when(peerNodeMock.getGroupPort()).thenReturn(OptionalConfig.of(Setting.NODE_GROUP_PORT, 1234));
     assertThat(testGroupPortMapper.getPeerGroupPort(peerNodeMock, currentNodeMock), is(2345));
   }
 

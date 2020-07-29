@@ -47,11 +47,11 @@ public class SimulationHandler implements ConfigChangeHandler {
   public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
     LOGGER.info("Received: {}", change);
 
-    if (change.getValue() == null) {
+    if (!change.getValue().isPresent()) {
       throw new InvalidConfigChangeException("Operation not supported: " + change);
     }
 
-    if ("TRACE".equals(change.getValue())) {
+    if ("TRACE".equals(change.getValue().get())) {
       throw new InvalidConfigChangeException("Simulate prepare failure");
     }
   }
@@ -60,7 +60,7 @@ public class SimulationHandler implements ConfigChangeHandler {
   public void apply(Configuration change) {
     LOGGER.info("Received: {}", change);
 
-    switch (change.getValue()) {
+    switch (change.getValue().get()) {
 
       case "DEBUG":
         if (state.equals("failed") || state.equals("recovered")) {

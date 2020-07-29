@@ -39,7 +39,7 @@ public class DataDirectoryConfigChangeHandlerTest {
 
   @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
 
-  private NodeContext topology = new NodeContext(Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("bar", "localhost").clearDataDirs())), 1, "bar");
+  private NodeContext topology = new NodeContext(Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("bar", "localhost").unsetDataDirs())), 1, "bar");
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.DATA_DIRS, "new-root", "path/to/data/root");
 
   @Test
@@ -48,8 +48,8 @@ public class DataDirectoryConfigChangeHandlerTest {
     DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, IParameterSubstitutor.identity(), new PathResolver(tmpDir.getRoot()));
     dataDirectoryConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
 
-    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().entrySet(), Matchers.hasSize(1));
-    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs(), hasEntry("new-root", Paths.get("path/to/data/root")));
+    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().orDefault().entrySet(), Matchers.hasSize(1));
+    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().orDefault(), hasEntry("new-root", Paths.get("path/to/data/root")));
   }
 
   @Test

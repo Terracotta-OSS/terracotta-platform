@@ -16,10 +16,8 @@
 package org.terracotta.dynamic_config.api.model;
 
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
-import static java.util.function.Predicate.isEqual;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 
 /**
@@ -29,7 +27,7 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.availabil
  */
 public class Testing {
   public static Cluster newTestCluster(String name, Stripe... stripes) {
-    return fillDefaults(new Cluster(Arrays.asList(stripes)))
+    return new Cluster(Arrays.asList(stripes))
         .setFailoverPriority(availability())
         .setName(name);
   }
@@ -39,48 +37,26 @@ public class Testing {
   }
 
   public static Cluster newTestCluster(String name) {
-    return fillDefaults(new Cluster(emptyList()))
+    return new Cluster(emptyList())
         .setFailoverPriority(availability())
         .setName(name);
   }
 
   public static Cluster newTestCluster(Stripe... stripes) {
-    return fillDefaults(new Cluster(stripes))
+    return new Cluster(stripes)
         .setFailoverPriority(availability());
   }
 
   public static Node newTestNode(String name, String hostname, int port) {
-    return fillDefaults(new Node())
+    return new Node()
         .setName(name)
-        .setPort(port)
-        .setHostname(hostname);
-  }
-
-  public static Node newTestNode(String hostname, int port) {
-    return fillDefaults(new Node())
         .setPort(port)
         .setHostname(hostname);
   }
 
   public static Node newTestNode(String name, String hostname) {
-    return fillDefaults(new Node())
+    return new Node()
         .setName(name)
         .setHostname(hostname);
-  }
-
-  public static Node newTestNode(String hostname) {
-    return fillDefaults(new Node())
-        .setHostname(hostname);
-  }
-
-  public static <T extends PropertyHolder> T fillDefaults(T o) {
-    Stream.of(Setting.values())
-        .filter(isEqual(Setting.NODE_HOSTNAME).negate())
-        .filter(isEqual(Setting.NODE_CONFIG_DIR).negate())
-        .filter(isEqual(Setting.CLUSTER_NAME).negate())
-        .filter(isEqual(Setting.LICENSE_FILE).negate())
-        .filter(s -> s.isScope(o.getScope()))
-        .forEach(setting -> setting.fillDefault(o));
-    return o;
   }
 }

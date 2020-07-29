@@ -56,11 +56,11 @@ public class MutualClusterValidator {
     if (!Objects.equals(major.getSecurityAuthc(), minor.getSecurityAuthc())) {
       fail(SECURITY_AUTHC, major.getSecurityAuthc(), minor.getSecurityAuthc());
     }
-    if (!major.isSecuritySslTls() == minor.isSecuritySslTls()) {
-      fail(SECURITY_SSL_TLS, major.isSecuritySslTls(), minor.isSecuritySslTls());
+    if (!Objects.equals(major.getSecuritySslTls(), minor.getSecuritySslTls())) {
+      fail(SECURITY_SSL_TLS, major.getSecuritySslTls(), minor.getSecuritySslTls());
     }
-    if (!major.isSecurityWhitelist() == minor.isSecurityWhitelist()) {
-      fail(SECURITY_WHITELIST, major.isSecurityWhitelist(), minor.isSecurityWhitelist());
+    if (!Objects.equals(major.getSecurityWhitelist(), minor.getSecurityWhitelist())) {
+      fail(SECURITY_WHITELIST, major.getSecurityWhitelist(), minor.getSecurityWhitelist());
     }
   }
 

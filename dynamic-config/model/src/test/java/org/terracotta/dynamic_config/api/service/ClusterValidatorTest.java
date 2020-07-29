@@ -123,8 +123,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testDifferingDataDirectoryNames() {
-    Node node1 = Testing.newTestNode("localhost1");
-    Node node2 = Testing.newTestNode("localhost2");
+    Node node1 = Testing.newTestNode("node1", "localhost1");
+    Node node2 = Testing.newTestNode("node2", "localhost2");
     node1.putDataDir("dir-1", Paths.get("data"));
     node2.putDataDir("dir-2", Paths.get("data"));
 
@@ -133,8 +133,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testSetSameBackupPath_ok() {
-    Node node1 = Testing.newTestNode("localhost1");
-    Node node2 = Testing.newTestNode("localhost2");
+    Node node1 = Testing.newTestNode("node1", "localhost1");
+    Node node2 = Testing.newTestNode("node2", "localhost2");
     node1.setBackupDir(Paths.get("backup"));
     node2.setBackupDir(Paths.get("backup"));
     new ClusterValidator(Testing.newTestCluster(new Stripe(node1), new Stripe(node2))).validate();
@@ -142,8 +142,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testSetDifferentBackupPaths_ok() {
-    Node node1 = Testing.newTestNode("localhost1");
-    Node node2 = Testing.newTestNode("localhost2");
+    Node node1 = Testing.newTestNode("node1", "localhost1");
+    Node node2 = Testing.newTestNode("node2", "localhost2");
     node1.setBackupDir(Paths.get("backup-1"));
     node2.setBackupDir(Paths.get("backup-2"));
     new ClusterValidator(Testing.newTestCluster(new Stripe(node1), new Stripe(node2))).validate();
@@ -152,7 +152,7 @@ public class ClusterValidatorTest {
   @Test
   public void testSetBackupOnOneStripeOnly_fail() {
     Node node1 = Testing.newTestNode("foo", "localhost1");
-    Node node2 = Testing.newTestNode("localhost2");
+    Node node2 = Testing.newTestNode("node2", "localhost2");
     node1.setBackupDir(Paths.get("backup"));
 
     assertClusterValidationFails(
@@ -163,8 +163,8 @@ public class ClusterValidatorTest {
   @Test
   public void testValidCluster() {
     Node[] nodes = Stream.of(
-        Testing.newTestNode("localhost1"),
-        Testing.newTestNode("localhost2")
+        Testing.newTestNode("node1", "localhost1"),
+        Testing.newTestNode("node2", "localhost2")
     ).map(node -> node
         .setSecurityAuditLogDir(Paths.get("audit-" + random.nextInt()))
         .setSecurityDir(Paths.get("security-root" + random.nextInt()))
@@ -192,7 +192,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_1() {
-    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-dir"));
       node.setSecurityAuditLogDir(Paths.get("security-audit-dir"));
     }).toArray(Node[]::new);
@@ -205,7 +205,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_2() {
-    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-dir"));
       node.setSecurityAuditLogDir(Paths.get("security-audit-dir"));
     }).toArray(Node[]::new);
@@ -217,7 +217,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_3() {
-    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).toArray(Node[]::new);
+    Node[] nodes = Stream.of(Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")).toArray(Node[]::new);
 
     Cluster cluster = Testing.newTestCluster(new Stripe(nodes));
     new ClusterValidator(cluster).validate();
@@ -225,7 +225,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_4() {
-    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-root-dir"));
     }).toArray(Node[]::new);
 
@@ -237,7 +237,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_5() {
-    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-root-dir"));
       node.setSecurityAuditLogDir(Paths.get("security-audit-dir"));
     }).toArray(Node[]::new);
@@ -251,7 +251,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_6() {
-    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")};
 
     Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(false);
@@ -260,7 +260,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_7() {
-    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("security-root-dir"));
     }).toArray(Node[]::new);
 
@@ -271,7 +271,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_1() {
-    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")};
 
     Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(false)
@@ -282,7 +282,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_2() {
-    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")};
 
     Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(true)
@@ -293,7 +293,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_3() {
-    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")};
 
     Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecuritySslTls(true);
@@ -303,7 +303,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_4() {
-    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")};
 
     Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecurityAuthc("file");
@@ -313,7 +313,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_5() {
-    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")).peek(node -> {
       node.setSecurityAuditLogDir(Paths.get("."));
     }).toArray(Node[]::new);
 
@@ -324,7 +324,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_6() {
-    Node[] nodes = new Node[]{Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")};
+    Node[] nodes = new Node[]{Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")};
 
     Cluster cluster = Testing.newTestCluster(new Stripe(nodes))
         .setSecurityWhitelist(true);
@@ -334,7 +334,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_7() {
-    Node[] nodes = Stream.of(Testing.newTestNode("localhost1"), Testing.newTestNode("localhost2")).peek(node -> {
+    Node[] nodes = Stream.of(Testing.newTestNode("node1", "localhost1"), Testing.newTestNode("node2", "localhost2")).peek(node -> {
       node.setSecurityDir(Paths.get("."));
     }).toArray(Node[]::new);
 

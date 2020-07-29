@@ -60,7 +60,7 @@ public class ConfigurationGeneratorVisitorTest {
 
   @Test
   public void testConfigFileContainsOneNode_noNodeHostPortSpecified() {
-    Node node = Testing.newTestNode("localhost");
+    Node node = Testing.newTestNode("node1", "localhost");
     Cluster cluster = Testing.newTestCluster(new Stripe(node));
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(null, null, CONFIG_FILE, cluster);
 
@@ -69,16 +69,16 @@ public class ConfigurationGeneratorVisitorTest {
 
   @Test
   public void testConfigFileContainsOneNode_matchingNodeHostPortSpecified() {
-    Node node = Testing.newTestNode(PARAMETER_SUBSTITUTOR.substitute(Setting.NODE_HOSTNAME.getDefaultValue()));
+    Node node = Testing.newTestNode("node1", PARAMETER_SUBSTITUTOR.substitute(Setting.NODE_HOSTNAME.getDefaultProperty().orElse("")));
     Cluster cluster = Testing.newTestCluster(new Stripe(node));
-    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(node.getHostname(), String.valueOf(node.getPort()), CONFIG_FILE, cluster);
+    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(node.getHostname(), node.getPort().map(String::valueOf).orElse(null), CONFIG_FILE, cluster);
 
     assertThat(matchingNode, equalTo(node));
   }
 
   @Test
   public void testConfigFileContainsOneNode_noMatchingNodeHostPortSpecified() {
-    Node node = Testing.newTestNode("localhost");
+    Node node = Testing.newTestNode("node1", "localhost");
     Cluster cluster = Testing.newTestCluster(new Stripe(node));
 
     assertThat(
@@ -89,8 +89,8 @@ public class ConfigurationGeneratorVisitorTest {
 
   @Test
   public void testConfigFileContainsMultipleNodes_noNodeHostPortSpecified_foundMatchUsingDefaults() {
-    Node node1 = Testing.newTestNode(PARAMETER_SUBSTITUTOR.substitute(Setting.NODE_HOSTNAME.getDefaultValue()));
-    Node node2 = Testing.newTestNode("localhost", 1234);
+    Node node1 = Testing.newTestNode("node1", PARAMETER_SUBSTITUTOR.substitute(Setting.NODE_HOSTNAME.getDefaultProperty().orElse("")));
+    Node node2 = Testing.newTestNode("node2", "localhost", 1234);
     Cluster cluster = Testing.newTestCluster(new Stripe(node1, node2));
 
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(null, null, CONFIG_FILE, cluster);
@@ -99,8 +99,8 @@ public class ConfigurationGeneratorVisitorTest {
 
   @Test
   public void testConfigFileContainsMultipleNodes_noNodeHostPortSpecified() {
-    Node node1 = Testing.newTestNode("some-host", 1234);
-    Node node2 = Testing.newTestNode("some-host", 5678);
+    Node node1 = Testing.newTestNode("node1", "some-host", 1234);
+    Node node2 = Testing.newTestNode("node2", "some-host", 5678);
     Cluster cluster = Testing.newTestCluster(new Stripe(node1, node2));
 
     assertThat(
@@ -111,18 +111,18 @@ public class ConfigurationGeneratorVisitorTest {
 
   @Test
   public void testConfigFileContainsMultipleNodes_matchingNodeHostPortSpecified() {
-    Node node1 = Testing.newTestNode("localhost");
-    Node node2 = Testing.newTestNode("localhost", 1234);
+    Node node1 = Testing.newTestNode("node1", "localhost");
+    Node node2 = Testing.newTestNode("node2", "localhost", 1234);
     Cluster cluster = Testing.newTestCluster(new Stripe(node1, node2));
-    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(node2.getHostname(), String.valueOf(node2.getPort()), CONFIG_FILE, cluster);
+    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(node2.getHostname(), String.valueOf(node2.getPort().get()), CONFIG_FILE, cluster);
 
     assertThat(matchingNode, equalTo(node2));
   }
 
   @Test
   public void testConfigFileContainsMultipleNodes_noMatchingNodeHostPortSpecified() {
-    Node node1 = Testing.newTestNode("localhost");
-    Node node2 = Testing.newTestNode("localhost", 1234);
+    Node node1 = Testing.newTestNode("node1", "localhost");
+    Node node2 = Testing.newTestNode("node2", "localhost", 1234);
     Cluster cluster = Testing.newTestCluster(new Stripe(node1, node2));
 
     assertThat(
@@ -133,7 +133,7 @@ public class ConfigurationGeneratorVisitorTest {
 
   @Test
   public void testConfigFileContainsSingleNode_noMatchesForSpecifiedNodeName() {
-    Node node1 = Testing.newTestNode("localhost");
+    Node node1 = Testing.newTestNode("node1", "localhost");
     Cluster cluster = Testing.newTestCluster(new Stripe(node1));
 
     assertThat(
@@ -144,8 +144,8 @@ public class ConfigurationGeneratorVisitorTest {
 
   @Test
   public void testConfigFileContainsMultipleNodes_noMatchesForSpecifiedNodeName() {
-    Node node1 = Testing.newTestNode("localhost");
-    Node node2 = Testing.newTestNode("localhost", 1234);
+    Node node1 = Testing.newTestNode("node1", "localhost");
+    Node node2 = Testing.newTestNode("node2", "localhost", 1234);
     Cluster cluster = Testing.newTestCluster(new Stripe(node1, node2));
 
     assertThat(
@@ -168,7 +168,7 @@ public class ConfigurationGeneratorVisitorTest {
 
   @Test
   public void testConfigFileContainsSingleNode_matchingNodeNameSpecified() {
-    Node node1 = Testing.newTestNode("localhost");
+    Node node1 = Testing.newTestNode("node1", "localhost");
     Cluster cluster = Testing.newTestCluster(new Stripe(node1));
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingNodeName(node1.getName(), CONFIG_FILE, cluster);
 
@@ -177,8 +177,8 @@ public class ConfigurationGeneratorVisitorTest {
 
   @Test
   public void testConfigFileContainsMultipleNodes_matchingNodeNameSpecified() {
-    Node node1 = Testing.newTestNode("localhost");
-    Node node2 = Testing.newTestNode("localhost", 1234);
+    Node node1 = Testing.newTestNode("node1", "localhost");
+    Node node2 = Testing.newTestNode("node2", "localhost", 1234);
     Cluster cluster = Testing.newTestCluster(new Stripe(node1, node2));
     Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingNodeName(node2.getName(), CONFIG_FILE, cluster);
 

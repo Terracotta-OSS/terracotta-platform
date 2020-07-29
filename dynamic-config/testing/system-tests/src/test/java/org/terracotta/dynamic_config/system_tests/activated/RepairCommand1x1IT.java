@@ -56,8 +56,8 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
             containsString("Commit failed for node localhost:" + getNodePort() + ". Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (stripe ID: 1, node: node-1-1)': Simulate temporary commit failure"),
             containsString("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")))));
 
-    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides(), is(equalTo(emptyMap())));
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides(), is(equalTo(emptyMap())));
+    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), is(equalTo(emptyMap())));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), is(equalTo(emptyMap())));
 
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
@@ -69,8 +69,8 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
             containsOutput("Attempting an automatic repair of the configuration"),
             containsOutput("Configuration is repaired")));
 
-    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
+    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -78,7 +78,7 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
   public void test_auto_repair_uncommitted_node() throws Exception {
     Cluster initialCluster = getRuntimeCluster("localhost", getNodePort());
     assertThat(initialCluster, is(equalTo(getUpcomingCluster("localhost", getNodePort()))));
-    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getTcProperties(), is(equalTo(emptyMap())));
+    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getTcProperties().orDefault(), is(equalTo(emptyMap())));
 
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
@@ -120,7 +120,7 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
 
     // ensure that the server has started with the last committed config
     assertThat(getRuntimeCluster("localhost", getNodePort()), is(not(equalTo(initialCluster))));
-    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
+    assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
   }
 }

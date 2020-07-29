@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <!--
 
     Copyright Terracotta, Inc.
@@ -16,10 +16,21 @@
     limitations under the License.
 
 -->
-<included>
-  <!--  <logger name="org.terracotta.dynamic_config" level="TRACE"/>-->
-  <!--  <logger name="org.terracotta.persistence.sanskrit" level="TRACE"/>-->
-  <!--  <logger name="org.terracotta.nomad" level="TRACE"/>-->
-    <logger name="org.terracotta" level="TRACE"/>
-  <!--<logger name="org.terracotta.config.data_roots.DataDirectoryConfigChangeHandler" level="TRACE"/>-->
-</included>
+<tc-config xmlns="http://www.terracotta.org/config">
+  <servers>
+    <server host="localhost" name="node-1">
+      <logs>%h-logs</logs>
+      <tsa-port>9410</tsa-port>
+      <tsa-group-port>9430</tsa-group-port>
+    </server>
+    <server host="localhost" name="node-2">
+      <logs>%h-logs</logs>
+      <tsa-port>9510</tsa-port>
+      <tsa-group-port>9530</tsa-group-port>
+    </server>
+    <client-reconnect-window>120</client-reconnect-window>
+  </servers>
+  <failover-priority>
+    <availability/>
+  </failover-priority>
+</tc-config>

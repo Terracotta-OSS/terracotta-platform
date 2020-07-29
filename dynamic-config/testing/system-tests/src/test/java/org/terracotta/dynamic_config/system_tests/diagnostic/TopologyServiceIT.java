@@ -19,11 +19,15 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -37,22 +41,28 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.availabil
 @ClusterDefinition
 public class TopologyServiceIT extends DynamicConfigIT {
 
+  Path config;
+  Cluster cluster;
+
   @Override
   protected void startNode(int stripeId, int nodeId) {
+    config = copyConfigProperty("/config-property-files/single-stripe.properties");
+    cluster = new ClusterFactory().create(Props.load(config));
     startNode(1, 1,
         "--config-dir", getNodePath(stripeId, nodeId).resolve("config").toString(),
-        "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
+        "-f", config.toString()
     );
   }
 
   @Test
   public void test_getPendingTopology() throws Exception {
-    withTopologyService("localhost", getNodePort(1,1), topologyService -> {
+    withTopologyService("localhost", getNodePort(1, 1), topologyService -> {
       Cluster pendingCluster = topologyService.getUpcomingNodeContext().getCluster();
 
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
+      assertThat(pendingCluster, is(equalTo(cluster)));
       assertThat(pendingCluster, is(equalTo(Testing.newTestCluster(new Stripe(Testing.newTestNode("node-1-1", "localhost", getNodePort())
           .setGroupPort(getNodeGroupPort(1, 1))
           .setBindAddress("0.0.0.0")
@@ -60,11 +70,15 @@ public class TopologyServiceIT extends DynamicConfigIT {
           .setMetadataDir(Paths.get("metadata", "stripe1"))
           .setLogDir(Paths.get("logs", "stripe1", "node-1-1"))
           .setBackupDir(Paths.get("backup", "stripe1"))
+          .setLoggerOverrides(emptyMap())
+          .setTcProperties(emptyMap())
           .putDataDir("main", Paths.get("user-data", "main", "stripe1"))
       ))
           .setClientReconnectWindow(120, SECONDS)
           .setClientLeaseDuration(20, SECONDS)
           .setFailoverPriority(availability())
+          .setSecuritySslTls(false)
+          .setSecurityWhitelist(false)
           .putOffheapResource("main", 512, MB))));
     });
   }

@@ -85,10 +85,10 @@ public class ClusterValidator {
     cluster.getStripes()
         .stream()
         .flatMap(s -> s.getNodes().stream())
-        .filter(node -> (node.getPublicHostname() != null && node.getPublicPort() == null) || (node.getPublicHostname() == null && node.getPublicPort() != null))
+        .filter(node -> (node.getPublicHostname().isConfigured() && !node.getPublicPort().isConfigured()) || (!node.getPublicHostname().isConfigured() && node.getPublicPort().isConfigured()))
         .findFirst()
         .ifPresent(node -> {
-          throw new MalformedClusterException("Public address: '" + (node.getPublicHostname() + ":" + node.getPublicPort())
+          throw new MalformedClusterException("Public address: '" + (node.getPublicHostname().orDefault() + ":" + node.getPublicPort().orDefault())
               + "' of node with name: " + node.getName() + " isn't well-formed. Public hostname and port need to be set together");
         });
   }
@@ -162,7 +162,7 @@ public class ClusterValidator {
 
   private void validateDataDirs() {
     Set<Set<String>> uniqueDataDirNames = cluster.getNodes().stream()
-        .map(node -> node.getDataDirs().keySet())
+        .map(node -> node.getDataDirs().orDefault().keySet())
         .collect(Collectors.toSet());
     if (uniqueDataDirNames.size() > 1) {
       throw new MalformedClusterException("Data directory names need to match across the cluster," +
@@ -173,7 +173,7 @@ public class ClusterValidator {
 
   private void validateBackupDirs() {
     List<String> nodesWithBackupDirs = cluster.getNodes().stream()
-        .filter(node -> Objects.nonNull(node.getBackupDir()))
+        .filter(node -> node.getBackupDir().isConfigured())
         .map(Node::getName)
         .collect(toList());
     if (nodesWithBackupDirs.size() != 0 && nodesWithBackupDirs.size() != cluster.getNodeCount()) {
@@ -183,18 +183,18 @@ public class ClusterValidator {
   }
 
   private void validateSecurityDir() {
-    if ("certificate".equals(cluster.getSecurityAuthc()) && !cluster.isSecuritySslTls()) {
+    if (cluster.getSecurityAuthc().is("certificate") && !cluster.getSecuritySslTls().orDefault()) {
       throw new MalformedClusterException(SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
     }
     cluster.nodeContexts().forEach(nodeContext -> {
       Node node = nodeContext.getNode();
-      if ((cluster.getSecurityAuthc() != null && node.getSecurityDir() == null)
-          || (node.getSecurityAuditLogDir() != null && node.getSecurityDir() == null)
-          || (cluster.isSecuritySslTls() && node.getSecurityDir() == null)
-          || (cluster.isSecurityWhitelist() && node.getSecurityDir() == null)) {
+      if ((cluster.getSecurityAuthc().isConfigured() && !node.getSecurityDir().isConfigured())
+          || (node.getSecurityAuditLogDir().isConfigured() && !node.getSecurityDir().isConfigured())
+          || (cluster.getSecuritySslTls().orDefault() && !node.getSecurityDir().isConfigured())
+          || (cluster.getSecurityWhitelist().orDefault() && !node.getSecurityDir().isConfigured())) {
         throw new MalformedClusterException(SECURITY_DIR + " is mandatory for any of the security configuration");
       }
-      if (node.getSecurityDir() != null && !cluster.isSecuritySslTls() && cluster.getSecurityAuthc() == null && !cluster.isSecurityWhitelist()) {
+      if (node.getSecurityDir().isConfigured() && !cluster.getSecuritySslTls().orDefault() && !cluster.getSecurityAuthc().isConfigured() && !cluster.getSecurityWhitelist().orDefault()) {
         throw new MalformedClusterException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
       }
     });

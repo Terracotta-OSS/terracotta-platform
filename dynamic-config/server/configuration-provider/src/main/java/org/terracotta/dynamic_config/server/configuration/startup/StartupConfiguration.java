@@ -157,7 +157,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   @Override
   public Properties getTcProperties() {
     Properties copy = new Properties();
-    copy.putAll(nodeContextSupplier.get().getNode().getTcProperties());
+    copy.putAll(nodeContextSupplier.get().getNode().getTcProperties().orDefault());
     return copy;
   }
 
@@ -248,7 +248,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public int getTsaPort() {
-    return nodeContextSupplier.get().getNode().getPort();
+    return nodeContextSupplier.get().getNode().getPort().orDefault();
   }
 
   @Override

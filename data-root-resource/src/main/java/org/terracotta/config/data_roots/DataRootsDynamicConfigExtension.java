@@ -39,8 +39,8 @@ public class DataRootsDynamicConfigExtension implements DynamicConfigExtension {
     ConfigChangeHandlerManager configChangeHandlerManager = findService(platformConfiguration, ConfigChangeHandlerManager.class);
 
     NodeContext nodeContext = topologyService.getRuntimeNodeContext();
-    Path nodeMetadataDir = nodeContext.getNode().getMetadataDir();
-    Map<String, Path> dataDirs = nodeContext.getNode().getDataDirs();
+    Path nodeMetadataDir = nodeContext.getNode().getMetadataDir().orDefault();
+    Map<String, Path> dataDirs = nodeContext.getNode().getDataDirs().orDefault();
     DataDirectoriesConfigImpl dataDirectoriesConfig = new DataDirectoriesConfigImpl(parameterSubstitutor, pathResolver, nodeMetadataDir, dataDirs);
     configChangeHandlerManager.set(Setting.DATA_DIRS, new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, parameterSubstitutor, pathResolver));
 

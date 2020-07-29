@@ -20,14 +20,30 @@ import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
+import static org.terracotta.dynamic_config.api.model.Setting.DATA_DIRS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
+import static org.terracotta.dynamic_config.api.model.Setting.modelToProperties;
 
 public class Node implements Cloneable, PropertyHolder {
 
@@ -47,9 +63,9 @@ public class Node implements Cloneable, PropertyHolder {
   private Path backupDir;
   private Path securityDir;
   private Path securityAuditLogDir;
-  private Map<String, String> tcProperties = new ConcurrentHashMap<>();
-  private Map<String, String> loggerOverrides = new ConcurrentHashMap<>();
-  private Map<String, Path> dataDirs = new ConcurrentHashMap<>();
+  private Map<String, String> tcProperties;
+  private Map<String, String> loggerOverrides;
+  private Map<String, Path> dataDirs;
 
   @Override
   public Scope getScope() {
@@ -64,60 +80,60 @@ public class Node implements Cloneable, PropertyHolder {
     return hostname;
   }
 
-  public String getPublicHostname() {
-    return publicHostname;
+  public OptionalConfig<String> getPublicHostname() {
+    return OptionalConfig.of(NODE_PUBLIC_HOSTNAME, publicHostname);
   }
 
-  public Integer getPort() {
-    return port;
+  public OptionalConfig<Integer> getPort() {
+    return OptionalConfig.of(NODE_PORT, port);
   }
 
-  public Integer getPublicPort() {
-    return publicPort;
+  public OptionalConfig<Integer> getPublicPort() {
+    return OptionalConfig.of(NODE_PUBLIC_PORT, publicPort);
   }
 
-  public Integer getGroupPort() {
-    return groupPort;
+  public OptionalConfig<Integer> getGroupPort() {
+    return OptionalConfig.of(NODE_GROUP_PORT, groupPort);
   }
 
-  public String getBindAddress() {
-    return bindAddress;
+  public OptionalConfig<String> getBindAddress() {
+    return OptionalConfig.of(NODE_BIND_ADDRESS, bindAddress);
   }
 
-  public String getGroupBindAddress() {
-    return groupBindAddress;
+  public OptionalConfig<String> getGroupBindAddress() {
+    return OptionalConfig.of(NODE_GROUP_BIND_ADDRESS, groupBindAddress);
   }
 
-  public Path getMetadataDir() {
-    return metadataDir;
+  public OptionalConfig<Path> getMetadataDir() {
+    return OptionalConfig.of(NODE_METADATA_DIR, metadataDir);
   }
 
-  public Path getLogDir() {
-    return logDir;
+  public OptionalConfig<Path> getLogDir() {
+    return OptionalConfig.of(NODE_LOG_DIR, logDir);
   }
 
-  public Path getBackupDir() {
-    return backupDir;
+  public OptionalConfig<Path> getBackupDir() {
+    return OptionalConfig.of(NODE_BACKUP_DIR, backupDir);
   }
 
-  public Path getSecurityDir() {
-    return securityDir;
+  public OptionalConfig<Path> getSecurityDir() {
+    return OptionalConfig.of(SECURITY_DIR, securityDir);
   }
 
-  public Path getSecurityAuditLogDir() {
-    return securityAuditLogDir;
+  public OptionalConfig<Path> getSecurityAuditLogDir() {
+    return OptionalConfig.of(SECURITY_AUDIT_LOG_DIR, securityAuditLogDir);
   }
 
-  public Map<String, Path> getDataDirs() {
-    return Collections.unmodifiableMap(dataDirs);
+  public OptionalConfig<Map<String, Path>> getDataDirs() {
+    return OptionalConfig.of(DATA_DIRS, dataDirs);
   }
 
-  public Map<String, String> getLoggerOverrides() {
-    return Collections.unmodifiableMap(loggerOverrides);
+  public OptionalConfig<Map<String, String>> getLoggerOverrides() {
+    return OptionalConfig.of(NODE_LOGGER_OVERRIDES, loggerOverrides);
   }
 
-  public Map<String, String> getTcProperties() {
-    return tcProperties;
+  public OptionalConfig<Map<String, String>> getTcProperties() {
+    return OptionalConfig.of(TC_PROPERTIES, tcProperties);
   }
 
   public Node setName(String name) {
@@ -186,11 +202,13 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node putLoggerOverride(String logger, String level) {
-    this.loggerOverrides.put(logger, level);
-    return this;
+    return putLoggerOverrides(singletonMap(logger, level));
   }
 
   public Node putLoggerOverrides(Map<String, String> loggerOverrides) {
+    if (this.loggerOverrides == null) {
+      setLoggerOverrides(Optional.ofNullable(NODE_LOGGER_OVERRIDES.<Map<String, String>>getDefaultValue()).orElse(emptyMap()));
+    }
     this.loggerOverrides.putAll(loggerOverrides);
     return this;
   }
@@ -201,21 +219,39 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node removeLoggerOverride(String logger) {
-    this.loggerOverrides.remove(logger);
+    if (this.loggerOverrides == null) {
+      // this code is handling the removal of any default value set
+      Map<String, String> def = NODE_LOGGER_OVERRIDES.getDefaultValue();
+      if (def != null && def.containsKey(logger)) {
+        setLoggerOverrides(def);
+      }
+    }
+    if (this.loggerOverrides != null) {
+      this.loggerOverrides.remove(logger);
+    }
     return this;
   }
 
-  public Node clearLoggerOverrides() {
-    loggerOverrides.clear();
+  public Node unsetLoggerOverrides() {
+    if (this.loggerOverrides != null) {
+      setLoggerOverrides(emptyMap());
+    } else {
+      Map<String, String> def = NODE_LOGGER_OVERRIDES.getDefaultValue();
+      if (def != null && !def.isEmpty()) {
+        setLoggerOverrides(emptyMap());
+      }
+    }
     return this;
   }
 
   public Node putTcProperty(String key, String value) {
-    this.tcProperties.put(key, value);
-    return this;
+    return putTcProperties(singletonMap(key, value));
   }
 
   public Node putTcProperties(Map<String, String> tcProperties) {
+    if (this.tcProperties == null) {
+      setTcProperties(Optional.ofNullable(TC_PROPERTIES.<Map<String, String>>getDefaultValue()).orElse(emptyMap()));
+    }
     this.tcProperties.putAll(tcProperties);
     return this;
   }
@@ -226,21 +262,39 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node removeTcProperty(String key) {
-    this.tcProperties.remove(key);
+    if (this.tcProperties == null) {
+      // this code is handling the removal of any default value set
+      Map<String, String> def = TC_PROPERTIES.getDefaultValue();
+      if (def != null && def.containsKey(key)) {
+        setTcProperties(def);
+      }
+    }
+    if (this.tcProperties != null) {
+      this.tcProperties.remove(key);
+    }
     return this;
   }
 
-  public Node clearTcProperties() {
-    this.tcProperties.clear();
+  public Node unsetTcProperties() {
+    if (this.tcProperties != null) {
+      setTcProperties(emptyMap());
+    } else {
+      Map<String, String> def = TC_PROPERTIES.getDefaultValue();
+      if (def != null && !def.isEmpty()) {
+        setTcProperties(emptyMap());
+      }
+    }
     return this;
   }
 
   public Node putDataDir(String name, Path path) {
-    this.dataDirs.put(name, path);
-    return this;
+    return putDataDirs(singletonMap(name, path));
   }
 
   public Node putDataDirs(Map<String, Path> dataDirs) {
+    if (this.dataDirs == null) {
+      setDataDirs(Optional.ofNullable(DATA_DIRS.<Map<String, Path>>getDefaultValue()).orElse(emptyMap()));
+    }
     this.dataDirs.putAll(dataDirs);
     return this;
   }
@@ -251,12 +305,28 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node removeDataDir(String key) {
-    dataDirs.remove(key);
+    if (this.dataDirs == null) {
+      // this code is handling the removal of any default value set
+      Map<String, Path> def = DATA_DIRS.getDefaultValue();
+      if (def != null && def.containsKey(key)) {
+        setDataDirs(def);
+      }
+    }
+    if (this.dataDirs != null) {
+      this.dataDirs.remove(key);
+    }
     return this;
   }
 
-  public Node clearDataDirs() {
-    this.dataDirs.clear();
+  public Node unsetDataDirs() {
+    if (this.dataDirs != null) {
+      setDataDirs(emptyMap());
+    } else {
+      Map<String, Path> def = DATA_DIRS.getDefaultValue();
+      if (def != null && !def.isEmpty()) {
+        setDataDirs(emptyMap());
+      }
+    }
     return this;
   }
 
@@ -273,6 +343,8 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public InetSocketAddress getInternalAddress() {
+    final String hostname = getHostname();
+    final Integer port = getPort().orDefault();
     if (hostname == null || Substitutor.containsSubstitutionParams(hostname)) {
       throw new AssertionError("Node " + name + " is not correctly defined with internal address: " + hostname + ":" + port);
     }
@@ -369,10 +441,6 @@ public class Node implements Cloneable, PropertyHolder {
    */
   @Override
   public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
-    return Setting.modelToProperties(this, expanded, includeDefaultValues);
-  }
-
-  public Node fillRequiredSettings() {
-    return Setting.fillRequiredSettings(this);
+    return modelToProperties(this, expanded, includeDefaultValues);
   }
 }

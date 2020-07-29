@@ -20,42 +20,6 @@
         },
         "capabilities": [
           {
-            "name": "DataRootSettings",
-            "context": [
-              {
-                "name": "consumerId",
-                "required": true
-              },
-              {
-                "name": "type",
-                "required": true
-              },
-              {
-                "name": "alias",
-                "required": true
-              }
-            ],
-            "descriptors": []
-          },
-          {
-            "name": "DataRootStatistics",
-            "context": [
-              {
-                "name": "consumerId",
-                "required": true
-              },
-              {
-                "name": "type",
-                "required": true
-              },
-              {
-                "name": "alias",
-                "required": true
-              }
-            ],
-            "descriptors": []
-          },
-          {
             "name": "OffHeapResourceSettings",
             "context": [
               {

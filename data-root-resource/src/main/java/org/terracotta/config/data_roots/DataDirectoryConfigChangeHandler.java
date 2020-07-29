@@ -48,15 +48,15 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
 
   @Override
   public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
-    if (change.getValue() == null) {
+    if (!change.getValue().isPresent()) {
       throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
 
-    Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs();
+    Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs().orDefault();
     LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
 
     String dataDirectoryName = change.getKey();
-    Path dataDirectoryPath = Paths.get(change.getValue());
+    Path dataDirectoryPath = Paths.get(change.getValue().get());
 
     if (dataDirs.containsKey(dataDirectoryName)) {
       throw new InvalidConfigChangeException("A data directory with name: " + dataDirectoryName + " already exists");
@@ -78,7 +78,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
   @Override
   public void apply(Configuration change) {
     String dataDirectoryName = change.getKey();
-    String dataDirectoryPath = change.getValue();
+    String dataDirectoryPath = change.getValue().get();
     dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
   }
 
