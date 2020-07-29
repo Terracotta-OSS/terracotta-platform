@@ -31,6 +31,7 @@ import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
@@ -66,6 +67,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.server.StopAction.RESTART;
 import static org.terracotta.server.StopAction.ZAP;
@@ -199,10 +201,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   public void onSettingChanged(SettingNomadChange change, Cluster updated) {
     if (change.canApplyAtRuntime(runtimeNodeContext.getNodeName())) {
       LOGGER.info("Configuration change: {} applied at runtime", change.getSummary());
-      LOGGER.info("New cluster configuration: {}", runtimeNodeContext.getCluster().toProperties(true, true));
     } else {
       LOGGER.info("Configuration change: {} will be applied after restart", change.getSummary());
-      LOGGER.info("Pending cluster configuration: {}", upcomingNodeContext.getCluster().toProperties(true, true));
     }
     // do not fire events within a synchronized block
     listeners.forEach(c -> c.onSettingChanged(change, updated));
@@ -277,6 +277,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
             runtimeNodeContext = runtimeNodeContext.withCluster(runtimeCluster).orElseGet(runtimeNodeContext::alone);
           }
         }
+      }
+
+      if (runtimeNodeContext.equals(upcomingNodeContext)) {
+        LOGGER.info("New cluster configuration: {}{}", lineSeparator(), clusterProperties(runtimeNodeContext));
+      } else {
+        LOGGER.info("Pending cluster configuration: {}{}", lineSeparator(), clusterProperties(upcomingNodeContext));
       }
     } else {
       LOGGER.warn("Nomad change {} failed to commit: {}", message.getChangeUuid(), response);
@@ -428,6 +434,10 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     licenseService.validate(licensePath, cluster);
     LOGGER.debug("License is valid for cluster: {}", cluster.toShapeString());
     return true;
+  }
+
+  private String clusterProperties(NodeContext nodeContext) {
+    return Props.toString(nodeContext.getCluster().toProperties(false, false));
   }
 
   private Map<String, ?> toMap(Object o) {
