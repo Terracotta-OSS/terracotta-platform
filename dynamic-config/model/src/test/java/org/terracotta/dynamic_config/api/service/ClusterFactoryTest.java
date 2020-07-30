@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.api.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,6 +45,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyMap;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -397,26 +397,26 @@ public class ClusterFactoryTest {
         .filter(node -> node.getName().equals("<GENERATED>"))
         .ifPresent(node -> node.setName(nodeName));
 
-    assertThat(built, Matchers.is(equalTo(cluster)));
+    assertThat(built, is(equalTo(cluster)));
   }
 
   private void assertCliFail(Map<Setting, String> params, String err) {
     err = err.replace("/", File.separator); // unix/win compat'
     assertThat(
         () -> clusterFactory.create(params, substitutor),
-        Matchers.is(throwing(instanceOf(MalformedClusterException.class)).andMessage(Matchers.is(equalTo(err)))));
+        is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
   }
 
   private void assertConfigEquals(Properties config, Cluster cluster) {
     Cluster built = clusterFactory.create(config);
-    assertThat(built, Matchers.is(equalTo(cluster)));
+    assertThat(built, is(equalTo(cluster)));
   }
 
   private void assertConfigFail(Properties config, String err) {
     err = err.replace("/", File.separator); // unix/win compat'
     assertThat(
         () -> clusterFactory.create(config),
-        Matchers.is(throwing(instanceOf(MalformedClusterException.class)).andMessage(Matchers.is(equalTo(err)))));
+        is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
   }
 
   private static Map<Setting, String> cli(String... params) {

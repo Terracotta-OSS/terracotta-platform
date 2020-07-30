@@ -57,7 +57,7 @@ public class ClusterValidator {
     validateAddresses();
     validateBackupDirs();
     validateDataDirs();
-    validateSecurityDir();
+    validateSecurity();
     validateFailoverSetting();
   }
 
@@ -182,21 +182,45 @@ public class ClusterValidator {
     }
   }
 
-  private void validateSecurityDir() {
+  private void validateSecurity() {
+    validateAuthc();
+    validateSecurityRequirements();
+    validateAuditLogDir();
+  }
+
+  private void validateAuthc() {
     if (cluster.getSecurityAuthc().is("certificate") && !cluster.getSecuritySslTls().orDefault()) {
       throw new MalformedClusterException(SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
     }
-    cluster.nodeContexts().forEach(nodeContext -> {
-      Node node = nodeContext.getNode();
-      if ((cluster.getSecurityAuthc().isConfigured() && !node.getSecurityDir().isConfigured())
-          || (node.getSecurityAuditLogDir().isConfigured() && !node.getSecurityDir().isConfigured())
-          || (cluster.getSecuritySslTls().orDefault() && !node.getSecurityDir().isConfigured())
-          || (cluster.getSecurityWhitelist().orDefault() && !node.getSecurityDir().isConfigured())) {
-        throw new MalformedClusterException(SECURITY_DIR + " is mandatory for any of the security configuration");
+  }
+
+  private void validateSecurityRequirements() {
+    for (Node node : cluster.getNodes()) {
+      boolean securityDirConfigured = node.getSecurityDir().isConfigured();
+      if (!securityDirConfigured) {
+        if (cluster.getSecurityAuthc().isConfigured() || node.getSecurityAuditLogDir().isConfigured() ||
+            cluster.getSecuritySslTls().orDefault() || cluster.getSecurityWhitelist().orDefault()) {
+          throw new MalformedClusterException(SECURITY_DIR + " is mandatory for any of the security configuration, but not found on node with name: " + node.getName());
+        }
       }
-      if (node.getSecurityDir().isConfigured() && !cluster.getSecuritySslTls().orDefault() && !cluster.getSecurityAuthc().isConfigured() && !cluster.getSecurityWhitelist().orDefault()) {
-        throw new MalformedClusterException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
+
+      if (securityDirConfigured && !cluster.getSecuritySslTls().orDefault() && !cluster.getSecurityAuthc().isConfigured() && !cluster.getSecurityWhitelist().orDefault()) {
+        throw new MalformedClusterException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST +
+            " is required for security configuration, but not found on node with name: " + node.getName());
       }
-    });
+    }
+  }
+
+  private void validateAuditLogDir() {
+    List<String> nodesWithNoAuditLogDirs = cluster.getStripes()
+        .stream()
+        .flatMap(s -> s.getNodes().stream())
+        .filter(node -> !node.getSecurityAuditLogDir().isConfigured())
+        .map(Node::getName)
+        .collect(toList());
+    if (nodesWithNoAuditLogDirs.size() != 0 && nodesWithNoAuditLogDirs.size() != cluster.getNodeCount()) {
+      throw new MalformedClusterException("Nodes with names: " + nodesWithNoAuditLogDirs + " don't have audit log directories " +
+          "defined, but other nodes in the cluster do. Audit log directories, if configured, need to be defined on all nodes in the cluster");
+    }
   }
 }
