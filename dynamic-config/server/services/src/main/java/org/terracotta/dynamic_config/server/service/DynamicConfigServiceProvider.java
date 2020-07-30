@@ -47,6 +47,7 @@ import java.util.Collection;
 
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
+import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
@@ -88,6 +89,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
     // cluster name
     addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);
+
+    // lock context
+    addToManager(configChangeHandlerManager, accept(), LOCK_CONTEXT);
 
     // tc-logging
     LoggerOverrideConfigChangeHandler loggerOverrideConfigChangeHandler = new LoggerOverrideConfigChangeHandler(topologyService);

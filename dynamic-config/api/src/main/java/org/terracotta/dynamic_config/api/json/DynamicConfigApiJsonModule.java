@@ -33,6 +33,8 @@ import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
@@ -66,7 +68,9 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
         new NamedType(NodeRemovalNomadChange.class, "NodeRemovalNomadChange"),
         new NamedType(SettingNomadChange.class, "SettingNomadChange"),
         new NamedType(StripeAdditionNomadChange.class, "StripeAdditionNomadChange"),
-        new NamedType(StripeRemovalNomadChange.class, "StripeRemovalNomadChange"));
+        new NamedType(StripeRemovalNomadChange.class, "StripeRemovalNomadChange"),
+        new NamedType(LockAwareDynamicConfigNomadChange.class, "LockAwareDynamicConfigNomadChange")
+    );
 
     setMixInAnnotation(NodeNomadChange.class, NodeNomadChangeMixin.class);
     setMixInAnnotation(Applicability.class, ApplicabilityMixin.class);
@@ -77,6 +81,7 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     setMixInAnnotation(SettingNomadChange.class, SettingNomadChangeMixin.class);
     setMixInAnnotation(StripeAdditionNomadChange.class, StripeAdditionNomadChangeMixin.class);
     setMixInAnnotation(StripeRemovalNomadChange.class, StripeRemovalNomadChangeMixin.class);
+    setMixInAnnotation(LockAwareDynamicConfigNomadChange.class, LockAwareDynamicConfigNomadChangeMixIn.class);
   }
 
   @Override
@@ -180,6 +185,14 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     public StripeRemovalNomadChangeMixin(@JsonProperty(value = "cluster", required = true) Cluster cluster,
                                          @JsonProperty(value = "stripe", required = true) Stripe stripe) {
       super(cluster, stripe);
+    }
+  }
+
+  private static class LockAwareDynamicConfigNomadChangeMixIn extends LockAwareDynamicConfigNomadChange {
+    @JsonCreator
+    public LockAwareDynamicConfigNomadChangeMixIn(@JsonProperty(value = "lockToken", required = true) String lockToken,
+                                                  @JsonProperty(value = "change", required = true) DynamicConfigNomadChange change) {
+      super(lockToken, change);
     }
   }
 }

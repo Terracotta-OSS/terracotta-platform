@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
+import org.terracotta.common.struct.LockContext;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
@@ -281,6 +282,23 @@ public enum Setting {
       ),
       of(ALL_NODES_ONLINE)
   ),
+
+  LOCK_CONTEXT(
+      SettingName.LOCK_CONTEXT,
+      false,
+      always(null),
+      CLUSTER,
+      fromCluster(Cluster::getConfigurationLockContext),
+      intoCluster((cluster, context) -> cluster.setConfigurationLockContext(context != null ? LockContext.from(context) : null)),
+      asList(
+          // only allow loading and parsing a property file
+          // do not allow the use of get/set/unset commands when configuring
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
+          when(ACTIVATED).allow(SET, UNSET).atLevel(CLUSTER)
+      ),
+      of(ACTIVES_ONLINE, HIDDEN)
+  ),
+
   NODE_CONFIG_DIR(SettingName.NODE_CONFIG_DIR,
       false,
       always(Paths.get("%H", "terracotta", "config")),

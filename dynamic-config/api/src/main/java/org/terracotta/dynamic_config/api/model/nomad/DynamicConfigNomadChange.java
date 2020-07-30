@@ -32,4 +32,8 @@ public interface DynamicConfigNomadChange extends NomadChange {
   Cluster apply(Cluster original);
 
   boolean canApplyAtRuntime(int stripeId, String nodeName);
+
+  default DynamicConfigNomadChange unwrap() {
+    return this;
+  }
 }

@@ -275,6 +275,7 @@ public class ConfigurationParserTest {
             "client-reconnect-window=120s",
             "failover-priority=availability",
             "client-lease-duration=150s",
+            "lock-context=",
             "authc=",
             "ssl-tls=false",
             "whitelist=false",

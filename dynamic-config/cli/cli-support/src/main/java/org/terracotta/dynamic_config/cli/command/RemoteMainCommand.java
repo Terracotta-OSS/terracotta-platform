@@ -44,6 +44,9 @@ public class RemoteMainCommand extends LocalMainCommand {
   @Parameter(names = {"-srd", "--security-root-directory"}, description = "Security root directory")
   private String securityRootDirectory;
 
+  @Parameter(names = {"--lock-token"}, hidden = true, description = "Lock token")
+  private String lockToken;
+
   public Measure<TimeUnit> getRequestTimeout() {
     return requestTimeout;
   }
@@ -62,6 +65,10 @@ public class RemoteMainCommand extends LocalMainCommand {
 
   public String getSecurityRootDirectory() {
     return securityRootDirectory;
+  }
+
+  public String getLockToken() {
+    return lockToken;
   }
 
   @Override
