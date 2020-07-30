@@ -58,7 +58,7 @@ public class SettingNomadChange extends FilteredNomadChange {
     String s = operation == Operation.SET ?
         name == null ? (operation + " " + setting + "=" + value) : (operation + " " + setting + "." + name + "=" + value) :
         name == null ? (operation + " " + setting) : (operation + " " + setting + "." + name);
-    switch (getApplicability().getScope()) {
+    switch (getApplicability().getLevel()) {
       case STRIPE:
         return s + " (stripe ID: " + getApplicability().getStripeId().getAsInt() + ")";
       case NODE:
@@ -78,11 +78,20 @@ public class SettingNomadChange extends FilteredNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(String nodeName) {
+  public boolean canApplyAtRuntime(int currentStripeId, String currentNodeName) {
     Setting setting = getSetting();
     boolean requiresClusterRestart = setting.requires(CLUSTER_RESTART);
-    boolean requiresThisNodeRestart = getApplicability().getScope() == Scope.NODE && getApplicability().getNodeName().equals(nodeName) && setting.requires(NODE_RESTART);
+    boolean requiresThisNodeRestart = setting.requires(NODE_RESTART) && getSetting().isScope(Scope.NODE) && applicableTo(currentStripeId, currentNodeName);
     return !requiresClusterRestart && !requiresThisNodeRestart;
+  }
+
+  private boolean applicableTo(int currentStripeId, String currentNodeName) {
+    switch (getApplicability().getLevel()) {
+      case CLUSTER: return true;
+      case STRIPE: return getApplicability().getStripeId().getAsInt() == currentStripeId;
+      case NODE: return getApplicability().getStripeId().getAsInt() == currentStripeId && Objects.equals(getApplicability().getNodeName(), currentNodeName);
+      default: throw new AssertionError(getApplicability().getLevel());
+    }
   }
 
   public String getName() {
@@ -146,7 +155,7 @@ public class SettingNomadChange extends FilteredNomadChange {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   private String namespace(Cluster cluster) {
-    switch (getApplicability().getScope()) {
+    switch (getApplicability().getLevel()) {
       case CLUSTER:
         return "";
       case STRIPE: {
@@ -167,7 +176,7 @@ public class SettingNomadChange extends FilteredNomadChange {
         return "stripe." + stripeId + ".node." + nodeId + ".";
       }
       default:
-        throw new AssertionError(getApplicability().getScope());
+        throw new AssertionError(getApplicability().getLevel());
     }
   }
 

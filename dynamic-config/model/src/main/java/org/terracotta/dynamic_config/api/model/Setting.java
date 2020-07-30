@@ -61,6 +61,7 @@ import static org.terracotta.dynamic_config.api.model.Requirement.ACTIVES_ONLINE
 import static org.terracotta.dynamic_config.api.model.Requirement.ALL_NODES_ONLINE;
 import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
 import static org.terracotta.dynamic_config.api.model.Requirement.CONFIG;
+import static org.terracotta.dynamic_config.api.model.Requirement.HIDDEN;
 import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
 import static org.terracotta.dynamic_config.api.model.Requirement.PRESENCE;
 import static org.terracotta.dynamic_config.api.model.Requirement.RESOLVE_EAGERLY;
@@ -767,8 +768,8 @@ public enum Setting {
     return permissions.stream().anyMatch(permissions -> permissions.allows(clusterState) && permissions.allows(operation) && permissions.allows(scope));
   }
 
-  private boolean isExportable() {
-    return permissions.stream().anyMatch(Permission::isExportable);
+  private boolean isUserExportable() {
+    return !requires(HIDDEN) && permissions.stream().anyMatch(Permission::isUserExportable);
   }
 
   public boolean mustBePresent() {
@@ -893,10 +894,10 @@ public enum Setting {
     return Stream.of(values()).filter(setting -> setting.name.equals(name)).findAny();
   }
 
-  public static Properties modelToProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues) {
+  public static Properties modelToProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings) {
     Properties properties = new Properties();
     Stream.of(Setting.values())
-        .filter(Setting::isExportable)
+        .filter(setting -> setting.isUserExportable() || (includeHiddenSettings && setting.requires(HIDDEN)))
         .filter(setting -> setting.isScope(o.getScope()))
         .forEach(setting -> properties.putAll(setting.toProperties(o, expanded, includeDefaultValues)));
     return properties;

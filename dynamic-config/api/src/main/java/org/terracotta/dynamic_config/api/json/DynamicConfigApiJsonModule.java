@@ -105,7 +105,7 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
 
   public static class ApplicabilityMixin extends Applicability {
     @JsonCreator
-    protected ApplicabilityMixin(@JsonProperty(value = "scope", required = true) Scope scope,
+    protected ApplicabilityMixin(@JsonProperty(value = "level", required = true) Scope scope,
                                  @JsonProperty("stripeId") Integer stripeId,
                                  @JsonProperty("nodeName") String nodeName) {
       super(scope, stripeId, nodeName);

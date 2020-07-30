@@ -57,7 +57,7 @@ public class Permission {
     return this.clusterStates.contains(clusterState);
   }
 
-  public boolean isExportable() {
+  public boolean isUserExportable() {
     return allows(CONFIGURING) && allows(GET);
   }
 

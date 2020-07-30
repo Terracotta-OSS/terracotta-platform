@@ -53,7 +53,7 @@ public class NodeAdditionNomadChange extends NodeNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(String nodeName) {
+  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
     return true;
   }
 

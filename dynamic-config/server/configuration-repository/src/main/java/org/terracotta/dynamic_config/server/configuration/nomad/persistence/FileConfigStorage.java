@@ -78,7 +78,7 @@ public class FileConfigStorage implements ConfigStorage<NodeContext> {
       if (file.getParent() != null) {
         Files.createDirectories(file.getParent());
       }
-      Properties nonDefaults = config.getCluster().toProperties(false, false);
+      Properties nonDefaults = config.getCluster().toProperties(false, false, true);
 
       // adds extra information about this node
       nonDefaults.setProperty("this.stripe-id", String.valueOf(config.getStripeId()));
