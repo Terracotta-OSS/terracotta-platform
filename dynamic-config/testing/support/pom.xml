@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.testing</groupId>
     <artifactId>dynamic-config-testing</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.8.0-pre19</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
