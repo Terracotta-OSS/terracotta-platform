@@ -65,21 +65,13 @@ public class TopologyServiceIT extends DynamicConfigIT {
       assertThat(pendingCluster, is(equalTo(cluster)));
       assertThat(pendingCluster, is(equalTo(Testing.newTestCluster(new Stripe(Testing.newTestNode("node-1-1", "localhost", getNodePort())
           .setGroupPort(getNodeGroupPort(1, 1))
-          .setBindAddress("0.0.0.0")
-          .setGroupBindAddress("0.0.0.0")
           .setMetadataDir(Paths.get("metadata", "stripe1"))
-          .setLogDir(Paths.get("logs", "stripe1", "node-1-1"))
+          .setLogDir(Paths.get("logs", "stripe1"))
           .setBackupDir(Paths.get("backup", "stripe1"))
-          .setLoggerOverrides(emptyMap())
-          .setTcProperties(emptyMap())
           .putDataDir("main", Paths.get("user-data", "main", "stripe1"))
       ))
-          .setClientReconnectWindow(120, SECONDS)
           .setClientLeaseDuration(20, SECONDS)
-          .setFailoverPriority(availability())
-          .setSecuritySslTls(false)
-          .setSecurityWhitelist(false)
-          .putOffheapResource("main", 512, MB))));
+          .setFailoverPriority(availability()))));
     });
   }
 

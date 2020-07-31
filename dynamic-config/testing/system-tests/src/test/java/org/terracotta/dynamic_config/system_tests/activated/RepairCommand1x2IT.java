@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Test;
+import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -222,14 +223,19 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
 
     // if we restart the detached node, that was offline  it will restart as active, which is expected in availability mode
-    startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo());
+    TerracottaServer toStart = getNode(1, passiveId);
+    startNode(1, passiveId, "-r", toStart.getConfigRepo());
     waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
 
     // we can reset this node
     invokeConfigTool("repair", "-f", "reset", "-s", "localhost:" + getNodePort(1, passiveId));
     waitForStopped(1, passiveId);
-    startNode(1, passiveId, "--failover-priority", "availability");
+
+    // TODO - simplify to startNode(1, passiveId) once TDB-5113 is fixed
+    startNode(1, passiveId, "-y", "availability", "-s", toStart.getHostName(),
+        "-p", String.valueOf(toStart.getTsaPort()), "-g", String.valueOf(toStart.getTsaGroupPort()),
+        "-L", toStart.getLogs(), "-r", tmpDir.getRoot().resolve("config").toString());
     waitForDiagnostic(1, passiveId);
   }
 
