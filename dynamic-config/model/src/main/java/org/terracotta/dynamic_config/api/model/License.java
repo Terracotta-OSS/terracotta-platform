@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class License {
 
@@ -29,9 +30,19 @@ public class License {
   // Expiry date of the license in UTC.
   private final LocalDate expiryDate;
 
+  // Flag, for each type of license, to indicates if it's active.
+  private final Map<String, Boolean> flagsMap;
+
   public License(Map<String, Long> capabilityLimitMap,
                  LocalDate expiryDate) {
+    this(capabilityLimitMap, Collections.emptyMap(), expiryDate);
+  }
+
+  public License(Map<String, Long> capabilityLimitMap,
+                 Map<String, Boolean> flagsMap,
+                 LocalDate expiryDate) {
     this.capabilityLimitMap = Collections.unmodifiableMap(new HashMap<>(capabilityLimitMap));
+    this.flagsMap = Collections.unmodifiableMap(new HashMap<>(flagsMap));
     this.expiryDate = expiryDate;
   }
 
@@ -41,6 +52,10 @@ public class License {
 
   public Map<String, Long> getCapabilityLimitMap() {
     return capabilityLimitMap;
+  }
+
+  public Map<String, Boolean> getFlagsMap() {
+    return flagsMap;
   }
 
   public boolean hasCapability(String capability) {
@@ -55,9 +70,10 @@ public class License {
   @Override
   public String toString() {
     return "License{" +
-        "capabilityLimitMap=" + capabilityLimitMap +
-        ", expiryDate=" + expiryDate +
-        '}';
+           "capabilityLimitMap=" + capabilityLimitMap +
+           ", expiryDate=" + expiryDate +
+           ", flagsMap=" + flagsMap +
+           "}";
   }
 
   @Override
@@ -66,11 +82,13 @@ public class License {
     if (o == null || getClass() != o.getClass()) return false;
 
     License license = (License) o;
-    return capabilityLimitMap.equals(license.capabilityLimitMap) && expiryDate.equals(license.expiryDate);
+    return capabilityLimitMap.equals(license.capabilityLimitMap) &&
+           expiryDate.equals(license.expiryDate) &&
+           flagsMap.equals(license.flagsMap);
   }
 
   @Override
   public int hashCode() {
-    return 31 * capabilityLimitMap.hashCode() + expiryDate.hashCode();
+    return Objects.hash(capabilityLimitMap, expiryDate, flagsMap);
   }
 }

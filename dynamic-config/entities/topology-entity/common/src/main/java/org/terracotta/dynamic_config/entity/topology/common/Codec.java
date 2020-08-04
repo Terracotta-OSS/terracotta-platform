@@ -79,6 +79,10 @@ public class Codec implements MessageCodec<Message, Response> {
               .string("name", 10)
               .int64("value", 20)
               .build())
+          .structs("flags", 30, newStructBuilder()
+              .string("name", 10)
+              .bool("value", 20)
+              .build())
           .build())
       .bool(REQ_HAS_INCOMPLETE_CHANGE.name(), 30)
       .bool(REQ_MUST_BE_RESTARTED.name(), 40)
@@ -135,7 +139,10 @@ public class Codec implements MessageCodec<Message, Response> {
                 .string("date", license.getExpiryDate().format(DT_FORMATTER))
                 .structs("limits", license.getCapabilityLimitMap().entrySet(), (entryEncoder, entry) -> entryEncoder
                     .string("name", entry.getKey())
-                    .int64("value", entry.getValue()));
+                    .int64("value", entry.getValue()))
+                .structs("flags", license.getFlagsMap().entrySet(), (entryEncoder, entry) -> entryEncoder
+                    .string("name", entry.getKey())
+                    .bool("value", entry.getValue()));
           }
           break;
         }
@@ -192,7 +199,9 @@ public class Codec implements MessageCodec<Message, Response> {
             LocalDate expiryDate = LocalDate.parse(payload.string("date"), DT_FORMATTER);
             Map<String, Long> limits = new HashMap<>();
             payload.structs("limits").forEachRemaining(entry -> limits.put(entry.string("name"), entry.int64("value")));
-            return new Response(type, new License(limits, expiryDate));
+            Map<String, Boolean> flags = new HashMap<>();
+            payload.structs("flags").forEachRemaining(entry -> flags.put(entry.string("name"), entry.bool("value")));
+            return new Response(type, new License(limits, flags, expiryDate));
           }
         }
         case REQ_HAS_INCOMPLETE_CHANGE:
