@@ -70,7 +70,7 @@ public class ConfigurationParserTest {
     lenient().when(substitutor.substitute("%c")).thenReturn("localhost.home");
     lenient().when(substitutor.substitute("%H")).thenReturn("home");
     lenient().when(substitutor.substitute("foo")).thenReturn("foo");
-    lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
+    lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("_GENERATED_");
     lenient().when(substitutor.substitute("9410")).thenReturn("9410");
     lenient().when(substitutor.substitute("")).thenReturn("");
     lenient().when(substitutor.substitute("availability")).thenReturn("availability");
@@ -81,10 +81,10 @@ public class ConfigurationParserTest {
     // node hostname should be resolved from default value (%h) if not given
     assertCliEquals(
         cli("failover-priority=availability"),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost")))
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("_GENERATED_", "localhost")))
             .setFailoverPriority(availability()),
         "stripe.1.node.1.hostname=localhost",
-        "stripe.1.node.1.name=<GENERATED>"
+        "stripe.1.node.1.name=_GENERATED_"
     );
     verify(substitutor, times(1)).substitute("%h");
     verify(substitutor, times(1)).substitute(startsWith("node-"));
@@ -97,9 +97,9 @@ public class ConfigurationParserTest {
     // placeholder in node hostname should be resolved eagerly
     assertCliEquals(
         cli("failover-priority=availability", "hostname=%c"),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost.home")))
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("_GENERATED_", "localhost.home")))
             .setFailoverPriority(availability()),
-        "stripe.1.node.1.name=<GENERATED>"
+        "stripe.1.node.1.name=_GENERATED_"
     );
     verify(substitutor).substitute("%c");
     verify(substitutor, times(1)).substitute(startsWith("node-"));
@@ -112,9 +112,9 @@ public class ConfigurationParserTest {
     // node hostname without placeholder triggers no resolve
     assertCliEquals(
         cli("failover-priority=availability", "hostname=foo"),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "foo")))
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("_GENERATED_", "foo")))
             .setFailoverPriority(availability()),
-        "stripe.1.node.1.name=<GENERATED>"
+        "stripe.1.node.1.name=_GENERATED_"
     );
     verify(substitutor).substitute("foo");
     verify(substitutor, times(1)).substitute(startsWith("node-"));
@@ -344,11 +344,11 @@ public class ConfigurationParserTest {
     // this is a hack that will reset to null only the node names that have been generated
     String nodeName = built.getSingleNode().get().getName();
     cluster.getSingleNode()
-        .filter(node -> node.getName().equals("<GENERATED>"))
+        .filter(node -> node.getName().equals("_GENERATED_"))
         .ifPresent(node -> node.setName(nodeName));
 
     Configuration[] configurations = Stream.of(addedConfigurations)
-        .map(string -> string.replace("<GENERATED>", nodeName))
+        .map(string -> string.replace("_GENERATED_", nodeName))
         .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(Configuration::valueOf)
         .toArray(Configuration[]::new);

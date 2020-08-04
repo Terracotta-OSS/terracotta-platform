@@ -78,6 +78,12 @@ public class SettingValidatorTest {
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_NAME + " cannot contain substitution parameters")))));
     });
     NODE_NAME.validate("foo");
+    NODE_NAME.validate("-");
+    NODE_NAME.validate("_");
+    NODE_NAME.validate(".");
+    NODE_NAME.validate(":");
+    NODE_NAME.validate("[]");
+    NODE_NAME.validate("]");
   }
 
   @Test

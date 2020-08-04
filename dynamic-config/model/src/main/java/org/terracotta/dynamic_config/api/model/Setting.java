@@ -74,7 +74,7 @@ import static org.terracotta.dynamic_config.api.model.SettingValidator.DATA_DIRS
 import static org.terracotta.dynamic_config.api.model.SettingValidator.DEFAULT_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.HOST_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.LOGGER_LEVEL_VALIDATOR;
-import static org.terracotta.dynamic_config.api.model.SettingValidator.NODE_NAME_VALIDATOR;
+import static org.terracotta.dynamic_config.api.model.SettingValidator.NAME_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.OFFHEAP_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.PATH_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.PORT_VALIDATOR;
@@ -157,7 +157,7 @@ public enum Setting {
       of(RESOLVE_EAGERLY, PRESENCE),
       emptyList(),
       emptyList(),
-      (key, value) -> NODE_NAME_VALIDATOR.accept(SettingName.NODE_NAME, tuple2(key, value))
+      (key, value) -> NAME_VALIDATOR.accept(SettingName.NODE_NAME, tuple2(key, value))
   ),
   NODE_HOSTNAME(SettingName.NODE_HOSTNAME,
       false,

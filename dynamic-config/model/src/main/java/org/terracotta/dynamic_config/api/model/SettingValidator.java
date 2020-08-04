@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableSet;
@@ -42,6 +43,12 @@ class SettingValidator {
 
   private static final String MULTI_VALUE_SEP = ",";
   private static final String PARAM_INTERNAL_SEP = ":";
+
+  // Notes:
+  // - For migration purpose, we need to support having DNS names in names (users used to specify dns names as names)
+  // - For migration purpose, we need to support special characters like :.[] because server names were generated from IPv4 / IPv6 addresses
+  // by the old XML parser if they were missing. I.e: [2001:db8:85a3:8d3:1319:8a2e:370:7348]:9410
+  private static final Pattern NAME = Pattern.compile("[a-zA-Z0-9-_.:\\[\\]]+");
 
   static final BiConsumer<String, Tuple2<String, String>> DEFAULT_VALIDATOR = (setting, kv) -> {
     // default validator applied to all settings
@@ -62,10 +69,13 @@ class SettingValidator {
     }
   };
 
-  static final BiConsumer<String, Tuple2<String, String>> NODE_NAME_VALIDATOR = (setting, kv) -> {
+  static final BiConsumer<String, Tuple2<String, String>> NAME_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
     if (Substitutor.containsSubstitutionParams(kv.t2)) {
       throw new IllegalArgumentException(setting + " cannot contain substitution parameters");
+    }
+    if (!NAME.matcher(kv.t2).matches()) {
+      throw new IllegalArgumentException(setting + " cannot only be formed with these characters: a-z, A-Z, 0-9, -, _, .");
     }
   };
 

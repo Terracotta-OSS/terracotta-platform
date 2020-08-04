@@ -82,7 +82,7 @@ public class ClusterFactoryTest {
     lenient().when(substitutor.substitute("%c")).thenReturn("localhost.home");
     lenient().when(substitutor.substitute("%H")).thenReturn("home");
     lenient().when(substitutor.substitute("foo")).thenReturn("foo");
-    lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
+    lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("_GENERATED_");
     lenient().when(substitutor.substitute("9410")).thenReturn("9410");
     lenient().when(substitutor.substitute("")).thenReturn("");
     lenient().when(substitutor.substitute("availability")).thenReturn("availability");
@@ -90,9 +90,9 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_create_cli() {
-    assertCliEquals(cli("failover-priority=availability"), Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost.home"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "foo"))));
+    assertCliEquals(cli("failover-priority=availability"), Testing.newTestCluster(new Stripe(Testing.newTestNode("_GENERATED_", "localhost"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Testing.newTestCluster(new Stripe(Testing.newTestNode("_GENERATED_", "localhost.home"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Testing.newTestCluster(new Stripe(Testing.newTestNode("_GENERATED_", "foo"))));
   }
 
   @Test
@@ -394,7 +394,7 @@ public class ClusterFactoryTest {
     // this is a hack that will reset to null only the node names that have been generated
     String nodeName = built.getSingleNode().get().getName();
     cluster.getSingleNode()
-        .filter(node -> node.getName().equals("<GENERATED>"))
+        .filter(node -> node.getName().equals("_GENERATED_"))
         .ifPresent(node -> node.setName(nodeName));
 
     assertThat(built, is(equalTo(cluster)));
