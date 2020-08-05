@@ -25,7 +25,6 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.configuration.ServerConfiguration;
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -39,10 +38,8 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.ObjectMapperFactory;
-import org.terracotta.monitoring.PlatformService;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -125,25 +122,9 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     return nodeContextSupplier.get().getStripe().getNodes().stream().map(this::toServerConfiguration).collect(toList());
   }
 
-  /**
-   * Consumed by {@link PlatformService#getPlatformConfiguration()} to output the configuration.
-   * <p>
-   * MnM is using that and it needs to have a better view that what we had before (props resolved and also user set added in a separated section)
-   * <p>
-   * So this mimics what the export command would do
-   */
   @Override
   public String getRawConfiguration() {
-    NodeContext nodeContext = nodeContextSupplier.get();
-    Cluster cluster = nodeContext.getCluster();
-    Properties nonDefaults = cluster.toProperties(false, false);
-    substitute(nodeContext, nonDefaults);
-    try (StringWriter out = new StringWriter()) {
-      Props.store(out, nonDefaults, "User-defined configurations for node '" + nodeContext.getNodeName() + "' in stripe ID " + nodeContext.getStripeId());
-      return out.toString();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    return Props.toString(nodeContextSupplier.get().getCluster().toProperties(false, false));
   }
 
   /**

@@ -41,12 +41,8 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadChangeInfo;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.Properties;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -107,7 +103,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           boolean restartRequired = !change.canApplyAtRuntime(topologyService.getRuntimeNodeContext().getStripeId(), topologyService.getRuntimeNodeContext().getNodeName());
           Map<String, String> data = new TreeMap<>();
           data.put("change", change.toString());
-          data.put("result", topologyToConfig(updated));
+          data.put("result", Props.toString(updated.toProperties(false, false)));
           data.put("appliedAtRuntime", String.valueOf(!restartRequired));
           data.put("restartRequired", String.valueOf(restartRequired));
           String type = "DYNAMIC_CONFIG_" + change.getOperation();
@@ -118,7 +114,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         public void onNewConfigurationSaved(NodeContext nodeContext, Long version) {
           Map<String, String> data = new TreeMap<>();
           data.put("version", String.valueOf(version));
-          data.put("upcomingConfig", topologyToConfig(nodeContext.getCluster()));
+          data.put("upcomingConfig", Props.toString(nodeContext.getCluster().toProperties(false, false)));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_SAVED", data));
         }
 
@@ -208,16 +204,6 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
       });
 
       LOGGER.info("Activated management and monitoring for dynamic configuration");
-    }
-  }
-
-  private static String topologyToConfig(Cluster cluster) {
-    Properties properties = cluster.toProperties(false, true);
-    try (StringWriter out = new StringWriter()) {
-      Props.store(out, properties, "Configurations:");
-      return out.toString();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
 }

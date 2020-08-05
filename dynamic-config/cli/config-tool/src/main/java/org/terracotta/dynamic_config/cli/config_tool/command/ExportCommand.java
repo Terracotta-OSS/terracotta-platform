@@ -109,13 +109,23 @@ public class ExportCommand extends RemoteCommand {
           throw new AssertionError(outputFormat);
         }
       case PROPERTIES:
-        Properties nonDefaults = cluster.toProperties(false, false);
+        // user-defined
+        Properties userDefined = cluster.toProperties(false, false);
+        // hidden ones
+        Properties hidden = cluster.toProperties(false, false, true);
+        hidden.keySet().removeAll(userDefined.keySet());
+        // defaulted values
+        Properties defaults = cluster.toProperties(false, true);
+        defaults.keySet().removeAll(userDefined.keySet());
+        // write them all
         try (StringWriter out = new StringWriter()) {
-          Props.store(out, nonDefaults, "Non-default configurations");
-          if (includeDefaultValues) {
-            Properties defaults = cluster.toProperties(false, true);
-            defaults.keySet().removeAll(nonDefaults.keySet());
+          // this one is always non empty since we have at least failover-priority
+          Props.store(out, userDefined, "User-defined configurations");
+          if (!defaults.isEmpty() && includeDefaultValues) {
             Props.store(out, defaults, "Default configurations");
+          }
+          if (!hidden.isEmpty()) {
+            Props.store(out, defaults, "Hidden system configurations (only for informational, import and repair purposes): please do not alter, get, set, unset them.");
           }
           return out.toString();
         } catch (IOException e) {

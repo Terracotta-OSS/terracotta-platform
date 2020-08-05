@@ -915,8 +915,8 @@ public enum Setting {
   public static Properties modelToProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings) {
     Properties properties = new Properties();
     Stream.of(Setting.values())
-        .filter(setting -> setting.isUserExportable() || (includeHiddenSettings && setting.requires(HIDDEN)))
         .filter(setting -> setting.isScope(o.getScope()))
+        .filter(setting -> setting.isUserExportable() || (includeHiddenSettings && setting.requires(HIDDEN)))
         .forEach(setting -> properties.putAll(setting.toProperties(o, expanded, includeDefaultValues)));
     return properties;
   }
