@@ -41,7 +41,7 @@ import java.util.Properties;
 import static java.lang.System.lineSeparator;
 
 @Parameters(commandNames = "export", commandDescription = "Export a cluster configuration")
-@Usage("export -s <hostname[:port]> [-f <config-file>] [-i] [-r]")
+@Usage("export -s <hostname[:port]> [-f <config-file>] [-i] [-r][-a]")
 public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-s"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
@@ -51,6 +51,9 @@ public class ExportCommand extends RemoteCommand {
 
   @Parameter(names = {"-i"}, description = "Include default values. Default: false", converter = BooleanConverter.class)
   private boolean includeDefaultValues;
+
+  @Parameter(names = {"-a"}, description = "Export all configured settings, including system settings. Required to be able to repair or partially activate a node. Default: false", converter = BooleanConverter.class)
+  private boolean includeHiddenSettings;
 
   @Parameter(names = {"-r"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
@@ -109,11 +112,11 @@ public class ExportCommand extends RemoteCommand {
           throw new AssertionError(outputFormat);
         }
       case PROPERTIES:
-        Properties nonDefaults = cluster.toProperties(false, false);
+        Properties nonDefaults = cluster.toProperties(false, false, includeHiddenSettings);
         try (StringWriter out = new StringWriter()) {
           Props.store(out, nonDefaults, "Non-default configurations");
           if (includeDefaultValues) {
-            Properties defaults = cluster.toProperties(false, true);
+            Properties defaults = cluster.toProperties(false, true, includeHiddenSettings);
             defaults.keySet().removeAll(nonDefaults.keySet());
             Props.store(out, defaults, "Default configurations");
           }
