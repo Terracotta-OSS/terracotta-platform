@@ -48,6 +48,7 @@ import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
+import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
@@ -127,7 +128,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Cluster setFailoverPriority(FailoverPriority failoverPriority) {
-    this.failoverPriority = failoverPriority;
+    this.failoverPriority = requireNonNull(failoverPriority);
     return this;
   }
 
@@ -307,16 +308,17 @@ public class Cluster implements Cloneable, PropertyHolder {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Cluster clone() {
-    return new Cluster(stripes.stream().map(Stripe::clone).collect(toList()))
-        .setName(name)
-        .setConfigurationLockContext(lockContext)
-        .setClientLeaseDuration(clientLeaseDuration)
-        .setClientReconnectWindow(clientReconnectWindow)
-        .setFailoverPriority(failoverPriority)
-        .setOffheapResources(offheapResources)
-        .setSecurityAuthc(securityAuthc)
-        .setSecuritySslTls(securitySslTls)
-        .setSecurityWhitelist(securityWhitelist);
+    final Cluster clone = new Cluster(stripes.stream().map(Stripe::clone).collect(toList()));
+    clone.clientLeaseDuration = this.clientLeaseDuration;
+    clone.clientReconnectWindow = this.clientReconnectWindow;
+    clone.failoverPriority = this.failoverPriority;
+    clone.lockContext = this.lockContext;
+    clone.name = this.name;
+    clone.offheapResources = this.offheapResources == null ? null : new ConcurrentHashMap<>(this.offheapResources);
+    clone.securityAuthc = this.securityAuthc;
+    clone.securitySslTls = this.securitySslTls;
+    clone.securityWhitelist = this.securityWhitelist;
+    return clone;
   }
 
   public boolean removeStripe(Stripe stripe) {
@@ -437,8 +439,8 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public LockContext getConfigurationLockContext() {
-    return lockContext;
+  public OptionalConfig<LockContext> getConfigurationLockContext() {
+    return OptionalConfig.of(LOCK_CONTEXT, lockContext);
   }
 
   public Cluster setConfigurationLockContext(LockContext lockContext) {

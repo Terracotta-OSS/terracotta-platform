@@ -68,11 +68,11 @@ public class NodeTest {
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(equalTo("Node null is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> newTestNode("node1", null).getInternalAddress(),
+        () -> new Node().setName("node1").getInternalAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> newTestNode("node1", null).setPort(9410).getInternalAddress(),
+        () -> new Node().setName("node1").setPort(9410).getInternalAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: null:9410")))));
 
     assertThat(

@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
+import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Setting.DATA_DIRS;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
@@ -137,12 +138,12 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node setName(String name) {
-    this.name = name;
+    this.name = requireNonNull(name);
     return this;
   }
 
   public Node setHostname(String hostname) {
-    this.hostname = hostname;
+    this.hostname = requireNonNull(hostname);
     return this;
   }
 
@@ -365,23 +366,24 @@ public class Node implements Cloneable, PropertyHolder {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Node clone() {
-    return new Node()
-        .setDataDirs(dataDirs)
-        .setBackupDir(backupDir)
-        .setBindAddress(bindAddress)
-        .setGroupBindAddress(groupBindAddress)
-        .setGroupPort(groupPort)
-        .setHostname(hostname)
-        .setPublicHostname(publicHostname)
-        .setLogDir(logDir)
-        .setMetadataDir(metadataDir)
-        .setName(name)
-        .setPort(port)
-        .setPublicPort(publicPort)
-        .setTcProperties(tcProperties)
-        .setLoggerOverrides(loggerOverrides)
-        .setSecurityAuditLogDir(securityAuditLogDir)
-        .setSecurityDir(securityDir);
+    Node clone = new Node();
+    clone.dataDirs = this.dataDirs == null ? null : new ConcurrentHashMap<>(this.dataDirs);
+    clone.backupDir = this.backupDir;
+    clone.bindAddress = this.bindAddress;
+    clone.groupBindAddress = this.groupBindAddress;
+    clone.groupPort = this.groupPort;
+    clone.hostname = this.hostname;
+    clone.logDir = this.logDir;
+    clone.loggerOverrides = this.loggerOverrides == null ? null : new ConcurrentHashMap<>(this.loggerOverrides);
+    clone.metadataDir = this.metadataDir;
+    clone.name = this.name;
+    clone.port = this.port;
+    clone.publicHostname = this.publicHostname;
+    clone.publicPort = this.publicPort;
+    clone.securityAuditLogDir = this.securityAuditLogDir;
+    clone.securityDir = this.securityDir;
+    clone.tcProperties = this.tcProperties == null ? null : new ConcurrentHashMap<>(this.tcProperties);
+    return clone;
   }
 
   @Override
