@@ -42,7 +42,7 @@ public class LockAwareNomadChangeProcessor implements NomadChangeProcessor<Dynam
 
   private static void throwIfNotAllowed(NodeContext baseConfig, DynamicConfigNomadChange change) throws NomadException {
     if (baseConfig != null) {
-      LockContext lockContext = baseConfig.getCluster().getConfigurationLockContext();
+      LockContext lockContext = baseConfig.getCluster().getConfigurationLockContext().orElse(null);
       if (change instanceof LockAwareDynamicConfigNomadChange) {
         if (lockContext != null) {
           LockAwareDynamicConfigNomadChange lockAwareDynamicConfigNomadChange = (LockAwareDynamicConfigNomadChange)change;

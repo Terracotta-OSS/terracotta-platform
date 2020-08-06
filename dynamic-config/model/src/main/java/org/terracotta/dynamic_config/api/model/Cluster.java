@@ -48,6 +48,7 @@ import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
+import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
@@ -438,8 +439,8 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public LockContext getConfigurationLockContext() {
-    return lockContext;
+  public OptionalConfig<LockContext> getConfigurationLockContext() {
+    return OptionalConfig.of(LOCK_CONTEXT, lockContext);
   }
 
   public Cluster setConfigurationLockContext(LockContext lockContext) {
