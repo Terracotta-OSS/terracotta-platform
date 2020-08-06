@@ -22,8 +22,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
-import org.terracotta.common.struct.LockContext;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
@@ -40,16 +38,6 @@ public class StructJsonModule extends SimpleModule {
   public StructJsonModule() {
     super(StructJsonModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
     setMixInAnnotation(Measure.class, MeasureMixin.class);
-    setMixInAnnotation(LockContext.class, LockContextMixin.class);
-  }
-
-  public static abstract class LockContextMixin extends LockContext {
-    @JsonCreator
-    public LockContextMixin(@JsonProperty(value = "token", required = true) String token,
-                            @JsonProperty(value = "ownerName", required = true) String ownerName,
-                            @JsonProperty(value = "ownerTags", required = true) String ownerTags) {
-      super(token, ownerName, ownerTags);
-    }
   }
 
   @SuppressWarnings("unused")

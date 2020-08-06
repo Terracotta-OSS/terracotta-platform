@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.common.struct;
+package org.terracotta.dynamic_config.api.model;
 
 import java.util.Objects;
 

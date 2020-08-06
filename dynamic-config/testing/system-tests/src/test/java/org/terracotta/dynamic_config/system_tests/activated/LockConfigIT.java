@@ -16,7 +16,7 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Test;
-import org.terracotta.common.struct.LockContext;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
