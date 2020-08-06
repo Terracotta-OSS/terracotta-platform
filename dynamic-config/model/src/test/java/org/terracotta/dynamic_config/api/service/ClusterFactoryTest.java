@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.common.struct.LockContext;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
@@ -118,6 +119,15 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.hostname=foo"
         ),
         Testing.newTestCluster(new Stripe(Testing.newTestNode("real", "foo"))));
+
+    assertConfigEquals(
+        config(
+            "failover-priority=availability",
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost",
+            "lock-context=a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale"
+        ),
+        Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost"))).setConfigurationLockContext(LockContext.from("a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale")));
 
     assertConfigEquals(
         config(
