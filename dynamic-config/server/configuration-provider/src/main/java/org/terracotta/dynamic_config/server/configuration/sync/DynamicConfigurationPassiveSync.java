@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 
@@ -32,22 +33,25 @@ public class DynamicConfigurationPassiveSync {
 
   private final UpgradableNomadServer<NodeContext> nomadServer;
   private final DynamicConfigService dynamicConfigService;
+  private final TopologyService topologyService;
   private final Supplier<String> licenseContent;
   private final DynamicConfigNomadSynchronizer nomadSynchronizer;
 
   public DynamicConfigurationPassiveSync(NodeContext nodeStartupConfiguration,
                                          UpgradableNomadServer<NodeContext> nomadServer,
                                          DynamicConfigService dynamicConfigService,
+                                         TopologyService topologyService,
                                          Supplier<String> licenseContent) {
     this.nomadServer = nomadServer;
     this.dynamicConfigService = dynamicConfigService;
+    this.topologyService = topologyService;
     this.licenseContent = licenseContent;
     this.nomadSynchronizer = new DynamicConfigNomadSynchronizer(nodeStartupConfiguration, nomadServer);
   }
 
   public DynamicConfigSyncData getSyncData() {
     try {
-      return new DynamicConfigSyncData(nomadServer.getAllNomadChanges(), licenseContent.get());
+      return new DynamicConfigSyncData(nomadServer.getAllNomadChanges(), topologyService.getUpcomingNodeContext().getCluster(), licenseContent.get());
     } catch (NomadException e) {
       throw new RuntimeException(e);
     }
@@ -78,7 +82,7 @@ public class DynamicConfigurationPassiveSync {
    */
   public Set<Require> sync(DynamicConfigSyncData data) throws NomadException {
     // sync the active append log in the passive append log
-    Set<Require> requires = nomadSynchronizer.syncNomadChanges(data.getNomadChanges());
+    Set<Require> requires = nomadSynchronizer.syncNomadChanges(data.getNomadChanges(), data.getCluster());
 
     // sync the license from active node
     syncLicense(data.getLicense());

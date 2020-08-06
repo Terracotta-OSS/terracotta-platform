@@ -48,7 +48,7 @@ public class DynamicConfigNomadSynchronizer {
     this.nomadServer = nomadServer;
   }
 
-  public Set<Require> syncNomadChanges(List<NomadChangeInfo> sourceNomadChanges) throws NomadException {
+  public Set<Require> syncNomadChanges(List<NomadChangeInfo> sourceNomadChanges, Cluster sourceTopology) throws NomadException {
     List<NomadChangeInfo> nomadChanges = nomadServer.getAllNomadChanges();
 
     // programming errors
@@ -82,24 +82,20 @@ public class DynamicConfigNomadSynchronizer {
 
       // current cluster that was activated
       final Cluster currentCluster = ((ClusterActivationNomadChange) nomadChanges.get(0).getNomadChange()).getCluster();
+      LOGGER.trace("Passive node topology at activation time: {}", currentCluster);
 
-      // index until which we need to force a sync
-      int pos = Check.lastIndexOfSameCommittedSourceTopologyChange(sourceNomadChanges, currentCluster);
-
-      // Check if this node has been incorrectly activated with the wrong cluster.
-      // This should never happen.
-      if (pos == -1) {
-        throw new IllegalStateException("Unable to find any change in the source node matching the topology used to activate this node: " + currentCluster);
-      }
+      int pos = Check.findLastSyncPosition(sourceNomadChanges, sourceTopology, currentCluster)
+          .orElseThrow(() -> new IllegalStateException("Unable to find any change in the source node matching the topology used to activate this node: " + currentCluster));
 
       // reset the node's changes
+      LOGGER.trace("Reset and clear passive node changes");
       nomadServer.reset();
       nomadChanges.clear();
 
       // There might be some changes in the source node, before the last source node's topology change matching
       // the node's cluster, which might not be related to this node.
       // So we need to force sync them without triggering the change applicators and without
-      // by controlling how to save the config written on disk for all these commits
+      // by controlling how to save the config written on  disk for all these commits
       if (pos >= 0) {
         LOGGER.info("This node is force-syncing {} historical changes", pos + 1);
         Iterable<NomadChangeInfo> iterable = () -> sourceNomadChanges.stream().limit(pos + 1).iterator();
@@ -121,7 +117,9 @@ public class DynamicConfigNomadSynchronizer {
             }
           }
           // note: previous won't be null here because each append log contains at least one topology change (activation)
-          return nodeStartupConfiguration.withCluster(update).orElseGet(nodeStartupConfiguration::alone);
+          NodeContext result = nodeStartupConfiguration.withCluster(update).orElseGet(nodeStartupConfiguration::alone);
+          LOGGER.trace("Force-syncing({}, {}): {}", previousConfig, nomadChange, result);
+          return result;
         });
       }
 
@@ -174,11 +172,11 @@ public class DynamicConfigNomadSynchronizer {
 
   private Require repairNomadChange(NomadChangeInfo nomadChangeInfo) throws NomadException {
     LOGGER.info("Repairing prepared change version {} ({}) created at {} by {} from {}",
-      nomadChangeInfo.getVersion(),
-      nomadChangeInfo.getNomadChange().getSummary(),
-      nomadChangeInfo.getCreationTimestamp(),
-      nomadChangeInfo.getCreationUser(),
-      nomadChangeInfo.getCreationHost());
+        nomadChangeInfo.getVersion(),
+        nomadChangeInfo.getNomadChange().getSummary(),
+        nomadChangeInfo.getCreationTimestamp(),
+        nomadChangeInfo.getCreationUser(),
+        nomadChangeInfo.getCreationHost());
 
     DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
 
@@ -200,11 +198,11 @@ public class DynamicConfigNomadSynchronizer {
 
   private Require syncNomadChange(NomadChangeInfo nomadChangeInfo) throws NomadException {
     LOGGER.debug("Syncing change version {} ({}) created at {} by {} from {}",
-      nomadChangeInfo.getVersion(),
-      nomadChangeInfo.getNomadChange().getSummary(),
-      nomadChangeInfo.getCreationTimestamp(),
-      nomadChangeInfo.getCreationUser(),
-      nomadChangeInfo.getCreationHost());
+        nomadChangeInfo.getVersion(),
+        nomadChangeInfo.getNomadChange().getSummary(),
+        nomadChangeInfo.getCreationTimestamp(),
+        nomadChangeInfo.getCreationUser(),
+        nomadChangeInfo.getCreationHost());
 
     DiscoverResponse<NodeContext> discoverResponse = nomadServer.discover();
     long mutativeMessageCount = discoverResponse.getMutativeMessageCount();
@@ -230,8 +228,8 @@ public class DynamicConfigNomadSynchronizer {
     AcceptRejectResponse response = nomadServer.prepare(nomadChangeInfo.toPrepareMessage(mutativeMessageCount));
     if (!response.isAccepted()) {
       throw new NomadException("Prepare failure. " +
-        "Reason: " + response + ". " +
-        "Change:" + nomadChangeInfo.getNomadChange().getSummary());
+          "Reason: " + response + ". " +
+          "Change:" + nomadChangeInfo.getNomadChange().getSummary());
     }
   }
 
@@ -239,8 +237,8 @@ public class DynamicConfigNomadSynchronizer {
     AcceptRejectResponse response = nomadServer.commit(nomadChangeInfo.toCommitMessage(mutativeMessageCount));
     if (!response.isAccepted()) {
       throw new NomadException("Unexpected commit failure. " +
-        "Reason: " + response + ". " +
-        "Change:" + nomadChangeInfo.getNomadChange().getSummary());
+          "Reason: " + response + ". " +
+          "Change:" + nomadChangeInfo.getNomadChange().getSummary());
     }
   }
 
@@ -248,8 +246,8 @@ public class DynamicConfigNomadSynchronizer {
     AcceptRejectResponse response = nomadServer.rollback(nomadChangeInfo.toRollbackMessage(mutativeMessageCount));
     if (!response.isAccepted()) {
       throw new NomadException("Unexpected rollback failure. " +
-        "Reason: " + response + ". " +
-        "Change:" + nomadChangeInfo.getNomadChange().getSummary());
+          "Reason: " + response + ". " +
+          "Change:" + nomadChangeInfo.getNomadChange().getSummary());
     }
   }
 }

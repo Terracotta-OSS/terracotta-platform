@@ -128,7 +128,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
           nomadServerManager.getConfiguration().orElse(null),
           nomadServer,
           dynamicConfigService,
-          () -> dynamicConfigService.getLicenseContent().orElse(null));
+          topologyService, () -> dynamicConfigService.getLicenseContent().orElse(null));
 
       // generate the configuration wrapper
       configuration = configurationGeneratorVisitor.generateConfiguration();

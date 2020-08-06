@@ -31,6 +31,7 @@ import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.InvalidLicenseException;
@@ -110,12 +111,13 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void resetAndSync(NomadChangeInfo[] nomadChanges) {
+  public void resetAndSync(NomadChangeInfo[] nomadChanges, Cluster cluster) {
     UpgradableNomadServer<NodeContext> nomadServer = nomadServerManager.getNomadServer();
     DynamicConfigNomadSynchronizer nomadSynchronizer = new DynamicConfigNomadSynchronizer(
         nomadServerManager.getConfiguration().orElse(null), nomadServer);
 
     List<NomadChangeInfo> backup;
+    Cluster thisTopology = upcomingNodeContext.getCluster();
     try {
       backup = nomadServer.getAllNomadChanges();
     } catch (NomadException e) {
@@ -123,11 +125,11 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     }
 
     try {
-      nomadSynchronizer.syncNomadChanges(Arrays.asList(nomadChanges));
+      nomadSynchronizer.syncNomadChanges(Arrays.asList(nomadChanges), cluster);
     } catch (NomadException e) {
       try {
         nomadServer.reset();
-        nomadSynchronizer.syncNomadChanges(backup);
+        nomadSynchronizer.syncNomadChanges(backup, thisTopology);
       } catch (NomadException nomadException) {
         e.addSuppressed(nomadException);
       }
@@ -252,9 +254,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       }
 
       if (runtimeNodeContext.equals(upcomingNodeContext)) {
-        LOGGER.info("New cluster configuration: {}{}", lineSeparator(), runtimeNodeContext.getCluster().toProperties(false, false, true));
+        LOGGER.info("New cluster configuration: {}{}", lineSeparator(), Props.toString(runtimeNodeContext.getCluster().toProperties(false, false, true)));
       } else {
-        LOGGER.info("Pending cluster configuration: {}{}", lineSeparator(), upcomingNodeContext.getCluster().toProperties(false, false, true));
+        LOGGER.info("Pending cluster configuration: {}{}", lineSeparator(), Props.toString(upcomingNodeContext.getCluster().toProperties(false, false, true)));
       }
     } else {
       LOGGER.warn("Nomad change {} failed to commit: {}", message.getChangeUuid(), response);
