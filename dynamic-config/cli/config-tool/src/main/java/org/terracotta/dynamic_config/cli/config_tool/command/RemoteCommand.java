@@ -147,7 +147,7 @@ public abstract class RemoteCommand extends Command {
 
     runClusterActivation(newNodes, cluster);
 
-    syncNomadChangesTo(newNodes, getAllNomadChangesFrom(destination));
+    syncNomadChangesTo(newNodes, getAllNomadChangesFrom(destination), cluster);
 
     restartNodes(newNodes, restartDelay, restartWaitTime);
   }
@@ -166,13 +166,13 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  private void syncNomadChangesTo(Collection<InetSocketAddress> newNodes, NomadChangeInfo[] nomadChanges) {
+  private void syncNomadChangesTo(Collection<InetSocketAddress> newNodes, NomadChangeInfo[] nomadChanges, Cluster cluster) {
     logger.info("Sync'ing nomad changes to nodes : {}", toString(newNodes));
 
     try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
       dynamicConfigServices(diagnosticServices)
         .map(Tuple2::getT2)
-        .forEach(service -> service.resetAndSync(nomadChanges));
+        .forEach(service -> service.resetAndSync(nomadChanges, cluster));
       logger.info("Nomad changes sync successful");
     }
   }

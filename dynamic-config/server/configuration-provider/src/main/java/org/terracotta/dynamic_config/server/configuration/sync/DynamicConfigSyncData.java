@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadChangeInfo;
 
@@ -34,11 +35,14 @@ public class DynamicConfigSyncData {
 
   private final List<NomadChangeInfo> nomadChanges;
   private final String license;
+  private final Cluster cluster;
 
   @JsonCreator
   public DynamicConfigSyncData(@JsonProperty(value = "nomadChanges", required = true) List<NomadChangeInfo> nomadChanges,
+                               @JsonProperty(value = "cluster", required = true) Cluster cluster,
                                @JsonProperty(value = "license") String license) {
     this.nomadChanges = nomadChanges;
+    this.cluster = cluster;
     this.license = license;
   }
 
@@ -48,6 +52,10 @@ public class DynamicConfigSyncData {
 
   public String getLicense() {
     return license;
+  }
+
+  public Cluster getCluster() {
+    return cluster;
   }
 
   public static class Codec {

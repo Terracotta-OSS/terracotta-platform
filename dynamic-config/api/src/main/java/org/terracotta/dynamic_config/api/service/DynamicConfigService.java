@@ -79,7 +79,6 @@ public interface DynamicConfigService {
 
   /**
    * Reset and sync this node's append log with the provided nomad changes and update the its configurations accordingly.
-   * @param nomadChanges
    */
-  void resetAndSync(NomadChangeInfo[] nomadChanges);
+  void resetAndSync(NomadChangeInfo[] nomadChanges, Cluster cluster);
 }
