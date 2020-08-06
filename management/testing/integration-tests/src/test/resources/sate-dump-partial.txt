@@ -41,7 +41,6 @@ cacheSize=0
       com.tc.services.PlatformServiceProvider={
         PlatformServiceImpl={
           tcServerState=State[ ACTIVE-COORDINATOR ]
-          tcServerConfig=#User-defined configurations for node 'testServer0' in stripe ID 1
 cluster-name=tc-cluster
 offheap-resources=primary-server-resource\:64MB
 stripe.1.node.1.hostname=localhost
