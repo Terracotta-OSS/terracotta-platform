@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import org.terracotta.common.struct.LockContext;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;

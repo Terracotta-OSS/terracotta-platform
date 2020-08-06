@@ -15,7 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.service.nomad.processor;
 
-import org.terracotta.common.struct.LockContext;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;

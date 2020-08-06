@@ -42,6 +42,7 @@ import org.terracotta.common.struct.json.StructJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.License;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
@@ -76,6 +77,7 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
     setMixInAnnotation(FailoverPriority.class, FailoverPriorityMixin.class);
     setMixInAnnotation(License.class, LicenseMixin.class);
     setMixInAnnotation(OptionalConfig.class, OptionalConfigMixin.class);
+    setMixInAnnotation(LockContext.class, LockContextMixin.class);
   }
 
   @Override
@@ -321,6 +323,15 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
     @Override
     protected Object _getReferencedIfPresent(OptionalConfig<?> value) {
       return value.isConfigured() ? value.get() : null;
+    }
+  }
+
+  public static abstract class LockContextMixin extends LockContext {
+    @JsonCreator
+    public LockContextMixin(@JsonProperty(value = "token", required = true) String token,
+                            @JsonProperty(value = "ownerName", required = true) String ownerName,
+                            @JsonProperty(value = "ownerTags", required = true) String ownerTags) {
+      super(token, ownerName, ownerTags);
     }
   }
 }
