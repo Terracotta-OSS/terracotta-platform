@@ -127,7 +127,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Cluster setFailoverPriority(FailoverPriority failoverPriority) {
-    this.failoverPriority = failoverPriority;
+    this.failoverPriority = requireNonNull(failoverPriority);
     return this;
   }
 
@@ -307,16 +307,17 @@ public class Cluster implements Cloneable, PropertyHolder {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Cluster clone() {
-    return new Cluster(stripes.stream().map(Stripe::clone).collect(toList()))
-        .setName(name)
-        .setConfigurationLockContext(lockContext)
-        .setClientLeaseDuration(clientLeaseDuration)
-        .setClientReconnectWindow(clientReconnectWindow)
-        .setFailoverPriority(failoverPriority)
-        .setOffheapResources(offheapResources)
-        .setSecurityAuthc(securityAuthc)
-        .setSecuritySslTls(securitySslTls)
-        .setSecurityWhitelist(securityWhitelist);
+    final Cluster clone = new Cluster(stripes.stream().map(Stripe::clone).collect(toList()));
+    clone.clientLeaseDuration = this.clientLeaseDuration;
+    clone.clientReconnectWindow = this.clientReconnectWindow;
+    clone.failoverPriority = this.failoverPriority;
+    clone.lockContext = this.lockContext;
+    clone.name = this.name;
+    clone.offheapResources = this.offheapResources == null ? null : new ConcurrentHashMap<>(this.offheapResources);
+    clone.securityAuthc = this.securityAuthc;
+    clone.securitySslTls = this.securitySslTls;
+    clone.securityWhitelist = this.securityWhitelist;
+    return clone;
   }
 
   public boolean removeStripe(Stripe stripe) {
