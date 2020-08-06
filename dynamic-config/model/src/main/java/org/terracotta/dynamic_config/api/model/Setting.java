@@ -73,7 +73,7 @@ import static org.terracotta.dynamic_config.api.model.SettingValidator.DATA_DIRS
 import static org.terracotta.dynamic_config.api.model.SettingValidator.DEFAULT_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.HOST_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.LOGGER_LEVEL_VALIDATOR;
-import static org.terracotta.dynamic_config.api.model.SettingValidator.NODE_NAME_VALIDATOR;
+import static org.terracotta.dynamic_config.api.model.SettingValidator.NAME_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.OFFHEAP_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.PATH_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.PORT_VALIDATOR;
@@ -156,7 +156,22 @@ public enum Setting {
       of(RESOLVE_EAGERLY, PRESENCE),
       emptyList(),
       emptyList(),
-      (key, value) -> NODE_NAME_VALIDATOR.accept(SettingName.NODE_NAME, tuple2(key, value))
+      (key, value) -> NAME_VALIDATOR.accept(SettingName.NODE_NAME, tuple2(key, value))
+  ),
+  STRIPE_NAME(SettingName.STRIPE_NAME,
+      false,
+      () -> "stripe-" + Uuid.generateShortUuid(),
+      STRIPE,
+      fromStripe(Stripe::getName),
+      intoStripe(Stripe::setName),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atLevels(CLUSTER, STRIPE),
+          when(CONFIGURING).allow(SET, IMPORT).atLevel(STRIPE)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE),
+      emptyList(),
+      emptyList(),
+      (key, value) -> NAME_VALIDATOR.accept(SettingName.STRIPE_NAME, tuple2(key, value))
   ),
   NODE_HOSTNAME(SettingName.NODE_HOSTNAME,
       false,
@@ -279,7 +294,10 @@ public enum Setting {
           when(CONFIGURING).allowAnyOperations().atLevel(CLUSTER),
           when(ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE)
+      of(ALL_NODES_ONLINE),
+      emptyList(),
+      emptyList(),
+      (key, value) -> NAME_VALIDATOR.accept(SettingName.CLUSTER_NAME, tuple2(key, value))
   ),
 
   LOCK_CONTEXT(
@@ -841,7 +859,7 @@ public enum Setting {
     setProperty(scope == CLUSTER ? nodeContext.getCluster() : nodeContext.getNode(), key, value);
   }
 
-  public void setProperty(PropertyHolder node, String key, String value) {
+  public void setProperty(PropertyHolder o, String key, String value) {
     if (!isWritable()) {
       throw new IllegalArgumentException("Setting: " + this + " is not writable");
     }
@@ -854,7 +872,7 @@ public enum Setting {
       value = null;
     }
     validate(key, value);
-    this.setter.accept(node, tuple2(key, value));
+    this.setter.accept(o, tuple2(key, value));
   }
 
   public Properties toProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues) {
@@ -920,25 +938,12 @@ public enum Setting {
     return properties;
   }
 
-  @SuppressWarnings("unchecked")
   private static Function<PropertyHolder, Optional<Stream<Tuple2<String, String>>>> fromNode(Function<Node, Object> extractor) {
-    return node -> {
-      Object o = extractor.apply((Node) node);
-      if (o instanceof OptionalConfig) {
-        o = ((OptionalConfig<Object>) o).orElse(null);
-      }
-      if (o == null) {
-        return Optional.empty();
-      }
-      if (o instanceof Map) {
-        return Optional.of(((Map<String, ?>) o).entrySet()
-            .stream()
-            .filter(e -> e.getValue() != null)
-            .sorted(Map.Entry.comparingByKey())
-            .map(e -> tuple2(e.getKey(), e.getValue().toString())));
-      }
-      return Optional.of(Stream.of(tuple2(null, String.valueOf(o))));
-    };
+    return node -> stream(extractor.apply((Node) node));
+  }
+
+  private static Function<PropertyHolder, Optional<Stream<Tuple2<String, String>>>> fromStripe(Function<Stripe, Object> extractor) {
+    return stripe -> stream(extractor.apply((Stripe) stripe));
   }
 
   private static Function<PropertyHolder, Optional<Stream<Tuple2<String, String>>>> fromCluster(Function<Cluster, Object> extractor) {
@@ -981,6 +986,15 @@ public enum Setting {
         throw new IllegalArgumentException("Key must be null: parameter is not a map");
       }
       setter.accept((Node) node, empty(tuple.t2) ? null : tuple.t2.trim());
+    };
+  }
+
+  private static BiConsumer<PropertyHolder, Tuple2<String, String>> intoStripe(BiConsumer<Stripe, String> setter) {
+    return (stripe, tuple) -> {
+      if (tuple.t1 != null) {
+        throw new IllegalArgumentException("Key must be null: parameter is not a map");
+      }
+      setter.accept((Stripe) stripe, empty(tuple.t2) ? null : tuple.t2.trim());
     };
   }
 

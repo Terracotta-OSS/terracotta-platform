@@ -72,10 +72,10 @@ public class ActivateCommandTest extends BaseTest {
   private Path config;
   private final Cluster cluster = Testing.newTestCluster(
       "my-cluster",
-      new Stripe(
+      new Stripe().setName("stripe1").addNode(
           Testing.newTestNode("node1", "localhost", 9411)
       ),
-      new Stripe(
+      new Stripe().setName("stripe2").addNodes(
           Testing.newTestNode("node2", "localhost", 9421),
           Testing.newTestNode("node3", "localhost", 9422)
       ));

@@ -56,6 +56,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.SettingName.STRIPE_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils.addDashDash;
 
@@ -78,6 +79,9 @@ public class Options {
 
   @Parameter(names = {"-n", "--" + NODE_NAME}, description = "node name")
   private String nodeName;
+
+  @Parameter(names = {"-E", "--" + STRIPE_NAME}, description = "stripe name")
+  private String stripeName;
 
   @Parameter(names = {"-a", "--" + NODE_BIND_ADDRESS}, description = "node bind address for port")
   private String bindAddress;

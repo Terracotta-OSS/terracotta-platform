@@ -79,12 +79,12 @@ public class RestartServiceTest extends BaseTest {
     restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing());
     cluster = Testing.newTestCluster(
         "my-cluster",
-        new Stripe(
+        new Stripe().addNodes(
             Testing.newTestNode("node1", "localhost", PORTS[0]),
             Testing.newTestNode("node2", "localhost", PORTS[1]),
             Testing.newTestNode("node3", "localhost", PORTS[2])
         ),
-        new Stripe(
+        new Stripe().addNodes(
             Testing.newTestNode("node1", "localhost", PORTS[3]),
             Testing.newTestNode("node2", "localhost", PORTS[4]),
             Testing.newTestNode("node3", "localhost", PORTS[5])

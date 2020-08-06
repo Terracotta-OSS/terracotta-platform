@@ -21,6 +21,7 @@ import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.Optional;
 
+import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -164,8 +165,8 @@ public class NodeContext implements Cloneable {
    * Returns this cluster with this node only
    */
   public NodeContext withOnlyNode(Node node) {
-    Cluster cluster = getCluster().clone().removeStripes();
-    cluster.addStripe(new Stripe(node).clone());
+    Stripe stripe = getStripe().clone().setNodes(singletonList(node));
+    Cluster cluster = getCluster().clone().setStripes(singletonList(stripe));
     return new NodeContext(cluster, node.getAddress());
   }
 }

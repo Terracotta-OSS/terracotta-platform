@@ -47,7 +47,7 @@ public class StripeTest {
   Node node2 = Testing.newTestNode("node2", "localhost", 9411)
       .putDataDir("data", Paths.get("/data/cache2"));
 
-  Stripe stripe = new Stripe(node1);
+  Stripe stripe = new Stripe().addNodes(node1);
 
   @Test
   public void test_containsNode() {

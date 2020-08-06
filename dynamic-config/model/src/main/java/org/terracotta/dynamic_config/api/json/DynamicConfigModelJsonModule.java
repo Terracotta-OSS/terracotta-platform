@@ -196,11 +196,6 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
   }
 
   public static class StripeMixin extends Stripe {
-    @JsonCreator
-    public StripeMixin(@JsonProperty(value = "nodes", required = true) List<Node> nodes) {
-      super(nodes);
-    }
-
     @JsonIgnore
     @Override
     public Collection<InetSocketAddress> getNodeAddresses() {

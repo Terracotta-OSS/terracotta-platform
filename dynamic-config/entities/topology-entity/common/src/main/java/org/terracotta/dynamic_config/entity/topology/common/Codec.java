@@ -256,7 +256,7 @@ public class Codec implements MessageCodec<Message, Response> {
     requireNonNull(payload);
     Properties properties = Props.load(payload);
     Node node = new Node();
-    Cluster cluster = new Cluster(new Stripe(node));
+    Cluster cluster = new Cluster(new Stripe().addNode(node));
     properties.stringPropertyNames().forEach(key -> Configuration.valueOf("stripe.1.node.1." + key, properties.getProperty(key)).apply(cluster));
     return node;
   }

@@ -41,7 +41,7 @@ public class ClusterActivationNomadChangeProcessorTest {
   public ExpectedException expectedException = ExpectedException.none();
 
   private ClusterActivationNomadChangeProcessor processor;
-  private NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe(Testing.newTestNode("foo", "localhost"))), 1, "foo");
+  private NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe().addNodes(Testing.newTestNode("foo", "localhost"))), 1, "foo");
 
   @Before
   public void setUp() {
@@ -60,7 +60,7 @@ public class ClusterActivationNomadChangeProcessorTest {
   @Test
   public void testCanApplyWithNonNullBaseConfig() throws Exception {
     ClusterActivationNomadChange change = new ClusterActivationNomadChange(Testing.newTestCluster("cluster"));
-    NodeContext topology = new NodeContext(Testing.newTestCluster(new Stripe(Testing.newTestNode("foo", "localhost"))), 1, "foo");
+    NodeContext topology = new NodeContext(Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("foo", "localhost"))), 1, "foo");
 
     expectedException.expect(NomadException.class);
     expectedException.expectMessage("Found an existing configuration: " + topology);

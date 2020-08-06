@@ -62,7 +62,7 @@ class SettingValidator {
     }
   };
 
-  static final BiConsumer<String, Tuple2<String, String>> NODE_NAME_VALIDATOR = (setting, kv) -> {
+  static final BiConsumer<String, Tuple2<String, String>> NAME_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
     if (Substitutor.containsSubstitutionParams(kv.t2)) {
       throw new IllegalArgumentException(setting + " cannot contain substitution parameters");

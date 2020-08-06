@@ -18,8 +18,6 @@ package org.terracotta.dynamic_config.api.model;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -33,26 +31,31 @@ import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 
 
 public class Stripe implements Cloneable, PropertyHolder {
-  private final List<Node> nodes;
 
-  public Stripe(List<Node> nodes) {
-    this.nodes = new CopyOnWriteArrayList<>(requireNonNull(nodes));
-  }
-
-  public Stripe(Node... nodes) {
-    this(Arrays.asList(nodes));
-  }
-
-  public Stripe() {
-    this.nodes = new ArrayList<>();
-  }
+  private List<Node> nodes = new CopyOnWriteArrayList<>();
+  private String name;
 
   public List<Node> getNodes() {
     return Collections.unmodifiableList(nodes);
+  }
+
+  public Stripe setNodes(List<Node> nodes) {
+    this.nodes = new CopyOnWriteArrayList<>(nodes);
+    return this;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public Stripe setName(String name) {
+    this.name = requireNonNull(name);
+    return this;
   }
 
   @Override
@@ -60,23 +63,25 @@ public class Stripe implements Cloneable, PropertyHolder {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Stripe stripe = (Stripe) o;
-    return nodes.equals(stripe.nodes);
+    return nodes.equals(stripe.nodes)
+        && Objects.equals(name, stripe.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodes);
+    return Objects.hash(nodes, name);
   }
 
   @Override
   public String toString() {
     return "Stripe{" +
-        "nodes=" + nodes +
+        "name='" + name + '\'' +
+        ", nodes=" + nodes +
         '}';
   }
 
   public String toShapeString() {
-    return "( " + nodes.stream().map(node -> node.getName() + "@" + node.getAddress()).collect(joining(", ")) + " )";
+    return name + " ( " + nodes.stream().map(node -> node.getName() + "@" + node.getAddress()).collect(joining(", ")) + " )";
   }
 
   public Collection<InetSocketAddress> getNodeAddresses() {
@@ -105,7 +110,10 @@ public class Stripe implements Cloneable, PropertyHolder {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Stripe clone() {
-    return new Stripe(nodes.stream().map(Node::clone).collect(toList()));
+    Stripe copy = new Stripe();
+    copy.nodes = this.nodes.stream().map(Node::clone).collect(toCollection(CopyOnWriteArrayList::new));
+    copy.name = this.name;
+    return copy;
   }
 
   public boolean removeNode(InetSocketAddress address) {
@@ -118,6 +126,13 @@ public class Stripe implements Cloneable, PropertyHolder {
 
   public Stripe addNode(Node source) {
     nodes.add(source);
+    return this;
+  }
+
+  public Stripe addNodes(Node... sources) {
+    for (Node source : sources) {
+      addNode(source);
+    }
     return this;
   }
 

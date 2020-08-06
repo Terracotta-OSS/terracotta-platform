@@ -69,7 +69,7 @@ public class CommandLineProcessorChainTest {
 
   private final Node node1 = Testing.newTestNode("node-1", "localhost", 19410);
   private final Node node2 = Testing.newTestNode("node-2", "localhost", 9411);
-  private final Cluster cluster = Testing.newTestCluster((String) null, new Stripe(node1));
+  private final Cluster cluster = Testing.newTestCluster((String) null, new Stripe().addNodes(node1));
   private final NodeContext nodeContext = new NodeContext(cluster, 1, "node-1");
   private Options options;
   private Map<Setting, String> paramValueMap;
@@ -192,7 +192,7 @@ public class CommandLineProcessorChainTest {
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
-    cluster.addStripe(new Stripe(node2));
+    cluster.addStripe(new Stripe().addNodes(node2));
     cluster.setName(CLUSTER_NAME);
 
     doThrow(new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster"))

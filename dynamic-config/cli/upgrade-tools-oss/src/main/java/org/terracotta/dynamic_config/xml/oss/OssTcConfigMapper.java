@@ -70,7 +70,7 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
           .setDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true).orElse(emptyMap()))
           .setBackupDir(null)
       ));
-      return new Cluster(new Stripe(nodes))
+      return new Cluster(new Stripe().setNodes(nodes))
           .setClientLeaseDuration(commonMapper.toClientLeaseDuration(xmlPlugins).orElse(null))
           .setOffheapResources(commonMapper.toOffheapResources(xmlPlugins).orElse(emptyMap()))
           .setClientReconnectWindow(commonMapper.toClientReconnectWindow(tcConfig).orElse(null))

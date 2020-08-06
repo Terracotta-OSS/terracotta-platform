@@ -51,7 +51,7 @@ public class CodecTest {
   public void test_encode_decode() throws MessageCodecException {
     Node node = Testing.newTestNode("foo", "localhost", 9410);
     Node node2 = Testing.newTestNode("foo2", "localhost", 9411);
-    Stripe stripe = new Stripe(node, node2);
+    Stripe stripe = new Stripe().setName("stripe1").addNodes(node, node2);
     Cluster cluster = Testing.newTestCluster("bar", stripe);
 
     test(REQ_LICENSE, null);

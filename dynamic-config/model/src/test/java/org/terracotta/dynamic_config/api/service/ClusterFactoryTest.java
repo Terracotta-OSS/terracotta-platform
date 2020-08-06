@@ -84,6 +84,7 @@ public class ClusterFactoryTest {
     lenient().when(substitutor.substitute("%H")).thenReturn("home");
     lenient().when(substitutor.substitute("foo")).thenReturn("foo");
     lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
+    lenient().when(substitutor.substitute(startsWith("stripe-"))).thenReturn("<GENERATED>");
     lenient().when(substitutor.substitute("9410")).thenReturn("9410");
     lenient().when(substitutor.substitute("")).thenReturn("");
     lenient().when(substitutor.substitute("availability")).thenReturn("availability");
@@ -91,9 +92,9 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_create_cli() {
-    assertCliEquals(cli("failover-priority=availability"), Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost.home"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "foo"))));
+    assertCliEquals(cli("failover-priority=availability"), Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost.home"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "foo"))));
   }
 
   @Test
@@ -113,47 +114,52 @@ public class ClusterFactoryTest {
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.name=real",
             "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.hostname=foo"
         ),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("real", "foo"))));
+        Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("real", "foo"))));
 
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost",
             "lock-context=a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale"
         ),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost"))).setConfigurationLockContext(LockContext.from("a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale")));
+        Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost"))).setConfigurationLockContext(LockContext.from("a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale")));
 
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost"
         ),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost"))));
+        Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost"))));
 
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost1",
             "stripe.1.node.2.name=node2",
             "stripe.1.node.2.hostname=localhost2",
+            "stripe.2.stripe-name=stripe2",
             "stripe.2.node.1.name=node3",
             "stripe.2.node.1.hostname=localhost3",
             "stripe.2.node.2.name=node4",
             "stripe.2.node.2.hostname=localhost4"
         ),
         Testing.newTestCluster(
-            new Stripe(
+            new Stripe().setName("stripe1").addNodes(
                 Testing.newTestNode("node1", "localhost1"),
                 Testing.newTestNode("node2", "localhost2")),
-            new Stripe(
+            new Stripe().setName("stripe2").addNodes(
                 Testing.newTestNode("node3", "localhost3"),
                 Testing.newTestNode("node4", "localhost4"))
         ));
@@ -161,16 +167,18 @@ public class ClusterFactoryTest {
     assertConfigEquals(
         config(
             "stripe.1.node.1.name=node1",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
             "failover-priority=availability",
             "stripe.1.node.1.tc-properties="
         ),
-        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost").setTcProperties(emptyMap()))));
+        Testing.newTestCluster("foo", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost").setTcProperties(emptyMap()))));
 
     assertConfigEquals(
         config(
             "stripe.1.node.1.name=node1",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
             "client-reconnect-window=120s",
@@ -188,7 +196,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost")
+        Testing.newTestCluster("foo", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost")
             .setPort(9410)
             .setGroupPort(9430)
             .setBindAddress("0.0.0.0")
@@ -257,7 +265,7 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_toProperties() {
-    Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe(
+    Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
         Testing.newTestNode("node-1", "localhost1")
             .putDataDir("foo", Paths.get("%H/tc1/foo"))
             .putDataDir("bar", Paths.get("%H/tc1/bar")),
@@ -269,7 +277,7 @@ public class ClusterFactoryTest {
         .putOffheapResource("foo", 1, MemoryUnit.GB)
         .putOffheapResource("bar", 2, MemoryUnit.GB);
 
-    Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", new Stripe(
+    Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
         Testing.newTestNode("node-1", "localhost1")
             .setPort(NODE_PORT.getDefaultValue())
             .setGroupPort(NODE_GROUP_PORT.getDefaultValue())
@@ -403,9 +411,14 @@ public class ClusterFactoryTest {
     // since node name is generated when not given,
     // this is a hack that will reset to null only the node names that have been generated
     String nodeName = built.getSingleNode().get().getName();
-    cluster.getSingleNode()
-        .filter(node -> node.getName().equals("<GENERATED>"))
-        .ifPresent(node -> node.setName(nodeName));
+    cluster.getStripes()
+        .stream()
+        .filter(stripe -> "<GENERATED>".equals(stripe.getName()))
+        .forEach(stripe -> stripe.setName(nodeName));
+    cluster.getNodes()
+        .stream()
+        .filter(node -> "<GENERATED>".equals(node.getName()))
+        .forEach(node -> node.setName(nodeName));
 
     assertThat(built, is(equalTo(cluster)));
   }

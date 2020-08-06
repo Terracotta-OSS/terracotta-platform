@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.model.Stripe;
 
 import java.util.List;
 import java.util.Map;
@@ -53,7 +54,8 @@ public class ClusterValidator {
   }
 
   public void validate() throws MalformedClusterException {
-    validateNodeName();
+    validateNodeNames();
+    validateStripeNames();
     validateAddresses();
     validateBackupDirs();
     validateDataDirs();
@@ -145,7 +147,15 @@ public class ClusterValidator {
     }
   }
 
-  private void validateNodeName() {
+  private void validateNodeNames() {
+    cluster.getNodes()
+        .stream()
+        .filter(node -> node.getName() == null)
+        .findAny()
+        .ifPresent(nodeName -> {
+          throw new MalformedClusterException("Found node without name");
+        });
+
     cluster.getNodes()
         .stream()
         .map(Node::getName)
@@ -158,6 +168,30 @@ public class ClusterValidator {
         .findAny()
         .ifPresent(nodeName -> {
           throw new MalformedClusterException("Found duplicate node name: " + nodeName);
+        });
+  }
+
+  private void validateStripeNames() {
+    cluster.getStripes()
+        .stream()
+        .filter(stripe -> stripe.getName() == null)
+        .findAny()
+        .ifPresent(stripeName -> {
+          throw new MalformedClusterException("Found stripe without name");
+        });
+
+    cluster.getStripes()
+        .stream()
+        .map(Stripe::getName)
+        .filter(Objects::nonNull)
+        .collect(groupingBy(identity(), counting()))
+        .entrySet()
+        .stream()
+        .filter(e -> e.getValue() > 1)
+        .map(Map.Entry::getKey)
+        .findAny()
+        .ifPresent(stripeName -> {
+          throw new MalformedClusterException("Found duplicate stripe name: " + stripeName);
         });
   }
 

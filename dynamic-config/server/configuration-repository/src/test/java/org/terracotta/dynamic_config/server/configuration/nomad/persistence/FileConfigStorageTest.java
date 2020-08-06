@@ -45,7 +45,7 @@ public class FileConfigStorageTest {
   public void saveAndRetrieve() throws Exception {
     Path root = temporaryFolder.getRoot();
 
-    NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
+    NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
     Properties properties = Props.load(new StringReader(new String(Files.readAllBytes(Paths.get(getClass().getResource("/config.properties").toURI())), StandardCharsets.UTF_8).replace("\\", "/")));
 
     FileConfigStorage storage = new FileConfigStorage(root, "node-1");

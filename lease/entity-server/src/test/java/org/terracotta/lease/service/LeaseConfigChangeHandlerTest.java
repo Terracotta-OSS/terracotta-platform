@@ -31,7 +31,7 @@ import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluste
 
 public class LeaseConfigChangeHandlerTest {
 
-  private NodeContext topology = new NodeContext(Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("bar", "localhost"))), 1, "bar");
+  private NodeContext topology = new NodeContext(Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("bar", "localhost"))), 1, "bar");
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.CLIENT_LEASE_DURATION, "20s");
 
   @Test

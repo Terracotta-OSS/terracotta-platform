@@ -63,18 +63,18 @@ public class SettingNomadChangeTest {
     assertThat(change.getSetting(), is(equalTo(OFFHEAP_RESOURCES)));
 
     configuration = Configuration.valueOf("stripe.1.node.1.log-dir=foo");
-    change = fromConfiguration(configuration, Operation.SET, Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost"))));
+    change = fromConfiguration(configuration, Operation.SET, Testing.newTestCluster(new Stripe().addNode(Testing.newTestNode("node1", "localhost"))));
     assertThat(change.getApplicability(), is(equalTo(node(1, "node1"))));
     assertThat(change.getSetting(), is(equalTo(NODE_LOG_DIR)));
 
     configuration = Configuration.valueOf("stripe.1.log-dir=foo");
-    change = fromConfiguration(configuration, Operation.SET, Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost"))));
+    change = fromConfiguration(configuration, Operation.SET, Testing.newTestCluster(new Stripe().addNode(Testing.newTestNode("node1", "localhost"))));
     assertThat(change.getApplicability(), is(equalTo(stripe(1))));
     assertThat(change.getSetting(), is(equalTo(NODE_LOG_DIR)));
     assertThat(change.getOperation(), is(equalTo(Operation.SET)));
 
     configuration = Configuration.valueOf("stripe.1.backup-dir=foo");
-    change = fromConfiguration(configuration, Operation.UNSET, Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost"))));
+    change = fromConfiguration(configuration, Operation.UNSET, Testing.newTestCluster(new Stripe().addNode(Testing.newTestNode("node1", "localhost"))));
     assertThat(change.getApplicability(), is(equalTo(stripe(1))));
     assertThat(change.getSetting(), is(equalTo(NODE_BACKUP_DIR)));
     assertThat(change.getOperation(), is(equalTo(Operation.UNSET)));
@@ -89,7 +89,7 @@ public class SettingNomadChangeTest {
 
   @Test
   public void test_toConfiguration() {
-    Cluster cluster = Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost")));
+    Cluster cluster = Testing.newTestCluster(new Stripe().addNode(Testing.newTestNode("node1", "localhost")));
 
     assertThat(set(cluster(), CLUSTER_NAME, "my-cluster").toConfiguration(cluster), is(equalTo(Configuration.valueOf("cluster-name=my-cluster"))));
     assertThat(unset(cluster(), NODE_BACKUP_DIR).toConfiguration(cluster), is(equalTo(Configuration.valueOf("backup-dir"))));
@@ -104,15 +104,15 @@ public class SettingNomadChangeTest {
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid stripe ID: 0")))));
     assertThat(
         () -> set(node(1, "node2"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node2 in stripe ID: 1 not found in cluster: Cluster 'null' ( ( node1@localhost:9410 ) )")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node2 in stripe ID: 1 not found in cluster: Cluster 'null' ( null ( node1@localhost:9410 ) )")))));
     assertThat(
         () -> set(node(2, "node1"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node1 in stripe ID: 2 not found in cluster: Cluster 'null' ( ( node1@localhost:9410 ) )")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node1 in stripe ID: 2 not found in cluster: Cluster 'null' ( null ( node1@localhost:9410 ) )")))));
     assertThat(
         () -> set(stripe(0), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Invalid stripe ID: 0")))));
     assertThat(
         () -> set(stripe(2), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Stripe ID: 2 not found in cluster: Cluster 'null' ( ( node1@localhost:9410 ) )")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Stripe ID: 2 not found in cluster: Cluster 'null' ( null ( node1@localhost:9410 ) )")))));
   }
 }
