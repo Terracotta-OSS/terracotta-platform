@@ -76,8 +76,9 @@ public class ClusterValidator {
         .map(Node::getName)
         .collect(toList());
     if (nodesWithNoPublicAddresses.size() != 0 && nodesWithNoPublicAddresses.size() != cluster.getNodeCount()) {
-      throw new MalformedClusterException("Nodes with names: " + nodesWithNoPublicAddresses + " don't have public addresses " +
-          "defined, but other nodes in the cluster do. Public addresses, if configured, need to be defined on all nodes in the cluster");
+      throw new MalformedClusterException("Nodes with names: " + nodesWithNoPublicAddresses +
+          " don't have public addresses " + "defined, but other nodes in the cluster do." +
+          " Mutative operations on public addresses must be done simultaneously on every node in the cluster");
     }
   }
 
@@ -167,7 +168,7 @@ public class ClusterValidator {
     if (uniqueDataDirNames.size() > 1) {
       throw new MalformedClusterException("Data directory names need to match across the cluster," +
           " but found the following mismatches: " + uniqueDataDirNames + ". " +
-          "Mutative operations on data dirs must be done simultaneously on every node in cluster");
+          "Mutative operations on data dirs must be done simultaneously on every node in the cluster");
     }
   }
 
@@ -177,8 +178,9 @@ public class ClusterValidator {
         .map(Node::getName)
         .collect(toList());
     if (nodesWithBackupDirs.size() != 0 && nodesWithBackupDirs.size() != cluster.getNodeCount()) {
-      throw new MalformedClusterException("Nodes with names: " + nodesWithBackupDirs + " don't have backup directories " +
-          "defined, but other nodes in the cluster do. Backup directories, if configured, need to be defined on all nodes in the cluster");
+      throw new MalformedClusterException("Nodes with names: " + nodesWithBackupDirs +
+          " don't have backup directories defined, but other nodes in the cluster do." +
+          " Mutative operations on backup dirs must be done simultaneously on every node in the cluster");
     }
   }
 
@@ -219,8 +221,9 @@ public class ClusterValidator {
         .map(Node::getName)
         .collect(toList());
     if (nodesWithNoAuditLogDirs.size() != 0 && nodesWithNoAuditLogDirs.size() != cluster.getNodeCount()) {
-      throw new MalformedClusterException("Nodes with names: " + nodesWithNoAuditLogDirs + " don't have audit log directories " +
-          "defined, but other nodes in the cluster do. Audit log directories, if configured, need to be defined on all nodes in the cluster");
+      throw new MalformedClusterException("Nodes with names: " + nodesWithNoAuditLogDirs +
+          " don't have audit log directories defined, but other nodes in the cluster do." +
+          " Mutative operations on audit log dirs must be done simultaneously on every node in the cluster");
     }
   }
 }
