@@ -21,6 +21,7 @@ import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Usage;
@@ -32,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static java.lang.System.lineSeparator;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 
 /**
  * @author Mathieu Carbou
@@ -52,6 +54,21 @@ public class ImportCommand extends RemoteCommand {
   @Override
   public void validate() {
     cluster = loadCluster();
+    FailoverPriority failoverPriority = cluster.getFailoverPriority();
+    if (failoverPriority.equals(consistency())) {
+      int voterCount = failoverPriority.getVoters();
+      int nodeCount = cluster.getNodes().size();
+      int sum = voterCount + nodeCount;
+      if (sum % 2 == 0) {
+        logger.warn(lineSeparator() +
+            "===========================================================================================" + lineSeparator() +
+            "IMPORTANT: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes (" + nodeCount + ") " +
+            "in this stripe is an even " + lineSeparator() + "number. " +
+            "An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
+            "===========================================================================================" + lineSeparator());
+      }
+    }
+
     runtimePeers = cluster.getNodeAddresses();
 
     // validate the topology
