@@ -283,8 +283,9 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
   public static class LicenseMixin extends License {
     @JsonCreator
     public LicenseMixin(@JsonProperty(value = "capabilities", required = true) Map<String, Long> capabilityLimitMap,
+                        @JsonProperty(value = "flags", required = true) Map<String, Boolean> flagsMap,
                         @JsonProperty(value = "expiryDate", required = true) LocalDate expiryDate) {
-      super(capabilityLimitMap, expiryDate);
+      super(capabilityLimitMap, flagsMap, expiryDate);
     }
   }
 

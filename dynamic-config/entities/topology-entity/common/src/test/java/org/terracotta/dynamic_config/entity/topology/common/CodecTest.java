@@ -55,8 +55,10 @@ public class CodecTest {
     Cluster cluster = Testing.newTestCluster("bar", stripe);
 
     test(REQ_LICENSE, null);
-    test(REQ_LICENSE, new License(emptyMap(), LocalDate.of(2020, 1, 1)));
-    test(REQ_LICENSE, new License(singletonMap("offheap", 1024L), LocalDate.of(2020, 1, 1)));
+    test(REQ_LICENSE, new License(emptyMap(), emptyMap(), LocalDate.of(2020, 1, 1)));
+    test(REQ_LICENSE, new License(singletonMap("offheap", 1024L), emptyMap(), LocalDate.of(2020, 1, 1)));
+    test(REQ_LICENSE, new License(emptyMap(), singletonMap("SubscriptionBased", false), LocalDate.now()));
+    test(REQ_LICENSE, new License(singletonMap("offheap", 1024L), singletonMap("StorageBased", false), LocalDate.now()));
 
     test(REQ_MUST_BE_RESTARTED, true);
     test(REQ_HAS_INCOMPLETE_CHANGE, true);
