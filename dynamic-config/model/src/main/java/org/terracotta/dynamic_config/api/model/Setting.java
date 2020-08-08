@@ -79,6 +79,8 @@ import static org.terracotta.dynamic_config.api.model.SettingValidator.PATH_VALI
 import static org.terracotta.dynamic_config.api.model.SettingValidator.PORT_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.PROPS_VALIDATOR;
 import static org.terracotta.dynamic_config.api.model.SettingValidator.TIME_VALIDATOR;
+import static org.terracotta.dynamic_config.api.model.Version.V1;
+import static org.terracotta.dynamic_config.api.model.Version.V2;
 
 /**
  * <pre>
@@ -144,6 +146,7 @@ public enum Setting {
   // ==== Settings applied to a specific node only
 
   NODE_NAME(SettingName.NODE_NAME,
+      of(V1, V2),
       false,
       () -> "node-" + Uuid.generateShortUuid(),
       NODE,
@@ -159,6 +162,7 @@ public enum Setting {
       (key, value) -> NAME_VALIDATOR.accept(SettingName.NODE_NAME, tuple2(key, value))
   ),
   STRIPE_NAME(SettingName.STRIPE_NAME,
+      of(V2),
       false,
       () -> "stripe-" + Uuid.generateShortUuid(),
       STRIPE,
@@ -174,6 +178,7 @@ public enum Setting {
       (key, value) -> NAME_VALIDATOR.accept(SettingName.STRIPE_NAME, tuple2(key, value))
   ),
   NODE_HOSTNAME(SettingName.NODE_HOSTNAME,
+      of(V1, V2),
       false,
       always("%h"),
       NODE,
@@ -189,6 +194,7 @@ public enum Setting {
       (key, value) -> HOST_VALIDATOR.accept(SettingName.NODE_HOSTNAME, tuple2(key, value))
   ),
   NODE_PORT(SettingName.NODE_PORT,
+      of(V1, V2),
       false,
       always(9410),
       NODE,
@@ -204,6 +210,7 @@ public enum Setting {
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_PORT, tuple2(key, value))
   ),
   NODE_PUBLIC_HOSTNAME(SettingName.NODE_PUBLIC_HOSTNAME,
+      of(V1, V2),
       false,
       always(null),
       NODE,
@@ -219,6 +226,7 @@ public enum Setting {
       (key, value) -> HOST_VALIDATOR.accept(SettingName.NODE_PUBLIC_HOSTNAME, tuple2(key, value))
   ),
   NODE_PUBLIC_PORT(SettingName.NODE_PUBLIC_PORT,
+      of(V1, V2),
       false,
       always(null),
       NODE,
@@ -234,6 +242,7 @@ public enum Setting {
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_PUBLIC_PORT, tuple2(key, value))
   ),
   NODE_GROUP_PORT(SettingName.NODE_GROUP_PORT,
+      of(V1, V2),
       false,
       always(9430),
       NODE,
@@ -250,6 +259,7 @@ public enum Setting {
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_GROUP_PORT, tuple2(key, value))
   ),
   NODE_BIND_ADDRESS(SettingName.NODE_BIND_ADDRESS,
+      of(V1, V2),
       false,
       always("0.0.0.0"),
       NODE,
@@ -266,6 +276,7 @@ public enum Setting {
       (key, value) -> ADDRESS_VALIDATOR.accept(SettingName.NODE_BIND_ADDRESS, tuple2(key, value))
   ),
   NODE_GROUP_BIND_ADDRESS(SettingName.NODE_GROUP_BIND_ADDRESS,
+      of(V1, V2),
       false,
       always("0.0.0.0"),
       NODE,
@@ -285,6 +296,7 @@ public enum Setting {
   // ==== Node configuration
 
   CLUSTER_NAME(SettingName.CLUSTER_NAME,
+      of(V1, V2),
       false,
       always(null),
       CLUSTER,
@@ -300,8 +312,8 @@ public enum Setting {
       (key, value) -> NAME_VALIDATOR.accept(SettingName.CLUSTER_NAME, tuple2(key, value))
   ),
 
-  LOCK_CONTEXT(
-      SettingName.LOCK_CONTEXT,
+  LOCK_CONTEXT(SettingName.LOCK_CONTEXT,
+      of(V2),
       false,
       always(null),
       CLUSTER,
@@ -317,6 +329,7 @@ public enum Setting {
   ),
 
   NODE_CONFIG_DIR(SettingName.NODE_CONFIG_DIR,
+      of(V1, V2),
       false,
       always(Paths.get("%H", "terracotta", "config")),
       NODE,
@@ -329,6 +342,7 @@ public enum Setting {
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_CONFIG_DIR, tuple2(key, value))
   ),
   NODE_METADATA_DIR(SettingName.NODE_METADATA_DIR,
+      of(V1, V2),
       false,
       always(Paths.get("%H", "terracotta", "metadata")),
       NODE,
@@ -345,6 +359,7 @@ public enum Setting {
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_METADATA_DIR, tuple2(key, value))
   ),
   NODE_LOG_DIR(SettingName.NODE_LOG_DIR,
+      of(V1, V2),
       false,
       always(Paths.get("%H", "terracotta", "logs")),
       NODE,
@@ -361,6 +376,7 @@ public enum Setting {
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_LOG_DIR, tuple2(key, value))
   ),
   NODE_BACKUP_DIR(SettingName.NODE_BACKUP_DIR,
+      of(V1, V2),
       false,
       always(null),
       NODE,
@@ -376,6 +392,7 @@ public enum Setting {
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_BACKUP_DIR, tuple2(key, value))
   ),
   TC_PROPERTIES(SettingName.TC_PROPERTIES,
+      of(V1, V2),
       true,
       always(emptyMap()),
       NODE,
@@ -411,6 +428,7 @@ public enum Setting {
       (key, value) -> PROPS_VALIDATOR.accept(SettingName.TC_PROPERTIES, tuple2(key, value))
   ),
   NODE_LOGGER_OVERRIDES(SettingName.NODE_LOGGER_OVERRIDES,
+      of(V1, V2),
       true,
       always(emptyMap()),
       NODE,
@@ -446,6 +464,7 @@ public enum Setting {
       (key, value) -> LOGGER_LEVEL_VALIDATOR.accept(SettingName.NODE_LOGGER_OVERRIDES, tuple2(key, value))
   ),
   CLIENT_RECONNECT_WINDOW(SettingName.CLIENT_RECONNECT_WINDOW,
+      of(V1, V2),
       false,
       always(Measure.of(120, SECONDS)),
       CLUSTER,
@@ -461,6 +480,7 @@ public enum Setting {
       (key, value) -> TIME_VALIDATOR.accept(SettingName.CLIENT_RECONNECT_WINDOW, tuple2(key, value))
   ),
   FAILOVER_PRIORITY(SettingName.FAILOVER_PRIORITY,
+      of(V1, V2),
       false,
       always(null),
       CLUSTER,
@@ -479,6 +499,7 @@ public enum Setting {
   // ==== Lease
 
   CLIENT_LEASE_DURATION(SettingName.CLIENT_LEASE_DURATION,
+      of(V1, V2),
       false,
       always(Measure.of(150, SECONDS)),
       CLUSTER,
@@ -497,6 +518,7 @@ public enum Setting {
   // ==== License update
 
   LICENSE_FILE(SettingName.LICENSE_FILE,
+      of(V1, V2),
       false,
       always(null),
       CLUSTER,
@@ -514,6 +536,7 @@ public enum Setting {
   // ==== Security
 
   SECURITY_DIR(SettingName.SECURITY_DIR,
+      of(V1, V2),
       false,
       always(null),
       NODE,
@@ -529,6 +552,7 @@ public enum Setting {
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_DIR, tuple2(key, value))
   ),
   SECURITY_AUDIT_LOG_DIR(SettingName.SECURITY_AUDIT_LOG_DIR,
+      of(V1, V2),
       false,
       always(null),
       NODE,
@@ -544,6 +568,7 @@ public enum Setting {
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_AUDIT_LOG_DIR, tuple2(key, value))
   ),
   SECURITY_AUTHC(SettingName.SECURITY_AUTHC,
+      of(V1, V2),
       false,
       always(null),
       CLUSTER,
@@ -557,6 +582,7 @@ public enum Setting {
       asList("file", "ldap", "certificate")
   ),
   SECURITY_SSL_TLS(SettingName.SECURITY_SSL_TLS,
+      of(V1, V2),
       false,
       always(false),
       CLUSTER,
@@ -570,6 +596,7 @@ public enum Setting {
       asList("true", "false")
   ),
   SECURITY_WHITELIST(SettingName.SECURITY_WHITELIST,
+      of(V1, V2),
       false,
       always(false),
       CLUSTER,
@@ -586,6 +613,7 @@ public enum Setting {
   // ==== Resources configuration
 
   OFFHEAP_RESOURCES(SettingName.OFFHEAP_RESOURCES,
+      of(V1, V2),
       true,
       always(singletonMap("main", Measure.of(512, MB))),
       CLUSTER,
@@ -621,6 +649,7 @@ public enum Setting {
       (key, value) -> OFFHEAP_VALIDATOR.accept(SettingName.OFFHEAP_RESOURCES, tuple2(key, value))
   ),
   DATA_DIRS(SettingName.DATA_DIRS,
+      of(V1, V2),
       true,
       always(singletonMap("main", Paths.get("%H", "terracotta", "user-data", "main"))),
       NODE,
@@ -661,6 +690,7 @@ public enum Setting {
   );
 
   private final String name;
+  private final Collection<Version> versions;
   private final boolean map;
   private final Supplier<Object> defaultValue;
   private final Scope scope;
@@ -673,6 +703,7 @@ public enum Setting {
   private final BiConsumer<PropertyHolder, Tuple2<String, String>> setter;
 
   Setting(String name,
+          Collection<Version> versions,
           boolean map,
           Supplier<Object> defaultValue,
           Scope scope,
@@ -680,10 +711,11 @@ public enum Setting {
           BiConsumer<PropertyHolder, Tuple2<String, String>> setter,
           Collection<Permission> permissions,
           EnumSet<Requirement> requirements) {
-    this(name, map, defaultValue, scope, extractor, setter, permissions, requirements, emptyList(), emptyList());
+    this(name, versions, map, defaultValue, scope, extractor, setter, permissions, requirements, emptyList(), emptyList());
   }
 
   Setting(String name,
+          Collection<Version> versions,
           boolean map,
           Supplier<Object> defaultValue,
           Scope scope,
@@ -692,10 +724,11 @@ public enum Setting {
           Collection<Permission> permissions,
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues) {
-    this(name, map, defaultValue, scope, extractor, setter, permissions, requirements, allowedValues, emptyList());
+    this(name, versions, map, defaultValue, scope, extractor, setter, permissions, requirements, allowedValues, emptyList());
   }
 
   Setting(String name,
+          Collection<Version> versions,
           boolean map,
           Supplier<Object> defaultValue,
           Scope scope,
@@ -705,10 +738,11 @@ public enum Setting {
           EnumSet<Requirement> requirements,
           Collection<String> allowedValues,
           Collection<? extends Enum<?>> allowedUnits) {
-    this(name, map, defaultValue, scope, extractor, setter, permissions, requirements, allowedValues, allowedUnits, (key, value) -> DEFAULT_VALIDATOR.accept(name, tuple2(key, value)));
+    this(name, versions, map, defaultValue, scope, extractor, setter, permissions, requirements, allowedValues, allowedUnits, (key, value) -> DEFAULT_VALIDATOR.accept(name, tuple2(key, value)));
   }
 
   Setting(String name,
+          Collection<Version> versions,
           boolean map,
           Supplier<Object> defaultValue,
           Scope scope,
@@ -720,6 +754,7 @@ public enum Setting {
           Collection<? extends Enum<?>> allowedUnits,
           BiConsumer<String, String> validator) {
     this.name = requireNonNull(name);
+    this.versions = versions;
     this.map = map;
     this.defaultValue = requireNonNull(defaultValue);
     this.scope = requireNonNull(scope);
@@ -742,6 +777,10 @@ public enum Setting {
   @Override
   public String toString() {
     return name;
+  }
+
+  public Collection<Version> getVersions() {
+    return versions;
   }
 
   public Collection<Permission> getPermissions() {
@@ -929,9 +968,10 @@ public enum Setting {
     return Stream.of(values()).filter(setting -> setting.name.equals(name)).findAny();
   }
 
-  public static Properties modelToProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings) {
+  public static Properties modelToProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings, Version version) {
     Properties properties = new Properties();
     Stream.of(Setting.values())
+        .filter(setting -> version.amongst(setting.getVersions()))
         .filter(setting -> setting.isUserExportable() || (includeHiddenSettings && setting.requires(HIDDEN)))
         .filter(setting -> setting.isScope(o.getScope()))
         .forEach(setting -> properties.putAll(setting.toProperties(o, expanded, includeDefaultValues)));

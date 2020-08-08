@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.JavaType;
@@ -48,6 +47,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.inet.json.InetJsonModule;
 import org.terracotta.json.TerracottaJsonModule;
 
@@ -68,7 +68,7 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
   private static final long serialVersionUID = 1L;
 
   public DynamicConfigModelJsonModule() {
-    super(DynamicConfigModelJsonModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
+    super(DynamicConfigModelJsonModule.class.getSimpleName(), new com.fasterxml.jackson.core.Version(1, 0, 0, null, null, null));
 
     setMixInAnnotation(NodeContext.class, NodeContextMixin.class);
     setMixInAnnotation(Cluster.class, ClusterMixin.class);
@@ -78,6 +78,7 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
     setMixInAnnotation(License.class, LicenseMixin.class);
     setMixInAnnotation(OptionalConfig.class, OptionalConfigMixin.class);
     setMixInAnnotation(LockContext.class, LockContextMixin.class);
+    setMixInAnnotation(Version.class, VersionMixin.class);
   }
 
   @Override
@@ -329,5 +330,15 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
                             @JsonProperty(value = "ownerTags", required = true) String ownerTags) {
       super(token, ownerName, ownerTags);
     }
+  }
+
+  public static abstract class VersionMixin {
+    @JsonCreator
+    public static Version fromValue(String s) {
+      return s == null ? null : Version.fromValue(s);
+    }
+
+    @JsonValue
+    public abstract String getValue();
   }
 }
