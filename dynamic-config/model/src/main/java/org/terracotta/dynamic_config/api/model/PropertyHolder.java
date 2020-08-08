@@ -24,10 +24,6 @@ import java.util.stream.Stream;
 public interface PropertyHolder {
   Scope getScope();
 
-  default Properties toProperties(boolean expanded, boolean includeDefaultValues) {
-    return toProperties(expanded, includeDefaultValues, false);
-  }
-
   Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings);
 
   default Stream<? extends PropertyHolder> descendants() {

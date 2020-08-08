@@ -43,8 +43,8 @@ public class GetCommand extends ConfigurationCommand {
     Map<String, String> properties = new TreeMap<>();
     // we put both expanded and non expanded properties
     // and we will filter depending on what the user wanted
-    cluster.toProperties(false, true).forEach((k, v) -> properties.put((String) k, (String) v));
-    cluster.toProperties(true, true).forEach((k, v) -> properties.put((String) k, (String) v));
+    cluster.toProperties(false, true, false).forEach((k, v) -> properties.put((String) k, (String) v));
+    cluster.toProperties(true, true, false).forEach((k, v) -> properties.put((String) k, (String) v));
 
     // for each configuration asked by the user we try to find it
     for (Configuration configuration : configurations) {

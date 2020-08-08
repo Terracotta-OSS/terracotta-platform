@@ -110,12 +110,12 @@ public class ExportCommand extends RemoteCommand {
         }
       case PROPERTIES:
         // user-defined
-        Properties userDefined = cluster.toProperties(false, false);
+        Properties userDefined = cluster.toProperties(false, false, false);
         // hidden ones
         Properties hidden = cluster.toProperties(false, false, true);
         hidden.keySet().removeAll(userDefined.keySet());
         // defaulted values
-        Properties defaults = cluster.toProperties(false, true);
+        Properties defaults = cluster.toProperties(false, true, false);
         defaults.keySet().removeAll(userDefined.keySet());
         // write them all
         try (StringWriter out = new StringWriter()) {

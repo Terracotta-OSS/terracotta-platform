@@ -341,10 +341,10 @@ public class ConfigurationParserTest {
   public void test_setting_with_default_can_be_ommitted() {
     Cluster cluster = Testing.newTestCluster("foo", new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost")));
 
-    Properties properties = cluster.toProperties(false, false);
+    Properties properties = cluster.toProperties(false, false, true);
     assertThat(properties.toString(), properties, not(hasKey("client-lease-duration")));
 
-    properties = cluster.toProperties(false, true);
+    properties = cluster.toProperties(false, true, true);
     assertThat(properties.toString(), properties, hasKey("client-lease-duration"));
 
     assertConfigEquals(

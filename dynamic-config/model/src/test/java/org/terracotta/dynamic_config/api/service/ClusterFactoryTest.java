@@ -306,10 +306,10 @@ public class ClusterFactoryTest {
         .putOffheapResource("bar", 2, MemoryUnit.GB);
 
     Stream.of(
-        tuple2(cluster.toProperties(false, true), "config_with_defaults.properties"),
-        tuple2(cluster.toProperties(false, false), "config_without_defaults.properties"),
-        tuple2(cluster.toProperties(true, true), "config_expanded_default.properties"),
-        tuple2(cluster.toProperties(true, false), "config_expanded_without_default.properties")
+        tuple2(cluster.toProperties(false, true, true), "config_with_defaults.properties"),
+        tuple2(cluster.toProperties(false, false, true), "config_without_defaults.properties"),
+        tuple2(cluster.toProperties(true, true, true), "config_expanded_default.properties"),
+        tuple2(cluster.toProperties(true, false, true), "config_expanded_without_default.properties")
     ).forEach(rethrow(tuple -> {
       Properties expectedProps = fixPaths(Props.load(Paths.get(getClass().getResource("/config-property-files/" + tuple.t2).toURI())));
 
@@ -335,13 +335,13 @@ public class ClusterFactoryTest {
 
     assertThat(fromJson, is(equalTo(fromProps)));
     assertThat(
-        Props.toString(fromJson.toProperties(false, false)),
-        fromJson.toProperties(false, false),
+        Props.toString(fromJson.toProperties(false, false, true)),
+        fromJson.toProperties(false, false, true),
         is(equalTo(props)));
     assertThat(
-        Props.toString(fromJson.toProperties(false, false)),
-        fromJson.toProperties(false, false),
-        is(equalTo(fromProps.toProperties(false, false))));
+        Props.toString(fromJson.toProperties(false, false, true)),
+        fromJson.toProperties(false, false, true),
+        is(equalTo(fromProps.toProperties(false, false, true))));
     assertThat(
         json.writeValueAsString(fromProps),
         fromProps,
@@ -356,13 +356,13 @@ public class ClusterFactoryTest {
 
     assertThat(fromJson, is(equalTo(fromProps)));
     assertThat(
-        Props.toString(fromJson.toProperties(false, true)),
-        fromJson.toProperties(false, true),
+        Props.toString(fromJson.toProperties(false, true, true)),
+        fromJson.toProperties(false, true, true),
         is(equalTo(props)));
     assertThat(
-        Props.toString(fromJson.toProperties(false, true)),
-        fromJson.toProperties(false, true),
-        is(equalTo(fromProps.toProperties(false, true))));
+        Props.toString(fromJson.toProperties(false, true, true)),
+        fromJson.toProperties(false, true, true),
+        is(equalTo(fromProps.toProperties(false, true, true))));
     assertThat(
         json.writeValueAsString(fromProps),
         fromProps,
