@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.model.Version;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -41,6 +42,16 @@ import static java.util.stream.Collectors.toMap;
 public class ClusterFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClusterFactory.class);
+
+  private final Version version;
+
+  public ClusterFactory() {
+    this(Version.CURRENT);
+  }
+
+  public ClusterFactory(Version version) {
+    this.version = version;
+  }
 
   /**
    * Creates a {@code Cluster} object from a config properties file
@@ -71,7 +82,7 @@ public class ClusterFactory {
   }
 
   public Cluster create(Properties properties, Consumer<Configuration> added) {
-    return ConfigurationParser.parsePropertyConfiguration(properties, added);
+    return ConfigurationParser.parsePropertyConfiguration(properties, version, added);
   }
 
   /**
@@ -105,7 +116,7 @@ public class ClusterFactory {
   }
 
   private Cluster validated(Cluster cluster) {
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster).validate(version);
     return cluster;
   }
 

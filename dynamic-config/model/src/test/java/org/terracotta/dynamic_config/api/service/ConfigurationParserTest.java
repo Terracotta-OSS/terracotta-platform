@@ -27,6 +27,7 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.model.Version;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -382,7 +383,7 @@ public class ConfigurationParserTest {
   }
 
   private void assertConfigEquals(Properties config, Cluster cluster, String... addedConfigurations) {
-    Cluster built = ConfigurationParser.parsePropertyConfiguration(config, added::add);
+    Cluster built = ConfigurationParser.parsePropertyConfiguration(config, Version.CURRENT, added::add);
     Configuration[] configurations = Stream.of(addedConfigurations)
         .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(Configuration::valueOf)
@@ -396,7 +397,7 @@ public class ConfigurationParserTest {
   private void assertConfigFail(Properties config, String err) {
     err = err.replace("/", File.separator); // unix/win compat'
     assertThat(
-        () -> ConfigurationParser.parsePropertyConfiguration(config, added::add),
+        () -> ConfigurationParser.parsePropertyConfiguration(config, Version.CURRENT, added::add),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(err)))));
   }
 

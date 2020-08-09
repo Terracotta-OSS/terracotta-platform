@@ -15,15 +15,18 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -38,6 +41,7 @@ import java.util.Properties;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
@@ -46,6 +50,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
+import static org.terracotta.dynamic_config.api.model.Version.CURRENT;
 import static org.terracotta.dynamic_config.api.model.Version.V1;
 import static org.terracotta.dynamic_config.api.model.Version.V2;
 
@@ -53,6 +58,8 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  * @author Mathieu Carbou
  */
 public class CompatibilityTest {
+
+  private final ObjectMapper mapper = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
   private final Cluster clusterV1 = Testing.newTestCluster("my-cluster", new Stripe().addNodes(
       Testing.newTestNode("node-1", "localhost1")
@@ -104,13 +111,69 @@ public class CompatibilityTest {
     }
   }
 
+  @Test
+  public void test_versioned_parsing() throws URISyntaxException, IOException {
+    // - config file format is V2
+    // - config has V2 settings
+    {
+      Cluster parsed = new ClusterFactory(V2).create(Props.load(read("/V2.properties")));
+      Cluster expected = mapper.readValue(getClass().getResource("/V2.json"), Cluster.class);
+      assertThat(parsed, is(equalTo(expected)));
+    }
+    // - config file format is V2
+    // - config has V1 settings only
+    // defaults will be applied
+    {
+      Cluster parsed = new ClusterFactory(V2).create(Props.load(read("/V1.properties")));
+      assertThat(parsed.getSingleStripe().get().getName(), startsWith("stripe-"));
+      parsed.getSingleStripe().get().setName("stripe-XYZ");
+      Cluster expected = mapper.readValue(getClass().getResource("/V1_and_V2_defaults.json"), Cluster.class);
+      assertThat(parsed, is(equalTo(expected)));
+    }
+    // - config file format is V1
+    // - config has V1 settings only
+    // - output is V1 only
+    {
+      Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/V1.properties")));
+      Cluster expected = mapper.readValue(getClass().getResource("/V1.json"), Cluster.class);
+      assertThat(parsed, is(equalTo(expected)));
+    }
+    // - config file format has some unsupported settings
+    // - output is V1 only
+    // example of older client that only knows about V1 config and are getting a V2 config
+    {
+      Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/V2.properties")));
+      Cluster expected = mapper.readValue(getClass().getResource("/V1.json"), Cluster.class);
+      assertThat(parsed, is(equalTo(expected)));
+    }
+    // json and properties checks
+    {
+      Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/default-node1.1.properties")));
+      Cluster expected = mapper.readValue(getClass().getResource("/default-node1.1.json"), Cluster.class);
+      assertThat(mapper.writeValueAsString(parsed),
+          mapper.valueToTree(parsed),
+          is(equalTo(mapper.readTree(read("/default-node1.1.json")))));
+      assertThat(parsed, is(equalTo(expected)));
+      assertThat(Props.toString(parsed.toProperties(false, false, true, CURRENT)),
+          parsed.toProperties(false, false, true, CURRENT),
+          is(equalTo(Props.load(read("/default-node1.1-v2.properties")))));
+      assertThat(Props.toString(parsed.toProperties(false, false, true, V1)),
+          parsed.toProperties(false, false, true, V1),
+          is(equalTo(Props.load(read("/default-node1.1-v2.properties")))));
+    }
+  }
+
   private String read(String resource) throws URISyntaxException, IOException {
     URL url = getClass().getResource(resource);
-    if(url == null) {
+    if (url == null) {
       throw new AssertionError(resource);
     }
     Path path = Paths.get(url.toURI());
     String data = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    return unwin(data);
+  }
+
+  private static String unwin(String data) {
     return isWindows() ? data.replace("\r\n", "\n").replace("\n", "\r\n").replace("/", "\\\\") : data;
   }
 

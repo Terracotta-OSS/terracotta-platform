@@ -1,0 +1,71 @@
+{
+  "stripes": [
+    {
+      "name": "stripe-XYZ",
+      "nodes": [
+        {
+          "bindAddress": "0.0.0.0",
+          "dataDirs": {
+            "bar": "%H/tc1/bar",
+            "foo": "%H/tc1/foo",
+            "main": "%H/terracotta/user-data/main"
+          },
+          "groupBindAddress": "0.0.0.0",
+          "groupPort": 9430,
+          "hostname": "localhost1",
+          "logDir": "%H/terracotta/logs",
+          "metadataDir": "%H/terracotta/metadata",
+          "name": "node-1",
+          "port": 9410
+        },
+        {
+          "bindAddress": "0.0.0.0",
+          "dataDirs": {
+            "bar": "%H/tc2/bar",
+            "foo": "%H/tc2/foo",
+            "main": "%H/terracotta/user-data/main"
+          },
+          "groupBindAddress": "0.0.0.0",
+          "groupPort": 9430,
+          "hostname": "localhost2",
+          "logDir": "%H/terracotta/logs",
+          "metadataDir": "%H/terracotta/metadata",
+          "name": "node-2",
+          "port": 9410,
+          "tcProperties": {}
+        }
+      ]
+    }
+  ],
+  "clientLeaseDuration": {
+    "quantity": 150,
+    "unit": "SECONDS",
+    "type": "TIME"
+  },
+  "clientReconnectWindow": {
+    "quantity": 120,
+    "unit": "SECONDS",
+    "type": "TIME"
+  },
+  "failoverPriority": "consistency:2",
+  "name": "my-cluster",
+  "offheapResources": {
+    "bar": {
+      "quantity": 2,
+      "unit": "GB",
+      "type": "MEMORY"
+    },
+    "foo": {
+      "quantity": 1,
+      "unit": "GB",
+      "type": "MEMORY"
+    },
+    "main": {
+      "quantity": 512,
+      "unit": "MB",
+      "type": "MEMORY"
+    }
+  },
+  "securitySslTls": false,
+  "securityWhitelist": false
+}
