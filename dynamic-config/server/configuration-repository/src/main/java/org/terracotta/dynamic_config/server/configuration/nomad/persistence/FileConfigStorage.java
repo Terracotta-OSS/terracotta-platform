@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
-public class FileConfigStorage implements ConfigStorage<NodeContext> {
+public class FileConfigStorage implements ConfigStorage {
   private static final Logger LOGGER = LoggerFactory.getLogger(FileConfigStorage.class);
 
   private final Path root;

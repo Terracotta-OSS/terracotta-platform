@@ -25,7 +25,7 @@ import org.terracotta.persistence.sanskrit.HashUtils;
 /**
  * @author Mathieu Carbou
  */
-public class DefaultHashComputer implements HashComputer<NodeContext> {
+public class DefaultHashComputer implements HashComputer {
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultHashComputer.class);
 
   private final ObjectMapper mapper;

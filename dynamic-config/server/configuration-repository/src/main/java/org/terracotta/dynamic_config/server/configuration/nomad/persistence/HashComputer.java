@@ -15,10 +15,12 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
+
 /**
  * @author Mathieu Carbou
  */
 @FunctionalInterface
-public interface HashComputer<T> {
-  String computeHash(T o);
+public interface HashComputer {
+  String computeHash(NodeContext o);
 }

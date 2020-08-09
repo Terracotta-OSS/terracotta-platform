@@ -75,7 +75,7 @@ public class NomadServerFactory {
     Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapper);
 
     Path clusterDir = configurationManager.getClusterPath();
-    InitialConfigStorage<NodeContext> configStorage = new InitialConfigStorage<>(new ConfigStorageAdapter<NodeContext>(new FileConfigStorage(clusterDir, nodeName)) {
+    InitialConfigStorage configStorage = new InitialConfigStorage(new ConfigStorageAdapter(new FileConfigStorage(clusterDir, nodeName)) {
       @Override
       public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
         super.saveConfig(version, config);
@@ -85,7 +85,7 @@ public class NomadServerFactory {
       }
     });
 
-    SanskritNomadServerState<NodeContext> serverState = new SanskritNomadServerState<>(sanskrit, configStorage, new DefaultHashComputer(objectMapper));
+    SanskritNomadServerState serverState = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer(objectMapper));
     long currentVersion = serverState.getCurrentVersion();
     if (currentVersion != 0) {
       String filename = ClusterConfigFilename.with(nodeName, currentVersion).getFilename();

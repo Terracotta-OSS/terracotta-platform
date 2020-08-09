@@ -24,12 +24,14 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeRequest;
-import org.terracotta.persistence.sanskrit.HashUtils;
 import org.terracotta.persistence.sanskrit.MutableSanskritObject;
 import org.terracotta.persistence.sanskrit.Sanskrit;
 import org.terracotta.persistence.sanskrit.SanskritObject;
@@ -55,23 +57,26 @@ import static org.terracotta.nomad.server.NomadServerMode.PREPARED;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SanskritNomadServerStateTest {
+
+  NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
+
   @Mock
   private Sanskrit sanskrit;
 
   @Mock
-  private ConfigStorage<String> configStorage;
+  private ConfigStorage configStorage;
 
   @Captor
   private ArgumentCaptor<SanskritChange> sanskritChangeCaptor;
 
-  private SanskritNomadServerState<String> state;
+  private SanskritNomadServerState state;
   private Instant now = Instant.now();
 
   @Before
   public void before() {
     ObjectMapper objectMapper = new ObjectMapperFactory().pretty().withModule(new DynamicConfigApiJsonModule()).create();
     when(sanskrit.newMutableSanskritObject()).thenReturn(new SanskritObjectImpl(objectMapper));
-    state = new SanskritNomadServerState<>(sanskrit, configStorage, HashUtils::generateHash);
+    state = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer(objectMapper));
 
   }
 
@@ -134,22 +139,22 @@ public class SanskritNomadServerStateTest {
     changeObject.setString("state", "ROLLED_BACK");
     changeObject.setLong("version", 1L);
     changeObject.setExternal("operation", settingNomadChange);
-    changeObject.setString("changeResultHash", "c2c9b194778150614a8a1b127842fc6f42b1a5f4");
+    changeObject.setString("changeResultHash", "58b3ea1afa2d92b5e349c53aad9131180ef92418");
     changeObject.setString("creationHost", "host");
     changeObject.setString("creationUser", "user");
     changeObject.setString("creationTimestamp", now.toString());
     changeObject.setString("summary", "description");
 
     when(sanskrit.getObject(uuid.toString())).thenReturn(changeObject);
-    when(configStorage.getConfig(1L)).thenReturn("config");
+    when(configStorage.getConfig(1L)).thenReturn(topology);
 
-    ChangeRequest<String> changeRequest = state.getChangeRequest(uuid);
+    ChangeRequest<NodeContext> changeRequest = state.getChangeRequest(uuid);
     SettingNomadChange change = (SettingNomadChange) changeRequest.getChange();
 
     assertEquals(ROLLED_BACK, changeRequest.getState());
     assertEquals(1L, changeRequest.getVersion());
     assertEquals(settingNomadChange, change);
-    assertEquals("config", changeRequest.getChangeResult());
+    assertEquals(topology, changeRequest.getChangeResult());
     assertEquals("host", changeRequest.getCreationHost());
     assertEquals("user", changeRequest.getCreationUser());
     assertEquals(now, changeRequest.getCreationTimestamp());
@@ -168,22 +173,22 @@ public class SanskritNomadServerStateTest {
     changeObject.setLong("version", 1L);
     changeObject.setString("prevChangeUuid", prevuuid.toString());
     changeObject.setExternal("operation", settingNomadChange);
-    changeObject.setString("changeResultHash", "c2c9b194778150614a8a1b127842fc6f42b1a5f4");
+    changeObject.setString("changeResultHash", "58b3ea1afa2d92b5e349c53aad9131180ef92418");
     changeObject.setString("creationHost", "host");
     changeObject.setString("creationUser", "user");
     changeObject.setString("creationTimestamp", now.toString());
     changeObject.setString("summary", "description");
 
     when(sanskrit.getObject(uuid.toString())).thenReturn(changeObject);
-    when(configStorage.getConfig(1L)).thenReturn("config");
+    when(configStorage.getConfig(1L)).thenReturn(topology);
 
-    ChangeRequest<String> changeRequest = state.getChangeRequest(uuid);
+    ChangeRequest<NodeContext> changeRequest = state.getChangeRequest(uuid);
     SettingNomadChange change = (SettingNomadChange) changeRequest.getChange();
 
     assertEquals(ROLLED_BACK, changeRequest.getState());
     assertEquals(1L, changeRequest.getVersion());
     assertEquals(settingNomadChange, change);
-    assertEquals("config", changeRequest.getChangeResult());
+    assertEquals(topology, changeRequest.getChangeResult());
     assertEquals("host", changeRequest.getCreationHost());
     assertEquals("user", changeRequest.getCreationUser());
     assertEquals(now, changeRequest.getCreationTimestamp());
@@ -207,12 +212,12 @@ public class SanskritNomadServerStateTest {
 
     SettingNomadChange settingNomadChange = SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "primary-server-resource", "2GB");
 
-    ChangeRequest<String> changeRequest = new ChangeRequest<>(
+    ChangeRequest<NodeContext> changeRequest = new ChangeRequest<>(
         COMMITTED,
         4L,
         null,
         settingNomadChange,
-        "config",
+        topology,
         "host1",
         "user1",
         now
@@ -248,12 +253,12 @@ public class SanskritNomadServerStateTest {
     assertThat(changeDetails.getString("state"), is("COMMITTED"));
     assertThat(changeDetails.getLong("version"), is(4L));
     assertThat(changeDetails.getObject("operation", NomadChange.class), is(settingNomadChange));
-    assertThat(changeDetails.getString("changeResultHash"), is("c2c9b194778150614a8a1b127842fc6f42b1a5f4"));
+    assertThat(changeDetails.getString("changeResultHash"), is("58b3ea1afa2d92b5e349c53aad9131180ef92418"));
     assertThat(changeDetails.getString("creationHost"), is("host1"));
     assertThat(changeDetails.getString("creationUser"), is("user1"));
     assertThat(changeDetails.getString("creationTimestamp"), is(now.toString()));
 
-    verify(configStorage).saveConfig(4L, "config");
+    verify(configStorage).saveConfig(4L, topology);
   }
 
   @Test
@@ -281,7 +286,7 @@ public class SanskritNomadServerStateTest {
   @Test
   public void getCurrentCommittedChangeResult() throws Exception {
     when(sanskrit.getLong("currentVersion")).thenReturn(5L);
-    when(configStorage.getConfig(5L)).thenReturn("config");
-    assertEquals("config", state.getCurrentCommittedChangeResult().get());
+    when(configStorage.getConfig(5L)).thenReturn(topology);
+    assertEquals(topology, state.getCurrentCommittedChangeResult().get());
   }
 }

@@ -15,22 +15,24 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
+
 /**
  * @author Mathieu Carbou
  */
-public class ConfigStorageAdapter<T> implements ConfigStorage<T> {
+public class ConfigStorageAdapter implements ConfigStorage {
 
-  private final ConfigStorage<T> delegate;
+  private final ConfigStorage delegate;
 
-  public ConfigStorageAdapter(ConfigStorage<T> delegate) {
+  public ConfigStorageAdapter(ConfigStorage delegate) {
     this.delegate = delegate;
   }
 
   @Override
-  public T getConfig(long version) throws ConfigStorageException {return delegate.getConfig(version);}
+  public NodeContext getConfig(long version) throws ConfigStorageException {return delegate.getConfig(version);}
 
   @Override
-  public void saveConfig(long version, T config) throws ConfigStorageException {delegate.saveConfig(version, config);}
+  public void saveConfig(long version, NodeContext config) throws ConfigStorageException {delegate.saveConfig(version, config);}
 
   @Override
   public void reset() throws ConfigStorageException {

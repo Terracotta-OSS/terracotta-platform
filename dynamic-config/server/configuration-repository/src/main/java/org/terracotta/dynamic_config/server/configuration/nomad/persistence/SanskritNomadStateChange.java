@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadServerMode;
@@ -47,75 +48,75 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.REQUEST;
 
-public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
+public class SanskritNomadStateChange implements NomadStateChange<NodeContext> {
   private final Sanskrit sanskrit;
   private final SanskritChangeBuilder changeBuilder;
-  private final HashComputer<T> hashComputer;
+  private final HashComputer hashComputer;
   private volatile Long changeVersion;
-  private volatile T changeResult;
+  private volatile NodeContext changeResult;
 
-  public SanskritNomadStateChange(Sanskrit sanskrit, SanskritChangeBuilder changeBuilder, HashComputer<T> hashComputer) {
+  public SanskritNomadStateChange(Sanskrit sanskrit, SanskritChangeBuilder changeBuilder, HashComputer hashComputer) {
     this.sanskrit = sanskrit;
     this.changeBuilder = changeBuilder;
     this.hashComputer = hashComputer;
   }
 
   @Override
-  public NomadStateChange<T> setInitialized() {
+  public NomadStateChange<NodeContext> setInitialized() {
     setMode(NomadServerMode.ACCEPTING);
     return this;
   }
 
   @Override
-  public NomadStateChange<T> setMode(NomadServerMode mode) {
+  public NomadStateChange<NodeContext> setMode(NomadServerMode mode) {
     changeBuilder.setString(MODE, mode.name());
     return this;
   }
 
   @Override
-  public NomadStateChange<T> setRequest(NomadServerRequest request) {
+  public NomadStateChange<NodeContext> setRequest(NomadServerRequest request) {
     changeBuilder.setString(REQUEST, request.name());
     return this;
   }
 
   @Override
-  public NomadStateChange<T> setLatestChangeUuid(UUID changeUuid) {
+  public NomadStateChange<NodeContext> setLatestChangeUuid(UUID changeUuid) {
     changeBuilder.setString(LATEST_CHANGE_UUID, changeUuid.toString());
     return this;
   }
 
   @Override
-  public NomadStateChange<T> setCurrentVersion(long versionNumber) {
+  public NomadStateChange<NodeContext> setCurrentVersion(long versionNumber) {
     changeBuilder.setLong(CURRENT_VERSION, versionNumber);
     return this;
   }
 
   @Override
-  public NomadStateChange<T> setHighestVersion(long versionNumber) {
+  public NomadStateChange<NodeContext> setHighestVersion(long versionNumber) {
     changeBuilder.setLong(HIGHEST_VERSION, versionNumber);
     return this;
   }
 
   @Override
-  public NomadStateChange<T> setLastMutationHost(String lastMutationHost) {
+  public NomadStateChange<NodeContext> setLastMutationHost(String lastMutationHost) {
     changeBuilder.setString(LAST_MUTATION_HOST, lastMutationHost);
     return this;
   }
 
   @Override
-  public NomadStateChange<T> setLastMutationUser(String lastMutationUser) {
+  public NomadStateChange<NodeContext> setLastMutationUser(String lastMutationUser) {
     changeBuilder.setString(LAST_MUTATION_USER, lastMutationUser);
     return this;
   }
 
   @Override
-  public NomadStateChange<T> setLastMutationTimestamp(Instant lastMutationTimestamp) {
+  public NomadStateChange<NodeContext> setLastMutationTimestamp(Instant lastMutationTimestamp) {
     changeBuilder.setString(LAST_MUTATION_TIMESTAMP, lastMutationTimestamp.toString());
     return this;
   }
 
   @Override
-  public NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest) {
+  public NomadStateChange<NodeContext> createChange(UUID changeUuid, ChangeRequest<NodeContext> changeRequest) {
     changeVersion = changeRequest.getVersion();
     changeResult = changeRequest.getChangeResult();
     String resultHash = hashComputer.computeHash(changeResult);
@@ -138,7 +139,7 @@ public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
   }
 
   @Override
-  public NomadStateChange<T> updateChangeRequestState(UUID changeUuid, ChangeRequestState newState) {
+  public NomadStateChange<NodeContext> updateChangeRequestState(UUID changeUuid, ChangeRequestState newState) {
     String uuidString = changeUuid.toString();
     SanskritObject existing = getObject(uuidString);
     MutableSanskritObject updated = sanskrit.newMutableSanskritObject();
@@ -157,7 +158,7 @@ public class SanskritNomadStateChange<T> implements NomadStateChange<T> {
     return changeVersion;
   }
 
-  public T getChangeResult() {
+  public NodeContext getChangeResult() {
     return changeResult;
   }
 

@@ -36,7 +36,7 @@ public class DefaultHashComputerTest {
   @Test
   public void computeHash() throws IOException {
     ObjectMapper om = new ObjectMapperFactory().pretty().withModule(new DynamicConfigApiJsonModule()).create();
-    HashComputer<NodeContext> hashComputer = new DefaultHashComputer(om);
+    HashComputer hashComputer = new DefaultHashComputer(om);
 
     Node node = Testing.newTestNode("foo", "localhost");
     NodeContext nodeContext = new NodeContext(Testing.newTestCluster(new Stripe().addNodes(node)), 1, "foo");

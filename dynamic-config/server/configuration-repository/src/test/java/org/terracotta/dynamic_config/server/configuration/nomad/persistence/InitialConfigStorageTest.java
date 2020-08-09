@@ -19,6 +19,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -27,34 +30,37 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class InitialConfigStorageTest {
+
+  NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
+
   @Mock
-  private ConfigStorage<String> underlying;
+  private ConfigStorage underlying;
 
   @Test
   public void getInitialVersion() throws Exception {
-    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
+    InitialConfigStorage storage = new InitialConfigStorage(underlying);
     assertNull(storage.getConfig(0L));
   }
 
   @Test(expected = AssertionError.class)
   public void attemptToSaveInitialVersion() throws Exception {
-    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
-    storage.saveConfig(0L, "config");
+    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    storage.saveConfig(0L, topology);
   }
 
   @Test
   public void getOtherVersion() throws Exception {
-    when(underlying.getConfig(1L)).thenReturn("config");
+    when(underlying.getConfig(1L)).thenReturn(topology);
 
-    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
-    assertEquals("config", storage.getConfig(1L));
+    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    assertEquals(topology, storage.getConfig(1L));
   }
 
   @Test
   public void saveOtherVersion() throws Exception {
-    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
-    storage.saveConfig(1L, "config");
+    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    storage.saveConfig(1L, topology);
 
-    verify(underlying).saveConfig(1L, "config");
+    verify(underlying).saveConfig(1L, topology);
   }
 }
