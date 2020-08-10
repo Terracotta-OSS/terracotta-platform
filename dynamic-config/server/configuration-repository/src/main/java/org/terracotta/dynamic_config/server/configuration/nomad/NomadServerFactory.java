@@ -15,12 +15,13 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad;
 
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1;
+import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ClusterConfigFilename;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageAdapter;
@@ -42,6 +43,7 @@ import org.terracotta.nomad.server.NomadServerImpl;
 import org.terracotta.nomad.server.SingleThreadedNomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServerAdapter;
+import org.terracotta.persistence.sanskrit.ObjectMapperSupplier;
 import org.terracotta.persistence.sanskrit.Sanskrit;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
@@ -66,13 +68,16 @@ public class NomadServerFactory {
 
     // Creates a json mapper with indentation for human readability, but forcing all EOL to be LF like Sanskrit
     // The sanskrit files should be portable from Lin to Win and still work.
-    ObjectMapper objectMapper = objectMapperFactory.pretty().create();
-    DefaultIndenter indent = new DefaultIndenter("  ", "\n");
-    objectMapper.writer(new DefaultPrettyPrinter()
-        .withObjectIndenter(indent)
-        .withArrayIndenter(indent));
+    // do not use pretty() or it will mess up the EOL and sanskrit hashes. It is also harder to keep backward compat with that
+    ObjectMapper objectMapper = objectMapperFactory.create();
 
-    Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapper);
+    ObjectMapper objectMapperV1 = objectMapperFactory.withModules(new DynamicConfigModelJsonModuleV1(), new DynamicConfigApiJsonModuleV1()).create();
+
+    ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.versioned(objectMapper, Version.CURRENT.getValue())
+        .withVersions(objectMapperV1, "", Version.V1.getValue())
+        .withVersions(objectMapper, Version.V2.getValue());
+
+    Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapperSupplier);
 
     Path clusterDir = configurationManager.getClusterPath();
     InitialConfigStorage configStorage = new InitialConfigStorage(new ConfigStorageAdapter(new FileConfigStorage(clusterDir, nodeName)) {

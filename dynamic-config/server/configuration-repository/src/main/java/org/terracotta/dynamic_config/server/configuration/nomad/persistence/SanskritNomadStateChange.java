@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadServerMode;
@@ -34,6 +35,7 @@ import java.util.UUID;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_HOST;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_TIMESTAMP;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_USER;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_FORMAT_VERSION;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_RESULT_HASH;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_STATE;
@@ -127,7 +129,8 @@ public class SanskritNomadStateChange implements NomadStateChange<NodeContext> {
     if (changeRequest.getPrevChangeId() != null) {
       child.setString(PREV_CHANGE_UUID, changeRequest.getPrevChangeId());
     }
-    child.setExternal(CHANGE_OPERATION, changeRequest.getChange());
+    child.setExternal(CHANGE_OPERATION, changeRequest.getChange(), Version.CURRENT.getValue());
+    child.setString(CHANGE_FORMAT_VERSION, Version.CURRENT.getValue());
     child.setString(CHANGE_RESULT_HASH, resultHash);
     child.setString(CHANGE_CREATION_HOST, changeRequest.getCreationHost());
     child.setString(CHANGE_CREATION_USER, changeRequest.getCreationUser());

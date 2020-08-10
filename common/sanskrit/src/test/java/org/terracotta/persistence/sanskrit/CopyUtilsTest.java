@@ -15,11 +15,11 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.json.ObjectMapperFactory;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -30,12 +30,12 @@ public class CopyUtilsTest {
   private SanskritVisitor visitor1;
   @Mock
   private SanskritVisitor visitor2;
-  private ObjectMapper objectMapper = new ObjectMapper();
+  private ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.notVersioned(new ObjectMapperFactory().create());
 
   @Test
   public void copyEmpty() {
-    SanskritObjectImpl object = new SanskritObjectImpl(objectMapper);
-    SanskritObject sanskritObject = CopyUtils.makeCopy(objectMapper, object);
+    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
+    SanskritObject sanskritObject = CopyUtils.makeCopy(objectMapperSupplier, object);
     sanskritObject.accept(visitor1);
 
     verifyNoMoreInteractions(visitor1);
@@ -43,15 +43,15 @@ public class CopyUtilsTest {
 
   @Test
   public void copyData() {
-    SanskritObjectImpl subObject = new SanskritObjectImpl(objectMapper);
+    SanskritObjectImpl subObject = new SanskritObjectImpl(objectMapperSupplier);
     subObject.setString("1", "b");
 
-    SanskritObjectImpl object = new SanskritObjectImpl(objectMapper);
+    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
     object.setString("1", "a");
     object.setLong("2", 1L);
     object.setObject("3", subObject);
 
-    SanskritObject sanskritObject = CopyUtils.makeCopy(objectMapper, object);
+    SanskritObject sanskritObject = CopyUtils.makeCopy(objectMapperSupplier, object);
     sanskritObject.accept(visitor1);
     sanskritObject.getObject("3").accept(visitor2);
 

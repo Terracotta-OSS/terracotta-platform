@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
@@ -35,6 +36,7 @@ import java.util.UUID;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_HOST;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_TIMESTAMP;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_CREATION_USER;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_FORMAT_VERSION;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_RESULT_HASH;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_STATE;
@@ -128,7 +130,13 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
 
       ChangeRequestState state = ChangeRequestState.valueOf(child.getString(CHANGE_STATE));
       long version = child.getLong(CHANGE_VERSION);
-      NomadChange change = child.getObject(CHANGE_OPERATION, NomadChange.class);
+      String changeFormatVersion = child.getString(CHANGE_FORMAT_VERSION);
+      if (changeFormatVersion == null) {
+        // changeFormatVersion was missing in V1, so we consider it blank.
+        // null value means latest version.
+        changeFormatVersion = Version.V1.getValue();
+      }
+      NomadChange change = child.getObject(CHANGE_OPERATION, NomadChange.class, changeFormatVersion);
       String prevChangeUuid = child.getString(PREV_CHANGE_UUID);
       String expectedHash = child.getString(CHANGE_RESULT_HASH);
       String creationHost = child.getString(CHANGE_CREATION_HOST);
@@ -138,7 +146,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
       NodeContext nodeContext = configStorage.getConfig(version);
       String actualHash = hashComputer.computeHash(nodeContext);
       if (!actualHash.equals(expectedHash)) {
-        throw new NomadException("Bad hash for change: " + changeUuid + ". Hash: " + actualHash + ". Expected: " + expectedHash + ". Loaded configuration: " + nodeContext);
+        throw new NomadException("Bad hash for change: " + changeUuid + ". Computed: " + actualHash + ". Expected: " + expectedHash + ". Loaded configuration: " + nodeContext);
       }
 
       return new ChangeRequest<>(state, version, prevChangeUuid, change, nodeContext, creationHost, creationUser, creationTimestamp);

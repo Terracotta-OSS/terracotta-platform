@@ -35,7 +35,7 @@ import static org.junit.Assert.assertThat;
 public class DefaultHashComputerTest {
   @Test
   public void computeHash() throws IOException {
-    ObjectMapper om = new ObjectMapperFactory().pretty().withModule(new DynamicConfigApiJsonModule()).create();
+    ObjectMapper om = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
     HashComputer hashComputer = new DefaultHashComputer(om);
 
     Node node = Testing.newTestNode("foo", "localhost");

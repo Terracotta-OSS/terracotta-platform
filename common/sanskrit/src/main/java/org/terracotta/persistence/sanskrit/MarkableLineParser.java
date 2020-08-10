@@ -15,6 +15,9 @@
  */
 package org.terracotta.persistence.sanskrit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -33,6 +36,8 @@ import java.util.stream.StreamSupport;
  * newline.
  */
 public class MarkableLineParser {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(MarkableLineParser.class);
 
   public static final String LS = "\n";
 
@@ -75,6 +80,9 @@ public class MarkableLineParser {
 
           if (endsWithLineSeparator(sb)) {
             String line = withoutLineSeparator(sb);
+            if (LOGGER.isTraceEnabled()) {
+              LOGGER.trace("parsed: {}", line.replace("\r", "\\r").replace("\n", "\\n"));
+            }
             action.accept(line);
             return true;
           }
