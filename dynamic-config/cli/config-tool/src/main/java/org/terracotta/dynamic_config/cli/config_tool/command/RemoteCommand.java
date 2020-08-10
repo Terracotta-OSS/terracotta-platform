@@ -33,6 +33,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
+import org.terracotta.dynamic_config.cli.config_tool.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartProgress;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
@@ -91,6 +92,10 @@ public abstract class RemoteCommand extends Command {
   @Inject public NomadManager<NodeContext> nomadManager;
   @Inject public RestartService restartService;
   @Inject public StopService stopService;
+
+  protected boolean isLockAwareNomadManager() {
+    return nomadManager instanceof LockAwareNomadManager;
+  }
 
   protected void licenseValidation(InetSocketAddress node, Cluster cluster) {
     logger.trace("licenseValidation({}, {})", node, cluster);

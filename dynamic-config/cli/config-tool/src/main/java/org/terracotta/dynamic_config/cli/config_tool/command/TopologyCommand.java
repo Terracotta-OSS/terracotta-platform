@@ -19,9 +19,11 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
+import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
@@ -31,6 +33,7 @@ import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import static java.lang.System.lineSeparator;
@@ -51,11 +54,14 @@ public abstract class TopologyCommand extends RemoteCommand {
   @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
 
-  @Inject public ObjectMapperFactory objectMapperFactory;
+  @Inject
+  public ObjectMapperFactory objectMapperFactory;
 
   protected Map<InetSocketAddress, LogicalServerState> destinationOnlineNodes;
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
+  private final LockContext lockContext =
+      new LockContext(UUID.randomUUID().toString(), "platform", "dynamic-scale");
 
   @Override
   public void validate() {
@@ -117,16 +123,20 @@ public abstract class TopologyCommand extends RemoteCommand {
     // This is done in the DynamicConfigService#setUpcomingCluster() method
 
     if (destinationClusterActivated) {
-      TopologyNomadChange nomadChange = buildNomadChange(result);
-      licenseValidation(destination, nomadChange.getCluster());
-      onNomadChangeReady(nomadChange);
-      logger.info("Sending the topology change");
-      try {
-        runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
-      } catch (RuntimeException e) {
-        onNomadChangeFailure(nomadChange, e);
+      if (operationType == OperationType.STRIPE && !isLockAwareNomadManager()) {
+        acquireLockAndRunCommand();
+      } else {
+        TopologyNomadChange nomadChange = buildNomadChange(result);
+        licenseValidation(destination, nomadChange.getCluster());
+        onNomadChangeReady(nomadChange);
+        logger.info("Sending the topology change");
+        try {
+          runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
+        } catch (RuntimeException e) {
+          onNomadChangeFailure(nomadChange, e);
+        }
+        onNomadChangeSuccess(nomadChange);
       }
-      onNomadChangeSuccess(nomadChange);
 
     } else {
       logger.info("Sending the topology change");
@@ -180,6 +190,21 @@ public abstract class TopologyCommand extends RemoteCommand {
         throw new IllegalArgumentException(error);
       }
     }
+  }
+
+  protected void acquireLockAndRunCommand() {
+    logger.info("locking the configuration");
+    String[] lockCommand = new String[]{"set", "-s", destination.toString(), "-c", "lock-context=" + lockContext };
+    ConfigTool.main(lockCommand);
+    logger.info("Configuration locking is successful");
+    String[] command = createCommand(lockContext.getToken());
+    if (command != null) {
+      ConfigTool.main(command);
+    }
+  }
+
+  protected String[] createCommand(String lockToken) {
+    return null;
   }
 
   protected void onNomadChangeReady(TopologyNomadChange nomadChange) {

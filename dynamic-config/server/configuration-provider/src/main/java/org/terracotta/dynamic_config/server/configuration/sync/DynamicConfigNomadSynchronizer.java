@@ -21,7 +21,9 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
+import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.NomadChangeInfo;
@@ -50,6 +52,11 @@ public class DynamicConfigNomadSynchronizer {
 
   public Set<Require> syncNomadChanges(List<NomadChangeInfo> sourceNomadChanges, Cluster sourceTopology) throws NomadException {
     List<NomadChangeInfo> nomadChanges = nomadServer.getAllNomadChanges();
+    NomadChange firstNomadChange = nomadChanges.get(0).getNomadChange();
+    if (firstNomadChange instanceof LockAwareDynamicConfigNomadChange) {
+      firstNomadChange = ((LockAwareDynamicConfigNomadChange)firstNomadChange).getChange();
+    }
+    NomadChange firstFinalNomadChange = firstNomadChange;
 
     // programming errors
     // to be able to start, there must be at least one committed activation change in the append log
@@ -57,7 +64,7 @@ public class DynamicConfigNomadSynchronizer {
     // DynamicConfigConfigurationProvider will catch such uncommitted changes and prevent startup (there won't be any available configuration)
     Check.assertNonEmpty(sourceNomadChanges, nomadChanges);
     Check.assertThat(() -> sourceNomadChanges.get(0).getNomadChange() instanceof ClusterActivationNomadChange);
-    Check.assertThat(() -> nomadChanges.get(0).getNomadChange() instanceof ClusterActivationNomadChange);
+    Check.assertThat(() -> firstFinalNomadChange instanceof ClusterActivationNomadChange);
     Check.assertThat(() -> sourceNomadChanges.get(0).getChangeRequestState() == COMMITTED);
     Check.assertThat(() -> nomadChanges.get(0).getChangeRequestState() == COMMITTED);
 
@@ -81,7 +88,7 @@ public class DynamicConfigNomadSynchronizer {
       LOGGER.info("New node is joining an activated cluster: syncing previous existing changes");
 
       // current cluster that was activated
-      final Cluster currentCluster = ((ClusterActivationNomadChange) nomadChanges.get(0).getNomadChange()).getCluster();
+      final Cluster currentCluster = ((ClusterActivationNomadChange) firstNomadChange).getCluster();
       LOGGER.trace("Passive node topology at activation time: {}", currentCluster);
 
       int pos = Check.findLastSyncPosition(sourceNomadChanges, sourceTopology, currentCluster)
