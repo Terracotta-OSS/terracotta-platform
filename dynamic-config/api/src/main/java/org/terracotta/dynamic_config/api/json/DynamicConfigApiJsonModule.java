@@ -110,10 +110,10 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
 
   public static class ApplicabilityMixin extends Applicability {
     @JsonCreator
-    protected ApplicabilityMixin(@JsonProperty(value = "level", required = true) Scope scope,
+    protected ApplicabilityMixin(@JsonProperty(value = "level", required = true) Scope level,
                                  @JsonProperty("stripeId") Integer stripeId,
                                  @JsonProperty("nodeName") String nodeName) {
-      super(scope, stripeId, nodeName);
+      super(level, stripeId, nodeName);
     }
   }
 
