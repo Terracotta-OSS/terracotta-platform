@@ -30,6 +30,7 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeRequest;
@@ -76,10 +77,10 @@ public class SanskritNomadServerStateTest {
 
   @Before
   public void before() {
+    new ClusterValidator(topology.getCluster()).validate();
     ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
     when(sanskrit.newMutableSanskritObject()).thenReturn(new SanskritObjectImpl(ObjectMapperSupplier.notVersioned(objectMapper)));
-    state = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer(objectMapper));
-
+    state = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer());
   }
 
   @Test
@@ -141,7 +142,7 @@ public class SanskritNomadServerStateTest {
     changeObject.setString("state", "ROLLED_BACK");
     changeObject.setLong("version", 1L);
     changeObject.setExternal("operation", settingNomadChange, Version.CURRENT.getValue());
-    changeObject.setString("changeResultHash", "ac7cfd6a1f2a3147f4630935a7b9ba7858432faf");
+    changeObject.setString("changeResultHash", "676dbc868848a9d37a689f91d77864bf3de7ef80");
     changeObject.setString("creationHost", "host");
     changeObject.setString("creationUser", "user");
     changeObject.setString("creationTimestamp", now.toString());
@@ -175,7 +176,7 @@ public class SanskritNomadServerStateTest {
     changeObject.setLong("version", 1L);
     changeObject.setString("prevChangeUuid", prevuuid.toString());
     changeObject.setExternal("operation", settingNomadChange, Version.CURRENT.getValue());
-    changeObject.setString("changeResultHash", "ac7cfd6a1f2a3147f4630935a7b9ba7858432faf");
+    changeObject.setString("changeResultHash", "676dbc868848a9d37a689f91d77864bf3de7ef80");
     changeObject.setString("creationHost", "host");
     changeObject.setString("creationUser", "user");
     changeObject.setString("creationTimestamp", now.toString());
@@ -255,7 +256,7 @@ public class SanskritNomadServerStateTest {
     assertThat(changeDetails.getString("state"), is("COMMITTED"));
     assertThat(changeDetails.getLong("version"), is(4L));
     assertThat(changeDetails.getObject("operation", NomadChange.class, null), is(settingNomadChange));
-    assertThat(changeDetails.getString("changeResultHash"), is("ac7cfd6a1f2a3147f4630935a7b9ba7858432faf"));
+    assertThat(changeDetails.getString("changeResultHash"), is("676dbc868848a9d37a689f91d77864bf3de7ef80"));
     assertThat(changeDetails.getString("creationHost"), is("host1"));
     assertThat(changeDetails.getString("creationUser"), is("user1"));
     assertThat(changeDetails.getString("creationTimestamp"), is(now.toString()));

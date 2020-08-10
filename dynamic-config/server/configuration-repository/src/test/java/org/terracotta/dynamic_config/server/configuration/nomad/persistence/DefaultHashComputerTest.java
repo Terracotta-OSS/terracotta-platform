@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
@@ -36,15 +37,15 @@ public class DefaultHashComputerTest {
   @Test
   public void computeHash() throws IOException {
     ObjectMapper om = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
-    HashComputer hashComputer = new DefaultHashComputer(om);
+    HashComputer hashComputer = new DefaultHashComputer();
 
     Node node = Testing.newTestNode("foo", "localhost");
     NodeContext nodeContext = new NodeContext(Testing.newTestCluster(new Stripe().addNodes(node)), 1, "foo");
 
-    String hash = hashComputer.computeHash(nodeContext);
+    String hash = hashComputer.computeHash(new Config(nodeContext, Version.CURRENT));
     String json = om.writeValueAsString(nodeContext);
     NodeContext reloaded = om.readValue(json, NodeContext.class);
-    String reloadedHash = hashComputer.computeHash(reloaded);
+    String reloadedHash = hashComputer.computeHash(new Config(reloaded, Version.CURRENT));
 
     assertThat(reloaded, is(nodeContext));
     assertThat(reloadedHash, is(hash));

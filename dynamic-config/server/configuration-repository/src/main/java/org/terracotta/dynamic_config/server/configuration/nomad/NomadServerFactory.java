@@ -90,7 +90,7 @@ public class NomadServerFactory {
       }
     });
 
-    SanskritNomadServerState serverState = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer(objectMapper));
+    SanskritNomadServerState serverState = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer());
     long currentVersion = serverState.getCurrentVersion();
     if (currentVersion != 0) {
       String filename = ClusterConfigFilename.with(nodeName, currentVersion).getFilename();

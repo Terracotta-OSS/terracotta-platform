@@ -121,7 +121,7 @@ public class SanskritNomadStateChange implements NomadStateChange<NodeContext> {
   public NomadStateChange<NodeContext> createChange(UUID changeUuid, ChangeRequest<NodeContext> changeRequest) {
     changeVersion = changeRequest.getVersion();
     changeResult = changeRequest.getChangeResult();
-    String resultHash = hashComputer.computeHash(changeResult);
+    String resultHash = hashComputer.computeHash(new Config(changeResult, Version.CURRENT));
 
     MutableSanskritObject child = sanskrit.newMutableSanskritObject();
     child.setString(CHANGE_STATE, changeRequest.getState().name());
