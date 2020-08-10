@@ -148,7 +148,7 @@ public class SanskritNomadServerStateTest {
     changeObject.setString("summary", "description");
 
     when(sanskrit.getObject(uuid.toString())).thenReturn(changeObject);
-    when(configStorage.getConfig(1L)).thenReturn(topology);
+    when(configStorage.getConfig(1L)).thenReturn(new Config(topology, Version.CURRENT));
 
     ChangeRequest<NodeContext> changeRequest = state.getChangeRequest(uuid);
     SettingNomadChange change = (SettingNomadChange) changeRequest.getChange();
@@ -182,7 +182,7 @@ public class SanskritNomadServerStateTest {
     changeObject.setString("summary", "description");
 
     when(sanskrit.getObject(uuid.toString())).thenReturn(changeObject);
-    when(configStorage.getConfig(1L)).thenReturn(topology);
+    when(configStorage.getConfig(1L)).thenReturn(new Config(topology, Version.CURRENT));
 
     ChangeRequest<NodeContext> changeRequest = state.getChangeRequest(uuid);
     SettingNomadChange change = (SettingNomadChange) changeRequest.getChange();
@@ -288,7 +288,7 @@ public class SanskritNomadServerStateTest {
   @Test
   public void getCurrentCommittedChangeResult() throws Exception {
     when(sanskrit.getLong("currentVersion")).thenReturn(5L);
-    when(configStorage.getConfig(5L)).thenReturn(topology);
+    when(configStorage.getConfig(5L)).thenReturn(new Config(topology, Version.CURRENT));
     assertEquals(topology, state.getCurrentCommittedChangeResult().get());
   }
 }

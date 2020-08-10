@@ -27,7 +27,7 @@ public class InitialConfigStorage implements ConfigStorage {
   }
 
   @Override
-  public NodeContext getConfig(long version) throws ConfigStorageException {
+  public Config getConfig(long version) throws ConfigStorageException {
     if (version == INITIAL_VERSION) {
       return null;
     }

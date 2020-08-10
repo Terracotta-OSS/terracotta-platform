@@ -22,6 +22,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.model.Version;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -50,10 +51,10 @@ public class InitialConfigStorageTest {
 
   @Test
   public void getOtherVersion() throws Exception {
-    when(underlying.getConfig(1L)).thenReturn(topology);
+    when(underlying.getConfig(1L)).thenReturn(new Config(topology, Version.CURRENT));
 
     InitialConfigStorage storage = new InitialConfigStorage(underlying);
-    assertEquals(topology, storage.getConfig(1L));
+    assertEquals(new Config(topology, Version.CURRENT), storage.getConfig(1L));
   }
 
   @Test

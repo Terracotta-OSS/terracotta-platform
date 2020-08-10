@@ -143,13 +143,14 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
       String creationUser = child.getString(CHANGE_CREATION_USER);
       Instant creationTimestamp = Instant.parse(child.getString(CHANGE_CREATION_TIMESTAMP));
 
-      NodeContext nodeContext = configStorage.getConfig(version);
-      String actualHash = hashComputer.computeHash(nodeContext);
+      Config config = configStorage.getConfig(version);
+      NodeContext topology = config.getTopology();
+      String actualHash = hashComputer.computeHash(topology);
       if (!actualHash.equals(expectedHash)) {
-        throw new NomadException("Bad hash for change: " + changeUuid + ". Computed: " + actualHash + ". Expected: " + expectedHash + ". Loaded configuration: " + nodeContext);
+        throw new NomadException("Bad hash for change: " + changeUuid + ". Computed: " + actualHash + ". Expected: " + expectedHash + ". Loaded configuration: " + topology);
       }
 
-      return new ChangeRequest<>(state, version, prevChangeUuid, change, nodeContext, creationHost, creationUser, creationTimestamp);
+      return new ChangeRequest<>(state, version, prevChangeUuid, change, topology, creationHost, creationUser, creationTimestamp);
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to read configuration: " + changeUuid, e);
     }
@@ -192,7 +193,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
       return Optional.empty();
     }
     try {
-      return Optional.ofNullable(configStorage.getConfig(currentVersion));
+      return Optional.ofNullable(configStorage.getConfig(currentVersion).getTopology());
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to load current configuration", e);
     }

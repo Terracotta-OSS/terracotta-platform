@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.Props;
 
@@ -29,12 +30,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.Version.CURRENT;
+import static org.terracotta.dynamic_config.api.model.Version.V1;
 
 public class FileConfigStorage implements ConfigStorage {
   private static final Logger LOGGER = LoggerFactory.getLogger(FileConfigStorage.class);
@@ -50,7 +54,7 @@ public class FileConfigStorage implements ConfigStorage {
   @SuppressWarnings("unused")
   @Override
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
-  public NodeContext getConfig(long version) throws ConfigStorageException {
+  public Config getConfig(long version) throws ConfigStorageException {
     Path file = toPath(version);
     LOGGER.debug("Loading version: {} from file: {}", version, file);
     try {
@@ -60,10 +64,18 @@ public class FileConfigStorage implements ConfigStorage {
       int stripeId = Integer.parseInt(properties.remove("this.stripe-id").toString());
       int nodeId = Integer.parseInt(properties.remove("this.node-id").toString());
       String nodeName = properties.remove("this.name").toString();
+      Version configFormatVersion = Optional.ofNullable(properties.remove("this.version"))
+          .map(Object::toString)
+          .map(Version::fromValue)
+          .orElse(V1);
 
-      Cluster cluster = new ClusterFactory().create(properties, configuration -> {
+      // parse the config in the given version.
+      // Note: this is really important to use the parser matching the version of the config.
+      // Reason is that Nomad is computing a hash based on the "output" of the change, and verifies this hash
+      // back when re-loading. So the reloaded value cannot be parsed differently.
+      Cluster cluster = new ClusterFactory(configFormatVersion).create(properties, configuration -> {
       }); // do not over-log added configs
-      return new NodeContext(cluster, stripeId, nodeName);
+      return new Config(new NodeContext(cluster, stripeId, nodeName), configFormatVersion);
     } catch (RuntimeException e) {
       throw new ConfigStorageException(e);
     }
@@ -84,6 +96,7 @@ public class FileConfigStorage implements ConfigStorage {
       nonDefaults.setProperty("this.stripe-id", String.valueOf(config.getStripeId()));
       nonDefaults.setProperty("this.node-id", String.valueOf(config.getNodeId()));
       nonDefaults.setProperty("this.name", String.valueOf(config.getNodeName()));
+      nonDefaults.setProperty("this.version", CURRENT.getValue());
 
       StringWriter out = new StringWriter();
       String comments = "THIS FILE IS INTENDED FOR BOOK-KEEPING PURPOSES ONLY, AND IS NOT SUPPOSED TO BE EDITED. DO NOT ATTEMPT TO MODIFY.";

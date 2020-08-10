@@ -29,7 +29,7 @@ public class ConfigStorageAdapter implements ConfigStorage {
   }
 
   @Override
-  public NodeContext getConfig(long version) throws ConfigStorageException {return delegate.getConfig(version);}
+  public Config getConfig(long version) throws ConfigStorageException {return delegate.getConfig(version);}
 
   @Override
   public void saveConfig(long version, NodeContext config) throws ConfigStorageException {delegate.saveConfig(version, config);}
