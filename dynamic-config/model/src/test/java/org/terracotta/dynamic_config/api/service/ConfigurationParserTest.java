@@ -71,6 +71,7 @@ public class ConfigurationParserTest {
     lenient().when(substitutor.substitute("%H")).thenReturn("home");
     lenient().when(substitutor.substitute("foo")).thenReturn("foo");
     lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
+    lenient().when(substitutor.substitute(startsWith("stripe-"))).thenReturn("<GENERATED>");
     lenient().when(substitutor.substitute("9410")).thenReturn("9410");
     lenient().when(substitutor.substitute("")).thenReturn("");
     lenient().when(substitutor.substitute("availability")).thenReturn("availability");
@@ -81,13 +82,15 @@ public class ConfigurationParserTest {
     // node hostname should be resolved from default value (%h) if not given
     assertCliEquals(
         cli("failover-priority=availability"),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost")))
+        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost")))
             .setFailoverPriority(availability()),
         "stripe.1.node.1.hostname=localhost",
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.name=<GENERATED>"
     );
     verify(substitutor, times(1)).substitute("%h");
     verify(substitutor, times(1)).substitute(startsWith("node-"));
+    verify(substitutor, times(1)).substitute(startsWith("stripe-"));
     verify(substitutor, times(1)).substitute("availability");
     verifyNoMoreInteractions(substitutor);
   }
@@ -97,12 +100,14 @@ public class ConfigurationParserTest {
     // placeholder in node hostname should be resolved eagerly
     assertCliEquals(
         cli("failover-priority=availability", "hostname=%c"),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "localhost.home")))
+        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost.home")))
             .setFailoverPriority(availability()),
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.name=<GENERATED>"
     );
     verify(substitutor).substitute("%c");
     verify(substitutor, times(1)).substitute(startsWith("node-"));
+    verify(substitutor, times(1)).substitute(startsWith("stripe-"));
     verify(substitutor, times(1)).substitute("availability");
     verifyNoMoreInteractions(substitutor);
   }
@@ -112,12 +117,14 @@ public class ConfigurationParserTest {
     // node hostname without placeholder triggers no resolve
     assertCliEquals(
         cli("failover-priority=availability", "hostname=foo"),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("<GENERATED>", "foo")))
+        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "foo")))
             .setFailoverPriority(availability()),
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.name=<GENERATED>"
     );
     verify(substitutor).substitute("foo");
     verify(substitutor, times(1)).substitute(startsWith("node-"));
+    verify(substitutor, times(1)).substitute(startsWith("stripe-"));
     verify(substitutor, times(1)).substitute("availability");
     verifyNoMoreInteractions(substitutor);
   }
@@ -131,6 +138,7 @@ public class ConfigurationParserTest {
     assertConfigFail(config("failover-priority=availability", "stripe.1.node.1.hostname=%h"), "Invalid input: 'stripe.1.node.1.hostname=%h'. Placeholders are not allowed");
     assertConfigFail(config(
         "failover-priority=availability",
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.hostname=localhost",
         "stripe.1.node.2.name=foo"
     ), "Required setting: 'hostname' is missing for node ID: 2 in stripe ID: 1");
@@ -139,16 +147,19 @@ public class ConfigurationParserTest {
     assertConfigFail(config("failover-priority=availability", "hostname=foo"), "Invalid input: 'hostname=foo'. Reason: Setting 'hostname' cannot be set at cluster level");
     assertConfigFail(config(
         "failover-priority=availability",
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.hostname=localhost",
         "stripe.1.backup-dir=foo/bar"
-    ), "Invalid input: 'stripe.1.backup-dir=foo/bar'. Reason: stripe level configuration not allowed");
+    ), "Invalid input: 'stripe.1.backup-dir=foo/bar'. Reason: Setting 'backup-dir' cannot be import at stripe level when node is configuring");
     assertConfigFail(config(
         "failover-priority=availability",
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.hostname=localhost",
         "backup-dir=foo/bar"
     ), "Invalid input: 'backup-dir=foo/bar'. Reason: Setting 'backup-dir' cannot be import at cluster level when node is configuring");
     assertConfigFail(config(
         "failover-priority=availability",
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.hostname=localhost",
         "stripe.1.node.1.failover-priority=availability"
     ), "Invalid input: 'stripe.1.node.1.failover-priority=availability'. Reason: Setting 'failover-priority' does not allow any operation at node level");
@@ -158,12 +169,14 @@ public class ConfigurationParserTest {
     assertConfigFail(config("failover-priority=availability", "stripe.2.node.1.hostname=localhost"), "Stripe ID must start at 1");
     assertConfigFail(config(
         "failover-priority=availability",
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.hostname=localhost",
         "stripe.1.node.2.hostname=localhost",
         "stripe.1.node.4.hostname=localhost"
     ), "Node ID must end at 3 in stripe 1");
     assertConfigFail(config(
         "failover-priority=availability",
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.hostname=localhost",
         "stripe.2.node.1.hostname=localhost",
         "stripe.4.node.1.hostname=localhost"
@@ -172,11 +185,13 @@ public class ConfigurationParserTest {
     // not allowed in config
     assertConfigFail(config(
         "failover-priority=availability",
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.hostname=localhost",
         "stripe.1.node.1.config-dir=foo/bar"
     ), "Invalid input: 'stripe.1.node.1.config-dir=foo/bar'. Reason: Setting 'config-dir' does not allow any operation at node level");
     assertConfigFail(config(
         "failover-priority=availability",
+        "stripe.1.stripe-name=<GENERATED>",
         "stripe.1.node.1.hostname=localhost",
         "license-file=foo/bar"
     ), "Invalid input: 'license-file=foo/bar'. Reason: now allowed");
@@ -189,12 +204,13 @@ public class ConfigurationParserTest {
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=<GENERATED>",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.name=real",
             "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.hostname=foo"
         ),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("real", "foo")))
+        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("real", "foo")))
     );
     verifyNoMoreInteractions(substitutor);
   }
@@ -205,10 +221,11 @@ public class ConfigurationParserTest {
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=<GENERATED>",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost"
         ),
-        Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost")))
+        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost")))
     );
     verifyNoMoreInteractions(substitutor);
   }
@@ -217,20 +234,22 @@ public class ConfigurationParserTest {
   public void test_parsing_minimal_2x2() {
     assertConfigEquals(
         config("failover-priority=availability",
+            "stripe.1.stripe-name=<GENERATED>",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.2.name=node2",
             "stripe.1.node.2.hostname=localhost",
+            "stripe.2.stripe-name=<GENERATED>",
             "stripe.2.node.1.name=node1",
             "stripe.2.node.1.hostname=localhost",
             "stripe.2.node.2.name=node2",
             "stripe.2.node.2.hostname=localhost"
         ),
         Testing.newTestCluster(
-            new Stripe(
+            new Stripe().setName("<GENERATED>").addNodes(
                 Testing.newTestNode("node1", "localhost"),
                 Testing.newTestNode("node2", "localhost")),
-            new Stripe(
+            new Stripe().setName("<GENERATED>").addNodes(
                 Testing.newTestNode("node1", "localhost"),
                 Testing.newTestNode("node2", "localhost"))
         )
@@ -244,11 +263,12 @@ public class ConfigurationParserTest {
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=<GENERATED>",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo"
         ),
-        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost"))));
     verifyNoMoreInteractions(substitutor);
   }
 
@@ -280,6 +300,7 @@ public class ConfigurationParserTest {
             "ssl-tls=false",
             "whitelist=false",
             "offheap-resources=main:512MB",
+            "stripe.1.stripe-name=<GENERATED>",
             "stripe.1.node.1.port=9410",
             "stripe.1.node.1.public-port=",
             "stripe.1.node.1.public-hostname=",
@@ -295,7 +316,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost")
+        Testing.newTestCluster("foo", new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost")
             .setPort(9410)
             .setGroupPort(9430)
             .setBindAddress("0.0.0.0")
@@ -318,7 +339,7 @@ public class ConfigurationParserTest {
 
   @Test
   public void test_setting_with_default_can_be_ommitted() {
-    Cluster cluster = Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost")));
+    Cluster cluster = Testing.newTestCluster("foo", new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost")));
 
     Properties properties = cluster.toProperties(false, false);
     assertThat(properties.toString(), properties, not(hasKey("client-lease-duration")));
@@ -329,11 +350,12 @@ public class ConfigurationParserTest {
     assertConfigEquals(
         config(
             "cluster-name=foo",
+            "stripe.1.stripe-name=<GENERATED>",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost",
             "failover-priority=availability"
         ),
-        Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost"))));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

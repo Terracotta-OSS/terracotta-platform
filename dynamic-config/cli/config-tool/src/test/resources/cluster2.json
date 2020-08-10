@@ -1,6 +1,7 @@
 {
   "stripes": [
     {
+      "name": "stripe1",
       "nodes": [
         {
           "dataDirs": {
@@ -14,6 +15,7 @@
       ]
     },
     {
+      "name": "stripe2",
       "nodes": [
         {
           "dataDirs": {

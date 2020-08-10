@@ -60,11 +60,11 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
       .putDataDir("cache", Paths.get("/data/cache3"));
 
   NodeContext nodeContext0 = new NodeContext(
-      Testing.newTestCluster("my-cluster", new Stripe(node0)),
+      Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNode(node0)),
       node0.getAddress());
 
   NodeContext nodeContext1 = new NodeContext(
-      Testing.newTestCluster("my-cluster", new Stripe(node1)),
+      Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNode(node1)),
       node1.getAddress());
 
   @Captor ArgumentCaptor<Cluster> newCluster;
@@ -104,7 +104,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_node_validation_fail_src_multiNodeStripe() {
-    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe(node1, node2)), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe().addNodes(node1, node2)), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -119,7 +119,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_node_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe(node1)).setFailoverPriority(consistency()), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -178,7 +178,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe_validation_fail_src_multiStripeCluster() {
-    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe(node1), new Stripe(node2)), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe().addNode(node1), new Stripe().addNode(node2)), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -193,6 +193,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe_ok() throws IOException {
+    // first rename teh stripe
+    nodeContext1.getStripe().setName("stripe2");
+
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
@@ -224,7 +227,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe(node1)).setFailoverPriority(consistency()), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()

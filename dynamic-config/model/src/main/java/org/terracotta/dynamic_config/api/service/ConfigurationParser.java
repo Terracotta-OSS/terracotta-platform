@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.api.service;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.PropertyHolder;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Substitutor;
@@ -28,11 +29,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
@@ -64,138 +70,143 @@ class ConfigurationParser {
    * The cluster object is NOT validated and will need to be validated with the
    * {@link ClusterValidator}
    */
-  public Cluster parse() {
-    Cluster cluster = new Cluster();
-
-    // Find all the settings that are not define and which require to be resolved eagerly.
-    // We cannot have any placeholders now in those settings. They must be previously resolved.
-    // Apply them, or their default.
-    Stream.of(Setting.values())
-        .filter(setting -> setting.requires(RESOLVE_EAGERLY))
-        .filter(setting -> setting.isScope(CLUSTER))
-        .forEach(setting -> {
-          Optional<Configuration> configuration = configurations.stream().filter(cfg -> cfg.getSetting() == setting).findAny();
-          if (configuration.isPresent()) {
-            configuration.get().apply(cluster);
-            // no need to re-apply after
-            configurations.remove(configuration.get());
-          } else {
-            Optional<String> def = setting.getDefaultProperty();
-            if (def.isPresent()) {
-              if (Substitutor.containsSubstitutionParams(def.get())) {
-                throw new IllegalArgumentException("Required setting: '" + setting + "' is missing");
-              }
-              setting.setProperty(cluster, def.get());
-              defaultAddedListener.accept(Configuration.valueOf(setting + "=" + def.get()));
-            } else {
-              throw new IllegalArgumentException("Required setting: '" + setting + "' is missing");
-            }
-          }
-        });
-
+  public synchronized Cluster parse() {
     // Determine the number of stripes and nodes.
     // This map gives a configuration list per node and stripe
-    final TreeMap<Integer, TreeMap<Integer, List<Configuration>>> configurationMap = configurations.stream()
+    final TreeMap<Integer, TreeSet<Integer>> ids = configurations.stream()
         .filter(configuration -> configuration.getLevel() == NODE)
         .collect(
             groupingBy(Configuration::getStripeId, TreeMap::new,
-                groupingBy(Configuration::getNodeId, TreeMap::new,
-                    toList())));
+                mapping(Configuration::getNodeId, toCollection(TreeSet::new))));
 
     // adds default ids if missing
     {
       // adds first stripe if not defined
-      if (configurationMap.isEmpty()) {
-        configurationMap.put(1, new TreeMap<>());
+      if (ids.isEmpty()) {
+        ids.put(1, new TreeSet<>());
       }
       // adds first node if not defined
-      if (configurationMap.firstEntry().getValue().isEmpty()) {
-        configurationMap.firstEntry().getValue().put(1, new ArrayList<>());
+      if (ids.firstEntry().getValue().isEmpty()) {
+        ids.firstEntry().getValue().add(1);
       }
     }
 
     // ids checks
     {
       // verify the stripe ID numbers
-      if (configurationMap.firstKey() != 1) {
+      if (ids.firstKey() != 1) {
         throw new IllegalArgumentException("Stripe ID must start at 1");
       }
-      if (configurationMap.lastKey() != configurationMap.size()) {
-        throw new IllegalArgumentException("Stripe ID must end at " + configurationMap.size());
+      if (ids.lastKey() != ids.size()) {
+        throw new IllegalArgumentException("Stripe ID must end at " + ids.size());
       }
       // verify the Node Id numbers
-      configurationMap.forEach((stripeId, nodeCounts) -> {
-        if (nodeCounts.firstKey() != 1) {
+      ids.forEach((stripeId, nodesIds) -> {
+        if (nodesIds.first() != 1) {
           throw new IllegalArgumentException("Node ID must start at 1 in stripe " + stripeId);
         }
-        if (nodeCounts.lastKey() != nodeCounts.size()) {
-          throw new IllegalArgumentException("Node ID must end at " + nodeCounts.size() + " in stripe " + stripeId);
+        if (nodesIds.last() != nodesIds.size()) {
+          throw new IllegalArgumentException("Node ID must end at " + nodesIds.size() + " in stripe " + stripeId);
         }
       });
     }
 
-    // validate each config line
-    {
-      configurations.forEach(configuration -> {
-        // verify that the line is a supported config
-        if (!configuration.getSetting().allows(IMPORT)) {
-          throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Reason: now allowed");
-        }
-        // verify that we only have cluster or node scope
-        if (configuration.getLevel() == STRIPE) {
-          throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Reason: stripe level configuration not allowed");
-        }
-        // validate the config object
-        configuration.validate(CONFIGURING, IMPORT);
-      });
-    }
+    validateConfigurations();
 
     // build the cluster
-    configurationMap.forEach((stripeId, nodeConfigurationsMap) -> {
+    Cluster cluster = new Cluster();
+
+    eagerlyApplySetting(
+        cluster,
+        cfg -> true,
+        setting -> defaultAddedListener.accept(Configuration.valueOf(setting + "=" + setting.getDefaultProperty().get())),
+        setting -> {
+          throw new IllegalArgumentException("Required setting: '" + setting + "' is missing");
+        });
+
+    ids.forEach((stripeId, nodeIds) -> {
+
+      // create stripe
       Stripe stripe = new Stripe();
-      nodeConfigurationsMap.forEach((nodeId, nodeConfigurations) -> {
+      cluster.addStripe(stripe);
+      if (cluster.getStripeCount() != stripeId) {
+        throw new AssertionError("Expected stripe count to be: " + stripeId + " but was: " + cluster.getStripeCount());
+      }
+
+      eagerlyApplySetting(
+          stripe,
+          cfg -> cfg.getStripeId() == stripeId,
+          setting -> defaultAddedListener.accept(Configuration.valueOf("stripe." + stripeId + "." + setting + "=" + setting.getDefaultProperty().get())),
+          setting -> {
+            throw new IllegalArgumentException("Required setting: '" + setting + "' is missing for stripe ID: " + stripeId);
+          });
+
+      nodeIds.forEach(nodeId -> {
+
         // create the node and eagerly initialize the basic fields
         Node node = new Node();
         stripe.addNode(node);
         if (stripe.getNodeCount() != nodeId) {
           throw new AssertionError("Expected node count to be: " + nodeId + " but was: " + stripe.getNodeCount());
         }
-        // Find all the settings that are not define and which require to be resolved eagerly.
-        // We cannot have any placeholders now in those settings. They must be previously resolved.
-        // Apply them, or their default.
-        Stream.of(Setting.values())
-            .filter(setting -> setting.requires(RESOLVE_EAGERLY))
-            .filter(setting -> setting.isScope(NODE))
-            .forEach(setting -> {
-              Optional<Configuration> configuration = nodeConfigurations.stream().filter(cfg -> cfg.getSetting() == setting).findAny();
-              if (configuration.isPresent()) {
-                configuration.get().apply(node);
-                // no need to re-apply after
-                configurations.remove(configuration.get());
-              } else {
-                Optional<String> def = setting.getDefaultProperty();
-                if (def.isPresent()) {
-                  if (Substitutor.containsSubstitutionParams(def.get())) {
-                    throw new IllegalArgumentException("Required setting: '" + setting + "' is missing for node ID: " + nodeId + " in stripe ID: " + stripeId);
-                  }
-                  setting.setProperty(node, def.get());
-                  defaultAddedListener.accept(Configuration.valueOf("stripe." + stripeId + ".node." + nodeId + "." + setting + "=" + def.get()));
-                } else {
-                  throw new IllegalArgumentException("Required setting: '" + setting + "' is missing for node ID: " + nodeId + " in stripe ID: " + stripeId);
-                }
-              }
+
+        eagerlyApplySetting(
+            node,
+            cfg -> cfg.getStripeId() == stripeId && cfg.getNodeId() == nodeId,
+            setting -> defaultAddedListener.accept(Configuration.valueOf("stripe." + stripeId + ".node." + nodeId + "." + setting + "=" + setting.getDefaultProperty().get())),
+            setting -> {
+              throw new IllegalArgumentException("Required setting: '" + setting + "' is missing for node ID: " + nodeId + " in stripe ID: " + stripeId);
             });
       });
-      cluster.addStripe(stripe);
-      if (cluster.getStripeCount() != stripeId) {
-        throw new AssertionError("Expected stripe count to be: " + stripeId + " but was: " + cluster.getStripeCount());
-      }
     });
 
-    // install all the "settings" inside the cluster
+    // install all the remaining settings inside the model
     configurations.forEach(configuration -> configuration.apply(cluster));
 
     return cluster;
+  }
+
+  private void validateConfigurations() {
+    configurations.forEach(configuration -> {
+      // verify that the line is a supported config
+      if (!configuration.getSetting().allows(IMPORT)) {
+        throw new IllegalArgumentException("Invalid input: '" + configuration + "'. Reason: now allowed");
+      }
+      // validate the config object
+      configuration.validate(CONFIGURING, IMPORT);
+    });
+  }
+
+  private void eagerlyApplySetting(PropertyHolder o, Predicate<Configuration> filter, Consumer<Setting> onDefaultAdded, Consumer<Setting> onError) {
+    Map<Setting, List<Configuration>> configs = configurations.stream()
+        .filter(cfg -> cfg.getSetting().isScope(o.getScope()))
+        .filter(cfg -> cfg.getLevel() == o.getScope())
+        .filter(filter)
+        .collect(groupingBy(Configuration::getSetting));
+
+    Stream.of(Setting.values())
+        .filter(setting -> setting.requires(RESOLVE_EAGERLY))
+        .filter(setting -> setting.isScope(o.getScope()))
+        .forEach(setting -> {
+          List<Configuration> defined = configs.getOrDefault(setting, emptyList());
+          if (!defined.isEmpty()) {
+            defined.forEach(c -> c.apply(o));
+            // no need to re-apply after
+            configurations.removeAll(defined);
+          } else {
+            Optional<String> def = setting.getDefaultProperty();
+            if (def.isPresent()) {
+              if (Substitutor.containsSubstitutionParams(def.get())) {
+                onError.accept(setting);
+              } else {
+                setting.setProperty(o, def.get());
+                onDefaultAdded.accept(setting);
+              }
+            } else {
+              onError.accept(setting);
+            }
+          }
+        });
   }
 
   static Cluster parsePropertyConfiguration(Properties properties, Consumer<Configuration> defaultAddedListener) {
@@ -252,10 +263,13 @@ class ConfigurationParser {
     } else {
       set = parameterSubstitutor.substitute(set);
     }
+    if (set == null) {
+      throw new AssertionError(key + " is null: bad mocking ?");
+    }
     properties.setProperty(key, set);
   }
 
   private static String prefixed(Setting setting) {
-    return setting.isScope(CLUSTER) ? setting.toString() : ("stripe.1.node.1." + setting);
+    return setting.isScope(CLUSTER) ? setting.toString() : setting.isScope(STRIPE) ? ("stripe.1." + setting) : ("stripe.1.node.1." + setting);
   }
 }

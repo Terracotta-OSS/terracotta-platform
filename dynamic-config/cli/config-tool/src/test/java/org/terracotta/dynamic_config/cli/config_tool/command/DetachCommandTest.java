@@ -65,7 +65,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   Node strayNode = Testing.newTestNode("stray-node", "stray-host", 12345)
       .putDataDir("cache", Paths.get("/data/stray-cache"));
 
-  Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe(node1_1, node1_2), new Stripe(node2_1, node2_2))
+  Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(node1_1, node1_2), new Stripe().setName("stripe2").addNodes(node2_1, node2_2))
       .putOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Captor

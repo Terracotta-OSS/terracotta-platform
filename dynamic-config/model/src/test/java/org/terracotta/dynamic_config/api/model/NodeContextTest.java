@@ -44,7 +44,7 @@ public class NodeContextTest {
       .putTcProperty("server.entity.processor.threads", "64")
       .putTcProperty("topology.validate", "true");
 
-  Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe(node1), new Stripe(node2))
+  Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().addNodes(node1), new Stripe().addNodes(node2))
       .setFailoverPriority(consistency(2))
       .putOffheapResource("foo", 1, MemoryUnit.GB)
       .putOffheapResource("bar", 2, MemoryUnit.GB);
@@ -149,6 +149,6 @@ public class NodeContextTest {
   }
 
   private static NodeContext nodeContext(Node node) {
-    return new NodeContext(Testing.newTestCluster(new Stripe(node)), 1, node.getName());
+    return new NodeContext(Testing.newTestCluster(new Stripe().addNodes(node)), 1, node.getName());
   }
 }

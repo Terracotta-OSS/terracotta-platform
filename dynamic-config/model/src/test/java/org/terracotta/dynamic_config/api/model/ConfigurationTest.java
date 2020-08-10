@@ -809,7 +809,7 @@ public class ConfigurationTest {
 
   @Test
   public void test_apply() {
-    Cluster cluster = Testing.newTestCluster(new Stripe(Testing.newTestNode("node1", "localhost")));
+    Cluster cluster = Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("node1", "localhost")));
 
     // cluster wide override
     assertFalse(cluster.getOffheapResources().isConfigured());
@@ -927,6 +927,11 @@ public class ConfigurationTest {
     Configuration.valueOf("tc-properties").apply(node);
     assertTrue(node.getTcProperties().isConfigured());
     assertThat(node.getTcProperties().get(), is(equalTo(emptyMap())));
+  }
+
+  @Test
+  public void test_stripe_setting() {
+    Configuration.valueOf("stripe.1.stripe-name=stripe1");
   }
 
   private Matcher<String> duplicating(String value) {

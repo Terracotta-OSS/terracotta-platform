@@ -1,6 +1,7 @@
 {
   "stripes": [
     {
+      "name": "stripe1",
       "nodes": [
         {
           "name": "testServer0",

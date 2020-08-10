@@ -39,7 +39,7 @@ public class DataDirectoryConfigChangeHandlerTest {
 
   @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
 
-  private NodeContext topology = new NodeContext(Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("bar", "localhost").unsetDataDirs())), 1, "bar");
+  private NodeContext topology = new NodeContext(Testing.newTestCluster("foo", new Stripe().addNode(Testing.newTestNode("bar", "localhost").unsetDataDirs())), 1, "bar");
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.DATA_DIRS, "new-root", "path/to/data/root");
 
   @Test

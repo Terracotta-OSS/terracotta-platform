@@ -54,7 +54,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 
 public class Cluster implements Cloneable, PropertyHolder {
-  private final List<Stripe> stripes;
+  private List<Stripe> stripes;
 
   private String name;
   private LockContext lockContext;
@@ -206,6 +206,11 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   public List<Stripe> getStripes() {
     return Collections.unmodifiableList(stripes);
+  }
+
+  public Cluster setStripes(List<Stripe> stripes) {
+    this.stripes = new CopyOnWriteArrayList<>(stripes);
+    return this;
   }
 
   public Cluster addStripe(Stripe stripe) {

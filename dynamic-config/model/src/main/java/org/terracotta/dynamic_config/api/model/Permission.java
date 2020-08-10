@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -26,9 +27,6 @@ import static org.terracotta.dynamic_config.api.model.Operation.GET;
 import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Operation.SET;
 import static org.terracotta.dynamic_config.api.model.Operation.UNSET;
-import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
-import static org.terracotta.dynamic_config.api.model.Scope.NODE;
-import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
 
 /**
  * @author Mathieu Carbou
@@ -126,11 +124,11 @@ public class Permission {
     }
 
     public Permission atLevels(Scope... levels) {
-      Collection<Scope> l = asList(levels);
-      if (operations.contains(IMPORT) && (l.contains(STRIPE) || l.size() != 1)) {
-        throw new IllegalArgumentException(IMPORT + " operation is only compatible with " + NODE + " or " + CLUSTER);
+      Collection<Scope> levelList = asList(levels);
+      if (operations.contains(IMPORT) && levelList.size() != 1) {
+        throw new IllegalArgumentException(IMPORT + " operation is only compatible with one of " + Arrays.toString(Scope.values()));
       }
-      return new Permission(clusterStates, operations, l);
+      return new Permission(clusterStates, operations, levelList);
     }
 
   }

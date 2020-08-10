@@ -27,12 +27,10 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.common.struct.MemoryUnit.MB;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 
 /**
@@ -63,7 +61,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
       //System.out.println(toPrettyJson(pendingTopology));
 
       assertThat(pendingCluster, is(equalTo(cluster)));
-      assertThat(pendingCluster, is(equalTo(Testing.newTestCluster(new Stripe(Testing.newTestNode("node-1-1", "localhost", getNodePort())
+      assertThat(pendingCluster, is(equalTo(Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node-1-1", "localhost", getNodePort())
           .setGroupPort(getNodeGroupPort(1, 1))
           .setMetadataDir(Paths.get("metadata", "stripe1"))
           .setLogDir(Paths.get("logs", "stripe1"))

@@ -64,7 +64,7 @@ public class ClusterTest {
   Node node2 = Testing.newTestNode("node2", "localhost", 9411)
       .putDataDir("data", Paths.get("/data/cache2"));
 
-  Stripe stripe1 = new Stripe(node1);
+  Stripe stripe1 = new Stripe().addNodes(node1);
   Cluster cluster = Testing.newTestCluster("c", stripe1)
       .setClientLeaseDuration(1, TimeUnit.SECONDS)
       .setClientReconnectWindow(2, TimeUnit.MINUTES)
@@ -156,7 +156,7 @@ public class ClusterTest {
     stripe1.removeNode(node2.getAddress());
     assertThat(cluster.getSingleNode().get(), is(sameInstance(node1)));
 
-    cluster.addStripe(new Stripe(node2));
+    cluster.addStripe(new Stripe().addNodes(node2));
     assertThat(() -> cluster.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
 
     // back to normal
@@ -172,7 +172,7 @@ public class ClusterTest {
   public void test_getSingleStripe() {
     assertThat(cluster.getSingleStripe().get(), is(sameInstance(stripe1)));
 
-    Stripe stripe2 = new Stripe(node2);
+    Stripe stripe2 = new Stripe().addNodes(node2);
     cluster.addStripe(stripe2);
     assertThat(() -> cluster.getSingleStripe(), is(throwing(instanceOf(IllegalStateException.class))));
 
@@ -190,7 +190,7 @@ public class ClusterTest {
     assertThat(cluster.getStripeId(node1.getAddress()).getAsInt(), is(equalTo(1)));
     assertThat(cluster.getStripeId(node2.getAddress()).isPresent(), is(false));
 
-    cluster.addStripe(new Stripe(node2));
+    cluster.addStripe(new Stripe().addNodes(node2));
     assertThat(cluster.getStripeId(node2.getAddress()).getAsInt(), is(2));
   }
 
@@ -199,7 +199,7 @@ public class ClusterTest {
     assertThat(cluster.getNodeId(node1.getAddress()).getAsInt(), is(equalTo(1)));
     assertThat(cluster.getNodeId(node2.getAddress()).isPresent(), is(false));
 
-    cluster.addStripe(new Stripe(node2));
+    cluster.addStripe(new Stripe().addNodes(node2));
     assertThat(cluster.getNodeId(node2.getAddress()).getAsInt(), is(1));
 
     assertThat(cluster.getNodeId(1, "node1").getAsInt(), is(1));
@@ -212,7 +212,7 @@ public class ClusterTest {
 
   @Test
   public void test_forEach() {
-    cluster.addStripe(new Stripe(node2));
+    cluster.addStripe(new Stripe().addNodes(node2));
     Node node1 = cluster.getNode(1, 1).get();
     Node node2 = cluster.getNode(2, 1).get();
 

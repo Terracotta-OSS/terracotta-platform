@@ -60,7 +60,7 @@ public class DynamicConfigurationPassiveSyncTest {
   @Rule
   public ExpectedException exceptionRule = ExpectedException.none();
   private Instant now = Instant.now();
-  private NodeContext startupTopology = new NodeContext(Testing.newTestCluster("foo", new Stripe(Testing.newTestNode("bar", "localhost"))), 1, "bar");
+  private NodeContext startupTopology = new NodeContext(Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("bar", "localhost"))), 1, "bar");
   private NomadChangeInfo activation = new NomadChangeInfo(UUID.randomUUID(), new ClusterActivationNomadChange(startupTopology.getCluster()), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now);
   private DynamicConfigSyncData.Codec codec = new DynamicConfigSyncData.Codec(new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()));
   private TopologyService topologyService;

@@ -33,6 +33,7 @@ import java.util.TreeMap;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
+import static org.terracotta.dynamic_config.api.model.Setting.STRIPE_NAME;
 
 public class CustomJCommander extends JCommander {
   private final Collection<String> userSpecifiedOptions = new HashSet<>();
@@ -102,7 +103,7 @@ public class CustomJCommander extends JCommander {
           Optional<String> defaultValue = setting.getDefaultProperty();
 
           // special handling
-          if (setting == NODE_NAME) {
+          if (setting == NODE_NAME || setting == STRIPE_NAME) {
             defaultValue = Optional.of("<randomly-generated>");
           }
 

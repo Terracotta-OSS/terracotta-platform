@@ -22,6 +22,7 @@ package org.terracotta.dynamic_config.api.model;
 public class SettingName {
   public static final String CLUSTER_NAME = "cluster-name";
   public static final String NODE_NAME = "name";
+  public static final String STRIPE_NAME = "stripe-name";
   public static final String NODE_HOSTNAME = "hostname";
   public static final String NODE_PUBLIC_HOSTNAME = "public-hostname";
   public static final String NODE_PORT = "port";
