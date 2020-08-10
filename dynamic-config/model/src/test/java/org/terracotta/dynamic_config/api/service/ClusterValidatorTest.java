@@ -156,7 +156,7 @@ public class ClusterValidatorTest {
     node1.setBackupDir(get("backup"));
 
     assertClusterValidationFails(
-        "Nodes with names: [foo] don't have backup directories defined",
+        "Nodes with names: [foo] currently have (or will have) backup directories defined",
         newTestCluster(new Stripe().setName("stripe1").addNodes(node1, node2)));
   }
 

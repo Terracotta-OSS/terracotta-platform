@@ -213,8 +213,8 @@ public class ClusterValidator {
         .collect(toList());
     if (nodesWithBackupDirs.size() != 0 && nodesWithBackupDirs.size() != cluster.getNodeCount()) {
       throw new MalformedClusterException("Nodes with names: " + nodesWithBackupDirs +
-          " don't have backup directories defined, but other nodes in the cluster do." +
-          " Mutative operations on backup dirs must be done simultaneously on every node in the cluster");
+          " currently have (or will have) backup directories defined, but some nodes in the cluster do not." +
+          " Within a cluster, all nodes must have either a backup directory defined or no backup directory defined.");
     }
   }
 
