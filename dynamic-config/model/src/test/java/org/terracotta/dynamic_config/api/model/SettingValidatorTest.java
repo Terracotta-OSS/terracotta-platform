@@ -17,7 +17,12 @@ package org.terracotta.dynamic_config.api.model;
 
 import org.junit.Test;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -381,6 +386,21 @@ public class SettingValidatorTest {
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides.com.foo is invalid: Bad level: FATAL")))));
   }
 
+  @Test
+  public void testFilePermissions() throws Exception {
+    Path p = Paths.get(SettingValidatorTest.class.getResource("/permission.txt").toURI());
+    //Path p = Paths.get("/resourcespermission.txt");
+    Set<PosixFilePermission> set = new HashSet<>();
+    set.add(PosixFilePermission.OWNER_EXECUTE);
+    Files.setPosixFilePermissions(p, set);
+    Stream.of(NODE_LOG_DIR).forEach(setting -> {
+      validateDefaults(setting);
+      assertThat(
+          () -> setting.validate(p.toString()),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid path specified for setting " + setting + ": " + p.toString())))));
+    });
+  }
+  
   private void validateDefaults(Setting setting) {
     assertThat(
         () -> setting.validate("foo", "bar"),

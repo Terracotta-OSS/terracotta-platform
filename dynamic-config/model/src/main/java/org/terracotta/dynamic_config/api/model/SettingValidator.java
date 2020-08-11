@@ -20,7 +20,11 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -91,8 +95,12 @@ class SettingValidator {
   static final BiConsumer<String, Tuple2<String, String>> PATH_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
     try {
-      Paths.get(kv.t2);
-    } catch (RuntimeException e) {
+      Path p = Paths.get(kv.t2);
+      Set<PosixFilePermission> set = Files.getPosixFilePermissions(p);
+      if (!set.contains(PosixFilePermission.OWNER_WRITE) || !set.contains(PosixFilePermission.OWNER_READ)) {
+        throw new RuntimeException();
+      }
+    } catch (RuntimeException | IOException e) {
       throw new IllegalArgumentException("Invalid path specified for setting " + setting + ": " + kv.t2);
     }
   };
