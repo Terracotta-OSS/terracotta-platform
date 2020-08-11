@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.test_support.processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -89,7 +90,8 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
   @Override
   public void apply(NodeRemovalNomadChange change) throws NomadException {
     Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
-    if (!runtime.containsNode(change.getNode().getAddress())) {
+    Node node = change.getNode();
+    if (!runtime.containsNode(node.getAddress())) {
       return;
     }
 
@@ -109,18 +111,16 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
     }
 
     try {
-      LOGGER.info("Removing node: {} from stripe ID: {}", change.getNode().getName(), change.getStripeId());
-
-      InetSocketAddress addr = change.getNode().getInternalAddress();
-      LOGGER.debug("Calling mBean {}#{}({}))", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME, addr);
+      LOGGER.info("Removing node: {} from stripe ID: {}", node.getName(), change.getStripeId());
+      LOGGER.debug("Calling mBean {}#{}", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME);
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
           PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{addr.toString()},
-          new String[]{String.class.getName()}
+          new Object[]{node.getHostname(), node.getPort().orDefault(), node.getGroupPort().orDefault()},
+          new String[]{String.class.getName(), int.class.getName(), int.class.getName()}
       );
 
-      dynamicConfigEventFiring.onNodeRemoval(change.getStripeId(), change.getNode());
+      dynamicConfigEventFiring.onNodeRemoval(change.getStripeId(), node);
     } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
