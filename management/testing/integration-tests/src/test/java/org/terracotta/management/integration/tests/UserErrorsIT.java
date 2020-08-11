@@ -83,7 +83,7 @@ public class UserErrorsIT extends AbstractSingleTest {
       fail();
     } catch (ExecutionException e) {
       assertThat(e.getCause(), is(instanceOf(EntityUserException.class)));
-      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.nms.server.ActiveNmsServerEntity: exception in user code: java.lang.IllegalArgumentException: Server Entity {stripeId=SINGLE, serverId=testServer0, serverName=INEXISTING, entityId=pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity, entityName=pet-clinic/pets, entityType=org.terracotta.management.entity.sample.client.CacheEntity, consumerId=7, cacheName=pet-clinic/pets} is either not found or not manageable"));
+      assertThat(e.getCause().getMessage(), equalTo("Entity: org.terracotta.management.entity.nms.server.ActiveNmsServerEntity: exception in user code: java.lang.IllegalArgumentException: Server Entity {stripeId=stripe[0], serverId=testServer0, serverName=INEXISTING, entityId=pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity, entityName=pet-clinic/pets, entityType=org.terracotta.management.entity.sample.client.CacheEntity, consumerId=7, cacheName=pet-clinic/pets} is either not found or not manageable"));
     }
   }
 

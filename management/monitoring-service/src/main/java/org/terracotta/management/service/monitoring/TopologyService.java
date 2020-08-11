@@ -43,7 +43,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -91,10 +90,12 @@ class TopologyService implements PlatformListener {
   private volatile Server currentActive;
 
   TopologyService(FiringService firingService, PlatformConfiguration platformConfiguration) {
+    org.terracotta.dynamic_config.api.service.TopologyService topologyService =
+        platformConfiguration.getExtendedConfiguration(org.terracotta.dynamic_config.api.service.TopologyService.class).iterator().next();
     this.firingService = Objects.requireNonNull(firingService);
     this.platformConfiguration = platformConfiguration;
     this.cluster = Cluster.create();
-    this.cluster.addStripe(stripe = Stripe.create("SINGLE"));
+    this.cluster.addStripe(stripe = Stripe.create(topologyService.getRuntimeNodeContext().getStripe().getName()));
   }
 
   // ================================================

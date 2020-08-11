@@ -1,7 +1,7 @@
 {
   "stripes" : [ {
-    "id" : "SINGLE",
-    "name" : "SINGLE",
+    "id" : "stripe[0]",
+    "name" : "stripe[0]",
     "servers" : [ {
       "id" : "server-1",
       "serverEntities" : [ {
@@ -40,13 +40,13 @@
         "version" : "1.2.0"
     },
     "connections" : [ {
-      "id" : "uuid-1:SINGLE:server-1:127.0.0.1:5678",
+      "id" : "uuid-1:stripe[0]:server-1:127.0.0.1:5678",
       "logicalConnectionUid" : "uuid-1",
       "clientEndpoint" : {
         "address" : "127.0.0.1",
         "port" : 5678
       },
-      "stripeId" : "SINGLE",
+      "stripeId" : "stripe[0]",
       "serverId" : "server-1",
       "serverEntityIds" : { }
     } ],
@@ -66,13 +66,13 @@
         "version" : "1.2.0"
     },
     "connections" : [ {
-      "id" : "uuid-2:SINGLE:server-1:127.0.0.1:5679",
+      "id" : "uuid-2:stripe[0]:server-1:127.0.0.1:5679",
       "logicalConnectionUid" : "uuid-2",
       "clientEndpoint" : {
         "address" : "127.0.0.1",
         "port" : 5679
       },
-      "stripeId" : "SINGLE",
+      "stripeId" : "stripe[0]",
       "serverId" : "server-1",
       "serverEntityIds" : { }
     } ],
