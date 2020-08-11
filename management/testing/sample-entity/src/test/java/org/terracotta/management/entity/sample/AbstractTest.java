@@ -26,6 +26,15 @@ import org.junit.rules.Timeout;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.entity.BasicServiceConfiguration;
+import org.terracotta.entity.PlatformConfiguration;
+import org.terracotta.entity.ServiceConfiguration;
+import org.terracotta.entity.ServiceProvider;
+import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityClientService;
 import org.terracotta.management.entity.nms.agent.server.NmsAgentEntityServerService;
@@ -59,6 +68,11 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static java.util.Collections.singleton;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+
 /**
  * @author Mathieu Carbou
  */
@@ -84,6 +98,8 @@ public abstract class AbstractTest {
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
     mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
 
+    TopologyServiceServiceProvider topologyServiceServiceProvider = new TopologyServiceServiceProvider();
+
     stripeControl = PassthroughTestHelpers.createMultiServerStripe("stripe-1", nPassives + 1, server -> {
       server.registerClientEntityService(new CacheEntityClientService());
       server.registerServerEntityService(new CacheEntityServerService());
@@ -101,6 +117,9 @@ public abstract class AbstractTest {
       resource.setValue(BigInteger.valueOf(32));
       resources.getResource().add(resource);
       server.registerExtendedConfiguration(new OffHeapResourcesProvider(resources));
+
+      server.registerExtendedConfiguration(topologyServiceServiceProvider.getService(0, new BasicServiceConfiguration<>(TopologyService.class)));
+      server.registerServiceProvider(topologyServiceServiceProvider, null);
     });
 
     try {
@@ -208,4 +227,37 @@ public abstract class AbstractTest {
     this.nmsService.setOperationTimeout(10, TimeUnit.SECONDS);
   }
 
+  public static class TopologyServiceServiceProvider implements ServiceProvider {
+
+    NodeContext topology = new NodeContext(newTestCluster("my-cluster", new Stripe()
+        .setName("stripe[0]")
+        .addNode(Testing.newTestNode("bar", "localhost"))), 1, "bar");
+    TopologyService topologyService = mock(TopologyService.class);
+
+    public TopologyServiceServiceProvider() {
+      when(topologyService.getRuntimeNodeContext()).thenReturn(topology);
+    }
+
+    @Override
+    public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
+      return true;
+    }
+
+    @Override
+    public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+      if (configuration.getServiceType() == TopologyService.class) {
+        return configuration.getServiceType().cast(topologyService);
+      }
+      return null;
+    }
+
+    @Override
+    public Collection<Class<?>> getProvidedServiceTypes() {
+      return singleton(TopologyService.class);
+    }
+
+    @Override
+    public void prepareForSynchronization() {
+    }
+  }
 }

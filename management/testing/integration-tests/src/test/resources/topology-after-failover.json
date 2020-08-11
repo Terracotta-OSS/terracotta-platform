@@ -1,8 +1,8 @@
 {
   "stripes": [
     {
-      "id": "SINGLE",
-      "name": "SINGLE",
+      "id": "stripe[0]",
+      "name": "stripe[0]",
       "servers": [
         {
           "id": "testServer0",
@@ -524,13 +524,13 @@
       },
       "connections": [
         {
-          "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
+          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
           "logicalConnectionUid": "<uuid>",
           "clientEndpoint": {
             "address": "127.0.0.1",
             "port": 0
           },
-          "stripeId": "SINGLE",
+          "stripeId": "stripe[0]",
           "serverId": "testServer0",
           "serverEntityIds": {
             "FailoverIT:org.terracotta.management.entity.nms.client.NmsEntity": 1
@@ -558,13 +558,13 @@
       },
       "connections": [
         {
-          "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
+          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
           "logicalConnectionUid": "<uuid>",
           "clientEndpoint": {
             "address": "127.0.0.1",
             "port": 0
           },
-          "stripeId": "SINGLE",
+          "stripeId": "stripe[0]",
           "serverId": "testServer0",
           "serverEntityIds": {
             "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
@@ -757,13 +757,13 @@
       },
       "connections": [
         {
-          "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
+          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
           "logicalConnectionUid": "<uuid>",
           "clientEndpoint": {
             "address": "127.0.0.1",
             "port": 0
           },
-          "stripeId": "SINGLE",
+          "stripeId": "stripe[0]",
           "serverId": "testServer0",
           "serverEntityIds": {
             "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
