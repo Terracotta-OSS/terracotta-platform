@@ -174,11 +174,11 @@ public class NomadServerManager {
     }
 
     DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory);
-    //TODO: decorate like this: this.dynamicConfigService = new AuditLogDecorator(dynamicConfigService);
-    this.dynamicConfigService = dynamicConfigService;
+    this.dynamicConfigService = new AuditService(dynamicConfigService);
     this.topologyService = dynamicConfigService;
-    // DynamicConfigServiceImpl only needs to listen on one event
+
     getEventRegistrationService().register(dynamicConfigService);
+    getEventRegistrationService().register(new AuditListener());
 
     LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(configPath.toString()));
   }
