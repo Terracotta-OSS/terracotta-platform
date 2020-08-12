@@ -22,6 +22,7 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Usage;
@@ -57,15 +58,17 @@ public class ImportCommand extends RemoteCommand {
     FailoverPriority failoverPriority = cluster.getFailoverPriority();
     if (failoverPriority.equals(consistency())) {
       int voterCount = failoverPriority.getVoters();
-      int nodeCount = cluster.getNodes().size();
-      int sum = voterCount + nodeCount;
-      if (sum % 2 == 0) {
-        logger.warn(lineSeparator() +
-            "===========================================================================================" + lineSeparator() +
-            "IMPORTANT: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes (" + nodeCount + ") " +
-            "in this stripe is an even " + lineSeparator() + "number. " +
-            "An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
-            "===========================================================================================" + lineSeparator());
+      for (Stripe stripe : cluster.getStripes()) {
+        int nodeCount = stripe.getNodes().size();
+        int sum = voterCount + nodeCount;
+        if (sum % 2 == 0) {
+          logger.warn(lineSeparator() +
+                  "===========================================================================================" + lineSeparator() +
+                  "IMPORTANT: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes (" + nodeCount + ") " +
+                  "in stripe " + lineSeparator() + "'" + stripe.getName() + "' is an even "  + "number. " + lineSeparator() +
+                  "An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
+                  "===========================================================================================" + lineSeparator());
+        }
       }
     }
 
