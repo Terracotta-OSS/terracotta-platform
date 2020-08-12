@@ -43,7 +43,7 @@ public class NodeLogDirChangeHandler implements ConfigChangeHandler {
     }
 
     Path substitutedLogPath = substitute(Paths.get(logPath));
-    if (!Files.exists(substitutedLogPath)) {
+    if (!substitutedLogPath.toFile().exists()) {
       try {
         Files.createDirectories(substitutedLogPath);
       } catch (Exception e) {

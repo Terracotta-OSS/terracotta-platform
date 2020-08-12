@@ -63,12 +63,12 @@ public class ConvertCommand extends Command {
   @Override
   public void validate() {
     for (Path tcConfigFile : tcConfigFiles) {
-      if (!Files.exists(tcConfigFile)) {
+      if (!tcConfigFile.toFile().exists()) {
         throw new ParameterException("tc-config file: " + tcConfigFile + " not found");
       }
     }
 
-    if (Files.exists(destinationDir)) {
+    if (destinationDir.toFile().exists()) {
       throw new ParameterException("Destination directory: " + destinationDir.toAbsolutePath().normalize() + " exists already. Please specify a non-existent directory");
     }
 
@@ -80,7 +80,7 @@ public class ConvertCommand extends Command {
       throw new ParameterException("Cluster name is required for conversion into a configuration directory");
     }
 
-    if (licensePath != null && !Files.exists(licensePath)) {
+    if (licensePath != null && !licensePath.toFile().exists()) {
       throw new ParameterException("License file: " + licensePath + " not found");
     }
   }

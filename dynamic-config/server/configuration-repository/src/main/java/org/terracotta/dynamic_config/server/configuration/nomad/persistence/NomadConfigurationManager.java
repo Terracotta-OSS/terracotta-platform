@@ -105,7 +105,7 @@ public class NomadConfigurationManager {
   }
 
   boolean checkDirectoryExists(Path path) {
-    boolean dirExists = Files.exists(path);
+    boolean dirExists = path.toFile().exists();
     if (dirExists && !Files.isDirectory(path)) {
       throw new IllegalArgumentException(path.getFileName() + " at path: " + path.getParent() + " is not a directory");
     }
