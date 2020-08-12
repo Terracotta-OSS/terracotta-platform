@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.entities</groupId>
     <artifactId>dynamic-config-entities</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.8.0-pre22</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
