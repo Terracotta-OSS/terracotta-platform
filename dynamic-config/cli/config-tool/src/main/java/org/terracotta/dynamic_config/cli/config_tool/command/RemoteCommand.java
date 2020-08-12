@@ -219,7 +219,7 @@ public abstract class RemoteCommand extends Command {
     logger.trace("runConfigurationRepair({}, {})", toString(consistencyAnalyzer.getAllNodes().keySet()), forcedState);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runConfigurationRepair(consistencyAnalyzer, failures, forcedState);
-    failures.reThrow();
+    failures.reThrowReasons();
   }
 
   /**
@@ -232,14 +232,14 @@ public abstract class RemoteCommand extends Command {
     logger.trace("runConfigurationChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
-    failures.reThrow();
+    failures.reThrowReasons();
   }
 
   protected final void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, TopologyNomadChange change) {
     logger.trace("runTopologyChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runTopologyChange(destinationCluster, onlineNodes, change, failures);
-    failures.reThrow();
+    failures.reThrowReasons();
   }
 
   /**
@@ -251,7 +251,7 @@ public abstract class RemoteCommand extends Command {
     logger.trace("runClusterActivation({}, {})", expectedOnlineNodes, cluster.toShapeString());
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runClusterActivation(expectedOnlineNodes, cluster, failures);
-    failures.reThrow();
+    failures.reThrowReasons();
     logger.debug("Configuration directories have been created for all nodes");
   }
 

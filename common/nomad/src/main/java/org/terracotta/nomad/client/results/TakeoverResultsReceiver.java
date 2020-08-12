@@ -24,7 +24,7 @@ public interface TakeoverResultsReceiver {
 
   default void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
 
-  default void takeoverFail(InetSocketAddress server, String reason) {}
+  default void takeoverFail(InetSocketAddress server, Throwable reason) {}
 
   default void endTakeover() {}
 }

@@ -85,7 +85,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   private final Map<InetSocketAddress, DiscoverResponse<T>> responses;
   private final Map<InetSocketAddress, LogicalServerState> allNodes;
 
-  private volatile String discoverFailure;
+  private volatile Throwable discoverFailure;
   private volatile boolean discoveredInconsistentCluster;
   private volatile boolean discoveredOtherClient;
 
@@ -111,7 +111,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     discoverFailure = reason;
   }
 
@@ -153,7 +153,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     return Optional.ofNullable(responses.get(node));
   }
 
-  public String getDiscoverFailure() {
+  public Throwable getDiscoverFailure() {
     return discoverFailure;
   }
 

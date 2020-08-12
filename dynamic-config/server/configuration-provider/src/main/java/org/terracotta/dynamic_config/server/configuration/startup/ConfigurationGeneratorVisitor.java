@@ -249,7 +249,7 @@ public class ConfigurationGeneratorVisitor {
     NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
-    failureRecorder.reThrow();
+    failureRecorder.reThrowErrors();
   }
 
   private String read(String path) {

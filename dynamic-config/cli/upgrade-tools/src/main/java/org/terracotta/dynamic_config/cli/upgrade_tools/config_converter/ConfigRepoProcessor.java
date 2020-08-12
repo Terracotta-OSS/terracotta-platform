@@ -61,7 +61,7 @@ public class ConfigRepoProcessor {
     try (NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC())) {
       NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
       nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
-      failureRecorder.reThrow();
+      failureRecorder.reThrowErrors();
     }
   }
 

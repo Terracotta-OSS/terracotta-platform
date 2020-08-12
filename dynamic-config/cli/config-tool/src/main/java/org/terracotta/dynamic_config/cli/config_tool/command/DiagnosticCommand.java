@@ -219,7 +219,7 @@ public class DiagnosticCommand extends RemoteCommand {
         return "The cluster configuration is healthy. New configuration changes are possible.";
 
       case DISCOVERY_FAILURE:
-        return "Failed to analyze cluster configuration. Reason: " + consistencyAnalyzer.getDiscoverFailure();
+        return "Failed to analyze cluster configuration. Reason: " + consistencyAnalyzer.getDiscoverFailure().getMessage();
 
       case CONCURRENT_ACCESS:
         return "Failed to analyze cluster configuration. Reason: concurrent client access:"

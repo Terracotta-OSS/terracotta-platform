@@ -49,7 +49,7 @@ public class MultiDiscoveryResultReceiver<T> implements DiscoverResultsReceiver<
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     for (DiscoverResultsReceiver<T> receiver : receivers) {
       receiver.discoverFail(server, reason);
     }
