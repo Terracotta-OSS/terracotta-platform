@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.NomadChangeInfo;
@@ -85,7 +86,10 @@ public class DynamicConfigNomadSynchronizer {
       LOGGER.trace("Passive node topology at activation time: {}", currentCluster);
 
       int pos = Check.findLastSyncPosition(sourceNomadChanges, sourceTopology, currentCluster)
-          .orElseThrow(() -> new IllegalStateException("Unable to find any change in the source node matching the topology used to activate this node: " + currentCluster));
+          .orElseThrow(() -> new IllegalStateException("Unable to find any change in the source node matching the topology used to activate this node.\n" +
+              Props.toString(currentCluster.toProperties(false, false, true), "Passive topology") + "\n" +
+              Props.toString(sourceTopology.toProperties(false, false, true), "Active topology")
+          ));
 
       // reset the node's changes
       LOGGER.trace("Reset and clear passive node changes");

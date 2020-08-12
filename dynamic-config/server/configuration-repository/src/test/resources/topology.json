@@ -1,0 +1,25 @@
+{
+  "cluster": {
+    "stripes": [
+      {
+        "name": "stripe[0]",
+        "nodes": [
+          {
+            "dataDirs": {
+              "main": "%H/terracotta/default-node1/user-data"
+            },
+            "hostname": "localhost",
+            "logDir": "%H/terracotta/default-node1/logs",
+            "metadataDir": "%H/terracotta/default-node1/metadata",
+            "name": "default-node1"
+          }
+        ]
+      }
+    ],
+    "failoverPriority": "availability",
+    "name": "tc-cluster"
+  },
+  "nodeName": "default-node1",
+  "stripeId": 1,
+  "nodeId": 1
+}
