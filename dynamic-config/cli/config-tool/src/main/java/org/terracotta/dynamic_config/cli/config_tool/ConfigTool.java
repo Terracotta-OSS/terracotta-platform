@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.cli.config_tool;
 
 import com.beust.jcommander.ParameterException;
+import com.tc.util.ManagedServiceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.TimeUnit;
@@ -25,20 +26,10 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.CommandRepository;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.ActivateCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.AttachCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.DetachCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.DiagnosticCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.ExportCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.GetCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.ImportCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.LogCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.RepairCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.SetCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.UnsetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
@@ -49,10 +40,7 @@ import org.terracotta.nomad.entity.client.NomadEntity;
 import org.terracotta.nomad.entity.client.NomadEntityProvider;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.System.lineSeparator;
 
@@ -79,27 +67,14 @@ public class ConfigTool {
   }
 
   public static void start(String... args) {
+    CommandMapper mapper = ManagedServiceLoader.loadServices(CommandMapper.class, ConfigTool.class.getClassLoader())
+        .stream().findFirst().get();
     final RemoteMainCommand mainCommand = new RemoteMainCommand();
     LOGGER.debug("Registering commands with CommandRepository");
     CommandRepository commandRepository = new CommandRepository();
-    commandRepository.addAll(
-        new HashSet<>(
-            Arrays.asList(
-                mainCommand,
-                new ActivateCommand(),
-                new AttachCommand(),
-                new DetachCommand(),
-                new ImportCommand(),
-                new ExportCommand(),
-                new GetCommand(),
-                new SetCommand(),
-                new UnsetCommand(),
-                new DiagnosticCommand(),
-                new RepairCommand(),
-                new LogCommand()
-            )
-        )
-    );
+    List<Command> commands = mapper.getCommands();
+    commands.add(mainCommand);
+    commandRepository.addAll(new HashSet<>(commands));
 
     LOGGER.debug("Parsing command-line arguments");
     CustomJCommander jCommander = parseArguments(commandRepository, mainCommand, args);
