@@ -220,12 +220,6 @@ public class AttachCommand extends TopologyCommand {
   }
 
   @Override
-  protected String[] createCommand(String lockToken) {
-    return new String[] {"--lock-token", lockToken, "attach", "-t", "stripe", "-d",
-        destination.toString(), "-s", source.toString(), "-W", restartWaitTime.toString(), "-D", restartDelay.toString() };
-  }
-
-  @Override
   protected Collection<InetSocketAddress> getAllOnlineSourceNodes() {
     return newOnlineNodes.keySet();
   }

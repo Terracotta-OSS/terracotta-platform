@@ -18,16 +18,17 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.LockContext;
-import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
+import org.terracotta.dynamic_config.api.model.*;
+import org.terracotta.dynamic_config.api.model.nomad.*;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
+import org.terracotta.dynamic_config.cli.config_tool.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.nomad.NomadEnvironment;
 
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
@@ -60,7 +61,7 @@ public abstract class TopologyCommand extends RemoteCommand {
   protected Map<InetSocketAddress, LogicalServerState> destinationOnlineNodes;
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
-  private final LockContext lockContext =
+  protected final LockContext lockContext =
       new LockContext(UUID.randomUUID().toString(), "platform", "dynamic-scale");
 
   @Override
@@ -123,20 +124,22 @@ public abstract class TopologyCommand extends RemoteCommand {
     // This is done in the DynamicConfigService#setUpcomingCluster() method
 
     if (destinationClusterActivated) {
-      if (operationType == OperationType.STRIPE && !isLockAwareNomadManager()) {
-        acquireLockAndRunCommand();
-      } else {
-        TopologyNomadChange nomadChange = buildNomadChange(result);
-        licenseValidation(destination, nomadChange.getCluster());
-        onNomadChangeReady(nomadChange);
-        logger.info("Sending the topology change");
-        try {
-          runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
-        } catch (RuntimeException e) {
-          onNomadChangeFailure(nomadChange, e);
+      TopologyNomadChange nomadChange = buildNomadChange(result);
+      if (operationType == OperationType.STRIPE) {
+        acquireLock();
+        if (nomadChange instanceof StripeRemovalNomadChange) {
+          return;
         }
-        onNomadChangeSuccess(nomadChange);
       }
+      licenseValidation(destination, nomadChange.getCluster());
+      onNomadChangeReady(nomadChange);
+      logger.info("Sending the topology change");
+      try {
+        runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
+      } catch (RuntimeException e) {
+        onNomadChangeFailure(nomadChange, e);
+      }
+      onNomadChangeSuccess(nomadChange);
 
     } else {
       logger.info("Sending the topology change");
@@ -192,19 +195,14 @@ public abstract class TopologyCommand extends RemoteCommand {
     }
   }
 
-  protected void acquireLockAndRunCommand() {
-    logger.info("locking the configuration");
-    String[] lockCommand = new String[]{"set", "-s", destination.toString(), "-c", "lock-context=" + lockContext };
-    ConfigTool.main(lockCommand);
-    logger.info("Configuration locking is successful");
-    String[] command = createCommand(lockContext.getToken());
-    if (command != null) {
-      ConfigTool.main(command);
-    }
-  }
-
-  protected String[] createCommand(String lockToken) {
-    return null;
+  protected void acquireLock() {
+    //locking the config system
+    SettingNomadChange change = SettingNomadChange.set(Applicability.cluster(), Setting.LOCK_CONTEXT,
+        lockContext.toString());
+    runConfigurationChange(destinationCluster, destinationOnlineNodes, new MultiSettingNomadChange(change));
+    logger.info("Config system locked successfully to trigger re-balancing operation");
+    super.nomadManager = new LockAwareNomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider,
+        nomadEntityProvider, lockContext.getToken());
   }
 
   protected void onNomadChangeReady(TopologyNomadChange nomadChange) {
