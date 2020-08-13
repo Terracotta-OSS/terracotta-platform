@@ -17,6 +17,8 @@ package org.terracotta.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,22 +39,32 @@ public class ObjectMapperFactory {
 
   private final boolean pretty;
   private final List<Module> modules;
+  private final String eol;
 
   public ObjectMapperFactory() {
-    this(emptyList(), false);
+    this(emptyList(), false, "\n");
   }
 
-  private ObjectMapperFactory(List<Module> modules, boolean pretty) {
+  private ObjectMapperFactory(List<Module> modules, boolean pretty, String eol) {
     this.pretty = pretty;
     this.modules = new ArrayList<>(modules);
+    this.eol = eol;
   }
 
   public ObjectMapperFactory pretty() {
     return pretty(true);
   }
 
+  public ObjectMapperFactory eol(String eol) {
+    return new ObjectMapperFactory(this.modules, this.pretty, eol);
+  }
+
+  public ObjectMapperFactory systemEOL() {
+    return eol(System.lineSeparator());
+  }
+
   public ObjectMapperFactory pretty(boolean pretty) {
-    return new ObjectMapperFactory(modules, pretty);
+    return new ObjectMapperFactory(this.modules, pretty, this.eol);
   }
 
   public ObjectMapperFactory withModule(Module module) {
@@ -60,7 +72,7 @@ public class ObjectMapperFactory {
   }
 
   public ObjectMapperFactory withModules(Module... modules) {
-    ObjectMapperFactory factory = new ObjectMapperFactory(this.modules, this.pretty);
+    ObjectMapperFactory factory = new ObjectMapperFactory(this.modules, this.pretty, this.eol);
     factory.modules.addAll(asList(modules));
     return factory;
   }
@@ -76,6 +88,12 @@ public class ObjectMapperFactory {
         .enable(SerializationFeature.CLOSE_CLOSEABLE)
         .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
         .configure(SerializationFeature.INDENT_OUTPUT, pretty);
+    if (pretty) {
+      DefaultIndenter indent = new DefaultIndenter("  ", eol);
+      mapper.writer(new DefaultPrettyPrinter()
+          .withObjectIndenter(indent)
+          .withArrayIndenter(indent));
+    }
     for (Module module : modules) {
       mapper.registerModule(module);
     }
