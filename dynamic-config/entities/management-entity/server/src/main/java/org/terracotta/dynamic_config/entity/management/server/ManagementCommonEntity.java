@@ -104,6 +104,15 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           Map<String, String> data = new TreeMap<>();
           data.put("change", change.toString());
           data.put("result", Props.toString(updated.toProperties(false, false, true)));
+
+          data.put("operation", change.getOperation().name().toLowerCase());
+          data.put("setting", change.getSetting().toString());
+          data.put("name", change.getName());
+          data.put("value", change.getValue());
+          data.put("scope", change.getApplicability().getLevel().name().toLowerCase());
+          data.put("nodeName", change.getApplicability().getNodeName());
+          data.put("stripeId", Integer.toString(change.getApplicability().getStripeId().orElse(-1)));
+
           data.put("appliedAtRuntime", String.valueOf(!restartRequired));
           data.put("restartRequired", String.valueOf(restartRequired));
           String type = "DYNAMIC_CONFIG_" + change.getOperation();

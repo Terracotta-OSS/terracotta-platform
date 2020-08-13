@@ -357,6 +357,7 @@ class TopologyService implements PlatformListener {
         // avoid sending another event to report the same state as before, to avoid duplicates
 
         Map<String, String> attrs = new HashMap<>();
+        attrs.put("oldState", oldState.name());
         attrs.put("state", serverState.getState());
         attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
 

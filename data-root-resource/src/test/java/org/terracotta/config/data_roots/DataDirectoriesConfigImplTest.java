@@ -20,9 +20,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.terracotta.config.data_roots.management.DataRootBinding;
 import org.terracotta.config.util.ParameterSubstitutor;
 import org.terracotta.data.config.DataDirectories;
 import org.terracotta.data.config.DataRootMapping;
+import org.terracotta.management.service.monitoring.EntityManagementRegistry;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
 
 import java.io.IOException;
 import java.net.URL;
@@ -37,6 +40,9 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class DataDirectoriesConfigImplTest {
 
@@ -48,14 +54,31 @@ public class DataDirectoriesConfigImplTest {
 
   @Test
   public void getRoot() throws Exception {
+    EntityManagementRegistry registry = mock(EntityManagementRegistry.class);
+    EntityMonitoringService entityMonitoringService = mock(EntityMonitoringService.class);
+    when(registry.getMonitoringService()).thenReturn(entityMonitoringService);
+    when(entityMonitoringService.getConsumerId()).thenReturn(1L);
+    when(entityMonitoringService.getServerName()).thenReturn("myServer");
+
     String[] ids = {"a", "b"};
     String[] dataRootPaths = new String[ids.length];
     DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
+    DataRootBinding[] bindings = new DataRootBinding[ids.length];
 
+    for (int i = 0; i < ids.length; i++) {
+      bindings[i] = new DataRootBinding(ids[i], dataRootConfig.getRoot(ids[i]));
+    }
+    dataRootConfig.onManagementRegistryCreated(registry);
     for (int i = 0; i < ids.length; i++) {
       assertEquals(Paths.get(dataRootPaths[i]), dataRootConfig.getRoot(ids[i]));
       assertTrue(Files.exists(dataRootConfig.getRoot(ids[i])));
+      verify(registry).register(bindings[i]);
     }
+
+    String postRegistry_Id = "postRegistry";
+    dataRootConfig.addDataDirectory(postRegistry_Id, folder.newFolder().getAbsolutePath());
+    DataRootBinding newBinding = new DataRootBinding(postRegistry_Id, dataRootConfig.getRoot(postRegistry_Id));
+    verify(registry).register(newBinding);
   }
 
   @Test
