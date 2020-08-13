@@ -40,6 +40,7 @@ public class MarkableLineParser {
   private static final Logger LOGGER = LoggerFactory.getLogger(MarkableLineParser.class);
 
   public static final String LS = "\n";
+  public static final String CR = "\r";
 
   private final InputStream input;
   private long position;
@@ -62,7 +63,7 @@ public class MarkableLineParser {
   }
 
   private class LineParsingSpliterator implements Spliterator<String> {
-    private CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+    private final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
 
     @Override
     public boolean tryAdvance(Consumer<? super String> action) {
@@ -78,7 +79,7 @@ public class MarkableLineParser {
 
           sb.append(nextCharacter);
 
-          if (endsWithLineSeparator(sb)) {
+          if (endsWithLineSeparator(sb, LS)) {
             String line = withoutLineSeparator(sb);
             if (LOGGER.isTraceEnabled()) {
               LOGGER.trace("parsed: {}", line.replace("\r", "\\r").replace("\n", "\\n"));
@@ -123,21 +124,24 @@ public class MarkableLineParser {
       }
     }
 
-    private boolean endsWithLineSeparator(StringBuilder sb) {
-      if (sb.length() < LS.length()) {
+    private boolean endsWithLineSeparator(StringBuilder sb, String eol) {
+      if (sb.length() < eol.length()) {
         return false;
       }
 
-      char[] lastChars = new char[LS.length()];
-      sb.getChars(sb.length() - LS.length(), sb.length(), lastChars, 0);
+      char[] lastChars = new char[eol.length()];
+      sb.getChars(sb.length() - eol.length(), sb.length(), lastChars, 0);
 
       String suffix = new String(lastChars);
 
-      return LS.equals(suffix);
+      return eol.equals(suffix);
     }
 
     private String withoutLineSeparator(StringBuilder sb) {
       sb.delete(sb.length() - LS.length(), sb.length());
+      if (endsWithLineSeparator(sb, CR)) {
+        sb.delete(sb.length() - CR.length(), sb.length());
+      }
       return sb.toString();
     }
 
