@@ -28,10 +28,15 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiConsumer;
 
 import static java.util.Objects.requireNonNull;
 
@@ -41,6 +46,8 @@ import static java.util.Objects.requireNonNull;
  * @author Mathieu Carbou
  */
 public class Props {
+
+  public static final String EOL = "\n";
 
   public static Properties load(String content) {
     return load(new StringReader(content));
@@ -95,11 +102,15 @@ public class Props {
   public static String toString(Properties properties, String comment) {
     StringWriter out = new StringWriter();
     store(out, properties, comment);
-    return out.toString();
+    while (out.getBuffer().charAt(out.getBuffer().length() - 1) == '\r' || out.getBuffer().charAt(out.getBuffer().length() - 1) == '\n') {
+      out.getBuffer().deleteCharAt(out.getBuffer().length() - 1);
+    }
+    return out.toString().replace("\r", "");
   }
 
   public static void store(Writer out, Properties properties, String comment) {
     try {
+      // write in order into a temporary buffer
       StringWriter tmp = new StringWriter();
       Properties copy = new Properties() {
         private static final long serialVersionUID = 1L;
@@ -107,12 +118,50 @@ public class Props {
         // used to sort the lines in the output
         @Override
         public synchronized Enumeration<Object> keys() {
-          return Collections.enumeration(new TreeSet<>(properties.keySet()));
+          return Collections.enumeration(keySet());
+        }
+
+        @Override
+        public Enumeration<?> propertyNames() {
+          return Collections.enumeration(stringPropertyNames());
+        }
+
+        @Override
+        public Set<String> stringPropertyNames() {
+          return Collections.unmodifiableSet(new TreeSet<>(properties.stringPropertyNames()));
+        }
+
+        @Override
+        public synchronized Enumeration<Object> elements() {
+          return super.elements();
+        }
+
+        @Override
+        public Set<Object> keySet() {
+          return new TreeSet<>(properties.keySet());
+        }
+
+        @Override
+        public Set<Map.Entry<Object, Object>> entrySet() {
+          LinkedHashSet<Map.Entry<Object, Object>> set = new LinkedHashSet<>();
+          stringPropertyNames().forEach(key -> set.add(new AbstractMap.SimpleEntry<>(key, properties.getProperty(key))));
+          return set;
+        }
+
+        @Override
+        public synchronized void forEach(BiConsumer<? super Object, ? super Object> action) {
+          entrySet().forEach(e -> action.accept(e.getKey(), e.getKey()));
         }
       };
       copy.putAll(properties);
       copy.store(tmp, comment);
-      String content = tmp.toString();
+
+      // clean the buffer
+      while (tmp.getBuffer().charAt(tmp.getBuffer().length() - 1) == '\r' || tmp.getBuffer().charAt(tmp.getBuffer().length() - 1) == '\n') {
+        tmp.getBuffer().deleteCharAt(tmp.getBuffer().length() - 1);
+      }
+      String content = tmp.toString().replace("\r", "");
+
       final int secondLineStart = content.indexOf('\n') + 1;
       if (secondLineStart != 0) {
         if (comment == null) {

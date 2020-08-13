@@ -22,7 +22,6 @@ import java.io.StringWriter;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-import static java.lang.System.lineSeparator;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -48,10 +47,10 @@ public class PropsTest {
     StringWriter sw = new StringWriter();
     Props.store(sw, properties, null);
     assertThat(sw.toString(), is(equalTo(
-        "a=a" + lineSeparator() +
-            "b=b" + lineSeparator() +
-            "c=c" + lineSeparator() +
-            "d=d" + lineSeparator()
+        "a=a\n" +
+            "b=b\n" +
+            "c=c\n" +
+            "d=d"
     )));
   }
 
@@ -60,11 +59,11 @@ public class PropsTest {
     StringWriter sw = new StringWriter();
     Props.store(sw, properties, "");
     assertThat(sw.toString(), is(equalTo(
-        "#" + lineSeparator() +
-            "a=a" + lineSeparator() +
-            "b=b" + lineSeparator() +
-            "c=c" + lineSeparator() +
-            "d=d" + lineSeparator()
+        "#\n" +
+            "a=a\n" +
+            "b=b\n" +
+            "c=c\n" +
+            "d=d"
     )));
   }
 
@@ -73,11 +72,11 @@ public class PropsTest {
     StringWriter sw = new StringWriter();
     Props.store(sw, properties, "My Comment");
     assertThat(sw.toString(), is(equalTo(
-        "#My Comment" + lineSeparator() +
-            "a=a" + lineSeparator() +
-            "b=b" + lineSeparator() +
-            "c=c" + lineSeparator() +
-            "d=d" + lineSeparator()
+        "#My Comment\n" +
+            "a=a\n" +
+            "b=b\n" +
+            "c=c\n" +
+            "d=d"
     )));
   }
 
