@@ -297,7 +297,8 @@ public class ActivateCommandTest extends BaseTest {
 
   private ActivateCommand command() {
     ActivateCommand command = new ActivateCommand();
-    inject(command, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService);
+    inject(command, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService,
+        nomadEntityProvider);
     return command;
   }
 
