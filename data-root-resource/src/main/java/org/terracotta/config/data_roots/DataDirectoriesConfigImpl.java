@@ -135,8 +135,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     dataRootMap.put(name, dataDirectory);
 
     for (EntityManagementRegistry registry : registries) {
-      registry.register(new DataRootBinding(name, dataDirectory));
-      registry.refresh();
+      registry.registerAndRefresh(new DataRootBinding(name, dataDirectory));
     }
   }
 

@@ -88,8 +88,7 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     if (wasAdded) {
       for (EntityManagementRegistry registry : registries) {
         OffHeapResourceBinding managementBinding = getOffHeapResource(identifier).getManagementBinding();
-        registry.register(managementBinding);
-        registry.refresh();
+        registry.registerAndRefresh(managementBinding);
       }
     }
     return wasAdded;

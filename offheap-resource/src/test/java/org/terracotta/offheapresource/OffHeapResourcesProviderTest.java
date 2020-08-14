@@ -134,7 +134,7 @@ public class OffHeapResourcesProviderTest {
     assertTrue(offHeapResourcesProvider.addOffHeapResource(newOffheap_postRegistry_Id, 100_000L));
     OffHeapResourceImpl newOffheap_postRegistry = offHeapResourcesProvider.getOffHeapResource(newOffheap_postRegistry_Id);
     OffHeapResourceBinding newOffheap_postRegistry_Binding = newOffheap_postRegistry.getManagementBinding();
-    verify(registry).register(newOffheap_postRegistry_Binding);
+    verify(registry).registerAndRefresh(newOffheap_postRegistry_Binding);
     newOffheap_postRegistry.setCapacity(150_000L);
     assertTrue(newOffheap_postRegistry_Binding.getValue().capacity() == 150_000L);
   }

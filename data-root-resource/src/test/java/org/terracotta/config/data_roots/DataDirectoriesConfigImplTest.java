@@ -78,7 +78,7 @@ public class DataDirectoriesConfigImplTest {
     String postRegistry_Id = "postRegistry";
     dataRootConfig.addDataDirectory(postRegistry_Id, folder.newFolder().getAbsolutePath());
     DataRootBinding newBinding = new DataRootBinding(postRegistry_Id, dataRootConfig.getRoot(postRegistry_Id));
-    verify(registry).register(newBinding);
+    verify(registry).registerAndRefresh(newBinding);
   }
 
   @Test

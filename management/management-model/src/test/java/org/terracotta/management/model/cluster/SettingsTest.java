@@ -16,7 +16,6 @@
 package org.terracotta.management.model.cluster;
 
 import org.junit.Test;
-import static org.junit.Assert.assertTrue;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.terracotta.management.model.capabilities.descriptors.Settings;
@@ -25,6 +24,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnit4.class)
 public class SettingsTest {
