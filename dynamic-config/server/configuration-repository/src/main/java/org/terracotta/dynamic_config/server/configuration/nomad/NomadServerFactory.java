@@ -120,6 +120,15 @@ public class NomadServerFactory {
         }
         return response;
       }
+
+      @Override
+      public void close() {
+        try {
+          sanskrit.close();
+        } catch (SanskritException e) {
+          LOGGER.warn("Error closing Sanskrit: " + e.getMessage(), e);
+        }
+      }
     });
   }
 }
