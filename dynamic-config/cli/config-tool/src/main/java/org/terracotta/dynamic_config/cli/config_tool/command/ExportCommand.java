@@ -110,24 +110,26 @@ public class ExportCommand extends RemoteCommand {
         }
       case PROPERTIES:
         // user-defined
-        Properties userDefined = cluster.toProperties(false, false);
+        Properties userDefined = cluster.toProperties(false, false, false);
         // hidden ones
         Properties hidden = cluster.toProperties(false, false, true);
         hidden.keySet().removeAll(userDefined.keySet());
         // defaulted values
-        Properties defaults = cluster.toProperties(false, true);
+        Properties defaults = cluster.toProperties(false, true, false);
         defaults.keySet().removeAll(userDefined.keySet());
         // write them all
         try (StringWriter out = new StringWriter()) {
           // this one is always non empty since we have at least failover-priority
           Props.store(out, userDefined, "User-defined configurations");
           if (!defaults.isEmpty() && includeDefaultValues) {
+            out.write(Props.EOL);
             Props.store(out, defaults, "Default configurations");
           }
           if (!hidden.isEmpty()) {
+            out.write(Props.EOL);
             Props.store(out, hidden, "Hidden system configurations (only for informational, import and repair purposes): please do not alter, get, set, unset them.");
           }
-          return out.toString();
+          return out.toString().replace("\n", System.lineSeparator()); // to please the user. Props always writes the same way (\n).
         } catch (IOException e) {
           throw new UncheckedIOException(e);
         }

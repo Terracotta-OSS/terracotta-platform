@@ -15,14 +15,18 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad;
 
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1;
+import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Version;
+import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ClusterConfigFilename;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Config;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageAdapter;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.DefaultHashComputer;
@@ -31,6 +35,10 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Init
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.SanskritNomadServerState;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.nomad.NomadEnvironment;
+import org.terracotta.nomad.client.NomadClient;
+import org.terracotta.nomad.client.NomadEndpoint;
+import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
@@ -38,15 +46,21 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.NomadServerImpl;
 import org.terracotta.nomad.server.SingleThreadedNomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServerAdapter;
+import org.terracotta.persistence.sanskrit.ObjectMapperSupplier;
 import org.terracotta.persistence.sanskrit.Sanskrit;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
 import java.nio.file.Path;
+import java.time.Clock;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 public class NomadServerFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerFactory.class);
@@ -60,22 +74,25 @@ public class NomadServerFactory {
   public UpgradableNomadServer<NodeContext> createServer(NomadConfigurationManager configurationManager,
                                                          ChangeApplicator<NodeContext> changeApplicator,
                                                          String nodeName,
-                                                         DynamicConfigEventFiring dynamicConfigEventFiring) throws SanskritException, NomadException {
+                                                         DynamicConfigEventFiring dynamicConfigEventFiring) throws SanskritException, NomadException, ConfigStorageException {
 
     FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(configurationManager.getChangesPath());
 
     // Creates a json mapper with indentation for human readability, but forcing all EOL to be LF like Sanskrit
     // The sanskrit files should be portable from Lin to Win and still work.
-    ObjectMapper objectMapper = objectMapperFactory.pretty().create();
-    DefaultIndenter indent = new DefaultIndenter("  ", "\n");
-    objectMapper.writer(new DefaultPrettyPrinter()
-        .withObjectIndenter(indent)
-        .withArrayIndenter(indent));
+    // do not use pretty() or it will mess up the EOL and sanskrit hashes. It is also harder to keep backward compat with that
+    ObjectMapper objectMapper = objectMapperFactory.create();
 
-    Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapper);
+    ObjectMapper objectMapperV1 = objectMapperFactory.withModules(new DynamicConfigModelJsonModuleV1(), new DynamicConfigApiJsonModuleV1()).create();
+
+    ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.versioned(objectMapper, Version.CURRENT.getValue())
+        .withVersions(objectMapperV1, "", Version.V1.getValue())
+        .withVersions(objectMapper, Version.V2.getValue());
+
+    Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapperSupplier);
 
     Path clusterDir = configurationManager.getClusterPath();
-    InitialConfigStorage<NodeContext> configStorage = new InitialConfigStorage<>(new ConfigStorageAdapter<NodeContext>(new FileConfigStorage(clusterDir, nodeName)) {
+    InitialConfigStorage configStorage = new InitialConfigStorage(new ConfigStorageAdapter(new FileConfigStorage(clusterDir, nodeName)) {
       @Override
       public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
         super.saveConfig(version, config);
@@ -85,14 +102,9 @@ public class NomadServerFactory {
       }
     });
 
-    SanskritNomadServerState<NodeContext> serverState = new SanskritNomadServerState<>(sanskrit, configStorage, new DefaultHashComputer(objectMapper));
-    long currentVersion = serverState.getCurrentVersion();
-    if (currentVersion != 0) {
-      String filename = ClusterConfigFilename.with(nodeName, currentVersion).getFilename();
-      LOGGER.info("Loading version: {} of saved configuration from: {}", currentVersion, clusterDir.resolve(filename));
-    }
+    SanskritNomadServerState serverState = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer());
 
-    return new SingleThreadedNomadServer<>(new UpgradableNomadServerAdapter<NodeContext>(new NomadServerImpl<>(serverState, changeApplicator)) {
+    SingleThreadedNomadServer<NodeContext> nomadServer = new SingleThreadedNomadServer<>(new UpgradableNomadServerAdapter<NodeContext>(new NomadServerImpl<>(serverState, changeApplicator)) {
       @Override
       public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
         AcceptRejectResponse response = super.prepare(message);
@@ -120,6 +132,55 @@ public class NomadServerFactory {
         }
         return response;
       }
+
+      @Override
+      public void close() {
+        try {
+          sanskrit.close();
+        } catch (SanskritException e) {
+          LOGGER.warn("Error closing Sanskrit: " + e.getMessage(), e);
+        }
+      }
     });
+
+    long currentVersion = serverState.getCurrentVersion();
+    if (currentVersion != 0) {
+      upgrade(configStorage, nomadServer, currentVersion);
+
+    }
+
+    currentVersion = serverState.getCurrentVersion();
+    if (currentVersion != 0) {
+      Config config = configStorage.getConfig(currentVersion);
+      String filename = ClusterConfigFilename.with(nodeName, currentVersion).getFilename();
+      LOGGER.info("Using configuration version: {} with format version: {} at: {}", currentVersion, config.getVersion(), clusterDir.resolve(filename));
+    }
+
+    return nomadServer;
+  }
+
+  private void upgrade(InitialConfigStorage configStorage, NomadServer<NodeContext> nomadServer, long currentVersion) throws ConfigStorageException {
+    final Config config = configStorage.getConfig(currentVersion);
+    final Node node = config.getTopology().getNode();
+    final String filename = ClusterConfigFilename.with(node.getName(), currentVersion).getFilename();
+    final Version to = Version.CURRENT;
+
+    if (config.getVersion().is(to)) {
+      return;
+    }
+
+    LOGGER.info("Upgrading configuration version: {} stored in: {} from format version: {} to format version: {}", currentVersion, filename, config.getVersion(), to);
+
+    NomadEnvironment environment = new NomadEnvironment();
+
+    List<NomadEndpoint<NodeContext>> endpoints = singletonList(new NomadEndpoint<>(node.getInternalAddress(), nomadServer));
+    // Note: do NOT close this nomad client - it would close the server and sanskrit!
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
+    NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
+    nomadClient.tryApplyChange(failureRecorder, new FormatUpgradeNomadChange(config.getVersion(), to));
+
+    // this is important to rethrow eagerly in the nomad server creation flow to avoid starting a server ending with a prepared change,
+    // which cannot be migrated sadly since we cannot alter the append log entries.
+    failureRecorder.reThrowErrors();
   }
 }

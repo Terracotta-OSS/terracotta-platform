@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.api.json;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -31,9 +30,11 @@ import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
@@ -58,7 +59,7 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
   private static final long serialVersionUID = 1L;
 
   public DynamicConfigApiJsonModule() {
-    super(DynamicConfigApiJsonModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
+    super(DynamicConfigApiJsonModule.class.getSimpleName(), new com.fasterxml.jackson.core.Version(1, 0, 0, null, null, null));
 
     registerSubtypes(
         new NamedType(ClusterActivationNomadChange.class, "ClusterActivationNomadChange"),
@@ -69,7 +70,8 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
         new NamedType(SettingNomadChange.class, "SettingNomadChange"),
         new NamedType(StripeAdditionNomadChange.class, "StripeAdditionNomadChange"),
         new NamedType(StripeRemovalNomadChange.class, "StripeRemovalNomadChange"),
-        new NamedType(LockAwareDynamicConfigNomadChange.class, "LockAwareDynamicConfigNomadChange")
+        new NamedType(LockAwareDynamicConfigNomadChange.class, "LockAwareDynamicConfigNomadChange"),
+        new NamedType(FormatUpgradeNomadChange.class, "FormatUpgradeNomadChange")
     );
 
     setMixInAnnotation(NodeNomadChange.class, NodeNomadChangeMixin.class);
@@ -82,6 +84,7 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     setMixInAnnotation(StripeAdditionNomadChange.class, StripeAdditionNomadChangeMixin.class);
     setMixInAnnotation(StripeRemovalNomadChange.class, StripeRemovalNomadChangeMixin.class);
     setMixInAnnotation(LockAwareDynamicConfigNomadChange.class, LockAwareDynamicConfigNomadChangeMixIn.class);
+    setMixInAnnotation(FormatUpgradeNomadChange.class, FormatUpgradeNomadChangeMixIn.class);
   }
 
   @Override
@@ -110,10 +113,10 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
 
   public static class ApplicabilityMixin extends Applicability {
     @JsonCreator
-    protected ApplicabilityMixin(@JsonProperty(value = "level", required = true) Scope scope,
+    protected ApplicabilityMixin(@JsonProperty(value = "level", required = true) Scope level,
                                  @JsonProperty("stripeId") Integer stripeId,
                                  @JsonProperty("nodeName") String nodeName) {
-      super(scope, stripeId, nodeName);
+      super(level, stripeId, nodeName);
     }
   }
 
@@ -188,11 +191,19 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     }
   }
 
-  private static class LockAwareDynamicConfigNomadChangeMixIn extends LockAwareDynamicConfigNomadChange {
+  public static class LockAwareDynamicConfigNomadChangeMixIn extends LockAwareDynamicConfigNomadChange {
     @JsonCreator
     public LockAwareDynamicConfigNomadChangeMixIn(@JsonProperty(value = "lockToken", required = true) String lockToken,
                                                   @JsonProperty(value = "change", required = true) DynamicConfigNomadChange change) {
       super(lockToken, change);
+    }
+  }
+
+  public static class FormatUpgradeNomadChangeMixIn extends FormatUpgradeNomadChange {
+    @JsonCreator
+    public FormatUpgradeNomadChangeMixIn(@JsonProperty(value = "from", required = true) Version from,
+                                         @JsonProperty(value = "to", required = true) Version to) {
+      super(from, to);
     }
   }
 }

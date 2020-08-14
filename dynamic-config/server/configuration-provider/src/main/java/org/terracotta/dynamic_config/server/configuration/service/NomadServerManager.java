@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
@@ -33,13 +34,14 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
 import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.nomad.ConfigChangeApplicator;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.UncheckedNomadException;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ApplicabilityNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ClusterActivationNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.DefaultNomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.FormatUpgradeNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockAwareNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.MultiSettingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.NodeAdditionNomadChangeProcessor;
@@ -153,7 +155,7 @@ public class NomadServerManager {
     init(configPath, nodeContext::getNodeName, () -> nodeContext);
   }
 
-  public void init(Path configPath, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws UncheckedNomadException {
+  private void init(Path configPath, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws UncheckedNomadException {
     requireNonNull(configPath);
     requireNonNull(nodeName);
     requireNonNull(nodeContext);
@@ -169,7 +171,7 @@ public class NomadServerManager {
 
     try {
       this.nomadServer = nomadServerFactory.createServer(getConfigurationManager(), null, nodeName.get(), getEventFiringService());
-    } catch (SanskritException | NomadException e) {
+    } catch (SanskritException | NomadException | ConfigStorageException e) {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
@@ -209,6 +211,7 @@ public class NomadServerManager {
     router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
     router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService));
     router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
+    router.register(FormatUpgradeNomadChange.class, new FormatUpgradeNomadChangeProcessor());
 
     getNomadServer().setChangeApplicator(
         new ConfigChangeApplicator(

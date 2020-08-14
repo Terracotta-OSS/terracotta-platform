@@ -15,19 +15,22 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import org.terracotta.json.ObjectMapperFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class SanskritObjectImplTest {
+
+  private final ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.notVersioned(new ObjectMapperFactory().create());
+
   @Test
   public void setAndGet() {
-    SanskritObjectImpl child = new SanskritObjectImpl(new ObjectMapper());
+    SanskritObjectImpl child = new SanskritObjectImpl(objectMapperSupplier);
     child.setString("A", "a");
 
-    SanskritObjectImpl object = new SanskritObjectImpl(new ObjectMapper());
+    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
     object.setString("A", "a");
     object.setLong("B", 1L);
     object.setObject("C", child);
@@ -40,7 +43,7 @@ public class SanskritObjectImplTest {
 
   @Test(expected = ClassCastException.class)
   public void getLongWithStringMethod() {
-    SanskritObjectImpl object = new SanskritObjectImpl(new ObjectMapper());
+    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
     object.setLong("A", 1L);
 
     object.getString("A");
@@ -48,7 +51,7 @@ public class SanskritObjectImplTest {
 
   @Test(expected = ClassCastException.class)
   public void getStringWithLongMethod() {
-    SanskritObjectImpl object = new SanskritObjectImpl(new ObjectMapper());
+    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
     object.setString("A", "a");
 
     object.getLong("A");
@@ -56,7 +59,7 @@ public class SanskritObjectImplTest {
 
   @Test
   public void getMissingKeys() {
-    SanskritObjectImpl object = new SanskritObjectImpl(new ObjectMapper());
+    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
     assertNull(object.getString("A"));
     assertNull(object.getLong("A"));
     assertNull(object.getObject("A"));
@@ -64,7 +67,7 @@ public class SanskritObjectImplTest {
 
   @Test
   public void changeType() {
-    SanskritObjectImpl object = new SanskritObjectImpl(new ObjectMapper());
+    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
     object.setString("A", "a");
     object.setLong("A", 1L);
     assertEquals(1L, (long) object.getLong("A"));

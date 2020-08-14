@@ -93,7 +93,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     discoverFail = true;
   }
 
@@ -115,7 +115,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
+  public void prepareFail(InetSocketAddress server, Throwable reason) {
     prepareFail = true;
   }
 
@@ -135,12 +135,12 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress server, String reason) {
+  public void takeoverFail(InetSocketAddress server, Throwable reason) {
     takeoverFail = true;
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, String reason) {
+  public void commitFail(InetSocketAddress server, Throwable reason) {
     commitRollbackFail = true;
   }
 
@@ -150,7 +150,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, String reason) {
+  public void rollbackFail(InetSocketAddress server, Throwable reason) {
     commitRollbackFail = true;
   }
 

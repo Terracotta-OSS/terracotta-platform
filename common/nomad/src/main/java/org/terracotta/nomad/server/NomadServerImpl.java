@@ -124,6 +124,8 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
 
   @Override
   public void close() {
+    // has to be empty in this implementation.
+    // Only there to support closing server "stubs" used for client <-> server communication through diagnostic or entity channels
   }
 
   @Override

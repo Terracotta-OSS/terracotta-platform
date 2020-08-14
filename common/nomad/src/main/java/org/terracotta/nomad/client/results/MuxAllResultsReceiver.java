@@ -53,7 +53,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.discoverFail(server, reason);
     }
@@ -131,7 +131,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
+  public void prepareFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.prepareFail(server, reason);
     }
@@ -180,7 +180,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress server, String reason) {
+  public void takeoverFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.takeoverFail(server, reason);
     }
@@ -208,7 +208,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, String reason) {
+  public void commitFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.commitFail(server, reason);
     }
@@ -243,7 +243,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, String reason) {
+  public void rollbackFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.rollbackFail(server, reason);
     }

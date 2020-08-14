@@ -442,7 +442,7 @@ public class Node implements Cloneable, PropertyHolder {
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
   @Override
-  public Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings) {
-    return modelToProperties(this, expanded, includeDefaultValues, includeHiddenSettings);
+  public Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings, Version version) {
+    return modelToProperties(this, expanded, includeDefaultValues, includeHiddenSettings, version);
   }
 }

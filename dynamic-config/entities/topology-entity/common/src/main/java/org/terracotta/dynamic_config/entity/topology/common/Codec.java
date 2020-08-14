@@ -238,7 +238,7 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeCluster(Cluster cluster) {
     requireNonNull(cluster);
-    return Props.toString(cluster.toProperties(false, false));
+    return Props.toString(cluster.toProperties(false, false, true));
   }
 
   private Cluster decodeCluster(String payload) {
@@ -249,7 +249,7 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeNode(Node node) {
     requireNonNull(node);
-    return Props.toString(node.toProperties(false, false));
+    return Props.toString(node.toProperties(false, false, true));
   }
 
   private Node decodeNode(String payload) {
@@ -263,7 +263,7 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeStripe(Stripe stripe) {
     requireNonNull(stripe);
-    final Properties props = stripe.toProperties(false, false);
+    final Properties props = stripe.toProperties(false, false, true);
     props.setProperty("nodes", String.valueOf(stripe.getNodeCount()));
     return Props.toString(props);
   }

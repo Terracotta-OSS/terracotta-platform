@@ -38,7 +38,7 @@ public class ConfigPropertiesProcessor {
   }
 
   public void process(Cluster cluster) {
-    Properties properties = cluster.toProperties(false, false);
+    Properties properties = cluster.toProperties(false, false, true);
     try (StringWriter out = new StringWriter()) {
       Props.store(out, properties, "Converted cluster configuration:");
       Files.createDirectories(outputDir);

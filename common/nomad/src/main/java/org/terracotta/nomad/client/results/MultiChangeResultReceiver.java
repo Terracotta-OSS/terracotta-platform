@@ -50,7 +50,7 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverFail(server, reason);
     }
@@ -127,7 +127,7 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
+  public void prepareFail(InetSocketAddress server, Throwable reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepareFail(server, reason);
     }
@@ -169,7 +169,7 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, String reason) {
+  public void commitFail(InetSocketAddress server, Throwable reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.commitFail(server, reason);
     }
@@ -204,7 +204,7 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, String reason) {
+  public void rollbackFail(InetSocketAddress server, Throwable reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.rollbackFail(server, reason);
     }

@@ -22,7 +22,9 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Version;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,6 +41,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.Version.V2;
 
 /**
  * This class expects all the fields to be first validated by {@link Setting#validate(String)}.
@@ -54,13 +57,19 @@ public class ClusterValidator {
   }
 
   public void validate() throws MalformedClusterException {
+    validate(Version.CURRENT);
+  }
+
+  public void validate(Version version) throws MalformedClusterException {
     validateNodeNames();
-    validateStripeNames();
     validateAddresses();
     validateBackupDirs();
     validateDataDirs();
     validateSecurity();
     validateFailoverSetting();
+    if (version.amongst(EnumSet.of(V2))) {
+      validateStripeNames();
+    }
   }
 
   private void validateAddresses() {

@@ -25,31 +25,47 @@ import static java.lang.System.lineSeparator;
  */
 public class NomadFailureReceiver<T> extends LoggingResultReceiver<T> {
 
-  private final List<String> failures = new CopyOnWriteArrayList<>();
+  private final List<String> reasons = new CopyOnWriteArrayList<>();
+  private final List<Throwable> errors = new CopyOnWriteArrayList<>();
 
   @Override
-  protected void error(String line) {
-    failures.add(line);
+  protected void error(String line, Throwable e) {
+    reasons.add(e == null ? line : (line + ". Reason: " + stringify(e)));
+    if (e != null) {
+      errors.add(e);
+    }
   }
 
-  public List<String> getFailures() {
-    return failures;
+  public List<String> getReasons() {
+    return reasons;
   }
 
   public boolean isEmpty() {
-    return failures.isEmpty();
+    return reasons.isEmpty();
   }
 
-  public void reThrow() throws IllegalStateException {
+  public void reThrowReasons() throws IllegalStateException {
     if (!isEmpty()) {
-      StringBuilder msg = new StringBuilder("Two-Phase commit failed with " + failures.size() + " messages(s):" + lineSeparator() + lineSeparator());
-      for (int i = 0; i < failures.size(); i++) {
-        if (msg.charAt(msg.length() - 1) != '\n') {
-          msg.append(lineSeparator());
-        }
-        msg.append("(").append(i + 1).append(") ").append(failures.get(i));
-      }
-      throw new IllegalStateException(msg.toString());
+      throw buildError();
     }
+  }
+
+  public void reThrowErrors() throws IllegalStateException {
+    if (!isEmpty()) {
+      IllegalStateException error = buildError();
+      errors.forEach(error::addSuppressed);
+      throw error;
+    }
+  }
+
+  private IllegalStateException buildError() {
+    StringBuilder msg = new StringBuilder("Two-Phase commit failed with " + reasons.size() + " messages(s):" + lineSeparator() + lineSeparator());
+    for (int i = 0; i < reasons.size(); i++) {
+      if (msg.charAt(msg.length() - 1) != '\n') {
+        msg.append(lineSeparator());
+      }
+      msg.append("(").append(i + 1).append(") ").append(reasons.get(i));
+    }
+    return new IllegalStateException(msg.toString());
   }
 }

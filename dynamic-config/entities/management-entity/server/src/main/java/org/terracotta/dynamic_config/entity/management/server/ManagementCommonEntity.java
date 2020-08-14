@@ -103,7 +103,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           boolean restartRequired = !change.canApplyAtRuntime(topologyService.getRuntimeNodeContext().getStripeId(), topologyService.getRuntimeNodeContext().getNodeName());
           Map<String, String> data = new TreeMap<>();
           data.put("change", change.toString());
-          data.put("result", Props.toString(updated.toProperties(false, false)));
+          data.put("result", Props.toString(updated.toProperties(false, false, true)));
           data.put("appliedAtRuntime", String.valueOf(!restartRequired));
           data.put("restartRequired", String.valueOf(restartRequired));
           String type = "DYNAMIC_CONFIG_" + change.getOperation();
@@ -114,7 +114,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         public void onNewConfigurationSaved(NodeContext nodeContext, Long version) {
           Map<String, String> data = new TreeMap<>();
           data.put("version", String.valueOf(version));
-          data.put("upcomingConfig", Props.toString(nodeContext.getCluster().toProperties(false, false)));
+          data.put("upcomingConfig", Props.toString(nodeContext.getCluster().toProperties(false, false, true)));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_SAVED", data));
         }
 

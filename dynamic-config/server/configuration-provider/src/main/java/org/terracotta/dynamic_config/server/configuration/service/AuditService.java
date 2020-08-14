@@ -48,7 +48,7 @@ public class AuditService implements DynamicConfigService {
 
   @Override
   public void setUpcomingCluster(Cluster cluster) {
-    server.audit("Setting upcoming cluster to " + cluster.toProperties(false, false), new Properties());
+    server.audit("Setting upcoming cluster to " + cluster.toProperties(false, false, true), new Properties());
     dynamicConfigService.setUpcomingCluster(cluster);
   }
 

@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.api.model.PropertyHolder;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Substitutor;
+import org.terracotta.dynamic_config.api.model.Version;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,10 +56,12 @@ import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
 class ConfigurationParser {
 
   private final List<Configuration> configurations;
+  private final Version version;
   private final Consumer<Configuration> defaultAddedListener;
 
-  private ConfigurationParser(List<Configuration> configurations, Consumer<Configuration> defaultAddedListener) {
+  private ConfigurationParser(List<Configuration> configurations, Version version, Consumer<Configuration> defaultAddedListener) {
     this.configurations = new ArrayList<>(requireNonNull(configurations));
+    this.version = version;
     this.defaultAddedListener = requireNonNull(defaultAddedListener);
     if (configurations.isEmpty()) {
       throw new IllegalArgumentException("No configuration provided");
@@ -161,7 +164,9 @@ class ConfigurationParser {
     });
 
     // install all the remaining settings inside the model
-    configurations.forEach(configuration -> configuration.apply(cluster));
+    configurations.stream()
+        .filter(configuration -> version.amongst(configuration.getSetting().getVersions()))
+        .forEach(configuration -> configuration.apply(cluster));
 
     return cluster;
   }
@@ -185,6 +190,7 @@ class ConfigurationParser {
         .collect(groupingBy(Configuration::getSetting));
 
     Stream.of(Setting.values())
+        .filter(setting -> version.amongst(setting.getVersions()))
         .filter(setting -> setting.requires(RESOLVE_EAGERLY))
         .filter(setting -> setting.isScope(o.getScope()))
         .forEach(setting -> {
@@ -209,16 +215,16 @@ class ConfigurationParser {
         });
   }
 
-  static Cluster parsePropertyConfiguration(Properties properties, Consumer<Configuration> defaultAddedListener) {
+  static Cluster parsePropertyConfiguration(Properties properties, Version version, Consumer<Configuration> defaultAddedListener) {
     // Note: node hostname, port and name are all required minimal properties.
     // They are used to identify a node in an exported cluster configuration file
     // and no placeholder resolving can be done client-side
-    return new ConfigurationParser(propertiesToConfigurations(properties), defaultAddedListener).parse();
+    return new ConfigurationParser(propertiesToConfigurations(properties), version, defaultAddedListener).parse();
   }
 
   static Cluster parseCommandLineParameters(Map<Setting, String> userConsoleParameters, IParameterSubstitutor substitutor, Consumer<Configuration> defaultAddedListener) {
     final Properties properties = cliToProperties(userConsoleParameters, substitutor, defaultAddedListener);
-    return parsePropertyConfiguration(properties, defaultAddedListener);
+    return parsePropertyConfiguration(properties, Version.CURRENT, defaultAddedListener);
   }
 
   /**

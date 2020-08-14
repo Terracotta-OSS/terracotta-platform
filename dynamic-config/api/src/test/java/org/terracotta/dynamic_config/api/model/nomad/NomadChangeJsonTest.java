@@ -23,6 +23,7 @@ import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.change.NomadChange;
 
@@ -58,7 +59,8 @@ public class NomadChangeJsonTest {
         new MultiSettingNomadChange(
             SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
             SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "bar", "512MB")
-        )
+        ),
+        new FormatUpgradeNomadChange(Version.V1, Version.V2)
     };
 
     for (int i = 0; i < changes.length; i++) {

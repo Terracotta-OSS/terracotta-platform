@@ -245,11 +245,11 @@ public class ConfigurationGeneratorVisitor {
   private void runNomadActivation(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeConfigurationDir) {
     requireNonNull(nodeConfigurationDir);
     NomadEnvironment environment = new NomadEnvironment();
-    try (NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC())) {
-      NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
-      nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
-      failureRecorder.reThrow();
-    }
+    // Note: do NOT close this nomad client - it would close the server and sanskrit!
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
+    NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
+    nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
+    failureRecorder.reThrowErrors();
   }
 
   private String read(String path) {

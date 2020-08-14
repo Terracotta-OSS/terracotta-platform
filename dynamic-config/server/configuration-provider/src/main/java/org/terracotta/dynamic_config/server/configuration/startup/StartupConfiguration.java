@@ -124,7 +124,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public String getRawConfiguration() {
-    return Props.toString(nodeContextSupplier.get().getCluster().toProperties(false, false));
+    return Props.toString(nodeContextSupplier.get().getCluster().toProperties(false, false, false));
   }
 
   /**

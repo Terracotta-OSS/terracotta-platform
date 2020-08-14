@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.NomadEnvironment;
@@ -61,7 +62,7 @@ public class ConfigRepoProcessor {
     try (NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC())) {
       NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
       nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
-      failureRecorder.reThrow();
+      failureRecorder.reThrowErrors();
     }
   }
 
@@ -91,7 +92,7 @@ public class ConfigRepoProcessor {
 
     try {
       return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, nodeName, null);
-    } catch (SanskritException | NomadException e) {
+    } catch (SanskritException | NomadException | ConfigStorageException e) {
       throw new RuntimeException(e);
     }
   }

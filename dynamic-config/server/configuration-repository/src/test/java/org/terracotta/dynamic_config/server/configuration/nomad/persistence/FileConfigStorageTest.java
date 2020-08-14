@@ -55,9 +55,9 @@ public class FileConfigStorageTest {
     assertTrue(Files.exists(root.resolve("node-1.1.properties")));
 
     Properties written = Props.load(new StringReader(new String(Files.readAllBytes(root.resolve("node-1.1.properties")), StandardCharsets.UTF_8).replace("\\", "/")));
-    assertThat(written.toString(), written, is(equalTo(properties)));
+    assertThat(Props.toString(written), written, is(equalTo(properties)));
 
-    NodeContext loaded = storage.getConfig(1L);
-    assertThat(loaded, is(topology));
+    Config loaded = storage.getConfig(1L);
+    assertThat(loaded.getTopology(), is(topology));
   }
 }

@@ -22,7 +22,7 @@ public interface CommitResultsReceiver {
 
   default void committed(InetSocketAddress server) {}
 
-  default void commitFail(InetSocketAddress server, String reason) {}
+  default void commitFail(InetSocketAddress server, Throwable reason) {}
 
   default void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
 

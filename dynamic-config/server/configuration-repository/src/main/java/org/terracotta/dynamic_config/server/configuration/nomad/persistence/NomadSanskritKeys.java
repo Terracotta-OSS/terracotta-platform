@@ -28,6 +28,7 @@ public interface NomadSanskritKeys {
   String CHANGE_STATE = "state";
   String CHANGE_VERSION = "version";
   String CHANGE_OPERATION = "operation";
+  String CHANGE_FORMAT_VERSION = "formatVersion";
   String CHANGE_RESULT_HASH = "changeResultHash";
   String CHANGE_CREATION_HOST = "creationHost";
   String CHANGE_CREATION_USER = "creationUser";

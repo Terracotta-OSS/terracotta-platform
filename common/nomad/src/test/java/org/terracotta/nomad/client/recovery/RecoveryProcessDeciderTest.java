@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.nomad.client.Consistency;
 import org.terracotta.nomad.client.results.AllResultsReceiver;
+import org.terracotta.nomad.server.NomadException;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;
@@ -60,7 +61,7 @@ public class RecoveryProcessDeciderTest {
 
     decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
-    decider.discoverFail(address2, "reason");
+    decider.discoverFail(address2, new NomadException("reason"));
     decider.endDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -141,7 +142,7 @@ public class RecoveryProcessDeciderTest {
     decider.endDiscovery();
     decider.startSecondDiscovery();
     decider.discoverRepeated(address1);
-    decider.discoverFail(address2, "reason");
+    decider.discoverFail(address2, new NomadException("reason"));
     decider.endSecondDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -200,7 +201,7 @@ public class RecoveryProcessDeciderTest {
     decider.endDiscovery();
     decider.startTakeover();
     decider.takeover(address1);
-    decider.takeoverFail(address2, "reason");
+    decider.takeoverFail(address2, new NomadException("reason"));
     decider.endPrepare();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -270,7 +271,7 @@ public class RecoveryProcessDeciderTest {
     decider.takeover(address2);
     decider.endPrepare();
     decider.startCommit();
-    decider.commitFail(address2, "reason");
+    decider.commitFail(address2, new NomadException("reason"));
     decider.endCommit();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -341,7 +342,7 @@ public class RecoveryProcessDeciderTest {
     decider.takeover(address2);
     decider.endPrepare();
     decider.startRollback();
-    decider.rollbackFail(address2, "reason");
+    decider.rollbackFail(address2, new NomadException("reason"));
     decider.endRollback();
 
     assertTrue(decider.isDiscoverSuccessful());
