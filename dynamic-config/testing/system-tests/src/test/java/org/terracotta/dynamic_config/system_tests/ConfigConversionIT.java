@@ -23,11 +23,21 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
+import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
+import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.nomad.server.NomadException;
+import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.testing.TmpDir;
 
 import java.nio.file.Files;
@@ -347,6 +357,21 @@ public class ConfigConversionIT {
     assertThat(
         tmpDir.getRoot().resolve("generated-configs").resolve("stripe-1").resolve("testServer0").resolve("cluster").resolve("testServer0.1.properties"),
         matches("/conversion/cluster-1.properties"));
+
+    assertCanLoadNomadConfig(tmpDir.getRoot().resolve("generated-configs").resolve("stripe-1").resolve("testServer0"));
+  }
+
+  private void assertCanLoadNomadConfig(Path config) throws SanskritException, NomadException, ConfigStorageException {
+    assertTrue(Files.exists(config));
+
+    NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(config, IParameterSubstitutor.identity());
+    nomadConfigurationManager.createDirectories();
+    ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+    NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
+
+    try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, null, "testServer0", null)) {
+      nomadServer.discover().getLatestChange().getResult();
+    }
   }
 
   private static Matcher<Path> matches(String config) throws Exception {
