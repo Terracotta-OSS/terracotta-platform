@@ -84,7 +84,14 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
 
   @Override
   public boolean addOffHeapResource(OffHeapResourceIdentifier identifier, long capacityInBytes) {
-    return addToResources(identifier, capacityInBytes);
+    boolean wasAdded = addToResources(identifier, capacityInBytes);
+    if (wasAdded) {
+      for (EntityManagementRegistry registry : registries) {
+        OffHeapResourceBinding managementBinding = getOffHeapResource(identifier).getManagementBinding();
+        registry.registerAndRefresh(managementBinding);
+      }
+    }
+    return wasAdded;
   }
 
   @Override
@@ -178,6 +185,7 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
               Map<String, String> attrs = new HashMap<>();
               attrs.put("oldCapacity", Long.toString(oldCapacity));
               attrs.put("newCapacity", Long.toString(newCapacity));
+              registry.refresh();
               registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_CAPACITY_CHANGED", attrs);
             }
           }
