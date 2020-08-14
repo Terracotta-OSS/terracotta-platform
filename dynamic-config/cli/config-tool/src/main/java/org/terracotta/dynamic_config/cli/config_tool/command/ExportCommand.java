@@ -37,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.time.Instant;
 
 import static java.lang.System.lineSeparator;
 
@@ -119,6 +120,13 @@ public class ExportCommand extends RemoteCommand {
         defaults.keySet().removeAll(userDefined.keySet());
         // write them all
         try (StringWriter out = new StringWriter()) {
+          // write a timestamp as a comment in the file header
+          out.write("# Timestamp of configuration export: ");
+          out.write(Instant.now().toString());
+          out.write(Props.EOL);
+          out.write("#");
+          out.write(Props.EOL);
+          
           // this one is always non empty since we have at least failover-priority
           Props.store(out, userDefined, "User-defined configurations");
           if (!defaults.isEmpty() && includeDefaultValues) {
@@ -127,7 +135,7 @@ public class ExportCommand extends RemoteCommand {
           }
           if (!hidden.isEmpty()) {
             out.write(Props.EOL);
-            Props.store(out, hidden, "Hidden system configurations (only for informational, import and repair purposes): please do not alter, get, set, unset them.");
+            Props.store(out, hidden, "Hidden internal system configurations (only for informational, import and repair purposes): please do not alter, get, set, unset them.");
           }
           return out.toString().replace("\n", System.lineSeparator()); // to please the user. Props always writes the same way (\n).
         } catch (IOException e) {
