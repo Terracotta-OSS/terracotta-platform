@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
@@ -52,7 +53,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
       throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
 
-    Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs().orDefault();
+    Map<String, RawPath> dataDirs = baseConfig.getNode().getDataDirs().orDefault();
     LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
 
     String dataDirectoryName = change.getKey();
@@ -62,7 +63,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
       throw new InvalidConfigChangeException("A data directory with name: " + dataDirectoryName + " already exists");
     }
 
-    for (Map.Entry<String, Path> entry : dataDirs.entrySet()) {
+    for (Map.Entry<String, RawPath> entry : dataDirs.entrySet()) {
       if (overLaps(entry.getValue(), dataDirectoryPath)) {
         throw new InvalidConfigChangeException("Data directory: " + dataDirectoryName + " overlaps with: " + entry.getKey());
       }

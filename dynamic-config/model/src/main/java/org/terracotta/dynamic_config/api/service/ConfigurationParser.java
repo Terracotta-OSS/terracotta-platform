@@ -166,7 +166,27 @@ class ConfigurationParser {
     // install all the remaining settings inside the model
     configurations.stream()
         .filter(configuration -> version.amongst(configuration.getSetting().getVersions()))
-        .forEach(configuration -> configuration.apply(cluster));
+        .forEach(configuration -> {
+          Setting setting = configuration.getSetting();
+          if (setting.isMap()) {
+            // if the setting is a map, when we parse an expanded config file like:
+            // stripe.1.node.1.data-dirs.bar=%H/tc1/bar
+            // stripe.1.node.1.data-dirs.foo=%H/tc1/foo
+            // we need to first "unset" the map.
+            // This is required because before that, the user could have used the default.
+            // So when setting a property expanded, this is an "addition". So the default value will stay (i.e. set command).
+            // But when parsing a config file, we can assume we do not want the default since all the setting are describe
+            configuration.findTargets(cluster).forEach(o -> {
+              // for each object in the model targeted by this config,
+              // we check if a value has been previously set. If not,
+              // we set the value to empty
+              if (!setting.getProperty(o).isPresent()) {
+                setting.setProperty(o, ""); // for a map, will explicitly set to empty (and will clear the default value)
+              }
+            });
+          }
+          configuration.apply(cluster);
+        });
 
     return cluster;
   }

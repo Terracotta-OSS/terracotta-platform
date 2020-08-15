@@ -21,15 +21,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.BeanProperty;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.Serializers;
 import com.fasterxml.jackson.databind.ser.std.ReferenceTypeSerializer;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.databind.type.ReferenceType;
 import com.fasterxml.jackson.databind.type.TypeBindings;
 import com.fasterxml.jackson.databind.type.TypeFactory;
@@ -45,6 +48,7 @@ import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Version;
@@ -79,6 +83,24 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
     setMixInAnnotation(OptionalConfig.class, OptionalConfigMixin.class);
     setMixInAnnotation(LockContext.class, LockContextMixin.class);
     setMixInAnnotation(Version.class, VersionMixin.class);
+
+    // using serializers / deserializers and not mixins avoid having to ignore all paths delegates
+    // "ignore all fields but some" will come in jackson 2.12
+    // Ref: https://github.com/FasterXML/jackson-databind/issues/1296
+    addSerializer(RawPath.class, ToStringSerializer.instance);
+    addDeserializer(RawPath.class, new FromStringDeserializer<RawPath>(RawPath.class) {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      protected RawPath _deserialize(String value, DeserializationContext ctxt) {
+        return RawPath.valueOf(value);
+      }
+
+      @Override
+      protected RawPath _deserializeFromEmptyString() {
+        return RawPath.valueOf("");
+      }
+    });
   }
 
   @Override

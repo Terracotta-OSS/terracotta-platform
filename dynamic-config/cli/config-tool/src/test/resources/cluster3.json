@@ -5,8 +5,7 @@
       "nodes": [
         {
           "dataDirs": {
-            "cache": "/data/cache1_1",
-            "main": "%H/terracotta/user-data/main"
+            "cache": "/data/cache1_1"
           },
           "hostname": "localhost",
           "name": "node1_1",
@@ -19,8 +18,7 @@
       "nodes": [
         {
           "dataDirs": {
-            "cache": "/data/cache2_1",
-            "main": "%H/terracotta/user-data/main"
+            "cache": "/data/cache2_1"
           },
           "hostname": "localhost",
           "name": "node2_1",
@@ -28,8 +26,7 @@
         },
         {
           "dataDirs": {
-            "cache": "/data/cache2_2",
-            "main": "%H/terracotta/user-data/main"
+            "cache": "/data/cache2_2"
           },
           "hostname": "localhost",
           "name": "node2_2",

@@ -23,11 +23,11 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static org.hamcrest.Matchers.contains;
@@ -51,19 +51,24 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
   Node node1_1 = Testing.newTestNode("node1_1", "localhost", 9410)
-      .putDataDir("cache", Paths.get("/data/cache1_1"));
+      .unsetDataDirs()
+      .putDataDir("cache", RawPath.valueOf("/data/cache1_1"));
 
   Node node1_2 = Testing.newTestNode("node1_2", "localhost", 9411)
-      .putDataDir("cache", Paths.get("/data/cache1_2"));
+      .unsetDataDirs()
+      .putDataDir("cache", RawPath.valueOf("/data/cache1_2"));
 
   Node node2_1 = Testing.newTestNode("node2_1", "localhost", 9412)
-      .putDataDir("cache", Paths.get("/data/cache2_1"));
+      .unsetDataDirs()
+      .putDataDir("cache", RawPath.valueOf("/data/cache2_1"));
 
   Node node2_2 = Testing.newTestNode("node2_2", "localhost", 9413)
-      .putDataDir("cache", Paths.get("/data/cache2_2"));
+      .unsetDataDirs()
+      .putDataDir("cache", RawPath.valueOf("/data/cache2_2"));
 
   Node strayNode = Testing.newTestNode("stray-node", "stray-host", 12345)
-      .putDataDir("cache", Paths.get("/data/stray-cache"));
+      .unsetDataDirs()
+      .putDataDir("cache", RawPath.valueOf("/data/stray-cache"));
 
   Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(node1_1, node1_2), new Stripe().setName("stripe2").addNodes(node2_1, node2_2))
       .putOffheapResource("foo", 1, MemoryUnit.GB);

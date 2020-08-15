@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
@@ -58,8 +57,8 @@ public class GetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
         allOf(
-            containsOutput("stripe.1.node.1.data-dirs=main:node-1-1" + separator + "data-dir"),
-            containsOutput("stripe.1.node.2.data-dirs=main:node-1-2" + separator + "data-dir")));
+            containsOutput("stripe.1.node.1.data-dirs=main:node-1-1/data-dir"),
+            containsOutput("stripe.1.node.2.data-dirs=main:node-1-2/data-dir")));
   }
 
   @Test

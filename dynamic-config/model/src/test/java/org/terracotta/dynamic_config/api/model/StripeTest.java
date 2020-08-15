@@ -17,8 +17,6 @@ package org.terracotta.dynamic_config.api.model;
 
 import org.junit.Test;
 
-import java.nio.file.Paths;
-
 import static java.net.InetSocketAddress.createUnresolved;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -35,17 +33,17 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class StripeTest {
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9410)
-      .putDataDir("data", Paths.get("data"))
-      .setBackupDir(Paths.get("backup"))
+      .putDataDir("data", RawPath.valueOf("data"))
+      .setBackupDir(RawPath.valueOf("backup"))
       .setBindAddress("0.0.0.0")
       .setGroupBindAddress("0.0.0.0")
       .setGroupPort(9430)
-      .setLogDir(Paths.get("log"))
-      .setMetadataDir(Paths.get("metadata"))
-      .setSecurityAuditLogDir(Paths.get("audit"));
+      .setLogDir(RawPath.valueOf("log"))
+      .setMetadataDir(RawPath.valueOf("metadata"))
+      .setSecurityAuditLogDir(RawPath.valueOf("audit"));
 
   Node node2 = Testing.newTestNode("node2", "localhost", 9411)
-      .putDataDir("data", Paths.get("/data/cache2"));
+      .putDataDir("data", RawPath.valueOf("/data/cache2"));
 
   Stripe stripe = new Stripe().addNodes(node1);
 

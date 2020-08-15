@@ -21,7 +21,6 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.io.File;
 
-import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.not;
@@ -138,7 +137,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),
-        containsOutput("stripe.1.node.1.log-dir=logs" + separator + "stripe1"));
+        containsOutput("stripe.1.node.1.log-dir=logs/stripe1"));
 
     // Restart node and verify that the change has taken effect
     stopNode(1, 1);
@@ -146,7 +145,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-r", "-c", "log-dir"),
-        containsOutput("stripe.1.node.1.log-dir=logs" + separator + "stripe1"));
+        containsOutput("stripe.1.node.1.log-dir=logs/stripe1"));
   }
 
   @Test

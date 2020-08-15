@@ -42,6 +42,7 @@ import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
@@ -309,11 +310,11 @@ public class DynamicConfigIT {
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
     return server(getNodeName(stripeId, nodeId), "localhost")
-        .configRepo(getNodePath(stripeId, nodeId).resolve("config").toString())
-        .logs(getNodePath(stripeId, nodeId).resolve("logs").toString())
-        .dataDir("main:" + getNodePath(stripeId, nodeId).resolve("data-dir").toString())
+        .configRepo(getNodePath(stripeId, nodeId).append("/config").toString())
+        .logs(getNodePath(stripeId, nodeId).append("/logs").toString())
+        .dataDir("main:" + getNodePath(stripeId, nodeId).append("/data-dir").toString())
         .offheap("main:512MB,foo:1GB")
-        .metaData(getNodePath(stripeId, nodeId).resolve("metadata").toString())
+        .metaData(getNodePath(stripeId, nodeId).append("/metadata").toString())
         .failoverPriority(getFailoverPriority().toString())
         .clusterName(CLUSTER_NAME);
   }
@@ -330,12 +331,12 @@ public class DynamicConfigIT {
     return "node-" + stripeId + "-" + nodeId;
   }
 
-  protected Path getNodePath(int stripeId, int nodeId) {
-    return Paths.get(getNodeName(stripeId, nodeId));
+  protected RawPath getNodePath(int stripeId, int nodeId) {
+    return RawPath.valueOf(getNodeName(stripeId, nodeId));
   }
 
-  protected final Path getNodeConfigDir(int stripeId, int nodeId) {
-    return getNodePath(stripeId, nodeId).resolve("config");
+  protected final RawPath getNodeConfigDir(int stripeId, int nodeId) {
+    return getNodePath(stripeId, nodeId).append("/config");
   }
 
   protected Path getLicensePath() {
@@ -548,7 +549,7 @@ public class DynamicConfigIT {
       }
     }
   }
-  
+
   private boolean isServerBlocked(TerracottaServer server) {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(server.getHostName(), server.getTsaPort()),

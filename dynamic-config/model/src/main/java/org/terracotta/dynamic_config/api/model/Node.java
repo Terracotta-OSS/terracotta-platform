@@ -19,7 +19,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -59,14 +58,14 @@ public class Node implements Cloneable, PropertyHolder {
   private Integer groupPort;
   private String bindAddress;
   private String groupBindAddress;
-  private Path metadataDir;
-  private Path logDir;
-  private Path backupDir;
-  private Path securityDir;
-  private Path securityAuditLogDir;
+  private RawPath metadataDir;
+  private RawPath logDir;
+  private RawPath backupDir;
+  private RawPath securityDir;
+  private RawPath securityAuditLogDir;
   private Map<String, String> tcProperties;
   private Map<String, String> loggerOverrides;
-  private Map<String, Path> dataDirs;
+  private Map<String, RawPath> dataDirs;
 
   @Override
   public Scope getScope() {
@@ -105,27 +104,27 @@ public class Node implements Cloneable, PropertyHolder {
     return OptionalConfig.of(NODE_GROUP_BIND_ADDRESS, groupBindAddress);
   }
 
-  public OptionalConfig<Path> getMetadataDir() {
+  public OptionalConfig<RawPath> getMetadataDir() {
     return OptionalConfig.of(NODE_METADATA_DIR, metadataDir);
   }
 
-  public OptionalConfig<Path> getLogDir() {
+  public OptionalConfig<RawPath> getLogDir() {
     return OptionalConfig.of(NODE_LOG_DIR, logDir);
   }
 
-  public OptionalConfig<Path> getBackupDir() {
+  public OptionalConfig<RawPath> getBackupDir() {
     return OptionalConfig.of(NODE_BACKUP_DIR, backupDir);
   }
 
-  public OptionalConfig<Path> getSecurityDir() {
+  public OptionalConfig<RawPath> getSecurityDir() {
     return OptionalConfig.of(SECURITY_DIR, securityDir);
   }
 
-  public OptionalConfig<Path> getSecurityAuditLogDir() {
+  public OptionalConfig<RawPath> getSecurityAuditLogDir() {
     return OptionalConfig.of(SECURITY_AUDIT_LOG_DIR, securityAuditLogDir);
   }
 
-  public OptionalConfig<Map<String, Path>> getDataDirs() {
+  public OptionalConfig<Map<String, RawPath>> getDataDirs() {
     return OptionalConfig.of(DATA_DIRS, dataDirs);
   }
 
@@ -177,27 +176,27 @@ public class Node implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public Node setMetadataDir(Path metadataDir) {
+  public Node setMetadataDir(RawPath metadataDir) {
     this.metadataDir = metadataDir;
     return this;
   }
 
-  public Node setLogDir(Path logDir) {
+  public Node setLogDir(RawPath logDir) {
     this.logDir = logDir;
     return this;
   }
 
-  public Node setBackupDir(Path backupDir) {
+  public Node setBackupDir(RawPath backupDir) {
     this.backupDir = backupDir;
     return this;
   }
 
-  public Node setSecurityDir(Path securityDir) {
+  public Node setSecurityDir(RawPath securityDir) {
     this.securityDir = securityDir;
     return this;
   }
 
-  public Node setSecurityAuditLogDir(Path securityAuditLogDir) {
+  public Node setSecurityAuditLogDir(RawPath securityAuditLogDir) {
     this.securityAuditLogDir = securityAuditLogDir;
     return this;
   }
@@ -288,19 +287,19 @@ public class Node implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public Node putDataDir(String name, Path path) {
+  public Node putDataDir(String name, RawPath path) {
     return putDataDirs(singletonMap(name, path));
   }
 
-  public Node putDataDirs(Map<String, Path> dataDirs) {
+  public Node putDataDirs(Map<String, RawPath> dataDirs) {
     if (this.dataDirs == null) {
-      setDataDirs(Optional.ofNullable(DATA_DIRS.<Map<String, Path>>getDefaultValue()).orElse(emptyMap()));
+      setDataDirs(Optional.ofNullable(DATA_DIRS.<Map<String, RawPath>>getDefaultValue()).orElse(emptyMap()));
     }
     this.dataDirs.putAll(dataDirs);
     return this;
   }
 
-  public Node setDataDirs(Map<String, Path> dataDirs) {
+  public Node setDataDirs(Map<String, RawPath> dataDirs) {
     this.dataDirs = dataDirs == null ? null : new ConcurrentHashMap<>(dataDirs);
     return this;
   }
@@ -308,7 +307,7 @@ public class Node implements Cloneable, PropertyHolder {
   public Node removeDataDir(String key) {
     if (this.dataDirs == null) {
       // this code is handling the removal of any default value set
-      Map<String, Path> def = DATA_DIRS.getDefaultValue();
+      Map<String, RawPath> def = DATA_DIRS.getDefaultValue();
       if (def != null && def.containsKey(key)) {
         setDataDirs(def);
       }
@@ -323,7 +322,7 @@ public class Node implements Cloneable, PropertyHolder {
     if (this.dataDirs != null) {
       setDataDirs(emptyMap());
     } else {
-      Map<String, Path> def = DATA_DIRS.getDefaultValue();
+      Map<String, RawPath> def = DATA_DIRS.getDefaultValue();
       if (def != null && !def.isEmpty()) {
         setDataDirs(emptyMap());
       }

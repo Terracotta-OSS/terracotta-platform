@@ -20,7 +20,6 @@ import org.terracotta.common.struct.Measure;
 
 import java.nio.file.Paths;
 
-import static java.io.File.separator;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -51,7 +50,7 @@ public class SetSettingTest {
     assertFalse(node.getSecurityDir().isConfigured());
     NODE_BACKUP_DIR.setProperty(node, ".");
     assertTrue(node.getBackupDir().isConfigured());
-    assertThat(node.getBackupDir().get(), is(equalTo(Paths.get("."))));
+    assertThat(node.getBackupDir().get(), is(equalTo(RawPath.valueOf("."))));
     NODE_BACKUP_DIR.setProperty(node, null);
     assertNull(node.getBackupDir().orDefault());
     assertFalse(node.getBackupDir().isConfigured());
@@ -63,7 +62,7 @@ public class SetSettingTest {
     assertFalse(node.getSecurityDir().isConfigured());
     SECURITY_DIR.setProperty(node, ".");
     assertTrue(node.getSecurityDir().isConfigured());
-    assertThat(node.getSecurityDir().get(), is(equalTo(Paths.get("."))));
+    assertThat(node.getSecurityDir().get(), is(equalTo(RawPath.valueOf("."))));
     SECURITY_DIR.setProperty(node, null);
     assertNull(node.getSecurityDir().orDefault());
     assertFalse(node.getSecurityDir().isConfigured());
@@ -75,7 +74,7 @@ public class SetSettingTest {
     assertFalse(node.getSecurityAuditLogDir().isConfigured());
     SECURITY_AUDIT_LOG_DIR.setProperty(node, ".");
     assertTrue(node.getSecurityAuditLogDir().isConfigured());
-    assertThat(node.getSecurityAuditLogDir().get(), is(equalTo(Paths.get("."))));
+    assertThat(node.getSecurityAuditLogDir().get(), is(equalTo(RawPath.valueOf("."))));
     SECURITY_AUDIT_LOG_DIR.setProperty(node, null);
     assertNull(node.getSecurityAuditLogDir().orDefault());
     assertFalse(node.getSecurityAuditLogDir().isConfigured());
@@ -145,7 +144,7 @@ public class SetSettingTest {
   public void test_setProperty_DATA_DIRS() {
     Node node = Testing.newTestNode("node1", "localhost");
     assertThat(node.getDataDirs().orDefault().size(), is(equalTo(1)));
-    assertThat(node.getDataDirs().orDefault().get("main"), is(equalTo(Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"))));
+    assertThat(node.getDataDirs().orDefault().get("main"), is(equalTo(RawPath.valueOf(Paths.get("%H", "terracotta", "user-data", "main").toString()))));
 
     DATA_DIRS.setProperty(node, null);
     assertTrue(node.getDataDirs().isConfigured());
@@ -171,18 +170,26 @@ public class SetSettingTest {
     node = Testing.newTestNode("node1", "localhost");
     DATA_DIRS.setProperty(node, "main", "foo/bar");
     assertThat(node.getDataDirs().orDefault().size(), is(equalTo(1)));
-    assertThat(node.getDataDirs().orDefault().get("main"), is(equalTo(Paths.get("foo/bar"))));
+    assertThat(node.getDataDirs().orDefault().get("main"), is(equalTo(RawPath.valueOf("foo/bar"))));
 
     node = Testing.newTestNode("node1", "localhost");
     DATA_DIRS.setProperty(node, null, "main:foo/bar");
     assertThat(node.getDataDirs().orDefault().size(), is(equalTo(1)));
-    assertThat(node.getDataDirs().orDefault().get("main"), is(equalTo(Paths.get("foo/bar"))));
+    assertThat(node.getDataDirs().orDefault().get("main"), is(equalTo(RawPath.valueOf("foo/bar"))));
 
+    // linux mapping
     node = Testing.newTestNode("node1", "localhost");
     DATA_DIRS.setProperty(node, null, "main:foo/bar,second:foo/baz");
     assertThat(node.getDataDirs().orDefault().size(), is(equalTo(2)));
-    assertThat(node.getDataDirs().orDefault().get("main"), is(equalTo(Paths.get("foo/bar"))));
-    assertThat(node.getDataDirs().orDefault().get("second"), is(equalTo(Paths.get("foo/baz"))));
+    assertThat(node.getDataDirs().orDefault().get("main"), is(equalTo(RawPath.valueOf("foo/bar"))));
+    assertThat(node.getDataDirs().orDefault().get("second"), is(equalTo(RawPath.valueOf("foo/baz"))));
+
+    // win mapping
+    node = Testing.newTestNode("node1", "localhost");
+    DATA_DIRS.setProperty(node, null, "main:foo\\bar,second:foo\\baz");
+    assertThat(node.getDataDirs().orDefault().size(), is(equalTo(2)));
+    assertThat(node.getDataDirs().orDefault().get("main"), is(equalTo(RawPath.valueOf("foo\\bar"))));
+    assertThat(node.getDataDirs().orDefault().get("second"), is(equalTo(RawPath.valueOf("foo\\baz"))));
   }
 
   @Test

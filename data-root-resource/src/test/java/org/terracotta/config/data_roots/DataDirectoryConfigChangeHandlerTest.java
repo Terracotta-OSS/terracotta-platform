@@ -19,6 +19,7 @@ import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
@@ -49,7 +50,7 @@ public class DataDirectoryConfigChangeHandlerTest {
     dataDirectoryConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
 
     assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().orDefault().entrySet(), Matchers.hasSize(1));
-    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().orDefault(), hasEntry("new-root", Paths.get("path/to/data/root")));
+    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().orDefault(), hasEntry("new-root", RawPath.valueOf("path/to/data/root")));
   }
 
   @Test

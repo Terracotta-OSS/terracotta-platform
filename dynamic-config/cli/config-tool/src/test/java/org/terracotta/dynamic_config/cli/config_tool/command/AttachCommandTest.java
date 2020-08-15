@@ -22,12 +22,12 @@ import org.mockito.Captor;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static java.net.InetSocketAddress.createUnresolved;
@@ -51,13 +51,16 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   Node node0 = Testing.newTestNode("node0", "localhost", 9410)
-      .putDataDir("cache", Paths.get("/data/cache1"));
+      .unsetDataDirs()
+      .putDataDir("cache", RawPath.valueOf("/data/cache1"));
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9411)
-      .putDataDir("cache", Paths.get("/data/cache2"));
+      .unsetDataDirs()
+      .putDataDir("cache", RawPath.valueOf("/data/cache2"));
 
   Node node2 = Testing.newTestNode("node2", "localhost", 9412)
-      .putDataDir("cache", Paths.get("/data/cache3"));
+      .unsetDataDirs()
+      .putDataDir("cache", RawPath.valueOf("/data/cache3"));
 
   NodeContext nodeContext0 = new NodeContext(
       Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNode(node0)),

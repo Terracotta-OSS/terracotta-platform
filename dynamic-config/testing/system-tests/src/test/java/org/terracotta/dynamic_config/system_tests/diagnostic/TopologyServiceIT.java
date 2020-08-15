@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
@@ -25,7 +26,6 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.equalTo;
@@ -47,7 +47,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
     config = copyConfigProperty("/config-property-files/single-stripe.properties");
     cluster = new ClusterFactory().create(Props.load(config));
     startNode(1, 1,
-        "--config-dir", getNodePath(stripeId, nodeId).resolve("config").toString(),
+        "--config-dir", getNodePath(stripeId, nodeId).append("/config").toString(),
         "-f", config.toString()
     );
   }
@@ -63,10 +63,11 @@ public class TopologyServiceIT extends DynamicConfigIT {
       assertThat(pendingCluster, is(equalTo(cluster)));
       assertThat(pendingCluster, is(equalTo(Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node-1-1", "localhost", getNodePort())
           .setGroupPort(getNodeGroupPort(1, 1))
-          .setMetadataDir(Paths.get("metadata", "stripe1"))
-          .setLogDir(Paths.get("logs", "stripe1"))
-          .setBackupDir(Paths.get("backup", "stripe1"))
-          .putDataDir("main", Paths.get("user-data", "main", "stripe1"))
+          .setMetadataDir(RawPath.valueOf("metadata/stripe1"))
+          .setLogDir(RawPath.valueOf("logs/stripe1"))
+          .setBackupDir(RawPath.valueOf("backup/stripe1"))
+          .unsetDataDirs()
+          .putDataDir("main", RawPath.valueOf("user-data/main/stripe1"))
       ))
           .setClientLeaseDuration(20, SECONDS)
           .setFailoverPriority(availability()))));

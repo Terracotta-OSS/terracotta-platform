@@ -228,10 +228,10 @@ public class NodeStartupIT extends DynamicConfigIT {
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
         "--failover-priority", "availability",
         "--hostname", "localhost",
-        "--log-dir", getNodePath(1, 1).resolve("logs").toString(),
-        "--backup-dir", getNodePath(1, 1).resolve("backup").toString(),
-        "--metadata-dir", getNodePath(1, 1).resolve("metadata").toString(),
-        "--data-dirs", "main:" + getNodePath(1, 1).resolve("data-dir").toString()
+        "--log-dir", getNodePath(1, 1).append("/logs").toString(),
+        "--backup-dir", getNodePath(1, 1).append("/backup").toString(),
+        "--metadata-dir", getNodePath(1, 1).append("/metadata").toString(),
+        "--data-dirs", "main:" + getNodePath(1, 1).append("/data-dir").toString()
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {

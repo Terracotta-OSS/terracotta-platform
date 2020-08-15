@@ -27,14 +27,13 @@ import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
 import org.terracotta.data.config.DataRootMapping;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.lease.service.config.LeaseConfigurationParser;
 import org.terracotta.lease.service.config.LeaseElement;
 import org.terracotta.offheapresource.OffHeapResourceConfigurationParser;
 import org.terracotta.offheapresource.config.ResourceType;
 import org.w3c.dom.Element;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -87,11 +86,11 @@ public class CommonMapper {
         .findAny());
   }
 
-  public Optional<Map<String, Path>> toDataDirs(Map<Class<?>, List<Object>> plugins, Predicate<DataRootMapping> filter) {
+  public Optional<Map<String, RawPath>> toDataDirs(Map<Class<?>, List<Object>> plugins, Predicate<DataRootMapping> filter) {
     return Optional.ofNullable(plugins.get(DataRootMapping.class)).map(list -> list.stream()
         .map(DataRootMapping.class::cast)
         .filter(filter)
-        .collect(toMap(DataRootMapping::getName, mapping -> Paths.get(mapping.getValue()))));
+        .collect(toMap(DataRootMapping::getName, mapping -> RawPath.valueOf(mapping.getValue()))));
   }
 
   public Optional<Map<String, Measure<MemoryUnit>>> toOffheapResources(Map<Class<?>, List<Object>> plugins) {
@@ -172,7 +171,7 @@ public class CommonMapper {
     }
   }
 
-  public Optional<Map.Entry<String, Path>> toMetadataDir(Map<Class<?>, List<Object>> plugins) {
+  public Optional<Map.Entry<String, RawPath>> toMetadataDir(Map<Class<?>, List<Object>> plugins) {
     // First try to find a deprecated service tag "<persistence:platform-persistence data-directory-id="root1"/>"
     // that will give us the ID of the dataroot to use for platform persistence
     return toDataDirs(plugins, DataRootMapping::isUseForPlatform).flatMap(map -> map.entrySet().stream().findAny());

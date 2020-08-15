@@ -32,11 +32,11 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
         "--group-bind-address", "::",
         "--port", String.valueOf(getNodePort(stripeId, nodeId)),
         "--group-port", String.valueOf(getNodeGroupPort(stripeId, nodeId)),
-        "--log-dir", getNodePath(stripeId, nodeId).resolve("logs").toString(),
-        "--backup-dir", getNodePath(stripeId, nodeId).resolve("backup").toString(),
-        "--metadata-dir", getNodePath(stripeId, nodeId).resolve("metadata").toString(),
-        "--config-dir", getNodePath(stripeId, nodeId).resolve("config").toString(),
-        "--data-dirs", "main:" + getNodePath(stripeId, nodeId).resolve("data-dir")
+        "--log-dir", getNodePath(stripeId, nodeId).append("/logs").toString(),
+        "--backup-dir", getNodePath(stripeId, nodeId).append("/backup").toString(),
+        "--metadata-dir", getNodePath(stripeId, nodeId).append("/metadata").toString(),
+        "--config-dir", getNodePath(stripeId, nodeId).append("/config").toString(),
+        "--data-dirs", "main:" + getNodePath(stripeId, nodeId).append("/data-dir")
     );
   }
 

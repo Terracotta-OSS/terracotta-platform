@@ -16,6 +16,7 @@
 package org.terracotta.config.data_roots;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -40,7 +41,7 @@ public class DataRootsDynamicConfigExtension implements DynamicConfigExtension {
 
     NodeContext nodeContext = topologyService.getRuntimeNodeContext();
     Path nodeMetadataDir = nodeContext.getNode().getMetadataDir().orDefault();
-    Map<String, Path> dataDirs = nodeContext.getNode().getDataDirs().orDefault();
+    Map<String, RawPath> dataDirs = nodeContext.getNode().getDataDirs().orDefault();
     DataDirectoriesConfigImpl dataDirectoriesConfig = new DataDirectoriesConfigImpl(parameterSubstitutor, pathResolver, nodeMetadataDir, dataDirs);
     configChangeHandlerManager.set(Setting.DATA_DIRS, new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, parameterSubstitutor, pathResolver));
 

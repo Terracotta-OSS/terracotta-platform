@@ -19,6 +19,7 @@ import org.terracotta.config.Server;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.conversion.AbstractTcConfigMapper;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.CommonMapper;
@@ -28,7 +29,6 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +64,7 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
           .setBindAddress(commonMapper.moreRestrictive(server.getTsaPort().getBind(), server.getBind()))
           .setGroupPort(server.getTsaGroupPort().getValue())
           .setGroupBindAddress(commonMapper.moreRestrictive(server.getTsaGroupPort().getBind(), server.getBind()))
-          .setLogDir(Paths.get(server.getLogs()))
+          .setLogDir(RawPath.valueOf(server.getLogs()))
           .setTcProperties(commonMapper.toProperties(tcConfig).orElse(emptyMap()))
           .setMetadataDir(commonMapper.toMetadataDir(xmlPlugins).map(Map.Entry::getValue).orElse(null))
           .setDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true).orElse(emptyMap()))
