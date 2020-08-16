@@ -65,6 +65,7 @@ public class PathTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void test_buggy_path_mapping_v1() throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper().registerModule(new TerracottaJsonModuleV1());
 

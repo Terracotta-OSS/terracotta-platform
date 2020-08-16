@@ -18,8 +18,6 @@ package org.terracotta.dynamic_config.server.configuration.nomad;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1;
-import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
@@ -83,7 +81,7 @@ public class NomadServerFactory {
     // do not use pretty() or it will mess up the EOL and sanskrit hashes. It is also harder to keep backward compat with that
     ObjectMapper objectMapper = objectMapperFactory.create();
 
-    ObjectMapper objectMapperV1 = objectMapperFactory.withModules(new DynamicConfigModelJsonModuleV1(), new DynamicConfigApiJsonModuleV1()).create();
+    ObjectMapper objectMapperV1 = createDeprecatedV1Mapper();
 
     ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.versioned(objectMapper, Version.CURRENT.getValue())
         .withVersions(objectMapperV1, "", Version.V1.getValue())
@@ -157,6 +155,13 @@ public class NomadServerFactory {
     }
 
     return nomadServer;
+  }
+
+  @SuppressWarnings("deprecation")
+  private ObjectMapper createDeprecatedV1Mapper() {
+    return objectMapperFactory.withModules(
+        new org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1(),
+        new org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1()).create();
   }
 
   private void upgrade(InitialConfigStorage configStorage, NomadServer<NodeContext> nomadServer, long currentVersion) throws ConfigStorageException {

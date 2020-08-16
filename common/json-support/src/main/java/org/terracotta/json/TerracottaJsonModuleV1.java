@@ -27,7 +27,9 @@ import java.nio.file.Paths;
 
 /**
  * @author Mathieu Carbou
+ * @deprecated DO NOT USE THIS MAPPER. It is kept as reference about what was used in Fix 1.
  */
+@Deprecated
 public class TerracottaJsonModuleV1 extends SimpleModule {
   private static final long serialVersionUID = 1L;
 
