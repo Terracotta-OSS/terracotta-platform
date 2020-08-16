@@ -6,11 +6,26 @@
         "nodes": [
           {
             "dataDirs": {
-              "main": "%H/terracotta/default-node1/user-data"
+              "main": [
+                "%H",
+                "terracotta",
+                "default-node1",
+                "user-data"
+              ]
             },
             "hostname": "localhost",
-            "logDir": "%H/terracotta/default-node1/logs",
-            "metadataDir": "%H/terracotta/default-node1/metadata",
+            "logDir": [
+              "%H",
+              "terracotta",
+              "default-node1",
+              "logs"
+            ],
+            "metadataDir": [
+              "%H",
+              "terracotta",
+              "default-node1",
+              "metadata"
+            ],
             "name": "default-node1"
           }
         ]

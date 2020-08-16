@@ -55,7 +55,7 @@ public class DiagnosticIT extends AbstractSingleTest {
         EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
         Diagnostics diagnostics = ref.fetchEntity(null);
         String dump = diagnostics.getClusterState();
-//        System.out.println(dump);
+        System.out.println(dump);
         try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
           if (lines.allMatch(line -> {
             boolean match = containsString(line).matches(dump);
