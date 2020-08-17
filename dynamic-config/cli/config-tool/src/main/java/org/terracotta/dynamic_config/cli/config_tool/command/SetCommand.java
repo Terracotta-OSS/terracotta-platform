@@ -56,7 +56,7 @@ public class SetCommand extends ConfigurationMutationCommand {
         .orElse(null);
 
     if (licenseFile != null) {
-      if (!Files.exists(licenseFile)) {
+      if (!licenseFile.toFile().exists()) {
         throw new ParameterException("License file not found: " + licenseFile);
       }
 

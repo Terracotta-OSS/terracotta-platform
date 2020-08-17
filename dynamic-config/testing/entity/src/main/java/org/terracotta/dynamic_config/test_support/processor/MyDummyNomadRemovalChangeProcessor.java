@@ -128,7 +128,7 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
 
   private Path path() throws IOException {
     final Path directory = parameterSubstitutor.substitute(pathResolver.resolve(topologyService.getUpcomingNodeContext().getNode().getDataDirs().orDefault().get("main"))).normalize();
-    if (!Files.exists(directory)) {
+    if (!directory.toFile().exists()) {
       Files.createDirectories(directory);
     } else {
       if (!Files.isDirectory(directory)) {

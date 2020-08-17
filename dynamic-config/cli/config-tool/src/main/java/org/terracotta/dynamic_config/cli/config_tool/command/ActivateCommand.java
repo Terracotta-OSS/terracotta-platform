@@ -77,7 +77,7 @@ public class ActivateCommand extends RemoteCommand {
       throw new IllegalArgumentException("A node must be supplied for a restricted activation");
     }
 
-    if (licenseFile != null && !Files.exists(licenseFile)) {
+    if (licenseFile != null && !licenseFile.toFile().exists()) {
       throw new ParameterException("License file not found: " + licenseFile);
     }
 

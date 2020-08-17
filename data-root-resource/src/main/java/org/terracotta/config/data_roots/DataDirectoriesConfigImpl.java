@@ -237,7 +237,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   }
 
   void ensureDirectory(Path directory) throws IOException {
-    if (!Files.exists(directory)) {
+    if (!directory.toFile().exists()) {
       Files.createDirectories(directory);
     } else {
       if (!Files.isDirectory(directory)) {

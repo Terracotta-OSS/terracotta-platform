@@ -63,7 +63,7 @@ public class ExportCommand extends RemoteCommand {
 
   @Override
   public void validate() {
-    if (outputFile != null && Files.exists(outputFile) && !Files.isRegularFile(outputFile)) {
+    if (outputFile != null && outputFile.toFile().exists() && !Files.isRegularFile(outputFile)) {
       throw new IllegalArgumentException(outputFile + " is not a file");
     }
     validateAddress(node);
@@ -79,12 +79,12 @@ public class ExportCommand extends RemoteCommand {
 
     } else {
       try {
-        if (Files.exists(outputFile)) {
+        if (outputFile.toFile().exists()) {
           logger.warn(outputFile + " already exists. Replacing this file.");
         } else {
           // try to create the parent directories
           Path dir = outputFile.toAbsolutePath().getParent();
-          if (dir != null && !Files.exists(dir)) {
+          if (dir != null && !dir.toFile().exists()) {
             Files.createDirectories(dir);
           }
         }
