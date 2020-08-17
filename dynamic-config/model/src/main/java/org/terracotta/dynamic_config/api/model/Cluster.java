@@ -30,6 +30,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Properties;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
@@ -43,6 +45,8 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.IntStream.rangeClosed;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.of;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
@@ -55,6 +59,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST
 public class Cluster implements Cloneable, PropertyHolder {
   private List<Stripe> stripes;
 
+  private String uid;
   private String name;
   private LockContext lockContext;
   private Measure<TimeUnit> clientReconnectWindow;
@@ -81,6 +86,16 @@ public class Cluster implements Cloneable, PropertyHolder {
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public String getUID() {
+    return uid;
+  }
+
+  public Cluster setUID(String uid) {
+    this.uid = requireNonNull(uid);
+    return this;
   }
 
   public OptionalConfig<String> getSecurityAuthc() {
@@ -252,6 +267,7 @@ public class Cluster implements Cloneable, PropertyHolder {
     Cluster that = (Cluster) o;
     return Objects.equals(stripes, that.stripes) &&
         Objects.equals(name, that.name) &&
+        Objects.equals(uid, that.uid) &&
         Objects.equals(lockContext, that.lockContext) &&
         Objects.equals(securitySslTls, that.securitySslTls) &&
         Objects.equals(securityWhitelist, that.securityWhitelist) &&
@@ -265,7 +281,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   @Override
   public int hashCode() {
     return Objects.hash(
-        stripes, name, securityAuthc, securitySslTls, securityWhitelist,
+        stripes, name, securityAuthc, securitySslTls, securityWhitelist, uid,
         failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, lockContext
     );
   }
@@ -274,6 +290,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   public String toString() {
     return "Cluster{" +
         "name='" + name + '\'' +
+        ", uid='" + uid + '\'' +
         ", lockContext='" + lockContext + '\'' +
         ", securityAuthc='" + securityAuthc + '\'' +
         ", securitySslTls=" + securitySslTls +
@@ -318,6 +335,7 @@ public class Cluster implements Cloneable, PropertyHolder {
     clone.failoverPriority = this.failoverPriority;
     clone.lockContext = this.lockContext;
     clone.name = this.name;
+    clone.uid = this.uid;
     clone.offheapResources = this.offheapResources == null ? null : new ConcurrentHashMap<>(this.offheapResources);
     clone.securityAuthc = this.securityAuthc;
     clone.securitySslTls = this.securitySslTls;
@@ -431,7 +449,7 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   @Override
   public Stream<? extends PropertyHolder> descendants() {
-    return Stream.concat(stripes.stream(), stripes.stream().flatMap(Stripe::descendants));
+    return concat(stripes.stream(), stripes.stream().flatMap(Stripe::descendants));
   }
 
   public Collection<String> getDataDirNames() {
@@ -450,5 +468,25 @@ public class Cluster implements Cloneable, PropertyHolder {
   public Cluster setConfigurationLockContext(LockContext lockContext) {
     this.lockContext = lockContext;
     return this;
+  }
+
+  /**
+   * Generate a new UID that is not yet used within this cluster
+   */
+  public String newUID() {
+    Set<String> uuids = concat(of(this), descendants()).map(PropertyHolder::getUID).filter(Objects::nonNull).collect(toSet());
+    String uuid;
+    while (uuids.contains(uuid = UID.newUID())) ;
+    return uuid;
+  }
+
+  /**
+   * Generate a new UID that is not yet used within this cluster and which randomness is controlled
+   */
+  public String newUID(Random random) {
+    Set<String> uuids = concat(of(this), descendants()).map(PropertyHolder::getUID).filter(Objects::nonNull).collect(toSet());
+    String uuid;
+    while (uuids.contains(uuid = UID.newUID(random))) ;
+    return uuid;
   }
 }

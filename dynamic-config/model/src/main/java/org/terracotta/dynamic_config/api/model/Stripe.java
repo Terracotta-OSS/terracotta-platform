@@ -38,6 +38,8 @@ import static java.util.stream.Collectors.toList;
 public class Stripe implements Cloneable, PropertyHolder {
 
   private List<Node> nodes = new CopyOnWriteArrayList<>();
+
+  private String uid;
   private String name;
 
   public List<Node> getNodes() {
@@ -60,23 +62,35 @@ public class Stripe implements Cloneable, PropertyHolder {
   }
 
   @Override
+  public String getUID() {
+    return uid;
+  }
+
+  public Stripe setUID(String uid) {
+    this.uid = requireNonNull(uid);
+    return this;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Stripe stripe = (Stripe) o;
     return nodes.equals(stripe.nodes)
-        && Objects.equals(name, stripe.name);
+        && Objects.equals(name, stripe.name)
+        && Objects.equals(uid, stripe.uid);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodes, name);
+    return Objects.hash(nodes, name, uid);
   }
 
   @Override
   public String toString() {
     return "Stripe{" +
         "name='" + name + '\'' +
+        ", uid=" + uid +
         ", nodes=" + nodes +
         '}';
   }
@@ -114,6 +128,7 @@ public class Stripe implements Cloneable, PropertyHolder {
     Stripe copy = new Stripe();
     copy.nodes = this.nodes.stream().map(Node::clone).collect(toCollection(CopyOnWriteArrayList::new));
     copy.name = this.name;
+    copy.uid = this.uid;
     return copy;
   }
 

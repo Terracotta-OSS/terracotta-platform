@@ -386,6 +386,11 @@ public class ConfigConversionIT {
       protected boolean matchesSafely(Path path) {
         this.path = path;
         this.props = Props.load(path);
+        props.entrySet().forEach(e-> {
+          if(e.getKey().toString().endsWith("-uid")) {
+            e.setValue("<uid>");
+          }
+        });
         return props.equals(expectedProps);
       }
 

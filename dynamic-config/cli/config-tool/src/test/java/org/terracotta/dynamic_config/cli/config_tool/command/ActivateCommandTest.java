@@ -22,7 +22,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
@@ -56,6 +55,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.dynamic_config.cli.command.Injector.inject;
 import static org.terracotta.nomad.messages.AcceptRejectResponse.accept;
 import static org.terracotta.nomad.messages.AcceptRejectResponse.reject;
@@ -70,12 +71,12 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class ActivateCommandTest extends BaseTest {
 
   private Path config;
-  private final Cluster cluster = Testing.newTestCluster(
+  private final Cluster cluster = newTestCluster(
       "my-cluster",
-      new Stripe().setName("stripe1").addNode(
+      newTestStripe("stripe1").addNode(
           Testing.newTestNode("node1", "localhost", 9411)
       ),
-      new Stripe().setName("stripe2").addNodes(
+      newTestStripe("stripe2", "s-uid2").addNodes(
           Testing.newTestNode("node2", "localhost", 9421),
           Testing.newTestNode("node3", "localhost", 9422)
       ));
@@ -85,6 +86,8 @@ public class ActivateCommandTest extends BaseTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
+
+    Testing.replaceUIDs(cluster);
     config = Paths.get(getClass().getResource("/my-cluster.properties").toURI());
 
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));

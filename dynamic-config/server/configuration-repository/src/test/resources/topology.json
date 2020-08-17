@@ -11,13 +11,16 @@
             "hostname": "localhost",
             "logDir": "%H/terracotta/default-node1/logs",
             "metadataDir": "%H/terracotta/default-node1/metadata",
-            "name": "default-node1"
+            "name": "default-node1",
+            "uid": "uid-1-1"
           }
-        ]
+        ],
+        "uid": "s-uid-1"
       }
     ],
     "failoverPriority": "availability",
-    "name": "tc-cluster"
+    "name": "tc-cluster",
+    "uid": "c-uid"
   },
   "nodeName": "default-node1",
   "stripeId": 1,

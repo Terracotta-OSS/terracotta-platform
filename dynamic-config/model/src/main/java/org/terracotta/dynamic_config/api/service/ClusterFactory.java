@@ -103,12 +103,12 @@ public class ClusterFactory {
         String.format(
             "%sRead the following parameters: %s%sAdded the following defaults: %s",
             lineSeparator(),
-            toDisplayParams("--", paramValueMap, parameterSubstitutor),
+            toDisplayParams("--", paramValueMap),
             lineSeparator(),
             toDisplayParams("--", defaultsAdded.stream()
                     .filter(configuration -> configuration.getValue().isPresent())
-                    .collect(toMap(Configuration::getSetting, cfg -> cfg.getValue().get())),
-                parameterSubstitutor)
+                    .collect(toMap(Configuration::getSetting, cfg -> cfg.getValue().get()))
+            )
         )
     );
 
@@ -120,12 +120,12 @@ public class ClusterFactory {
     return cluster;
   }
 
-  private String toDisplayParams(String prefix, Map<Setting, String> supplied, IParameterSubstitutor parameterSubstitutor) {
+  private String toDisplayParams(String prefix, Map<Setting, String> supplied) {
     String suppliedParameters = supplied.entrySet()
         .stream()
         .filter(e -> e.getValue() != null)
         .sorted(comparingByKey())
-        .map(entry -> prefix + entry.getKey() + "=" + parameterSubstitutor.substitute(entry.getValue()))
+        .map(entry -> prefix + entry.getKey() + "=" + entry.getValue())
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));
     if (suppliedParameters.trim().isEmpty()) {
       suppliedParameters = "[]";

@@ -464,9 +464,18 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
         throw new RuntimeException(e);
       }
     }
-    return stripes.stream().reduce((result, stripe) -> result
+    final Cluster cluster = stripes.stream().reduce((result, stripe) -> result
         .addStripe(stripe.getSingleStripe().get().clone())) // getSingleStripe() because conversion of xml -> model is for 1 stripe only
         .orElseThrow(() -> new RuntimeException("No server specified."))
         .setName(clusterName);
+
+    // add UIDs
+    cluster.setUID(cluster.newUID());
+    cluster.getStripes().forEach(stripe -> {
+      stripe.setUID(cluster.newUID());
+      stripe.getNodes().forEach(node -> node.setUID(cluster.newUID()));
+    });
+
+    return cluster;
   }
 }

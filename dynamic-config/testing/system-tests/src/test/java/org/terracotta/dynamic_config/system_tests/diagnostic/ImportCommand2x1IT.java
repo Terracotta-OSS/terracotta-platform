@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Path;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -36,7 +37,17 @@ public class ImportCommand2x1IT extends DynamicConfigIT {
     Path path = copyConfigProperty("/config-property-files/import2x1.properties");
     invokeConfigTool("import", "-f", path.toString());
     TreeMap<Object, Object> after = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true));
+
     TreeMap<Object, Object> expected = new TreeMap<>(Props.load(path));
+    String[] uids = {
+        "cluster-uid",
+        "stripe.1.stripe-uid",
+        "stripe.2.stripe-uid",
+        "stripe.1.node.1.node-uid",
+        "stripe.2.node.1.node-uid"
+    };
+    Stream.of(uids).forEach(prop -> expected.put(prop, after.get(prop)));
+
     assertThat(after.toString(), after, is(equalTo(expected)));
     assertThat(before, is(not(equalTo(expected))));
   }

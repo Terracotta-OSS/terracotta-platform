@@ -98,8 +98,11 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
+    String exportPath = tmpDir.getRoot().resolve("export.properties").toAbsolutePath().toString();
+    invokeConfigTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportPath);
+
     assertThat(
-        invokeConfigTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
+        invokeConfigTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportPath),
         allOf(containsOutput("No license installed"), containsOutput("came back up")));
     waitForPassive(1, 2);
 

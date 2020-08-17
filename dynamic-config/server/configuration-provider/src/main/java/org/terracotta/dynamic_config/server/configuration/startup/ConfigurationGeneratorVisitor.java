@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -131,6 +132,23 @@ public class ConfigurationGeneratorVisitor {
     if (nodeContext.getCluster().getStripeCount() > 1) {
       throw new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster");
     }
+
+    // IMPORTANT: UID
+    // When we start with --auto-activate, the node can be started with a topology containing a stripe and several nodes.
+    // If it is the case, the node will start, become either active or will try to join an existing active.
+    // To be able to sync with this active, the topology (and consequently the UIDs) need to be generated equally
+    // So this special case of starting a server will require to rewrite the generated UIDs when parsing the CLI or config file,
+    // and this generation will be done with a controlled random.
+    // Note: UIDs cannot be given from the CLI, they are system generated settings.
+    Cluster cluster = nodeContext.getCluster();
+    Random random = new Random(clusterName.hashCode());
+    cluster.setUID(cluster.newUID(random));
+    cluster.getStripes().forEach(stripe -> {
+      stripe.setUID(cluster.newUID(random));
+      stripe.getNodes().forEach(node -> {
+        node.setUID(cluster.newUID(random));
+      });
+    });
 
     String nodeName = nodeContext.getNodeName();
     ServerEnv.getServer().console("Starting node: {} in cluster: {}", nodeName, clusterName);

@@ -20,6 +20,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
@@ -37,9 +38,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
@@ -77,12 +80,12 @@ public class BackwardCompatibilityTest {
 
       // upgrade should have been done
       Properties after = Props.load(config.resolve("cluster").resolve("default-node1.2.properties"));
-      assertThat(after.stringPropertyNames(), hasItem("stripe.1.stripe-name"));
-      assertThat(after.stringPropertyNames(), hasItem("this.version"));
+
+      String[] newV2Props = {"stripe.1.stripe-name", "this.version", "cluster-uid", "stripe.1.stripe-uid", "stripe.1.node.1.node-uid"};
+      assertThat(after.stringPropertyNames(), hasItems(newV2Props));
 
       // check content should match v1 content plus these 2 fields
-      before.setProperty("stripe.1.stripe-name", after.getProperty("stripe.1.stripe-name"));
-      before.setProperty("this.version", "2");
+      Stream.of(newV2Props).forEach(prop -> before.setProperty(prop, after.getProperty(prop)));
       assertThat(after, is(equalTo(before)));
 
       // check topology
@@ -93,6 +96,7 @@ public class BackwardCompatibilityTest {
       assertThat(nomadServer.discover().getLatestChange().getResult(), is(equalTo(topology)));
 
       ObjectMapper objectMapper = objectMapperFactory.create();
+      Testing.replaceUIDs(topology.getCluster());
       assertThat(
           objectMapper.writeValueAsString(topology),
           objectMapper.valueToTree(topology),

@@ -7,7 +7,8 @@
           {
             "hostname": "localhost",
             "name": "foo",
-            "port": 9410
+            "port": 9410,
+            "uid": "uid-1-1"
           }
         ]
       }
@@ -30,7 +31,8 @@
         "unit": "MB",
         "type": "MEMORY"
       }
-    }
+    },
+    "uid": "c-uid"
   },
   "applicability": {
     "level": "CLUSTER"

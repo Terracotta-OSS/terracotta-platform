@@ -145,10 +145,49 @@ public enum Setting {
 
   // ==== Settings applied to a specific node only
 
+  NODE_UID(SettingName.NODE_UID,
+      of(V2),
+      false,
+      UID::newUID,
+      NODE,
+      fromNode(Node::getUID),
+      intoNode(Node::setUID),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE, HIDDEN)
+  ),
+  STRIPE_UID(SettingName.STRIPE_UID,
+      of(V2),
+      false,
+      UID::newUID,
+      STRIPE,
+      fromStripe(Stripe::getUID),
+      intoStripe(Stripe::setUID),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atLevels(CLUSTER, STRIPE),
+          when(CONFIGURING).allow(IMPORT).atLevel(STRIPE)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE, HIDDEN)
+  ),
+  CLUSTER_UID(SettingName.CLUSTER_UID,
+      of(V2),
+      false,
+      UID::newUID,
+      CLUSTER,
+      fromCluster(Cluster::getUID),
+      intoCluster(Cluster::setUID),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atLevel(CLUSTER),
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE, HIDDEN)
+  ),
   NODE_NAME(SettingName.NODE_NAME,
       of(V1, V2),
       false,
-      () -> "node-" + Uuid.generateShortUuid(),
+      () -> "node-" + UID.newUID(),
       NODE,
       fromNode(Node::getName),
       intoNode(Node::setName),
@@ -164,7 +203,7 @@ public enum Setting {
   STRIPE_NAME(SettingName.STRIPE_NAME,
       of(V2),
       false,
-      () -> "stripe-" + Uuid.generateShortUuid(),
+      () -> "stripe-" + UID.newUID(),
       STRIPE,
       fromStripe(Stripe::getName),
       intoStripe(Stripe::setName),

@@ -15,10 +15,8 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
@@ -35,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,11 +45,6 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.startsWith;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -62,37 +56,44 @@ public class ConfigurationParserTest {
 
   private final List<Configuration> added = new ArrayList<>();
 
-  @Mock public IParameterSubstitutor substitutor;
+  private Consumer<Configuration> addedListener = configuration -> {
+    if (configuration.getSetting().toString().endsWith("-uid") || configuration.getValue().get().startsWith("node-")  || configuration.getValue().get().startsWith("stripe-")) {
+      added.add(Configuration.valueOf(configuration.toString().replace(configuration.getValue().get(), "<GENERATED>")));
+    } else {
+      added.add(configuration);
+    }
+  };
 
-  @Before
-  public void setUp() {
-    lenient().when(substitutor.substitute("%h")).thenReturn("localhost");
-    lenient().when(substitutor.substitute("%c")).thenReturn("localhost.home");
-    lenient().when(substitutor.substitute("%H")).thenReturn("home");
-    lenient().when(substitutor.substitute("foo")).thenReturn("foo");
-    lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
-    lenient().when(substitutor.substitute(startsWith("stripe-"))).thenReturn("<GENERATED>");
-    lenient().when(substitutor.substitute("9410")).thenReturn("9410");
-    lenient().when(substitutor.substitute("")).thenReturn("");
-    lenient().when(substitutor.substitute("availability")).thenReturn("availability");
-  }
+  public IParameterSubstitutor substitutor = source -> {
+    if (source == null) {
+      return null;
+    }
+    switch (source) {
+      case "%h":
+        return "localhost";
+      case "%c":
+        return "localhost.home";
+      case "%H":
+        return "home";
+      default:
+        return source;
+    }
+  };
 
   @Test
   public void test_cliToProperties_1() {
     // node hostname should be resolved from default value (%h) if not given
     assertCliEquals(
         cli("failover-priority=availability"),
-        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost")))
+        Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "localhost")))
             .setFailoverPriority(availability()),
-        "stripe.1.node.1.hostname=localhost",
+        "stripe.1.node.1.name=<GENERATED>",
         "stripe.1.stripe-name=<GENERATED>",
-        "stripe.1.node.1.name=<GENERATED>"
+        "stripe.1.node.1.node-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "cluster-uid=<GENERATED>",
+        "stripe.1.node.1.hostname=localhost"
     );
-    verify(substitutor, times(1)).substitute("%h");
-    verify(substitutor, times(1)).substitute(startsWith("node-"));
-    verify(substitutor, times(1)).substitute(startsWith("stripe-"));
-    verify(substitutor, times(1)).substitute("availability");
-    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
@@ -100,16 +101,14 @@ public class ConfigurationParserTest {
     // placeholder in node hostname should be resolved eagerly
     assertCliEquals(
         cli("failover-priority=availability", "hostname=%c"),
-        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost.home")))
+        Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "localhost.home")))
             .setFailoverPriority(availability()),
+        "stripe.1.node.1.name=<GENERATED>",
         "stripe.1.stripe-name=<GENERATED>",
-        "stripe.1.node.1.name=<GENERATED>"
+        "stripe.1.node.1.node-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "cluster-uid=<GENERATED>"
     );
-    verify(substitutor).substitute("%c");
-    verify(substitutor, times(1)).substitute(startsWith("node-"));
-    verify(substitutor, times(1)).substitute(startsWith("stripe-"));
-    verify(substitutor, times(1)).substitute("availability");
-    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
@@ -117,16 +116,14 @@ public class ConfigurationParserTest {
     // node hostname without placeholder triggers no resolve
     assertCliEquals(
         cli("failover-priority=availability", "hostname=foo"),
-        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "foo")))
+        Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "foo")))
             .setFailoverPriority(availability()),
+        "stripe.1.node.1.name=<GENERATED>",
         "stripe.1.stripe-name=<GENERATED>",
-        "stripe.1.node.1.name=<GENERATED>"
+        "stripe.1.node.1.node-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "cluster-uid=<GENERATED>"
     );
-    verify(substitutor).substitute("foo");
-    verify(substitutor, times(1)).substitute(startsWith("node-"));
-    verify(substitutor, times(1)).substitute(startsWith("stripe-"));
-    verify(substitutor, times(1)).substitute("availability");
-    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
@@ -210,9 +207,11 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.hostname=foo"
         ),
-        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("real", "foo")))
+        Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("real", "foo"))),
+        "cluster-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "stripe.1.node.1.node-uid=<GENERATED>"
     );
-    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
@@ -225,9 +224,11 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost"
         ),
-        Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost")))
+        Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("node1", "localhost"))),
+        "cluster-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "stripe.1.node.1.node-uid=<GENERATED>"
     );
-    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
@@ -246,15 +247,21 @@ public class ConfigurationParserTest {
             "stripe.2.node.2.hostname=localhost"
         ),
         Testing.newTestCluster(
-            new Stripe().setName("<GENERATED>").addNodes(
+            new Stripe().addNodes(
                 Testing.newTestNode("node1", "localhost"),
                 Testing.newTestNode("node2", "localhost")),
-            new Stripe().setName("<GENERATED>").addNodes(
+            new Stripe().addNodes(
                 Testing.newTestNode("node1", "localhost"),
                 Testing.newTestNode("node2", "localhost"))
-        )
+        ),
+        "cluster-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "stripe.1.node.1.node-uid=<GENERATED>",
+        "stripe.1.node.2.node-uid=<GENERATED>",
+        "stripe.2.stripe-uid=<GENERATED>",
+        "stripe.2.node.1.node-uid=<GENERATED>",
+        "stripe.2.node.2.node-uid=<GENERATED>"
     );
-    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
@@ -268,8 +275,11 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo"
         ),
-        Testing.newTestCluster("foo", new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost"))));
-    verifyNoMoreInteractions(substitutor);
+        Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost"))),
+        "cluster-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "stripe.1.node.1.node-uid=<GENERATED>"
+    );
   }
 
   @Test
@@ -281,7 +291,6 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo"
         ), "Required setting: 'failover-priority' is missing");
-    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
@@ -316,7 +325,7 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Testing.newTestCluster("foo", new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost")
+        Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost")
             .setPort(9410)
             .setGroupPort(9430)
             .setBindAddress("0.0.0.0")
@@ -332,14 +341,16 @@ public class ConfigurationParserTest {
             .setClientLeaseDuration(150, TimeUnit.SECONDS)
             .setSecuritySslTls(false)
             .setSecurityWhitelist(false)
-            .putOffheapResource("main", 512, MemoryUnit.MB)
+            .putOffheapResource("main", 512, MemoryUnit.MB),
+        "cluster-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "stripe.1.node.1.node-uid=<GENERATED>"
     );
-    verifyNoMoreInteractions(substitutor);
   }
 
   @Test
   public void test_setting_with_default_can_be_ommitted() {
-    Cluster cluster = Testing.newTestCluster("foo", new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost")));
+    Cluster cluster = Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost")));
 
     Properties properties = cluster.toProperties(false, false, true);
     assertThat(properties.toString(), properties, not(hasKey("client-lease-duration")));
@@ -355,17 +366,27 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.hostname=localhost",
             "failover-priority=availability"
         ),
-        Testing.newTestCluster("foo", new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost"))),
+        "cluster-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "stripe.1.node.1.node-uid=<GENERATED>"
+    );
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
-  private void assertCliEquals(Map<Setting, String> params, Cluster cluster, String... addedConfigurations) {
-    Cluster built = ConfigurationParser.parseCommandLineParameters(params, substitutor, added::add);
+  private void assertCliEquals(Map<Setting, String> params, Cluster expectedCluster, String... addedConfigurations) {
+    Testing.resetRequiredUIDs(expectedCluster, "<GENERATED>");
+    Testing.resetRequiredNames(expectedCluster, "<GENERATED>");
+
+    Cluster built = ConfigurationParser.parseCommandLineParameters(params, substitutor, addedListener);
+
+    Testing.replaceRequiredUIDs(built, "<GENERATED>");
+    Testing.replaceRequiredNames(built, "<GENERATED>");
 
     // since node name is generated when not given,
     // this is a hack that will reset to null only the node names that have been generated
     String nodeName = built.getSingleNode().get().getName();
-    cluster.getSingleNode()
+    expectedCluster.getSingleNode()
         .filter(node -> node.getName().equals("<GENERATED>"))
         .ifPresent(node -> node.setName(nodeName));
 
@@ -374,18 +395,25 @@ public class ConfigurationParserTest {
         .map(Configuration::valueOf)
         .toArray(Configuration[]::new);
 
-    assertThat(built, is(equalTo(cluster)));
+    assertThat(built, is(equalTo(expectedCluster)));
     assertThat(added.stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(",\n")), added.size(), is(equalTo(configurations.length)));
     assertThat(added, hasItems(configurations));
     added.clear();
   }
 
-  private void assertConfigEquals(Properties config, Cluster cluster, String... addedConfigurations) {
-    Cluster built = ConfigurationParser.parsePropertyConfiguration(config, Version.CURRENT, added::add);
+  private void assertConfigEquals(Properties config, Cluster expectedCluster, String... addedConfigurations) {
+    Testing.resetRequiredUIDs(expectedCluster, "<GENERATED>");
+    Testing.resetRequiredNames(expectedCluster, "<GENERATED>");
+
+    Cluster built = ConfigurationParser.parsePropertyConfiguration(config, Version.CURRENT, addedListener);
+
+    Testing.replaceRequiredUIDs(built, "<GENERATED>");
+    Testing.replaceRequiredNames(built, "<GENERATED>");
+
     Configuration[] configurations = Stream.of(addedConfigurations)
         .map(Configuration::valueOf)
         .toArray(Configuration[]::new);
-    assertThat(built, is(equalTo(cluster)));
+    assertThat(built, is(equalTo(expectedCluster)));
     assertThat(added.stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(",\n")), added.size(), is(equalTo(configurations.length)));
     assertThat(added, hasItems(configurations));
     added.clear();
