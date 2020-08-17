@@ -63,11 +63,11 @@ public class ImportCommand extends RemoteCommand {
         int sum = voterCount + nodeCount;
         if (sum % 2 == 0) {
           logger.warn(lineSeparator() +
-                  "===========================================================================================" + lineSeparator() +
-                  "IMPORTANT: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes (" + nodeCount + ") " +
-                  "in stripe " + lineSeparator() + "'" + stripe.getName() + "' is an even "  + "number. " + lineSeparator() +
-                  "An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
-                  "===========================================================================================" + lineSeparator());
+              "=========================================================================================================" + lineSeparator() +
+              "IMPORTANT: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes " +
+              "(" + nodeCount + ") in stripe " + stripe.getName() + lineSeparator() +
+              "is an even number. An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
+              "=========================================================================================================" + lineSeparator());
         }
       }
     }

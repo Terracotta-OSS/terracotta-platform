@@ -28,7 +28,6 @@ import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 public class AuditListener implements DynamicConfigListener {
   private final Server server = ServerEnv.getServer();
@@ -50,12 +49,12 @@ public class AuditListener implements DynamicConfigListener {
 
   @Override
   public void onStripeAddition(Stripe addedStripe) {
-    server.audit("Attach invoked for stripe with nodes " + getNodeNames(addedStripe), new Properties());
+    server.audit("Attach invoked for stripe " + addedStripe.getName(), new Properties());
   }
 
   @Override
   public void onStripeRemoval(Stripe removedStripe) {
-    server.audit("Detach invoked for stripe with nodes " + getNodeNames(removedStripe), new Properties());
+    server.audit("Detach invoked for stripe " + removedStripe.getName(), new Properties());
   }
 
   @Override
@@ -66,9 +65,5 @@ public class AuditListener implements DynamicConfigListener {
   @Override
   public void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {
     server.audit("Nomad change " + message.getChangeUuid() + " rolled back", new Properties());
-  }
-
-  private String getNodeNames(Stripe addedStripe) {
-    return addedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(", "));
   }
 }

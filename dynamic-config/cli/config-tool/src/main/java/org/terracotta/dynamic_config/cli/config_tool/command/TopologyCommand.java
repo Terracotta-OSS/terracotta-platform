@@ -30,7 +30,9 @@ import org.terracotta.json.ObjectMapperFactory;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static java.lang.System.lineSeparator;
@@ -130,11 +132,9 @@ public abstract class TopologyCommand extends RemoteCommand {
 
     } else {
       logger.info("Sending the topology change");
-      Collection<InetSocketAddress> allOnlineSourceNodes = getAllOnlineSourceNodes();
-      if (!allOnlineSourceNodes.isEmpty()) {
-        setUpcomingCluster(allOnlineSourceNodes, result);
-      }
-      setUpcomingCluster(destinationOnlineNodes.keySet(), result);
+      Set<InetSocketAddress> allOnlineNodes = new HashSet<>(getAllOnlineSourceNodes());
+      allOnlineNodes.addAll(destinationOnlineNodes.keySet());
+      setUpcomingCluster(allOnlineNodes, result);
     }
 
     logger.info("Command successful!" + lineSeparator());
