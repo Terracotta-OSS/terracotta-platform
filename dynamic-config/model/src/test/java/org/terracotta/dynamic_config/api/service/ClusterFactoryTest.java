@@ -26,6 +26,7 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
@@ -57,12 +58,6 @@ import static org.mockito.Mockito.lenient;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -76,6 +71,50 @@ public class ClusterFactoryTest {
   @Mock public IParameterSubstitutor substitutor;
 
   ObjectMapper json = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
+
+  Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
+      Testing.newTestNode("node-1", "localhost1")
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
+      Testing.newTestNode("node-2", "localhost2")
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
+          .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
+      .setFailoverPriority(consistency(2))
+      .putOffheapResource("foo", 1, MemoryUnit.GB)
+      .putOffheapResource("bar", 2, MemoryUnit.GB);
+
+  Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
+      Testing.newTestNode("node-1", "localhost1")
+          .setPort(9410)
+          .setGroupPort(9430)
+          .setBindAddress("0.0.0.0")
+          .setGroupBindAddress("0.0.0.0")
+          .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+          .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
+      Testing.newTestNode("node-2", "localhost2")
+          .setPort(9410)
+          .setGroupPort(9430)
+          .setBindAddress("0.0.0.0")
+          .setGroupBindAddress("0.0.0.0")
+          .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+          .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
+          .setTcProperties(emptyMap()))) // specifically set the map to empty one by teh user
+      .setSecuritySslTls(false)
+      .setSecurityWhitelist(false)
+      .setClientReconnectWindow(120, TimeUnit.SECONDS)
+      .setClientLeaseDuration(150, TimeUnit.SECONDS)
+      .setFailoverPriority(consistency(2))
+      .putOffheapResource("foo", 1, MemoryUnit.GB)
+      .putOffheapResource("bar", 2, MemoryUnit.GB);
 
   @Before
   public void setUp() {
@@ -201,10 +240,10 @@ public class ClusterFactoryTest {
             .setGroupPort(9430)
             .setBindAddress("0.0.0.0")
             .setGroupBindAddress("0.0.0.0")
-            .setMetadataDir(Paths.get("%H", "terracotta", "metadata"))
-            .setLogDir(Paths.get("%H", "terracotta", "logs"))
+            .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+            .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
             .setTcProperties(emptyMap())
-            .putDataDir("main", Paths.get("%H", "terracotta", "user-data", "main"))
+            .putDataDir("main", RawPath.valueOf("%H/terracotta/user-data/main"))
         ))
             .setClientReconnectWindow(120, TimeUnit.SECONDS)
             .setFailoverPriority(availability())
@@ -265,53 +304,13 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_toProperties() {
-    Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
-        Testing.newTestNode("node-1", "localhost1")
-            .putDataDir("foo", Paths.get("%H/tc1/foo"))
-            .putDataDir("bar", Paths.get("%H/tc1/bar")),
-        Testing.newTestNode("node-2", "localhost2")
-            .putDataDir("foo", Paths.get("%H/tc2/foo"))
-            .putDataDir("bar", Paths.get("%H/tc2/bar"))
-            .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
-        .setFailoverPriority(consistency(2))
-        .putOffheapResource("foo", 1, MemoryUnit.GB)
-        .putOffheapResource("bar", 2, MemoryUnit.GB);
-
-    Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
-        Testing.newTestNode("node-1", "localhost1")
-            .setPort(NODE_PORT.getDefaultValue())
-            .setGroupPort(NODE_GROUP_PORT.getDefaultValue())
-            .setBindAddress(NODE_BIND_ADDRESS.getDefaultValue())
-            .setGroupBindAddress(NODE_GROUP_BIND_ADDRESS.getDefaultValue())
-            .setLogDir(NODE_LOG_DIR.getDefaultValue())
-            .setMetadataDir(NODE_METADATA_DIR.getDefaultValue())
-            .putDataDir("foo", Paths.get("%H/tc1/foo"))
-            .putDataDir("bar", Paths.get("%H/tc1/bar")),
-        Testing.newTestNode("node-2", "localhost2")
-            .setPort(NODE_PORT.getDefaultValue())
-            .setGroupPort(NODE_GROUP_PORT.getDefaultValue())
-            .setBindAddress(NODE_BIND_ADDRESS.getDefaultValue())
-            .setGroupBindAddress(NODE_GROUP_BIND_ADDRESS.getDefaultValue())
-            .setLogDir(NODE_LOG_DIR.getDefaultValue())
-            .setMetadataDir(NODE_METADATA_DIR.getDefaultValue())
-            .putDataDir("foo", Paths.get("%H/tc2/foo"))
-            .putDataDir("bar", Paths.get("%H/tc2/bar"))
-            .setTcProperties(emptyMap()))) // specifically set the map to empty one by teh user
-        .setSecuritySslTls(false)
-        .setSecurityWhitelist(false)
-        .setClientReconnectWindow(120, TimeUnit.SECONDS)
-        .setClientLeaseDuration(150, TimeUnit.SECONDS)
-        .setFailoverPriority(consistency(2))
-        .putOffheapResource("foo", 1, MemoryUnit.GB)
-        .putOffheapResource("bar", 2, MemoryUnit.GB);
-
     Stream.of(
-        tuple2(cluster.toProperties(false, true, true), "config_with_defaults.properties"),
+        tuple2(fixPaths(cluster.toProperties(false, true, true)), "config_with_defaults.properties"),
         tuple2(cluster.toProperties(false, false, true), "config_without_defaults.properties"),
-        tuple2(cluster.toProperties(true, true, true), "config_expanded_default.properties"),
+        tuple2(fixPaths(cluster.toProperties(true, true, true)), "config_expanded_default.properties"),
         tuple2(cluster.toProperties(true, false, true), "config_expanded_without_default.properties")
     ).forEach(rethrow(tuple -> {
-      Properties expectedProps = fixPaths(Props.load(Paths.get(getClass().getResource("/config-property-files/" + tuple.t2).toURI())));
+      Properties expectedProps = Props.load(Paths.get(getClass().getResource("/config-property-files/" + tuple.t2).toURI()));
 
       assertThat(
           "File: " + tuple.t2 + " should perhaps be:\n" + Props.toString(tuple.t1),
@@ -325,6 +324,15 @@ public class ClusterFactoryTest {
           expectedCluster,
           either(equalTo(cluster)).or(equalTo(clusterWithDefaults)));
     }));
+  }
+
+  @Test
+  public void test_parsing_expanded_values_does_not_add_defaults() throws URISyntaxException, IOException {
+    Properties expectedProps = Props.load(Paths.get(getClass().getResource("/config-property-files/config_expanded_default.properties").toURI()));
+    Cluster expectedCluster = new ClusterFactory().create(expectedProps);
+    assertThat(
+        "\nclusterWithDefaults: " + json.writeValueAsString(clusterWithDefaults) + "\nexpectedCluster:     " + json.writeValueAsString(expectedCluster),
+        expectedCluster, is(equalTo(clusterWithDefaults)));
   }
 
   @Test
@@ -389,19 +397,14 @@ public class ClusterFactoryTest {
 
   private String read(String resource) throws URISyntaxException, IOException {
     Path path = Paths.get(getClass().getResource(resource).toURI());
-    String data = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-    return isWindows() ? data.replace("\r\n", "\n").replace("\n", "\r\n").replace("/", "\\\\") : data;
+    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 
   private Properties fixPaths(Properties props) {
     if (File.separatorChar == '\\') {
-      props.entrySet().forEach(e -> e.setValue(e.getValue().toString().replace('/', '\\')));
+      props.entrySet().forEach(e -> e.setValue(e.getValue().toString().replace('\\', '/')));
     }
     return props;
-  }
-
-  private static boolean isWindows() {
-    return System.getProperty("os.name").toLowerCase().startsWith("windows");
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -424,7 +427,6 @@ public class ClusterFactoryTest {
   }
 
   private void assertCliFail(Map<Setting, String> params, String err) {
-    err = err.replace("/", File.separator); // unix/win compat'
     assertThat(
         () -> clusterFactory.create(params, substitutor),
         is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
@@ -436,7 +438,6 @@ public class ClusterFactoryTest {
   }
 
   private void assertConfigFail(Properties config, String err) {
-    err = err.replace("/", File.separator); // unix/win compat'
     assertThat(
         () -> clusterFactory.create(config),
         is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
@@ -444,7 +445,6 @@ public class ClusterFactoryTest {
 
   private static Map<Setting, String> cli(String... params) {
     return Stream.of(params)
-        .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(p -> p.split("="))
         .map(kv -> new AbstractMap.SimpleEntry<>(Setting.fromName(kv[0]), kv[1]))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -452,7 +452,6 @@ public class ClusterFactoryTest {
 
   private static Properties config(String... params) {
     return Stream.of(params)
-        .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(p -> p.split("="))
         .reduce(new Properties(), (props, kv) -> {
           props.setProperty(kv[0], kv.length == 1 ? "" : kv[1]);

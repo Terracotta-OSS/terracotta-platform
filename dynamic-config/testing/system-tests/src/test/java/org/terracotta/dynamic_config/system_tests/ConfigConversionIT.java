@@ -27,6 +27,7 @@ import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
@@ -159,8 +160,8 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getLogDir().get(), is(Paths.get("%h-logs")));
-    assertThat(cluster.getNode(1, 2).get().getLogDir().get(), is(Paths.get("%h-logs")));
+    assertThat(cluster.getNode(1, 1).get().getLogDir().get(), is(RawPath.valueOf("%h-logs")));
+    assertThat(cluster.getNode(1, 2).get().getLogDir().get(), is(RawPath.valueOf("%h-logs")));
   }
 
   @Test
@@ -316,7 +317,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getLogDir().get(), is(Paths.get("abcd")));
+    assertThat(cluster.getNode(1, 1).get().getLogDir().get(), is(RawPath.valueOf("abcd")));
   }
 
   @Test

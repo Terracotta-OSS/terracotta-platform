@@ -21,7 +21,6 @@ import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import static java.io.File.separator;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -77,7 +76,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main"),
-        containsOutput("stripe.1.node.1.data-dirs.main=user-data" + separator + "main" + separator + "stripe1-node1-data-dir"));
+        containsOutput("stripe.1.node.1.data-dirs.main=user-data/main/stripe1-node1-data-dir"));
   }
 
   @Test
@@ -86,7 +85,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.backup-dir"),
-        containsOutput("stripe.1.node.1.backup-dir=backup" + separator + "stripe1-node1-backup"));
+        containsOutput("stripe.1.node.1.backup-dir=backup/stripe1-node1-backup"));
   }
 
   @Test

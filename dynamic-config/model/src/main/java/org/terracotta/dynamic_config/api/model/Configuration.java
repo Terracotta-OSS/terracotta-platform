@@ -466,7 +466,7 @@ public class Configuration {
    *   * from must be "Cluster" or "Stripe" or "Node
    * </pre>
    */
-  private Stream<? extends PropertyHolder> findTargets(PropertyHolder from) {
+  public Stream<? extends PropertyHolder> findTargets(PropertyHolder from) {
     Stream<? extends PropertyHolder> targets;
     switch (this.level) {
 

@@ -70,16 +70,8 @@ public class NomadChangeJsonTest {
       byte[] bytes = Files.readAllBytes(Paths.get(jsonFile.toURI()));
       String json = new String(bytes, StandardCharsets.UTF_8);
 
-      if (isWindows()) {
-        json = json.replace("/", "\\\\");
-      }
-
       assertThat(jsonFile.getPath(), objectMapper.valueToTree(change).toString(), is(equalTo(objectMapper.readTree(json).toString())));
       assertThat(jsonFile.getPath(), objectMapper.readValue(json, NomadChange.class), is(equalTo(change)));
     }
-  }
-
-  private static boolean isWindows() {
-    return System.getProperty("os.name").toLowerCase().startsWith("windows");
   }
 }

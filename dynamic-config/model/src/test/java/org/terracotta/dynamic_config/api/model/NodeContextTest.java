@@ -19,7 +19,6 @@ import org.junit.Test;
 import org.terracotta.common.struct.MemoryUnit;
 
 import java.net.InetSocketAddress;
-import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -35,12 +34,12 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class NodeContextTest {
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9410)
-      .putDataDir("foo", Paths.get("%H/tc1/foo"))
-      .putDataDir("bar", Paths.get("%H/tc1/bar"));
+      .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
+      .putDataDir("bar", RawPath.valueOf("%H/tc1/bar"));
 
   Node node2 = Testing.newTestNode("node2", "localhost", 9411)
-      .putDataDir("foo", Paths.get("%H/tc2/foo"))
-      .putDataDir("bar", Paths.get("%H/tc2/bar"))
+      .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
+      .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
       .putTcProperty("server.entity.processor.threads", "64")
       .putTcProperty("topology.validate", "true");
 

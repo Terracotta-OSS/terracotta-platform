@@ -26,7 +26,9 @@ import org.terracotta.dynamic_config.api.model.nomad.Applicability;
  * This module can be added to the existing ones and will override some definitions to make the object mapper compatible with V1
  *
  * @author Mathieu Carbou
+ * @deprecated old V1 format. Do not use anymore. Here for reference and backward compatibility.
  */
+@Deprecated
 public class DynamicConfigApiJsonModuleV1 extends SimpleModule {
   private static final long serialVersionUID = 1L;
 

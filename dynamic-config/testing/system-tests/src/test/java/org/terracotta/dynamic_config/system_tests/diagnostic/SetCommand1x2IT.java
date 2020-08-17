@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import static java.io.File.separator;
 import static org.hamcrest.Matchers.allOf;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
@@ -44,11 +43,11 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void testStripe_level_setBackupDirectory() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.backup-dir=backup" + separator + "stripe-1");
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.backup-dir=backup/stripe-1");
 
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
-        allOf(containsOutput("stripe.1.node.1.backup-dir=backup" + separator + "stripe-1"), containsOutput("stripe.1.node.2.backup-dir=backup" + separator + "stripe-1")));
+        allOf(containsOutput("stripe.1.node.1.backup-dir=backup/stripe-1"), containsOutput("stripe.1.node.2.backup-dir=backup/stripe-1")));
   }
 
   @Test
@@ -62,11 +61,11 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void testCluster_setBackupDirectory() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "backup-dir=backup" + separator + "data");
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "backup-dir=backup/data");
 
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
-        containsOutput("backup-dir=backup" + separator + "data"));
+        containsOutput("backup-dir=backup/data"));
   }
 
   @Test

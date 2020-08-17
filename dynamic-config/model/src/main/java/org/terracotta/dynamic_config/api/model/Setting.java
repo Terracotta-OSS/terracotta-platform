@@ -331,7 +331,7 @@ public enum Setting {
   NODE_CONFIG_DIR(SettingName.NODE_CONFIG_DIR,
       of(V1, V2),
       false,
-      always(Paths.get("%H", "terracotta", "config")),
+      always(RawPath.valueOf(Paths.get("%H", "terracotta", "config").toString())),
       NODE,
       o -> Optional.empty(),
       noop(),
@@ -344,10 +344,10 @@ public enum Setting {
   NODE_METADATA_DIR(SettingName.NODE_METADATA_DIR,
       of(V1, V2),
       false,
-      always(Paths.get("%H", "terracotta", "metadata")),
+      always(RawPath.valueOf(Paths.get("%H", "terracotta", "metadata").toString())),
       NODE,
       fromNode(Node::getMetadataDir),
-      intoNode((node, value) -> node.setMetadataDir(Paths.get(value))),
+      intoNode((node, value) -> node.setMetadataDir(RawPath.valueOf(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING).allow(GET, SET).atAnyLevels(),
@@ -361,10 +361,10 @@ public enum Setting {
   NODE_LOG_DIR(SettingName.NODE_LOG_DIR,
       of(V1, V2),
       false,
-      always(Paths.get("%H", "terracotta", "logs")),
+      always(RawPath.valueOf(Paths.get("%H", "terracotta", "logs").toString())),
       NODE,
       fromNode(Node::getLogDir),
-      intoNode((node, value) -> node.setLogDir(Paths.get(value))),
+      intoNode((node, value) -> node.setLogDir(RawPath.valueOf(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING).allow(GET, SET).atAnyLevels(),
@@ -381,7 +381,7 @@ public enum Setting {
       always(null),
       NODE,
       fromNode(Node::getBackupDir),
-      intoNode((node, value) -> node.setBackupDir(value == null ? null : Paths.get(value))),
+      intoNode((node, value) -> node.setBackupDir(value == null ? null : RawPath.valueOf(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
@@ -541,7 +541,7 @@ public enum Setting {
       always(null),
       NODE,
       fromNode(Node::getSecurityDir),
-      intoNode((node, value) -> node.setSecurityDir(value == null ? null : Paths.get(value))),
+      intoNode((node, value) -> node.setSecurityDir(value == null ? null : RawPath.valueOf(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
@@ -557,7 +557,7 @@ public enum Setting {
       always(null),
       NODE,
       fromNode(Node::getSecurityAuditLogDir),
-      intoNode((node, value) -> node.setSecurityAuditLogDir(value == null ? null : Paths.get(value))),
+      intoNode((node, value) -> node.setSecurityAuditLogDir(value == null ? null : RawPath.valueOf(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
@@ -651,7 +651,7 @@ public enum Setting {
   DATA_DIRS(SettingName.DATA_DIRS,
       of(V1, V2),
       true,
-      always(singletonMap("main", Paths.get("%H", "terracotta", "user-data", "main"))),
+      always(singletonMap("main", RawPath.valueOf(Paths.get("%H", "terracotta", "user-data", "main").toString()))),
       NODE,
       fromNode(Node::getDataDirs),
       intoNodeMap((node, tuple) -> {
@@ -671,11 +671,11 @@ public enum Setting {
           node.setDataDirs(emptyMap());
           Stream.of(tuple.t2.split(",")).forEach(kv -> {
             int firstColon = kv.indexOf(":");
-            node.putDataDir(kv.substring(0, firstColon), Paths.get(kv.substring(firstColon + 1)));
+            node.putDataDir(kv.substring(0, firstColon), RawPath.valueOf(kv.substring(firstColon + 1)));
           });
         } else {
           // tuple.t1 != null && tuple.t2 != null
-          node.putDataDir(tuple.t1, Paths.get(tuple.t2));
+          node.putDataDir(tuple.t1, RawPath.valueOf(tuple.t2));
         }
       }),
       asList(

@@ -30,6 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+import static java.util.stream.Collectors.toMap;
+
 /**
  * Handles dynamic data-directory additions
  */
@@ -52,7 +54,7 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
       throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
 
-    Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs().orDefault();
+    Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().toPath()));
     LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
 
     String dataDirectoryName = change.getKey();

@@ -36,7 +36,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Properties;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -84,11 +83,6 @@ public class BackwardCompatibilityTest {
       // check content should match v1 content plus these 2 fields
       before.setProperty("stripe.1.stripe-name", after.getProperty("stripe.1.stripe-name"));
       before.setProperty("this.version", "2");
-      if (isWindows()) {
-        for (Map.Entry<Object, Object> entry : before.entrySet()) {
-          entry.setValue(String.valueOf(entry.getValue()).replace("/", "\\"));
-        }
-      }
       assertThat(after, is(equalTo(before)));
 
       // check topology
@@ -112,15 +106,6 @@ public class BackwardCompatibilityTest {
       throw new AssertionError(resource);
     }
     Path path = Paths.get(url.toURI());
-    String data = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-    return unwin(data);
-  }
-
-  private static String unwin(String data) {
-    return isWindows() ? data.replace("\r\n", "\n").replace("\n", "\r\n").replace("/", "\\\\") : data;
-  }
-
-  private static boolean isWindows() {
-    return System.getProperty("os.name").toLowerCase().startsWith("windows");
+    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 }

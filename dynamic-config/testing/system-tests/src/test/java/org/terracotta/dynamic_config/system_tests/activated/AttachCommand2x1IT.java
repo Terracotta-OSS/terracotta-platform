@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Test;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -37,8 +38,8 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
     return "foo";
   }
 
-  protected Path getNodePath(int stripeId, int nodeId) {
-    return Paths.get("node-" + stripeId + "-" + nodeId);
+  protected RawPath getNodePath(int stripeId, int nodeId) {
+    return RawPath.valueOf("node-" + stripeId + "-" + nodeId);
   }
 
   @Test

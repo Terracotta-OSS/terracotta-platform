@@ -24,13 +24,12 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -322,11 +321,11 @@ public class ConfigurationParserTest {
             .setGroupPort(9430)
             .setBindAddress("0.0.0.0")
             .setGroupBindAddress("0.0.0.0")
-            .setMetadataDir(Paths.get("%H", "terracotta", "metadata"))
-            .setLogDir(Paths.get("%H", "terracotta", "logs"))
+            .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+            .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
             .setLoggerOverrides(emptyMap())
             .setTcProperties(emptyMap())
-            .putDataDir("main", Paths.get("%H", "terracotta", "user-data", "main"))
+            .putDataDir("main", RawPath.valueOf("%H/terracotta/user-data/main"))
         ))
             .setClientReconnectWindow(120, TimeUnit.SECONDS)
             .setFailoverPriority(availability())
@@ -372,7 +371,6 @@ public class ConfigurationParserTest {
 
     Configuration[] configurations = Stream.of(addedConfigurations)
         .map(string -> string.replace("<GENERATED>", nodeName))
-        .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(Configuration::valueOf)
         .toArray(Configuration[]::new);
 
@@ -385,7 +383,6 @@ public class ConfigurationParserTest {
   private void assertConfigEquals(Properties config, Cluster cluster, String... addedConfigurations) {
     Cluster built = ConfigurationParser.parsePropertyConfiguration(config, Version.CURRENT, added::add);
     Configuration[] configurations = Stream.of(addedConfigurations)
-        .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(Configuration::valueOf)
         .toArray(Configuration[]::new);
     assertThat(built, is(equalTo(cluster)));
@@ -395,7 +392,6 @@ public class ConfigurationParserTest {
   }
 
   private void assertConfigFail(Properties config, String err) {
-    err = err.replace("/", File.separator); // unix/win compat'
     assertThat(
         () -> ConfigurationParser.parsePropertyConfiguration(config, Version.CURRENT, added::add),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(err)))));
@@ -403,7 +399,6 @@ public class ConfigurationParserTest {
 
   private static Map<Setting, String> cli(String... params) {
     return Stream.of(params)
-        .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(p -> p.split("="))
         .map(kv -> new AbstractMap.SimpleEntry<>(Setting.fromName(kv[0]), kv[1]))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -411,7 +406,6 @@ public class ConfigurationParserTest {
 
   private static Properties config(String... params) {
     return Stream.of(params)
-        .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(p -> p.split("="))
         .reduce(new Properties(), (props, kv) -> {
           props.setProperty(kv[0], kv.length == 1 ? "" : kv[1]);

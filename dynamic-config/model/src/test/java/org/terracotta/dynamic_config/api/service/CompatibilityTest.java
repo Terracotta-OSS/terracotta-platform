@@ -23,6 +23,7 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
@@ -44,12 +45,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Version.CURRENT;
 import static org.terracotta.dynamic_config.api.model.Version.V1;
 import static org.terracotta.dynamic_config.api.model.Version.V2;
@@ -63,23 +58,25 @@ public class CompatibilityTest {
 
   private final Cluster clusterV1 = Testing.newTestCluster("my-cluster", new Stripe().addNodes(
       Testing.newTestNode("node-1", "localhost1")
-          .setPort(NODE_PORT.getDefaultValue())
-          .setGroupPort(NODE_GROUP_PORT.getDefaultValue())
-          .setBindAddress(NODE_BIND_ADDRESS.getDefaultValue())
-          .setGroupBindAddress(NODE_GROUP_BIND_ADDRESS.getDefaultValue())
-          .setLogDir(NODE_LOG_DIR.getDefaultValue())
-          .setMetadataDir(NODE_METADATA_DIR.getDefaultValue())
-          .putDataDir("foo", Paths.get("%H/tc1/foo"))
-          .putDataDir("bar", Paths.get("%H/tc1/bar")),
+          .setPort(9410)
+          .setGroupPort(9430)
+          .setBindAddress("0.0.0.0")
+          .setGroupBindAddress("0.0.0.0")
+          .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+          .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
       Testing.newTestNode("node-2", "localhost2")
-          .setPort(NODE_PORT.getDefaultValue())
-          .setGroupPort(NODE_GROUP_PORT.getDefaultValue())
-          .setBindAddress(NODE_BIND_ADDRESS.getDefaultValue())
-          .setGroupBindAddress(NODE_GROUP_BIND_ADDRESS.getDefaultValue())
-          .setLogDir(NODE_LOG_DIR.getDefaultValue())
-          .setMetadataDir(NODE_METADATA_DIR.getDefaultValue())
-          .putDataDir("foo", Paths.get("%H/tc2/foo"))
-          .putDataDir("bar", Paths.get("%H/tc2/bar"))
+          .setPort(9410)
+          .setGroupPort(9430)
+          .setBindAddress("0.0.0.0")
+          .setGroupBindAddress("0.0.0.0")
+          .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+          .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
           .setTcProperties(emptyMap()))) // specifically set the map to empty one by teh user
       .setSecuritySslTls(false)
       .setSecurityWhitelist(false)
@@ -169,15 +166,6 @@ public class CompatibilityTest {
       throw new AssertionError(resource);
     }
     Path path = Paths.get(url.toURI());
-    String data = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-    return unwin(data);
-  }
-
-  private static String unwin(String data) {
-    return isWindows() ? data.replace("\r\n", "\n").replace("\n", "\r\n").replace("/", "\\\\") : data;
-  }
-
-  private static boolean isWindows() {
-    return System.getProperty("os.name").toLowerCase().startsWith("windows");
+    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 }

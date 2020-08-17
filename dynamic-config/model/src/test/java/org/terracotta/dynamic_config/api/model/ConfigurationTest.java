@@ -20,7 +20,6 @@ import org.hamcrest.Matcher;
 import org.junit.Test;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -830,13 +829,13 @@ public class ConfigurationTest {
     assertFalse(cluster.getSingleNode().get().getBackupDir().isConfigured());
     Configuration.valueOf("stripe.1:backup-dir=foo/bar").apply(cluster);
     assertTrue(cluster.getSingleNode().get().getBackupDir().isConfigured());
-    assertThat(cluster.getSingleNode().get().getBackupDir().get(), is(equalTo(Paths.get("foo/bar"))));
+    assertThat(cluster.getSingleNode().get().getBackupDir().get(), is(equalTo(RawPath.valueOf("foo/bar"))));
 
     // node level
     assertFalse(cluster.getSingleNode().get().getSecurityDir().isConfigured());
     Configuration.valueOf("stripe.1.node.1:security-dir=foo/bar").apply(cluster);
     assertTrue(cluster.getSingleNode().get().getSecurityDir().isConfigured());
-    assertThat(cluster.getSingleNode().get().getSecurityDir().get(), is(equalTo(Paths.get("foo/bar"))));
+    assertThat(cluster.getSingleNode().get().getSecurityDir().get(), is(equalTo(RawPath.valueOf("foo/bar"))));
 
     // unset
     Configuration.valueOf("stripe.1.node.1:security-dir=foo/bar").apply(cluster);
@@ -908,7 +907,7 @@ public class ConfigurationTest {
 
     node = Testing.newTestNode("foo", "localhost")
         .unsetDataDirs()
-        .putDataDir("second", Paths.get("."));
+        .putDataDir("second", RawPath.valueOf("."));
     assertTrue(node.getDataDirs().isConfigured());
     Configuration.valueOf("data-dirs").apply(node);
     assertTrue(node.getDataDirs().isConfigured());

@@ -18,9 +18,7 @@ package org.terracotta.dynamic_config.api.model;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
-import java.nio.file.Paths;
 
-import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -35,24 +33,24 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class NodeTest {
 
   Node node = Testing.newTestNode("node1", "localhost", 9410)
-      .putDataDir("data", Paths.get("data"))
-      .setBackupDir(Paths.get("backup"))
+      .putDataDir("data", RawPath.valueOf("data"))
+      .setBackupDir(RawPath.valueOf("backup"))
       .setBindAddress("0.0.0.0")
       .setGroupBindAddress("0.0.0.0")
       .setGroupPort(9430)
-      .setLogDir(Paths.get("log"))
-      .setMetadataDir(Paths.get("metadata"))
+      .setLogDir(RawPath.valueOf("log"))
+      .setMetadataDir(RawPath.valueOf("metadata"))
       .putTcProperty("key", "val")
-      .setSecurityAuditLogDir(Paths.get("audit"))
-      .setSecurityDir(Paths.get("sec"));
+      .setSecurityAuditLogDir(RawPath.valueOf("audit"))
+      .setSecurityDir(RawPath.valueOf("sec"));
 
   Node node3 = Testing.newTestNode("node3", "localhost", 9410)
       .setGroupPort(9430)
       .setBindAddress("0.0.0.0")
       .setGroupBindAddress("0.0.0.0")
-      .setMetadataDir(Paths.get("%H" + separator + "terracotta" + separator + "metadata"))
-      .setLogDir(Paths.get("%H" + separator + "terracotta" + separator + "logs"))
-      .putDataDir("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"));
+      .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+      .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+      .putDataDir("main", RawPath.valueOf("%H/terracotta/user-data/main"));
 
   @Test
   public void test_clone() {

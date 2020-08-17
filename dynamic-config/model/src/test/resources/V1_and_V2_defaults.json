@@ -7,8 +7,7 @@
           "bindAddress": "0.0.0.0",
           "dataDirs": {
             "bar": "%H/tc1/bar",
-            "foo": "%H/tc1/foo",
-            "main": "%H/terracotta/user-data/main"
+            "foo": "%H/tc1/foo"
           },
           "groupBindAddress": "0.0.0.0",
           "groupPort": 9430,
@@ -22,8 +21,7 @@
           "bindAddress": "0.0.0.0",
           "dataDirs": {
             "bar": "%H/tc2/bar",
-            "foo": "%H/tc2/foo",
-            "main": "%H/terracotta/user-data/main"
+            "foo": "%H/tc2/foo"
           },
           "groupBindAddress": "0.0.0.0",
           "groupPort": 9430,

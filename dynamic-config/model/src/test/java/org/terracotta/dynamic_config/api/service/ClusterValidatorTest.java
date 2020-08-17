@@ -20,12 +20,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 
 import java.util.Random;
 import java.util.stream.Stream;
 
-import static java.nio.file.Paths.get;
 import static org.terracotta.common.struct.MemoryUnit.GB;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
@@ -125,8 +125,8 @@ public class ClusterValidatorTest {
   public void testDifferingDataDirectoryNames() {
     Node node1 = newTestNode("node1", "localhost1");
     Node node2 = newTestNode("node2", "localhost2");
-    node1.putDataDir("dir-1", get("data"));
-    node2.putDataDir("dir-2", get("data"));
+    node1.putDataDir("dir-1", RawPath.valueOf("data"));
+    node2.putDataDir("dir-2", RawPath.valueOf("data"));
 
     assertClusterValidationFails("Data directory names need to match across the cluster", newTestCluster(new Stripe().setName("stripe1").addNodes(node1, node2)));
   }
@@ -135,8 +135,8 @@ public class ClusterValidatorTest {
   public void testSetSameBackupPath_ok() {
     Node node1 = newTestNode("node1", "localhost1");
     Node node2 = newTestNode("node2", "localhost2");
-    node1.setBackupDir(get("backup"));
-    node2.setBackupDir(get("backup"));
+    node1.setBackupDir(RawPath.valueOf("backup"));
+    node2.setBackupDir(RawPath.valueOf("backup"));
     new ClusterValidator(newTestCluster(new Stripe().setName("stripe1").addNodes(node1), new Stripe().setName("stripe2").addNodes(node2))).validate();
   }
 
@@ -144,8 +144,8 @@ public class ClusterValidatorTest {
   public void testSetDifferentBackupPaths_ok() {
     Node node1 = newTestNode("node1", "localhost1");
     Node node2 = newTestNode("node2", "localhost2");
-    node1.setBackupDir(get("backup-1"));
-    node2.setBackupDir(get("backup-2"));
+    node1.setBackupDir(RawPath.valueOf("backup-1"));
+    node2.setBackupDir(RawPath.valueOf("backup-2"));
     new ClusterValidator(newTestCluster(new Stripe().setName("stripe1").addNodes(node1), new Stripe().setName("stripe2").addNodes(node2))).validate();
   }
 
@@ -153,7 +153,7 @@ public class ClusterValidatorTest {
   public void testSetBackupOnOneStripeOnly_fail() {
     Node node1 = newTestNode("foo", "localhost1");
     Node node2 = newTestNode("node2", "localhost2");
-    node1.setBackupDir(get("backup"));
+    node1.setBackupDir(RawPath.valueOf("backup"));
 
     assertClusterValidationFails(
         "Nodes with names: [foo] currently have (or will have) backup directories defined",
@@ -166,12 +166,12 @@ public class ClusterValidatorTest {
         newTestNode("node1", "localhost1"),
         newTestNode("node2", "localhost2")
     ).map(node -> node
-        .setSecurityAuditLogDir(get("audit-" + random.nextInt()))
-        .setSecurityDir(get("security-root" + random.nextInt()))
-        .putDataDir("dir-1", get("some-path" + random.nextInt()))
-        .setBackupDir(get("backup-" + random.nextInt()))
-        .setMetadataDir(get("metadata-" + random.nextInt()))
-        .setLogDir(get("logs-" + random.nextInt()))
+        .setSecurityAuditLogDir(RawPath.valueOf("audit-" + random.nextInt()))
+        .setSecurityDir(RawPath.valueOf("security-root" + random.nextInt()))
+        .putDataDir("dir-1", RawPath.valueOf("some-path" + random.nextInt()))
+        .setBackupDir(RawPath.valueOf("backup-" + random.nextInt()))
+        .setMetadataDir(RawPath.valueOf("metadata-" + random.nextInt()))
+        .setLogDir(RawPath.valueOf("logs-" + random.nextInt()))
         .setName("-" + random.nextInt())
         .setHostname("host-" + random.nextInt())
         .setPort(1 + random.nextInt(65500))
@@ -192,8 +192,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_1() {
-    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(get("security-dir")).setSecurityAuditLogDir(get("security-audit-dir"));
-    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(get("security-dir")).setSecurityAuditLogDir(get("security-audit-dir"));
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
+    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
 
     Cluster cluster = newTestCluster(new Stripe().setName("stripe1").addNodes(node1, node2)).setSecuritySslTls(false).setSecurityWhitelist(true);
     new ClusterValidator(cluster).validate();
@@ -201,8 +201,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_2() {
-    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(get("security-dir")).setSecurityAuditLogDir(get("security-audit-dir"));
-    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(get("security-dir")).setSecurityAuditLogDir(get("security-audit-dir"));
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
+    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
 
     Cluster cluster = newTestCluster(new Stripe().setName("stripe1").addNodes(node1, node2)).setSecurityWhitelist(true);
     new ClusterValidator(cluster).validate();
@@ -210,16 +210,16 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_3() {
-    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(get("security-root-dir"));
-    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(get("security-root-dir"));
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir"));
+    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(RawPath.valueOf("security-root-dir"));
     Cluster cluster = newTestCluster(new Stripe().setName("stripe1").addNodes(node1, node2)).setSecurityAuthc("file");
     new ClusterValidator(cluster).validate();
   }
 
   @Test
   public void testGoodSecurity_4() {
-    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(get("security-root-dir"));
-    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(get("security-root-dir"));
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir"));
+    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(RawPath.valueOf("security-root-dir"));
 
     Cluster cluster = newTestCluster(new Stripe().setName("stripe1").addNodes(node1, node2)).setSecuritySslTls(true).setSecurityAuthc("certificate");
     new ClusterValidator(cluster).validate();
@@ -227,8 +227,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testGoodSecurity_5() {
-    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(get("security-root-dir")).setSecurityAuditLogDir(get("security-audit-dir"));
-    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(get("security-root-dir")).setSecurityAuditLogDir(get("security-audit-dir"));
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
+    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
 
     Cluster cluster = newTestCluster(new Stripe().setName("stripe1").addNodes(node1, node2))
         .setSecuritySslTls(true)
@@ -275,7 +275,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_auditLogDirWithoutSecurityDir() {
-    Node node = newTestNode("node1", "localhost1").setSecurityAuditLogDir(get("."));
+    Node node = newTestNode("node1", "localhost1").setSecurityAuditLogDir(RawPath.valueOf("."));
     Cluster cluster = newTestCluster(new Stripe().setName("stripe1").addNodes(node));
 
     assertClusterValidationFails("security-dir is mandatory for any of the security configuration", cluster);
@@ -291,7 +291,7 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_securityDirWithoutSecurity() {
-    Node node = newTestNode("node1", "localhost1").setSecurityDir(get("security-dir"));
+    Node node = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir"));
     Cluster cluster = newTestCluster(new Stripe().setName("stripe1").addNodes(node));
 
     assertClusterValidationFails("One of ssl-tls, authc, or whitelist is required for security configuration", cluster);
@@ -299,8 +299,8 @@ public class ClusterValidatorTest {
 
   @Test
   public void testBadSecurity_notAllNodesHaveAuditLogDir() {
-    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(get("security-dir")).setSecurityAuditLogDir(get("audit"));
-    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(get("security-dir"));
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("audit"));
+    Node node2 = newTestNode("node2", "localhost2").setSecurityDir(RawPath.valueOf("security-dir"));
     Cluster cluster = newTestCluster(new Stripe().setName("stripe1").addNodes(node1, node2)).setSecurityWhitelist(true);
 
     assertClusterValidationFails("Nodes with names: [node2] don't have audit log directories defined", cluster);
