@@ -17,14 +17,10 @@ package org.terracotta.management.model.capabilities.descriptors;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static java.util.Arrays.asList;
 
 /**
  * @author Mathieu Carbou
@@ -85,13 +81,11 @@ public class Settings extends AbstractMap<String, Object> implements Descriptor,
   }
 
   public String[] getStrings(String key) {
-    List<?> list = get(key, List.class);
-    return list.toArray(new String[0]);
+    return get(key, String[].class);
   }
 
   public String[] getStringsOrDefault(String key, String... def) {
-    String[] result = getStrings(key);
-    return result != null ? result : def;
+    return getOrDefault(key, String[].class, def);
   }
 
   public Settings set(String key, Settings settings) {
@@ -123,7 +117,7 @@ public class Settings extends AbstractMap<String, Object> implements Descriptor,
   }
 
   public Settings set(String key, String... items) {
-    map.put(key, asList(items));
+    map.put(key, items);
     return this;
   }
 
