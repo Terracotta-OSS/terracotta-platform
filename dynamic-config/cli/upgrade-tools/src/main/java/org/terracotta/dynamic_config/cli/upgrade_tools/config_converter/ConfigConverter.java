@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.SettingName;
 import org.terracotta.dynamic_config.api.model.Substitutor;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -98,7 +99,7 @@ public class ConfigConverter {
 
   private List<String> checkPlaceHolders(org.terracotta.dynamic_config.api.model.Node node) {
     List<String> placeHolders = new ArrayList<>();
-    node.getDataDirs().orDefault().values().stream().map(Path::toString).filter(Substitutor::containsSubstitutionParams).findAny().ifPresent(path -> placeHolders.add(SettingName.DATA_DIRS));
+    node.getDataDirs().orDefault().values().stream().map(RawPath::toString).filter(Substitutor::containsSubstitutionParams).findAny().ifPresent(path -> placeHolders.add(SettingName.DATA_DIRS));
     node.getBackupDir().filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_BACKUP_DIR));
     node.getLogDir().filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_LOG_DIR));
     node.getMetadataDir().filter(path -> Substitutor.containsSubstitutionParams(path.toString())).ifPresent(path -> placeHolders.add(SettingName.NODE_METADATA_DIR));
@@ -109,27 +110,27 @@ public class ConfigConverter {
   }
 
   private String containsRelativePaths(org.terracotta.dynamic_config.api.model.Node node) {
-    if (node.getDataDirs().orDefault().values().stream().anyMatch(path -> !path.isAbsolute())) {
+    if (node.getDataDirs().orDefault().values().stream().anyMatch(path -> !path.toPath().isAbsolute())) {
       return SettingName.DATA_DIRS;
     }
 
-    if (node.getBackupDir().isConfigured() && !node.getBackupDir().get().isAbsolute()) {
+    if (node.getBackupDir().isConfigured() && !node.getBackupDir().get().toPath().isAbsolute()) {
       return SettingName.NODE_BACKUP_DIR;
     }
 
-    if (node.getLogDir().isConfigured() && !node.getLogDir().get().isAbsolute()) {
+    if (node.getLogDir().isConfigured() && !node.getLogDir().get().toPath().isAbsolute()) {
       return SettingName.NODE_LOG_DIR;
     }
 
-    if (node.getMetadataDir().isConfigured() && !node.getMetadataDir().get().isAbsolute()) {
+    if (node.getMetadataDir().isConfigured() && !node.getMetadataDir().get().toPath().isAbsolute()) {
       return SettingName.NODE_METADATA_DIR;
     }
 
-    if (node.getSecurityDir().isConfigured() && !node.getSecurityDir().get().isAbsolute()) {
+    if (node.getSecurityDir().isConfigured() && !node.getSecurityDir().get().toPath().isAbsolute()) {
       return SettingName.SECURITY_DIR;
     }
 
-    if (node.getSecurityAuditLogDir().isConfigured() && !node.getSecurityAuditLogDir().get().isAbsolute()) {
+    if (node.getSecurityAuditLogDir().isConfigured() && !node.getSecurityAuditLogDir().get().toPath().isAbsolute()) {
       return SettingName.SECURITY_AUDIT_LOG_DIR;
     }
     return null;

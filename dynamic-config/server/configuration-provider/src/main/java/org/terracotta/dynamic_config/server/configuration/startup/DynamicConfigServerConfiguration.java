@@ -85,7 +85,7 @@ class DynamicConfigServerConfiguration implements ServerConfiguration {
   @Override
   public File getLogsLocation() {
     String sanitizedNodeName = node.getName().replace(":", "-"); // Sanitize for path
-    return unConfigured ? null : substitutor.substitute(pathResolver.resolve(node.getLogDir().orDefault().resolve(sanitizedNodeName))).toFile();
+    return unConfigured ? null : substitutor.substitute(pathResolver.resolve(node.getLogDir().orDefault().toPath().resolve(sanitizedNodeName))).toFile();
   }
 
   @Override

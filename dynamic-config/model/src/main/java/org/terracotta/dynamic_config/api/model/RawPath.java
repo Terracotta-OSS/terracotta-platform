@@ -15,20 +15,9 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
-import java.util.Iterator;
 import java.util.Objects;
-import java.util.Spliterator;
-import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 
@@ -61,7 +50,7 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
-public class RawPath implements Path {
+public class RawPath {
 
   private final String value;
   private volatile transient Path cache;
@@ -110,98 +99,12 @@ public class RawPath implements Path {
 
   /**
    * Builds a new raw path where the parameter is appended to the current value.
-   *
+   * <p>
    * This is up to the user to correctly set the path separator.
-   *
+   * <p>
    * Example: {@code RawPath.valueOf("foo").append("/bar")}
    */
   public RawPath append(String segments) {
     return RawPath.valueOf(value + segments);
   }
-
-  // DELEGATES
-
-  @Override
-  public FileSystem getFileSystem() {return toPath().getFileSystem();}
-
-  @Override
-  public boolean isAbsolute() {return toPath().isAbsolute();}
-
-  @Override
-  public Path getRoot() {return toPath().getRoot();}
-
-  @Override
-  public Path getFileName() {return toPath().getFileName();}
-
-  @Override
-  public Path getParent() {return toPath().getParent();}
-
-  @Override
-  public int getNameCount() {return toPath().getNameCount();}
-
-  @Override
-  public Path getName(int index) {return toPath().getName(index);}
-
-  @Override
-  public Path subpath(int beginIndex, int endIndex) {return toPath().subpath(beginIndex, endIndex);}
-
-  @Override
-  public boolean startsWith(Path other) {return toPath().startsWith(other);}
-
-  @Override
-  public boolean startsWith(String other) {return toPath().startsWith(other);}
-
-  @Override
-  public boolean endsWith(Path other) {return toPath().endsWith(other);}
-
-  @Override
-  public boolean endsWith(String other) {return toPath().endsWith(other);}
-
-  @Override
-  public Path normalize() {return toPath().normalize();}
-
-  @Override
-  public Path resolve(Path other) {return toPath().resolve(other);}
-
-  @Override
-  public Path resolve(String other) {return toPath().resolve(other);}
-
-  @Override
-  public Path resolveSibling(Path other) {return toPath().resolveSibling(other);}
-
-  @Override
-  public Path resolveSibling(String other) {return toPath().resolveSibling(other);}
-
-  @Override
-  public Path relativize(Path other) {return toPath().relativize(other);}
-
-  @Override
-  public URI toUri() {return toPath().toUri();}
-
-  @Override
-  public Path toAbsolutePath() {return toPath().toAbsolutePath();}
-
-  @Override
-  public Path toRealPath(LinkOption... options) throws IOException {return toPath().toRealPath(options);}
-
-  @Override
-  public File toFile() {return toPath().toFile();}
-
-  @Override
-  public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) throws IOException {return toPath().register(watcher, events, modifiers);}
-
-  @Override
-  public WatchKey register(WatchService watcher, WatchEvent.Kind<?>... events) throws IOException {return toPath().register(watcher, events);}
-
-  @Override
-  public Iterator<Path> iterator() {return toPath().iterator();}
-
-  @Override
-  public int compareTo(Path other) {return toPath().compareTo(other);}
-
-  @Override
-  public void forEach(Consumer<? super Path> action) {toPath().forEach(action);}
-
-  @Override
-  public Spliterator<Path> spliterator() {return toPath().spliterator();}
 }

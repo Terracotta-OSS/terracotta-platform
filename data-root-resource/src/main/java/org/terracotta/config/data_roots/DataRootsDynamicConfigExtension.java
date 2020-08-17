@@ -16,7 +16,6 @@
 package org.terracotta.config.data_roots;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -27,6 +26,8 @@ import org.terracotta.entity.PlatformConfiguration;
 
 import java.nio.file.Path;
 import java.util.Map;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Mathieu Carbou
@@ -40,8 +41,8 @@ public class DataRootsDynamicConfigExtension implements DynamicConfigExtension {
     ConfigChangeHandlerManager configChangeHandlerManager = findService(platformConfiguration, ConfigChangeHandlerManager.class);
 
     NodeContext nodeContext = topologyService.getRuntimeNodeContext();
-    Path nodeMetadataDir = nodeContext.getNode().getMetadataDir().orDefault();
-    Map<String, RawPath> dataDirs = nodeContext.getNode().getDataDirs().orDefault();
+    Path nodeMetadataDir = nodeContext.getNode().getMetadataDir().orDefault().toPath();
+    Map<String, Path> dataDirs = nodeContext.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().toPath()));
     DataDirectoriesConfigImpl dataDirectoriesConfig = new DataDirectoriesConfigImpl(parameterSubstitutor, pathResolver, nodeMetadataDir, dataDirs);
     configChangeHandlerManager.set(Setting.DATA_DIRS, new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, parameterSubstitutor, pathResolver));
 

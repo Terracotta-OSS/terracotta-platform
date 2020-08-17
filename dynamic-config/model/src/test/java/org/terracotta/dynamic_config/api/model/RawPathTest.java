@@ -21,9 +21,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.json.ObjectMapperFactory;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -100,14 +97,7 @@ public class RawPathTest {
 
     @Override
     public String toString() {
-      if (path == null) {
-        return "null";
-      }
-      List<String> segments = new ArrayList<>(path.getNameCount());
-      for (Path p : path) {
-        segments.add(p.toString());
-      }
-      return segments.toString();
+      return String.valueOf(path);
     }
   }
 }

@@ -102,7 +102,6 @@ import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
-  protected static final boolean WIN = System.getProperty("os.name").toLowerCase().startsWith("windows");
   protected static final String CLUSTER_NAME = "tc-cluster";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
@@ -371,14 +370,6 @@ public class DynamicConfigIT {
       }
       Properties variables = generateProperties();
       Properties resolved = new PropertyResolver(variables).resolveAll(loaded);
-      if (WIN) {
-        // Convert all / to \\ for Windows.
-        // This assumes we only use / and \\ for paths in property values
-        resolved.stringPropertyNames()
-            .stream()
-            .filter(key -> resolved.getProperty(key).contains("/"))
-            .forEach(key -> resolved.setProperty(key, resolved.getProperty(key).replace("/", "\\")));
-      }
       Files.createDirectories(getBaseDir());
       try (Writer writer = new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8)) {
         resolved.store(writer, "");
@@ -390,7 +381,7 @@ public class DynamicConfigIT {
   }
 
   protected Path generateNodeConfigDir(int stripeId, int nodeId, Consumer<ConfigurationGenerator> fn) throws Exception {
-    Path nodeConfigurationDir = getBaseDir().resolve(getNodeConfigDir(stripeId, nodeId));
+    Path nodeConfigurationDir = getBaseDir().resolve(getNodeConfigDir(stripeId, nodeId).toPath());
     Path configDirs = getBaseDir().resolve("generated-configs");
     ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(configDirs, new ConfigurationGenerator.PortSupplier() {
       @Override

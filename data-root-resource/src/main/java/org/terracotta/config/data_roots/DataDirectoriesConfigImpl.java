@@ -59,7 +59,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   private final PathResolver pathResolver;
   private final Collection<EntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
 
-  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, Path metadataDir, Map<String, ? extends Path> dataDirectories) {
+  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, Path metadataDir, Map<String, Path> dataDirectories) {
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
 

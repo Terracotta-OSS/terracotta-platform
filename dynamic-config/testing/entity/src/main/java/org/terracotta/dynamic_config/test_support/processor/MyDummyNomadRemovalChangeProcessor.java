@@ -34,7 +34,6 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -127,7 +126,7 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
   }
 
   private Path path() throws IOException {
-    final Path directory = parameterSubstitutor.substitute(pathResolver.resolve(topologyService.getUpcomingNodeContext().getNode().getDataDirs().orDefault().get("main"))).normalize();
+    final Path directory = parameterSubstitutor.substitute(pathResolver.resolve(topologyService.getUpcomingNodeContext().getNode().getDataDirs().orDefault().get("main").toPath())).normalize();
     if (!directory.toFile().exists()) {
       Files.createDirectories(directory);
     } else {
