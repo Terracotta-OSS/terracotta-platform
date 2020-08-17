@@ -86,7 +86,7 @@ public class Settings extends AbstractMap<String, Object> implements Descriptor,
 
   public String[] getStrings(String key) {
     List<?> list = get(key, List.class);
-    return list.toArray(new String[0]);
+    return list != null ? list.toArray(new String[0]) : null;
   }
 
   public String[] getStringsOrDefault(String key, String... def) {

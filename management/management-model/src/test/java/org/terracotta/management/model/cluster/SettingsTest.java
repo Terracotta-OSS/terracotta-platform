@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(JUnit4.class)
@@ -50,5 +52,11 @@ public class SettingsTest {
     settings2.set("strings", "foo", "bar", "baz");
 
     assertTrue(settings1.equals(settings2));
+  }
+
+  @Test
+  public void testMissingStringsKeyReturnsNull() {
+    Settings settings = new Settings();
+    assertNull(settings.getStrings("missingStringsKey"));
   }
 }
