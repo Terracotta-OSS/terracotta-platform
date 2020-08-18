@@ -293,7 +293,7 @@ public class CommandLineProcessorChainTest {
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
 
-    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expect(NullPointerException.class);
     expectedException.expectMessage("Cluster name is required with license file");
     mainCommandLineProcessor.process();
   }

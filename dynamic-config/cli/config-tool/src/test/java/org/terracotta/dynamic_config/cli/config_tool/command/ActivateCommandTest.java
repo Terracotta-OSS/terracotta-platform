@@ -115,7 +115,7 @@ public class ActivateCommandTest extends BaseTest {
     ActivateCommand command = command()
         .setConfigPropertiesFile(config);
     command.validate();
-    assertThat(command.getCluster().getName().get(), is(equalTo("my-cluster")));
+    assertThat(command.getCluster().getName(), is(equalTo("my-cluster")));
   }
 
   @Test
@@ -128,7 +128,7 @@ public class ActivateCommandTest extends BaseTest {
         .setClusterName("foo")
         .setConfigPropertiesFile(config);
     command.validate();
-    assertThat(command.getCluster().getName().get(), is(equalTo("foo")));
+    assertThat(command.getCluster().getName(), is(equalTo("foo")));
 
   }
 
@@ -201,7 +201,7 @@ public class ActivateCommandTest extends BaseTest {
       verifyNoMoreInteractions(mock);
     }));
 
-    assertThat(command.getCluster().getName().get(), is(equalTo("my-cluster")));
+    assertThat(command.getCluster().getName(), is(equalTo("my-cluster")));
   }
 
   @Test
@@ -241,7 +241,7 @@ public class ActivateCommandTest extends BaseTest {
       verifyNoMoreInteractions(mock);
     }));
 
-    assertThat(command.getCluster().getName().get(), is(equalTo("my-cluster")));
+    assertThat(command.getCluster().getName(), is(equalTo("my-cluster")));
   }
 
   @Test
@@ -292,7 +292,7 @@ public class ActivateCommandTest extends BaseTest {
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     }));
 
-    assertThat(command.getCluster().getName().get(), is(equalTo(clusterName)));
+    assertThat(command.getCluster().getName(), is(equalTo(clusterName)));
   }
 
   private ActivateCommand command() {
