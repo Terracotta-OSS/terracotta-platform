@@ -224,7 +224,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void change_cluster_name_back() throws Exception {
     // TDB-5067
-    String clusterName = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getCluster().getName().get());
+    String clusterName = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getCluster().getName());
     assertThat(
         invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=new-name"),
         not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));

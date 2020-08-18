@@ -847,9 +847,9 @@ public class ConfigurationTest {
 
     // special cases
     Configuration.valueOf("license-file=foo/bar").apply(cluster);
-    assertThat(cluster.getName().orDefault(), is(nullValue()));
+    assertThat(cluster.getName(), is(nullValue()));
     Configuration.valueOf("cluster-name=foo").apply(cluster);
-    assertThat(cluster.getName().get(), is(equalTo("foo")));
+    assertThat(cluster.getName(), is(equalTo("foo")));
 
     // bad stripe
     assertThat(

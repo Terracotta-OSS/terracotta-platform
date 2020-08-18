@@ -71,7 +71,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
     withTopologyService("localhost", getNodePort(), topologyService -> {
       NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
-      assertThat(runtimeNodeContext.getCluster().getName().get(), is(equalTo("my-cluster")));
+      assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
     });
   }
 

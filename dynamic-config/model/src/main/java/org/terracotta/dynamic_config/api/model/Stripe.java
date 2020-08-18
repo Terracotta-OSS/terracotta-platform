@@ -49,6 +49,7 @@ public class Stripe implements Cloneable, PropertyHolder {
     return this;
   }
 
+  @Override
   public String getName() {
     return name;
   }

@@ -46,7 +46,6 @@ import static java.util.stream.IntStream.rangeClosed;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
-import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
@@ -79,8 +78,9 @@ public class Cluster implements Cloneable, PropertyHolder {
     return CLUSTER;
   }
 
-  public OptionalConfig<String> getName() {
-    return OptionalConfig.of(CLUSTER_NAME, name);
+  @Override
+  public String getName() {
+    return name;
   }
 
   public OptionalConfig<String> getSecurityAuthc() {

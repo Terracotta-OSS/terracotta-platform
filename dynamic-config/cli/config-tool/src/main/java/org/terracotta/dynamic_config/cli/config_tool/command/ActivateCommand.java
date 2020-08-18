@@ -29,7 +29,6 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
@@ -95,7 +94,9 @@ public class ActivateCommand extends RemoteCommand {
       cluster.setName(clusterName);
     }
 
-    cluster.getName().orElseThrow(() -> new IllegalArgumentException("Cluster name is missing"));
+    if (cluster.getName() == null) {
+      throw new IllegalArgumentException("Cluster name is missing");
+    }
 
     if (node != null && !cluster.containsNode(node)) {
       throw new IllegalArgumentException("Node: " + node + " is not in cluster: " + cluster.toShapeString());

@@ -123,7 +123,10 @@ public class ConfigurationGeneratorVisitor {
   }
 
   void startActivated(NodeContext nodeContext, String optionalLicenseFile, String optionalNodeConfigurationDirectoryFromCLI) {
-    final String clusterName = nodeContext.getCluster().getName().orElseThrow(() -> new IllegalArgumentException("Cluster name is required to pre-activate a node"));
+    String clusterName = nodeContext.getCluster().getName();
+    if (clusterName == null) {
+      throw new IllegalArgumentException("Cluster name is required to pre-activate a node");
+    }
 
     if (nodeContext.getCluster().getStripeCount() > 1) {
       throw new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster");

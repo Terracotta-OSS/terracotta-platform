@@ -69,7 +69,7 @@ public class ConfigConversionIT {
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
 
-    assertThat(cluster.getName().get(), is("my-cluster"));
+    assertThat(cluster.getName(), is("my-cluster"));
     assertThat(cluster.getDataDirNames().size(), is(1));
     assertThat(cluster.getOffheapResources().get().size(), is(1));
     assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
