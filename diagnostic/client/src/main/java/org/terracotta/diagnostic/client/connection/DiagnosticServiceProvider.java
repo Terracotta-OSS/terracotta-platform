@@ -55,4 +55,39 @@ public class DiagnosticServiceProvider {
       throw new DiagnosticServiceProviderException(e);
     }
   }
+
+  public DiagnosticService fetchUnSecuredDiagnosticService(InetSocketAddress address) throws DiagnosticServiceProviderException {
+    return fetchUnSecuredDiagnosticService(address, connectTimeout);
+  }
+
+  public DiagnosticService fetchUnSecuredDiagnosticService(InetSocketAddress address, Duration connectTimeout) throws DiagnosticServiceProviderException {
+    try {
+      return DiagnosticServiceFactory.fetch(address, connectionName, connectTimeout, diagnosticInvokeTimeout, null, objectMapperFactory);
+    } catch (ConnectionException e) {
+      throw new DiagnosticServiceProviderException(e);
+    }
+  }
+
+  public DiagnosticService fetchDiagnosticServiceWithFallback(InetSocketAddress address) throws DiagnosticServiceProviderException {
+    return fetchDiagnosticServiceWithFallback(address, connectTimeout);
+  }
+
+  public DiagnosticService fetchDiagnosticServiceWithFallback(InetSocketAddress address, Duration connectTimeout) throws DiagnosticServiceProviderException {
+    try {
+      // try the default approach, could be secured or unsecured.
+      return fetchDiagnosticService(address, connectTimeout);
+    } catch (DiagnosticServiceProviderException ex) {
+      // try using unsecured approach only if secured approach is tried before.
+      if (isSecurityEnabled()) {
+        return fetchUnSecuredDiagnosticService(address, connectTimeout);
+      } else {
+        // throw the original exception without creating new one.
+        throw ex;
+      }
+    }
+  }
+
+  private boolean isSecurityEnabled() {
+    return securityRootDirectory != null && !securityRootDirectory.isEmpty();
+  }
 }

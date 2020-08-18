@@ -264,7 +264,7 @@ public abstract class RemoteCommand extends Command {
 
   protected final Cluster getUpcomingCluster(InetSocketAddress expectedOnlineNode) {
     logger.trace("getUpcomingCluster({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticServiceWithFallback(expectedOnlineNode)) {
       return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
     }
   }
@@ -272,7 +272,7 @@ public abstract class RemoteCommand extends Command {
   protected final void setUpcomingCluster(Collection<InetSocketAddress> expectedOnlineNodes, Cluster cluster) {
     logger.trace("setUpcomingCluster({})", expectedOnlineNodes);
     for (InetSocketAddress expectedOnlineNode : expectedOnlineNodes) {
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticServiceWithFallback(expectedOnlineNode)) {
         diagnosticService.getProxy(DynamicConfigService.class).setUpcomingCluster(cluster);
       }
     }
@@ -280,7 +280,7 @@ public abstract class RemoteCommand extends Command {
 
   protected final Cluster getRuntimeCluster(InetSocketAddress expectedOnlineNode) {
     logger.trace("getRuntimeCluster({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticServiceWithFallback(expectedOnlineNode)) {
       return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
     }
   }
@@ -431,14 +431,14 @@ public abstract class RemoteCommand extends Command {
 
   protected final boolean isActivated(InetSocketAddress expectedOnlineNode) {
     logger.trace("isActivated({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticServiceWithFallback(expectedOnlineNode)) {
       return diagnosticService.getProxy(TopologyService.class).isActivated();
     }
   }
 
   protected final void resetAndStop(InetSocketAddress expectedOnlineNode) {
     logger.info("Reset node: {}. Node will stop in 5 seconds", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticServiceWithFallback(expectedOnlineNode)) {
       DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
       proxy.reset();
       proxy.stop(Duration.ofSeconds(5));

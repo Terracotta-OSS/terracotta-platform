@@ -79,7 +79,7 @@ public class RestartService {
     // trigger a restart request for all nodes
     for (InetSocketAddress addr : addresses) {
       // this call should be pretty fast and should not timeout if restart delay is long enough
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
+      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticServiceWithFallback(addr)) {
         diagnosticService.getProxy(DynamicConfigService.class).restart(restartDelay);
         restartRequested.add(addr);
       } catch (Exception e) {

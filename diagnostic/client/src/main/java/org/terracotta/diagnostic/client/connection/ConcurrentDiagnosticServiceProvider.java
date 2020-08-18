@@ -66,7 +66,7 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
       TimeBudget timeBudget = new TimeBudget(connectionTimeout.toMillis(), MILLISECONDS);
       addresses.forEach(address -> completionService.submit(() -> {
         try {
-          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, Duration.ofMillis(timeBudget.remaining()));
+          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticServiceWithFallback(address, Duration.ofMillis(timeBudget.remaining()));
           return tuple3(address, diagnosticService, null);
         } catch (DiagnosticServiceProviderException e) {
           return tuple3(address, null, e);
