@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.system_tests.activated;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -143,5 +144,26 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     assertThat(
         invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic7.txt").toURI())).collect(toList())));
+  }
+
+  @Test
+  public void testWhenConfigLocked() throws Exception {
+    startNode(1, 1);
+    waitForDiagnostic(1, 1);
+    activateCluster();
+
+    LockContext lockContext = new LockContext("some-uuid", "test", "test");
+
+    invokeConfigTool("lock-config", "-s", "localhost:" + getNodePort(1, 1),
+                     "--lock-context", lockContext.toString());
+
+    assertThat(
+        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        containsLinesInOrderStartingWith(
+            Files.lines(
+                Paths.get(getClass().getResource("/diagnostic-output/diagnostic-when-locked.txt").toURI())
+            ).collect(toList())
+        )
+    );
   }
 }

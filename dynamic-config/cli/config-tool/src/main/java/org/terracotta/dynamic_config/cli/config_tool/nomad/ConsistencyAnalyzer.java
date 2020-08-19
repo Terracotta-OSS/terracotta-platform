@@ -19,6 +19,7 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
+import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadChangeInfo;
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -260,6 +262,10 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   public boolean isOnlineAndInConfiguration(UID nodeUID) {
     Endpoint endpoint = findEndpoint(nodeUID);
     return responses.containsKey(endpoint) && responses.get(endpoint).getLatestChange() == null && allNodes.get(endpoint) == STARTING;
+  }
+
+  public Optional<T> getNodeContext() {
+    return responses.values().stream().map(DiscoverResponse::getLatestChange).filter(Objects::nonNull).map(ChangeDetails::getResult).findAny();
   }
 
   public GlobalState getGlobalState() {
