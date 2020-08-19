@@ -45,11 +45,6 @@ public class LogCommand extends RemoteCommand {
   private InetSocketAddress node;
 
   @Override
-  public void validate() {
-    validateAddress(node);
-  }
-
-  @Override
   public void run() {
     logger.info("Configuration logs from {}:", node);
 

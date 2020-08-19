@@ -10,10 +10,10 @@
           "hostname": "localhost",
           "name": "node0",
           "port": 9410,
-          "uid": "uid-1-1"
+          "uid": "ZwZtuxl6QlWGZVUJ_30uMQ"
         }
       ],
-      "uid": "s-uid-1"
+      "uid": "5Zv3uphiRLavoGZthy7JNg"
     },
     {
       "name": "stripe2",
@@ -25,13 +25,13 @@
           "hostname": "localhost",
           "name": "node1",
           "port": 9411,
-          "uid": "uid-2-1"
+          "uid": "2sxJu9g_TvKG9sAN9bKp_w"
         }
       ],
-      "uid": "s-uid-2"
+      "uid": "RUHaurjcQA-57mpGqtovOA"
     }
   ],
   "failoverPriority": "availability",
   "name": "my-cluster",
-  "uid": "c-uid"
+  "uid": "YLQguzhRSdS6y5M9vnA5mw"
 }

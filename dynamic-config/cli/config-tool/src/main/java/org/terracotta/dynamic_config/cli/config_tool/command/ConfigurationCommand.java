@@ -71,7 +71,5 @@ public abstract class ConfigurationCommand extends RemoteCommand {
         }
       }
     }
-
-    validateAddress(node);
   }
 }

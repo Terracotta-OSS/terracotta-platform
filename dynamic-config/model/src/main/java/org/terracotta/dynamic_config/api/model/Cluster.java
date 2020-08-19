@@ -59,7 +59,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST
 public class Cluster implements Cloneable, PropertyHolder {
   private List<Stripe> stripes;
 
-  private String uid;
+  private UID uid;
   private String name;
   private LockContext lockContext;
   private Measure<TimeUnit> clientReconnectWindow;
@@ -89,11 +89,11 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   @Override
-  public String getUID() {
+  public UID getUID() {
     return uid;
   }
 
-  public Cluster setUID(String uid) {
+  public Cluster setUID(UID uid) {
     this.uid = requireNonNull(uid);
     return this;
   }
@@ -473,9 +473,9 @@ public class Cluster implements Cloneable, PropertyHolder {
   /**
    * Generate a new UID that is not yet used within this cluster
    */
-  public String newUID() {
-    Set<String> uuids = concat(of(this), descendants()).map(PropertyHolder::getUID).filter(Objects::nonNull).collect(toSet());
-    String uuid;
+  public UID newUID() {
+    Set<UID> uuids = concat(of(this), descendants()).map(PropertyHolder::getUID).filter(Objects::nonNull).collect(toSet());
+    UID uuid;
     while (uuids.contains(uuid = UID.newUID())) ;
     return uuid;
   }
@@ -483,9 +483,9 @@ public class Cluster implements Cloneable, PropertyHolder {
   /**
    * Generate a new UID that is not yet used within this cluster and which randomness is controlled
    */
-  public String newUID(Random random) {
-    Set<String> uuids = concat(of(this), descendants()).map(PropertyHolder::getUID).filter(Objects::nonNull).collect(toSet());
-    String uuid;
+  public UID newUID(Random random) {
+    Set<UID> uuids = concat(of(this), descendants()).map(PropertyHolder::getUID).filter(Objects::nonNull).collect(toSet());
+    UID uuid;
     while (uuids.contains(uuid = UID.newUID(random))) ;
     return uuid;
   }

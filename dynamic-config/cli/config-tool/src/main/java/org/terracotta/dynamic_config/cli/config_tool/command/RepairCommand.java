@@ -50,7 +50,6 @@ public class RepairCommand extends RemoteCommand {
   @Override
   public void validate() {
     requireNonNull(node);
-    validateAddress(node);
   }
 
   @Override

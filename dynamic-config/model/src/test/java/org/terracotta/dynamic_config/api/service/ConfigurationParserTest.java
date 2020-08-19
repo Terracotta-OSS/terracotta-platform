@@ -375,12 +375,12 @@ public class ConfigurationParserTest {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   private void assertCliEquals(Map<Setting, String> params, Cluster expectedCluster, String... addedConfigurations) {
-    Testing.resetRequiredUIDs(expectedCluster, "<GENERATED>");
+    Testing.resetRequiredUIDs(expectedCluster, Testing.A_UID);
     Testing.resetRequiredNames(expectedCluster, "<GENERATED>");
 
     Cluster built = ConfigurationParser.parseCommandLineParameters(params, substitutor, addedListener);
 
-    Testing.replaceRequiredUIDs(built, "<GENERATED>");
+    Testing.replaceRequiredUIDs(built, Testing.A_UID);
     Testing.replaceRequiredNames(built, "<GENERATED>");
 
     // since node name is generated when not given,
@@ -402,12 +402,12 @@ public class ConfigurationParserTest {
   }
 
   private void assertConfigEquals(Properties config, Cluster expectedCluster, String... addedConfigurations) {
-    Testing.resetRequiredUIDs(expectedCluster, "<GENERATED>");
+    Testing.resetRequiredUIDs(expectedCluster, Testing.A_UID);
     Testing.resetRequiredNames(expectedCluster, "<GENERATED>");
 
     Cluster built = ConfigurationParser.parsePropertyConfiguration(config, Version.CURRENT, addedListener);
 
-    Testing.replaceRequiredUIDs(built, "<GENERATED>");
+    Testing.replaceRequiredUIDs(built, Testing.A_UID);
     Testing.replaceRequiredNames(built, "<GENERATED>");
 
     Configuration[] configurations = Stream.of(addedConfigurations)

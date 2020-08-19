@@ -65,8 +65,6 @@ public class AttachCommand extends TopologyCommand {
   public void validate() {
     super.validate();
 
-    validateAddress(source);
-
     sourceCluster = getUpcomingCluster(source);
 
     Collection<InetSocketAddress> destinationPeers = destinationCluster.getNodeAddresses();

@@ -54,7 +54,7 @@ public class NodeTest {
 
   @Test
   public void test_clone() {
-    assertThat(new Node().setUID("uid"), is(equalTo(new Node().setUID("uid").clone())));
+    assertThat(new Node().setUID(Testing.N_UIDS[1]), is(equalTo(new Node().setUID(Testing.N_UIDS[1]).clone())));
     assertThat(node, is(equalTo(node.clone())));
     assertThat(node.hashCode(), is(equalTo(node.clone().hashCode())));
   }

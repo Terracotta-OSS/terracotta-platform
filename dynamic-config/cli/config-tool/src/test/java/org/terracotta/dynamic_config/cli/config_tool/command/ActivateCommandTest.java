@@ -76,7 +76,7 @@ public class ActivateCommandTest extends BaseTest {
       newTestStripe("stripe1").addNode(
           Testing.newTestNode("node1", "localhost", 9411)
       ),
-      newTestStripe("stripe2", "s-uid2").addNodes(
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(
           Testing.newTestNode("node2", "localhost", 9421),
           Testing.newTestNode("node3", "localhost", 9422)
       ));
@@ -91,7 +91,6 @@ public class ActivateCommandTest extends BaseTest {
     config = Paths.get(getClass().getResource("/my-cluster.properties").toURI());
 
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));
-    when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));
   }
 
   @Test

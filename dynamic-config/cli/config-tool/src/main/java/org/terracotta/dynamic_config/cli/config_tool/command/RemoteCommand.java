@@ -179,16 +179,6 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  /**
-   * Ensure that the input address is really an address that can be used to connect to a node of a cluster
-   */
-  protected final void validateAddress(InetSocketAddress expectedOnlineNode) {
-    logger.trace("Validating node address: {} (this can take time if the node is not reachable)", expectedOnlineNode);
-    getRuntimeCluster(expectedOnlineNode).getNode(expectedOnlineNode)
-        .orElseGet(() -> getUpcomingCluster(expectedOnlineNode).getNode(expectedOnlineNode)
-            .orElseThrow(() -> new IllegalArgumentException("Targeted cluster does not contain any node with this address: " + expectedOnlineNode + ". Is it a mistake ? Are you connecting to the wrong cluster ? If not, please use the configured node hostname and port to connect.")));
-  }
-
   protected final boolean mustBeRestarted(InetSocketAddress expectedOnlineNode) {
     logger.trace("mustBeRestarted({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {

@@ -65,10 +65,10 @@ public class TopologyServiceIT extends DynamicConfigIT {
       assertThat(pendingCluster, is(equalTo(cluster)));
       assertThat(pendingCluster, is(equalTo(newTestCluster(
           newTestStripe("stripe1")
-              .setUID("s-uid-1")
+              .setUID(Testing.S_UIDS[1])
               .addNodes(
                   newTestNode("node-1-1", "localhost", getNodePort())
-                      .setUID("uid-1-1")
+                      .setUID(Testing.N_UIDS[2])
                       .setGroupPort(getNodeGroupPort(1, 1))
                       .setMetadataDir(RawPath.valueOf("metadata/stripe1"))
                       .setLogDir(RawPath.valueOf("logs/stripe1"))
@@ -76,7 +76,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
                       .unsetDataDirs()
                       .putDataDir("main", RawPath.valueOf("user-data/main/stripe1"))
               ))
-          .setUID("c-uid")
+          .setUID(Testing.C_UIDS[0])
           .setClientLeaseDuration(20, SECONDS)
           .setFailoverPriority(availability()))));
     });

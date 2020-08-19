@@ -25,7 +25,7 @@ import static org.terracotta.dynamic_config.api.model.Version.CURRENT;
  */
 public interface PropertyHolder {
 
-  String getUID();
+  UID getUID();
 
   String getName();
 

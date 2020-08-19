@@ -66,7 +66,7 @@ public class RawPathTest {
     assertTrue(properties.containsKey("stripe.1.node.1.log-dir"));
     assertThat(properties.getProperty("stripe.1.node.1.log-dir"), is(equalTo("a\\b")));
 
-    String expectedJson = "{\"stripes\":[{\"name\":\"s\",\"nodes\":[{\"hostname\":\"localhost\",\"logDir\":\"a\\\\b\",\"name\":\"foo\",\"uid\":\"n-uid-1\"}],\"uid\":\"s-uid-1\"}],\"failoverPriority\":\"availability\",\"name\":\"c\",\"uid\":\"c-uid\"}";
+    String expectedJson = "{\"stripes\":[{\"name\":\"s\",\"nodes\":[{\"hostname\":\"localhost\",\"logDir\":\"a\\\\b\",\"name\":\"foo\",\"uid\":\"jUhhu1kRQd-x6iNgpo9Xyw\"}],\"uid\":\"5Zv3uphiRLavoGZthy7JNg\"}],\"failoverPriority\":\"availability\",\"name\":\"c\",\"uid\":\"YLQguzhRSdS6y5M9vnA5mw\"}";
     assertThat(om.writeValueAsString(cluster), om.writeValueAsString(cluster), is(equalTo(expectedJson)));
     assertThat(om.readValue(expectedJson, Cluster.class), is(equalTo(cluster)));
     assertThat(om.readValue(expectedJson, Cluster.class).toProperties(false, false, true), is(equalTo(properties)));

@@ -17,20 +17,55 @@ package org.terracotta.dynamic_config.api.model;
 
 import java.math.BigInteger;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Mathieu Carbou
  */
-public class UID {
+public final class UID {
+
+  private final String value;
+
+  private UID(String value) {
+    this.value = requireNonNull(value);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof UID)) return false;
+    UID uid = (UID) o;
+    return value.equals(uid.value);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(value);
+  }
+
+  @Override
+  public String toString() {
+    return value;
+  }
+
+  public static UID valueOf(String v) {
+    requireNonNull(v);
+    if (!isUID(v)) {
+      throw new IllegalArgumentException("Not a UID: " + v);
+    }
+    return new UID(v);
+  }
 
   /**
    * Generate a Java-like UUID in a shorter string B64 encoded
    */
-  public static String newUID() {
+  public static UID newUID() {
     UUID uuid = UUID.randomUUID();
-    return encodeB64(toBytes(new long[]{uuid.getMostSignificantBits(), uuid.getLeastSignificantBits()}));
+    return new UID(encodeB64(toBytes(new long[]{uuid.getMostSignificantBits(), uuid.getLeastSignificantBits()})));
   }
 
   /**
@@ -38,7 +73,7 @@ public class UID {
    * <p>
    * This method takes a seed to be able to control the UID generator sequence.
    */
-  public static String newUID(Random r) {
+  public static UID newUID(Random r) {
     byte[] bytes = new byte[16];
     r.nextBytes(bytes);
     // similar to JDK's UUID impl
@@ -46,7 +81,7 @@ public class UID {
     bytes[6] |= 0x40;  /* set to version 4     */
     bytes[8] &= 0x3f;  /* clear variant        */
     bytes[8] |= 0x80;  /* set to IETF variant  */
-    return encodeB64(bytes);
+    return new UID(encodeB64(bytes));
   }
 
   public static boolean isUID(String s) {

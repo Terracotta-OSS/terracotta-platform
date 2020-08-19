@@ -39,7 +39,7 @@ public class Stripe implements Cloneable, PropertyHolder {
 
   private List<Node> nodes = new CopyOnWriteArrayList<>();
 
-  private String uid;
+  private UID uid;
   private String name;
 
   public List<Node> getNodes() {
@@ -62,11 +62,11 @@ public class Stripe implements Cloneable, PropertyHolder {
   }
 
   @Override
-  public String getUID() {
+  public UID getUID() {
     return uid;
   }
 
-  public Stripe setUID(String uid) {
+  public Stripe setUID(UID uid) {
     this.uid = requireNonNull(uid);
     return this;
   }

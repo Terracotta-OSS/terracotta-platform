@@ -36,8 +36,8 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Properties;
 import java.time.Instant;
+import java.util.Properties;
 
 import static java.lang.System.lineSeparator;
 
@@ -66,7 +66,6 @@ public class ExportCommand extends RemoteCommand {
     if (outputFile != null && outputFile.toFile().exists() && !Files.isRegularFile(outputFile)) {
       throw new IllegalArgumentException(outputFile + " is not a file");
     }
-    validateAddress(node);
   }
 
   @Override

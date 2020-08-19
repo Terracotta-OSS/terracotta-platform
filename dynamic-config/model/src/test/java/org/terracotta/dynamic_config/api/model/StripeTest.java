@@ -55,7 +55,7 @@ public class StripeTest {
 
   @Test
   public void test_clone() {
-    assertThat(new Stripe().setUID("uid"), is(equalTo(new Stripe().setUID("uid").clone())));
+    assertThat(new Stripe().setUID(Testing.S_UIDS[1]), is(equalTo(new Stripe().setUID(Testing.S_UIDS[1]).clone())));
     assertThat(stripe, is(equalTo(stripe.clone())));
   }
 

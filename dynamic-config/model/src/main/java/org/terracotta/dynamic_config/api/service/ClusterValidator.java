@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 
 import java.util.EnumSet;
@@ -75,7 +76,7 @@ public class ClusterValidator {
   }
 
   private void validateUIDs() {
-    Map<String, String> discovered = new HashMap<>();
+    Map<UID, String> discovered = new HashMap<>();
     if (cluster.getUID() == null) {
       throw new MalformedClusterException("Missing UID on cluster");
     }

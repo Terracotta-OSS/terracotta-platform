@@ -16,7 +16,7 @@
           "metadataDir": "%H/terracotta/metadata",
           "name": "node-1",
           "port": 9410,
-          "uid": "uid-1-1"
+          "uid": "VOVyu3kuQxCRIu7dK_UZZA"
         },
         {
           "bindAddress": "0.0.0.0",
@@ -32,10 +32,10 @@
           "name": "node-2",
           "port": 9410,
           "tcProperties": {},
-          "uid": "uid-1-2"
+          "uid": "ZwZtuxl6QlWGZVUJ_30uMQ"
         }
       ],
-      "uid": "s-uid-1"
+      "uid": "5Zv3uphiRLavoGZthy7JNg"
     }
   ],
   "clientLeaseDuration": {
@@ -69,5 +69,5 @@
   },
   "securitySslTls": false,
   "securityWhitelist": false,
-  "uid": "c-uid"
+  "uid": "YLQguzhRSdS6y5M9vnA5mw"
 }

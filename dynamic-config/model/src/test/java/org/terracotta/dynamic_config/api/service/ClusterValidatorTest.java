@@ -21,6 +21,7 @@ import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.RawPath;
+import org.terracotta.dynamic_config.api.model.Testing;
 
 import java.util.Random;
 import java.util.stream.Stream;
@@ -46,64 +47,64 @@ public class ClusterValidatorTest {
 
   @Test
   public void testDuplicateNodeUIDs() {
-    Node node1 = newTestNode("foo1", "localhost1", "uid");
-    Node node2 = newTestNode("foo2", "localhost2", "uid");
+    Node node1 = newTestNode("foo1", "localhost1", Testing.N_UIDS[1]);
+    Node node2 = newTestNode("foo2", "localhost2", Testing.N_UIDS[1]);
 
     assertClusterValidationFails(
-        "Duplicate UID for node ID: 2 in stripe ID: 1. UID: uid was used on node ID: 1 in stripe ID: 1",
+        "Duplicate UID for node ID: 2 in stripe ID: 1. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on node ID: 1 in stripe ID: 1",
         newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)));
   }
 
   @Test
   public void testDuplicateNodeUIDsDifferentStripes() {
-    Node node1 = newTestNode("foo1", "localhost1", "uid");
-    Node node2 = newTestNode("foo2", "localhost2", "uid");
+    Node node1 = newTestNode("foo1", "localhost1", Testing.N_UIDS[1]);
+    Node node2 = newTestNode("foo2", "localhost2", Testing.N_UIDS[1]);
 
     assertClusterValidationFails(
-        "Duplicate UID for node ID: 1 in stripe ID: 2. UID: uid was used on node ID: 1 in stripe ID: 1",
-        newTestCluster(newTestStripe("stripe1").addNode(node1), newTestStripe("stripe2").setUID("s-uid-2").addNode(node2)));
+        "Duplicate UID for node ID: 1 in stripe ID: 2. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on node ID: 1 in stripe ID: 1",
+        newTestCluster(newTestStripe("stripe1").addNode(node1), newTestStripe("stripe2").setUID(Testing.S_UIDS[2]).addNode(node2)));
   }
 
   @Test
   public void testDuplicateStripeUIDs() {
-    Node node1 = newTestNode("foo1", "localhost1", "uid-1");
-    Node node2 = newTestNode("foo2", "localhost2", "uid-2");
+    Node node1 = newTestNode("foo1", "localhost1", Testing.N_UIDS[1]);
+    Node node2 = newTestNode("foo2", "localhost2", Testing.N_UIDS[2]);
 
     assertClusterValidationFails(
-        "Duplicate UID for stripe ID: 2. UID: s-uid-1 was used on stripe ID: 1",
+        "Duplicate UID for stripe ID: 2. UID: 5Zv3uphiRLavoGZthy7JNg was used on stripe ID: 1",
         newTestCluster(newTestStripe("stripe1").addNode(node1), newTestStripe("stripe2").addNode(node2)));
   }
 
   @Test
   public void testDuplicateUIDs() {
-    Node node1 = newTestNode("foo1", "localhost1", "uid-1");
-    Node node2 = newTestNode("foo2", "localhost2", "uid-2");
+    Node node1 = newTestNode("foo1", "localhost1", Testing.N_UIDS[1]);
+    Node node2 = newTestNode("foo2", "localhost2", Testing.N_UIDS[2]);
 
     assertClusterValidationFails(
-        "Duplicate UID for stripe ID: 2. UID: uid-1 was used on node ID: 1 in stripe ID: 1",
-        newTestCluster(newTestStripe("stripe1").addNode(node1), newTestStripe("stripe2").setUID("uid-1").addNode(node2)));
+        "Duplicate UID for stripe ID: 2. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on node ID: 1 in stripe ID: 1",
+        newTestCluster(newTestStripe("stripe1").addNode(node1), newTestStripe("stripe2").setUID(Testing.N_UIDS[1]).addNode(node2)));
 
     assertClusterValidationFails(
-        "Duplicate UID for node ID: 1 in stripe ID: 1. UID: uid-1 was used on cluster",
-        newTestCluster(newTestStripe("stripe1").addNode(node1)).setUID("uid-1"));
+        "Duplicate UID for node ID: 1 in stripe ID: 1. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on cluster",
+        newTestCluster(newTestStripe("stripe1").addNode(node1)).setUID(Testing.N_UIDS[1]));
 
     assertClusterValidationFails(
-        "Duplicate UID for stripe ID: 1. UID: s-uid-1 was used on cluster",
-        newTestCluster(newTestStripe("stripe1").addNode(node1)).setUID("s-uid-1"));
+        "Duplicate UID for stripe ID: 1. UID: 5Zv3uphiRLavoGZthy7JNg was used on cluster",
+        newTestCluster(newTestStripe("stripe1").addNode(node1)).setUID(Testing.S_UIDS[1]));
 
     assertClusterValidationFails(
-        "Duplicate UID for stripe ID: 1. UID: c-uid was used on cluster",
-        newTestCluster(newTestStripe("stripe1").addNode(node1).setUID("c-uid")));
+        "Duplicate UID for stripe ID: 1. UID: YLQguzhRSdS6y5M9vnA5mw was used on cluster",
+        newTestCluster(newTestStripe("stripe1").addNode(node1).setUID(Testing.C_UIDS[0])));
 
     assertClusterValidationFails(
-        "Duplicate UID for node ID: 1 in stripe ID: 1. UID: uid-1 was used on stripe ID: 1",
-        newTestCluster(newTestStripe("stripe1").addNode(node1).setUID("uid-1")));
+        "Duplicate UID for node ID: 1 in stripe ID: 1. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on stripe ID: 1",
+        newTestCluster(newTestStripe("stripe1").addNode(node1).setUID(Testing.N_UIDS[1])));
   }
 
   @Test
   public void testDuplicateNodeNameSameStripe() {
     Node node1 = newTestNode("foo", "localhost1");
-    Node node2 = newTestNode("foo", "localhost2", "uid-2");
+    Node node2 = newTestNode("foo", "localhost2", Testing.N_UIDS[2]);
 
     assertClusterValidationFails("Found duplicate node name: foo", newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)));
   }
@@ -111,15 +112,15 @@ public class ClusterValidatorTest {
   @Test
   public void testDuplicateNodeNameDifferentStripe() {
     Node node1 = newTestNode("foo", "localhost1");
-    Node node2 = newTestNode("foo", "localhost2", "uid-2");
+    Node node2 = newTestNode("foo", "localhost2", Testing.N_UIDS[2]);
 
-    assertClusterValidationFails("Found duplicate node name: foo", newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", "s-uid-2").addNodes(node2)));
+    assertClusterValidationFails("Found duplicate node name: foo", newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2)));
   }
 
   @Test
   public void testDuplicateAddress() {
     Node node1 = newTestNode("foo1", "localhost");
-    Node node2 = newTestNode("foo2", "localhost", "uid-2");
+    Node node2 = newTestNode("foo2", "localhost", Testing.N_UIDS[2]);
 
     assertClusterValidationFails(
         "Nodes with names: foo1, foo2 have the same address: 'localhost:9410'",
@@ -129,7 +130,7 @@ public class ClusterValidatorTest {
   @Test
   public void testDuplicatePublicAddress() {
     Node node1 = newTestNode("foo1", "host1").setPublicHostname("public-host").setPublicPort(9510);
-    Node node2 = newTestNode("foo2", "host2", "uid-2").setPublicHostname("public-host").setPublicPort(9510);
+    Node node2 = newTestNode("foo2", "host2", Testing.N_UIDS[2]).setPublicHostname("public-host").setPublicPort(9510);
 
     assertClusterValidationFails(
         "Nodes with names: foo1, foo2 have the same public address: 'public-host:9510'",
@@ -139,7 +140,7 @@ public class ClusterValidatorTest {
   @Test
   public void testNotAllNodesHavePublicAddress() {
     Node node1 = newTestNode("foo1", "host1").setPublicHostname("public-host").setPublicPort(9510);
-    Node node2 = newTestNode("foo2", "host2", "uid-2");
+    Node node2 = newTestNode("foo2", "host2", Testing.N_UIDS[2]);
 
     assertClusterValidationFails(
         "Nodes with names: [foo2] don't have public addresses defined, but other nodes in the cluster do. Mutative operations on public addresses must be done simultaneously on every node in the cluster",
@@ -155,14 +156,14 @@ public class ClusterValidatorTest {
   @Test
   public void testSamePublicAndPrivateAddressAcrossNodes() {
     Node node1 = newTestNode("foo1", "host1").setPort(9410).setPublicHostname("host2").setPublicPort(9410);
-    Node node2 = newTestNode("foo2", "host2", "uid-2").setPort(9410).setPublicHostname("host1").setPublicPort(9410);
+    Node node2 = newTestNode("foo2", "host2", Testing.N_UIDS[2]).setPort(9410).setPublicHostname("host1").setPublicPort(9410);
     new ClusterValidator(newTestCluster(newTestStripe("stripe1").addNodes(node1, node2))).validate();
   }
 
   @Test
   public void testDuplicatePrivateAddressWithDifferentPublicAddresses() {
     Node node1 = newTestNode("foo1", "localhost").setPublicHostname("public-host1").setPublicPort(9510);
-    Node node2 = newTestNode("foo2", "localhost", "uid-2").setPublicHostname("public-host2").setPublicPort(9510);
+    Node node2 = newTestNode("foo2", "localhost", Testing.N_UIDS[2]).setPublicHostname("public-host2").setPublicPort(9510);
 
     assertClusterValidationFails(
         "Nodes with names: foo1, foo2 have the same address: 'localhost:9410'",
@@ -186,7 +187,7 @@ public class ClusterValidatorTest {
   @Test
   public void testDifferingDataDirectoryNames() {
     Node node1 = newTestNode("node1", "localhost1");
-    Node node2 = newTestNode("node2", "localhost2", "uid-2");
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]);
     node1.putDataDir("dir-1", RawPath.valueOf("data"));
     node2.putDataDir("dir-2", RawPath.valueOf("data"));
 
@@ -196,25 +197,25 @@ public class ClusterValidatorTest {
   @Test
   public void testSetSameBackupPath_ok() {
     Node node1 = newTestNode("node1", "localhost1");
-    Node node2 = newTestNode("node2", "localhost2", "uid-2");
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]);
     node1.setBackupDir(RawPath.valueOf("backup"));
     node2.setBackupDir(RawPath.valueOf("backup"));
-    new ClusterValidator(newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", "s-uid-2").addNodes(node2))).validate();
+    new ClusterValidator(newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2))).validate();
   }
 
   @Test
   public void testSetDifferentBackupPaths_ok() {
     Node node1 = newTestNode("node1", "localhost1");
-    Node node2 = newTestNode("node2", "localhost2", "uid-2");
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]);
     node1.setBackupDir(RawPath.valueOf("backup-1"));
     node2.setBackupDir(RawPath.valueOf("backup-2"));
-    new ClusterValidator(newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", "s-uid-2").addNodes(node2))).validate();
+    new ClusterValidator(newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2))).validate();
   }
 
   @Test
   public void testSetBackupOnOneStripeOnly_fail() {
     Node node1 = newTestNode("foo", "localhost1");
-    Node node2 = newTestNode("node2", "localhost2", "uid-2");
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]);
     node1.setBackupDir(RawPath.valueOf("backup"));
 
     assertClusterValidationFails(
@@ -226,7 +227,7 @@ public class ClusterValidatorTest {
   public void testValidCluster() {
     Node[] nodes = Stream.of(
         newTestNode("node1", "localhost1"),
-        newTestNode("node2", "localhost2", "uid-2")
+        newTestNode("node2", "localhost2", Testing.N_UIDS[2])
     ).map(node -> node
         .setSecurityAuditLogDir(RawPath.valueOf("audit-" + random.nextInt()))
         .setSecurityDir(RawPath.valueOf("security-root" + random.nextInt()))
@@ -255,7 +256,7 @@ public class ClusterValidatorTest {
   @Test
   public void testGoodSecurity_1() {
     Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
-    Node node2 = newTestNode("node2", "localhost2", "uid-2").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
 
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecuritySslTls(false).setSecurityWhitelist(true);
     new ClusterValidator(cluster).validate();
@@ -264,7 +265,7 @@ public class ClusterValidatorTest {
   @Test
   public void testGoodSecurity_2() {
     Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
-    Node node2 = newTestNode("node2", "localhost2", "uid-2").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
 
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecurityWhitelist(true);
     new ClusterValidator(cluster).validate();
@@ -273,7 +274,7 @@ public class ClusterValidatorTest {
   @Test
   public void testGoodSecurity_3() {
     Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir"));
-    Node node2 = newTestNode("node2", "localhost2", "uid-2").setSecurityDir(RawPath.valueOf("security-root-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-root-dir"));
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecurityAuthc("file");
     new ClusterValidator(cluster).validate();
   }
@@ -281,7 +282,7 @@ public class ClusterValidatorTest {
   @Test
   public void testGoodSecurity_4() {
     Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir"));
-    Node node2 = newTestNode("node2", "localhost2", "uid-2").setSecurityDir(RawPath.valueOf("security-root-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-root-dir"));
 
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecuritySslTls(true).setSecurityAuthc("certificate");
     new ClusterValidator(cluster).validate();
@@ -290,7 +291,7 @@ public class ClusterValidatorTest {
   @Test
   public void testGoodSecurity_5() {
     Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
-    Node node2 = newTestNode("node2", "localhost2", "uid-2").setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-root-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
 
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2))
         .setSecuritySslTls(true)
@@ -362,7 +363,7 @@ public class ClusterValidatorTest {
   @Test
   public void testBadSecurity_notAllNodesHaveAuditLogDir() {
     Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("audit"));
-    Node node2 = newTestNode("node2", "localhost2", "uid-2").setSecurityDir(RawPath.valueOf("security-dir"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir"));
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecurityWhitelist(true);
 
     assertClusterValidationFails("Nodes with names: [node2] don't have audit log directories defined, but other nodes in the cluster do. Mutative operations on audit log dirs must be done simultaneously on every node in the cluster", cluster);

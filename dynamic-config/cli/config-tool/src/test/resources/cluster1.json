@@ -10,7 +10,7 @@
           "hostname": "localhost",
           "name": "node0",
           "port": 9410,
-          "uid": "uid-1-1"
+          "uid": "VOVyu3kuQxCRIu7dK_UZZA"
         },
         {
           "dataDirs": {
@@ -19,13 +19,13 @@
           "hostname": "localhost",
           "name": "node1",
           "port": 9411,
-          "uid": "uid-1-2"
+          "uid": "ZwZtuxl6QlWGZVUJ_30uMQ"
         }
       ],
-      "uid": "s-uid-1"
+      "uid": "5Zv3uphiRLavoGZthy7JNg"
     }
   ],
   "failoverPriority": "availability",
   "name": "my-cluster",
-  "uid": "c-uid"
+  "uid": "YLQguzhRSdS6y5M9vnA5mw"
 }
