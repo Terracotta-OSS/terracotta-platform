@@ -99,7 +99,7 @@ public abstract class TopologyCommand extends RemoteCommand {
   }
 
   @Override
-  public final void run() {
+  public void run() {
     // build an updated topology
     Cluster result = updateTopology();
 

@@ -40,6 +40,7 @@ import org.terracotta.dynamic_config.cli.config_tool.stop.StopProgress;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
+import org.terracotta.nomad.entity.client.NomadEntityProvider;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadChangeInfo;
 
@@ -91,6 +92,7 @@ public abstract class RemoteCommand extends Command {
   @Inject public NomadManager<NodeContext> nomadManager;
   @Inject public RestartService restartService;
   @Inject public StopService stopService;
+  @Inject public NomadEntityProvider nomadEntityProvider;
 
   protected void licenseValidation(InetSocketAddress node, Cluster cluster) {
     logger.trace("licenseValidation({}, {})", node, cluster);
