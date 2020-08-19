@@ -78,7 +78,7 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
         stripe.setUID(upgraded.newUID(random));
       }
       stripe.getNodes().forEach(node -> {
-        if(node.getUID() == null) {
+        if (node.getUID() == null) {
           node.setUID(upgraded.newUID(random));
         }
       });
