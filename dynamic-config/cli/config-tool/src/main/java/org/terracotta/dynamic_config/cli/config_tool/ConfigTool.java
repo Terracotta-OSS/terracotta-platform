@@ -119,7 +119,8 @@ public class ConfigTool {
     StopService stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
 
     LOGGER.debug("Injecting services in CommandRepository");
-    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, objectMapperFactory);
+    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService,
+        stopService, objectMapperFactory, nomadEntityProvider);
 
     jCommander.getAskedCommand().map(command -> {
       // check for help
