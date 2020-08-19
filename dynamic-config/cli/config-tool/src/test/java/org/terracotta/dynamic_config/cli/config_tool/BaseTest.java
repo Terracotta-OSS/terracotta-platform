@@ -30,6 +30,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.cli.config_tool.nomad.DefaultNomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
@@ -111,7 +112,7 @@ public abstract class BaseTest {
       }
     };
     multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider<>(diagnosticServiceProvider, timeout, new ConcurrencySizing());
-    nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
+    nomadManager = new DefaultNomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
     stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
   }
