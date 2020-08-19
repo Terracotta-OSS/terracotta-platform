@@ -25,7 +25,7 @@ import org.terracotta.nomad.server.NomadException;
 import static java.lang.String.format;
 
 public class LockAwareNomadChangeProcessor implements NomadChangeProcessor<DynamicConfigNomadChange> {
-  private static final String REJECT_MESSAGE = "changes are not allowed as config is locked by '%s (%s)'";
+  private static final String REJECT_MESSAGE = "changes are not allowed as config is locked by '%s'";
 
   private final NomadChangeProcessor<DynamicConfigNomadChange> next;
 
@@ -48,12 +48,12 @@ public class LockAwareNomadChangeProcessor implements NomadChangeProcessor<Dynam
           LockAwareDynamicConfigNomadChange lockAwareDynamicConfigNomadChange = (LockAwareDynamicConfigNomadChange)change;
           String tokenFromClient = lockAwareDynamicConfigNomadChange.getLockToken();
           if (!lockContext.getToken().equals(tokenFromClient)) {
-            throw new NomadException(format(REJECT_MESSAGE, lockContext.getOwnerName(), lockContext.getOwnerTags()));
+            throw new NomadException(format(REJECT_MESSAGE, lockContext.ownerInfo()));
           }
         }
       } else {
         if (lockContext != null) {
-          throw new NomadException(format(REJECT_MESSAGE, lockContext.getOwnerName(), lockContext.getOwnerTags()));
+          throw new NomadException(format(REJECT_MESSAGE, lockContext.ownerInfo()));
         }
       }
     }

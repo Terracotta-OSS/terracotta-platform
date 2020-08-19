@@ -17,6 +17,8 @@ package org.terracotta.dynamic_config.api.model;
 
 import java.util.Objects;
 
+import static java.lang.String.format;
+
 public class LockContext {
   private static final String DELIMITER = ";";
 
@@ -45,6 +47,10 @@ public class LockContext {
   public static LockContext from(String contextStr) {
     String[] substrings = contextStr.split(DELIMITER);
 
+    if (substrings.length != 3) {
+      throw new IllegalArgumentException(format("Invalid lock-context '%s', expected format 'uuid;owner-name;owner-tags", contextStr));
+    }
+
     return new LockContext(substrings[0], substrings[1], substrings[2]);
   }
 
@@ -64,6 +70,10 @@ public class LockContext {
   }
 
   public String toString() {
-    return String.format("%s%s%s%s%s", token, DELIMITER, ownerName, DELIMITER, ownerTags);
+    return format("%s%s%s%s%s", token, DELIMITER, ownerName, DELIMITER, ownerTags);
+  }
+
+  public String ownerInfo() {
+    return format("%s (%s)", ownerName, ownerTags);
   }
 }

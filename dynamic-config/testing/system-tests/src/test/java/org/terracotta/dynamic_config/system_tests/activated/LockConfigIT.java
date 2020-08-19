@@ -109,11 +109,11 @@ public class LockConfigIT extends DynamicConfigIT {
   }
 
   private void lock() {
-    invokeWithoutToken("set", "-s", "localhost:" + getNodePort(), "-c", "lock-context=" + lockContext);
+    invokeWithoutToken("lock-config", "-s", "localhost:" + getNodePort(), "--lock-context", lockContext.toString());
   }
 
   private void unlock() {
-    invokeWithToken("unset", "-s", "localhost:" + getNodePort(), "-c", "lock-context");
+    invokeWithToken("unlock-config", "-s", "localhost:" + getNodePort());
   }
 
   private void invokeWithoutToken(String... args) {
