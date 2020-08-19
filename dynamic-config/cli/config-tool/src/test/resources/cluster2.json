@@ -9,9 +9,11 @@
           },
           "hostname": "localhost",
           "name": "node0",
-          "port": 9410
+          "port": 9410,
+          "uid": "uid-1-1"
         }
-      ]
+      ],
+      "uid": "s-uid-1"
     },
     {
       "name": "stripe2",
@@ -22,11 +24,14 @@
           },
           "hostname": "localhost",
           "name": "node1",
-          "port": 9411
+          "port": 9411,
+          "uid": "uid-2-1"
         }
-      ]
+      ],
+      "uid": "s-uid-2"
     }
   ],
   "failoverPriority": "availability",
-  "name": "my-cluster"
+  "name": "my-cluster",
+  "uid": "c-uid"
 }

@@ -116,7 +116,7 @@ public class AttachCommand extends TopologyCommand {
               "===================================================================================" + lineSeparator() +
               "IMPORTANT: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes " +
               "(" + nodeCount + ") in this stripe " + lineSeparator() +
-              "is an odd number, which will become even with the addition of node " + source + "." +  lineSeparator() +
+              "is an odd number, which will become even with the addition of node " + source + "." + lineSeparator() +
               "An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
               "===================================================================================" + lineSeparator());
         }
@@ -152,14 +152,27 @@ public class AttachCommand extends TopologyCommand {
         logger.info("Attaching node: {} to stripe: {}", source, destination);
         Stripe stripe = cluster.getStripe(destination).get();
         Node node = sourceCluster.getNode(this.source).get();
-        stripe.addNode(node.clone());
+
+        Node clone = node.clone();
+        stripe.addNode(clone);
+
+        // change the node UID
+        clone.setUID(cluster.newUID());
+
         break;
       }
 
       case STRIPE: {
         Stripe stripe = sourceCluster.getStripe(source).get();
         logger.info("Attaching a new stripe formed with nodes: {} to cluster: {}", toString(stripe.getNodeAddresses()), destination);
-        cluster.addStripe(stripe.clone());
+
+        Stripe clone = stripe.clone();
+        cluster.addStripe(clone);
+
+        // change the stripe UID and all its nodes
+        clone.setUID(cluster.newUID());
+        clone.getNodes().forEach(n -> n.setUID(cluster.newUID()));
+
         break;
       }
 

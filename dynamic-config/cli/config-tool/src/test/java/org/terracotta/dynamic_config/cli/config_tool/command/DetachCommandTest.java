@@ -24,7 +24,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.RawPath;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 
 import java.io.IOException;
@@ -41,6 +40,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
@@ -70,7 +71,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/stray-cache"));
 
-  Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(node1_1, node1_2), new Stripe().setName("stripe2").addNodes(node2_1, node2_2))
+  Cluster cluster = newTestCluster("my-cluster", newTestStripe("stripe1").addNodes(node1_1, node1_2), newTestStripe("stripe2", "s-uid2").addNodes(node2_1, node2_2))
       .putOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Captor
@@ -85,6 +86,8 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   @Before
   public void setUp() throws Exception {
     super.setUp();
+
+    Testing.replaceUIDs(cluster);
 
     when(topologyServiceMock(node1_1.getAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getAddress()));
     when(topologyServiceMock(node1_1.getAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getAddress()));

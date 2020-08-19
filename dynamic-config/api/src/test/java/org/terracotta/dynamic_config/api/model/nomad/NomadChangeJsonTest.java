@@ -53,6 +53,8 @@ public class NomadChangeJsonTest {
 
   @Test
   public void test_ser_deser() throws IOException, URISyntaxException {
+    Testing.replaceUIDs(cluster);
+
     NomadChange[] changes = {
         new ClusterActivationNomadChange(cluster),
         SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
@@ -69,7 +71,6 @@ public class NomadChangeJsonTest {
       URL jsonFile = getClass().getResource("/nomad/change" + i + ".json");
       byte[] bytes = Files.readAllBytes(Paths.get(jsonFile.toURI()));
       String json = new String(bytes, StandardCharsets.UTF_8);
-
       assertThat(jsonFile.getPath(), objectMapper.valueToTree(change).toString(), is(equalTo(objectMapper.readTree(json).toString())));
       assertThat(jsonFile.getPath(), objectMapper.readValue(json, NomadChange.class), is(equalTo(change)));
     }

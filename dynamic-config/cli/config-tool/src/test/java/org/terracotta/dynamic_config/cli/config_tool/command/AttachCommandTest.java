@@ -41,6 +41,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
@@ -63,11 +65,11 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
       .putDataDir("cache", RawPath.valueOf("/data/cache3"));
 
   NodeContext nodeContext0 = new NodeContext(
-      Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNode(node0)),
+      newTestCluster("my-cluster", newTestStripe("stripe1").addNode(node0)),
       node0.getAddress());
 
   NodeContext nodeContext1 = new NodeContext(
-      Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNode(node1)),
+      newTestCluster("my-cluster", newTestStripe("stripe1").addNode(node1)),
       node1.getAddress());
 
   @Captor ArgumentCaptor<Cluster> newCluster;
@@ -82,6 +84,8 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   public void setUp() throws Exception {
     super.setUp();
 
+    Testing.replaceUIDs(nodeContext0.getCluster());
+    Testing.replaceUIDs(nodeContext1.getCluster());
     when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(nodeContext0);
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext1);
 
@@ -107,7 +111,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_node_validation_fail_src_multiNodeStripe() {
-    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe().addNodes(node1, node2)), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNodes(node1, node2)), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -122,7 +126,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_node_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -155,6 +159,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(2));
     assertThat(allValues.get(0), is(equalTo(allValues.get(1))));
+    Testing.replaceUIDs(allValues.get(0));
     assertThat(
         objectMapper.writeValueAsString(allValues.get(0)),
         allValues.get(0),
@@ -181,7 +186,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe_validation_fail_src_multiStripeCluster() {
-    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe().addNode(node1), new Stripe().addNode(node2)), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1), new Stripe().addNode(node2)), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -216,6 +221,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(2));
     assertThat(allValues.get(0), is(equalTo(allValues.get(1))));
+    Testing.replaceUIDs(allValues.get(0));
     assertThat(
         objectMapper.writeValueAsString(allValues.get(0)),
         allValues.get(0),
@@ -230,7 +236,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(Testing.newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()

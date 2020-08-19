@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Version;
 
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,6 +70,37 @@ public class ClusterValidator {
     validateFailoverSetting();
     if (version.amongst(EnumSet.of(V2))) {
       validateStripeNames();
+      validateUIDs();
+    }
+  }
+
+  private void validateUIDs() {
+    Map<String, String> discovered = new HashMap<>();
+    if (cluster.getUID() == null) {
+      throw new MalformedClusterException("Missing UID on cluster");
+    }
+    discovered.put(cluster.getUID(), "cluster");
+    for (int stripeId = 1; stripeId <= cluster.getStripeCount(); stripeId++) {
+      Stripe stripe = cluster.getStripe(stripeId).get();
+      String label = "stripe ID: " + stripeId;
+      if (stripe.getUID() == null) {
+        throw new MalformedClusterException("Missing UID on " + label);
+      }
+      String prev = discovered.put(stripe.getUID(), label);
+      if (prev != null) {
+        throw new MalformedClusterException("Duplicate UID for " + label + ". UID: " + stripe.getUID() + " was used on " + prev);
+      }
+      for (int nodeId = 1; nodeId <= stripe.getNodeCount(); nodeId++) {
+        Node node = stripe.getNode(nodeId).get();
+        label = "node ID: " + nodeId + " in stripe ID: " + stripeId;
+        if (node.getUID() == null) {
+          throw new MalformedClusterException("Missing UID on " + label);
+        }
+        prev = discovered.put(node.getUID(), label);
+        if (prev != null) {
+          throw new MalformedClusterException("Duplicate UID for " + label + ". UID: " + node.getUID() + " was used on " + prev);
+        }
+      }
     }
   }
 

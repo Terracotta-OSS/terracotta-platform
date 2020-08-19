@@ -23,9 +23,9 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockContext;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.json.ObjectMapperFactory;
 
@@ -44,7 +44,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
+import static org.terracotta.dynamic_config.api.model.Testing.replaceUIDs;
 import static org.terracotta.dynamic_config.api.model.Version.CURRENT;
 import static org.terracotta.dynamic_config.api.model.Version.V1;
 import static org.terracotta.dynamic_config.api.model.Version.V2;
@@ -56,8 +58,10 @@ public class CompatibilityTest {
 
   private final ObjectMapper mapper = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
-  private final Cluster clusterV1 = Testing.newTestCluster("my-cluster", new Stripe().addNodes(
-      Testing.newTestNode("node-1", "localhost1")
+  private final Cluster clusterV1 = new Cluster().setName("my-cluster").setFailoverPriority(availability()).addStripe(new Stripe().addNodes(
+      new Node()
+          .setName("node-1")
+          .setHostname("localhost1")
           .setPort(9410)
           .setGroupPort(9430)
           .setBindAddress("0.0.0.0")
@@ -67,7 +71,9 @@ public class CompatibilityTest {
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
-      Testing.newTestNode("node-2", "localhost2")
+      new Node()
+          .setName("node-2")
+          .setHostname("localhost2")
           .setPort(9410)
           .setGroupPort(9430)
           .setBindAddress("0.0.0.0")
@@ -114,18 +120,22 @@ public class CompatibilityTest {
     // - config has V2 settings
     {
       Cluster parsed = new ClusterFactory(V2).create(Props.load(read("/V2.properties")));
+      replaceUIDs(parsed);
       Cluster expected = mapper.readValue(getClass().getResource("/V2.json"), Cluster.class);
-      assertThat(parsed, is(equalTo(expected)));
+      assertThat(mapper.writeValueAsString(parsed), parsed, is(equalTo(expected)));
     }
     // - config file format is V2
     // - config has V1 settings only
     // defaults will be applied
     {
       Cluster parsed = new ClusterFactory(V2).create(Props.load(read("/V1.properties")));
+
       assertThat(parsed.getSingleStripe().get().getName(), startsWith("stripe-"));
       parsed.getSingleStripe().get().setName("stripe-XYZ");
+      replaceUIDs(parsed);
+
       Cluster expected = mapper.readValue(getClass().getResource("/V1_and_V2_defaults.json"), Cluster.class);
-      assertThat(parsed, is(equalTo(expected)));
+      assertThat(mapper.writeValueAsString(parsed), parsed, is(equalTo(expected)));
     }
     // - config file format is V1
     // - config has V1 settings only

@@ -47,9 +47,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.modelToProperties;
 
 public class Node implements Cloneable, PropertyHolder {
 
-  // Note: primitive fields need to be initialized with their default value,
-  // otherwise we will wrongly detect that they have been initialized (Setting.getPropertyValue will return 0 for a port for example)
-
+  private String uid;
   private String name;
   private String hostname;
   private String publicHostname;
@@ -70,6 +68,11 @@ public class Node implements Cloneable, PropertyHolder {
   @Override
   public Scope getScope() {
     return NODE;
+  }
+
+  @Override
+  public String getUID() {
+    return uid;
   }
 
   public String getName() {
@@ -134,6 +137,11 @@ public class Node implements Cloneable, PropertyHolder {
 
   public OptionalConfig<Map<String, String>> getTcProperties() {
     return OptionalConfig.of(TC_PROPERTIES, tcProperties);
+  }
+
+  public Node setUID(String uid) {
+    this.uid = requireNonNull(uid);
+    return this;
   }
 
   public Node setName(String name) {
@@ -382,6 +390,7 @@ public class Node implements Cloneable, PropertyHolder {
     clone.securityAuditLogDir = this.securityAuditLogDir;
     clone.securityDir = this.securityDir;
     clone.tcProperties = this.tcProperties == null ? null : new ConcurrentHashMap<>(this.tcProperties);
+    clone.uid = this.uid;
     return clone;
   }
 
@@ -393,6 +402,7 @@ public class Node implements Cloneable, PropertyHolder {
     return Objects.equals(port, node.port) &&
         Objects.equals(groupPort, node.groupPort) &&
         Objects.equals(name, node.name) &&
+        Objects.equals(uid, node.uid) &&
         Objects.equals(hostname, node.hostname) &&
         Objects.equals(publicHostname, node.publicHostname) &&
         Objects.equals(publicPort, node.publicPort) &&
@@ -412,7 +422,7 @@ public class Node implements Cloneable, PropertyHolder {
   public int hashCode() {
     return Objects.hash(name, hostname, publicHostname, port, publicPort, groupPort,
         bindAddress, groupBindAddress, tcProperties, loggerOverrides, metadataDir, logDir, backupDir,
-        securityDir, securityAuditLogDir, dataDirs);
+        securityDir, securityAuditLogDir, dataDirs, uid);
   }
 
   @Override
@@ -421,6 +431,7 @@ public class Node implements Cloneable, PropertyHolder {
         "name='" + name + '\'' +
         ", hostname='" + hostname + '\'' +
         ", port=" + port +
+        ", uid=" + uid +
         ", publicHostname='" + publicHostname + '\'' +
         ", publicPort=" + publicPort +
         ", groupPort=" + groupPort +

@@ -20,7 +20,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
 
@@ -28,11 +27,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 
 @RunWith(MockitoJUnitRunner.class)
 public class InitialConfigStorageTest {
 
-  NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
+  NodeContext topology = new NodeContext(Testing.newTestCluster("bar", newTestStripe("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
 
   @Mock
   private ConfigStorage underlying;
