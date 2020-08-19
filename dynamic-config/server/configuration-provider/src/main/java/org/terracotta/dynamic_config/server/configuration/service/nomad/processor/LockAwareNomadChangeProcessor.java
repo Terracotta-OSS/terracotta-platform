@@ -19,6 +19,7 @@ import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
@@ -47,16 +48,23 @@ public class LockAwareNomadChangeProcessor implements NomadChangeProcessor<Dynam
         if (lockContext != null) {
           LockAwareDynamicConfigNomadChange lockAwareDynamicConfigNomadChange = (LockAwareDynamicConfigNomadChange)change;
           String tokenFromClient = lockAwareDynamicConfigNomadChange.getLockToken();
-          if (!lockContext.getToken().equals(tokenFromClient)) {
+          if (!lockContext.getToken().equals(tokenFromClient) && notForced(change)) {
             throw new NomadException(format(REJECT_MESSAGE, lockContext.ownerInfo()));
           }
         }
       } else {
         if (lockContext != null) {
-          throw new NomadException(format(REJECT_MESSAGE, lockContext.ownerInfo()));
+          if (notForced(change)) {
+            throw new NomadException(format(REJECT_MESSAGE, lockContext.ownerInfo()));
+          }
         }
       }
     }
+  }
+
+  private static boolean notForced(DynamicConfigNomadChange change) {
+    DynamicConfigNomadChange unwrapped = change.unwrap();
+    return !(unwrapped instanceof UnlockConfigNomadChange) || !((UnlockConfigNomadChange)unwrapped).isForced();
   }
 
   @Override

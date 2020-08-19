@@ -20,7 +20,8 @@ import com.beust.jcommander.converters.EnumConverter;
 public enum RepairAction {
   COMMIT,
   ROLLBACK,
-  RESET;
+  RESET,
+  UNLOCK;
 
   public static class RepairActionConverter extends EnumConverter<RepairAction> {
     public RepairActionConverter() {

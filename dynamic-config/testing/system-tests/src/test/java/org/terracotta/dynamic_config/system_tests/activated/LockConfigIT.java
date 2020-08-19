@@ -71,6 +71,16 @@ public class LockConfigIT extends DynamicConfigIT {
   }
 
   @Test
+  public void testForceUnlock() throws Exception {
+    activate();
+    lock();
+
+    invokeWithoutToken("repair", "-s", "localhost:" + getNodePort(), "-f", "unlock");
+
+    invokeWithoutToken("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.test=123MB");
+  }
+
+  @Test
   public void testLockCanBeExported() throws Exception {
     activate();
     lock();

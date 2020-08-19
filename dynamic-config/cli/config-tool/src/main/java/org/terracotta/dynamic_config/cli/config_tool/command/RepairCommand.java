@@ -19,6 +19,7 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.converter.RepairAction;
@@ -39,13 +40,13 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "repair", commandDescription = "Repair a cluster configuration")
-@Usage("repair -s <hostname[:port]> [-f commit|rollback|reset]")
+@Usage("repair -s <hostname[:port]> [-f commit|rollback|reset|unlock]")
 public class RepairCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-f"}, description = "Repair action to force: commit, rollback, reset", converter = RepairAction.RepairActionConverter.class)
+  @Parameter(names = {"-f"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairAction.RepairActionConverter.class)
   RepairAction forcedRepairAction;
 
   @Override
@@ -57,10 +58,26 @@ public class RepairCommand extends RemoteCommand {
   public final void run() {
     if (forcedRepairAction == RepairAction.RESET) {
       resetAndStop(node);
+    } else if (forcedRepairAction == RepairAction.UNLOCK) {
+      forceUnlock();
     } else {
       nomadRepair();
     }
     logger.info("Command successful!" + lineSeparator());
+  }
+
+  private void forceUnlock() {
+    Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
+    Map<Endpoint, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
+
+    if (onlineNodes.size() != allNodes.size()) {
+      Collection<Endpoint> offlines = new ArrayList<>(allNodes.keySet());
+      offlines.removeAll(onlineNodes.keySet());
+      logger.warn("Some nodes are not reachable: {}", toString(offlines));
+    }
+    Cluster cluster = getUpcomingCluster(node);
+
+    forceUnlock(cluster, onlineNodes);
   }
 
   private void nomadRepair() {
