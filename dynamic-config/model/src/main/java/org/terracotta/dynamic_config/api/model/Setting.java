@@ -151,7 +151,7 @@ public enum Setting {
       UID::newUID,
       NODE,
       fromNode(Node::getUID),
-      intoNode(Node::setUID),
+      intoNode((o, value) -> o.setUID(UID.valueOf(value))),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
           when(CONFIGURING).allow(IMPORT).atLevel(NODE)
@@ -164,7 +164,7 @@ public enum Setting {
       UID::newUID,
       STRIPE,
       fromStripe(Stripe::getUID),
-      intoStripe(Stripe::setUID),
+      intoStripe((o, value) -> o.setUID(UID.valueOf(value))),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atLevels(CLUSTER, STRIPE),
           when(CONFIGURING).allow(IMPORT).atLevel(STRIPE)
@@ -177,7 +177,7 @@ public enum Setting {
       UID::newUID,
       CLUSTER,
       fromCluster(Cluster::getUID),
-      intoCluster(Cluster::setUID),
+      intoCluster((o, value) -> o.setUID(UID.valueOf(value))),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atLevel(CLUSTER),
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER)

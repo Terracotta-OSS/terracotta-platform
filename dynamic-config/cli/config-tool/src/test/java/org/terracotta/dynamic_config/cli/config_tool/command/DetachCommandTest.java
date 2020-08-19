@@ -71,7 +71,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/stray-cache"));
 
-  Cluster cluster = newTestCluster("my-cluster", newTestStripe("stripe1").addNodes(node1_1, node1_2), newTestStripe("stripe2", "s-uid2").addNodes(node2_1, node2_2))
+  Cluster cluster = newTestCluster("my-cluster", newTestStripe("stripe1").addNodes(node1_1, node1_2), newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2_1, node2_2))
       .putOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Captor
@@ -121,6 +121,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
+    System.out.println(objectMapper.writeValueAsString(allValues.get(0)));
     assertThat(
         objectMapper.writeValueAsString(allValues.get(0)),
         allValues.get(0),
@@ -168,6 +169,7 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
+    System.out.println(objectMapper.writeValueAsString(allValues.get(0)));
     assertThat(
         objectMapper.writeValueAsString(allValues.get(0)),
         allValues.get(0),

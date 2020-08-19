@@ -13,10 +13,10 @@
           "tcProperties": {
             "terracotta.management.assert": "true"
           },
-          "uid": "n-uid"
+          "uid": "jUhhu1kRQd-x6iNgpo9Xyw"
         }
       ],
-      "uid": "s-uid"
+      "uid": "5Zv3uphiRLavoGZthy7JNg"
     }
   ],
   "failoverPriority": "availability",
@@ -28,5 +28,5 @@
       "type": "MEMORY"
     }
   },
-  "uid": "c-uid"
+  "uid": "YLQguzhRSdS6y5M9vnA5mw"
 }

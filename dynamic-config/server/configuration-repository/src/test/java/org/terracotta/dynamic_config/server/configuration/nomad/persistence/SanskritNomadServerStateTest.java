@@ -143,7 +143,7 @@ public class SanskritNomadServerStateTest {
     changeObject.setString("state", "ROLLED_BACK");
     changeObject.setLong("version", 1L);
     changeObject.setExternal("operation", settingNomadChange, Version.CURRENT.getValue());
-    changeObject.setString("changeResultHash", "c78a6a1fb948c878c8fa2560082388153ae470c1");
+    changeObject.setString("changeResultHash", "1063a7c79380cc1c8372c1f78d1104eefdeed073");
     changeObject.setString("creationHost", "host");
     changeObject.setString("creationUser", "user");
     changeObject.setString("creationTimestamp", now.toString());
@@ -177,7 +177,7 @@ public class SanskritNomadServerStateTest {
     changeObject.setLong("version", 1L);
     changeObject.setString("prevChangeUuid", prevuuid.toString());
     changeObject.setExternal("operation", settingNomadChange, Version.CURRENT.getValue());
-    changeObject.setString("changeResultHash", "c78a6a1fb948c878c8fa2560082388153ae470c1");
+    changeObject.setString("changeResultHash", "1063a7c79380cc1c8372c1f78d1104eefdeed073");
     changeObject.setString("creationHost", "host");
     changeObject.setString("creationUser", "user");
     changeObject.setString("creationTimestamp", now.toString());
@@ -257,7 +257,7 @@ public class SanskritNomadServerStateTest {
     assertThat(changeDetails.getString("state"), is("COMMITTED"));
     assertThat(changeDetails.getLong("version"), is(4L));
     assertThat(changeDetails.getObject("operation", NomadChange.class, null), is(settingNomadChange));
-    assertThat(changeDetails.getString("changeResultHash"), is("c78a6a1fb948c878c8fa2560082388153ae470c1"));
+    assertThat(changeDetails.getString("changeResultHash"), is("1063a7c79380cc1c8372c1f78d1104eefdeed073"));
     assertThat(changeDetails.getString("creationHost"), is("host1"));
     assertThat(changeDetails.getString("creationUser"), is("user1"));
     assertThat(changeDetails.getString("creationTimestamp"), is(now.toString()));

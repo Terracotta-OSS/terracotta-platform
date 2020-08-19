@@ -51,6 +51,7 @@ import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.inet.json.InetJsonModule;
 import org.terracotta.json.TerracottaJsonModule;
@@ -99,6 +100,21 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
       @Override
       protected RawPath _deserializeFromEmptyString() {
         return RawPath.valueOf("");
+      }
+    });
+
+    addSerializer(UID.class, ToStringSerializer.instance);
+    addDeserializer(UID.class, new FromStringDeserializer<UID>(UID.class) {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      protected UID _deserialize(String value, DeserializationContext ctxt) {
+        return UID.valueOf(value);
+      }
+
+      @Override
+      protected UID _deserializeFromEmptyString() {
+        return UID.valueOf("");
       }
     });
   }

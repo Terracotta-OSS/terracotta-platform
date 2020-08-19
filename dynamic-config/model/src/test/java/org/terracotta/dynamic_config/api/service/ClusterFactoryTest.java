@@ -83,26 +83,26 @@ public class ClusterFactoryTest {
 
   ObjectMapper json = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
-  Cluster cluster = Testing.newTestCluster("my-cluster", newTestStripe("stripe1").setUID("s-uid").addNodes(
+  Cluster cluster = Testing.newTestCluster("my-cluster", newTestStripe("stripe1").setUID(Testing.S_UIDS[1]).addNodes(
       Testing.newTestNode("node-1", "localhost1")
-          .setUID("n-uid-1")
+          .setUID(Testing.N_UIDS[1])
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
       Testing.newTestNode("node-2", "localhost2")
-          .setUID("n-uid-2")
+          .setUID(Testing.N_UIDS[2])
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
           .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
-      .setUID("c-uid")
+      .setUID(Testing.C_UIDS[0])
       .setFailoverPriority(consistency(2))
       .putOffheapResource("foo", 1, MemoryUnit.GB)
       .putOffheapResource("bar", 2, MemoryUnit.GB);
 
-  Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", newTestStripe("stripe1").setUID("s-uid").addNodes(
+  Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", newTestStripe("stripe1").setUID(Testing.S_UIDS[1]).addNodes(
       Testing.newTestNode("node-1", "localhost1")
-          .setUID("n-uid-1")
+          .setUID(Testing.N_UIDS[1])
           .setPort(9410)
           .setGroupPort(9430)
           .setBindAddress("0.0.0.0")
@@ -113,7 +113,7 @@ public class ClusterFactoryTest {
           .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
       Testing.newTestNode("node-2", "localhost2")
-          .setUID("n-uid-2")
+          .setUID(Testing.N_UIDS[2])
           .setPort(9410)
           .setGroupPort(9430)
           .setBindAddress("0.0.0.0")
@@ -124,7 +124,7 @@ public class ClusterFactoryTest {
           .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
           .setTcProperties(emptyMap()))) // specifically set the map to empty one by teh user
-      .setUID("c-uid")
+      .setUID(Testing.C_UIDS[0])
       .setSecuritySslTls(false)
       .setSecurityWhitelist(false)
       .setClientReconnectWindow(120, TimeUnit.SECONDS)
@@ -202,7 +202,7 @@ public class ClusterFactoryTest {
             newTestStripe("stripe1").addNodes(
                 Testing.newTestNode("node1", "localhost1"),
                 Testing.newTestNode("node2", "localhost2")),
-            newTestStripe("stripe2", "s-uid2").addNodes(
+            newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(
                 Testing.newTestNode("node3", "localhost3"),
                 Testing.newTestNode("node4", "localhost4"))
         ));
@@ -345,7 +345,7 @@ public class ClusterFactoryTest {
     Cluster fromJson = json.readValue(read("/config2.json"), Cluster.class);
     Cluster fromProps = new ClusterFactory().create(props);
 
-    assertThat(json.writeValueAsString(fromProps),  fromProps, is(equalTo(fromJson)));
+    assertThat(json.writeValueAsString(fromProps), fromProps, is(equalTo(fromJson)));
     assertThat(
         Props.toString(fromJson.toProperties(false, false, true)),
         fromJson.toProperties(false, false, true),
@@ -366,7 +366,7 @@ public class ClusterFactoryTest {
     Cluster fromProps = new ClusterFactory().create(props);
     Cluster fromJson = json.readValue(read("/config1.json"), Cluster.class);
 
-    assertThat(json.writeValueAsString(fromProps),  fromProps, is(equalTo(fromJson)));
+    assertThat(json.writeValueAsString(fromProps), fromProps, is(equalTo(fromJson)));
     assertThat(
         Props.toString(fromJson.toProperties(false, true, true)),
         fromJson.toProperties(false, true, true),
@@ -412,12 +412,12 @@ public class ClusterFactoryTest {
   }
 
   private void assertCliEquals(Map<Setting, String> params, Cluster expectedCluster) {
-    Testing.resetRequiredUIDs(expectedCluster, "<GENERATED>");
+    Testing.resetRequiredUIDs(expectedCluster, Testing.A_UID);
     Testing.resetRequiredNames(expectedCluster, "<GENERATED>");
 
     Cluster built = clusterFactory.create(params, substitutor);
 
-    Testing.replaceRequiredUIDs(built, "<GENERATED>");
+    Testing.replaceRequiredUIDs(built, Testing.A_UID);
     Testing.replaceRequiredNames(built, "<GENERATED>");
 
     assertThat(built, is(equalTo(expectedCluster)));
@@ -430,12 +430,12 @@ public class ClusterFactoryTest {
   }
 
   private void assertConfigEquals(Properties config, Cluster expectedCluster) {
-    Testing.resetRequiredUIDs(expectedCluster, "<GENERATED>");
+    Testing.resetRequiredUIDs(expectedCluster, Testing.A_UID);
     Testing.resetRequiredNames(expectedCluster, "<GENERATED>");
 
     Cluster built = clusterFactory.create(config);
 
-    Testing.replaceRequiredUIDs(built, "<GENERATED>");
+    Testing.replaceRequiredUIDs(built, Testing.A_UID);
     Testing.replaceRequiredNames(built, "<GENERATED>");
 
     assertThat(built, is(equalTo(expectedCluster)));

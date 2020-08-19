@@ -12,15 +12,15 @@
             "logDir": "%H/terracotta/default-node1/logs",
             "metadataDir": "%H/terracotta/default-node1/metadata",
             "name": "default-node1",
-            "uid": "uid-1-1"
+            "uid": "VOVyu3kuQxCRIu7dK_UZZA"
           }
         ],
-        "uid": "s-uid-1"
+        "uid": "5Zv3uphiRLavoGZthy7JNg"
       }
     ],
     "failoverPriority": "availability",
     "name": "tc-cluster",
-    "uid": "c-uid"
+    "uid": "YLQguzhRSdS6y5M9vnA5mw"
   },
   "nodeName": "default-node1",
   "stripeId": 1,

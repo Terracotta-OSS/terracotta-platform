@@ -76,7 +76,7 @@ public class ActivateCommandTest extends BaseTest {
       newTestStripe("stripe1").addNode(
           Testing.newTestNode("node1", "localhost", 9411)
       ),
-      newTestStripe("stripe2", "s-uid2").addNodes(
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(
           Testing.newTestNode("node2", "localhost", 9421),
           Testing.newTestNode("node3", "localhost", 9422)
       ));

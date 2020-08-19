@@ -47,7 +47,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.modelToProperties;
 
 public class Node implements Cloneable, PropertyHolder {
 
-  private String uid;
+  private UID uid;
   private String name;
   private String hostname;
   private String publicHostname;
@@ -71,7 +71,7 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   @Override
-  public String getUID() {
+  public UID getUID() {
     return uid;
   }
 
@@ -139,7 +139,7 @@ public class Node implements Cloneable, PropertyHolder {
     return OptionalConfig.of(TC_PROPERTIES, tcProperties);
   }
 
-  public Node setUID(String uid) {
+  public Node setUID(UID uid) {
     this.uid = requireNonNull(uid);
     return this;
   }

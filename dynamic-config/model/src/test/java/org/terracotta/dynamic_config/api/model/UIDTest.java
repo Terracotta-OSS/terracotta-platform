@@ -34,21 +34,21 @@ public class UIDTest {
   @Test
   public void newUID() {
     for (int i = 0; i < 10_000; i++) {
-      String uid = UID.newUID();
-      assertTrue(UID.isUID(uid));
-      assertThat(UID.encodeB64(UID.decodeB64(uid)), is(equalTo(uid)));
+      UID uid = UID.newUID();
+      assertTrue(UID.isUID(uid.toString()));
+      assertThat(UID.encodeB64(UID.decodeB64(uid.toString())), is(equalTo(uid.toString())));
     }
   }
 
   @Test
   public void newUID_seed() {
-    String[] uids1 = new String[10_000];
+    UID[] uids1 = new UID[10_000];
     Random r = new Random(0);
     for (int i = 0; i < 10_000; i++) {
       uids1[i] = UID.newUID(r);
     }
 
-    String[] uids2 = new String[10_000];
+    UID[] uids2 = new UID[10_000];
     r = new Random(0);
     for (int i = 0; i < 10_000; i++) {
       uids2[i] = UID.newUID(r);
