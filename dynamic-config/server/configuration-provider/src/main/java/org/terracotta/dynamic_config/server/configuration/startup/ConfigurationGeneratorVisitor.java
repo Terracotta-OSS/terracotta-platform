@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.startup;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
@@ -247,7 +248,7 @@ public class ConfigurationGeneratorVisitor {
   }
 
   Path getOrDefaultConfigurationDirectory(String configPath) {
-    return configPath != null ? Paths.get(configPath) : Setting.NODE_CONFIG_DIR.getDefaultValue();
+    return configPath != null ? Paths.get(configPath) : Setting.NODE_CONFIG_DIR.<RawPath>getDefaultValue().toPath();
   }
 
   Optional<String> findNodeName(Path configPath, IParameterSubstitutor parameterSubstitutor) {
