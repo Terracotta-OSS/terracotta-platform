@@ -51,7 +51,6 @@ public class DiagnosticCommand extends RemoteCommand {
   @Override
   public void validate() {
     requireNonNull(node);
-    validateAddress(node);
   }
 
   @Override

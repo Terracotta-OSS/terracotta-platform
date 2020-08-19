@@ -80,10 +80,6 @@ public class ActivateCommand extends RemoteCommand {
       throw new ParameterException("License file not found: " + licenseFile);
     }
 
-    if (node != null) {
-      validateAddress(node);
-    }
-
     // loading cluster from available sources, then validating
 
     cluster = loadTopologyFromConfig()

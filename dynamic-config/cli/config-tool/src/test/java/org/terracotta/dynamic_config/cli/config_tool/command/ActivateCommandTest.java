@@ -91,7 +91,6 @@ public class ActivateCommandTest extends BaseTest {
     config = Paths.get(getClass().getResource("/my-cluster.properties").toURI());
 
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));
-    when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));
   }
 
   @Test

@@ -75,7 +75,6 @@ public abstract class TopologyCommand extends RemoteCommand {
     }
 
     logger.debug("Validating the parameters");
-    validateAddress(destination);
 
     // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
     validateLogOrFail(
