@@ -293,9 +293,11 @@ public abstract class RemoteCommand extends Command {
       missing.removeAll(progress.getErrors().keySet()); // remove nodes that we were not able to contact
       missing.removeAll(restarted.keySet()); // remove nodes that have been restarted
       if (!missing.isEmpty()) {
-        throw new IllegalStateException("Some nodes failed to restart within " + maximumWaitTime.getSeconds() + " seconds " +
-            "(This can happen if cluster didn't have security configured before activation but has the same after activation, or vice-versa):" + lineSeparator()
-            + " - " + missing.stream().map(InetSocketAddress::toString).collect(joining(lineSeparator() + " - ")));
+        throw new IllegalStateException("Some nodes may have failed to restart within " + maximumWaitTime.getSeconds() + " seconds. " + lineSeparator() +
+                "This should be confirmed by examining the state of the nodes listed below." + lineSeparator() +
+                "Note: if the cluster did not have security configured before activation but has security configured post-activation, or vice-versa, " + lineSeparator() +
+                "then the nodes may have in fact successfully restarted.  This should be confirmed.  Nodes:" + lineSeparator()
+                + " - " + missing.stream().map(InetSocketAddress::toString).collect(joining(lineSeparator() + " - ")));
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
