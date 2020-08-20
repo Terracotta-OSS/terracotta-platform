@@ -19,7 +19,6 @@ import java.net.InetSocketAddress;
 import java.time.Duration;
 
 import org.junit.Test;
-import org.mockito.Mock;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.json.ObjectMapperFactory;
 
@@ -28,17 +27,13 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-/**
- * DiagnosticServiceProviderTest
- */
-public class DiagnosticServiceProviderTest {
 
-  @Mock
-  private DiagnosticService diagnosticService;
+public class DiagnosticServiceProviderTest {
 
   @Test
   public void testFallBackWhenSecurityRootDirectoryNotProvided() {
@@ -47,15 +42,15 @@ public class DiagnosticServiceProviderTest {
     Duration timeout = Duration.ofSeconds(1);
     DiagnosticServiceProvider diagnosticServiceProvider = spy(new DiagnosticServiceProvider("test", timeout, timeout, null, new ObjectMapperFactory()));
 
-    doThrow(new DiagnosticServiceProviderException("failed")).when(diagnosticServiceProvider).fetchDiagnosticService(node);
+    doThrow(new DiagnosticServiceProviderException("failed")).when(diagnosticServiceProvider).fetchDiagnosticService(node, timeout);
 
     try {
       diagnosticServiceProvider.fetchDiagnosticServiceWithFallback(node);
     } catch (DiagnosticServiceProviderException ignored) {
     }
 
-    verify(diagnosticServiceProvider, times(1)).fetchDiagnosticService(node);
-    verify(diagnosticServiceProvider, times(0)).fetchUnSecuredDiagnosticService(node);
+    verify(diagnosticServiceProvider, times(1)).fetchDiagnosticService(node, timeout);
+    verify(diagnosticServiceProvider, times(0)).fetchUnSecuredDiagnosticService(node, timeout);
   }
 
   @Test
@@ -65,12 +60,14 @@ public class DiagnosticServiceProviderTest {
     Duration timeout = Duration.ofSeconds(1);
     DiagnosticServiceProvider diagnosticServiceProvider = spy(new DiagnosticServiceProvider("test", timeout, timeout, "./security", new ObjectMapperFactory()));
 
-    doThrow(new DiagnosticServiceProviderException("failed")).when(diagnosticServiceProvider).fetchDiagnosticService(node);
-    doReturn(diagnosticService).when(diagnosticServiceProvider).fetchUnSecuredDiagnosticService(node);
+    doThrow(new DiagnosticServiceProviderException("failed")).when(diagnosticServiceProvider).fetchDiagnosticService(node, timeout);
+
+    DiagnosticService diagnosticService = mock(DiagnosticService.class);
+    doReturn(diagnosticService).when(diagnosticServiceProvider).fetchUnSecuredDiagnosticService(node, timeout);
 
     assertThat(diagnosticServiceProvider.fetchDiagnosticServiceWithFallback(node), is(sameInstance(diagnosticService)));
 
-    verify(diagnosticServiceProvider, times(1)).fetchDiagnosticService(node);
-    verify(diagnosticServiceProvider, times(1)).fetchUnSecuredDiagnosticService(node);
+    verify(diagnosticServiceProvider, times(1)).fetchDiagnosticService(node, timeout);
+    verify(diagnosticServiceProvider, times(1)).fetchUnSecuredDiagnosticService(node, timeout);
   }
 }
