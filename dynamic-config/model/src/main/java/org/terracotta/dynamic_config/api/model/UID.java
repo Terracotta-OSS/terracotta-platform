@@ -17,20 +17,35 @@ package org.terracotta.dynamic_config.api.model;
 
 import java.math.BigInteger;
 import java.util.Base64;
-import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
 /**
+ * A UID object is an identifier (NOT A UUID) of a model class: node, stripe or cluster.
+ * <p>
+ * This class (or wrapper if you prefer the name) is useful to act as a key
+ * at places where you need to identify nodes, stripes or cluster.
+ * <p>
+ * It is not meant to be used to identify something else.
+ * <p>
+ * A UID is an identifier meant to be unique within a cluster but is not required
+ * to be universally unique. We can have 2 clusters with the same
+ * set of UIDs.
+ * <p>
+ * The way to generate them can also be controlled or not, as long as they
+ * are unique within a cluster.
+ *
  * @author Mathieu Carbou
  */
-public final class UID {
+public final class UID implements java.io.Serializable, Comparable<UID> {
 
-  private final String value;
+  private static final long serialVersionUID = 1L;
 
-  private UID(String value) {
+  private final UUID value;
+
+  private UID(UUID value) {
     this.value = requireNonNull(value);
   }
 
@@ -44,28 +59,39 @@ public final class UID {
 
   @Override
   public int hashCode() {
-    return Objects.hash(value);
+    return value.hashCode();
   }
 
   @Override
   public String toString() {
+    return encodeB64(toBytes(new long[]{value.getMostSignificantBits(), value.getLeastSignificantBits()}));
+  }
+
+  @Override
+  public int compareTo(UID o) {
+    return value.compareTo(o.value);
+  }
+
+  public UUID asUUID() {
     return value;
   }
 
   public static UID valueOf(String v) {
     requireNonNull(v);
-    if (!isUID(v)) {
-      throw new IllegalArgumentException("Not a UID: " + v);
-    }
+    final byte[] bytes = decodeB64(v);
+    long[] longs = toLongs(bytes);
+    return new UID(new UUID(longs[0], longs[1]));
+  }
+
+  public static UID from(UUID v) {
     return new UID(v);
   }
 
   /**
-   * Generate a Java-like UUID in a shorter string B64 encoded
+   * Generate a new random UID
    */
   public static UID newUID() {
-    UUID uuid = UUID.randomUUID();
-    return new UID(encodeB64(toBytes(new long[]{uuid.getMostSignificantBits(), uuid.getLeastSignificantBits()})));
+    return new UID(UUID.randomUUID());
   }
 
   /**
@@ -81,7 +107,8 @@ public final class UID {
     bytes[6] |= 0x40;  /* set to version 4     */
     bytes[8] &= 0x3f;  /* clear variant        */
     bytes[8] |= 0x80;  /* set to IETF variant  */
-    return new UID(encodeB64(bytes));
+    long[] longs = toLongs(bytes);
+    return new UID(new UUID(longs[0], longs[1]));
   }
 
   public static boolean isUID(String s) {

@@ -111,11 +111,6 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
       protected UID _deserialize(String value, DeserializationContext ctxt) {
         return UID.valueOf(value);
       }
-
-      @Override
-      protected UID _deserializeFromEmptyString() {
-        return UID.valueOf("");
-      }
     });
   }
 
