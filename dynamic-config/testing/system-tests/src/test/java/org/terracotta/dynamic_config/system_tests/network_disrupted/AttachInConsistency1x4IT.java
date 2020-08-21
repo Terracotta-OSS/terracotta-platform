@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.system_tests.network_disrupted;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.net.ClientToServerDisruptor;
@@ -35,9 +36,9 @@ import java.util.Iterator;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 4, autoStart = false, netDisruptionEnabled = true)
@@ -135,6 +136,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   }
 
   @Test
+  @Ignore("TDB-5201: Following the address fix in TDB-5109, it impacts the way we connect to the nodes and disruption tests are not working anymore")
   public void test_attach_when_active_client_and_passives_disrupted() throws Exception {
     startNode(1, 4);
     waitForDiagnostic(1, 4);
