@@ -62,88 +62,115 @@ import static org.terracotta.dynamic_config.server.configuration.startup.Console
 
 @Parameters(separators = "=")
 public class Options {
-  @Parameter(names = {"-s", "--" + NODE_HOSTNAME}, description = "node host name")
+  @DeprecatedParameter(names = {"-s", "--" + NODE_HOSTNAME}, description = "node host name")
+  @Parameter(names = "-" + NODE_HOSTNAME, description = "node host name")
   private String hostname;
 
-  @Parameter(names = {"-S", "--" + NODE_PUBLIC_HOSTNAME}, description = "public node host name")
+  @DeprecatedParameter(names = {"-S", "--" + NODE_PUBLIC_HOSTNAME}, description = "public node host name")
+  @Parameter(names = "-" + NODE_PUBLIC_HOSTNAME, description = "public node host name")
   private String publicHostname;
 
-  @Parameter(names = {"-p", "--" + NODE_PORT}, description = "node port")
+  @DeprecatedParameter(names = {"-p", "--" + NODE_PORT}, description = "node port")
+  @Parameter(names = "-" + NODE_PORT, description = "node port")
   private String port;
 
-  @Parameter(names = {"-P", "--" + NODE_PUBLIC_PORT}, description = "public node port")
+  @DeprecatedParameter(names = {"-P", "--" + NODE_PUBLIC_PORT}, description = "public node port")
+  @Parameter(names = "-" + NODE_PUBLIC_PORT, description = "public node port")
   private String publicPort;
 
-  @Parameter(names = {"-g", "--" + NODE_GROUP_PORT}, description = "node port used for intra-stripe communication")
+  @DeprecatedParameter(names = {"-g", "--" + NODE_GROUP_PORT}, description = "node port used for intra-stripe communication")
+  @Parameter(names = "-" + NODE_GROUP_PORT, description = "node port used for intra-stripe communication")
   private String groupPort;
 
-  @Parameter(names = {"-n", "--" + NODE_NAME}, description = "node name")
+  @DeprecatedParameter(names = {"-n", "--" + NODE_NAME}, description = "node name")
+  @Parameter(names = "-" + NODE_NAME, description = "node name")
   private String nodeName;
 
+  @DeprecatedParameter(names = {"-E", "--" + STRIPE_NAME}, description = "stripe name")
   @Parameter(names = {"-E", "--" + STRIPE_NAME}, description = "stripe name")
   private String stripeName;
 
-  @Parameter(names = {"-a", "--" + NODE_BIND_ADDRESS}, description = "node bind address for port")
+  @DeprecatedParameter(names = {"-a", "--" + NODE_BIND_ADDRESS}, description = "node bind address for port")
+  @Parameter(names =  "-" + NODE_BIND_ADDRESS, description = "node bind address for port")
   private String bindAddress;
 
-  @Parameter(names = {"-A", "--" + NODE_GROUP_BIND_ADDRESS}, description = "node bind address for group port")
+  @DeprecatedParameter(names = {"-A", "--" + NODE_GROUP_BIND_ADDRESS}, description = "node bind address for group port")
+  @Parameter(names = "-" + NODE_GROUP_BIND_ADDRESS, description = "node bind address for group port")
   private String groupBindAddress;
 
-  @Parameter(names = {"-r", "--" + NODE_CONFIG_DIR}, description = "node configuration directory")
+  @DeprecatedParameter(names = {"-r", "--" + NODE_CONFIG_DIR}, description = "node configuration directory")
+  @Parameter(names = "-" + NODE_CONFIG_DIR, description = "node configuration directory")
   private String configDir;
 
-  @Parameter(names = {"-m", "--" + NODE_METADATA_DIR}, description = "node metadata directory")
+  @DeprecatedParameter(names = {"-m", "--" + NODE_METADATA_DIR}, description = "node metadata directory")
+  @Parameter(names = "-" + NODE_METADATA_DIR, description = "node metadata directory")
   private String metadataDir;
 
-  @Parameter(names = {"-L", "--" + NODE_LOG_DIR}, description = "node log directory")
+  @DeprecatedParameter(names = {"-L", "--" + NODE_LOG_DIR}, description = "node log directory")
+  @Parameter(names = "-" + NODE_LOG_DIR, description = "node log directory")
   private String logDir;
 
-  @Parameter(names = {"-b", "--" + NODE_BACKUP_DIR}, description = "node backup directory")
+  @DeprecatedParameter(names = {"-b", "--" + NODE_BACKUP_DIR}, description = "node backup directory")
+  @Parameter(names = "-" + NODE_BACKUP_DIR, description = "node backup directory")
   private String backupDir;
 
-  @Parameter(names = {"-x", "--" + SECURITY_DIR}, description = "security root directory")
+  @DeprecatedParameter(names = {"-x", "--" + SECURITY_DIR}, description = "security root directory")
+  @Parameter(names = "-" + SECURITY_DIR, description = "security root directory")
   private String securityDir;
 
-  @Parameter(names = {"-u", "--" + SECURITY_AUDIT_LOG_DIR}, description = "security audit log directory")
+  @DeprecatedParameter(names = {"-u", "--" + SECURITY_AUDIT_LOG_DIR}, description = "security audit log directory")
+  @Parameter(names = "-" + SECURITY_AUDIT_LOG_DIR, description = "security audit log directory")
   private String securityAuditLogDir;
 
-  @Parameter(names = {"-z", "--" + SECURITY_AUTHC}, description = "security authentication setting (file|ldap|certificate)")
+  @DeprecatedParameter(names = {"-z", "--" + SECURITY_AUTHC}, description = "security authentication setting (file|ldap|certificate)")
+  @Parameter(names = "-" + SECURITY_AUTHC, description = "security authentication setting (file|ldap|certificate)")
   private String securityAuthc;
 
-  @Parameter(names = {"-t", "--" + SECURITY_SSL_TLS}, description = "ssl-tls setting (true|false)")
+  @DeprecatedParameter(names = {"-t", "--" + SECURITY_SSL_TLS}, description = "ssl-tls setting (true|false)")
+  @Parameter(names = "-" + SECURITY_SSL_TLS, description = "ssl-tls setting (true|false)")
   private String securitySslTls;
 
-  @Parameter(names = {"-w", "--" + SECURITY_WHITELIST}, description = "security whitelist (true|false)")
+  @DeprecatedParameter(names = {"-w", "--" + SECURITY_WHITELIST}, description = "security whitelist (true|false)")
+  @Parameter(names = "-" + SECURITY_WHITELIST, description = "security whitelist (true|false)")
   private String securityWhitelist;
 
-  @Parameter(names = {"-y", "--" + FAILOVER_PRIORITY}, description = "failover priority setting (availability|consistency)")
+  @DeprecatedParameter(names = {"-y", "--" + FAILOVER_PRIORITY}, description = "failover priority setting (availability|consistency)")
+  @Parameter(names = "-" + FAILOVER_PRIORITY, description = "failover priority setting (availability|consistency)")
   private String failoverPriority;
 
-  @Parameter(names = {"-R", "--" + CLIENT_RECONNECT_WINDOW}, description = "client reconnect window")
+  @DeprecatedParameter(names = {"-R", "--" + CLIENT_RECONNECT_WINDOW}, description = "client reconnect window")
+  @Parameter(names = "-" + CLIENT_RECONNECT_WINDOW, description = "client reconnect window")
   private String clientReconnectWindow;
 
-  @Parameter(names = {"-i", "--" + CLIENT_LEASE_DURATION}, description = "client lease duration")
+  @DeprecatedParameter(names = {"-i", "--" + CLIENT_LEASE_DURATION}, description = "client lease duration")
+  @Parameter(names = "-" + CLIENT_LEASE_DURATION, description = "client lease duration")
   private String clientLeaseDuration;
 
-  @Parameter(names = {"-o", "--" + OFFHEAP_RESOURCES}, description = "offheap resources")
+  @DeprecatedParameter(names = {"-o", "--" + OFFHEAP_RESOURCES}, description = "offheap resources")
+  @Parameter(names = "-" + OFFHEAP_RESOURCES, description = "offheap resources")
   private String offheapResources;
 
-  @Parameter(names = {"-d", "--" + DATA_DIRS}, description = "data directory")
+  @DeprecatedParameter(names = {"-d", "--" + DATA_DIRS}, description = "data directory")
+  @Parameter(names = "-" + DATA_DIRS, description = "data directory")
   private String dataDirs;
 
-  @Parameter(names = {"-f", "--" + CONFIG_FILE}, description = "configuration properties file")
+  @DeprecatedParameter(names = {"-f", "--" + CONFIG_FILE}, description = "configuration properties file")
+  @Parameter(names = "-" + CONFIG_FILE, description = "configuration properties file")
   private String configFile;
 
-  @Parameter(names = {"-T", "--" + TC_PROPERTIES}, description = "tc-properties")
+  @DeprecatedParameter(names = {"-T", "--" + TC_PROPERTIES}, description = "tc-properties")
+  @Parameter(names = "-" + TC_PROPERTIES, description = "tc-properties")
   private String tcProperties;
 
-  @Parameter(names = {"-N", "--" + CLUSTER_NAME}, description = "cluster name")
+  @DeprecatedParameter(names = {"-N", "--" + CLUSTER_NAME}, description = "cluster name")
+  @Parameter(names = "-" + CLUSTER_NAME, description = "cluster name")
   private String clusterName;
 
-  @Parameter(names = {"-l", "--" + LICENSE_FILE}, hidden = true)
+  @Parameter(names = "-" + LICENSE_FILE, hidden = true)
   private String licenseFile;
 
-  @Parameter(names = {"-D", "--" + REPAIR_MODE}, description = "node repair mode (true|false)")
+  @DeprecatedParameter(names = {"-D", "--" + REPAIR_MODE}, description = "node repair mode (true|false)")
+  @Parameter(names = "-" + REPAIR_MODE, description = "node repair mode (true|false)")
   private boolean wantsRepairMode;
 
   // hidden option that won't appear in the help file,
