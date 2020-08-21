@@ -10,7 +10,7 @@
           "hostname": "localhost",
           "name": "node1_1",
           "port": 9410,
-          "uid": "ZwZtuxl6QlWGZVUJ_30uMQ"
+          "uid": "jUhhu1kRQd-x6iNgpo9Xyw"
         },
         {
           "dataDirs": {
@@ -19,7 +19,7 @@
           "hostname": "localhost",
           "name": "node1_2",
           "port": 9411,
-          "uid": "x6tPuzj0Tq2Qs1niISqVMg"
+          "uid": "VOVyu3kuQxCRIu7dK_UZZA"
         }
       ],
       "uid": "5Zv3uphiRLavoGZthy7JNg"

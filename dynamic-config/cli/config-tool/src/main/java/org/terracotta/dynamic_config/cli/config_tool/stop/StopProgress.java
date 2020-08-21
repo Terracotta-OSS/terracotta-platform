@@ -15,7 +15,8 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.stop;
 
-import java.net.InetSocketAddress;
+import org.terracotta.dynamic_config.api.model.Node;
+
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
@@ -37,15 +38,15 @@ public interface StopProgress {
    * <p>
    * If all nodes are stopped before the timeout expires, the list will contain all the nodes that were asked to stop
    */
-  Collection<InetSocketAddress> await(Duration duration) throws InterruptedException;
+  Collection<Node.Endpoint> await(Duration duration) throws InterruptedException;
 
   /**
    * Register a callback that will be called when a node has been stopped
    */
-  void onStopped(Consumer<InetSocketAddress> c);
+  void onStopped(Consumer<Node.Endpoint> c);
 
   /**
    * Get all nodes for which we have failed to ask for a stop
    */
-  Map<InetSocketAddress, Exception> getErrors();
+  Map<Node.Endpoint, Exception> getErrors();
 }

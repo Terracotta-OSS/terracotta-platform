@@ -22,6 +22,7 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
@@ -29,8 +30,8 @@ import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterConfigMismatchException;
 import org.terracotta.dynamic_config.api.service.MutualClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
-import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -56,20 +57,31 @@ public class AttachCommand extends TopologyCommand {
   @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
-  // list of new nodes to add with their backup topology
-  private final Map<InetSocketAddress, Cluster> newOnlineNodes = new LinkedHashMap<>();
+  @Parameter(required = true, names = {"-s"}, description = "Source node or stripe", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress sourceAddress;
 
+  // list of new nodes to add with their backup topology
+  private final Map<Endpoint, Cluster> newOnlineNodes = new LinkedHashMap<>();
+
+  protected Endpoint source;
   private Cluster sourceCluster;
+  private Stripe addedStripe;
+  private Node addedNode;
 
   @Override
   public void validate() {
     super.validate();
 
+    source = getEndpoint(sourceAddress);
     sourceCluster = getUpcomingCluster(source);
 
-    Collection<InetSocketAddress> destinationPeers = destinationCluster.getNodeAddresses();
-    if (InetSocketAddressUtils.contains(destinationPeers, source)) {
-      throw new IllegalArgumentException("Source node: " + source + " is already part of cluster at: " + destination);
+    if (destination.getNodeUID().equals(source.getNodeUID())) {
+      throw new IllegalArgumentException("The destination and the source endpoints must not be the same");
+    }
+
+    Collection<Endpoint> destinationPeers = destinationCluster.getSimilarEndpoints(destination);
+    if (destinationPeers.contains(source)) {
+      throw new IllegalArgumentException("Source node: " + source + " is already part of cluster: " + destinationCluster.toShapeString());
     }
 
     if (isActivated(source)) {
@@ -103,7 +115,7 @@ public class AttachCommand extends TopologyCommand {
               "It must be detached first before being attached to a new stripe. " +
               "You can run the command with the force option to force the attachment, but at the risk of breaking the cluster from where the node is taken.");
 
-      Stripe destinationStripe = destinationCluster.getStripe(destination).get();
+      Stripe destinationStripe = destinationCluster.getStripeByNode(destination.getNodeUID()).get();
       FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
       if (failoverPriority.equals(consistency())) {
         int voterCount = failoverPriority.getVoters();
@@ -136,7 +148,9 @@ public class AttachCommand extends TopologyCommand {
       newOnlineNodes.put(source, sourceCluster);
     } else {
       // we attach a whole stripe
-      sourceCluster.getStripe(source).get().getNodeAddresses().forEach(addr -> newOnlineNodes.put(addr, getUpcomingCluster(addr)));
+      sourceCluster.getStripeByNode(source.getNodeUID()).get()
+          .getSimilarEndpoints(source)
+          .forEach(endpoint -> newOnlineNodes.put(endpoint, getUpcomingCluster(endpoint)));
     }
   }
 
@@ -147,29 +161,29 @@ public class AttachCommand extends TopologyCommand {
     switch (operationType) {
 
       case NODE: {
-        logger.info("Attaching node: {} to stripe: {}", source, destination);
-        Stripe stripe = cluster.getStripe(destination).get();
-        Node node = sourceCluster.getNode(this.source).get();
+        logger.info("Attaching node: {} to stripe: {}", source, cluster.getStripeByNode(destination.getNodeUID()).get().toShapeString());
+        Stripe stripe = cluster.getStripeByNode(destination.getNodeUID()).get();
+        Node node = sourceCluster.getNode(source.getNodeUID()).get();
 
-        Node clone = node.clone();
-        stripe.addNode(clone);
+        addedNode = node.clone();
+        stripe.addNode(addedNode);
 
         // change the node UID
-        clone.setUID(cluster.newUID());
+        addedNode.setUID(cluster.newUID());
 
         break;
       }
 
       case STRIPE: {
-        Stripe stripe = sourceCluster.getStripe(source).get();
-        logger.info("Attaching a new stripe formed with nodes: {} to cluster: {}", toString(stripe.getNodeAddresses()), destination);
+        Stripe stripe = sourceCluster.getStripeByNode(source.getNodeUID()).get();
+        logger.info("Attaching a new stripe: {} to cluster: {}", stripe.toShapeString(), destinationCluster.getName());
 
-        Stripe clone = stripe.clone();
-        cluster.addStripe(clone);
+        addedStripe = stripe.clone();
+        cluster.addStripe(addedStripe);
 
         // change the stripe UID and all its nodes
-        clone.setUID(cluster.newUID());
-        clone.getNodes().forEach(n -> n.setUID(cluster.newUID()));
+        addedStripe.setUID(cluster.newUID());
+        addedStripe.getNodes().forEach(n -> n.setUID(cluster.newUID()));
 
         break;
       }
@@ -187,9 +201,9 @@ public class AttachCommand extends TopologyCommand {
   protected TopologyNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
-        return new NodeAdditionNomadChange(result, result.getStripeId(destination).getAsInt(), result.getNode(source).get());
+        return new NodeAdditionNomadChange(result, result.getStripeByNode(addedNode.getUID()).get().getUID(), addedNode);
       case STRIPE: {
-        return new StripeAdditionNomadChange(result, result.getStripe(source).get());
+        return new StripeAdditionNomadChange(result, addedStripe);
       }
       default: {
         throw new UnsupportedOperationException(operationType.name());
@@ -223,15 +237,20 @@ public class AttachCommand extends TopologyCommand {
         "The node/stripe information may still be added to the destination cluster: you will need to run the diagnostic / export command to check the state of the transaction." + lineSeparator() +
         "The node/stripe to attach won't be activated and restarted, and their topology will be rolled back to their initial value."
     );
-    newOnlineNodes.forEach((addr, cluster) -> {
-      logger.info("Rollback topology of node: {}", addr);
-      setUpcomingCluster(Collections.singletonList(addr), cluster);
+    newOnlineNodes.forEach((endpoint, cluster) -> {
+      logger.info("Rollback topology of node: {}", endpoint);
+      setUpcomingCluster(Collections.singletonList(endpoint), cluster);
     });
     throw error;
   }
 
   @Override
-  protected Collection<InetSocketAddress> getAllOnlineSourceNodes() {
+  protected Collection<Endpoint> getAllOnlineSourceNodes() {
     return newOnlineNodes.keySet();
+  }
+
+  AttachCommand setSourceAddress(InetSocketAddress sourceAddress) {
+    this.sourceAddress = sourceAddress;
+    return this;
   }
 }

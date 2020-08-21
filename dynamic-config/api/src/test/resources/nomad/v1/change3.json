@@ -1,0 +1,9 @@
+{
+  "type": "FormatUpgradeNomadChange",
+  "from": "1",
+  "to": "2",
+  "applicability": {
+    "scope": "CLUSTER"
+  },
+  "summary": "Upgrading configuration format from version 1 to version 2"
+}

@@ -219,7 +219,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public String getServerName() {
-    return nodeContextSupplier.get().getNodeName();
+    return nodeContextSupplier.get().getNode().getName();
   }
 
   @Override
@@ -251,15 +251,6 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     for (DynamicConfigExtension dynamicConfigExtension : ServiceLoader.load(DynamicConfigExtension.class, classLoader)) {
       dynamicConfigExtension.configure(this, this);
     }
-  }
-
-  private void substitute(NodeContext nodeContext, Properties properties) {
-    int stripeId = nodeContext.getStripeId();
-    int nodeId = nodeContext.getNodeId();
-    String prefix = "stripe." + stripeId + ".node." + nodeId + ".";
-    properties.stringPropertyNames().stream()
-        .filter(key -> !key.startsWith("stripe.") || key.startsWith(prefix)) // we only substitute cluster-wide parameters plus this node's parameters
-        .forEach(key -> properties.setProperty(key, substitutor.substitute(properties.getProperty(key))));
   }
 
   private ServerConfiguration toServerConfiguration(Node node) {

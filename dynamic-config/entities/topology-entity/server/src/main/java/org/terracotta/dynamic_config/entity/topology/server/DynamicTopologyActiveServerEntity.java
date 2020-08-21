@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.entity.topology.common.Message;
@@ -137,13 +138,13 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Mes
     if (eventRegistration == null) {
       eventRegistration = eventService.register(new DynamicConfigListener() {
         @Override
-        public void onNodeAddition(int stripeId, Node addedNode) {
-          fire(new Response(EVENT_NODE_ADDITION, asList(stripeId, addedNode)));
+        public void onNodeAddition(UID stripeUID, Node addedNode) {
+          fire(new Response(EVENT_NODE_ADDITION, asList(stripeUID, addedNode)));
         }
 
         @Override
-        public void onNodeRemoval(int stripeId, Node removedNode) {
-          fire(new Response(EVENT_NODE_REMOVAL, asList(stripeId, removedNode)));
+        public void onNodeRemoval(UID stripeUID, Node removedNode) {
+          fire(new Response(EVENT_NODE_REMOVAL, asList(stripeUID, removedNode)));
         }
 
         @Override

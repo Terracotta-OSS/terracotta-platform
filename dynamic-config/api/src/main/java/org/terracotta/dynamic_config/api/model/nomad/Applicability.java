@@ -15,74 +15,39 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Scope;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 
-import java.util.Objects;
-import java.util.OptionalInt;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
 
-public class Applicability {
-  private final Scope level;
-  private final String nodeName;
-  private final Integer stripeId;
+public interface Applicability {
 
-  public static Applicability cluster() {
-    return new Applicability(CLUSTER, null, null);
+  static Applicability cluster() {
+    return new DefaultApplicability(CLUSTER, null, null);
   }
 
-  public static Applicability stripe(int stripeId) {
-    return new Applicability(STRIPE, stripeId, null);
+  static Applicability stripe(UID stripeUID) {
+    return new DefaultApplicability(STRIPE, requireNonNull(stripeUID), null);
   }
 
-  public static Applicability node(int stripeId, String nodeName) {
-    return new Applicability(NODE, stripeId, requireNonNull(nodeName));
+  static Applicability node(UID nodeUID) {
+    return new DefaultApplicability(NODE, null, requireNonNull(nodeUID));
   }
 
-  protected Applicability(Scope level,
-                          Integer stripeId,
-                          String nodeName) {
-    this.level = requireNonNull(level);
-    this.stripeId = stripeId;
-    this.nodeName = nodeName;
-  }
+  Scope getLevel();
 
-  public Scope getLevel() {
-    return level;
-  }
+  Optional<Stripe> getStripe(Cluster cluster);
 
-  public String getNodeName() {
-    return nodeName;
-  }
+  Optional<Node> getNode(Cluster cluster);
 
-  public OptionalInt getStripeId() {
-    return stripeId == null ? OptionalInt.empty() : OptionalInt.of(stripeId);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof Applicability)) return false;
-    Applicability that = (Applicability) o;
-    return getLevel() == that.getLevel() &&
-        Objects.equals(getNodeName(), that.getNodeName()) &&
-        Objects.equals(getStripeId(), that.getStripeId());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(getLevel(), getNodeName(), getStripeId());
-  }
-
-  @Override
-  public String toString() {
-    return "Applicability{" +
-        "scope=" + level +
-        ", nodeName='" + nodeName + '\'' +
-        ", stripeId='" + stripeId + '\'' +
-        '}';
-  }
+  boolean isApplicableTo(NodeContext node);
 }

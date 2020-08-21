@@ -17,11 +17,17 @@ package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
@@ -52,7 +58,6 @@ public class SettingNomadChange extends FilteredNomadChange {
     this.value = value;
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
   public String getSummary() {
     String s = operation == Operation.SET ?
@@ -60,9 +65,8 @@ public class SettingNomadChange extends FilteredNomadChange {
         name == null ? (operation + " " + setting) : (operation + " " + setting + "." + name);
     switch (getApplicability().getLevel()) {
       case STRIPE:
-        return s + " (stripe ID: " + getApplicability().getStripeId().getAsInt() + ")";
       case NODE:
-        return s + " (stripe ID: " + getApplicability().getStripeId().getAsInt() + ", node: " + getApplicability().getNodeName() + ")";
+        return s + " (on " + getApplicability() + ")";
       default:
         return s;
     }
@@ -78,20 +82,11 @@ public class SettingNomadChange extends FilteredNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(int currentStripeId, String currentNodeName) {
+  public boolean canApplyAtRuntime(NodeContext currentNode) {
     Setting setting = getSetting();
     boolean requiresClusterRestart = setting.requires(CLUSTER_RESTART);
-    boolean requiresThisNodeRestart = setting.requires(NODE_RESTART) && getSetting().isScope(Scope.NODE) && applicableTo(currentStripeId, currentNodeName);
+    boolean requiresThisNodeRestart = setting.requires(NODE_RESTART) && getSetting().isScope(Scope.NODE) && getApplicability().isApplicableTo(currentNode);
     return !requiresClusterRestart && !requiresThisNodeRestart;
-  }
-
-  private boolean applicableTo(int currentStripeId, String currentNodeName) {
-    switch (getApplicability().getLevel()) {
-      case CLUSTER: return true;
-      case STRIPE: return getApplicability().getStripeId().getAsInt() == currentStripeId;
-      case NODE: return getApplicability().getStripeId().getAsInt() == currentStripeId && Objects.equals(getApplicability().getNodeName(), currentNodeName);
-      default: throw new AssertionError(getApplicability().getLevel());
-    }
   }
 
   public String getName() {
@@ -153,26 +148,25 @@ public class SettingNomadChange extends FilteredNomadChange {
     }
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   private String namespace(Cluster cluster) {
     switch (getApplicability().getLevel()) {
       case CLUSTER:
         return "";
       case STRIPE: {
-        int stripeId = getApplicability().getStripeId().getAsInt();
-        if (stripeId < 1) {
-          throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
-        }
-        if (stripeId > cluster.getStripeCount()) {
-          throw new IllegalArgumentException("Stripe ID: " + stripeId + " not found in cluster: " + cluster.toShapeString());
-        }
+        int stripeId = getApplicability().getStripe(cluster)
+            .map(stripe -> cluster.getStripeId(stripe.getUID())
+                .orElseThrow(() -> new IllegalArgumentException("Stripe UID: " + stripe.getUID() + " not found in cluster: " + cluster.toShapeString())))
+            .orElseThrow(() -> new IllegalArgumentException("Stripe not found in cluster: " + cluster.toShapeString() + " with applicability: " + getApplicability()));
         return "stripe." + stripeId + ".";
       }
       case NODE: {
-        int stripeId = getApplicability().getStripeId().getAsInt();
-        String nodeName = getApplicability().getNodeName();
-        int nodeId = cluster.getNodeId(stripeId, nodeName)
-            .orElseThrow(() -> new IllegalArgumentException("Node: " + nodeName + " in stripe ID: " + stripeId + " not found in cluster: " + cluster.toShapeString()));
+        int stripeId = getApplicability().getStripe(cluster)
+            .map(stripe -> cluster.getStripeId(stripe.getUID())
+                .orElseThrow(() -> new IllegalArgumentException("Stripe UID: " + stripe.getUID() + " not found in cluster: " + cluster.toShapeString())))
+            .orElseThrow(() -> new IllegalArgumentException("Stripe not found in cluster: " + cluster.toShapeString() + " with applicability: " + getApplicability()));
+        int nodeId = getApplicability().getNode(cluster)
+            .map(node -> getNodeId(cluster, node.getUID()))
+            .orElseThrow(() -> new IllegalArgumentException("Node not found in cluster: " + cluster.toShapeString() + " with applicability: " + getApplicability()));
         return "stripe." + stripeId + ".node." + nodeId + ".";
       }
       default:
@@ -212,13 +206,35 @@ public class SettingNomadChange extends FilteredNomadChange {
   private static Applicability toApplicability(Configuration configuration, Cluster cluster) {
     switch (configuration.getLevel()) {
       case NODE:
-        return Applicability.node(configuration.getStripeId(), cluster.getNode(configuration.getStripeId(), configuration.getNodeId()).get().getName());
+        return Applicability.node(cluster.getStripe(configuration.getStripeId()).flatMap(stripe -> getNode(stripe, configuration.getNodeId())).get().getUID());
       case STRIPE:
-        return Applicability.stripe(configuration.getStripeId());
+        return Applicability.stripe(cluster.getStripe(configuration.getStripeId()).get().getUID());
       case CLUSTER:
         return Applicability.cluster();
       default:
         throw new AssertionError(configuration.getLevel());
     }
+  }
+
+  private static Optional<Node> getNode(Stripe stripe, int nodeId) {
+    if (nodeId < 1) {
+      throw new IllegalArgumentException("Invalid node ID: " + nodeId);
+    }
+    if (nodeId > stripe.getNodeCount()) {
+      return Optional.empty();
+    }
+    return Optional.of(stripe.getNodes().get(nodeId - 1));
+  }
+
+  public int getNodeId(Cluster cluster, UID nodeUID) {
+    for (Stripe stripe : cluster.getStripes()) {
+      List<Node> nodes = stripe.getNodes();
+      for (int i = 0; i < nodes.size(); i++) {
+        if (nodes.get(i).getUID().equals(nodeUID)) {
+          return i + 1;
+        }
+      }
+    }
+    throw new IllegalArgumentException("Node UID: " + nodeUID + " not found in cluster: " + cluster.toShapeString());
   }
 }

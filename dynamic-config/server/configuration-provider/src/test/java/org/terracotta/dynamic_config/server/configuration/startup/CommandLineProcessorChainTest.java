@@ -70,7 +70,7 @@ public class CommandLineProcessorChainTest {
   private final Node node1 = Testing.newTestNode("node-1", "localhost", 19410);
   private final Node node2 = Testing.newTestNode("node-2", "localhost", 9411);
   private final Cluster cluster = Testing.newTestCluster((String) null, new Stripe().addNodes(node1));
-  private final NodeContext nodeContext = new NodeContext(cluster, 1, "node-1");
+  private final NodeContext nodeContext = new NodeContext(cluster, node1.getUID());
   private Options options;
   private Map<Setting, String> paramValueMap;
   private ClusterFactory clusterCreator;

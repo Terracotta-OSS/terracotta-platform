@@ -78,14 +78,14 @@ public class ConfigConversionIT {
     assertThat(cluster.getClientReconnectWindow().get(), is(Measure.of(120, TimeUnit.SECONDS)));
     assertThat(cluster.getStripeCount(), is(1));
     assertThat(cluster.getNodes().size(), is(2));
-    assertThat(cluster.getNode(1, 1).get().getName(), is("node-1"));
-    assertThat(cluster.getNode(1, 1).get().getHostname(), is("localhost"));
-    assertThat(cluster.getNode(1, 1).get().getPort().get(), is(9410));
-    assertThat(cluster.getNode(1, 1).get().getGroupPort().get(), is(9430));
-    assertThat(cluster.getNode(1, 2).get().getName(), is("node-2"));
-    assertThat(cluster.getNode(1, 2).get().getHostname(), is("localhost"));
-    assertThat(cluster.getNode(1, 2).get().getPort().get(), is(9510));
-    assertThat(cluster.getNode(1, 2).get().getGroupPort().get(), is(9530));
+    assertThat(cluster.getNodeByName("node-1").get().getName(), is("node-1"));
+    assertThat(cluster.getNodeByName("node-1").get().getHostname(), is("localhost"));
+    assertThat(cluster.getNodeByName("node-1").get().getPort().get(), is(9410));
+    assertThat(cluster.getNodeByName("node-1").get().getGroupPort().get(), is(9430));
+    assertThat(cluster.getNodeByName("node-2").get().getName(), is("node-2"));
+    assertThat(cluster.getNodeByName("node-2").get().getHostname(), is("localhost"));
+    assertThat(cluster.getNodeByName("node-2").get().getPort().get(), is(9510));
+    assertThat(cluster.getNodeByName("node-2").get().getGroupPort().get(), is(9530));
   }
 
   @Test
@@ -100,16 +100,16 @@ public class ConfigConversionIT {
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
 
-    assertThat(cluster.getNode(1, 1).get().getName(), is("node-1"));
+    assertThat(cluster.getNodeByName("node-1").get().getName(), is("node-1"));
     // IMPORTANT: see NonSubstitutingTCConfigurationParser and TCConfigurationParser
     // If the server name was given, but not the host name, the host name value was picked from the server name
     // also, xml parsing was initializing all these settings
-    assertThat(cluster.getNode(1, 1).get().getHostname(), is("node-1"));
-    assertTrue(cluster.getNode(1, 1).get().getPort().isConfigured());
-    assertTrue(cluster.getNode(1, 1).get().getGroupPort().isConfigured());
-    assertTrue(cluster.getNode(1, 1).get().getLogDir().isConfigured());
-    assertTrue(cluster.getNode(1, 1).get().getBindAddress().isConfigured());
-    assertTrue(cluster.getNode(1, 1).get().getGroupBindAddress().isConfigured());
+    assertThat(cluster.getNodeByName("node-1").get().getHostname(), is("node-1"));
+    assertTrue(cluster.getNodeByName("node-1").get().getPort().isConfigured());
+    assertTrue(cluster.getNodeByName("node-1").get().getGroupPort().isConfigured());
+    assertTrue(cluster.getNodeByName("node-1").get().getLogDir().isConfigured());
+    assertTrue(cluster.getNodeByName("node-1").get().getBindAddress().isConfigured());
+    assertTrue(cluster.getNodeByName("node-1").get().getGroupBindAddress().isConfigured());
   }
 
   @Test
@@ -160,8 +160,8 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getLogDir().get(), is(RawPath.valueOf("%h-logs")));
-    assertThat(cluster.getNode(1, 2).get().getLogDir().get(), is(RawPath.valueOf("%h-logs")));
+    assertThat(cluster.getNodeByName("node-1").get().getLogDir().get(), is(RawPath.valueOf("%h-logs")));
+    assertThat(cluster.getNodeByName("node-2").get().getLogDir().get(), is(RawPath.valueOf("%h-logs")));
   }
 
   @Test
@@ -261,7 +261,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getPort().get(), is(9411));
+    assertThat(cluster.getNodeByName("server11").get().getPort().get(), is(9411));
   }
 
   @Test
@@ -275,7 +275,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getBindAddress().get(), is("1.1.1.1"));
+    assertThat(cluster.getNodeByName("server11").get().getBindAddress().get(), is("1.1.1.1"));
   }
 
   @Test
@@ -289,7 +289,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getGroupPort().get(), is(9431));
+    assertThat(cluster.getNodeByName("server11").get().getGroupPort().get(), is(9431));
   }
 
   @Test
@@ -303,7 +303,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getGroupBindAddress().get(), is("2.2.2.2"));
+    assertThat(cluster.getNodeByName("server11").get().getGroupBindAddress().get(), is("2.2.2.2"));
   }
 
   @Test
@@ -317,7 +317,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getLogDir().get(), is(RawPath.valueOf("abcd")));
+    assertThat(cluster.getNodeByName("server11").get().getLogDir().get(), is(RawPath.valueOf("abcd")));
   }
 
   @Test
@@ -331,8 +331,8 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getNode(1, 1).get().getTcProperties().orDefault().size(), is(1));
-    assertThat(cluster.getNode(1, 1).get().getTcProperties().orDefault().get("myserver"), is("server"));
+    assertThat(cluster.getNodeByName("server11").get().getTcProperties().orDefault().size(), is(1));
+    assertThat(cluster.getNodeByName("server11").get().getTcProperties().orDefault().get("myserver"), is("server"));
   }
 
   @Test

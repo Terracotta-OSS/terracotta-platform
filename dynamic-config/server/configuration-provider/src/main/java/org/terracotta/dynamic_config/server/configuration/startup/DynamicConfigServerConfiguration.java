@@ -90,6 +90,6 @@ class DynamicConfigServerConfiguration implements ServerConfiguration {
 
   @Override
   public String toString() {
-    return node.getName() + "@" + node.getAddress();
+    return node.getName() + "@" + node.getInternalAddress();
   }
 }

@@ -15,9 +15,13 @@
  */
 package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
@@ -41,6 +45,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ConfigRepoProcessor {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigRepoProcessor.class);
+
   private final Path outputFolderPath;
   private final NomadServerFactory nomadServerFactory = new NomadServerFactory(new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()));
 
@@ -54,8 +60,8 @@ public class ConfigRepoProcessor {
 
   private void saveToNomad(Cluster cluster) {
 
-    List<NomadEndpoint<NodeContext>> endpoints = cluster.nodeContexts()
-        .map(nodeContext -> new NomadEndpoint<>(nodeContext.getNode().getAddress(), getNomadServer(nodeContext.getStripeId(), nodeContext.getNodeName())))
+    List<NomadEndpoint<NodeContext>> endpoints = cluster.getNodes().stream()
+        .map(node -> new NomadEndpoint<>(node.getInternalAddress(), getNomadServer(cluster, node)))
         .collect(Collectors.toList());
 
     NomadEnvironment environment = new NomadEnvironment();
@@ -66,22 +72,22 @@ public class ConfigRepoProcessor {
     }
   }
 
-  protected NomadServer<NodeContext> getNomadServer(int stripeId, String nodeName) {
-    Path configPath = outputFolderPath.resolve("stripe-" + stripeId).resolve(nodeName);
-    return createServer(configPath, stripeId, nodeName);
+  protected NomadServer<NodeContext> getNomadServer(Cluster cluster, Node node) {
+    int stripeId = cluster.getStripeIdByNode(node.getUID()).getAsInt();
+    Stripe stripe = cluster.getStripeByNode(node.getUID()).get();
+    Path configPath = outputFolderPath.resolve("stripe-" + stripeId).resolve(node.getName());
+    LOGGER.info("Preparing configuration folder for node: " + node.getName() + " in stripe: " + stripe.getName() + " at: " + configPath.toAbsolutePath());
+    return createServer(configPath, node);
   }
 
-  private NomadServer<NodeContext> createServer(Path configPath, int stripeId, String nodeName) {
+  private NomadServer<NodeContext> createServer(Path configPath, Node node) {
     NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(configPath, IParameterSubstitutor.identity());
     nomadConfigurationManager.createDirectories();
 
     ChangeApplicator<NodeContext> changeApplicator = new ChangeApplicator<NodeContext>() {
       @Override
       public PotentialApplicationResult<NodeContext> tryApply(final NodeContext existing, final NomadChange change) {
-        return PotentialApplicationResult.allow(new NodeContext(
-            ((ClusterActivationNomadChange) change).getCluster(),
-            stripeId,
-            nodeName
+        return PotentialApplicationResult.allow(new NodeContext(((ClusterActivationNomadChange) change).getCluster(), node.getUID()
         ));
       }
 
@@ -91,7 +97,7 @@ public class ConfigRepoProcessor {
     };
 
     try {
-      return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, nodeName, null);
+      return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, node.getName(), null);
     } catch (SanskritException | NomadException | ConfigStorageException e) {
       throw new RuntimeException(e);
     }

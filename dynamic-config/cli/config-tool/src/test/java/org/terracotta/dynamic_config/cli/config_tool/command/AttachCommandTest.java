@@ -28,6 +28,7 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
 
 import static java.net.InetSocketAddress.createUnresolved;
@@ -52,25 +53,25 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
-  Node node0 = Testing.newTestNode("node0", "localhost", 9410)
+  Node node0 = Testing.newTestNode("node0", "localhost", 9410, Testing.N_UIDS[1])
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/cache1"));
 
-  Node node1 = Testing.newTestNode("node1", "localhost", 9411)
+  Node node1 = Testing.newTestNode("node1", "localhost", 9411, Testing.N_UIDS[2])
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/cache2"));
 
-  Node node2 = Testing.newTestNode("node2", "localhost", 9412)
+  Node node2 = Testing.newTestNode("node2", "localhost", 9412, Testing.N_UIDS[3])
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/cache3"));
 
   NodeContext nodeContext0 = new NodeContext(
       newTestCluster("my-cluster", newTestStripe("stripe1").addNode(node0)),
-      node0.getAddress());
+      node0.getUID());
 
   NodeContext nodeContext1 = new NodeContext(
       newTestCluster("my-cluster", newTestStripe("stripe1").addNode(node1)),
-      node1.getAddress());
+      node1.getUID());
 
   @Captor ArgumentCaptor<Cluster> newCluster;
 
@@ -84,8 +85,6 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   public void setUp() throws Exception {
     super.setUp();
 
-    Testing.replaceUIDs(nodeContext0.getCluster());
-    Testing.replaceUIDs(nodeContext1.getCluster());
     when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(nodeContext0);
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext1);
 
@@ -96,13 +95,24 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   }
 
   @Test
+  public void test_validate_failures() {
+    assertThat(
+        () -> newCommand()
+            .setSourceAddress(InetSocketAddress.createUnresolved("localhost", 9410))
+            .setOperationType(NODE)
+            .setDestinationAddress(InetSocketAddress.createUnresolved("localhost", 9410))
+            .validate(),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("The destination and the source endpoints must not be the same")))));
+  }
+
+  @Test
   public void test_attach_node_validation_fail_src_activated() {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
 
     TopologyCommand command = newCommand()
+        .setSourceAddress(createUnresolved("localhost", 9411))
         .setOperationType(NODE)
-        .setDestination("localhost", 9410)
-        .setSource(createUnresolved("localhost", 9411));
+        .setDestinationAddress("localhost", 9410);
 
     assertThat(
         command::validate,
@@ -111,13 +121,13 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_node_validation_fail_src_multiNodeStripe() {
-    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNodes(node1, node2)), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNodes(node1, node2)), node1.getUID());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
+        .setSourceAddress(createUnresolved("localhost", 9411))
         .setOperationType(NODE)
-        .setDestination("localhost", 9410)
-        .setSource(createUnresolved("localhost", 9411));
+        .setDestinationAddress("localhost", 9410);
 
     assertThat(
         command::validate,
@@ -126,13 +136,13 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_node_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getUID());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
+        .setSourceAddress(createUnresolved("localhost", 9411))
         .setOperationType(NODE)
-        .setDestination("localhost", 9410)
-        .setSource(createUnresolved("localhost", 9411));
+        .setDestinationAddress("localhost", 9410);
 
     assertThat(
         command::validate,
@@ -146,9 +156,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
     TopologyCommand command = newCommand()
+        .setSourceAddress(createUnresolved("localhost", 9411))
         .setOperationType(NODE)
-        .setDestination("localhost", 9410)
-        .setSource(createUnresolved("localhost", 9411));
+        .setDestinationAddress("localhost", 9410);
     command.validate();
     command.run();
 
@@ -167,7 +177,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(2));
+    assertThat(cluster.getNodes(), hasSize(2));
   }
 
   @Test
@@ -175,9 +185,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
 
     TopologyCommand command = newCommand()
+        .setSourceAddress(createUnresolved("localhost", 9411))
         .setOperationType(STRIPE)
-        .setDestination("localhost", 9410)
-        .setSource(createUnresolved("localhost", 9411));
+        .setDestinationAddress("localhost", 9410);
 
     assertThat(
         command::validate,
@@ -186,13 +196,13 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe_validation_fail_src_multiStripeCluster() {
-    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1), new Stripe().addNode(node2)), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1), new Stripe().addNode(node2)), node1.getUID());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
+        .setSourceAddress(createUnresolved("localhost", 9411))
         .setOperationType(STRIPE)
-        .setDestination("localhost", 9410)
-        .setSource(createUnresolved("localhost", 9411));
+        .setDestinationAddress("localhost", 9410);
 
     assertThat(
         command::validate,
@@ -208,9 +218,9 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
     TopologyCommand command = newCommand()
+        .setSourceAddress(createUnresolved("localhost", 9411))
         .setOperationType(STRIPE)
-        .setDestination("localhost", 9410)
-        .setSource(createUnresolved("localhost", 9411));
+        .setDestinationAddress("localhost", 9410);
     command.validate();
     command.run();
 
@@ -231,18 +241,18 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     assertThat(cluster.getStripes(), hasSize(2));
     assertThat(cluster.getStripes().get(0).getNodes(), hasSize(1));
     assertThat(cluster.getStripes().get(1).getNodes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(2));
+    assertThat(cluster.getNodes(), hasSize(2));
   }
 
   @Test
   public void test_attach_stripe_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getAddress());
+    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getUID());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
+        .setSourceAddress(createUnresolved("localhost", 9411))
         .setOperationType(STRIPE)
-        .setDestination("localhost", 9410)
-        .setSource(createUnresolved("localhost", 9411));
+        .setDestinationAddress("localhost", 9410);
 
     assertThat(
         command::validate,

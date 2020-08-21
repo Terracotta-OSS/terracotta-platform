@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.cli.config_tool.nomad;
 
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
 import org.terracotta.nomad.NomadEnvironment;
@@ -24,7 +25,7 @@ import org.terracotta.nomad.entity.client.NomadEntityProvider;
 public class LockAwareNomadManager<T> extends NomadManager<T> {
   private final String lockToken;
 
-  public LockAwareNomadManager(NomadEnvironment environment, MultiDiagnosticServiceProvider multiDiagnosticServiceProvider, NomadEntityProvider nomadEntityProvider, String lockToken) {
+  public LockAwareNomadManager(NomadEnvironment environment, MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider, NomadEntityProvider nomadEntityProvider, String lockToken) {
     super(environment, multiDiagnosticServiceProvider, nomadEntityProvider);
     this.lockToken = lockToken;
   }

@@ -68,8 +68,8 @@ public class CodecTest {
     test(REQ_RUNTIME_CLUSTER, cluster);
     test(REQ_UPCOMING_CLUSTER, cluster);
 
-    test(EVENT_NODE_ADDITION, asList(1, node));
-    test(EVENT_NODE_REMOVAL, asList(1, node));
+    test(EVENT_NODE_ADDITION, asList(stripe.getUID(), node));
+    test(EVENT_NODE_REMOVAL, asList(stripe.getUID(), node));
 
     test(EVENT_SETTING_CHANGED, asList(Configuration.valueOf("cluster-name=foo"), cluster));
 

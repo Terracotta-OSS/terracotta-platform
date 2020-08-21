@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.converter.RepairAction;
@@ -63,24 +64,24 @@ public class RepairCommand extends RemoteCommand {
   }
 
   private void nomadRepair() {
-    Map<InetSocketAddress, LogicalServerState> allNodes = findRuntimePeersStatus(node);
-    Map<InetSocketAddress, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
+    Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
+    Map<Endpoint, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
 
     if (onlineNodes.size() != allNodes.size()) {
-      Collection<InetSocketAddress> offlines = new ArrayList<>(allNodes.keySet());
+      Collection<Endpoint> offlines = new ArrayList<>(allNodes.keySet());
       offlines.removeAll(onlineNodes.keySet());
       logger.warn("Some nodes are not reachable: {}", toString(offlines));
     }
 
     // the automatic repair command can only work on activated nodes
-    Map<InetSocketAddress, LogicalServerState> activatedNodes = filter(onlineNodes, (addr, state) -> isActivated(addr));
+    Map<Endpoint, LogicalServerState> activatedNodes = filter(onlineNodes, (endpoint, state) -> isActivated(endpoint));
 
     if (activatedNodes.isEmpty()) {
       throw new IllegalStateException("No activated node found. Repair command only works with activated nodes.");
     }
 
     if (activatedNodes.size() != onlineNodes.size()) {
-      Collection<InetSocketAddress> unconfigured = new ArrayList<>(onlineNodes.keySet());
+      Collection<Endpoint> unconfigured = new ArrayList<>(onlineNodes.keySet());
       unconfigured.removeAll(activatedNodes.keySet());
       logger.warn("Some online nodes are not activated: {}. Automatic repair will only work against activated nodes: {}", toString(unconfigured), toString(activatedNodes.keySet()));
     }

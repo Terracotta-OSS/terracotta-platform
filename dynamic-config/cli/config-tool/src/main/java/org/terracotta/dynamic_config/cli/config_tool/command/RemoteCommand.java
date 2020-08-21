@@ -25,7 +25,10 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
@@ -38,7 +41,6 @@ import org.terracotta.dynamic_config.cli.config_tool.restart.RestartProgress;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopProgress;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
-import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.entity.client.NomadEntityProvider;
 import org.terracotta.nomad.server.ChangeRequestState;
@@ -54,13 +56,11 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
@@ -74,6 +74,7 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
@@ -87,12 +88,16 @@ import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
  */
 public abstract class RemoteCommand extends Command {
 
-  @Inject public MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
+  @Inject public MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider;
   @Inject public DiagnosticServiceProvider diagnosticServiceProvider;
   @Inject public NomadManager<NodeContext> nomadManager;
   @Inject public RestartService restartService;
   @Inject public StopService stopService;
   @Inject public NomadEntityProvider nomadEntityProvider;
+
+  protected void licenseValidation(Endpoint endpoint, Cluster cluster) {
+    licenseValidation(endpoint.getAddress(), cluster);
+  }
 
   protected void licenseValidation(InetSocketAddress node, Cluster cluster) {
     logger.trace("licenseValidation({}, {})", node, cluster);
@@ -106,13 +111,13 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  private void activateNomadSystem(Collection<InetSocketAddress> newNodes, Cluster cluster, String licenseContent) {
+  private void activateNomadSystem(Collection<Endpoint> newNodes, Cluster cluster, String licenseContent) {
     logger.info("Activating nodes: {}", toString(newNodes));
 
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
+    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(newNodes))) {
       dynamicConfigServices(diagnosticServices)
-        .map(Tuple2::getT2)
-        .forEach(service -> service.activate(cluster, licenseContent));
+          .map(Tuple2::getT2)
+          .forEach(service -> service.activate(cluster, licenseContent));
       if (licenseContent == null) {
         logger.info("No license installed. If you are attaching a node, the license will be synced.");
       } else {
@@ -121,20 +126,20 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  private void restartNodes(Collection<InetSocketAddress> newNodes, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
+  private void restartNodes(Collection<Endpoint> newNodes, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
     logger.info("Restarting nodes: {}", toString(newNodes));
     restartNodes(
-      newNodes,
-      Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-      Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
-      // these are the list of states tha twe allow to consider a server has restarted
-      // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
-      // and has consequently bootstrapped the configuration from Nomad.
-      EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
+        newNodes,
+        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
+        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)),
+        // these are the list of states tha twe allow to consider a server has restarted
+        // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
+        // and has consequently bootstrapped the configuration from Nomad.
+        EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
     logger.info("All nodes came back up");
   }
 
-  protected final void activateNodes(Collection<InetSocketAddress> newNodes, Cluster cluster, Path licenseFile,
+  protected final void activateNodes(Collection<Endpoint> newNodes, Cluster cluster, Path licenseFile,
                                      Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
     activateNomadSystem(newNodes, cluster, read(licenseFile));
 
@@ -143,7 +148,7 @@ public abstract class RemoteCommand extends Command {
     restartNodes(newNodes, restartDelay, restartWaitTime);
   }
 
-  protected final void activateStripe(Collection<InetSocketAddress> newNodes, Cluster cluster, InetSocketAddress destination,
+  protected final void activateStripe(Collection<Endpoint> newNodes, Cluster cluster, Endpoint destination,
                                       Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
     activateNomadSystem(newNodes, cluster, getLicenseContentFrom(destination).orElse(null));
 
@@ -154,29 +159,33 @@ public abstract class RemoteCommand extends Command {
     restartNodes(newNodes, restartDelay, restartWaitTime);
   }
 
-  private Optional<String> getLicenseContentFrom(InetSocketAddress node) {
+  private Optional<String> getLicenseContentFrom(Endpoint node) {
     logger.trace("getLicenseContent({})", node);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node.getAddress())) {
       return diagnosticService.getProxy(DynamicConfigService.class).getLicenseContent();
     }
   }
 
-  private NomadChangeInfo[] getAllNomadChangesFrom(InetSocketAddress node) {
+  private NomadChangeInfo[] getAllNomadChangesFrom(Endpoint node) {
     logger.trace("getChangeHistory({})", node);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node.getAddress())) {
       return diagnosticService.getProxy(TopologyService.class).getChangeHistory();
     }
   }
 
-  private void syncNomadChangesTo(Collection<InetSocketAddress> newNodes, NomadChangeInfo[] nomadChanges, Cluster cluster) {
+  private void syncNomadChangesTo(Collection<Endpoint> newNodes, NomadChangeInfo[] nomadChanges, Cluster cluster) {
     logger.info("Sync'ing nomad changes to nodes : {}", toString(newNodes));
 
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
+    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(newNodes))) {
       dynamicConfigServices(diagnosticServices)
-        .map(Tuple2::getT2)
-        .forEach(service -> service.resetAndSync(nomadChanges, cluster));
+          .map(Tuple2::getT2)
+          .forEach(service -> service.resetAndSync(nomadChanges, cluster));
       logger.info("Nomad changes sync successful");
     }
+  }
+
+  protected final boolean mustBeRestarted(Endpoint endpoint) {
+    return mustBeRestarted(endpoint.getAddress());
   }
 
   protected final boolean mustBeRestarted(InetSocketAddress expectedOnlineNode) {
@@ -184,6 +193,10 @@ public abstract class RemoteCommand extends Command {
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       return diagnosticService.getProxy(TopologyService.class).mustBeRestarted();
     }
+  }
+
+  protected final boolean hasIncompleteChange(Endpoint endpoint) {
+    return hasIncompleteChange(endpoint.getAddress());
   }
 
   protected final boolean hasIncompleteChange(InetSocketAddress expectedOnlineNode) {
@@ -196,7 +209,7 @@ public abstract class RemoteCommand extends Command {
   /**
    * Returns the current consistency of the configuration in the cluster
    */
-  protected final ConsistencyAnalyzer<NodeContext> analyzeNomadConsistency(Map<InetSocketAddress, LogicalServerState> allNodes) {
+  protected final ConsistencyAnalyzer<NodeContext> analyzeNomadConsistency(Map<Endpoint, LogicalServerState> allNodes) {
     logger.trace("analyzeNomadConsistency({})", allNodes);
     ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = new ConsistencyAnalyzer<>(allNodes);
     nomadManager.runConfigurationDiscovery(allNodes, consistencyAnalyzer);
@@ -220,14 +233,14 @@ public abstract class RemoteCommand extends Command {
    * <p>
    * Nodes are expected to be online.
    */
-  protected final void runConfigurationChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange change) {
+  protected final void runConfigurationChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, MultiSettingNomadChange change) {
     logger.trace("runConfigurationChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
     failures.reThrowReasons();
   }
 
-  protected final void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, TopologyNomadChange change) {
+  protected final void runTopologyChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, TopologyNomadChange change) {
     logger.trace("runTopologyChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runTopologyChange(destinationCluster, onlineNodes, change, failures);
@@ -239,12 +252,16 @@ public abstract class RemoteCommand extends Command {
    * <p>
    * Nodes are expected to be online.
    */
-  protected final void runClusterActivation(Collection<InetSocketAddress> expectedOnlineNodes, Cluster cluster) {
+  protected final void runClusterActivation(Collection<Endpoint> expectedOnlineNodes, Cluster cluster) {
     logger.trace("runClusterActivation({}, {})", expectedOnlineNodes, cluster.toShapeString());
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runClusterActivation(expectedOnlineNodes, cluster, failures);
     failures.reThrowReasons();
     logger.debug("Configuration directories have been created for all nodes");
+  }
+
+  protected final LogicalServerState getState(Endpoint expectedOnlineNode) {
+    return getState(expectedOnlineNode.getAddress());
   }
 
   protected final LogicalServerState getState(InetSocketAddress expectedOnlineNode) {
@@ -254,6 +271,10 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
+  protected final Cluster getUpcomingCluster(Endpoint expectedOnlineNode) {
+    return getUpcomingCluster(expectedOnlineNode.getAddress());
+  }
+
   protected final Cluster getUpcomingCluster(InetSocketAddress expectedOnlineNode) {
     logger.trace("getUpcomingCluster({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
@@ -261,13 +282,17 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void setUpcomingCluster(Collection<InetSocketAddress> expectedOnlineNodes, Cluster cluster) {
+  protected final void setUpcomingCluster(Collection<Endpoint> expectedOnlineNodes, Cluster cluster) {
     logger.trace("setUpcomingCluster({})", expectedOnlineNodes);
-    for (InetSocketAddress expectedOnlineNode : expectedOnlineNodes) {
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    for (Endpoint expectedOnlineNode : expectedOnlineNodes) {
+      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.getAddress())) {
         diagnosticService.getProxy(DynamicConfigService.class).setUpcomingCluster(cluster);
       }
     }
+  }
+
+  protected final Cluster getRuntimeCluster(Endpoint expectedOnlineNode) {
+    return getRuntimeCluster(expectedOnlineNode.getAddress());
   }
 
   protected final Cluster getRuntimeCluster(InetSocketAddress expectedOnlineNode) {
@@ -277,27 +302,34 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void restartNodes(Collection<InetSocketAddress> addresses, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
-    logger.trace("restartNodes({}, {})", addresses, maximumWaitTime);
+  protected final Endpoint getEndpoint(InetSocketAddress expectedOnlineNode) {
+    logger.trace("getEndpoint({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+      return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getNode().getEndpoint(expectedOnlineNode);
+    }
+  }
+
+  protected final void restartNodes(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
+    logger.trace("restartNodes({}, {})", endpoints, maximumWaitTime);
     try {
       RestartProgress progress = restartService.restartNodes(
-          addresses,
+          endpoints,
           restartDelay,
           acceptedStates);
       progress.getErrors().forEach((address, e) -> logger.warn("Unable to ask node: {} to restart: please restart it manually.", address));
-      progress.onRestarted((address, state) -> logger.info("Node: {} has restarted in state: {}", address, state));
-      Map<InetSocketAddress, LogicalServerState> restarted = progress.await(maximumWaitTime);
+      progress.onRestarted((endpoint, state) -> logger.info("Node: {} has restarted in state: {}", endpoint, state));
+      Map<Endpoint, LogicalServerState> restarted = progress.await(maximumWaitTime);
       // check where we are
-      Collection<InetSocketAddress> missing = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
-      missing.addAll(addresses);
+      Collection<Endpoint> missing = new TreeSet<>(Comparator.comparing(Endpoint::toString));
+      missing.addAll(endpoints);
       missing.removeAll(progress.getErrors().keySet()); // remove nodes that we were not able to contact
       missing.removeAll(restarted.keySet()); // remove nodes that have been restarted
       if (!missing.isEmpty()) {
         throw new IllegalStateException("Some nodes may have failed to restart within " + maximumWaitTime.getSeconds() + " seconds. " + lineSeparator() +
-                "This should be confirmed by examining the state of the nodes listed below." + lineSeparator() +
-                "Note: if the cluster did not have security configured before activation but has security configured post-activation, or vice-versa, " + lineSeparator() +
-                "then the nodes may have in fact successfully restarted.  This should be confirmed.  Nodes:" + lineSeparator()
-                + " - " + missing.stream().map(InetSocketAddress::toString).collect(joining(lineSeparator() + " - ")));
+            "This should be confirmed by examining the state of the nodes listed below." + lineSeparator() +
+            "Note: if the cluster did not have security configured before activation but has security configured post-activation, or vice-versa, " + lineSeparator() +
+            "then the nodes may have in fact successfully restarted.  This should be confirmed.  Nodes:" + lineSeparator()
+            + " - " + missing.stream().map(Endpoint::toString).collect(joining(lineSeparator() + " - ")));
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -305,21 +337,21 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void stopNodes(Collection<InetSocketAddress> addresses, Duration maximumWaitTime, Duration restartDelay) {
+  protected final void stopNodes(Collection<Endpoint> addresses, Duration maximumWaitTime, Duration restartDelay) {
     logger.trace("stopNodes({}, {})", addresses, maximumWaitTime);
     try {
       StopProgress progress = stopService.stopNodes(addresses, restartDelay);
       progress.getErrors().forEach((address, e) -> logger.warn("Unable to ask node: {} to stop: please stop it manually.", address));
-      progress.onStopped(address -> logger.info("Node: {} has stopped", address));
-      Collection<InetSocketAddress> stopped = progress.await(maximumWaitTime);
+      progress.onStopped(endpoint -> logger.info("Node: {} has stopped", endpoint));
+      Collection<Endpoint> stopped = progress.await(maximumWaitTime);
       // check where we are
-      Collection<InetSocketAddress> missing = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+      Collection<Endpoint> missing = new TreeSet<>(Comparator.comparing(Endpoint::toString));
       missing.addAll(addresses);
       missing.removeAll(progress.getErrors().keySet()); // remove nodes that we were not able to contact
       missing.removeAll(stopped); // remove nodes that have been restarted
       if (!missing.isEmpty()) {
         throw new IllegalStateException("Some nodes failed to stop within " + maximumWaitTime.getSeconds() + " seconds:" + lineSeparator()
-            + " - " + missing.stream().map(InetSocketAddress::toString).collect(joining(lineSeparator() + " - ")));
+            + " - " + missing.stream().map(Endpoint::toString).collect(joining(lineSeparator() + " - ")));
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -327,25 +359,26 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final Collection<InetSocketAddress> findRuntimePeers(InetSocketAddress expectedOnlineNode) {
+  protected final Collection<Endpoint> findRuntimePeers(InetSocketAddress expectedOnlineNode) {
     logger.trace("findRuntimePeers({})", expectedOnlineNode);
-    Collection<InetSocketAddress> peers = getRuntimeCluster(expectedOnlineNode).getNodeAddresses();
+    Cluster cluster = getRuntimeCluster(expectedOnlineNode);
+    Collection<Endpoint> peers = cluster.getEndpoints(expectedOnlineNode);
     if (logger.isDebugEnabled()) {
       logger.debug("Discovered nodes:{} through: {}", toString(peers), expectedOnlineNode);
     }
     return peers;
   }
 
-  protected final Map<InetSocketAddress, LogicalServerState> findRuntimePeersStatus(InetSocketAddress expectedOnlineNode) {
+  protected final Map<Endpoint, LogicalServerState> findRuntimePeersStatus(InetSocketAddress expectedOnlineNode) {
     logger.trace("findRuntimePeersStatus({})", expectedOnlineNode);
     Cluster cluster = getRuntimeCluster(expectedOnlineNode);
-    logger.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(cluster.getNodeAddresses()));
-    Collection<InetSocketAddress> addresses = cluster.getNodeAddresses();
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(addresses)) {
-      LinkedHashMap<InetSocketAddress, LogicalServerState> status = addresses.stream()
+    Collection<Endpoint> endpoints = cluster.getEndpoints(expectedOnlineNode);
+    logger.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(endpoints));
+    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(endpointsToMap(endpoints))) {
+      LinkedHashMap<Endpoint, LogicalServerState> status = endpoints.stream()
           .collect(toMap(
               identity(),
-              addr -> diagnosticServices.getDiagnosticService(addr).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
+              endpoint -> diagnosticServices.getDiagnosticService(endpoint.getNodeUID()).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
               (o1, o2) -> {
                 throw new UnsupportedOperationException();
               },
@@ -359,17 +392,21 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final Map<InetSocketAddress, LogicalServerState> findOnlineRuntimePeers(InetSocketAddress expectedOnlineNode) {
+  protected final Map<Endpoint, LogicalServerState> findOnlineRuntimePeers(Endpoint expectedOnlineNode) {
+    return findOnlineRuntimePeers(expectedOnlineNode.getAddress());
+  }
+
+  protected final Map<Endpoint, LogicalServerState> findOnlineRuntimePeers(InetSocketAddress expectedOnlineNode) {
     logger.trace("findOnlineRuntimePeers({})", expectedOnlineNode);
-    Map<InetSocketAddress, LogicalServerState> nodes = findRuntimePeersStatus(expectedOnlineNode);
+    Map<Endpoint, LogicalServerState> nodes = findRuntimePeersStatus(expectedOnlineNode);
     return filterOnlineNodes(nodes);
   }
 
-  protected final LinkedHashMap<InetSocketAddress, LogicalServerState> filterOnlineNodes(Map<InetSocketAddress, LogicalServerState> nodes) {
+  protected final LinkedHashMap<Endpoint, LogicalServerState> filterOnlineNodes(Map<Endpoint, LogicalServerState> nodes) {
     return filter(nodes, (addr, state) -> !state.isUnknown() && !state.isUnreacheable());
   }
 
-  protected final LinkedHashMap<InetSocketAddress, LogicalServerState> filter(Map<InetSocketAddress, LogicalServerState> nodes, BiPredicate<InetSocketAddress, LogicalServerState> predicate) {
+  protected final <K> LinkedHashMap<K, LogicalServerState> filter(Map<K, LogicalServerState> nodes, BiPredicate<K, LogicalServerState> predicate) {
     return nodes.entrySet()
         .stream()
         .filter(e -> predicate.test(e.getKey(), e.getValue()))
@@ -390,23 +427,23 @@ public abstract class RemoteCommand extends Command {
    * if the hostname/port change that is pending impacts one of the active node, then we might not find the actives
    * in the stripes.
    */
-  protected final void ensurePassivesAreAllOnline(Cluster cluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
-    List<InetSocketAddress> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).collect(toList());
-    List<InetSocketAddress> passives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isPassive()).map(Map.Entry::getKey).collect(toList());
-    Set<InetSocketAddress> expectedPassives = new HashSet<>(cluster.getNodeAddresses());
+  protected final void ensurePassivesAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
+    Collection<String> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).map(Endpoint::getNodeName).collect(toSet());
+    Collection<String> passives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isPassive()).map(Map.Entry::getKey).map(Endpoint::getNodeName).collect(toSet());
+    Collection<String> expectedPassives = cluster.getNodes().stream().map(Node::getName).collect(toSet());
     expectedPassives.removeAll(actives);
-    if (!InetSocketAddressUtils.containsAll(passives, expectedPassives)) {
+    if (!passives.containsAll(expectedPassives)) {
       throw new IllegalStateException("Not all cluster nodes are online: expected passive nodes " + toString(expectedPassives) + ", but only got: " + toString(passives)
           + ". Either some nodes are shutdown, either a hostname/port change has been made and the cluster has not yet been restarted.");
     }
   }
 
-  protected final void ensureActivesAreAllOnline(Cluster cluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+  protected final void ensureActivesAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
     if (onlineNodes.isEmpty()) {
       throw new IllegalStateException("Expected 1 active per stripe, but found no online node.");
     }
     // actives == list of current active nodes in the runtime topology
-    List<InetSocketAddress> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).collect(toList());
+    List<String> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).map(Endpoint::getNodeName).collect(toList());
     // Check for stripe count. Whether there is a pending dynamic config change or not, the stripe count is not changing.
     // The stripe count only changes in case of a runtime topology change, which is another case.
     if (cluster.getStripeCount() != actives.size()) {
@@ -414,13 +451,17 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void ensureNodesAreEitherActiveOrPassive(Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+  protected final void ensureNodesAreEitherActiveOrPassive(Map<Endpoint, LogicalServerState> onlineNodes) {
     onlineNodes.forEach((addr, state) -> {
       if (!state.isActive() && !state.isPassive()) {
         throw new IllegalStateException("Unable to update node: " + addr + " that is currently in state: " + state
             + ". Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update.");
       }
     });
+  }
+
+  protected final boolean isActivated(Endpoint expectedOnlineNode) {
+    return isActivated(expectedOnlineNode.getAddress());
   }
 
   protected final boolean isActivated(InetSocketAddress expectedOnlineNode) {
@@ -439,6 +480,10 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
+  protected final void reset(Endpoint expectedOnlineNode) {
+    reset(expectedOnlineNode.getAddress());
+  }
+
   protected final void reset(InetSocketAddress expectedOnlineNode) {
     logger.info("Reset node: {}", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
@@ -447,12 +492,13 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final boolean areAllNodesActivated(Collection<InetSocketAddress> expectedOnlineNodes) {
+  protected final boolean areAllNodesActivated(Collection<Endpoint> expectedOnlineNodes) {
     logger.trace("areAllNodesActivated({})", expectedOnlineNodes);
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes)) {
+    final Map<UID, InetSocketAddress> map = endpointsToMap(expectedOnlineNodes);
+    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(map)) {
       Map<Boolean, Collection<InetSocketAddress>> activations = topologyServices(diagnosticServices)
           .map(tuple -> tuple.map(identity(), TopologyService::isActivated))
-          .collect(groupingBy(Tuple2::getT2, mapping(Tuple2::getT1, toCollection(() -> new TreeSet<>(Comparator.comparing(InetSocketAddress::toString))))));
+          .collect(groupingBy(Tuple2::getT2, mapping(tuple -> map.get(tuple.getT1()), toCollection(() -> new TreeSet<>(Comparator.comparing(InetSocketAddress::toString))))));
       if (activations.isEmpty()) {
         throw new IllegalArgumentException("Cluster is empty or offline");
       }
@@ -465,7 +511,7 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected final void upgradeLicense(Collection<InetSocketAddress> expectedOnlineNodes, Path licenseFile) {
+  protected final void upgradeLicense(Collection<Endpoint> expectedOnlineNodes, Path licenseFile) {
     logger.trace("upgradeLicense({}, {})", expectedOnlineNodes, licenseFile);
     String xml;
     try {
@@ -473,7 +519,7 @@ public abstract class RemoteCommand extends Command {
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes)) {
+    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(expectedOnlineNodes))) {
       dynamicConfigServices(diagnosticServices)
           .map(tuple -> {
             try {
@@ -495,16 +541,20 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  protected static Stream<Tuple2<InetSocketAddress, TopologyService>> topologyServices(DiagnosticServices diagnosticServices) {
-    return diagnosticServices.map((address, diagnosticService) -> diagnosticService.getProxy(TopologyService.class));
+  protected static Map<UID, InetSocketAddress> endpointsToMap(Collection<Endpoint> newNodes) {
+    return newNodes.stream().collect(toMap(Endpoint::getNodeUID, Endpoint::getAddress));
   }
 
-  protected static Stream<Tuple2<InetSocketAddress, DynamicConfigService>> dynamicConfigServices(DiagnosticServices diagnosticServices) {
-    return diagnosticServices.map((address, diagnosticService) -> diagnosticService.getProxy(DynamicConfigService.class));
+  protected static Stream<Tuple2<UID, TopologyService>> topologyServices(DiagnosticServices<UID> diagnosticServices) {
+    return diagnosticServices.map((uid, diagnosticService) -> diagnosticService.getProxy(TopologyService.class));
   }
 
-  protected static String toString(Collection<InetSocketAddress> addresses) {
-    return addresses.stream().map(InetSocketAddress::toString).sorted().collect(Collectors.joining(", "));
+  protected static Stream<Tuple2<UID, DynamicConfigService>> dynamicConfigServices(DiagnosticServices<UID> diagnosticServices) {
+    return diagnosticServices.map((uid, diagnosticService) -> diagnosticService.getProxy(DynamicConfigService.class));
+  }
+
+  protected static String toString(Collection<?> items) {
+    return items.stream().map(Object::toString).sorted().collect(Collectors.joining(", "));
   }
 
   private static String read(Path path) {

@@ -19,6 +19,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FilteredNomadChange;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
@@ -26,13 +27,12 @@ import org.terracotta.nomad.server.NomadException;
  * Filters Nomad changes of type {@link FilteredNomadChange} based on their applicability
  */
 public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<DynamicConfigNomadChange> {
-  private final int stripeId;
-  private final String nodeName;
-  private final NomadChangeProcessor<DynamicConfigNomadChange> next;
 
-  public ApplicabilityNomadChangeProcessor(int stripeId, String nodeName, NomadChangeProcessor<DynamicConfigNomadChange> nomadChangeProcessor) {
-    this.stripeId = stripeId;
-    this.nodeName = nodeName;
+  private final NomadChangeProcessor<DynamicConfigNomadChange> next;
+  private final TopologyService topologyService;
+
+  public ApplicabilityNomadChangeProcessor(TopologyService topologyService, NomadChangeProcessor<DynamicConfigNomadChange> nomadChangeProcessor) {
+    this.topologyService = topologyService;
     this.next = nomadChangeProcessor;
   }
 
@@ -50,21 +50,12 @@ public class ApplicabilityNomadChangeProcessor implements NomadChangeProcessor<D
     }
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   private boolean applicableToThisServer(DynamicConfigNomadChange change) {
     if (!(change instanceof FilteredNomadChange)) {
       return false;
     }
+    NodeContext nodeContext = topologyService.getRuntimeNodeContext();
     Applicability applicability = ((FilteredNomadChange) change).getApplicability();
-    switch (applicability.getLevel()) {
-      case CLUSTER:
-        return true;
-      case STRIPE:
-        return stripeId == applicability.getStripeId().getAsInt();
-      case NODE:
-        return stripeId == applicability.getStripeId().getAsInt() && nodeName.equals(applicability.getNodeName());
-      default:
-        throw new AssertionError("Unknown applicability: " + applicability);
-    }
+    return applicability.isApplicableTo(nodeContext);
   }
 }

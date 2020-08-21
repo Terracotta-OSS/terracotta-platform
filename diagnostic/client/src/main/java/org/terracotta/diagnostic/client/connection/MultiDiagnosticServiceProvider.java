@@ -17,12 +17,14 @@ package org.terracotta.diagnostic.client.connection;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 
 /**
+ * @param <K> a node identifier
  * @author Mathieu Carbou
  */
-public interface MultiDiagnosticServiceProvider {
+public interface MultiDiagnosticServiceProvider<K> {
   /**
    * Concurrently fetch the diagnostic service of all the nodes.
    * These nodes are expected to be online.
@@ -33,9 +35,9 @@ public interface MultiDiagnosticServiceProvider {
    * @throws DiagnosticServiceProviderException If one of the node is unreachable,
    *                                            or if all the nodes cannot be reached within a specific duration (timeout)
    */
-  default DiagnosticServices fetchOnlineDiagnosticServices(Collection<InetSocketAddress> expectedOnlineNodes) throws DiagnosticServiceProviderException {
-    DiagnosticServices diagnosticServices = fetchDiagnosticServices(expectedOnlineNodes);
-    Collection<InetSocketAddress> offlineEndpoints = diagnosticServices.getOfflineEndpoints().keySet();
+  default DiagnosticServices<K> fetchOnlineDiagnosticServices(Map<K, InetSocketAddress> expectedOnlineNodes) throws DiagnosticServiceProviderException {
+    DiagnosticServices<K> diagnosticServices = fetchDiagnosticServices(expectedOnlineNodes);
+    Collection<K> offlineEndpoints = diagnosticServices.getOfflineEndpoints().keySet();
     if (!offlineEndpoints.isEmpty()) {
       DiagnosticServiceProviderException exception = new DiagnosticServiceProviderException("Diagnostic connection to: " + offlineEndpoints + " failed");
       // add all errors
@@ -60,5 +62,5 @@ public interface MultiDiagnosticServiceProvider {
    * <p>
    * The returned {@link DiagnosticServices} will have a list of online nodes and a list of offline nodes.
    */
-  DiagnosticServices fetchDiagnosticServices(Collection<InetSocketAddress> addresses);
+  DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses);
 }

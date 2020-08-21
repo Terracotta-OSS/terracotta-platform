@@ -17,6 +17,8 @@ package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.UID;
 
 import static java.util.Objects.requireNonNull;
 
@@ -25,41 +27,38 @@ import static java.util.Objects.requireNonNull;
  */
 public class NodeRemovalNomadChange extends NodeNomadChange {
 
-  public NodeRemovalNomadChange(Cluster cluster,
-                                int stripeId,
-                                Node node) {
-    super(cluster, stripeId, node);
+  public NodeRemovalNomadChange(Cluster cluster, UID stripeUID, Node node) {
+    super(cluster, stripeUID, node);
   }
 
   @Override
   public Cluster apply(Cluster original) {
     requireNonNull(original);
-    if (!original.containsNode(getStripeId(), getNode().getName())) {
-      throw new IllegalArgumentException("Node name: " + getNode().getName() + " is not in stripe ID: " + getStripeId() + " in cluster: " + original);
+    if (!original.containsNode(getNode().getName())) {
+      throw new IllegalArgumentException("Node name: " + getNode().getName() + " is not in cluster: " + original);
     }
-    if (!original.containsNode(getNodeAddress())) {
-      throw new IllegalArgumentException("Node with address: " + getNodeAddress() + " is not in cluster: " + original);
+    if (!original.containsNode(getNode().getUID())) {
+      throw new IllegalArgumentException("Node: " + getNode().getUID() + " is not in cluster: " + original);
     }
     Cluster updated = original.clone();
-    updated.removeNode(getNodeAddress());
+    updated.removeNode(getNode().getUID());
     return updated;
   }
 
   @Override
-  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
+  public boolean canApplyAtRuntime(NodeContext currentNode) {
     return true;
   }
 
   @Override
   public String getSummary() {
-    return "Detaching node: " + getNodeAddress() + " from stripe ID: " + getStripeId();
+    return "Detaching node: " + getNode().getName() + " from stripe: " + getCluster().getStripe(getStripeUID()).get().getName();
   }
 
   @Override
   public String toString() {
     return "NodeRemovalNomadChange{" + "" +
-        "removedNode=" + getNodeAddress() +
-        ", node=" + getNodeAddress() +
+        "removedNode=" + getNode().getName() +
         ", cluster=" + getCluster().toShapeString() +
         '}';
   }

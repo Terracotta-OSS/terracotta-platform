@@ -19,7 +19,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -51,8 +50,8 @@ public class SettingNomadChangeTest {
     assertThat(set(cluster(), OFFHEAP_RESOURCES, "main", "1GB").getSummary(), is(equalTo("set offheap-resources.main=1GB")));
     assertThat(unset(cluster(), OFFHEAP_RESOURCES).getSummary(), is(equalTo("unset offheap-resources")));
     assertThat(unset(cluster(), OFFHEAP_RESOURCES, "main").getSummary(), is(equalTo("unset offheap-resources.main")));
-    assertThat(set(stripe(1), NODE_LOG_DIR, "foo").getSummary(), is(equalTo("set log-dir=foo (stripe ID: 1)")));
-    assertThat(set(node(1, "node1"), NODE_LOG_DIR, "foo").getSummary(), is(equalTo("set log-dir=foo (stripe ID: 1, node: node1)")));
+    assertThat(set(stripe(Testing.A_UID), NODE_LOG_DIR, "foo").getSummary(), is(equalTo("set log-dir=foo (on stripe UID: YLQguzhRSdS6y5M9vnA5mw)")));
+    assertThat(set(node(Testing.A_UID), NODE_LOG_DIR, "foo").getSummary(), is(equalTo("set log-dir=foo (on node UID: YLQguzhRSdS6y5M9vnA5mw)")));
   }
 
   @Test
@@ -63,19 +62,19 @@ public class SettingNomadChangeTest {
     assertThat(change.getSetting(), is(equalTo(OFFHEAP_RESOURCES)));
 
     configuration = Configuration.valueOf("stripe.1.node.1.log-dir=foo");
-    change = fromConfiguration(configuration, Operation.SET, Testing.newTestCluster(new Stripe().addNode(Testing.newTestNode("node1", "localhost"))));
-    assertThat(change.getApplicability(), is(equalTo(node(1, "node1"))));
+    change = fromConfiguration(configuration, Operation.SET, Testing.newTestCluster(Testing.newTestStripe("stripe-1").addNode(Testing.newTestNode("node1", "localhost"))));
+    assertThat(change.getApplicability(), is(equalTo(node(Testing.N_UIDS[1]))));
     assertThat(change.getSetting(), is(equalTo(NODE_LOG_DIR)));
 
     configuration = Configuration.valueOf("stripe.1.log-dir=foo");
-    change = fromConfiguration(configuration, Operation.SET, Testing.newTestCluster(new Stripe().addNode(Testing.newTestNode("node1", "localhost"))));
-    assertThat(change.getApplicability(), is(equalTo(stripe(1))));
+    change = fromConfiguration(configuration, Operation.SET, Testing.newTestCluster(Testing.newTestStripe("stripe-1").addNode(Testing.newTestNode("node1", "localhost"))));
+    assertThat(change.getApplicability(), is(equalTo(stripe(Testing.S_UIDS[1]))));
     assertThat(change.getSetting(), is(equalTo(NODE_LOG_DIR)));
     assertThat(change.getOperation(), is(equalTo(Operation.SET)));
 
     configuration = Configuration.valueOf("stripe.1.backup-dir=foo");
-    change = fromConfiguration(configuration, Operation.UNSET, Testing.newTestCluster(new Stripe().addNode(Testing.newTestNode("node1", "localhost"))));
-    assertThat(change.getApplicability(), is(equalTo(stripe(1))));
+    change = fromConfiguration(configuration, Operation.UNSET, Testing.newTestCluster(Testing.newTestStripe("stripe-1").addNode(Testing.newTestNode("node1", "localhost"))));
+    assertThat(change.getApplicability(), is(equalTo(stripe(Testing.S_UIDS[1]))));
     assertThat(change.getSetting(), is(equalTo(NODE_BACKUP_DIR)));
     assertThat(change.getOperation(), is(equalTo(Operation.UNSET)));
 
@@ -89,30 +88,21 @@ public class SettingNomadChangeTest {
 
   @Test
   public void test_toConfiguration() {
-    Cluster cluster = Testing.newTestCluster(new Stripe().addNode(Testing.newTestNode("node1", "localhost")));
+    Cluster cluster = Testing.newTestCluster(Testing.newTestStripe("stripe-1").addNode(Testing.newTestNode("node1", "localhost")));
 
     assertThat(set(cluster(), CLUSTER_NAME, "my-cluster").toConfiguration(cluster), is(equalTo(Configuration.valueOf("cluster-name=my-cluster"))));
     assertThat(unset(cluster(), NODE_BACKUP_DIR).toConfiguration(cluster), is(equalTo(Configuration.valueOf("backup-dir"))));
     assertThat(set(cluster(), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("backup-dir=foo"))));
-    assertThat(set(stripe(1), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("stripe.1.backup-dir=foo"))));
-    assertThat(set(node(1, "node1"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("stripe.1.node.1.backup-dir=foo"))));
+    assertThat(set(stripe(Testing.S_UIDS[1]), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("stripe.1.backup-dir=foo"))));
+    assertThat(set(node(Testing.N_UIDS[1]), NODE_BACKUP_DIR, "foo").toConfiguration(cluster), is(equalTo(Configuration.valueOf("stripe.1.node.1.backup-dir=foo"))));
     assertThat(set(cluster(), OFFHEAP_RESOURCES, "main", "1GB").toConfiguration(cluster), is(equalTo(Configuration.valueOf("offheap-resources.main=1GB"))));
     assertThat(unset(cluster(), OFFHEAP_RESOURCES, "main").toConfiguration(cluster), is(equalTo(Configuration.valueOf("offheap-resources.main"))));
 
     assertThat(
-        () -> set(node(0, "node1"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid stripe ID: 0")))));
+        () -> set(node(Testing.A_UID), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Stripe not found in cluster: <no name> ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1:jUhhu1kRQd-x6iNgpo9Xyw@localhost:9410 ) ) with applicability: node UID: YLQguzhRSdS6y5M9vnA5mw")))));
     assertThat(
-        () -> set(node(1, "node2"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node2 in stripe ID: 1 not found in cluster: Cluster 'null' ( null ( node1@localhost:9410 ) )")))));
-    assertThat(
-        () -> set(node(2, "node1"), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Node: node1 in stripe ID: 2 not found in cluster: Cluster 'null' ( null ( node1@localhost:9410 ) )")))));
-    assertThat(
-        () -> set(stripe(0), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Invalid stripe ID: 0")))));
-    assertThat(
-        () -> set(stripe(2), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Stripe ID: 2 not found in cluster: Cluster 'null' ( null ( node1@localhost:9410 ) )")))));
+        () -> set(stripe(Testing.A_UID), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Stripe not found in cluster: <no name> ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1:jUhhu1kRQd-x6iNgpo9Xyw@localhost:9410 ) ) with applicability: stripe UID: YLQguzhRSdS6y5M9vnA5mw")))));
   }
 }

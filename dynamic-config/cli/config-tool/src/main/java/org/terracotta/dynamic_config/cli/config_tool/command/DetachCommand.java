@@ -21,14 +21,20 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.Identifier;
+import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
+import org.terracotta.dynamic_config.api.model.PropertyHolder;
+import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.IdentifierConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +48,7 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@Usage("detach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
+@Usage("detach [-t node|stripe] -d <hostname[:port]> -s [<hostname[:port]>|uid|name] [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
 public class DetachCommand extends TopologyCommand {
 
   @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to stop. Default: 60s", converter = TimeUnitConverter.class)
@@ -51,7 +57,13 @@ public class DetachCommand extends TopologyCommand {
   @Parameter(names = {"-D"}, description = "Delay before the server stops itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> stopDelay = Measure.of(2, TimeUnit.SECONDS);
 
-  private final Collection<InetSocketAddress> onlineNodesToRemove = new ArrayList<>(1);
+  @Parameter(required = true, names = {"-s"}, description = "Source node or stripe (address, name or UID)", converter = IdentifierConverter.class)
+  protected Identifier sourceIdentifier;
+
+  private final Collection<Endpoint> onlineNodesToRemove = new ArrayList<>(1);
+
+  private PropertyHolder source;
+  private Stripe stripeToDetach;
 
   @Override
   public void validate() {
@@ -62,15 +74,19 @@ public class DetachCommand extends TopologyCommand {
     }
 
     if (operationType == NODE) {
-      if (!destinationCluster.containsNode(source)) {
-        throw new IllegalStateException("Source node: " + source + " is not part of cluster at: " + destination);
+
+      source = sourceIdentifier.findObject(destinationCluster, Scope.NODE)
+          .orElseThrow(() -> new IllegalStateException("Source: " + sourceIdentifier + " is not part of cluster: " + destinationCluster.toShapeString()));
+
+      if (destination.getNodeUID().equals(source.getUID())) {
+        throw new IllegalArgumentException("The destination and the source nodes must not be the same");
       }
 
-      if (destinationCluster.getStripeId(source).getAsInt() != destinationCluster.getStripeId(destination).getAsInt()) {
-        throw new IllegalStateException("Source node: " + source + " is not present in the same stripe as destination: " + destination);
+      if (!destinationCluster.inSameStripe(source.getUID(), destination.getNodeUID()).isPresent()) {
+        throw new IllegalStateException("Source node: " + sourceIdentifier + " is not present in the same stripe as destination: " + destination);
       }
 
-      Stripe destinationStripe = destinationCluster.getStripe(destination).get();
+      Stripe destinationStripe = destinationCluster.getStripeByNode(destination.getNodeUID()).get();
       if (destinationStripe.getNodeCount() == 1) {
         throw new IllegalStateException("Unable to detach since destination stripe contains only 1 node");
       }
@@ -85,35 +101,33 @@ public class DetachCommand extends TopologyCommand {
               "===================================================================================" + lineSeparator() +
               "IMPORTANT: The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes " +
               "(" + nodeCount + ") in this stripe " + lineSeparator() +
-              "is an odd number, which will become even with the removal of node " + source + "." + lineSeparator() +
+              "is an odd number, which will become even with the removal of node " + sourceIdentifier + "." + lineSeparator() +
               "An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
               "===================================================================================" + lineSeparator());
         }
       }
 
       // when we want to detach a node
-      onlineNodesToRemove.add(source);
+      markNodeForRemoval(source.getUID());
     } else {
-      if (!destinationCluster.containsNode(source)) {
-        throw new IllegalStateException("Source stripe: " + source + " is not part of cluster at: " + destination);
-      }
 
-      if (destinationCluster.getStripeId(source).getAsInt() == destinationCluster.getStripeId(destination).getAsInt()) {
-        throw new IllegalStateException("Source node: " + source + " and destination node: " + destination + " are part of the same stripe");
+      source = sourceIdentifier.findObject(destinationCluster, Scope.STRIPE)
+          .orElseThrow(() -> new IllegalStateException("Source: " + sourceIdentifier + " is not part of cluster: " + destinationCluster.toShapeString()));
+
+      stripeToDetach = destinationCluster.getStripe(source.getUID()).get();
+      if (stripeToDetach.containsNode(destination.getNodeUID())) {
+        throw new IllegalStateException("Source: " + sourceIdentifier + " and destination: " + destination + " are part of the same stripe: " + stripeToDetach.toShapeString());
       }
 
       if (destinationClusterActivated) {
-        if (destinationCluster.getStripeId(source).getAsInt() == 1) {
+        if (destinationCluster.getStripeId(source.getUID()).getAsInt() == 1) {
           throw new IllegalStateException("Removing the leading stripe is not allowed");
         }
       }
 
       // when we want to detach a stripe, we detach all the nodes of the stripe
-      onlineNodesToRemove.addAll(destinationCluster.getStripe(source).get().getNodeAddresses());
+      stripeToDetach.getNodes().stream().map(Node::getUID).forEach(this::markNodeForRemoval);
     }
-
-    // compute the list of online nodes to detach if requested
-    onlineNodesToRemove.retainAll(destinationOnlineNodes.keySet());
 
     // When the operation type is node, the nodes being detached should be stopped first manually
     // But if the operation type is stripe, the stripes being detached are stopped automatically after they're removed
@@ -132,14 +146,14 @@ public class DetachCommand extends TopologyCommand {
     switch (operationType) {
 
       case NODE: {
-        logger.info("Detaching node: {} from stripe: {}", source, destination);
-        cluster.removeNode(source);
+        logger.info("Detaching node: {} from cluster: {}", source, destinationCluster.getName());
+        cluster.removeNode(source.getUID());
         break;
       }
 
       case STRIPE: {
-        Stripe stripe = cluster.getStripe(source).get();
-        logger.info("Detaching stripe containing nodes: {} from cluster: {}", toString(stripe.getNodeAddresses()), destination);
+        Stripe stripe = cluster.getStripe(source.getUID()).get();
+        logger.info("Detaching stripe: {} from cluster: {}", source, destinationCluster.getName());
         cluster.removeStripe(stripe);
         break;
       }
@@ -156,9 +170,12 @@ public class DetachCommand extends TopologyCommand {
   protected TopologyNomadChange buildNomadChange(Cluster result) {
     switch (operationType) {
       case NODE:
-        return new NodeRemovalNomadChange(result, destinationCluster.getStripeId(source).getAsInt(), destinationCluster.getNode(source).get());
+        return new NodeRemovalNomadChange(
+            result,
+            destinationCluster.getStripeByNode(source.getUID()).get().getUID(),
+            destinationCluster.getNode(source.getUID()).get());
       case STRIPE: {
-        return new StripeRemovalNomadChange(result, destinationCluster.getStripe(source).get());
+        return new StripeRemovalNomadChange(result, stripeToDetach);
       }
       default: {
         throw new UnsupportedOperationException(operationType.name());
@@ -185,7 +202,7 @@ public class DetachCommand extends TopologyCommand {
   }
 
   @Override
-  protected Collection<InetSocketAddress> getAllOnlineSourceNodes() {
+  protected Collection<Endpoint> getAllOnlineSourceNodes() {
     return onlineNodesToRemove;
   }
 
@@ -194,11 +211,11 @@ public class DetachCommand extends TopologyCommand {
 
       logger.info("Reset nodes: {}", toString(onlineNodesToRemove));
 
-      for (InetSocketAddress address : onlineNodesToRemove) {
+      for (Endpoint endpoint : onlineNodesToRemove) {
         try {
-          reset(address);
+          reset(endpoint);
         } catch (RuntimeException e) {
-          logger.warn("Error during reset of node: {}: {}", address, e.getMessage(), e);
+          logger.warn("Error during reset of node: {}: {}", endpoint, e.getMessage(), e);
         }
       }
 
@@ -215,5 +232,21 @@ public class DetachCommand extends TopologyCommand {
       // if a failover happened, make sure we get the new server states
       destinationOnlineNodes.entrySet().forEach(e -> e.setValue(getState(e.getKey())));
     }
+  }
+
+  DetachCommand setSourceIdentifier(Identifier sourceIdentifier) {
+    this.sourceIdentifier = sourceIdentifier;
+    return this;
+  }
+
+  private void markNodeForRemoval(UID nodeUID) {
+    // search if this node is online, if yes, mark it for removal
+    // "onlineNodesToRemove" keeps track of the nodes to connect to
+    // to update their topology
+    destinationOnlineNodes.keySet()
+        .stream()
+        .filter(endpoint -> endpoint.getNodeUID().equals(nodeUID))
+        .findAny()
+        .ifPresent(onlineNodesToRemove::add);
   }
 }

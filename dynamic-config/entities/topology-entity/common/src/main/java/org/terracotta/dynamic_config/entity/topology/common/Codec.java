@@ -20,6 +20,7 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.entity.MessageCodec;
@@ -89,11 +90,11 @@ public class Codec implements MessageCodec<Message, Response> {
       .string(REQ_RUNTIME_CLUSTER.name(), 50)
       .string(REQ_UPCOMING_CLUSTER.name(), 60)
       .struct(EVENT_NODE_ADDITION.name(), 70, newStructBuilder()
-          .int32("stripeId", 10)
+          .string("stripeUID", 10)
           .string("node", 20)
           .build())
       .struct(EVENT_NODE_REMOVAL.name(), 80, newStructBuilder()
-          .int32("stripeId", 10)
+          .string("stripeUID", 10)
           .string("node", 20)
           .build())
       .struct(EVENT_SETTING_CHANGED.name(), 90, newStructBuilder()
@@ -160,7 +161,7 @@ public class Codec implements MessageCodec<Message, Response> {
         case EVENT_NODE_REMOVAL: {
           List<Object> oo = response.getPayload();
           encoder.struct(type.name())
-              .int32("stripeId", (Integer) oo.get(0))
+              .string("stripeUID", oo.get(0).toString())
               .string("node", encodeNode((Node) oo.get(1)));
           break;
         }
@@ -214,7 +215,7 @@ public class Codec implements MessageCodec<Message, Response> {
         case EVENT_NODE_REMOVAL: {
           StructDecoder<?> event = decoder.struct(type.name());
           return new Response(type, asList(
-              event.int32("stripeId"),
+              UID.valueOf(event.string("stripeUID")),
               decodeNode(event.string("node"))));
         }
         case EVENT_SETTING_CHANGED: {

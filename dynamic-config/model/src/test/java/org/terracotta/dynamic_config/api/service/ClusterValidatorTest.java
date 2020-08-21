@@ -51,7 +51,7 @@ public class ClusterValidatorTest {
     Node node2 = newTestNode("foo2", "localhost2", Testing.N_UIDS[1]);
 
     assertClusterValidationFails(
-        "Duplicate UID for node ID: 2 in stripe ID: 1. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on node ID: 1 in stripe ID: 1",
+        "Duplicate UID for node: foo2 in stripe: stripe1. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on node: foo1 in stripe: stripe1",
         newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)));
   }
 
@@ -61,7 +61,7 @@ public class ClusterValidatorTest {
     Node node2 = newTestNode("foo2", "localhost2", Testing.N_UIDS[1]);
 
     assertClusterValidationFails(
-        "Duplicate UID for node ID: 1 in stripe ID: 2. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on node ID: 1 in stripe ID: 1",
+        "Duplicate UID for node: foo2 in stripe: stripe2. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on node: foo1 in stripe: stripe1",
         newTestCluster(newTestStripe("stripe1").addNode(node1), newTestStripe("stripe2").setUID(Testing.S_UIDS[2]).addNode(node2)));
   }
 
@@ -71,7 +71,7 @@ public class ClusterValidatorTest {
     Node node2 = newTestNode("foo2", "localhost2", Testing.N_UIDS[2]);
 
     assertClusterValidationFails(
-        "Duplicate UID for stripe ID: 2. UID: 5Zv3uphiRLavoGZthy7JNg was used on stripe ID: 1",
+        "Duplicate UID for stripe: stripe2. UID: 5Zv3uphiRLavoGZthy7JNg was used on stripe: stripe1",
         newTestCluster(newTestStripe("stripe1").addNode(node1), newTestStripe("stripe2").addNode(node2)));
   }
 
@@ -81,23 +81,23 @@ public class ClusterValidatorTest {
     Node node2 = newTestNode("foo2", "localhost2", Testing.N_UIDS[2]);
 
     assertClusterValidationFails(
-        "Duplicate UID for stripe ID: 2. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on node ID: 1 in stripe ID: 1",
+        "Duplicate UID for stripe: stripe2. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on node: foo1 in stripe: stripe1",
         newTestCluster(newTestStripe("stripe1").addNode(node1), newTestStripe("stripe2").setUID(Testing.N_UIDS[1]).addNode(node2)));
 
     assertClusterValidationFails(
-        "Duplicate UID for node ID: 1 in stripe ID: 1. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on cluster",
+        "Duplicate UID for node: foo1 in stripe: stripe1. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on cluster",
         newTestCluster(newTestStripe("stripe1").addNode(node1)).setUID(Testing.N_UIDS[1]));
 
     assertClusterValidationFails(
-        "Duplicate UID for stripe ID: 1. UID: 5Zv3uphiRLavoGZthy7JNg was used on cluster",
+        "Duplicate UID for stripe: stripe1. UID: 5Zv3uphiRLavoGZthy7JNg was used on cluster",
         newTestCluster(newTestStripe("stripe1").addNode(node1)).setUID(Testing.S_UIDS[1]));
 
     assertClusterValidationFails(
-        "Duplicate UID for stripe ID: 1. UID: YLQguzhRSdS6y5M9vnA5mw was used on cluster",
+        "Duplicate UID for stripe: stripe1. UID: YLQguzhRSdS6y5M9vnA5mw was used on cluster",
         newTestCluster(newTestStripe("stripe1").addNode(node1).setUID(Testing.C_UIDS[0])));
 
     assertClusterValidationFails(
-        "Duplicate UID for node ID: 1 in stripe ID: 1. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on stripe ID: 1",
+        "Duplicate UID for node: foo1 in stripe: stripe1. UID: jUhhu1kRQd-x6iNgpo9Xyw was used on stripe: stripe1",
         newTestCluster(newTestStripe("stripe1").addNode(node1).setUID(Testing.N_UIDS[1])));
   }
 

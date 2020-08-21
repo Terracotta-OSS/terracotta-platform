@@ -27,12 +27,11 @@ import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProviderException;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.EnumSet;
 import java.util.Map;
@@ -79,15 +78,15 @@ public class RestartServiceTest extends BaseTest {
     restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing());
     cluster = Testing.newTestCluster(
         "my-cluster",
-        new Stripe().addNodes(
-            Testing.newTestNode("node1", "localhost", PORTS[0]),
-            Testing.newTestNode("node2", "localhost", PORTS[1]),
-            Testing.newTestNode("node3", "localhost", PORTS[2])
+        Testing.newTestStripe("stripe-1", Testing.S_UIDS[1]).addNodes(
+            Testing.newTestNode("node1", "localhost", PORTS[0], Testing.N_UIDS[1]),
+            Testing.newTestNode("node2", "localhost", PORTS[1], Testing.N_UIDS[2]),
+            Testing.newTestNode("node3", "localhost", PORTS[2], Testing.N_UIDS[3])
         ),
-        new Stripe().addNodes(
-            Testing.newTestNode("node1", "localhost", PORTS[3]),
-            Testing.newTestNode("node2", "localhost", PORTS[4]),
-            Testing.newTestNode("node3", "localhost", PORTS[5])
+        Testing.newTestStripe("stripe-2", Testing.S_UIDS[2]).addNodes(
+            Testing.newTestNode("node1", "localhost", PORTS[3], Testing.N_UIDS[4]),
+            Testing.newTestNode("node2", "localhost", PORTS[4], Testing.N_UIDS[5]),
+            Testing.newTestNode("node3", "localhost", PORTS[5], Testing.N_UIDS[6])
         ));
   }
 
@@ -95,10 +94,10 @@ public class RestartServiceTest extends BaseTest {
   public void test_restart() throws InterruptedException {
     mockSuccessfulServerRestart();
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getEndpoints(null), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
+    Map<Endpoint, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(6)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -117,10 +116,10 @@ public class RestartServiceTest extends BaseTest {
       doThrow(new DiagnosticOperationTimeoutException("")).when(dynamicConfigService).restart(any());
     });
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getEndpoints(null), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(6)));
 
-    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
+    Map<Endpoint, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -136,10 +135,10 @@ public class RestartServiceTest extends BaseTest {
       doThrow(new DiagnosticServiceProviderException("error")).when(dynamicConfigService).restart(any());
     });
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getEndpoints(null), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(6)));
 
-    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
+    Map<Endpoint, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -154,10 +153,10 @@ public class RestartServiceTest extends BaseTest {
 
     when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenAnswer(sleep(SYNCHRONIZING, 60, SECONDS));
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getEndpoints(null), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(8));
+    Map<Endpoint, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(8));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(5)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -178,10 +177,10 @@ public class RestartServiceTest extends BaseTest {
     when(diagnosticServiceMock("localhost", 9422).getLogicalServerState()).thenReturn(UNINITIALIZED);
     when(diagnosticServiceMock("localhost", 9423).getLogicalServerState()).thenReturn(START_SUSPENDED);
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getEndpoints(null), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(8));
+    Map<Endpoint, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(8));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {

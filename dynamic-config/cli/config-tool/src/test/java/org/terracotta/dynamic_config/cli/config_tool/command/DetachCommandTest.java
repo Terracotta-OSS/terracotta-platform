@@ -21,15 +21,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Identifier;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Testing;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
 
-import static org.hamcrest.Matchers.contains;
+import static java.util.stream.Collectors.toSet;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -51,27 +54,29 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
-  Node node1_1 = Testing.newTestNode("node1_1", "localhost", 9410)
+  Node node1_1 = Testing.newTestNode("node1_1", "localhost", 9410, Testing.N_UIDS[1])
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/cache1_1"));
 
-  Node node1_2 = Testing.newTestNode("node1_2", "localhost", 9411)
+  Node node1_2 = Testing.newTestNode("node1_2", "localhost", 9411, Testing.N_UIDS[2])
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/cache1_2"));
 
-  Node node2_1 = Testing.newTestNode("node2_1", "localhost", 9412)
+  Node node2_1 = Testing.newTestNode("node2_1", "localhost", 9412, Testing.N_UIDS[3])
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/cache2_1"));
 
-  Node node2_2 = Testing.newTestNode("node2_2", "localhost", 9413)
+  Node node2_2 = Testing.newTestNode("node2_2", "localhost", 9413, Testing.N_UIDS[4])
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/cache2_2"));
 
-  Node strayNode = Testing.newTestNode("stray-node", "stray-host", 12345)
+  Node strayNode = Testing.newTestNode("stray-node", "stray-host", 12345, Testing.N_UIDS[5])
       .unsetDataDirs()
       .putDataDir("cache", RawPath.valueOf("/data/stray-cache"));
 
-  Cluster cluster = newTestCluster("my-cluster", newTestStripe("stripe1").addNodes(node1_1, node1_2), newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2_1, node2_2))
+  Cluster cluster = newTestCluster("my-cluster",
+      newTestStripe("stripe1", Testing.S_UIDS[1]).addNodes(node1_1, node1_2),
+      newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2_1, node2_2))
       .putOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Captor
@@ -87,37 +92,71 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   public void setUp() throws Exception {
     super.setUp();
 
-    Testing.replaceUIDs(cluster);
+    when(topologyServiceMock(node1_1.getInternalAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getUID()));
+    when(topologyServiceMock(node1_1.getInternalAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getUID()));
+    when(topologyServiceMock(node1_1.getInternalAddress()).isActivated()).thenReturn(false);
 
-    when(topologyServiceMock(node1_1.getAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getAddress()));
-    when(topologyServiceMock(node1_1.getAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getAddress()));
-    when(topologyServiceMock(node1_1.getAddress()).isActivated()).thenReturn(false);
+    when(topologyServiceMock(node1_2.getInternalAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_2.getUID()));
+    when(topologyServiceMock(node1_2.getInternalAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_2.getUID()));
+    when(topologyServiceMock(node1_2.getInternalAddress()).isActivated()).thenReturn(false);
 
-    when(topologyServiceMock(node1_2.getAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_2.getAddress()));
-    when(topologyServiceMock(node1_2.getAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_2.getAddress()));
-    when(topologyServiceMock(node1_2.getAddress()).isActivated()).thenReturn(false);
+    when(topologyServiceMock(node2_1.getInternalAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node2_1.getUID()));
+    when(topologyServiceMock(node2_1.getInternalAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node2_1.getUID()));
+    when(topologyServiceMock(node2_1.getInternalAddress()).isActivated()).thenReturn(false);
 
-    when(topologyServiceMock(node2_1.getAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node2_1.getAddress()));
-    when(topologyServiceMock(node2_1.getAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node2_1.getAddress()));
-    when(topologyServiceMock(node2_1.getAddress()).isActivated()).thenReturn(false);
-
-    when(diagnosticServiceMock(node1_1.getAddress()).getLogicalServerState()).thenReturn(STARTING);
-    when(diagnosticServiceMock(node1_2.getAddress()).getLogicalServerState()).thenReturn(STARTING);
-    when(diagnosticServiceMock(node2_1.getAddress()).getLogicalServerState()).thenReturn(STARTING);
-    when(diagnosticServiceMock(node2_2.getAddress()).getLogicalServerState()).thenReturn(UNREACHABLE);
+    when(diagnosticServiceMock(node1_1.getInternalAddress()).getLogicalServerState()).thenReturn(STARTING);
+    when(diagnosticServiceMock(node1_2.getInternalAddress()).getLogicalServerState()).thenReturn(STARTING);
+    when(diagnosticServiceMock(node2_1.getInternalAddress()).getLogicalServerState()).thenReturn(STARTING);
+    when(diagnosticServiceMock(node2_2.getInternalAddress()).getLogicalServerState()).thenReturn(UNREACHABLE);
   }
 
   @Test
-  public void testDetachNode_success_srcPartOfDestStripe() throws IOException {
+  public void test_validate_failures() {
+    assertThat(
+        () -> newCommand()
+            .setSourceIdentifier(Identifier.valueOf("localhost:9410"))
+            .setOperationType(NODE)
+            .setDestinationAddress(InetSocketAddress.createUnresolved("localhost", 9410))
+            .validate(),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("The destination and the source nodes must not be the same")))));
+  }
+
+  @Test
+  public void testDetachNode_success_srcPartOfDestStripe_by_addr() throws IOException {
     DetachCommand command = (DetachCommand) newCommand()
+        .setSourceIdentifier(Identifier.valueOf(node1_2.getInternalAddress().toString()))
         .setOperationType(NODE)
-        .setSource(node1_2.getAddress())
-        .setDestination(node1_1.getAddress());
+        .setDestinationAddress(node1_1.getInternalAddress());
+
+    assertDetachNodeSucess(command);
+  }
+
+  @Test
+  public void testDetachNode_success_srcPartOfDestStripe_by_uid() throws IOException {
+    DetachCommand command = (DetachCommand) newCommand()
+        .setSourceIdentifier(Identifier.valueOf(node1_2.getUID().toString()))
+        .setOperationType(NODE)
+        .setDestinationAddress(node1_1.getInternalAddress());
+
+    assertDetachNodeSucess(command);
+  }
+
+  @Test
+  public void testDetachNode_success_srcPartOfDestStripe_by_name() throws IOException {
+    DetachCommand command = (DetachCommand) newCommand()
+        .setSourceIdentifier(Identifier.valueOf(node1_2.getName()))
+        .setOperationType(NODE)
+        .setDestinationAddress(node1_1.getInternalAddress());
+
+    assertDetachNodeSucess(command);
+  }
+
+  private void assertDetachNodeSucess(DetachCommand command) throws IOException {
     command.validate();
     command.run();
 
     // capture the new topology set calls
-    verify(dynamicConfigServiceMock(node1_1.getAddress())).setUpcomingCluster(newCluster.capture());
+    verify(dynamicConfigServiceMock(node1_1.getInternalAddress())).setUpcomingCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
@@ -129,16 +168,16 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(2));
-    assertThat(cluster.getNodeAddresses(), hasSize(3));
-    assertThat(cluster.getNodeAddresses(), contains(node1_1.getAddress(), node2_1.getAddress(), node2_2.getAddress()));
+    assertThat(cluster.getNodes(), hasSize(3));
+    assertThat(cluster.getNodes().stream().map(Node::getUID).collect(toSet()), containsInAnyOrder(node1_1.getUID(), node2_1.getUID(), node2_2.getUID()));
   }
 
   @Test
   public void testDetachNode_fail_srcNotPartOfDestStripe() {
     DetachCommand command = (DetachCommand) newCommand()
+        .setSourceIdentifier(Identifier.valueOf(node1_1.getInternalAddress().toString()))
         .setOperationType(NODE)
-        .setSource(node1_1.getAddress())
-        .setDestination(node2_1.getAddress());
+        .setDestinationAddress(node2_1.getInternalAddress());
     assertThat(
         command::validate,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(containsString("not present in the same stripe"))));
@@ -147,20 +186,65 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   @Test
   public void testDetachNode_fail_randomSource() {
     TopologyCommand command = newCommand()
+        .setSourceIdentifier(Identifier.valueOf(strayNode.getInternalAddress().toString()))
         .setOperationType(NODE)
-        .setSource(strayNode.getAddress())
-        .setDestination(cluster.getNode(1, 1).get().getAddress());
+        .setDestinationAddress(cluster.getNode(Testing.N_UIDS[1]).get().getInternalAddress());
     assertThat(
         command::validate,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(containsString("not part of cluster"))));
   }
 
   @Test
-  public void testDetachStripe_success_srcPartOfCluster() throws IOException {
+  public void testDetachStripe_success_srcPartOfCluster_with_addr() throws IOException {
     TopologyCommand command = newCommand()
+        .setSourceIdentifier(Identifier.valueOf(node2_1.getInternalAddress().toString()))
         .setOperationType(STRIPE)
-        .setDestination(node1_1.getAddress())
-        .setSource(node2_1.getAddress());
+        .setDestinationAddress(node1_1.getInternalAddress());
+
+    assertDetachStripeSuccess(command);
+  }
+
+  @Test
+  public void testDetachStripe_success_srcPartOfCluster_with_node_uid() throws IOException {
+    TopologyCommand command = newCommand()
+        .setSourceIdentifier(Identifier.valueOf(node2_1.getUID().toString()))
+        .setOperationType(STRIPE)
+        .setDestinationAddress(node1_1.getInternalAddress());
+
+    assertDetachStripeSuccess(command);
+  }
+
+  @Test
+  public void testDetachStripe_success_srcPartOfCluster_with_node_name() throws IOException {
+    TopologyCommand command = newCommand()
+        .setSourceIdentifier(Identifier.valueOf(node2_1.getName()))
+        .setOperationType(STRIPE)
+        .setDestinationAddress(node1_1.getInternalAddress());
+
+    assertDetachStripeSuccess(command);
+  }
+
+  @Test
+  public void testDetachStripe_success_srcPartOfCluster_with_stripe_uid() throws IOException {
+    TopologyCommand command = newCommand()
+        .setSourceIdentifier(Identifier.valueOf(Testing.S_UIDS[2].toString()))
+        .setOperationType(STRIPE)
+        .setDestinationAddress(node1_1.getInternalAddress());
+
+    assertDetachStripeSuccess(command);
+  }
+
+  @Test
+  public void testDetachStripe_success_srcPartOfCluster_with_stripe_name() throws IOException {
+    TopologyCommand command = newCommand()
+        .setSourceIdentifier(Identifier.valueOf("stripe2"))
+        .setOperationType(STRIPE)
+        .setDestinationAddress(node1_1.getInternalAddress());
+
+    assertDetachStripeSuccess(command);
+  }
+
+  private void assertDetachStripeSuccess(TopologyCommand command) throws IOException {
     command.validate();
     command.run();
 
@@ -177,16 +261,16 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(2));
-    assertThat(cluster.getNodeAddresses(), contains(node1_1.getAddress(), node1_2.getAddress()));
+    assertThat(cluster.getNodes(), hasSize(2));
+    assertThat(cluster.getNodes().stream().map(Node::getUID).collect(toSet()), containsInAnyOrder(node1_1.getUID(), node1_2.getUID()));
   }
 
   @Test
   public void testDetachStripe_fail_srcNotPartOfCluster() {
     DetachCommand command = (DetachCommand) newCommand()
+        .setSourceIdentifier(Identifier.valueOf(strayNode.getInternalAddress().toString()))
         .setOperationType(STRIPE)
-        .setSource(strayNode.getAddress())
-        .setDestination(node2_1.getAddress());
+        .setDestinationAddress(node2_1.getInternalAddress());
     assertThat(
         command::validate,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(containsString("not part of cluster"))));
@@ -195,9 +279,9 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
   @Test
   public void testDetachStripe_fail_srcAndDestSameStripe() {
     TopologyCommand command = newCommand()
+        .setSourceIdentifier(Identifier.valueOf(node1_1.getInternalAddress().toString()))
         .setOperationType(STRIPE)
-        .setSource(node1_1.getAddress())
-        .setDestination(node1_2.getAddress());
+        .setDestinationAddress(node1_2.getInternalAddress());
     assertThat(
         command::validate,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(containsString("are part of the same stripe"))));

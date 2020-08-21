@@ -19,6 +19,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -35,9 +36,9 @@ public interface DynamicConfigEventFiring {
 
   void onSettingChanged(SettingNomadChange change, Cluster updated);
 
-  void onNodeRemoval(int stripeId, Node removedNode);
+  void onNodeRemoval(UID stripeUID, Node removedNode);
 
-  void onNodeAddition(int stripeId, Node addedNode);
+  void onNodeAddition(UID stripeUID, Node addedNode);
 
   void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response);
 

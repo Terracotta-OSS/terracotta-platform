@@ -37,20 +37,20 @@ public class SimulationHandlerIT extends DynamicConfigIT {
   public void test_prepare_fails() {
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=TRACE"),
-        exceptionMatcher("Prepare rejected for node localhost:" + getNodePort() + ". Reason: 'set logger-overrides.org.terracotta.dynamic-config.simulate=TRACE (stripe ID: 1, node: node-1-1)': Simulate prepare failure"));
+        exceptionMatcher("Prepare rejected for node localhost:" + getNodePort() + ". Reason: 'set logger-overrides.org.terracotta.dynamic-config.simulate=TRACE (on node UID: "));
   }
 
   @Test
   public void test_commit_fails_permanently() {
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
-        exceptionMatcher("Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=INFO (stripe ID: 1, node: node-1-1)': Simulate permanent commit failure"));
+        exceptionMatcher("Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=INFO (on node UID: "));
   }
 
   @Test
   public void test_commit_fails_temporary() {
     assertThat(
         () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
-        exceptionMatcher("Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (stripe ID: 1, node: node-1-1)': Simulate temporary commit failure"));
+        exceptionMatcher("Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (on node UID: "));
   }
 }

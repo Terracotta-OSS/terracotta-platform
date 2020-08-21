@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
@@ -40,7 +39,11 @@ public class DataDirectoryConfigChangeHandlerTest {
 
   @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
 
-  private NodeContext topology = new NodeContext(Testing.newTestCluster("foo", new Stripe().addNode(Testing.newTestNode("bar", "localhost").unsetDataDirs())), 1, "bar");
+  private NodeContext topology = new NodeContext(
+      Testing.newTestCluster("foo",
+          Testing.newTestStripe("stripe-1").addNode(
+              Testing.newTestNode("bar", "localhost").unsetDataDirs())), Testing.N_UIDS[1]);
+
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.DATA_DIRS, "new-root", "path/to/data/root");
 
   @Test

@@ -26,8 +26,10 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
@@ -56,6 +58,33 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
     setMixInAnnotation(Node.class, NodeMixinV1.class);
     setMixInAnnotation(FailoverPriority.class, FailoverPriorityMixin.class);
     setMixInAnnotation(License.class, LicenseMixinV1.class);
+  }
+
+  public static class NodeContextMixin extends NodeContext {
+    @JsonCreator
+    public NodeContextMixin(@JsonProperty(value = "cluster", required = true) Cluster cluster,
+                            @JsonProperty(value = "stripeId", required = false) int stripeId,
+                            @JsonProperty(value = "nodeName", required = true) String nodeName) {
+      super(cluster, cluster.getNodeByName(nodeName).get().getUID());
+    }
+
+    @JsonIgnore
+    @Override
+    public Node getNode() {
+      return super.getNode();
+    }
+
+    @JsonIgnore
+    @Override
+    public Stripe getStripe() {
+      return super.getStripe();
+    }
+
+    @JsonIgnore
+    @Override
+    public UID getStripeUID() {
+      return super.getStripeUID();
+    }
   }
 
   public static class ClusterMixinV1 extends Cluster {
@@ -90,12 +119,6 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
 
     @JsonIgnore
     @Override
-    public Collection<InetSocketAddress> getNodeAddresses() {
-      return super.getNodeAddresses();
-    }
-
-    @JsonIgnore
-    @Override
     public int getNodeCount() {
       return super.getNodeCount();
     }
@@ -117,15 +140,15 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
     public Collection<String> getDataDirNames() {
       return super.getDataDirNames();
     }
+
+    @JsonIgnore
+    @Override
+    public Collection<Node.Endpoint> getInternalEndpoints() {
+      return super.getInternalEndpoints();
+    }
   }
 
   public static class StripeMixinV1 extends Stripe {
-    @JsonIgnore
-    @Override
-    public Collection<InetSocketAddress> getNodeAddresses() {
-      return super.getNodeAddresses();
-    }
-
     @JsonIgnore
     @Override
     public Optional<Node> getSingleNode() throws IllegalStateException {
@@ -175,12 +198,6 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
 
     @JsonIgnore
     @Override
-    public InetSocketAddress getAddress() {
-      return super.getAddress();
-    }
-
-    @JsonIgnore
-    @Override
     public InetSocketAddress getInternalAddress() {
       return super.getInternalAddress();
     }
@@ -189,6 +206,18 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
     @Override
     public Optional<InetSocketAddress> getPublicAddress() {
       return super.getPublicAddress();
+    }
+
+    @JsonIgnore
+    @Override
+    public Endpoint getInternalEndpoint() {
+      return super.getInternalEndpoint();
+    }
+
+    @JsonIgnore
+    @Override
+    public Optional<Endpoint> getPublicEndpoint() {
+      return super.getPublicEndpoint();
     }
   }
 

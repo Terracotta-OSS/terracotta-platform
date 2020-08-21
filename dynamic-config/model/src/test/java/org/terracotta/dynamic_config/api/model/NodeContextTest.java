@@ -15,10 +15,11 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.common.struct.MemoryUnit;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 
-import java.net.InetSocketAddress;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -26,6 +27,9 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
+import static org.terracotta.dynamic_config.api.model.Testing.N_UIDS;
+import static org.terracotta.dynamic_config.api.model.Testing.S_UIDS;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -34,105 +38,62 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class NodeContextTest {
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9410)
+      .setUID(N_UIDS[1])
       .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
       .putDataDir("bar", RawPath.valueOf("%H/tc1/bar"));
 
   Node node2 = Testing.newTestNode("node2", "localhost", 9411)
+      .setUID(N_UIDS[2])
       .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
       .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
       .putTcProperty("server.entity.processor.threads", "64")
       .putTcProperty("topology.validate", "true");
 
-  Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().addNodes(node1), new Stripe().addNodes(node2))
+  Cluster cluster = Testing.newTestCluster("my-cluster",
+      newTestStripe("stripe-1").setUID(S_UIDS[1]).addNodes(node1),
+      newTestStripe("stripe-2").setUID(S_UIDS[2]).addNodes(node2))
       .setFailoverPriority(consistency(2))
       .putOffheapResource("foo", 1, MemoryUnit.GB)
       .putOffheapResource("bar", 2, MemoryUnit.GB);
 
+  @Before
+  public void setUp() throws Exception {
+    new ClusterValidator(cluster).validate();
+  }
+
   @Test
   public void test_ctors() {
     assertThat(
-        () -> new NodeContext(cluster, 0, "node1"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid stripe ID: 0")))));
-    assertThat(
-        () -> new NodeContext(cluster, 1, "node2"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node node2 in stripe ID 1 not found")))));
-    assertThat(
-        () -> new NodeContext(cluster, 2, "node1"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node node1 in stripe ID 2 not found")))));
-    assertThat(
-        () -> new NodeContext(cluster, 3, "node1"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid stripe ID: 3")))));
-
-    assertThat(
-        () -> new NodeContext(cluster, 0, 1),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid stripe ID: 0")))));
-    assertThat(
-        () -> new NodeContext(cluster, 1, 0),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid node ID: 0")))));
-    assertThat(
-        () -> new NodeContext(cluster, 1, 2),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node ID 2 in stripe ID 1 not found")))));
-    assertThat(
-        () -> new NodeContext(cluster, 1, 3),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node ID 3 in stripe ID 1 not found")))));
-    assertThat(
-        () -> new NodeContext(cluster, 2, 2),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node ID 2 in stripe ID 2 not found")))));
-    assertThat(
-        () -> new NodeContext(cluster, 3, 1),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node ID 1 in stripe ID 3 not found")))));
-
-    assertThat(
-        () -> new NodeContext(cluster, InetSocketAddress.createUnresolved("foo", 9410)),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node foo:9410 not found")))));
+        () -> new NodeContext(cluster, Testing.N_UIDS[4]),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node UID: x6tPuzj0Tq2Qs1niISqVMg not found in cluster: my-cluster ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1:jUhhu1kRQd-x6iNgpo9Xyw@localhost:9410 ), stripe-2:RUHaurjcQA-57mpGqtovOA ( node2:VOVyu3kuQxCRIu7dK_UZZA@localhost:9411 ) )")))));
   }
 
   @Test
   public void test_getCluster() {
-    assertThat(new NodeContext(cluster, 1, "node1").getCluster(), is(equalTo(cluster)));
-    assertThat(new NodeContext(cluster, 1, 1).getCluster(), is(equalTo(cluster)));
-    assertThat(new NodeContext(cluster, node1.getAddress()).getCluster(), is(equalTo(cluster)));
+    assertThat(new NodeContext(cluster, N_UIDS[1]).getCluster(), is(equalTo(cluster)));
+    assertThat(new NodeContext(cluster, node1.getUID()).getCluster(), is(equalTo(cluster)));
     assertThat(nodeContext(node1).getCluster().getSingleNode().get(), is(equalTo(node1)));
   }
 
   @Test
-  public void test_getStripeId() {
-    assertThat(new NodeContext(cluster, 1, "node1").getStripeId(), is(equalTo(1)));
-    assertThat(new NodeContext(cluster, 1, 1).getStripeId(), is(equalTo(1)));
-    assertThat(new NodeContext(cluster, node2.getAddress()).getStripeId(), is(equalTo(2)));
-    assertThat(nodeContext(node2).getStripeId(), is(equalTo(1)));
-  }
-
-  @Test
-  public void test_getNodeId() {
-    assertThat(new NodeContext(cluster, 1, "node1").getStripeId(), is(equalTo(1)));
-    assertThat(new NodeContext(cluster, 1, 1).getStripeId(), is(equalTo(1)));
-    assertThat(new NodeContext(cluster, node2.getAddress()).getStripeId(), is(equalTo(2)));
-    assertThat(nodeContext(node2).getStripeId(), is(equalTo(1)));
-  }
-
-  @Test
   public void test_getNodeName() {
-    assertThat(new NodeContext(cluster, 1, "node1").getNodeName(), is(equalTo("node1")));
-    assertThat(new NodeContext(cluster, 1, 1).getNodeName(), is(equalTo("node1")));
-    assertThat(new NodeContext(cluster, node2.getAddress()).getNodeName(), is(equalTo("node2")));
-    assertThat(nodeContext(node2).getNodeName(), is(equalTo("node2")));
+    assertThat(new NodeContext(cluster, N_UIDS[1]).getNode().getName(), is(equalTo("node1")));
+    assertThat(new NodeContext(cluster, node2.getUID()).getNode().getName(), is(equalTo("node2")));
+    assertThat(nodeContext(node2).getNode().getName(), is(equalTo("node2")));
   }
 
   @Test
   public void test_getNode() {
-    assertThat(new NodeContext(cluster, 1, "node1").getNode(), is(equalTo(node1)));
-    assertThat(new NodeContext(cluster, 1, 1).getNode(), is(equalTo(node1)));
-    assertThat(new NodeContext(cluster, node2.getAddress()).getNode(), is(equalTo(node2)));
+    assertThat(new NodeContext(cluster, N_UIDS[1]).getNode(), is(equalTo(node1)));
+    assertThat(new NodeContext(cluster, node2.getUID()).getNode(), is(equalTo(node2)));
     assertThat(nodeContext(node2).getNode(), is(equalTo(node2)));
   }
 
   @Test
   public void test_clone() {
     Stream.of(
-        new NodeContext(cluster, 1, "node1"),
-        new NodeContext(cluster, 1, 1),
-        new NodeContext(cluster, node2.getAddress()),
+        new NodeContext(cluster, node1.getUID()),
+        new NodeContext(cluster, node2.getUID()),
         nodeContext(node2)
     ).forEach(ctx -> assertThat(ctx.clone(), is(equalTo(ctx))));
   }
@@ -140,14 +101,13 @@ public class NodeContextTest {
   @Test
   public void test_hashCode() {
     Stream.of(
-        new NodeContext(cluster, 1, "node1"),
-        new NodeContext(cluster, 1, 1),
-        new NodeContext(cluster, node2.getAddress()),
+        new NodeContext(cluster, N_UIDS[1]),
+        new NodeContext(cluster, node2.getUID()),
         nodeContext(node2)
     ).forEach(ctx -> assertThat(ctx.clone().hashCode(), is(equalTo(ctx.hashCode()))));
   }
 
   private static NodeContext nodeContext(Node node) {
-    return new NodeContext(Testing.newTestCluster(new Stripe().addNodes(node)), 1, node.getName());
+    return new NodeContext(Testing.newTestCluster(newTestStripe("stripe-1").addNodes(node)), node.getUID());
   }
 }

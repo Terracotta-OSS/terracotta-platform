@@ -19,7 +19,6 @@ import org.junit.Test;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
@@ -31,7 +30,11 @@ import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluste
 
 public class LeaseConfigChangeHandlerTest {
 
-  private NodeContext topology = new NodeContext(Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("bar", "localhost"))), 1, "bar");
+  private NodeContext topology = new NodeContext(
+      Testing.newTestCluster("foo",
+          Testing.newTestStripe("stripe-1").addNodes(
+              Testing.newTestNode("bar", "localhost"))), Testing.N_UIDS[1]);
+
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.CLIENT_LEASE_DURATION, "20s");
 
   @Test

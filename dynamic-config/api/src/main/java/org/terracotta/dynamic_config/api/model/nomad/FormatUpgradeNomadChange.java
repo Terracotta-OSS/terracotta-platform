@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -89,7 +90,7 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
+  public boolean canApplyAtRuntime(NodeContext currentNode) {
     return true;
   }
 

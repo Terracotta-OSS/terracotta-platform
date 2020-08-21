@@ -20,7 +20,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
@@ -74,18 +73,20 @@ public class BackwardCompatibilityTest {
 
     try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(
         nomadConfigurationManager,
-        ChangeApplicator.allow((nodeContext, change) -> new NodeContext(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster()), 1, "default-node1")),
+        ChangeApplicator.allow((nodeContext, change) -> new NodeContext(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster()), nodeContext.getCluster().getSingleNode().get().getUID())),
         "default-node1",
         null)) {
 
       // upgrade should have been done
       Properties after = Props.load(config.resolve("cluster").resolve("default-node1.2.properties"));
 
-      String[] newV2Props = {"stripe.1.stripe-name", "this.version", "cluster-uid", "stripe.1.stripe-uid", "stripe.1.node.1.node-uid"};
+      String[] removedV1Props = {"this.stripe-id", "this.node-id", "this.name"};
+      String[] newV2Props = {"stripe.1.stripe-name", "cluster-uid", "stripe.1.stripe-uid", "stripe.1.node.1.node-uid", "this.version", "this.node-uid"};
       assertThat(after.stringPropertyNames(), hasItems(newV2Props));
 
       // check content should match v1 content plus these 2 fields
       Stream.of(newV2Props).forEach(prop -> before.setProperty(prop, after.getProperty(prop)));
+      Stream.of(removedV1Props).forEach(before::remove);
       assertThat(after, is(equalTo(before)));
 
       // check topology
@@ -96,7 +97,6 @@ public class BackwardCompatibilityTest {
       assertThat(nomadServer.discover().getLatestChange().getResult(), is(equalTo(topology)));
 
       ObjectMapper objectMapper = objectMapperFactory.create();
-      Testing.replaceUIDs(topology.getCluster());
       assertThat(
           objectMapper.writeValueAsString(topology),
           objectMapper.valueToTree(topology),

@@ -12,17 +12,15 @@
             "logDir": "%H/terracotta/default-node1/logs",
             "metadataDir": "%H/terracotta/default-node1/metadata",
             "name": "default-node1",
-            "uid": "VOVyu3kuQxCRIu7dK_UZZA"
+            "uid": "09EecKZ8Q127Ya02JeSCeg"
           }
         ],
-        "uid": "5Zv3uphiRLavoGZthy7JNg"
+        "uid": "E8Rcm5s6Rzyf_zQ1fuyaQw"
       }
     ],
     "failoverPriority": "availability",
     "name": "tc-cluster",
-    "uid": "YLQguzhRSdS6y5M9vnA5mw"
+    "uid": "nVSFGu1gQFKMD_8gVw0Hjg"
   },
-  "nodeName": "default-node1",
-  "stripeId": 1,
-  "nodeId": 1
+  "nodeUID": "09EecKZ8Q127Ya02JeSCeg"
 }

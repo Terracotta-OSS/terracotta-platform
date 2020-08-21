@@ -48,7 +48,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
 
     Cluster cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(1));
+    assertThat(cluster.getNodes(), hasSize(1));
 
     // add a node
     invokeConfigTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
@@ -57,7 +57,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(2));
+    assertThat(cluster.getNodes(), hasSize(2));
 
     // add a stripe
     invokeConfigTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
@@ -66,7 +66,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(2));
-    assertThat(cluster.getNodeAddresses(), hasSize(3));
+    assertThat(cluster.getNodes(), hasSize(3));
 
     // remove the previously added stripe
     invokeConfigTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
@@ -75,7 +75,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(2));
+    assertThat(cluster.getNodes(), hasSize(2));
 
     // remove the previously added node
     invokeConfigTool("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
@@ -84,7 +84,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(1));
+    assertThat(cluster.getNodes(), hasSize(1));
   }
 
   private void downloadToLocal() throws IOException {

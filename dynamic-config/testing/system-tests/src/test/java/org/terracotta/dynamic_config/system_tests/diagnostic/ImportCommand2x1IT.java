@@ -21,34 +21,32 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Path;
-import java.util.TreeMap;
+import java.util.Properties;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 
 @ClusterDefinition(stripes = 2)
 public class ImportCommand2x1IT extends DynamicConfigIT {
   @Test
   public void test_import() throws Exception {
-    TreeMap<Object, Object> before = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true));
-    Path path = copyConfigProperty("/config-property-files/import2x1.properties");
-    invokeConfigTool("import", "-f", path.toString());
-    TreeMap<Object, Object> after = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true));
+    getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true);
 
-    TreeMap<Object, Object> expected = new TreeMap<>(Props.load(path));
-    String[] uids = {
-        "cluster-uid",
+    Path configFile = copyConfigProperty("/config-property-files/import2x1.properties");
+    invokeConfigTool("import", "-f", configFile.toString());
+
+    Properties after = getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true);
+
+    Properties expected = Props.load(configFile);
+    Stream.of("cluster-uid",
         "stripe.1.stripe-uid",
         "stripe.2.stripe-uid",
         "stripe.1.node.1.node-uid",
         "stripe.2.node.1.node-uid"
-    };
-    Stream.of(uids).forEach(prop -> expected.put(prop, after.get(prop)));
+    ).forEach(prop -> expected.put(prop, after.get(prop)));
 
-    assertThat(after.toString(), after, is(equalTo(expected)));
-    assertThat(before, is(not(equalTo(expected))));
+    assertThat("EXPECTED:\n" + Props.toString(expected) + "\nAFTER\n" + Props.toString(after), after, is(equalTo(expected)));
   }
 }

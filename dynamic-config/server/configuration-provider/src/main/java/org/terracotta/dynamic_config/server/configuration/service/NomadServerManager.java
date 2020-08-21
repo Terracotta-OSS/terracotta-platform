@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
@@ -152,7 +153,7 @@ public class NomadServerManager {
   }
 
   public void init(Path configPath, NodeContext nodeContext) throws UncheckedNomadException {
-    init(configPath, nodeContext::getNodeName, () -> nodeContext);
+    init(configPath, () -> nodeContext.getNode().getName(), () -> nodeContext);
   }
 
   private void init(Path configPath, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws UncheckedNomadException {
@@ -192,15 +193,9 @@ public class NomadServerManager {
 
   /**
    * Makes Nomad server capable of write operations.
-   *
-   * @param stripeId ID of the stripe where the node belongs, should be greater than 1
-   * @param nodeName Name of the running node, non-null
    */
-  public void upgradeForWrite(int stripeId, String nodeName) {
-    requireNonNull(nodeName);
-    if (stripeId < 1) {
-      throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
-    }
+  public void upgradeForWrite(UID nodeUID) {
+    requireNonNull(nodeUID);
     if (getNomadServer().getChangeApplicator() != null) {
       throw new IllegalStateException("Nomad is already upgraded");
     }
@@ -208,17 +203,17 @@ public class NomadServerManager {
     router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(getTopologyService(), configChangeHandlerManager, getEventFiringService()));
     router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
     router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService()));
-    router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
+    router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(nodeUID));
     router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService));
     router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
     router.register(FormatUpgradeNomadChange.class, new FormatUpgradeNomadChangeProcessor());
 
     getNomadServer().setChangeApplicator(
         new ConfigChangeApplicator(
-            stripeId, nodeName,
+            nodeUID,
             new LockAwareNomadChangeProcessor(
                 new MultiSettingNomadChangeProcessor(
-                    nomadPermissionChangeProcessor.then(new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router))
+                    nomadPermissionChangeProcessor.then(new ApplicabilityNomadChangeProcessor(getTopologyService(), router))
                 )
             )
         )

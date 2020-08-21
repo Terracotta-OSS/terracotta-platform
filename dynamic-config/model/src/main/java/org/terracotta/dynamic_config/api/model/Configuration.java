@@ -516,14 +516,14 @@ public class Configuration {
             Cluster cluster = (Cluster) from;
             Stripe stripe = cluster.getStripe(stripeId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid stripe ID: " + stripeId + ". Cluster contains: " + cluster.getStripeCount() + " stripe(s)"));
-            Node node = stripe.getNode(nodeId)
+            Node node = getNode(stripe, nodeId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid node ID: " + nodeId + ". Stripe ID: " + stripeId + " contains: " + stripe.getNodeCount() + " node(s)"));
             targets = Stream.concat(Stream.of(node), node.descendants());
             break;
           }
           case STRIPE: {
             Stripe stripe = (Stripe) from;
-            Node node = stripe.getNode(nodeId)
+            Node node = getNode(stripe, nodeId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Invalid node ID: " + nodeId + ". Stripe ID: " + stripeId + " contains: " + stripe.getNodeCount() + " node(s)"));
             targets = Stream.concat(Stream.of(node), node.descendants());
             break;
@@ -665,5 +665,15 @@ public class Configuration {
   public static Configuration valueOf(Setting setting, int stripeId, int nodeId) {
     String val = setting.getDefaultProperty().orElse("");
     return new Configuration("stripe." + stripeId + ".node." + nodeId + "." + setting + "=" + val, setting, NODE, stripeId, nodeId, null, val);
+  }
+
+  private static Optional<Node> getNode(Stripe stripe, int nodeId) {
+    if (nodeId < 1) {
+      throw new IllegalArgumentException("Invalid node ID: " + nodeId);
+    }
+    if (nodeId > stripe.getNodeCount()) {
+      return Optional.empty();
+    }
+    return Optional.of(stripe.getNodes().get(nodeId - 1));
   }
 }
