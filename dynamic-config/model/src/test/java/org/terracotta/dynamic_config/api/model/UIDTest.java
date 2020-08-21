@@ -37,6 +37,8 @@ public class UIDTest {
       UID uid = UID.newUID();
       assertTrue(UID.isUID(uid.toString()));
       assertThat(UID.encodeB64(UID.decodeB64(uid.toString())), is(equalTo(uid.toString())));
+      assertThat(UID.encodeB64(UID.decodeB64(uid.toString())), is(equalTo(uid.toString())));
+      assertThat(UID.valueOf(uid.toString()).asUUID(), is(equalTo(uid.asUUID())));
     }
   }
 
