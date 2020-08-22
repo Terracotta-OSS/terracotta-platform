@@ -5,13 +5,12 @@
       "type": "SettingNomadChange",
       "applicability": {
         "level": "NODE",
-        "nodeName": "node1",
-        "stripeId": 1
+        "nodeUID": "jUhhu1kRQd-x6iNgpo9Xyw"
       },
       "operation": "SET",
       "setting": "NODE_BACKUP_DIR",
       "value": "backup",
-      "summary": "set backup-dir=backup (stripe ID: 1, node: node1)"
+      "summary": "set backup-dir=backup (on node UID: jUhhu1kRQd-x6iNgpo9Xyw)"
     },
     {
       "type": "SettingNomadChange",
@@ -25,5 +24,5 @@
       "summary": "set offheap-resources.bar=512MB"
     }
   ],
-  "summary": "set backup-dir=backup (stripe ID: 1, node: node1) then set offheap-resources.bar=512MB"
+  "summary": "set backup-dir=backup (on node UID: jUhhu1kRQd-x6iNgpo9Xyw) then set offheap-resources.bar=512MB"
 }

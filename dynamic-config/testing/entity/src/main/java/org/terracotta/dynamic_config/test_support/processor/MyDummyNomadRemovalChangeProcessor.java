@@ -90,7 +90,7 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
   public void apply(NodeRemovalNomadChange change) throws NomadException {
     Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
     Node node = change.getNode();
-    if (!runtime.containsNode(node.getAddress())) {
+    if (!runtime.containsNode(node.getUID())) {
       return;
     }
 
@@ -110,7 +110,7 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
     }
 
     try {
-      LOGGER.info("Removing node: {} from stripe ID: {}", node.getName(), change.getStripeId());
+      LOGGER.info("Removing node: {} from stripe UID: {}", node.getName(), change.getStripeUID());
       LOGGER.debug("Calling mBean {}#{}", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME);
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
@@ -119,7 +119,7 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
           new String[]{String.class.getName(), int.class.getName(), int.class.getName()}
       );
 
-      dynamicConfigEventFiring.onNodeRemoval(change.getStripeId(), node);
+      dynamicConfigEventFiring.onNodeRemoval(change.getStripeUID(), node);
     } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

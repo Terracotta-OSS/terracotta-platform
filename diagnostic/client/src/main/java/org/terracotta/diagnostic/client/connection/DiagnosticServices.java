@@ -17,9 +17,7 @@ package org.terracotta.diagnostic.client.connection;
 
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.DiagnosticService;
-import org.terracotta.inet.InetSocketAddressUtils;
 
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -29,38 +27,38 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 
-public class DiagnosticServices implements AutoCloseable {
-  private final Map<InetSocketAddress, DiagnosticService> onlineEndpoints;
-  private final Map<InetSocketAddress, DiagnosticServiceProviderException> offlineEndpoints;
+public class DiagnosticServices<K> implements AutoCloseable {
+  private final Map<K, DiagnosticService> onlineEndpoints;
+  private final Map<K, DiagnosticServiceProviderException> offlineEndpoints;
 
-  public DiagnosticServices(Map<InetSocketAddress, DiagnosticService> onlineEndpoints, Map<InetSocketAddress, DiagnosticServiceProviderException> offlineEndpoints) {
+  public DiagnosticServices(Map<K, DiagnosticService> onlineEndpoints, Map<K, DiagnosticServiceProviderException> offlineEndpoints) {
     this.onlineEndpoints = requireNonNull(onlineEndpoints);
     this.offlineEndpoints = requireNonNull(offlineEndpoints);
   }
 
-  public Map<InetSocketAddress, DiagnosticService> getOnlineEndpoints() {
+  public Map<K, DiagnosticService> getOnlineEndpoints() {
     return Collections.unmodifiableMap(onlineEndpoints);
   }
 
-  public Map<InetSocketAddress, DiagnosticServiceProviderException> getOfflineEndpoints() {
+  public Map<K, DiagnosticServiceProviderException> getOfflineEndpoints() {
     return Collections.unmodifiableMap(offlineEndpoints);
   }
 
-  public Optional<DiagnosticServiceProviderException> getError(InetSocketAddress address) {
+  public Optional<DiagnosticServiceProviderException> getError(K id) {
     return offlineEndpoints.entrySet().stream()
-        .filter(e -> InetSocketAddressUtils.areEqual(e.getKey(), address))
+        .filter(e -> e.getKey().equals(id))
         .map(Map.Entry::getValue)
         .findAny();
   }
 
-  public Optional<DiagnosticService> getDiagnosticService(InetSocketAddress address) {
+  public Optional<DiagnosticService> getDiagnosticService(K id) {
     return onlineEndpoints.entrySet().stream()
-        .filter(e -> InetSocketAddressUtils.areEqual(e.getKey(), address))
+        .filter(e -> e.getKey().equals(id))
         .map(Map.Entry::getValue)
         .findAny();
   }
 
-  public <T> Stream<Tuple2<InetSocketAddress, T>> map(BiFunction<InetSocketAddress, DiagnosticService, T> fn) {
+  public <T> Stream<Tuple2<K, T>> map(BiFunction<K, DiagnosticService, T> fn) {
     return onlineEndpoints.entrySet().stream().map(e -> tuple2(e.getKey(), fn.apply(e.getKey(), e.getValue())));
   }
 

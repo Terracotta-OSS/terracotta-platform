@@ -64,9 +64,9 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
     }
 
     if (options.allowsAutoActivation()) {
-      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getAddress()), options.getLicenseFile(), options.getConfigDir());
+      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getUID()), options.getLicenseFile(), options.getConfigDir());
     } else {
-      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getAddress()), options.getConfigDir());
+      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getUID()), options.getConfigDir());
     }
   }
 }

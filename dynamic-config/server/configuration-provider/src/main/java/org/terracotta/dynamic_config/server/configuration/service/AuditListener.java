@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.service;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
@@ -38,12 +39,12 @@ public class AuditListener implements DynamicConfigListener {
   }
 
   @Override
-  public void onNodeRemoval(int stripeId, Node removedNode) {
+  public void onNodeRemoval(UID stripeUID, Node removedNode) {
     server.audit("Detach invoked for node " + removedNode.getName(), new Properties());
   }
 
   @Override
-  public void onNodeAddition(int stripeId, Node addedNode) {
+  public void onNodeAddition(UID stripeUID, Node addedNode) {
     server.audit("Attach invoked for node " + addedNode.getName(), new Properties());
   }
 

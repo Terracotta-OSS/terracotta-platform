@@ -100,22 +100,6 @@ public class NodeTest {
   }
 
   @Test
-  public void test_getNodeAddress() {
-    assertThat(
-        newTestNode("node1", "localhost").getAddress(),
-        is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
-    assertThat(
-        newTestNode("node1", "localhost").setPublicHostname("foo").getAddress(),
-        is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
-    assertThat(
-        newTestNode("node1", "localhost").setPublicPort(1234).getAddress(),
-        is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
-    assertThat(
-        newTestNode("node1", "localhost").setPublicHostname("foo").setPublicPort(1234).getAddress(),
-        is(equalTo(InetSocketAddress.createUnresolved("foo", 1234))));
-  }
-
-  @Test
   public void test_hasAddress() {
     assertThat(
         newTestNode("node1", "localhost").hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),

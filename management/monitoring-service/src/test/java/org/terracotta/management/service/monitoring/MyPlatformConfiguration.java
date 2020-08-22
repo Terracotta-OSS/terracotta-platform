@@ -26,6 +26,7 @@ import java.util.Collections;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.terracotta.dynamic_config.api.model.Testing.N_UIDS;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
 
 public class MyPlatformConfiguration implements PlatformConfiguration {
@@ -36,7 +37,7 @@ public class MyPlatformConfiguration implements PlatformConfiguration {
 
   private final NodeContext topology = new NodeContext(newTestCluster("my-cluster", new Stripe()
       .setName("stripe[0]")
-      .addNode(Testing.newTestNode("bar", "localhost"))), 1, "bar");
+      .addNode(Testing.newTestNode("bar", "localhost"))), N_UIDS[1]);
   private final TopologyService topologyService = mock(TopologyService.class);
 
   public MyPlatformConfiguration(String serverName, String host, int port) {

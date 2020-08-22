@@ -17,7 +17,6 @@ package org.terracotta.dynamic_config.api.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -30,84 +29,51 @@ import static java.util.Objects.requireNonNull;
 public class NodeContext implements Cloneable {
 
   private final Cluster cluster;
-  private final int stripeId;
-  private final int nodeId;
-  private final String nodeName;
+  private final UID nodeUID;
   private final Node node;
+  private final Stripe stripe;
 
-  public NodeContext(Cluster cluster,
-                     int stripeId,
-                     String nodeName) {
+  public NodeContext(Cluster cluster, UID nodeUID) {
+    requireNonNull(nodeUID);
+    this.nodeUID = requireNonNull(nodeUID);
     this.cluster = requireNonNull(cluster);
-    this.stripeId = stripeId;
-    this.nodeName = requireNonNull(nodeName);
-    if (stripeId < 1 || stripeId > cluster.getStripeCount()) {
-      throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
-    }
-    this.node = cluster.getNode(stripeId, nodeName)
-        .orElseThrow(() -> new IllegalArgumentException("Node " + nodeName + " in stripe ID " + stripeId + " not found"));
-    this.nodeId = cluster.getNodeId(stripeId, nodeName)
-        .orElseThrow(() -> new IllegalArgumentException("Node " + nodeName + " in stripe ID " + stripeId + " not found"));
-  }
-
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
-  public NodeContext(Cluster cluster, InetSocketAddress nodeAddress) {
-    requireNonNull(nodeAddress);
-    this.cluster = requireNonNull(cluster);
-    this.node = cluster.getNode(nodeAddress)
-        .orElseThrow(() -> new IllegalArgumentException("Node " + nodeAddress + " not found"));
-    this.nodeName = requireNonNull(node.getName());
-    this.stripeId = cluster.getStripeId(nodeAddress).getAsInt();
-    this.nodeId = cluster.getNodeId(nodeAddress).getAsInt();
-  }
-
-  public NodeContext(Cluster cluster, int stripeId, int nodeId) {
-    this.cluster = requireNonNull(cluster);
-    this.stripeId = stripeId;
-    this.nodeId = nodeId;
-    this.node = cluster.getNode(stripeId, nodeId)
-        .orElseThrow(() -> new IllegalArgumentException("Node ID " + nodeId + " in stripe ID " + stripeId + " not found"));
-    this.nodeName = requireNonNull(node.getName());
+    this.node = cluster.getNode(nodeUID)
+        .orElseThrow(() -> new IllegalArgumentException("Node UID: " + nodeUID + " not found in cluster: " + cluster.toShapeString()));
+    this.stripe = cluster.getStripeByNode(nodeUID).get();
   }
 
   public Cluster getCluster() {
     return cluster;
   }
 
-  public int getStripeId() {
-    return stripeId;
-  }
-
-  public int getNodeId() {
-    return nodeId;
-  }
-
-  public String getNodeName() {
-    return nodeName;
+  public UID getNodeUID() {
+    return nodeUID;
   }
 
   public Node getNode() {
     return node;
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   public Stripe getStripe() {
-    return cluster.getStripe(stripeId).get();
+    return stripe;
+  }
+
+  public UID getStripeUID() {
+    return stripe.getUID();
   }
 
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public NodeContext clone() {
-    return new NodeContext(cluster.clone(), stripeId, nodeName);
+    return new NodeContext(cluster.clone(), nodeUID);
   }
 
   @Override
   public String toString() {
-    return "NodeContext{" + "cluster=" + cluster.toShapeString() +
-        ", stripeId=" + stripeId +
-        ", nodeId=" + nodeId +
-        ", nodeName='" + nodeName + '\'' +
+    return "NodeContext{" +
+        "cluster=" + cluster.toShapeString() +
+        ", nodeUID=" + nodeUID +
         '}';
   }
 
@@ -116,15 +82,13 @@ public class NodeContext implements Cloneable {
     if (this == o) return true;
     if (!(o instanceof NodeContext)) return false;
     NodeContext that = (NodeContext) o;
-    return getStripeId() == that.getStripeId() &&
-        getNodeId() == that.getNodeId() &&
-        getCluster().equals(that.getCluster()) &&
-        getNodeName().equals(that.getNodeName());
+    return getCluster().equals(that.getCluster()) &&
+        getNodeUID().equals(that.getNodeUID());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getCluster(), getStripeId(), getNodeId(), getNodeName());
+    return Objects.hash(getCluster(), getNodeUID());
   }
 
   /**
@@ -132,7 +96,7 @@ public class NodeContext implements Cloneable {
    * <p>
    * Parameter must not be null.
    * <p>
-   * If the new cluster contains this stripe ID / node name information,
+   * If the new cluster contains this node identifier,
    * then a new node context is returned targeting the same node in the new cluster.
    * <p>
    * Otherwise, an empty optional is returned
@@ -147,8 +111,8 @@ public class NodeContext implements Cloneable {
     // If the updated topology does not contain the node anymore (removal ?) and a base config was there (topology change)
     // then we isolate the node in its own cluster
 
-    return updated.containsNode(stripeId, nodeName) ?
-        Optional.of(new NodeContext(updated, stripeId, nodeName)) :
+    return updated.containsNode(nodeUID) ?
+        Optional.of(new NodeContext(updated, nodeUID)) :
         Optional.empty();
   }
 
@@ -167,6 +131,6 @@ public class NodeContext implements Cloneable {
   public NodeContext withOnlyNode(Node node) {
     Stripe stripe = getStripe().clone().setNodes(singletonList(node));
     Cluster cluster = getCluster().clone().setStripes(singletonList(stripe));
-    return new NodeContext(cluster, node.getAddress());
+    return new NodeContext(cluster, node.getUID());
   }
 }

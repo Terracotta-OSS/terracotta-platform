@@ -10,7 +10,7 @@
           "hostname": "localhost",
           "name": "node1_1",
           "port": 9410,
-          "uid": "ZwZtuxl6QlWGZVUJ_30uMQ"
+          "uid": "jUhhu1kRQd-x6iNgpo9Xyw"
         }
       ],
       "uid": "5Zv3uphiRLavoGZthy7JNg"
@@ -25,7 +25,7 @@
           "hostname": "localhost",
           "name": "node2_1",
           "port": 9412,
-          "uid": "2sxJu9g_TvKG9sAN9bKp_w"
+          "uid": "ZwZtuxl6QlWGZVUJ_30uMQ"
         },
         {
           "dataDirs": {
@@ -34,7 +34,7 @@
           "hostname": "localhost",
           "name": "node2_2",
           "port": 9413,
-          "uid": "oWlbu_lcQCSmLYuLehhsmA"
+          "uid": "x6tPuzj0Tq2Qs1niISqVMg"
         }
       ],
       "uid": "RUHaurjcQA-57mpGqtovOA"

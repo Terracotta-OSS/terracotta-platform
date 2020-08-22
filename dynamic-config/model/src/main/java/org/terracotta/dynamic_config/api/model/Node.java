@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
@@ -46,6 +47,9 @@ import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.api.model.Setting.modelToProperties;
 
 public class Node implements Cloneable, PropertyHolder {
+
+  private static final String ADDR_GROUP_PUBLIC = "public";
+  private static final String ADDR_GROUP_INTERNAL = "internal";
 
   private UID uid;
   private String name;
@@ -346,10 +350,6 @@ public class Node implements Cloneable, PropertyHolder {
         getPublicAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
   }
 
-  public InetSocketAddress getAddress() {
-    return getPublicAddress().orElseGet(this::getInternalAddress);
-  }
-
   public InetSocketAddress getInternalAddress() {
     final String hostname = getHostname();
     final Integer port = getPort().orDefault();
@@ -367,6 +367,42 @@ public class Node implements Cloneable, PropertyHolder {
       throw new AssertionError("Node " + name + " is not correctly defined with public address: " + publicHostname + ":" + publicPort);
     }
     return Optional.of(InetSocketAddress.createUnresolved(publicHostname, publicPort));
+  }
+
+  /**
+   * Get an endpoint to connect to this node based on the address used to initiate the connection.
+   * <p>
+   * If the address used to initiate the connection is the public address, then use it.
+   * <p>
+   * If the address used to initiate the connection is the internal address, then use it.
+   * <p>
+   * Otherwise, use the public address and if not set, the internal one
+   */
+  public Endpoint getEndpoint(InetSocketAddress initiator) {
+    Optional<InetSocketAddress> publicAddress = getPublicAddress();
+    InetSocketAddress internalAddress = getInternalAddress();
+    if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
+      return getPublicEndpoint().get();
+    }
+    if (internalAddress.equals(initiator)) {
+      return getInternalEndpoint();
+    }
+    // fallback: public first, otherwise internal
+    return getPublicEndpoint().orElseGet(this::getInternalEndpoint);
+  }
+
+  public Endpoint getSimilarEndpoints(Endpoint initiator) {
+    return ADDR_GROUP_INTERNAL.equals(initiator.getGroup()) ?
+        getInternalEndpoint() :
+        getPublicEndpoint().orElseGet(this::getInternalEndpoint);
+  }
+
+  public Endpoint getInternalEndpoint() {
+    return new Endpoint(this, ADDR_GROUP_INTERNAL, getInternalAddress());
+  }
+
+  public Optional<Endpoint> getPublicEndpoint() {
+    return getPublicAddress().map(addr -> new Endpoint(this, ADDR_GROUP_PUBLIC, addr));
   }
 
   @Override
@@ -427,25 +463,7 @@ public class Node implements Cloneable, PropertyHolder {
 
   @Override
   public String toString() {
-    return "Node{" +
-        "name='" + name + '\'' +
-        ", hostname='" + hostname + '\'' +
-        ", port=" + port +
-        ", uid=" + uid +
-        ", publicHostname='" + publicHostname + '\'' +
-        ", publicPort=" + publicPort +
-        ", groupPort=" + groupPort +
-        ", bindAddress='" + bindAddress + '\'' +
-        ", groupBindAddress='" + groupBindAddress + '\'' +
-        ", metadataDir='" + metadataDir + '\'' +
-        ", logDir='" + logDir + '\'' +
-        ", backupDir='" + backupDir + '\'' +
-        ", loggers='" + loggerOverrides + '\'' +
-        ", tcProperties='" + tcProperties + '\'' +
-        ", securityDir='" + securityDir + '\'' +
-        ", securityAuditLogDir='" + securityAuditLogDir + '\'' +
-        ", dataDirs=" + dataDirs +
-        '}';
+    return Props.toString(toProperties(false, false, true));
   }
 
   /**
@@ -454,5 +472,66 @@ public class Node implements Cloneable, PropertyHolder {
   @Override
   public Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings, Version version) {
     return modelToProperties(this, expanded, includeDefaultValues, includeHiddenSettings, version);
+  }
+
+  public String toShapeString() {
+    return getInternalEndpoint().toString();
+  }
+
+  /**
+   * This class represents an endpoint to use when connecting to a node.
+   * <p>
+   * The address will be either the internal address or the public address.
+   * <p>
+   * IMPORTANT FOR USAGE: the equals/hashcode of an endpoint is based on the UID.
+   * Other properties like address, name, group are characteristics.
+   *
+   * @author Mathieu Carbou
+   */
+  public static class Endpoint {
+
+    private final Node node;
+    private final String group;
+    private final InetSocketAddress address;
+
+    private Endpoint(Node node, String group, InetSocketAddress address) {
+      this.node = requireNonNull(node);
+      this.group = requireNonNull(group);
+      this.address = requireNonNull(address);
+    }
+
+    public String getGroup() {
+      return group;
+    }
+
+    public String getNodeName() {
+      return node.getName();
+    }
+
+    public UID getNodeUID() {
+      return node.getUID();
+    }
+
+    public InetSocketAddress getAddress() {
+      return address;
+    }
+
+    @Override
+    public String toString() {
+      return getNodeName() + ":" + getNodeUID() + "@" + getAddress();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Endpoint)) return false;
+      Endpoint endpoint = (Endpoint) o;
+      return getNodeUID().equals(endpoint.getNodeUID());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(getNodeUID());
+    }
   }
 }

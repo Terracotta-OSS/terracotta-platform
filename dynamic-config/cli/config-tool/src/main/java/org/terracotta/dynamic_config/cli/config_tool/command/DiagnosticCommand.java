@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
@@ -56,14 +57,14 @@ public class DiagnosticCommand extends RemoteCommand {
   @Override
   public final void run() {
     // this call can take some time and we can have some timeout
-    Map<InetSocketAddress, LogicalServerState> allNodes = findRuntimePeersStatus(node);
+    Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
 
     ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = analyzeNomadConsistency(allNodes);
-    Collection<InetSocketAddress> onlineNodes = sort(consistencyAnalyzer.getOnlineNodes().keySet());
-    Collection<InetSocketAddress> onlineActivatedNodes = sort(consistencyAnalyzer.getOnlineActivatedNodes().keySet());
-    Collection<InetSocketAddress> onlineInConfigurationNodes = sort(consistencyAnalyzer.getOnlineInConfigurationNodes().keySet());
-    Collection<InetSocketAddress> onlineInRepairNodes = sort(consistencyAnalyzer.getOnlineInRepairNodes().keySet());
-    Collection<InetSocketAddress> nodesPendingRestart = sort(allNodes.keySet().stream()
+    Collection<Endpoint> onlineNodes = sort(consistencyAnalyzer.getOnlineNodes().keySet());
+    Collection<Endpoint> onlineActivatedNodes = sort(consistencyAnalyzer.getOnlineActivatedNodes().keySet());
+    Collection<Endpoint> onlineInConfigurationNodes = sort(consistencyAnalyzer.getOnlineInConfigurationNodes().keySet());
+    Collection<Endpoint> onlineInRepairNodes = sort(consistencyAnalyzer.getOnlineInRepairNodes().keySet());
+    Collection<Endpoint> nodesPendingRestart = sort(allNodes.keySet().stream()
         .filter(onlineNodes::contains)
         .filter(this::mustBeRestarted)
         .collect(toSet()));
@@ -115,44 +116,44 @@ public class DiagnosticCommand extends RemoteCommand {
             .orElse("NO"))
         .append(lineSeparator());
 
-    allNodes.keySet().forEach(nodeAddress -> {
+    allNodes.keySet().forEach(endpoint -> {
       // header
-      sb.append("[").append(nodeAddress).append("]").append(lineSeparator());
+      sb.append("[").append(endpoint).append("]").append(lineSeparator());
 
       // node status
       sb.append(" - Node state: ")
-          .append(consistencyAnalyzer.getState(nodeAddress))
+          .append(consistencyAnalyzer.getState(endpoint.getNodeUID()))
           .append(lineSeparator());
       sb.append(" - Node online, configured and activated: ")
-          .append(consistencyAnalyzer.isOnlineAndActivated(nodeAddress) ?
+          .append(consistencyAnalyzer.isOnlineAndActivated(endpoint.getNodeUID()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
       sb.append(" - Node online, configured and in repair: ")
-          .append(consistencyAnalyzer.isOnlineAndInRepair(nodeAddress) ?
+          .append(consistencyAnalyzer.isOnlineAndInRepair(endpoint.getNodeUID()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
       sb.append(" - Node online, new and being configured: ")
-          .append(consistencyAnalyzer.isOnlineAndInConfiguration(nodeAddress) ?
+          .append(consistencyAnalyzer.isOnlineAndInConfiguration(endpoint.getNodeUID()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
 
       // if node is online, display more information
-      if (onlineNodes.contains(nodeAddress)) {
+      if (onlineNodes.contains(endpoint)) {
 
         sb.append(" - Node restart required: ")
-            .append(nodesPendingRestart.contains(nodeAddress) ?
+            .append(nodesPendingRestart.contains(endpoint) ?
                 "YES" :
                 "NO")
             .append(lineSeparator());
-        sb.append(" - Node configuration change in progress: ").append(hasIncompleteChange(nodeAddress) ?
+        sb.append(" - Node configuration change in progress: ").append(hasIncompleteChange(endpoint) ?
             "YES" :
             "NO")
             .append(lineSeparator());
 
-        consistencyAnalyzer.getDiscoveryResponse(nodeAddress).ifPresent(discoverResponse -> {
+        consistencyAnalyzer.getDiscoveryResponse(endpoint).ifPresent(discoverResponse -> {
 
           sb.append(" - Node can accept new changes: ")
               .append(discoverResponse.getMode() == NomadServerMode.ACCEPTING ? "YES" : "NO")
@@ -202,12 +203,12 @@ public class DiagnosticCommand extends RemoteCommand {
     logger.info(sb.toString());
   }
 
-  private static String details(Collection<InetSocketAddress> addresses) {
+  private static String details(Collection<Endpoint> addresses) {
     return addresses.isEmpty() ? "" : " (" + toString(addresses) + ")";
   }
 
-  private static Collection<InetSocketAddress> sort(Collection<InetSocketAddress> addrs) {
-    TreeSet<InetSocketAddress> sorted = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+  private static Collection<Endpoint> sort(Collection<Endpoint> addrs) {
+    TreeSet<Endpoint> sorted = new TreeSet<>(Comparator.comparing(Endpoint::toString));
     sorted.addAll(addrs);
     return sorted;
   }

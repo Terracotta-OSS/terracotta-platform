@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 
 import static java.util.Objects.requireNonNull;
 
@@ -33,7 +34,7 @@ public class ClusterActivationNomadChange extends TopologyNomadChange {
 
   @Override
   public String getSummary() {
-    return "Activating cluster";
+    return "Activating cluster: " + getCluster().getName();
   }
 
   @Override
@@ -42,14 +43,14 @@ public class ClusterActivationNomadChange extends TopologyNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
+  public boolean canApplyAtRuntime(NodeContext currentNode) {
     return false;
   }
 
   @Override
   public String toString() {
     return "ClusterActivationNomadChange{" +
-        "cluster=" + getCluster() +
+        "cluster=" + getCluster().toShapeString() +
         ", applicability=" + getApplicability() +
         '}';
   }

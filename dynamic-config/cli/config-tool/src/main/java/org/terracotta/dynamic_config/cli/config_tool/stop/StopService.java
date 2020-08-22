@@ -22,9 +22,9 @@ import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.LogicalServerState;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,23 +62,23 @@ public class StopService {
    * Stop a list of nodes. They will be stopped after the specified delay.
    * To detect that a node has been stopped, we will do some request until we reach a request timeout or amy other error.
    */
-  public StopProgress stopNodes(Collection<InetSocketAddress> addresses, Duration stopDelay) {
+  public StopProgress stopNodes(Collection<Node.Endpoint> endpoints, Duration stopDelay) {
     if (stopDelay.getSeconds() < 1) {
       throw new IllegalArgumentException("Stop delay must be at least 1 second");
     }
 
-    LOGGER.debug("Asking all nodes: {} to stop themselves", addresses);
+    LOGGER.debug("Asking all nodes: {} to stop themselves", endpoints);
 
     // list of nodes that we asked for a stop
-    Collection<InetSocketAddress> stopRequested = new HashSet<>();
+    Collection<Node.Endpoint> stopRequested = new HashSet<>();
 
     // list of nodes we failed to ask for a stop
-    Map<InetSocketAddress, Exception> stopRequestFailed = new HashMap<>();
+    Map<Node.Endpoint, Exception> stopRequestFailed = new HashMap<>();
 
     // trigger a stop request for all nodes
-    for (InetSocketAddress addr : addresses) {
+    for (Node.Endpoint addr : endpoints) {
       // this call should be pretty fast and should not timeout if stop delay is long enough
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
+      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr.getAddress())) {
         diagnosticService.getProxy(DynamicConfigService.class).stop(stopDelay);
         stopRequested.add(addr);
       } catch (Exception e) {
@@ -92,16 +92,16 @@ public class StopService {
     CountDownLatch done = new CountDownLatch(stopRequested.size());
 
     // record stopped nodes
-    Collection<InetSocketAddress> stoppedNodes = new CopyOnWriteArrayList<>();
+    Collection<Node.Endpoint> stoppedNodes = new CopyOnWriteArrayList<>();
 
     // this is an optional callback the requestor can add to be made aware in real time about the nodes that have been stopped
-    AtomicReference<Consumer<InetSocketAddress>> progressCallback = new AtomicReference<>();
+    AtomicReference<Consumer<Node.Endpoint>> progressCallback = new AtomicReference<>();
 
     // stop all threads ?
     AtomicBoolean continuePolling = new AtomicBoolean(true);
 
-    ExecutorService executorService = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(addresses.size()), r -> new Thread(r, getClass().getName()));
-    stopRequested.forEach(address -> executorService.submit(() -> {
+    ExecutorService executorService = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(endpoints.size()), r -> new Thread(r, getClass().getName()));
+    stopRequested.forEach(endpoint -> executorService.submit(() -> {
 
       // wait for the stop delay to end so that servers gets stopped
       try {
@@ -114,13 +114,13 @@ public class StopService {
       boolean stopped = false;
       while (!stopped && continuePolling.get() && !Thread.currentThread().isInterrupted()) {
         try {
-          stopped = isStopped(address);
+          stopped = isStopped(endpoint);
           if (stopped) {
-            LOGGER.debug("Node: {} has stopped", address);
-            stoppedNodes.add(address);
-            Consumer<InetSocketAddress> cb = progressCallback.get();
+            LOGGER.debug("Node: {} has stopped", endpoint);
+            stoppedNodes.add(endpoint);
+            Consumer<Node.Endpoint> cb = progressCallback.get();
             if (cb != null) {
-              cb.accept(address);
+              cb.accept(endpoint);
             }
             done.countDown();
           } else {
@@ -146,7 +146,7 @@ public class StopService {
 
       @Override
       @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
-      public Collection<InetSocketAddress> await(Duration duration) throws InterruptedException {
+      public Collection<Node.Endpoint> await(Duration duration) throws InterruptedException {
         try {
           done.await(duration.toMillis(), MILLISECONDS);
           return new ArrayList<>(stoppedNodes);
@@ -157,14 +157,14 @@ public class StopService {
       }
 
       @Override
-      public void onStopped(Consumer<InetSocketAddress> c) {
+      public void onStopped(Consumer<Node.Endpoint> c) {
         progressCallback.set(c);
         // call the callback with previously stopped servers if the callback was setup after some servers were recorded
         stoppedNodes.forEach(c);
       }
 
       @Override
-      public Map<InetSocketAddress, Exception> getErrors() {
+      public Map<Node.Endpoint, Exception> getErrors() {
         return stopRequestFailed;
       }
     };
@@ -187,9 +187,9 @@ public class StopService {
    * Also, the connect timeout must not be to low, otherwise the poll will return false in case of a slow network.
    * Using the default connect timeout provided by user should be enough. If not, the user can increase it and it will apply to all connections.
    */
-  private boolean isStopped(InetSocketAddress addr) {
-    LOGGER.debug("Checking if node: {} has stopped", addr);
-    try (DiagnosticService logicalServerState = diagnosticServiceProvider.fetchDiagnosticService(addr, Duration.ofSeconds(5))) {
+  private boolean isStopped(Node.Endpoint endpoint) {
+    LOGGER.debug("Checking if node: {} has stopped", endpoint);
+    try (DiagnosticService logicalServerState = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress(), Duration.ofSeconds(5))) {
       LogicalServerState state = logicalServerState.getLogicalServerState();
       return state == LogicalServerState.UNREACHABLE;
     } catch (RuntimeException e) {

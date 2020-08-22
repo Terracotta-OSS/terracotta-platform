@@ -15,9 +15,9 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import org.terracotta.dynamic_config.api.model.Cluster;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 
 public class LockAwareDynamicConfigNomadChange implements DynamicConfigNomadChange {
   private final String lockToken;
@@ -34,7 +34,7 @@ public class LockAwareDynamicConfigNomadChange implements DynamicConfigNomadChan
   }
 
   @Override
-  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
+  public boolean canApplyAtRuntime(NodeContext currentNode) {
     throw new UnsupportedOperationException();
   }
 

@@ -66,7 +66,7 @@ public class MutualClusterValidator {
 
   private <T> void fail(String settingName, T majorSetting, T minorSetting) {
     throw new ClusterConfigMismatchException("Mismatch found in " + settingName + " setting between target cluster with " +
-        "nodes: " + major.getNodeAddresses() + " and incoming cluster with nodes: " + minor.getNodeAddresses() + ". " +
+        "nodes: " + major.getInternalEndpoints() + " and incoming cluster with nodes: " + minor.getInternalEndpoints() + ". " +
         "Expected value: " + majorSetting + ", but found: " + minorSetting);
   }
 }

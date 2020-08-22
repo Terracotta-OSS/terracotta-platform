@@ -81,9 +81,8 @@ public class ClusterValidator {
       throw new MalformedClusterException("Missing UID on cluster");
     }
     discovered.put(cluster.getUID(), "cluster");
-    for (int stripeId = 1; stripeId <= cluster.getStripeCount(); stripeId++) {
-      Stripe stripe = cluster.getStripe(stripeId).get();
-      String label = "stripe ID: " + stripeId;
+    for (Stripe stripe : cluster.getStripes()) {
+      String label = "stripe: " + stripe.getName();
       if (stripe.getUID() == null) {
         throw new MalformedClusterException("Missing UID on " + label);
       }
@@ -91,9 +90,8 @@ public class ClusterValidator {
       if (prev != null) {
         throw new MalformedClusterException("Duplicate UID for " + label + ". UID: " + stripe.getUID() + " was used on " + prev);
       }
-      for (int nodeId = 1; nodeId <= stripe.getNodeCount(); nodeId++) {
-        Node node = stripe.getNode(nodeId).get();
-        label = "node ID: " + nodeId + " in stripe ID: " + stripeId;
+      for (Node node : stripe.getNodes()) {
+        label = "node: " + node.getName() + " in stripe: " + stripe.getName();
         if (node.getUID() == null) {
           throw new MalformedClusterException("Missing UID on " + label);
         }

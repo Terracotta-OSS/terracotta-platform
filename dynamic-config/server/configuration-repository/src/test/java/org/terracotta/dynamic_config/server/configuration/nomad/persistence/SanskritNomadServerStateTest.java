@@ -61,7 +61,7 @@ import static org.terracotta.nomad.server.NomadServerMode.PREPARED;
 @RunWith(MockitoJUnitRunner.class)
 public class SanskritNomadServerStateTest {
 
-  NodeContext topology = new NodeContext(Testing.newTestCluster("bar", newTestStripe("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
+  NodeContext topology = new NodeContext(Testing.newTestCluster("bar", newTestStripe("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), Testing.N_UIDS[1]);
 
   @Mock
   private Sanskrit sanskrit;

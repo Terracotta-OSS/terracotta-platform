@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
@@ -33,20 +34,18 @@ import static org.terracotta.nomad.server.PotentialApplicationResult.reject;
 public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigChangeApplicator.class);
 
-  private final int stripeId;
-  private final String nodeName;
+  private final UID nodeUID;
   private final NomadChangeProcessor<DynamicConfigNomadChange> processor;
 
-  public ConfigChangeApplicator(int stripeId, String nodeName, NomadChangeProcessor<DynamicConfigNomadChange> processor) {
-    this.stripeId = stripeId;
-    this.nodeName = nodeName;
+  public ConfigChangeApplicator(UID nodeUID, NomadChangeProcessor<DynamicConfigNomadChange> processor) {
+    this.nodeUID = nodeUID;
     this.processor = processor;
   }
 
   @Override
   public PotentialApplicationResult<NodeContext> tryApply(NodeContext baseConfig, NomadChange change) {
     if (!(change instanceof DynamicConfigNomadChange)) {
-      return reject(baseConfig,"Not a " + DynamicConfigNomadChange.class.getSimpleName() + ": " + change.getClass().getName());
+      return reject(baseConfig, "Not a " + DynamicConfigNomadChange.class.getSimpleName() + ": " + change.getClass().getName());
     }
 
     DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) change;
@@ -86,6 +85,6 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
     // - If we are activating this node, there is not yet any existing configuration, so we create one.
     // - If we have updated the topology and our current node is still there, then return a context to be written on disk for the node.
     // - If the updated topology does not contain the node anymore (removal ?) and a base config was there (topology change) then we isolate the node in its own cluster
-    return baseConfig == null ? new NodeContext(updated, stripeId, nodeName) : baseConfig.withCluster(updated).orElseGet(baseConfig::alone);
+    return baseConfig == null ? new NodeContext(updated, nodeUID) : baseConfig.withCluster(updated).orElseGet(baseConfig::alone);
   }
 }

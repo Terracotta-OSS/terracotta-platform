@@ -19,12 +19,12 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.UncheckedIOException;
@@ -45,36 +45,22 @@ public abstract class TopologyCommand extends RemoteCommand {
   protected OperationType operationType = OperationType.NODE;
 
   @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress destination;
-
-  @Parameter(required = true, names = {"-s"}, description = "Source node or stripe", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress source;
+  protected InetSocketAddress destinationAddress;
 
   @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
 
   @Inject public ObjectMapperFactory objectMapperFactory;
 
-  protected Map<InetSocketAddress, LogicalServerState> destinationOnlineNodes;
+  protected Endpoint destination;
+
+  protected Map<Endpoint, LogicalServerState> destinationOnlineNodes;
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
 
   @Override
   public void validate() {
-    if (source == null) {
-      throw new IllegalArgumentException("Missing source node");
-    }
-    if (destination == null) {
-      throw new IllegalArgumentException("Missing destination node");
-    }
-    if (operationType == null) {
-      throw new IllegalArgumentException("Missing type");
-    }
-    if (InetSocketAddressUtils.areEqual(source, destination)) {
-      throw new IllegalArgumentException("The destination and the source endpoints must not be the same");
-    }
-
-    logger.debug("Validating the parameters");
+    destination = getEndpoint(destinationAddress);
 
     // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
     validateLogOrFail(
@@ -87,8 +73,8 @@ public abstract class TopologyCommand extends RemoteCommand {
     destinationOnlineNodes = findOnlineRuntimePeers(destination);
     destinationClusterActivated = areAllNodesActivated(destinationOnlineNodes.keySet());
 
-    if (!destinationCluster.getStripe(destination).isPresent() || !destinationCluster.getNode(destination).isPresent()) {
-      throw new IllegalArgumentException("Wrong destination address: " + destination + ". It does not match any node in destination cluster: " + destinationCluster);
+    if (!destinationCluster.containsNode(destination.getNodeUID())) {
+      throw new IllegalArgumentException("Wrong destination endpoint: " + destination + ". It does not match any node in destination cluster: " + destinationCluster.toShapeString());
     }
 
     if (destinationClusterActivated) {
@@ -131,7 +117,7 @@ public abstract class TopologyCommand extends RemoteCommand {
 
     } else {
       logger.info("Sending the topology change");
-      Set<InetSocketAddress> allOnlineNodes = new HashSet<>(getAllOnlineSourceNodes());
+      Set<Endpoint> allOnlineNodes = new HashSet<>(getAllOnlineSourceNodes());
       allOnlineNodes.addAll(destinationOnlineNodes.keySet());
       setUpcomingCluster(allOnlineNodes, result);
     }
@@ -149,26 +135,13 @@ public abstract class TopologyCommand extends RemoteCommand {
     return this;
   }
 
-  InetSocketAddress getDestination() {
-    return destination;
-  }
-
-  TopologyCommand setDestination(InetSocketAddress destination) {
-    this.destination = destination;
+  TopologyCommand setDestinationAddress(InetSocketAddress destinationAddress) {
+    this.destinationAddress = destinationAddress;
     return this;
   }
 
-  TopologyCommand setDestination(String host, int port) {
-    return setDestination(InetSocketAddress.createUnresolved(host, port));
-  }
-
-  InetSocketAddress getSource() {
-    return source;
-  }
-
-  TopologyCommand setSource(InetSocketAddress source) {
-    this.source = source;
-    return this;
+  TopologyCommand setDestinationAddress(String host, int port) {
+    return setDestinationAddress(InetSocketAddress.createUnresolved(host, port));
   }
 
   protected final void validateLogOrFail(Supplier<Boolean> expectedCondition, String error) {
@@ -191,7 +164,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     throw error;
   }
 
-  protected abstract Collection<InetSocketAddress> getAllOnlineSourceNodes();
+  protected abstract Collection<Endpoint> getAllOnlineSourceNodes();
 
   protected abstract Cluster updateTopology();
 

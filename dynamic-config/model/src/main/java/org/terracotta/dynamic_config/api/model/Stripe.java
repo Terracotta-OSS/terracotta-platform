@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.terracotta.dynamic_config.api.service.Props;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -23,10 +24,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.IntStream;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -88,19 +88,11 @@ public class Stripe implements Cloneable, PropertyHolder {
 
   @Override
   public String toString() {
-    return "Stripe{" +
-        "name='" + name + '\'' +
-        ", uid=" + uid +
-        ", nodes=" + nodes +
-        '}';
+    return Props.toString(toProperties(false, false, true));
   }
 
   public String toShapeString() {
-    return name + " ( " + nodes.stream().map(node -> node.getName() + "@" + node.getAddress()).collect(joining(", ")) + " )";
-  }
-
-  public Collection<InetSocketAddress> getNodeAddresses() {
-    return getNodes().stream().map(Node::getAddress).collect(toList());
+    return name + ":" + uid + " ( " + nodes.stream().map(Node::toShapeString).collect(joining(", ")) + " )";
   }
 
   public Optional<Node> getSingleNode() throws IllegalStateException {
@@ -113,12 +105,40 @@ public class Stripe implements Cloneable, PropertyHolder {
     return Optional.of(nodes.iterator().next());
   }
 
-  public Optional<Node> getNode(InetSocketAddress address) {
-    return nodes.stream().filter(node -> node.hasAddress(address)).findAny();
+  public Optional<Node> getNode(UID uid) {
+    return nodes.stream().filter(node -> node.getUID().equals(uid)).findAny();
   }
 
-  public boolean containsNode(InetSocketAddress address) {
-    return nodes.stream().anyMatch(node -> node.hasAddress(address));
+  public Optional<Node> getNode(String nodeName) {
+    return nodes.stream().filter(node -> node.getName().equals(nodeName)).findAny();
+  }
+
+  public boolean containsNode(UID uid) {
+    return nodes.stream().anyMatch(node -> node.getUID().equals(uid));
+  }
+
+  public boolean containsNode(String nodeName) {
+    return nodes.stream().anyMatch(node -> node.getName().equals(nodeName));
+  }
+
+  /**
+   * Returns the endpoints to use to connect to the nodes of the cluster.
+   * The endpoints are using the same address "group" as the address used to access
+   * this node context.
+   * <p>
+   * In case no initiator is given, or if it is not found, the returned endpoints
+   * will be the public addresses if all nodes have a public address, otherwise it
+   * will be the internal addresses
+   *
+   * @param initiator Address used to load this class, can be null.
+   */
+  public Collection<Node.Endpoint> getEndpoints(InetSocketAddress initiator) {
+    Function<Node, Node.Endpoint> fetcher = getEndpointFetcher(initiator);
+    return getNodes().stream().map(fetcher).collect(toList());
+  }
+
+  public Collection<Node.Endpoint> getSimilarEndpoints(Node.Endpoint initiator) {
+    return getNodes().stream().map(node -> node.getSimilarEndpoints(initiator)).collect(toList());
   }
 
   @Override
@@ -132,8 +152,8 @@ public class Stripe implements Cloneable, PropertyHolder {
     return copy;
   }
 
-  public boolean removeNode(InetSocketAddress address) {
-    return nodes.removeIf(node -> node.hasAddress(address));
+  public boolean removeNode(UID uid) {
+    return nodes.removeIf(node -> node.getUID().equals(uid));
   }
 
   public boolean isEmpty() {
@@ -154,34 +174,6 @@ public class Stripe implements Cloneable, PropertyHolder {
 
   public int getNodeCount() {
     return nodes.size();
-  }
-
-  public Optional<Node> getNode(String nodeName) {
-    return nodes.stream().filter(node -> node.getName().equals(nodeName)).findAny();
-  }
-
-  public Optional<Node> getNode(int nodeId) {
-    if (nodeId < 1) {
-      throw new IllegalArgumentException("Invalid node ID: " + nodeId);
-    }
-    if (nodeId > nodes.size()) {
-      return Optional.empty();
-    }
-    return Optional.of(nodes.get(nodeId - 1));
-  }
-
-  public OptionalInt getNodeId(String nodeName) {
-    return IntStream.range(0, nodes.size())
-        .filter(idx -> nodeName.equals(nodes.get(idx).getName()))
-        .map(idx -> idx + 1)
-        .findAny();
-  }
-
-  public OptionalInt getNodeId(InetSocketAddress nodeAddress) {
-    return IntStream.range(0, nodes.size())
-        .filter(idx -> nodes.get(idx).hasAddress(nodeAddress))
-        .map(idx -> idx + 1)
-        .findAny();
   }
 
   /**
@@ -206,5 +198,28 @@ public class Stripe implements Cloneable, PropertyHolder {
   @Override
   public Scope getScope() {
     return Scope.STRIPE;
+  }
+
+  /**
+   * Finds an address group based on an address given by the user
+   * to connect to a node
+   */
+  private Function<Node, Node.Endpoint> getEndpointFetcher(InetSocketAddress initiator) {
+    boolean publicAddressConfigured = true;
+    for (Node node : getNodes()) {
+      if (node.getInternalAddress().equals(initiator)) {
+        return Node::getInternalEndpoint;
+      }
+      Optional<InetSocketAddress> publicAddress = node.getPublicAddress();
+      publicAddressConfigured &= publicAddress.isPresent();
+      if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
+        return n -> n.getPublicEndpoint().get();
+      }
+    }
+    // we didn't find any exact match...
+    // if the nodes have public addresses, then use them
+    return publicAddressConfigured ?
+        n -> n.getPublicEndpoint().get() :
+        Node::getInternalEndpoint;
   }
 }

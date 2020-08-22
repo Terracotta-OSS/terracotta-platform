@@ -17,10 +17,11 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.SettingName;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Substitutor;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.TcConfigMapper;
@@ -68,29 +69,30 @@ public class ConfigConverter {
   }
 
   protected void validateAgainstRelativePath(Cluster cluster) {
-    HashMap<Tuple2<Integer, String>, String> perNodeWarnings = new HashMap<>();
+    HashMap<String, String> perNodeWarnings = new HashMap<>();
     if (!acceptRelativePaths) {
-      cluster.nodeContexts().forEach(nodeContext -> {
-        org.terracotta.dynamic_config.api.model.Node node = nodeContext.getNode();
-        List<String> placeHolderList = checkPlaceHolders(node);
-        if (!placeHolderList.isEmpty()) {
-          perNodeWarnings.put(Tuple2.tuple2(nodeContext.getStripeId(), nodeContext.getNodeName()), placeHolderList.toString());
-        } else {
-          String settingName = containsRelativePaths(node);
-          if (settingName != null) {
-            throw new RuntimeException("The config: " + settingName + " for server: " + node.getName() +
-                " in stripe: " + nodeContext.getStripeId() + " contains relative paths, which will not work as intended" +
-                " after config conversion. Use absolute paths instead.");
+      for (Stripe stripe : cluster.getStripes()) {
+        for (Node node : stripe.getNodes()) {
+          List<String> placeHolderList = checkPlaceHolders(node);
+          if (!placeHolderList.isEmpty()) {
+            perNodeWarnings.put(node.getName(), placeHolderList.toString());
+          } else {
+            String settingName = containsRelativePaths(node);
+            if (settingName != null) {
+              throw new RuntimeException("The config: " + settingName + " for server: " + node.getName() +
+                  " in stripe: " + stripe.toShapeString() + " contains relative paths, which will not work as intended" +
+                  " after config conversion. Use absolute paths instead.");
+            }
           }
         }
-      });
+      }
     }
     if (!perNodeWarnings.isEmpty()) {
       LOGGER.warn("{}NOTE: The following nodes were found to have placeholders in paths, which may not work as intended on new hosts after config conversion: {}{}{}",
           lineSeparator(),
           lineSeparator(),
           perNodeWarnings.entrySet().stream()
-              .map(e -> " - Server: " + e.getKey().getT2() + " in stripe: " + e.getKey().getT1() + ". Configs containing placeholders: " + e.getValue())
+              .map(e -> " - Node: " + e.getKey() + ". Configs containing placeholders: " + e.getValue())
               .collect(Collectors.joining(lineSeparator())),
           lineSeparator()
       );

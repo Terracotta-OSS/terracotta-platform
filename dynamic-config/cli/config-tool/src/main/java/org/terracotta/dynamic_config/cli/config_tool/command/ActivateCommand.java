@@ -22,6 +22,7 @@ import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Usage;
@@ -62,7 +63,7 @@ public class ActivateCommand extends RemoteCommand {
   protected boolean restrictedActivation = false;
 
   private Cluster cluster;
-  private Collection<InetSocketAddress> runtimePeers;
+  private Collection<Endpoint> runtimePeers;
 
   @Override
   public void validate() {
@@ -94,17 +95,13 @@ public class ActivateCommand extends RemoteCommand {
       throw new IllegalArgumentException("Cluster name is missing");
     }
 
-    if (node != null && !cluster.containsNode(node)) {
-      throw new IllegalArgumentException("Node: " + node + " is not in cluster: " + cluster.toShapeString());
-    }
-
     new ClusterValidator(cluster).validate();
 
     // getting the list of nodes where to push the same topology
 
     runtimePeers = restrictedActivation ?
-        singletonList(node) : // if restrictive activation, we only activate the node supplied
-        cluster.getNodeAddresses(); // if normal activation the nodes to activate are those found in the config file or in the topology loaded from the node
+        singletonList(getEndpoint(node)) : // if restrictive activation, we only activate the node supplied
+        cluster.getEndpoints(node); // if normal activation the nodes to activate are those found in the config file or in the topology loaded from the node
 
     // verify the activated state of the nodes
     if (areAllNodesActivated(runtimePeers)) {

@@ -114,7 +114,7 @@ public class ConfigurationGeneratorVisitor {
   }
 
   void startUnconfigured(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {
-    String nodeName = nodeContext.getNodeName();
+    String nodeName = nodeContext.getNode().getName();
     ServerEnv.getServer().console("Starting unconfigured node: {}", nodeName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
@@ -151,7 +151,7 @@ public class ConfigurationGeneratorVisitor {
       });
     });
 
-    String nodeName = nodeContext.getNodeName();
+    String nodeName = nodeContext.getNode().getName();
     ServerEnv.getServer().console("Starting node: {} in cluster: {}", nodeName, clusterName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirectoryFromCLI);
     ServerEnv.getServer().console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
@@ -268,7 +268,7 @@ public class ConfigurationGeneratorVisitor {
     requireNonNull(nodeConfigurationDir);
     NomadEnvironment environment = new NomadEnvironment();
     // Note: do NOT close this nomad client - it would close the server and sanskrit!
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getInternalAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrowErrors();

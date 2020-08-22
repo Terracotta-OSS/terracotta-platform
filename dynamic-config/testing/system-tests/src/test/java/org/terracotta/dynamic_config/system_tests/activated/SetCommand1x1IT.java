@@ -133,7 +133,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void setNodeLogDir() {
     assertThat(
         invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=logs/stripe1"),
-        containsOutput("restart of nodes: localhost:" + getNodePort() + " is required"));
+        containsOutput("IMPORTANT: A restart of nodes: node-1-1 is required to apply the changes"));
 
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),

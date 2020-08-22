@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
 import static java.util.Collections.singleton;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.terracotta.dynamic_config.api.model.Testing.N_UIDS;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
 
 /**
@@ -231,7 +232,7 @@ public abstract class AbstractTest {
 
     NodeContext topology = new NodeContext(newTestCluster("my-cluster", new Stripe()
         .setName("stripe[0]")
-        .addNode(Testing.newTestNode("bar", "localhost"))), 1, "bar");
+        .addNode(Testing.newTestNode("bar", "localhost"))), N_UIDS[1]);
     TopologyService topologyService = mock(TopologyService.class);
 
     public TopologyServiceServiceProvider() {

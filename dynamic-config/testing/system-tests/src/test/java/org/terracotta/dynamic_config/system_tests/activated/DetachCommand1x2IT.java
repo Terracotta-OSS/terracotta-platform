@@ -82,8 +82,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     // try to detach this node
     assertThat(
         () -> invokeConfigTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
-        is(throwing(instanceOf(Exception.class)).andMessage(containsString("Impossible to do any topology change. " +
-            "Cluster at address: localhost:" + getNodePort(1, activeId) + " is waiting to be restarted to apply some pending changes"))));
+        is(throwing(instanceOf(Exception.class)).andMessage(containsString("Impossible to do any topology change"))));
 
     // try forcing the detach
     invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));

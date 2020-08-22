@@ -57,7 +57,7 @@ public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
       Map<Setting, String> cliOptions = new LinkedHashMap<>(options.getTopologyOptions());
       cliOptions.putIfAbsent(FAILOVER_PRIORITY, FailoverPriority.availability().toString());
       Cluster cluster = clusterCreator.create(cliOptions, parameterSubstitutor);
-      NodeContext alternate = new NodeContext(cluster, cluster.getSingleNode().get().getAddress());
+      NodeContext alternate = new NodeContext(cluster, cluster.getSingleNode().get().getUID());
 
       configurationGeneratorVisitor.startUsingConfigRepo(configPath, nodeName.get(), options.wantsRepairMode(), alternate);
       return;

@@ -3,14 +3,16 @@
   "cluster": {
     "stripes": [
       {
+        "name": "stripe-1",
         "nodes": [
           {
-            "hostname": "localhost",
-            "name": "foo",
-            "port": 9410,
+            "nodeHostname": "localhost",
+            "nodeName": "foo",
+            "nodePort": 9410,
             "uid": "VOVyu3kuQxCRIu7dK_UZZA"
           }
-        ]
+        ],
+        "uid": "5Zv3uphiRLavoGZthy7JNg"
       }
     ],
     "clientReconnectWindow": {
@@ -35,7 +37,7 @@
     "uid": "YLQguzhRSdS6y5M9vnA5mw"
   },
   "applicability": {
-    "level": "CLUSTER"
+    "scope": "CLUSTER"
   },
-  "summary": "Activating cluster"
+  "summary": "Activating cluster: myClusterName"
 }

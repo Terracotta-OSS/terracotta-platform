@@ -26,6 +26,8 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
@@ -54,19 +56,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
@@ -83,31 +85,31 @@ public class NomadManager<T> {
   );
 
   private final NomadEnvironment environment;
-  private final MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
+  private final MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider;
   private final NomadEntityProvider nomadEntityProvider;
 
-  public NomadManager(NomadEnvironment environment, MultiDiagnosticServiceProvider multiDiagnosticServiceProvider, NomadEntityProvider nomadEntityProvider) {
+  public NomadManager(NomadEnvironment environment, MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider, NomadEntityProvider nomadEntityProvider) {
     this.environment = environment;
     this.multiDiagnosticServiceProvider = multiDiagnosticServiceProvider;
     this.nomadEntityProvider = nomadEntityProvider;
   }
 
-  public void runConfigurationDiscovery(Map<InetSocketAddress, LogicalServerState> nodes, DiscoverResultsReceiver<T> results) {
+  public void runConfigurationDiscovery(Map<Node.Endpoint, LogicalServerState> nodes, DiscoverResultsReceiver<T> results) {
     LOGGER.debug("Attempting to discover nodes: {}", nodes);
-    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
+    List<Node.Endpoint> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
     try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
       client.tryDiscovery(new MultiDiscoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)));
     }
   }
 
-  public void runClusterActivation(Collection<InetSocketAddress> nodes, Cluster cluster, ChangeResultReceiver<T> results) {
+  public void runClusterActivation(Collection<Node.Endpoint> nodes, Cluster cluster, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to activate cluster: {}", cluster.toShapeString());
     try (NomadClient<T> client = createDiagnosticNomadClient(new ArrayList<>(nodes))) {
       client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), wrapNomadChange(new ClusterActivationNomadChange(cluster)));
     }
   }
 
-  public void runConfigurationChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
+  public void runConfigurationChange(Cluster destinationCluster, Map<Node.Endpoint, LogicalServerState> onlineNodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, onlineNodes);
     checkServerStates(onlineNodes);
     try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {
@@ -117,14 +119,14 @@ public class NomadManager<T> {
 
   public void runConfigurationRepair(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
     LOGGER.debug("Attempting to repair configuration on nodes: {}", consistencyAnalyzer.getAllNodes().keySet());
-    Map<InetSocketAddress, LogicalServerState> onlineActivatedNodes = consistencyAnalyzer.getOnlineActivatedNodes();
-    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(onlineActivatedNodes);
+    Map<Node.Endpoint, LogicalServerState> onlineActivatedNodes = consistencyAnalyzer.getOnlineActivatedNodes();
+    List<Node.Endpoint> orderedList = keepOnlineAndOrderPassivesFirst(onlineActivatedNodes);
     try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
       client.tryRecovery(new MultiRecoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), consistencyAnalyzer.getNodeCount(), forcedState);
     }
   }
 
-  public void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, TopologyNomadChange change, ChangeResultReceiver<T> results) {
+  public void runTopologyChange(Cluster destinationCluster, Map<Node.Endpoint, LogicalServerState> onlineNodes, TopologyNomadChange change, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to apply topology change: {} on cluster {}", change, destinationCluster);
     checkServerStates(onlineNodes);
     try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {
@@ -140,7 +142,7 @@ public class NomadManager<T> {
   /**
    * create a nomad client that is preparing through diagnostic port and committing through diagnostic port
    */
-  private NomadClient<T> createDiagnosticNomadClient(List<InetSocketAddress> expectedOnlineNodes) {
+  private NomadClient<T> createDiagnosticNomadClient(List<Node.Endpoint> expectedOnlineNodes) {
     LOGGER.trace("createDiagnosticNomadClient({})", expectedOnlineNodes);
     // create normal diagnostic endpoints
     List<NomadEndpoint<T>> nomadEndpoints = createDiagnosticNomadEndpoints(expectedOnlineNodes);
@@ -154,52 +156,55 @@ public class NomadManager<T> {
   /**
    * create a nomad client that is preparing through diagnostic port and committing through entity channel
    */
-  private NomadClient<T> createBiChannelNomadClient(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+  private NomadClient<T> createBiChannelNomadClient(Cluster destinationCluster, Map<Node.Endpoint, LogicalServerState> onlineNodes) {
     LOGGER.trace("createBiChannelNomadClient({}, {})", destinationCluster, onlineNodes);
 
     checkServerStates(onlineNodes);
 
     // collect all online addresses by stripe
-    List<List<InetSocketAddress>> onlineNodesPerStripe = destinationCluster.getStripes().stream().map(stripe -> {
-      List<InetSocketAddress> stripeNodes = new ArrayList<>();
-      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getInternalAddress).collect(toList()));
-      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getPublicAddress).filter(Optional::isPresent).map(Optional::get).collect(toList()));
-      stripeNodes.retainAll(onlineNodes.keySet());
+    Map<UID, List<Node.Endpoint>> onlineNodesPerStripe = destinationCluster.getStripes().stream().collect(toMap(Stripe::getUID, stripe -> {
+      List<Node.Endpoint> stripeNodes = new ArrayList<>();
+      for (Node node : stripe.getNodes()) {
+        for (Node.Endpoint endpoint : onlineNodes.keySet()) {
+          if (endpoint.getNodeUID().equals(node.getUID())) {
+            stripeNodes.add(node.getEndpoint(endpoint.getAddress()));
+          }
+        }
+      }
       return stripeNodes;
-    }).collect(toList());
+    }));
 
     // throw if stripe not online
-    for (int i = 0; i < onlineNodesPerStripe.size(); i++) {
-      final List<InetSocketAddress> addresses = onlineNodesPerStripe.get(i);
-      if (addresses.isEmpty()) {
-        throw new IllegalStateException("Entire stripe ID " + (i + 1) + " is not online in cluster: " + destinationCluster);
+    for (Map.Entry<UID, List<Node.Endpoint>> entry : onlineNodesPerStripe.entrySet()) {
+      if (entry.getValue().isEmpty()) {
+        throw new IllegalStateException("Entire stripe UID: " + entry.getKey() + " is not online in cluster: " + destinationCluster.toShapeString());
       }
     }
 
-    // connect to each stripes ans get the Nomad entity
-    final List<NomadEntity<T>> nomadEntities = new ArrayList<>(onlineNodesPerStripe.size());
-    final Runnable cleanup = () -> nomadEntities.forEach(Entity::close); // close() implementation is not expected to throw. See implementation code.
-    for (int i = 0; i < onlineNodesPerStripe.size(); i++) {
-      final List<InetSocketAddress> addresses = onlineNodesPerStripe.get(i);
+    // connect to each stripes and get the Nomad entity
+    final Map<UID, NomadEntity<T>> nomadEntities = new HashMap<>(onlineNodesPerStripe.size());
+    final Runnable cleanup = () -> nomadEntities.values().forEach(Entity::close); // close() implementation is not expected to throw. See implementation code.
+    for (Map.Entry<UID, List<Node.Endpoint>> entry : onlineNodesPerStripe.entrySet()) {
+      final List<Node.Endpoint> addresses = entry.getValue();
       try {
-        LOGGER.trace("Connecting to stripe ID: {} using nodes: {}", i + 1, addresses);
-        nomadEntities.add(nomadEntityProvider.fetchNomadEntity(addresses));
+        LOGGER.trace("Connecting to stripe UID: {} using nodes: {}", entry.getKey(), addresses);
+        nomadEntities.put(entry.getKey(), nomadEntityProvider.fetchNomadEntity(addresses.stream().map(Node.Endpoint::getAddress).collect(toList())));
       } catch (ConnectionException e) {
         cleanup.run();
-        throw new IllegalStateException("Unable to connect to stripe ID " + (i + 1) + ": " + e.getMessage(), e);
+        throw new IllegalStateException("Unable to connect to stripe UID " + entry.getKey() + ": " + e.getMessage(), e);
       }
     }
 
     // create a nomad endpoint per stripe for the commit phase
-    final List<NomadEndpoint<T>> stripeEndpoints = IntStream.range(0, nomadEntities.size()).mapToObj(i -> {
-      final InetSocketAddress firstAddress = onlineNodesPerStripe.get(i).get(0);
-      return new NomadEndpoint<T>(firstAddress, nomadEntities.get(i));
-    }).collect(toList());
+    final Map<UID, NomadEndpoint<T>> stripeEndpoints = onlineNodesPerStripe.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> {
+      final InetSocketAddress firstAddress = e.getValue().get(0).getAddress();
+      return new NomadEndpoint<T>(firstAddress, nomadEntities.get(e.getKey()));
+    }));
 
     // create normal diagnostic endpoints for the prepare phase
     List<NomadEndpoint<T>> nomadEndpoints;
     try {
-      List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(onlineNodes);
+      List<Node.Endpoint> orderedList = keepOnlineAndOrderPassivesFirst(onlineNodes);
       Collections.reverse(orderedList); // put actives first
       LOGGER.trace("Connecting to diagnostic ports: {}", orderedList);
       nomadEndpoints = createDiagnosticNomadEndpoints(orderedList);
@@ -210,7 +215,7 @@ public class NomadManager<T> {
     }
 
     // override the diagnostic endpoints to go over the entity channel for the nomad commit phase
-    ConcurrentMap<Integer, CompletableFuture<AcceptRejectResponse>> cache = new ConcurrentHashMap<>(stripeEndpoints.size());
+    ConcurrentMap<UID, CompletableFuture<AcceptRejectResponse>> cache = new ConcurrentHashMap<>(stripeEndpoints.size());
     nomadEndpoints = nomadEndpoints.stream().map(e -> new NomadEndpoint<T>(e.getAddress(), e) {
       @SuppressWarnings("OptionalGetWithoutIsPresent")
       @Override
@@ -220,18 +225,24 @@ public class NomadManager<T> {
         // So we cache the first response we got from a stripe, to return it immediately after for the other calls.
         // We consider that the commit response on the passive servers will be the same on the active servers.
         InetSocketAddress address = getAddress();
-        int stripeId = destinationCluster.getStripeId(address).getAsInt();
-        CompletableFuture<AcceptRejectResponse> result = cache.computeIfAbsent(stripeId, sid -> {
-          LOGGER.info("Committing topology change to stripe ID: {}", stripeId);
+        UID stripeUID = onlineNodesPerStripe.entrySet()
+            .stream()
+            .filter(e -> e.getValue().stream().anyMatch(endpoint -> endpoint.getAddress().equals(address)))
+            .findAny()
+            .map(Map.Entry::getKey)
+            .get();
 
-          LOGGER.trace("Sending commit message: {} to stripe ID: {}", message, stripeId);
+        CompletableFuture<AcceptRejectResponse> result = cache.computeIfAbsent(stripeUID, uid -> {
+          LOGGER.info("Committing topology change to stripe UID: {}", stripeUID);
+
+          LOGGER.trace("Sending commit message: {} to stripe UID: {}", message, stripeUID);
           CompletableFuture<AcceptRejectResponse> c = new CompletableFuture<>();
           try {
-            AcceptRejectResponse acceptRejectResponse = stripeEndpoints.get(stripeId - 1).commit(message);
-            LOGGER.trace("Received commit response: {} from stripe ID: {}", message, stripeId);
+            AcceptRejectResponse acceptRejectResponse = stripeEndpoints.get(stripeUID).commit(message);
+            LOGGER.trace("Received commit response: {} from stripe UID: {}", message, stripeUID);
             c.complete(acceptRejectResponse);
           } catch (NomadException | RuntimeException e) {
-            LOGGER.trace("Received commit failure: '{}' from stripe ID: {}", e.getMessage(), stripeId, e);
+            LOGGER.trace("Received commit failure: '{}' from stripe UID: {}", e.getMessage(), stripeUID, e);
             c.completeExceptionally(e);
           }
           return c;
@@ -276,18 +287,18 @@ public class NomadManager<T> {
   /**
    * build a list of endpoints through diagnostic port, keeping the same order wanted by user
    */
-  private List<NomadEndpoint<T>> createDiagnosticNomadEndpoints(List<InetSocketAddress> expectedOnlineNodes) {
+  private List<NomadEndpoint<T>> createDiagnosticNomadEndpoints(List<Node.Endpoint> expectedOnlineNodes) {
     LOGGER.trace("createDiagnosticNomadEndpoints({})", expectedOnlineNodes);
 
     // connect and concurrently open a diagnostic connection
-    DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes);
+    DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes.stream().collect(toMap(Node.Endpoint::getNodeUID, Node.Endpoint::getAddress)));
 
     // build a list of endpoints, keeping the same order wanted by user
-    return expectedOnlineNodes.stream().map(addr -> {
-      DiagnosticService diagnosticService = diagnosticServices.getDiagnosticService(addr).get();
+    return expectedOnlineNodes.stream().map(endpoint -> {
+      DiagnosticService diagnosticService = diagnosticServices.getDiagnosticService(endpoint.getNodeUID()).get();
       @SuppressWarnings("unchecked")
       NomadServer<T> nomadServer = diagnosticService.getProxy(NomadServer.class);
-      return new NomadEndpoint<T>(addr, nomadServer) {
+      return new NomadEndpoint<T>(endpoint.getAddress(), nomadServer) {
         @Override
         public void close() {
           diagnosticService.close();
@@ -299,18 +310,18 @@ public class NomadManager<T> {
   /**
    * Put passive firsts and then actives last and filter out offline nodes
    */
-  private static List<InetSocketAddress> keepOnlineAndOrderPassivesFirst(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
-    Predicate<Map.Entry<InetSocketAddress, LogicalServerState>> online = e -> !e.getValue().isUnknown() && !e.getValue().isUnreacheable();
-    Predicate<Map.Entry<InetSocketAddress, LogicalServerState>> actives = e -> e.getValue().isActive();
+  private static List<Node.Endpoint> keepOnlineAndOrderPassivesFirst(Map<Node.Endpoint, LogicalServerState> expectedOnlineNodes) {
+    Predicate<Map.Entry<Node.Endpoint, LogicalServerState>> online = e -> !e.getValue().isUnknown() && !e.getValue().isUnreacheable();
+    Predicate<Map.Entry<Node.Endpoint, LogicalServerState>> actives = e -> e.getValue().isActive();
     return Stream.concat(
         expectedOnlineNodes.entrySet().stream().filter(online.and(actives.negate())),
         expectedOnlineNodes.entrySet().stream().filter(online.and(actives))
     ).map(Map.Entry::getKey).collect(toList());
   }
 
-  private static void checkServerStates(Map<InetSocketAddress, LogicalServerState> expectedOnlineNodes) {
+  private static void checkServerStates(Map<Node.Endpoint, LogicalServerState> expectedOnlineNodes) {
     // find any illegal state that should prevent any Nomad access
-    for (Map.Entry<InetSocketAddress, LogicalServerState> entry : expectedOnlineNodes.entrySet()) {
+    for (Map.Entry<Node.Endpoint, LogicalServerState> entry : expectedOnlineNodes.entrySet()) {
       if (!ALLOWED.contains(entry.getValue())) {
         throw new IllegalStateException("Nomad system is currently not accessible. Node: " + entry.getKey() + " is in state: " + entry.getValue());
       }

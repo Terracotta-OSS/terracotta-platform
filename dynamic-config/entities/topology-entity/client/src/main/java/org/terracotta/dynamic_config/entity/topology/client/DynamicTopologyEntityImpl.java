@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.entity.topology.common.Message;
 import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.dynamic_config.entity.topology.common.Type;
@@ -64,12 +65,12 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
         switch (messageFromServer.getType()) {
           case EVENT_NODE_ADDITION: {
             List<Object> payload = messageFromServer.getPayload();
-            listener.onNodeAddition((int) payload.get(0), (Node) payload.get(1));
+            listener.onNodeAddition((UID) payload.get(0), (Node) payload.get(1));
             break;
           }
           case EVENT_NODE_REMOVAL: {
             List<Object> payload = messageFromServer.getPayload();
-            listener.onNodeRemoval((int) payload.get(0), (Node) payload.get(1));
+            listener.onNodeRemoval((UID) payload.get(0), (Node) payload.get(1));
             break;
           }
           case EVENT_SETTING_CHANGED: {

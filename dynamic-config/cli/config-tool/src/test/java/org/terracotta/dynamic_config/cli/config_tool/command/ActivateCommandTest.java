@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -73,24 +74,23 @@ public class ActivateCommandTest extends BaseTest {
   private Path config;
   private final Cluster cluster = newTestCluster(
       "my-cluster",
-      newTestStripe("stripe1").addNode(
-          Testing.newTestNode("node1", "localhost", 9411)
+      newTestStripe("stripe1", Testing.S_UIDS[1]).addNode(
+          Testing.newTestNode("node1", "localhost", 9411, Testing.N_UIDS[1])
       ),
       newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(
-          Testing.newTestNode("node2", "localhost", 9421),
-          Testing.newTestNode("node3", "localhost", 9422)
+          Testing.newTestNode("node2", "localhost", 9421, Testing.N_UIDS[2]),
+          Testing.newTestNode("node3", "localhost", 9422, Testing.N_UIDS[3])
       ));
-  private final int[] ports = cluster.getNodeAddresses().stream().mapToInt(InetSocketAddress::getPort).toArray();
+  private final int[] ports = cluster.getNodes().stream().map(Node::getInternalAddress).mapToInt(InetSocketAddress::getPort).toArray();
 
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
 
-    Testing.replaceUIDs(cluster);
     config = Paths.get(getClass().getResource("/my-cluster.properties").toURI());
 
-    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, 1, 1));
+    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, Testing.N_UIDS[1]));
   }
 
   @Test

@@ -35,6 +35,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 
 public class FileConfigStorageTest {
@@ -46,8 +47,11 @@ public class FileConfigStorageTest {
   public void saveAndRetrieve() throws Exception {
     Path root = temporaryFolder.getRoot();
 
-    NodeContext topology = new NodeContext(newTestCluster("bar", newTestStripe("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
-    Testing.replaceUIDs(topology.getCluster());
+    NodeContext topology = new NodeContext(
+        newTestCluster("bar",
+            newTestStripe("stripe1").addNodes(
+                newTestNode("node-1", "localhost").setUID(Testing.N_UIDS[1]))),
+        Testing.N_UIDS[1]);
 
     Properties properties = Props.load(new StringReader(new String(Files.readAllBytes(Paths.get(getClass().getResource("/config.properties").toURI())), StandardCharsets.UTF_8).replace("\\", "/")));
 

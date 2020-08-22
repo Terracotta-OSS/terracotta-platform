@@ -24,9 +24,9 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProviderException;
 import org.terracotta.diagnostic.common.DiagnosticException;
 import org.terracotta.diagnostic.model.LogicalServerState;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,29 +63,29 @@ public class RestartService {
    * Restart a list of nodes. They will be restarted after the specified delay.
    * To detect that a node has been restarted, we will wait until the node reaches one of the status given.
    */
-  public RestartProgress restartNodes(Collection<InetSocketAddress> addresses, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
+  public RestartProgress restartNodes(Collection<Node.Endpoint> endpoints, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
     if (restartDelay.getSeconds() < 1) {
       throw new IllegalArgumentException("Restart delay must be at least 1 second");
     }
 
-    LOGGER.debug("Asking all nodes: {} to restart themselves", addresses);
+    LOGGER.debug("Asking all nodes: {} to restart themselves", endpoints);
 
     // list of nodes that we asked for a restart
-    Collection<InetSocketAddress> restartRequested = new HashSet<>();
+    Collection<Node.Endpoint> restartRequested = new HashSet<>();
 
     // list of nodes we failed to ask for a restart
-    Map<InetSocketAddress, Exception> restartRequestFailed = new HashMap<>();
+    Map<Node.Endpoint, Exception> restartRequestFailed = new HashMap<>();
 
     // trigger a restart request for all nodes
-    for (InetSocketAddress addr : addresses) {
+    for (Node.Endpoint endpoint : endpoints) {
       // this call should be pretty fast and should not timeout if restart delay is long enough
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
+      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress())) {
         diagnosticService.getProxy(DynamicConfigService.class).restart(restartDelay);
-        restartRequested.add(addr);
+        restartRequested.add(endpoint);
       } catch (Exception e) {
         // timeout should not occur with a restart delay. Any error is recorded an we won't wait for this node to restart
-        restartRequestFailed.put(addr, e);
-        LOGGER.debug("Failed asking node {} to restart: {}", addr, e.getMessage(), e);
+        restartRequestFailed.put(endpoint, e);
+        LOGGER.debug("Failed asking node {} to restart: {}", endpoint, e.getMessage(), e);
       }
     }
 
@@ -93,16 +93,16 @@ public class RestartService {
     CountDownLatch done = new CountDownLatch(restartRequested.size());
 
     // record restarted nodes
-    Map<InetSocketAddress, LogicalServerState> restartedNodes = new ConcurrentHashMap<>();
+    Map<Node.Endpoint, LogicalServerState> restartedNodes = new ConcurrentHashMap<>();
 
     // this is an optional callback the requestor can add to be made aware in real time about the nodes that have been restarted
-    AtomicReference<BiConsumer<InetSocketAddress, LogicalServerState>> progressCallback = new AtomicReference<>();
+    AtomicReference<BiConsumer<Node.Endpoint, LogicalServerState>> progressCallback = new AtomicReference<>();
 
     // stop all threads ?
     AtomicBoolean continuePolling = new AtomicBoolean(true);
 
-    ExecutorService executorService = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(addresses.size()), r -> new Thread(r, getClass().getName()));
-    restartRequested.forEach(address -> executorService.submit(() -> {
+    ExecutorService executorService = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(endpoints.size()), r -> new Thread(r, getClass().getName()));
+    restartRequested.forEach(endpoint -> executorService.submit(() -> {
 
       // wait for the restart delay to end so that servers gets restarted
       try {
@@ -115,13 +115,13 @@ public class RestartService {
       LogicalServerState state = null;
       while (state == null && continuePolling.get() && !Thread.currentThread().isInterrupted()) {
         try {
-          state = isRestarted(address, acceptedStates);
+          state = isRestarted(endpoint, acceptedStates);
           if (state != null) {
-            LOGGER.debug("Node: {} has restarted", address);
-            restartedNodes.put(address, state);
-            BiConsumer<InetSocketAddress, LogicalServerState> cb = progressCallback.get();
+            LOGGER.debug("Node: {} has restarted", endpoint);
+            restartedNodes.put(endpoint, state);
+            BiConsumer<Node.Endpoint, LogicalServerState> cb = progressCallback.get();
             if (cb != null) {
-              cb.accept(address, state);
+              cb.accept(endpoint, state);
             }
             done.countDown();
           } else {
@@ -147,7 +147,7 @@ public class RestartService {
 
       @Override
       @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED")
-      public Map<InetSocketAddress, LogicalServerState> await(Duration duration) throws InterruptedException {
+      public Map<Node.Endpoint, LogicalServerState> await(Duration duration) throws InterruptedException {
         try {
           done.await(duration.toMillis(), MILLISECONDS);
           return new HashMap<>(restartedNodes);
@@ -158,14 +158,14 @@ public class RestartService {
       }
 
       @Override
-      public void onRestarted(BiConsumer<InetSocketAddress, LogicalServerState> c) {
+      public void onRestarted(BiConsumer<Node.Endpoint, LogicalServerState> c) {
         progressCallback.set(c);
         // call the callback with previously restarted servers if the callback was setup after some servers were recorded
         restartedNodes.forEach(c);
       }
 
       @Override
-      public Map<InetSocketAddress, Exception> getErrors() {
+      public Map<Node.Endpoint, Exception> getErrors() {
         return restartRequestFailed;
       }
     };
@@ -188,17 +188,17 @@ public class RestartService {
    * Also, the connect timeout must not be to low, otherwise the poll will return false in case of a slow network.
    * Using the default connect timeout provided by user should be enough. If not, the user can increase it and it will apply to all connections.
    */
-  private LogicalServerState isRestarted(InetSocketAddress addr, Collection<LogicalServerState> acceptedStates) {
-    LOGGER.debug("Checking if node: {} has restarted", addr);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
+  private LogicalServerState isRestarted(Node.Endpoint endpoint, Collection<LogicalServerState> acceptedStates) {
+    LOGGER.debug("Checking if node: {} has restarted", endpoint);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress())) {
       LogicalServerState state = diagnosticService.getLogicalServerState();
       // STARTING is the state when server hasn't finished its startup yet
       return state == null || !acceptedStates.contains(state) ? null : state;
     } catch (DiagnosticServiceProviderException | DiagnosticException e) {
-      LOGGER.debug("Status query for node: {} failed: {}", addr, e.getMessage());
+      LOGGER.debug("Status query for node: {} failed: {}", endpoint, e.getMessage());
       return null;
     } catch (Exception e) {
-      LOGGER.error("Unexpected error during status query for node: {}", addr, e);
+      LOGGER.error("Unexpected error during status query for node: {}", endpoint, e);
       return null;
     }
   }

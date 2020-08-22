@@ -22,7 +22,9 @@ import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Usage;
@@ -50,7 +52,7 @@ public class ImportCommand extends RemoteCommand {
   private Path configPropertiesFile;
 
   private Cluster cluster;
-  private Collection<InetSocketAddress> runtimePeers;
+  private Collection<Node.Endpoint> runtimePeers;
 
   @Override
   public void validate() {
@@ -72,7 +74,7 @@ public class ImportCommand extends RemoteCommand {
       }
     }
 
-    runtimePeers = cluster.getNodeAddresses();
+    runtimePeers = cluster.getEndpoints(node);
 
     // validate the topology
     new ClusterValidator(cluster).validate();
@@ -83,13 +85,10 @@ public class ImportCommand extends RemoteCommand {
         throw new IllegalStateException("Cluster is already activated");
 
       } else {
-        if (!runtimePeers.contains(node)) {
-          throw new IllegalStateException("Node: " + node + " is not in cluster: " + cluster.toShapeString());
-        }
         if (isActivated(node)) {
           throw new IllegalStateException("Node is already activated");
         }
-        runtimePeers = Collections.singletonList(node);
+        runtimePeers = Collections.singletonList(getEndpoint(node));
       }
     }
   }
@@ -98,7 +97,7 @@ public class ImportCommand extends RemoteCommand {
   public final void run() {
     logger.info("Importing cluster configuration from config file: {} to nodes: {}", configPropertiesFile, toString(runtimePeers));
 
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
+    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(runtimePeers))) {
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
           .forEach(service -> service.setUpcomingCluster(cluster));

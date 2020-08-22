@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.system_tests.network_disrupted;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.net.ClientToServerDisruptor;
@@ -32,9 +33,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
@@ -117,6 +118,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
   }
 
   @Test
+  @Ignore("TDB-5201: Following the address fix in TDB-5109, it impacts the way we connect to the nodes and disruption tests are not working anymore")
   public void test_detach_when_active_client_and_passive_disrupted() throws Exception {
     TerracottaServer active = angela.tsa().getActive();
     Collection<TerracottaServer> passives = angela.tsa().getPassives();

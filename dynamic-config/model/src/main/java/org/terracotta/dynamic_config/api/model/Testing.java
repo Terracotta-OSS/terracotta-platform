@@ -104,12 +104,12 @@ public class Testing {
       cluster.setUID(C_UIDS[0]);
     }
     rangeClosed(1, cluster.getStripeCount()).forEach(stripeId -> {
-      Stripe stripe = cluster.getStripe(stripeId).get();
+      Stripe stripe = cluster.getStripes().get(stripeId - 1);
       if (stripe.getUID() != null) {
         stripe.setUID(S_UIDS[stripeId]);
       }
       rangeClosed(1, stripe.getNodeCount()).forEach(nodeId -> {
-        final Node node = stripe.getNode(nodeId).get();
+        Node node = stripe.getNodes().get(nodeId - 1);
         if (node.getUID() != null) {
           node.setUID(N_UIDS[stripeId * cluster.getStripeCount() + nodeId]);
         }
@@ -122,12 +122,12 @@ public class Testing {
       cluster.setUID(uid);
     }
     rangeClosed(1, cluster.getStripeCount()).forEach(stripeId -> {
-      Stripe stripe = cluster.getStripe(stripeId).get();
+      Stripe stripe = cluster.getStripes().get(stripeId - 1);
       if (stripe.getUID() != null) {
         stripe.setUID(uid);
       }
       rangeClosed(1, stripe.getNodeCount()).forEach(nodeId -> {
-        final Node node = stripe.getNode(nodeId).get();
+        Node node = stripe.getNodes().get(nodeId - 1);
         if (node.getUID() != null) {
           node.setUID(uid);
         }
@@ -137,12 +137,12 @@ public class Testing {
 
   public static void replaceRequiredNames(Cluster cluster, String name) {
     rangeClosed(1, cluster.getStripeCount()).forEach(stripeId -> {
-      Stripe stripe = cluster.getStripe(stripeId).get();
+      Stripe stripe = cluster.getStripes().get(stripeId - 1);
       if (stripe.getName() != null) {
         stripe.setName(name);
       }
       rangeClosed(1, stripe.getNodeCount()).forEach(nodeId -> {
-        final Node node = stripe.getNode(nodeId).get();
+        Node node = stripe.getNodes().get(nodeId - 1);
         if (node.getName() != null) {
           node.setName(name);
         }
@@ -153,10 +153,10 @@ public class Testing {
   public static void resetRequiredUIDs(Cluster cluster, UID uid) {
     cluster.setUID(uid);
     rangeClosed(1, cluster.getStripeCount()).forEach(stripeId -> {
-      Stripe stripe = cluster.getStripe(stripeId).get();
+      Stripe stripe = cluster.getStripes().get(stripeId - 1);
       stripe.setUID(uid);
       rangeClosed(1, stripe.getNodeCount()).forEach(nodeId -> {
-        final Node node = stripe.getNode(nodeId).get();
+        Node node = stripe.getNodes().get(nodeId - 1);
         node.setUID(uid);
       });
     });
@@ -164,10 +164,10 @@ public class Testing {
 
   public static void resetRequiredNames(Cluster cluster, String name) {
     rangeClosed(1, cluster.getStripeCount()).forEach(stripeId -> {
-      Stripe stripe = cluster.getStripe(stripeId).get();
+      Stripe stripe = cluster.getStripes().get(stripeId - 1);
       stripe.setName(name);
       rangeClosed(1, stripe.getNodeCount()).forEach(nodeId -> {
-        final Node node = stripe.getNode(nodeId).get();
+        Node node = stripe.getNodes().get(nodeId - 1);
         node.setName(name);
       });
     });

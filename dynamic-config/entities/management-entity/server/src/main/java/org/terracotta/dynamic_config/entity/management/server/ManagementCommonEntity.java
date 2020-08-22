@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -100,23 +101,29 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
       eventRegistration = dynamicConfigEventService.register(new DynamicConfigListener() {
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
-          boolean restartRequired = !change.canApplyAtRuntime(topologyService.getRuntimeNodeContext().getStripeId(), topologyService.getRuntimeNodeContext().getNodeName());
+          NodeContext nodeContext = topologyService.getRuntimeNodeContext();
+          boolean restartRequired = !change.canApplyAtRuntime(nodeContext);
           Map<String, String> data = new TreeMap<>();
           data.put("change", change.toString());
           data.put("result", Props.toString(updated.toProperties(false, false, true)));
-
           data.put("operation", change.getOperation().name().toLowerCase());
           data.put("setting", change.getSetting().toString());
           data.put("name", change.getName());
           data.put("value", change.getValue());
           data.put("scope", change.getApplicability().getLevel().name().toLowerCase());
-          data.put("nodeName", change.getApplicability().getNodeName());
-          change.getApplicability().getStripeId().ifPresent(stripeId -> {
-            updated.getStripe(stripeId).ifPresent(stripe -> {
-              data.put("stripeName", stripe.getName());
-            });
-          });
+          data.put("summary", change.getSummary());
+          switch (change.getApplicability().getLevel()) {
+            case CLUSTER:
+              break;
+            case STRIPE:
+              data.put("stripeName", change.getApplicability().getStripe(updated).get().getName());
+              break;
+            case NODE:
+              data.put("stripeName", change.getApplicability().getStripe(updated).get().getName());
+              data.put("nodeName", change.getApplicability().getNode(updated).get().getName());
+              break;
 
+          }
           data.put("appliedAtRuntime", String.valueOf(!restartRequired));
           data.put("restartRequired", String.valueOf(restartRequired));
           String type = "DYNAMIC_CONFIG_" + change.getOperation();
@@ -176,24 +183,26 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         }
 
         @Override
-        public void onNodeRemoval(int stripeId, Node removedNode) {
+        public void onNodeRemoval(UID stripeUID, Node removedNode) {
           Map<String, String> data = new TreeMap<>();
-          data.put("stripeId", String.valueOf(stripeId));
+          data.put("stripeUID", stripeUID.toString());
+          data.put("stripeName", topologyService.getRuntimeNodeContext().getCluster().getStripe(stripeUID).get().getName());
           data.put("nodeName", removedNode.getName());
           data.put("nodeHostname", removedNode.getHostname());
-          data.put("nodeAddress", removedNode.getAddress().toString());
+          data.put("nodeAddress", removedNode.getInternalAddress().toString());
           data.put("nodeInternalAddress", removedNode.getInternalAddress().toString());
           removedNode.getPublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_REMOVED", data));
         }
 
         @Override
-        public void onNodeAddition(int stripeId, Node addedNode) {
+        public void onNodeAddition(UID stripeUID, Node addedNode) {
           Map<String, String> data = new TreeMap<>();
-          data.put("stripeId", String.valueOf(stripeId));
+          data.put("stripeUID", stripeUID.toString());
+          data.put("stripeName", topologyService.getRuntimeNodeContext().getCluster().getStripe(stripeUID).get().getName());
           data.put("nodeName", addedNode.getName());
           data.put("nodeHostname", addedNode.getHostname());
-          data.put("nodeAddress", addedNode.getAddress().toString());
+          data.put("nodeAddress", addedNode.getInternalAddress().toString());
           data.put("nodeInternalAddress", addedNode.getInternalAddress().toString());
           addedNode.getPublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
@@ -202,16 +211,22 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         @Override
         public void onStripeAddition(Stripe addedStripe) {
           Map<String, String> data = new TreeMap<>();
+          data.put("stripeUID", addedStripe.getUID().toString());
+          data.put("stripeName", addedStripe.getName());
+          data.put("nodeUIDs", addedStripe.getNodes().stream().map(Node::getUID).map(UID::toString).collect(Collectors.joining(",")));
           data.put("nodeNames", addedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
-          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getInternalAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_ADDED", data));
         }
 
         @Override
         public void onStripeRemoval(Stripe removedStripe) {
           Map<String, String> data = new TreeMap<>();
+          data.put("stripeUID", removedStripe.getUID().toString());
+          data.put("stripeName", removedStripe.getName());
+          data.put("nodeUIDs", removedStripe.getNodes().stream().map(Node::getUID).map(UID::toString).collect(Collectors.joining(",")));
           data.put("nodeNames", removedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
-          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getInternalAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_REMOVED", data));
         }
       });

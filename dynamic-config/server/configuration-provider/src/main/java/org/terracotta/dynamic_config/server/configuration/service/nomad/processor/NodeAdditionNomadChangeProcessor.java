@@ -30,7 +30,6 @@ import org.terracotta.nomad.server.NomadException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
-import java.net.InetSocketAddress;
 import java.util.stream.Stream;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
@@ -70,13 +69,13 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
   @Override
   public final void apply(NodeAdditionNomadChange change) throws NomadException {
     Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
-    if (runtime.containsNode(change.getNodeAddress())) {
+    if (runtime.containsNode(change.getNode().getUID())) {
       return;
     }
 
     try {
       Node node = change.getNode();
-      LOGGER.info("Adding node: {} to stripe ID: {}", node.getName(), change.getStripeId());
+      LOGGER.info("Adding node: {} to stripe: {}", node.getName(), runtime.getStripe(change.getStripeUID()).get().getName());
       LOGGER.debug("Calling mBean {}#{}", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME);
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
@@ -85,7 +84,7 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
           new String[]{String.class.getName(), int.class.getName(), int.class.getName()}
       );
 
-      dynamicConfigEventFiring.onNodeAddition(change.getStripeId(), node);
+      dynamicConfigEventFiring.onNodeAddition(change.getStripeUID(), node);
     } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

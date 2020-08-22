@@ -20,16 +20,15 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
-import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.PropertyHolder;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -55,8 +54,8 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     Cluster updatedCluster = originalCluster.clone();
 
     // will keep track of the targeted nodes for the changes of a node setting
-    Collection<InetSocketAddress> missingTargetedNodes = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
-    Collection<InetSocketAddress> nodesRequiringRestart = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+    Collection<String> missingTargetedNodes = new TreeSet<>();
+    Collection<String> nodesRequiringRestart = new TreeSet<>();
 
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
@@ -67,13 +66,12 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       // Note: this validation is only for node-specific settings
       if (c.getSetting().isScope(NODE)) {
         targets.stream()
-            .map(Node.class::cast)
-            .map(Node::getAddress)
+            .map(PropertyHolder::getName)
             .filter(originalCluster::containsNode)
-            .forEach(addr -> {
-              missingTargetedNodes.add(addr);
+            .forEach(name -> {
+              missingTargetedNodes.add(name);
               if (c.getSetting().requires(NODE_RESTART)) {
-                nodesRequiringRestart.add(addr);
+                nodesRequiringRestart.add(name);
               }
             });
       }
@@ -82,7 +80,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
     // get the current state of the nodes
     // this call can take some time and we can have some timeout
-    Map<InetSocketAddress, LogicalServerState> onlineNodes = findOnlineRuntimePeers(node);
+    Map<Endpoint, LogicalServerState> onlineNodes = findOnlineRuntimePeers(node);
     logger.debug("Online nodes: {}", onlineNodes);
 
     boolean allOnlineNodesActivated = areAllNodesActivated(onlineNodes.keySet());
@@ -91,7 +89,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     }
 
     // ensure that the nodes targeted by the set or unset command in the namespaces are all online so that they can validate the change
-    missingTargetedNodes.removeAll(onlineNodes.keySet());
+    onlineNodes.keySet().stream().map(Endpoint::getNodeName).forEach(missingTargetedNodes::remove);
     if (!missingTargetedNodes.isEmpty()) {
       throw new IllegalStateException("Some nodes that are targeted by the change are not reachable and thus cannot be validated. " +
           "Please ensure these nodes are online, or remove them from the request: " + toString(missingTargetedNodes));
@@ -133,7 +131,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     } else {
       // cluster is not active, we just need to replace the topology
       logger.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodes.keySet()));
-      try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(onlineNodes.keySet())) {
+      try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(onlineNodes.keySet()))) {
         dynamicConfigServices(diagnosticServices)
             .map(Tuple2::getT2)
             .forEach(dynamicConfigService -> dynamicConfigService.setUpcomingCluster(updatedCluster));

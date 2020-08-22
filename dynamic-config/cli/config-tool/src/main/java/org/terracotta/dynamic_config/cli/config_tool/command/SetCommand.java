@@ -18,11 +18,10 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.cli.command.Usage;
 
-import java.net.InetSocketAddress;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -69,7 +68,7 @@ public class SetCommand extends ConfigurationMutationCommand {
   @Override
   public void run() {
     if (licenseFile != null) {
-      Collection<InetSocketAddress> peers = findRuntimePeers(node);
+      Collection<Node.Endpoint> peers = findRuntimePeers(node);
       logger.debug("Importing license: {} on nodes: {}", licenseFile, toString(peers));
       upgradeLicense(peers, licenseFile);
     }

@@ -79,7 +79,7 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     // try to attach this node to the cluster
     assertThat(
         () -> invokeConfigTool("attach", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)),
-        exceptionMatcher("Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes"));
+        exceptionMatcher("is waiting to be restarted to apply some pending changes. You can run the command with the force option to force the commit, but at the risk of breaking this cluster configuration consistency. The newly added node will be restarted, but not the existing ones."));
 
     // try forcing the attach
     assertThat(invokeConfigTool("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));

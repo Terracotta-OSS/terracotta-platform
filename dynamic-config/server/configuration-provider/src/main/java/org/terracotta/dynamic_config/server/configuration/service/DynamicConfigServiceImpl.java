@@ -26,6 +26,7 @@ import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
@@ -176,7 +177,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public void onSettingChanged(SettingNomadChange change, Cluster updated) {
-    if (change.canApplyAtRuntime(runtimeNodeContext.getStripeId(), runtimeNodeContext.getNodeName())) {
+    if (change.canApplyAtRuntime(runtimeNodeContext)) {
       LOGGER.info("Configuration change: {} applied at runtime", change.getSummary());
     } else {
       LOGGER.info("Configuration change: {} will be applied after restart", change.getSummary());
@@ -189,23 +190,23 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void onNodeRemoval(int stripeId, Node removedNode) {
-    LOGGER.info("Removed node: {} from stripe ID: {}", removedNode.getAddress(), stripeId);
+  public void onNodeRemoval(UID stripeUID, Node removedNode) {
+    LOGGER.info("Removed node: {} from stripe: {}", removedNode.getName(), runtimeNodeContext.getCluster().getStripe(stripeUID).get().getName());
   }
 
   @Override
-  public void onNodeAddition(int stripeId, Node addedNode) {
-    LOGGER.info("Added node:{} to stripe ID: {}", addedNode.getAddress(), stripeId);
+  public void onNodeAddition(UID stripeUID, Node addedNode) {
+    LOGGER.info("Added node: {} to stripe: {}", addedNode.getName(), runtimeNodeContext.getCluster().getStripe(stripeUID).get().getName());
   }
 
   @Override
   public void onStripeAddition(Stripe addedStripe) {
-    LOGGER.info("Added stripe:{} to cluster: {}", addedStripe.toShapeString(), runtimeNodeContext.getCluster().toShapeString());
+    LOGGER.info("Added stripe: {} to cluster: {}", addedStripe.toShapeString(), runtimeNodeContext.getCluster().toShapeString());
   }
 
   @Override
   public void onStripeRemoval(Stripe removedStripe) {
-    LOGGER.info("Removed stripe:{} from cluster: {}", removedStripe.toShapeString(), runtimeNodeContext.getCluster().toShapeString());
+    LOGGER.info("Removed stripe: {} from cluster: {}", removedStripe.toShapeString(), runtimeNodeContext.getCluster().toShapeString());
   }
 
   @Override
@@ -246,7 +247,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
           upcomingNodeContext = upcomingNodeContext.withCluster(upcomingCluster).orElseGet(upcomingNodeContext::alone);
           // if the change can be applied at runtime, it was previously done in the config change handler.
           // so update also the runtime topology there
-          if (nomadChange.canApplyAtRuntime(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName())) {
+          if (nomadChange.canApplyAtRuntime(upcomingNodeContext)) {
             Cluster runtimeCluster = nomadChange.apply(runtimeNodeContext.getCluster());
             runtimeNodeContext = runtimeNodeContext.withCluster(runtimeCluster).orElseGet(runtimeNodeContext::alone);
           }
@@ -291,24 +292,24 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public synchronized void setUpcomingCluster(Cluster updatedCluster) {
     if (isActivated()) {
-      throw new IllegalStateException("Use Nomad instead to change the topology of activated node: " + runtimeNodeContext.getNode().getAddress());
+      throw new IllegalStateException("Use Nomad instead to change the topology of activated node: " + runtimeNodeContext.getNode().getName());
     }
 
     requireNonNull(updatedCluster);
 
     new ClusterValidator(updatedCluster).validate();
 
-    Node oldMe = upcomingNodeContext.getNode();
     Node newMe = findMe(updatedCluster);
 
     if (newMe != null) {
       // we have updated the topology and I am still part of this cluster
-      LOGGER.info("Set upcoming topology to: {}", updatedCluster.toShapeString());
-      this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getAddress());
+      LOGGER.info("Set upcoming topology to:\n{}", updatedCluster);
+      this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getUID());
     } else {
       // We have updated the topology and I am not part anymore of the cluster
       // So we just reset the cluster object so that this node is alone
-      LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getName(), oldMe.getAddress(), updatedCluster.toShapeString());
+      Node oldMe = upcomingNodeContext.getNode();
+      LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getName(), oldMe.getUID(), updatedCluster.toShapeString());
       this.upcomingNodeContext = this.upcomingNodeContext.withOnlyNode(oldMe);
     }
 
@@ -328,7 +329,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (findMe(maybeUpdatedCluster) == null) {
       throw new IllegalArgumentException(String.format(
           "No match found for node: %s in cluster topology: %s",
-          upcomingNodeContext.getNodeName(),
+          upcomingNodeContext.getNodeUID(),
           maybeUpdatedCluster
       ));
     }
@@ -337,7 +338,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     this.installLicense(licenseContent);
 
     LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster().toShapeString());
-    nomadServerManager.upgradeForWrite(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName());
+    nomadServerManager.upgradeForWrite(upcomingNodeContext.getNodeUID());
     LOGGER.debug("Setting nomad writable successful");
 
     clusterActivated = true;
@@ -456,14 +457,20 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
    * <p>
    * - We cannot use the node hostname or port only, since they might have changed through a set command.
    * - We cannot use the node name and stripe ID only, since the stripe ID can have changed in the new cluster with the attach/detach commands
+   * - Name could change following a set command when un-configured
    * <p>
    * So we try to find the best match we can...
    */
   private synchronized Node findMe(Cluster updatedCluster) {
     final Node me = upcomingNodeContext.getNode();
-    return updatedCluster.getNode(me.getInternalAddress()) // important to use the internal address
-        .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getName())
-            .orElse(null));
+    for (Node node : updatedCluster.getNodes()) {
+      if(node.getUID().equals(me.getUID())
+          || node.getInternalAddress().equals(me.getInternalAddress())
+          || node.getName().equals(me.getName())) {
+        return node;
+      }
+    }
+    return null;
   }
 
   private void runAfterDelay(Duration delayInSeconds, Runnable runnable) {
