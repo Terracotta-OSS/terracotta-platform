@@ -407,6 +407,10 @@ public class Cluster implements Cloneable, PropertyHolder {
     return getStripes().stream().filter(s -> s.containsNode(nodeUID)).findAny();
   }
 
+  public Optional<Stripe> getStripeByNodeName(String nodeName) {
+    return getStripes().stream().filter(s -> s.containsNode(nodeName)).findAny();
+  }
+
   public int getNodeCount() {
     return stripes.stream().mapToInt(Stripe::getNodeCount).sum();
   }
