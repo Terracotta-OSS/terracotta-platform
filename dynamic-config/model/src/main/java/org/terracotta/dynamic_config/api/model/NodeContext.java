@@ -96,7 +96,7 @@ public class NodeContext implements Cloneable {
    * <p>
    * Parameter must not be null.
    * <p>
-   * If the new cluster contains this node identifier,
+   * If the new cluster contains this node UID or name or address,
    * then a new node context is returned targeting the same node in the new cluster.
    * <p>
    * Otherwise, an empty optional is returned
@@ -111,9 +111,17 @@ public class NodeContext implements Cloneable {
     // If the updated topology does not contain the node anymore (removal ?) and a base config was there (topology change)
     // then we isolate the node in its own cluster
 
+    // find by UID
     return updated.containsNode(nodeUID) ?
         Optional.of(new NodeContext(updated, nodeUID)) :
-        Optional.empty();
+        // find by name
+        updated.containsNode(node.getName()) ?
+            Optional.of(new NodeContext(updated, updated.getNodeByName(node.getName()).get().getUID())) :
+            // find by internal address (which never changes)
+            updated.getNodes().stream()
+                .filter(n -> n.getInternalAddress().equals(node.getInternalAddress()))
+                .map(n -> new NodeContext(updated, n.getUID()))
+                .findAny();
   }
 
   /**

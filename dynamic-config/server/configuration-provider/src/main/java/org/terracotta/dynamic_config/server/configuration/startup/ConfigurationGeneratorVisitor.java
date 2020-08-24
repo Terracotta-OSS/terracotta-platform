@@ -20,7 +20,9 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -48,7 +50,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -141,15 +142,8 @@ public class ConfigurationGeneratorVisitor {
     // So this special case of starting a server will require to rewrite the generated UIDs when parsing the CLI or config file,
     // and this generation will be done with a controlled random.
     // Note: UIDs cannot be given from the CLI, they are system generated settings.
-    Cluster cluster = nodeContext.getCluster();
-    Random random = new Random(clusterName.hashCode());
-    cluster.setUID(cluster.newUID(random));
-    cluster.getStripes().forEach(stripe -> {
-      stripe.setUID(cluster.newUID(random));
-      stripe.getNodes().forEach(node -> {
-        node.setUID(cluster.newUID(random));
-      });
-    });
+
+    nodeContext = nodeContext.withCluster(new FormatUpgradeNomadChange(Version.V1, Version.CURRENT).apply(nodeContext.getCluster())).get();
 
     String nodeName = nodeContext.getNode().getName();
     ServerEnv.getServer().console("Starting node: {} in cluster: {}", nodeName, clusterName);
