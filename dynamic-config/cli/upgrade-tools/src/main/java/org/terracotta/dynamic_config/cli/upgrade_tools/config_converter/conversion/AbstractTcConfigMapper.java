@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.service.NameGenerator;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ConfigConversionException;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ErrorCode;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ErrorParamKey;
@@ -456,9 +457,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
       Node doc = entry.getValue();
       try {
         String xml = XmlUtility.getPrettyPrintableXmlString(doc);
-        // set stripe names to match what the user is used to see currently
         Cluster stripe = getStripe(xml);
-        stripe.getSingleStripe().get().setName("stripe[" + stripes.size() + "]");
         stripes.add(stripe);
       } catch (TransformerException e) {
         throw new RuntimeException(e);
@@ -475,6 +474,8 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
       stripe.setUID(cluster.newUID());
       stripe.getNodes().forEach(node -> node.setUID(cluster.newUID()));
     });
+
+    NameGenerator.assignFriendlyNames(cluster);
 
     return cluster;
   }

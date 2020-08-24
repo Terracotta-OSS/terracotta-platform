@@ -73,6 +73,16 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  public void test_auto_activation_success_for_1x2_cluster_with_default_stripe_name() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x2_default_stripe_name.properties");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/1-1");
+    waitForActive(1, 1);
+
+    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--config-dir", "config/stripe1/1-2");
+    waitForPassive(1, 2);
+  }
+
+  @Test
   public void test_auto_activation_success_for_1x2_cluster_usingNodeName() {
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
     startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", "config/stripe1/1-1");

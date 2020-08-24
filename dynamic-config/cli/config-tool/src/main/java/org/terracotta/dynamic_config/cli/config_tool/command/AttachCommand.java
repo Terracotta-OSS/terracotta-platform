@@ -29,6 +29,7 @@ import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterConfigMismatchException;
 import org.terracotta.dynamic_config.api.service.MutualClusterValidator;
+import org.terracotta.dynamic_config.api.service.NameGenerator;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
@@ -171,6 +172,9 @@ public class AttachCommand extends TopologyCommand {
         // change the node UID
         addedNode.setUID(cluster.newUID());
 
+        if (destinationClusterActivated) {
+          NameGenerator.assignFriendlyNodeName(cluster, addedNode.getUID());
+        }
         break;
       }
 
@@ -185,6 +189,9 @@ public class AttachCommand extends TopologyCommand {
         addedStripe.setUID(cluster.newUID());
         addedStripe.getNodes().forEach(n -> n.setUID(cluster.newUID()));
 
+        if (destinationClusterActivated) {
+          NameGenerator.assignFriendlyNames(cluster, addedStripe.getUID());
+        } 
         break;
       }
 

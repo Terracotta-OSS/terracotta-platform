@@ -17,11 +17,10 @@ package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.api.service.NameGenerator;
 
-import java.util.List;
 import java.util.Random;
 
 import static java.util.Objects.requireNonNull;
@@ -74,13 +73,9 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
         });
       });
 
-      // for stripe names, we will migrate the names has M&M was used to see them
-      List<Stripe> stripes = upgraded.getStripes();
-      for (int i = 0; i < stripes.size(); i++) {
-        if (stripes.get(i).getName() == null) {
-          stripes.get(i).setName("stripe[" + i + "]");
-        }
-      }
+      // Generate only stripe names when migrating from V1 to V2.
+      // Existing node names should not be touched
+      NameGenerator.assignFriendlyStripeNames(upgraded, new Random(clusterName.hashCode()));
     }
 
     new ClusterValidator(upgraded).validate();
