@@ -146,14 +146,14 @@ public class DetachCommand extends TopologyCommand {
     switch (operationType) {
 
       case NODE: {
-        logger.info("Detaching node: {} from cluster: {}", source, destinationCluster.getName());
+        logger.info("Detaching node: {} from cluster: {}", source.getName(), destinationCluster.getName());
         cluster.removeNode(source.getUID());
         break;
       }
 
       case STRIPE: {
         Stripe stripe = cluster.getStripe(source.getUID()).get();
-        logger.info("Detaching stripe: {} from cluster: {}", source, destinationCluster.getName());
+        logger.info("Detaching stripe: {} from cluster: {}", source.getName(), destinationCluster.getName());
         cluster.removeStripe(stripe);
         break;
       }
