@@ -318,13 +318,14 @@ public class Configuration {
       throw new AssertionError("Programmatic mistake: tried to validate operation " + operation + " when " + clusterState);
     }
     if (!setting.allows(operation)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation);
+      throw new IllegalArgumentException("The command '" + operation + "' cannot be applied on setting '" + setting + "'");
     }
     if (!setting.allows(clusterState, operation)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " when " + clusterState);
+      throw new IllegalArgumentException("The command '" + operation + "' cannot be applied on setting '" + setting + "' when " + clusterState);
+
     }
     if (!setting.allows(clusterState, operation, level)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " at " + level + " level when " + clusterState);
+      throw new IllegalArgumentException("The command '" + operation + "' cannot be applied on setting '" + setting + "' at " + level + " level when " + clusterState);
     }
     switch (operation) {
       case GET:

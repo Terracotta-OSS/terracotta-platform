@@ -144,4 +144,20 @@ public class LockConfigIT extends DynamicConfigIT {
     waitForActive(1);
     waitForNPassives(1, 1);
   }
+
+  @Test
+  public void testSetLockContext() throws Exception {
+    activate();
+    assertThat(
+        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "lock-context=abc"),
+        exceptionMatcher("Error: Invalid input: 'abc'. Expected format <token>;<owner_name>;<owner_tags>"));
+  }
+
+  @Test
+  public void testGetLockContext() throws Exception {
+    activate();
+    assertThat(
+        () -> invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "lock-context"),
+        exceptionMatcher("The command 'get' cannot be applied on setting 'lock-context'"));
+  }
 }

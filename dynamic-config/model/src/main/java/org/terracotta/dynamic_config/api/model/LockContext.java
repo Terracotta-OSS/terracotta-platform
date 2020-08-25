@@ -44,6 +44,9 @@ public class LockContext {
 
   public static LockContext from(String contextStr) {
     String[] substrings = contextStr.split(DELIMITER);
+    if (substrings.length != 3) {
+      throw new IllegalArgumentException("Invalid input: '" + contextStr + "'. Expected format <token>;<owner_name>;<owner_tags>");
+    }
 
     return new LockContext(substrings[0], substrings[1], substrings[2]);
   }
