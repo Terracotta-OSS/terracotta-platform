@@ -16,13 +16,13 @@
 package org.terracotta.dynamic_config.system_tests.network_disrupted;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.net.ClientToServerDisruptor;
 import org.terracotta.angela.client.net.ServerToServerDisruptor;
 import org.terracotta.angela.client.net.SplitCluster;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
+import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.equalTo;
@@ -136,7 +137,6 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   }
 
   @Test
-  @Ignore("TDB-5201: Following the address fix in TDB-5109, it impacts the way we connect to the nodes and disruption tests are not working anymore")
   public void test_attach_when_active_client_and_passives_disrupted() throws Exception {
     startNode(1, 4);
     waitForDiagnostic(1, 4);
@@ -149,6 +149,8 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
     int passiveId2 = findPassives(1)[1];
+    Map<ServerSymbolicName, Integer> map = angela.tsa().updateToProxiedPorts();
+    TerracottaServer passive = passives.iterator().next();
     //server to server disruption with active at one end and passives at other end.
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
 
@@ -163,7 +165,8 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
         String publicPort = "stripe.1.node.1.public-port=" + getNodePort(1, 4);
         assertThat(invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 4), "-c",
             publicHostName, "-c", publicPort), is(successful()));
-        assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 4)),
+        int publicPassivePort = map.get(passive.getServerSymbolicName());
+        assertThat(invokeConfigTool("attach", "-d", "localhost:" + publicPassivePort, "-s", "localhost:" + getNodePort(1, 4)),
             is(successful()));
         clientToServerDisruptor.undisrupt(Collections.singletonList(active.getServerSymbolicName()));
       }
