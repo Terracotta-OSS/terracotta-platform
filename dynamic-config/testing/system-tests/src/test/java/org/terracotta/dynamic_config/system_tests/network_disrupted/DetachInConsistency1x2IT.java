@@ -16,13 +16,13 @@
 package org.terracotta.dynamic_config.system_tests.network_disrupted;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.net.ClientToServerDisruptor;
 import org.terracotta.angela.client.net.ServerToServerDisruptor;
 import org.terracotta.angela.client.net.SplitCluster;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
+import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -30,6 +30,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -106,12 +107,12 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  @Ignore("TDB-5201: Following the address fix in TDB-5109, it impacts the way we connect to the nodes and disruption tests are not working anymore")
   public void test_detach_when_active_passive_disrupted_client_can_see_active() throws Exception {
     TerracottaServer active = angela.tsa().getActive();
     TerracottaServer passive = angela.tsa().getPassive();
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passive);
+    Map<ServerSymbolicName, Integer> map = angela.tsa().updateToProxiedPorts();
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
@@ -124,7 +125,8 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
       try (ClientToServerDisruptor clientToServerDisruptor = angela.tsa().disruptionController().newClientToServerDisruptor()) {
         clientToServerDisruptor.disrupt(Collections.singletonList(passive.getServerSymbolicName()));
-        assertThat(invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        int publicPortForActive = map.get(active.getServerSymbolicName());
+        assertThat(invokeConfigTool("detach", "-f", "-d", "localhost:" + publicPortForActive, "-s", "localhost:" + getNodePort(1, passiveId)),
             is(successful()));
         clientToServerDisruptor.undisrupt(Collections.singletonList(passive.getServerSymbolicName()));
       }

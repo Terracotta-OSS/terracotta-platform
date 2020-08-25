@@ -16,13 +16,13 @@
 package org.terracotta.dynamic_config.system_tests.network_disrupted;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.net.ClientToServerDisruptor;
 import org.terracotta.angela.client.net.ServerToServerDisruptor;
 import org.terracotta.angela.client.net.SplitCluster;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
+import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.equalTo;
@@ -118,7 +119,6 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
   }
 
   @Test
-  @Ignore("TDB-5201: Following the address fix in TDB-5109, it impacts the way we connect to the nodes and disruption tests are not working anymore")
   public void test_detach_when_active_client_and_passive_disrupted() throws Exception {
     TerracottaServer active = angela.tsa().getActive();
     Collection<TerracottaServer> passives = angela.tsa().getPassives();
@@ -127,11 +127,11 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     TerracottaServer passive2 = iterator.next();
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passives);
+    Map<ServerSymbolicName, Integer> map = angela.tsa().updateToProxiedPorts();
     int oldActiveId = findActive(1).getAsInt();
     int passiveId1 = findPassives(1)[0];
     int passiveId2 = findPassives(1)[1];
-    int newActiveId = 0;
-    int newPassiveId = 0;
+    int newActiveId;
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
 
       //start partition
@@ -141,29 +141,34 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
       waitForServerBlocked(active);
 
       TerracottaServer newActive = isActive(passive1, passive2);
+      TerracottaServer newPassive;
       assertThat(newActive, is(notNullValue()));
       if (newActive == passive1) {
         newActiveId = passiveId1;
-        newPassiveId = passiveId2;
+        newPassive = passive2;
       } else {
         newActiveId = passiveId2;
-        newPassiveId = passiveId1;
+        newPassive = passive1;
       }
       try (ClientToServerDisruptor clientToServerDisruptor = angela.tsa().disruptionController().newClientToServerDisruptor()) {
         clientToServerDisruptor.disrupt(Collections.singletonList(active.getServerSymbolicName()));
-        assertThat(invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, newActiveId), "-s", "localhost:" + getNodePort(1, newPassiveId)),
-            is(successful()));
+        int newActivePublicPort = map.get(newActive.getServerSymbolicName());
+        int newPassivePublicPort = map.get(newPassive.getServerSymbolicName());
+        assertThat(() -> invokeConfigTool("detach", "-f", "-d", "localhost:" + newActivePublicPort, "-s", "localhost:" + newPassivePublicPort),
+            exceptionMatcher("Nomad system is currently not accessible."));
         clientToServerDisruptor.undisrupt(Collections.singletonList(active.getServerSymbolicName()));
       }
       //stop partition
       disruptor.undisrupt();
+      stopNode(1, oldActiveId);
+      startNode(1, oldActiveId);
       waitForPassive(1, oldActiveId);
     }
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, oldActiveId)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, oldActiveId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, oldActiveId)).getNodeCount(), is(equalTo(3)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, oldActiveId)).getNodeCount(), is(equalTo(3)));
 
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, newActiveId)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, newActiveId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, newActiveId)).getNodeCount(), is(equalTo(3)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, newActiveId)).getNodeCount(), is(equalTo(3)));
 
     withTopologyService(1, oldActiveId, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, newActiveId, topologyService -> assertTrue(topologyService.isActivated()));
