@@ -2,7 +2,7 @@
   "cluster": {
     "stripes": [
       {
-        "name": "Pulsar",
+        "name": "Dog",
         "nodes": [
           {
             "dataDirs": {

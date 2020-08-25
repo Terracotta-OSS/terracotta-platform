@@ -92,7 +92,7 @@ public class BackwardCompatibilityTest {
       // check topology
       NodeContext topology = nomadServer.discover().getLatestChange().getResult();
       // Note: // we are controlling the random seed for the stripe name generation during upgrade to it will always be this one
-      assertThat(topology.getCluster().getSingleStripe().get().getName(), is(equalTo("Pulsar")));
+      assertThat(topology.getCluster().getSingleStripe().get().getName(), is(equalTo("Dog")));
 
       // subsequent calls are outputting the same result always after an upgrade
       assertThat(nomadServer.discover().getLatestChange().getResult(), is(equalTo(topology)));
