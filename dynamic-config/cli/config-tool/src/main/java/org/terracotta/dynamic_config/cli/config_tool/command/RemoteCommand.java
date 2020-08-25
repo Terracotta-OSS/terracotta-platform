@@ -29,13 +29,17 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
-import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.LockContext;
+import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
+import org.terracotta.dynamic_config.cli.config_tool.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartProgress;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
@@ -62,6 +66,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -233,17 +238,47 @@ public abstract class RemoteCommand extends Command {
    * <p>
    * Nodes are expected to be online.
    */
-  protected final void runConfigurationChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, MultiSettingNomadChange change) {
+  protected final void runConfigurationChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange change) {
     logger.trace("runConfigurationChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
     failures.reThrowReasons();
   }
 
+  protected final String lock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes,
+                              String ownerName, String tags) {
+    return lock(destinationCluster, onlineNodes, new LockContext(UUID.randomUUID().toString(), ownerName, tags));
+  }
+
+  protected final String lock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, LockContext lockContext) {
+    logger.info("Trying to lock the config...");
+    runConfigurationChange(destinationCluster, onlineNodes, new LockConfigNomadChange(lockContext));
+    logger.info("Locked the config.");
+    this.nomadManager = new LockAwareNomadManager<>(lockContext.getToken(), nomadManager);
+    return lockContext.getToken();
+  }
+
+  protected final void unlock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes) {
+    unlockInternal(destinationCluster, onlineNodes, false);
+  }
+
+  protected final void forceUnlock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes) {
+    unlockInternal(destinationCluster, onlineNodes, true);
+  }
+
+  private void unlockInternal(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, boolean force) {
+    logger.info("Trying to unlock the config...");
+    runConfigurationChange(destinationCluster, onlineNodes, new UnlockConfigNomadChange(force));
+    logger.info("Unlocked the config.");
+    if (nomadManager instanceof LockAwareNomadManager) {
+      this.nomadManager = ((LockAwareNomadManager<NodeContext>)nomadManager).getUnderlying();
+    }
+  }
+
   protected final void runTopologyChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, TopologyNomadChange change) {
     logger.trace("runTopologyChange({}, {})", onlineNodes, change);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
-    nomadManager.runTopologyChange(destinationCluster, onlineNodes, change, failures);
+    nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
     failures.reThrowReasons();
   }
 

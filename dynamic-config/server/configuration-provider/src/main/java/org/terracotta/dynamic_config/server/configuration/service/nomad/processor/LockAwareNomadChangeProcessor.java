@@ -19,13 +19,14 @@ import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
 import static java.lang.String.format;
 
 public class LockAwareNomadChangeProcessor implements NomadChangeProcessor<DynamicConfigNomadChange> {
-  private static final String REJECT_MESSAGE = "changes are not allowed as config is locked by '%s (%s)'";
+  private static final String REJECT_MESSAGE = "changes are not allowed as config is locked by '%s'";
 
   private final NomadChangeProcessor<DynamicConfigNomadChange> next;
 
@@ -47,16 +48,23 @@ public class LockAwareNomadChangeProcessor implements NomadChangeProcessor<Dynam
         if (lockContext != null) {
           LockAwareDynamicConfigNomadChange lockAwareDynamicConfigNomadChange = (LockAwareDynamicConfigNomadChange)change;
           String tokenFromClient = lockAwareDynamicConfigNomadChange.getLockToken();
-          if (!lockContext.getToken().equals(tokenFromClient)) {
-            throw new NomadException(format(REJECT_MESSAGE, lockContext.getOwnerName(), lockContext.getOwnerTags()));
+          if (!lockContext.getToken().equals(tokenFromClient) && notForced(change)) {
+            throw new NomadException(format(REJECT_MESSAGE, lockContext.ownerInfo()));
           }
         }
       } else {
         if (lockContext != null) {
-          throw new NomadException(format(REJECT_MESSAGE, lockContext.getOwnerName(), lockContext.getOwnerTags()));
+          if (notForced(change)) {
+            throw new NomadException(format(REJECT_MESSAGE, lockContext.ownerInfo()));
+          }
         }
       }
     }
+  }
+
+  private static boolean notForced(DynamicConfigNomadChange change) {
+    DynamicConfigNomadChange unwrapped = change.unwrap();
+    return !(unwrapped instanceof UnlockConfigNomadChange) || !((UnlockConfigNomadChange)unwrapped).isForced();
   }
 
   @Override

@@ -15,23 +15,51 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.nomad;
 
-import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
-import org.terracotta.dynamic_config.api.model.UID;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
+import org.terracotta.diagnostic.model.LogicalServerState;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
-import org.terracotta.nomad.NomadEnvironment;
-import org.terracotta.nomad.entity.client.NomadEntityProvider;
+import org.terracotta.nomad.client.change.ChangeResultReceiver;
+import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
+import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
+import org.terracotta.nomad.server.ChangeRequestState;
 
-public class LockAwareNomadManager<T> extends NomadManager<T> {
+import java.util.Collection;
+import java.util.Map;
+
+public class LockAwareNomadManager<T> implements NomadManager<T> {
   private final String lockToken;
+  private final NomadManager<T> underlying;
 
-  public LockAwareNomadManager(NomadEnvironment environment, MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider, NomadEntityProvider nomadEntityProvider, String lockToken) {
-    super(environment, multiDiagnosticServiceProvider, nomadEntityProvider);
+  public LockAwareNomadManager(String lockToken, NomadManager<T> underlying) {
     this.lockToken = lockToken;
+    this.underlying = underlying;
   }
 
   @Override
-  protected DynamicConfigNomadChange wrapNomadChange(DynamicConfigNomadChange change) {
-    return new LockAwareDynamicConfigNomadChange(lockToken, change);
+  public void runConfigurationDiscovery(Map<Endpoint, LogicalServerState> nodes, DiscoverResultsReceiver<T> results) {
+    this.underlying.runConfigurationDiscovery(nodes, results);
+  }
+
+  @Override
+  public void runClusterActivation(Collection<Endpoint> nodes, Cluster cluster, ChangeResultReceiver<T> results) {
+    this.underlying.runClusterActivation(nodes, cluster, results);
+  }
+
+  @Override
+  public void runConfigurationChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes,
+                                     DynamicConfigNomadChange changes, ChangeResultReceiver<T> results) {
+    this.underlying.runConfigurationChange(destinationCluster, onlineNodes, new LockAwareDynamicConfigNomadChange(lockToken, changes), results);
+  }
+
+  @Override
+  public void runConfigurationRepair(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
+    this.underlying.runConfigurationRepair(consistencyAnalyzer, results, forcedState);
+  }
+
+  public NomadManager<T> getUnderlying() {
+    return underlying;
   }
 }

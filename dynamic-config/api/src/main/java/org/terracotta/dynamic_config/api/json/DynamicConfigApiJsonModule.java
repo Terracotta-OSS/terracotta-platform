@@ -25,6 +25,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.terracotta.common.struct.json.StructJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.Scope;
@@ -38,12 +39,14 @@ import org.terracotta.dynamic_config.api.model.nomad.DefaultApplicability;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
 import org.terracotta.inet.json.InetJsonModule;
 import org.terracotta.json.TerracottaJsonModule;
 import org.terracotta.nomad.json.NomadJsonModule;
@@ -71,7 +74,9 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
         new NamedType(StripeAdditionNomadChange.class, "StripeAdditionNomadChange"),
         new NamedType(StripeRemovalNomadChange.class, "StripeRemovalNomadChange"),
         new NamedType(LockAwareDynamicConfigNomadChange.class, "LockAwareDynamicConfigNomadChange"),
-        new NamedType(FormatUpgradeNomadChange.class, "FormatUpgradeNomadChange")
+        new NamedType(FormatUpgradeNomadChange.class, "FormatUpgradeNomadChange"),
+        new NamedType(LockConfigNomadChange.class, "LockConfigNomadChange"),
+        new NamedType(UnlockConfigNomadChange.class, "UnlockConfigNomadChange")
     );
 
     setAbstractTypes(new SimpleAbstractTypeResolver()
@@ -87,6 +92,8 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     setMixInAnnotation(StripeRemovalNomadChange.class, StripeRemovalNomadChangeMixin.class);
     setMixInAnnotation(LockAwareDynamicConfigNomadChange.class, LockAwareDynamicConfigNomadChangeMixIn.class);
     setMixInAnnotation(FormatUpgradeNomadChange.class, FormatUpgradeNomadChangeMixIn.class);
+    setMixInAnnotation(LockConfigNomadChange.class, LockConfigNomadChangeMixIn.class);
+    setMixInAnnotation(UnlockConfigNomadChange.class, UnlockConfigNomadChangeMixIn.class);
   }
 
   @Override
@@ -181,6 +188,20 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     public FormatUpgradeNomadChangeMixIn(@JsonProperty(value = "from", required = true) Version from,
                                          @JsonProperty(value = "to", required = true) Version to) {
       super(from, to);
+    }
+  }
+
+  public static class LockConfigNomadChangeMixIn extends LockConfigNomadChange {
+    @JsonCreator
+    public LockConfigNomadChangeMixIn(@JsonProperty(value = "lockContext", required = true) LockContext lockContext) {
+      super(lockContext);
+    }
+  }
+
+  public static class UnlockConfigNomadChangeMixIn extends UnlockConfigNomadChange {
+    @JsonCreator
+    public UnlockConfigNomadChangeMixIn(@JsonProperty(value = "forced", required = true) boolean forced) {
+      super(forced);
     }
   }
 }

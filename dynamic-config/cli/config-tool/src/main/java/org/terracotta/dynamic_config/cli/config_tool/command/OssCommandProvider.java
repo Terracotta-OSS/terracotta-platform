@@ -35,6 +35,8 @@ public class OssCommandProvider implements CommandProvider {
     commands.add(new DiagnosticCommand());
     commands.add(new RepairCommand());
     commands.add(new LogCommand());
+    commands.add(new LockConfigCommand());
+    commands.add(new UnlockConfigCommand());
     return commands;
   }
 }

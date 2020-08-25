@@ -19,7 +19,9 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
@@ -35,6 +37,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeSet;
 
+import static java.lang.String.format;
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
@@ -213,10 +216,10 @@ public class DiagnosticCommand extends RemoteCommand {
     return sorted;
   }
 
-  private static String meaningOf(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
+  private String meaningOf(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
     switch (consistencyAnalyzer.getGlobalState()) {
       case ACCEPTING:
-        return "The cluster configuration is healthy. New configuration changes are possible.";
+        return "The cluster configuration is healthy. " + getLockingInfo(consistencyAnalyzer);
 
       case DISCOVERY_FAILURE:
         return "Failed to analyze cluster configuration. Reason: " + consistencyAnalyzer.getDiscoverFailure().getMessage();
@@ -281,5 +284,14 @@ public class DiagnosticCommand extends RemoteCommand {
       default:
         throw new AssertionError(consistencyAnalyzer.getGlobalState());
     }
+  }
+
+  private static String getLockingInfo(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
+    return consistencyAnalyzer.getNodeContext()
+                              .map(NodeContext::getCluster)
+                              .map(Cluster::getConfigurationLockContext)
+                              .flatMap(OptionalConfig::asOptional)
+                              .map((c) -> format("No changes are possible as config is locked by '%s'.", c.ownerInfo()))
+                              .orElse("New configuration changes are possible.");
   }
 }
