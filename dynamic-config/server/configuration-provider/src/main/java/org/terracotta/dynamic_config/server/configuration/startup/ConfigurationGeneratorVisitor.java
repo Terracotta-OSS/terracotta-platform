@@ -25,7 +25,6 @@ import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChang
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-import org.terracotta.dynamic_config.api.service.NameGenerator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
@@ -119,8 +118,6 @@ public class ConfigurationGeneratorVisitor {
     String nodeName = nodeContext.getNode().getName();
     ServerEnv.getServer().console("Starting unconfigured node: {}", nodeName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
-
-    NameGenerator.assignFriendlyNames(nodeContext.getCluster());
 
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
