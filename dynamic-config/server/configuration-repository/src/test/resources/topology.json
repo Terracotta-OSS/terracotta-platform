@@ -2,7 +2,7 @@
   "cluster": {
     "stripes": [
       {
-        "name": "stripe[0]",
+        "name": "Pulsar",
         "nodes": [
           {
             "dataDirs": {
@@ -12,15 +12,15 @@
             "logDir": "%H/terracotta/default-node1/logs",
             "metadataDir": "%H/terracotta/default-node1/metadata",
             "name": "default-node1",
-            "uid": "09EecKZ8Q127Ya02JeSCeg"
+            "uid": "9sxnw7nFQ1u0-mtl7ltwLw"
           }
         ],
-        "uid": "E8Rcm5s6Rzyf_zQ1fuyaQw"
+        "uid": "LQ230GdvTjmFewWXxB116A"
       }
     ],
     "failoverPriority": "availability",
     "name": "tc-cluster",
-    "uid": "nVSFGu1gQFKMD_8gVw0Hjg"
+    "uid": "Mu5eq_w_RrSUBzaEDhYvRA"
   },
-  "nodeUID": "09EecKZ8Q127Ya02JeSCeg"
+  "nodeUID": "9sxnw7nFQ1u0-mtl7ltwLw"
 }

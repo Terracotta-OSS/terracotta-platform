@@ -54,13 +54,13 @@ public class ConfigConverter {
     this.acceptRelativePaths = acceptRelativePaths;
   }
 
-  public void processInput(String clusterName, Path... tcConfigPaths) {
+  public void processInput(String clusterName, List<String> stripeNames, Path... tcConfigPaths) {
 
     TcConfigMapper mapper = new TcConfigMapperDiscovery(getClass().getClassLoader()).find().orElseThrow(() ->
         new AssertionError("No " + TcConfigMapper.class.getName() +
             " service implementation found on classpath"));
 
-    Cluster cluster = mapper.parseConfig(clusterName, tcConfigPaths);
+    Cluster cluster = mapper.parseConfig(clusterName, stripeNames, tcConfigPaths);
     validateAgainstRelativePath(cluster);
 
     new ClusterValidator(cluster).validate();

@@ -73,7 +73,7 @@ public class BackwardCompatibilityTest {
 
     try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(
         nomadConfigurationManager,
-        ChangeApplicator.allow((nodeContext, change) -> new NodeContext(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster()), nodeContext.getCluster().getSingleNode().get().getUID())),
+        ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()),
         "default-node1",
         null)) {
 
@@ -91,7 +91,8 @@ public class BackwardCompatibilityTest {
 
       // check topology
       NodeContext topology = nomadServer.discover().getLatestChange().getResult();
-      assertThat(topology.getCluster().getSingleStripe().get().getName(), is(equalTo("stripe[0]")));
+      // Note: // we are controlling the random seed for the stripe name generation during upgrade to it will always be this one
+      assertThat(topology.getCluster().getSingleStripe().get().getName(), is(equalTo("Pulsar")));
 
       // subsequent calls are outputting the same result always after an upgrade
       assertThat(nomadServer.discover().getLatestChange().getResult(), is(equalTo(topology)));

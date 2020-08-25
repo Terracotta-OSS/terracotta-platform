@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.api.service.NameGenerator;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
@@ -111,6 +112,9 @@ public class ActivateCommand extends RemoteCommand {
 
   @Override
   public final void run() {
+    if (!restrictedActivation) {
+      NameGenerator.assignFriendlyNames(cluster);
+    }
     activateNodes(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
     logger.info("Command successful!" + lineSeparator());
   }

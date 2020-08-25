@@ -17,11 +17,10 @@ package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.api.service.NameGenerator;
 
-import java.util.List;
 import java.util.Random;
 
 import static java.util.Objects.requireNonNull;
@@ -52,40 +51,35 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
     requireNonNull(original);
     Cluster upgraded = original.clone();
 
-    // From V1 to V2, added required settings are: UIDs, stripe name
-    // this migration process happens independently for each node and
-    // has to output the exact same result for all the nodes
+    if(from == Version.V1) {
+      // From V1 to V2, added required settings are: UIDs, stripe name
+      // this migration process happens independently for each node and
+      // has to output the exact same result for all the nodes
 
-    // for stripe names, we will migrate the names has M&M was used to see them
-    List<Stripe> stripes = upgraded.getStripes();
-    for (int i = 0; i < stripes.size(); i++) {
-      if (stripes.get(i).getName() == null) {
-        stripes.get(i).setName("stripe[" + i + "]");
-      }
-    }
+      // We need to generate the UIDs.
+      // The UIDs need to be generated the same way for all the nodes on the same cluster.
+      // The "upgrade" process is happening per node, and we have to generate some UIDs
+      // that will lead to the results regardless where we are
+      // We will then use the cluster name as a seed for the random number generator
+      String clusterName = upgraded.getName();
+      requireNonNull(clusterName);
 
-    // We need to generate the UIDs.
-    // The UIDs need to be generated the same way for all the nodes on the same cluster.
-    // The "upgrade" process is happening per node, and we have to generate some UIDs
-    // that will lead to the results regardless where we are
-    // We will then use the cluster name as a seed for the random number generator
-    String clusterName = upgraded.getName();
-    Random random = new Random(clusterName.hashCode());
-    if (upgraded.getUID() == null) {
+      Random random = new Random(clusterName.hashCode());
       upgraded.setUID(upgraded.newUID(random));
-    }
-    upgraded.getStripes().forEach(stripe -> {
-      if (stripe.getUID() == null) {
+      upgraded.getStripes().forEach(stripe -> {
         stripe.setUID(upgraded.newUID(random));
-      }
-      stripe.getNodes().forEach(node -> {
-        if (node.getUID() == null) {
+        stripe.getNodes().forEach(node -> {
           node.setUID(upgraded.newUID(random));
-        }
+        });
       });
-    });
+
+      // Generate only stripe names when migrating from V1 to V2.
+      // Existing node names should not be touched
+      NameGenerator.assignFriendlyStripeNames(upgraded, new Random(clusterName.hashCode()));
+    }
 
     new ClusterValidator(upgraded).validate();
+
     return upgraded;
   }
 

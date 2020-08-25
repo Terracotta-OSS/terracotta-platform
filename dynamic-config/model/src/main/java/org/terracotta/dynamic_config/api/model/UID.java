@@ -114,7 +114,7 @@ public final class UID implements java.io.Serializable, Comparable<UID> {
   public static boolean isUID(String s) {
     try {
       final byte[] decoded = decodeB64(s);
-      return decoded.length == 16;
+      return decoded.length == 16 && s.matches("[A-Za-z0-9-_]+");
     } catch (Exception e) {
       return false;
     }

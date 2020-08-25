@@ -24,6 +24,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
@@ -106,7 +107,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void setStripeName() throws Exception {
-    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getStripe().getName()), startsWith("stripe-"));
+    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getStripe().getName()), not(startsWith("stripe-"))); // name should have been taken from a list
     invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.stripe-name=foo");
     assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getStripe().getName()), is(equalTo("foo")));
   }

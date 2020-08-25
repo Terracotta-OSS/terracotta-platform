@@ -26,9 +26,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.nio.file.Files.createDirectories;
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertFalse;
 
 /**
@@ -127,7 +130,8 @@ public class ConfigurationGenerator {
       createDirectories(root);
       ConfigRepoProcessor resultProcessor = skipCommit ? new CommitSkippingConfigRepoProcessor(root) : new ConfigRepoProcessor(root);
       ConfigConverter converter = new ConfigConverter(resultProcessor::process);
-      converter.processInput("testCluster", tcConfigPaths);
+      List<String> stripeNames = IntStream.range(0, tcConfigPaths.length).mapToObj(idx -> "stripe[" + idx + "]").collect(toList());
+      converter.processInput("testCluster", stripeNames, tcConfigPaths);
 
       URL licenseUrl = ConfigurationGenerator.class.getResource("/license.xml");
       if (licenseUrl != null) {

@@ -122,6 +122,7 @@ public abstract class TopologyCommand extends RemoteCommand {
       setUpcomingCluster(allOnlineNodes, result);
     }
 
+    logger.info("Resulting cluster: " + result.toShapeString());
     logger.info("Command successful!" + lineSeparator());
   }
 

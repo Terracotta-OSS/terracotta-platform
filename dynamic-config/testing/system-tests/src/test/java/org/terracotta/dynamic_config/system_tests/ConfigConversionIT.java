@@ -391,6 +391,11 @@ public class ConfigConversionIT {
             e.setValue("<uid>");
           }
         });
+        props.entrySet().forEach(e-> {
+          if(e.getKey().toString().endsWith(".stripe-name")) {
+            e.setValue("<generated>");
+          }
+        });
         return props.equals(expectedProps);
       }
 
