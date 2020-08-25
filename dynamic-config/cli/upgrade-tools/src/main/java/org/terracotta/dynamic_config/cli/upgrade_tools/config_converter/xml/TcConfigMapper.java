@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml;
 import org.terracotta.dynamic_config.api.model.Cluster;
 
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * @author Mathieu Carbou
@@ -29,5 +30,5 @@ public interface TcConfigMapper {
   /**
    * Reads list of tc configuration xml file and output the Cluster object.
    */
-  Cluster parseConfig(String clusterName, Path... tcConfigPaths);
+  Cluster parseConfig(String clusterName, List<String> stripeNames, Path... tcConfigPaths);
 }

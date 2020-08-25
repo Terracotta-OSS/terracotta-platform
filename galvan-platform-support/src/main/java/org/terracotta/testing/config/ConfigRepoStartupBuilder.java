@@ -83,6 +83,11 @@ public class ConfigRepoStartupBuilder extends StartupCommandBuilder {
       command.add(tcConfig.toString());
     }
 
+    for (int i = 0; i < getTcConfigs().length; i++) {
+      command.add("-s");
+      command.add("stripe[" + i + "]");
+    }
+
     command.add("-n");
     command.add(getClusterName());
 

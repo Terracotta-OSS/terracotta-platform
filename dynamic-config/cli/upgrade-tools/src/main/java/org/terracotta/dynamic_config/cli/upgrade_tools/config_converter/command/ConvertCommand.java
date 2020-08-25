@@ -31,6 +31,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -44,6 +45,9 @@ import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.C
 public class ConvertCommand extends Command {
   @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
   private List<Path> tcConfigFiles;
+
+  @Parameter(names = {"-s"}, required = false, description = "An ordered list of stripe names")
+  private List<String> stripeNames;
 
   @Parameter(names = {"-l"}, description = "Path to license file", converter = PathConverter.class)
   private Path licensePath;
@@ -62,6 +66,10 @@ public class ConvertCommand extends Command {
 
   @Override
   public void validate() {
+    if (stripeNames == null) {
+      stripeNames = Collections.emptyList();
+    }
+
     for (Path tcConfigFile : tcConfigFiles) {
       if (!tcConfigFile.toFile().exists()) {
         throw new ParameterException("tc-config file: " + tcConfigFile + " not found");
@@ -90,7 +98,7 @@ public class ConvertCommand extends Command {
     if (conversionFormat == DIRECTORY) {
       ConfigRepoProcessor resultProcessor = new ConfigRepoProcessor(destinationDir);
       ConfigConverter converter = new ConfigConverter(resultProcessor::process, force);
-      converter.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
+      converter.processInput(newClusterName, stripeNames, tcConfigFiles.toArray(new Path[0]));
 
       if (licensePath != null) {
         try (Stream<Path> allLicenseDirs = Files.find(destinationDir, 3, (path, attrs) -> path.getFileName().toString().equals("license") && isDirectory(path))) {
@@ -111,7 +119,7 @@ public class ConvertCommand extends Command {
     } else if (conversionFormat == PROPERTIES) {
       ConfigPropertiesProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, newClusterName);
       ConfigConverter converter = new ConfigConverter(resultProcessor::process, force);
-      converter.processInput(newClusterName, tcConfigFiles.toArray(new Path[0]));
+      converter.processInput(newClusterName, stripeNames, tcConfigFiles.toArray(new Path[0]));
       logger.info("Configuration properties file saved under: {}", destinationDir.toAbsolutePath().normalize());
 
     } else {
