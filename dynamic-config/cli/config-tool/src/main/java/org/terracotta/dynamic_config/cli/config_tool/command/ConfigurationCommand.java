@@ -20,13 +20,16 @@ import com.beust.jcommander.ParameterException;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 
 import java.net.InetSocketAddress;
+import java.util.EnumSet;
 import java.util.List;
 
+import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
 import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
@@ -38,6 +41,8 @@ public abstract class ConfigurationCommand extends RemoteCommand {
 
   @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
   List<Configuration> configurations;
+
+  private final EnumSet<Setting> NOT_SUPPORTED_SETTINGS = EnumSet.of(Setting.LOCK_CONTEXT);
 
   protected final Operation operation;
 
@@ -58,6 +63,9 @@ public abstract class ConfigurationCommand extends RemoteCommand {
 
     // validate all configurations passes on CLI
     for (Configuration configuration : configurations) {
+      if (NOT_SUPPORTED_SETTINGS.contains(configuration.getSetting())) {
+        throw new IllegalArgumentException(format("'%s' is not supported" , configuration.getSetting()));
+      }
       configuration.validate(clusterState, operation);
     }
 

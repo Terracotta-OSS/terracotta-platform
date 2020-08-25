@@ -118,6 +118,23 @@ public class LockConfigIT extends DynamicConfigIT {
         allOf(containsOutput("No license installed"), containsOutput("came back up")));
   }
 
+  @Test
+  public void testLockContextCliUsage() throws Exception {
+    activate();
+    assertThat(
+        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "lock-context=" + lockContext),
+        exceptionMatcher("'lock-context' is not supported")
+    );
+    assertThat(
+        () -> invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "lock-context"),
+        exceptionMatcher("'lock-context' is not supported")
+    );
+    assertThat(
+        () -> invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "lock-context"),
+        exceptionMatcher("'lock-context' is not supported")
+    );
+  }
+
   private void lock() {
     invokeWithoutToken("lock-config", "-s", "localhost:" + getNodePort(), "--lock-context", lockContext.toString());
   }
