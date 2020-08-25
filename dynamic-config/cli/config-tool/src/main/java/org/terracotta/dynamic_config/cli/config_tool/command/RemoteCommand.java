@@ -362,7 +362,7 @@ public abstract class RemoteCommand extends Command {
       if (!missing.isEmpty()) {
         throw new IllegalStateException("Some nodes may have failed to restart within " + maximumWaitTime.getSeconds() + " seconds. " + lineSeparator() +
             "This should be confirmed by examining the state of the nodes listed below." + lineSeparator() +
-            "Note: if the cluster did not have security configured before activation but has security configured post-activation, or vice-versa, " + lineSeparator() +
+            "Note: if the cluster did not have security configured before activation but has security configured post-activation, or vice-versa, " +
             "then the nodes may have in fact successfully restarted.  This should be confirmed.  Nodes:" + lineSeparator()
             + " - " + missing.stream().map(Endpoint::toString).collect(joining(lineSeparator() + " - ")));
       }
