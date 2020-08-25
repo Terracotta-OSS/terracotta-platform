@@ -108,6 +108,7 @@ public class DynamicConfigNomadSynchronizer {
         Iterable<NomadChangeInfo> iterable = () -> sourceNomadChanges.stream().limit(pos + 1).iterator();
         nomadServer.forceSync(iterable, (previousConfig, nomadChange) -> {
           DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) nomadChange;
+          dynamicConfigNomadChange = dynamicConfigNomadChange.unwrap();
           Cluster previous = previousConfig == null ? null : previousConfig.getCluster();
           Cluster update;
           if (dynamicConfigNomadChange instanceof TopologyNomadChange) {
