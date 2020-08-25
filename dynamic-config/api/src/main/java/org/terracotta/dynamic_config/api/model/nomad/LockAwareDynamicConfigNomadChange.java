@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 
+import java.util.Objects;
+
 public class LockAwareDynamicConfigNomadChange implements DynamicConfigNomadChange {
   private final String lockToken;
   private final DynamicConfigNomadChange change;
@@ -55,5 +57,19 @@ public class LockAwareDynamicConfigNomadChange implements DynamicConfigNomadChan
   @Override
   public DynamicConfigNomadChange unwrap() {
     return change;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final LockAwareDynamicConfigNomadChange that = (LockAwareDynamicConfigNomadChange)o;
+    return Objects.equals(lockToken, that.lockToken) &&
+           Objects.equals(change, that.change);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(lockToken, change);
   }
 }
