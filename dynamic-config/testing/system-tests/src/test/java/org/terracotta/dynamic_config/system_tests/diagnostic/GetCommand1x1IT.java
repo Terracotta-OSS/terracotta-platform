@@ -75,4 +75,11 @@ public class GetCommand1x1IT extends DynamicConfigIT {
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.port"),
         containsOutput("stripe.1.node.1.port=" + getNodePort()));
   }
+
+  @Test
+  public void test_getUID() {
+    assertThat(invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "cluster-uid"), containsOutput("cluster-uid="));
+    assertThat(invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "node-uid"), containsOutput("node-uid="));
+    assertThat(invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe-uid"), containsOutput("stripe-uid="));
+  }
 }
