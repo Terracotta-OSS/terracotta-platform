@@ -43,7 +43,7 @@ public class NameGenerator {
     private boolean isLeaf;
   }
 
-  private static final String[] dictionaryFiles = {"animals.txt", "colors.txt", "space.txt", "countries.txt", "sports.txt"};
+  private static final String[] dictionaryFiles = {"animals.txt", "space.txt", "countries.txt", "sports.txt"};
   private static final Map<String, Integer> category = new HashMap<>();
   private static int stripeFallbackCount = 0;
   private static int nodeFallbackCount = 0;
