@@ -353,6 +353,10 @@ public class Cluster implements Cloneable, PropertyHolder {
     return stripes.remove(stripe);
   }
 
+  public boolean removeStripe(UID stripeUID) {
+    return stripes.removeIf(stripe -> stripe.getUID().equals(stripeUID));
+  }
+
   public boolean removeNode(UID uid) {
     boolean detached = stripes.stream().anyMatch(stripe -> stripe.removeNode(uid));
     if (detached) {

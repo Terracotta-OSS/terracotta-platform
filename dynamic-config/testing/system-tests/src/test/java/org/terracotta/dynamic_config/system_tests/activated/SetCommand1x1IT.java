@@ -15,11 +15,19 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
+import com.terracotta.connection.api.TerracottaConnectionService;
 import org.junit.Test;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity;
+import org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntityFactory;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.io.File;
+import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -264,5 +272,30 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(
         invokeConfigTool("get", "-s", publicHostname + ":" + getNodePort(), "-c", "stripe.1.node.1.public-hostname", "-c", "stripe.1.node.1.public-port"),
         allOf(containsOutput("stripe.1.node.1.public-hostname=" + publicHostname), containsOutput("stripe.1.node.1.public-port=" + publicPort)));
+  }
+
+  @Test
+  public void test_topology_entity_callback_onSettingChange() throws Exception {
+    try (DynamicTopologyEntity dynamicTopologyEntity = DynamicTopologyEntityFactory.fetch(
+        new TerracottaConnectionService(),
+        Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort())),
+        "dynamic-config-topology-entity",
+        getConnectionTimeout(),
+        new DynamicTopologyEntity.Settings().setRequestTimeout(getConnectionTimeout()),
+        null)) {
+
+      CountDownLatch called = new CountDownLatch(1);
+
+      dynamicTopologyEntity.setListener(new DynamicTopologyEntity.Listener() {
+        @Override
+        public void onSettingChange(Cluster cluster, Configuration configuration) {
+          called.countDown();
+        }
+      });
+
+      invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=new-name");
+
+      called.await();
+    }
   }
 }

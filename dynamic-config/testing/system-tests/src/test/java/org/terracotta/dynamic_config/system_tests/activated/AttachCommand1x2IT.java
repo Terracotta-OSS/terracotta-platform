@@ -15,9 +15,18 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
+import com.terracotta.connection.api.TerracottaConnectionService;
 import org.junit.Test;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.UID;
+import org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity;
+import org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntityFactory;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+
+import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -56,6 +65,41 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
 
     stopNode(1, 1);
     waitForActive(1, 2);
+  }
+
+  @Test
+  public void test_topology_entity_callback_onNodeAddition() throws Exception {
+    // activate a 1x1 cluster
+    startNode(1, 1);
+    waitForDiagnostic(1, 1);
+    activateCluster();
+
+    // start a second node
+    startNode(1, 2);
+    waitForDiagnostic(1, 2);
+
+    try (DynamicTopologyEntity dynamicTopologyEntity = DynamicTopologyEntityFactory.fetch(
+        new TerracottaConnectionService(),
+        Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort())),
+        "dynamic-config-topology-entity",
+        getConnectionTimeout(),
+        new DynamicTopologyEntity.Settings().setRequestTimeout(getConnectionTimeout()),
+        null)) {
+
+      CountDownLatch called = new CountDownLatch(1);
+
+      dynamicTopologyEntity.setListener(new DynamicTopologyEntity.Listener() {
+        @Override
+        public void onNodeAddition(Cluster cluster, UID addedNodeUID) {
+          called.countDown();
+        }
+      });
+
+      // attach
+      invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+
+      called.await();
+    }
   }
 
   @Test
