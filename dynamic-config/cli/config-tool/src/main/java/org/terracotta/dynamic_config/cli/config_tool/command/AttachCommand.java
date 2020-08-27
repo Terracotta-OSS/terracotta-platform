@@ -17,8 +17,12 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.tc.net.protocol.transport.TransportHandshakeException;
+import com.terracotta.connection.api.DetailedConnectionException;
+
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.diagnostic.client.connection.DiagnosticServiceProviderException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -35,9 +39,11 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.lang.System.lineSeparator;
@@ -73,8 +79,19 @@ public class AttachCommand extends TopologyCommand {
   public void validate() {
     super.validate();
 
-    source = getEndpoint(sourceAddress);
-    sourceCluster = getUpcomingCluster(source);
+    try {
+      source = getEndpoint(sourceAddress);
+      sourceCluster = getUpcomingCluster(source);
+    } catch (DiagnosticServiceProviderException dspEx) {
+      if (isHandshakeOrSecurityFailure(dspEx)) {
+        if (diagnosticServiceProvider.isSecureRequest()) {
+          String errMsg = "The destination is configured with security whereas source not. Please start the source with security enabled";
+          throw new IllegalArgumentException(errMsg);
+        } else {
+          throw dspEx;
+        }
+      }
+    }
 
     if (destination.getNodeUID().equals(source.getNodeUID())) {
       throw new IllegalArgumentException("The destination and the source endpoints must not be the same");
@@ -259,5 +276,26 @@ public class AttachCommand extends TopologyCommand {
   AttachCommand setSourceAddress(InetSocketAddress sourceAddress) {
     this.sourceAddress = sourceAddress;
     return this;
+  }
+
+  private boolean isHandshakeOrSecurityFailure(DiagnosticServiceProviderException dspEx) {
+    List<Throwable> throwables = new ArrayList<>();
+    Throwable cause = dspEx.getCause();
+
+    while (cause != null && !throwables.contains(cause)) {
+      if (cause instanceof DetailedConnectionException) {
+        DetailedConnectionException dce = (DetailedConnectionException) cause;
+        boolean isSecurityFailure = dce.getConnectionErrorMap()
+            .values()
+            .stream()
+            .anyMatch(exceptions -> exceptions.stream().anyMatch(ex -> ex instanceof TransportHandshakeException));
+        if (isSecurityFailure) {
+          return true;
+        }
+      }
+      throwables.add(cause);
+      cause = cause.getCause();
+    }
+    return false;
   }
 }
