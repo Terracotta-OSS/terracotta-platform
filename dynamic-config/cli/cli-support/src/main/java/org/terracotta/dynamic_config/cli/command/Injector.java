@@ -19,17 +19,24 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Collection;
 import java.util.stream.Stream;
+
+import static java.util.Arrays.asList;
 
 /**
  * @author Mathieu Carbou
  */
 public class Injector {
-  public static <T> T inject(T target, Object... services) {
+  public static <T> T inject(T target, Object[] services) {
+    return inject(target, asList(services));
+  }
+
+  public static <T> T inject(T target, Collection<Object> services) {
     Stream.of(target.getClass().getFields())
         .filter(field -> field.isAnnotationPresent(Inject.class))
         .forEach(field -> {
-          Object found = Stream.of(services)
+          Object found = services.stream()
               .filter(service -> field.getType().isInstance(service))
               .findAny()
               .orElseThrow(() -> new IllegalStateException("No service found to inject into " + field));
