@@ -320,7 +320,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Collection<Endpoint> getSimilarEndpoints(Endpoint initiator) {
-    return getNodes().stream().map(node -> node.getSimilarEndpoints(initiator)).collect(toList());
+    return getNodes().stream().map(node -> node.getSimilarEndpoint(initiator)).collect(toList());
   }
 
   public boolean containsNode(UID nodeUID) {

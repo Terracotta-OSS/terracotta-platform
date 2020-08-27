@@ -138,7 +138,7 @@ public class Stripe implements Cloneable, PropertyHolder {
   }
 
   public Collection<Node.Endpoint> getSimilarEndpoints(Node.Endpoint initiator) {
-    return getNodes().stream().map(node -> node.getSimilarEndpoints(initiator)).collect(toList());
+    return getNodes().stream().map(node -> node.getSimilarEndpoint(initiator)).collect(toList());
   }
 
   @Override
