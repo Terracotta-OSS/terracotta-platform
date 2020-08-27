@@ -62,9 +62,6 @@ public class ConfigConverterTool {
     // Process arguments like '-v'
     mainCommand.run();
 
-    LOGGER.debug("Injecting services in CommandRepository");
-    commandRepository.inject(); // no service injection yet
-
     jCommander.getAskedCommand().map(command -> {
       // check for help
       if (command.isHelp()) {

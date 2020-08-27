@@ -39,7 +39,11 @@ public class CommandRepository {
     return commandMap.get(name);
   }
 
-  public void inject(Object... services) {
+  public void inject(Object[] services) {
+    commandMap.values().forEach(command -> Injector.inject(command, services));
+  }
+
+  public void inject(Collection<Object> services) {
     commandMap.values().forEach(command -> Injector.inject(command, services));
   }
 }

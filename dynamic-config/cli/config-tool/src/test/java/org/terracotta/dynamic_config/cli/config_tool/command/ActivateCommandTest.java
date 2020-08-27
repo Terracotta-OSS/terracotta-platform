@@ -40,6 +40,7 @@ import java.util.UUID;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
+import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
@@ -299,8 +300,7 @@ public class ActivateCommandTest extends BaseTest {
 
   private ActivateCommand command() {
     ActivateCommand command = new ActivateCommand();
-    inject(command, diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService,
-        stopService, nomadEntityProvider);
+    inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider));
     return command;
   }
 

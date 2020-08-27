@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.cli.command.Metadata;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -38,8 +39,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   }
 
   protected final C newCommand() {
-    return inject(newTopologyCommand(), diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager,
-        restartService, stopService, objectMapperFactory, nomadEntityProvider);
+    return inject(newTopologyCommand(), asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, objectMapperFactory, nomadEntityProvider));
   }
 
   protected abstract C newTopologyCommand();
