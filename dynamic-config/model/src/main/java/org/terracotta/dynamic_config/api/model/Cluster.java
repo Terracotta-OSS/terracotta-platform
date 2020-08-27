@@ -320,7 +320,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Collection<Endpoint> getSimilarEndpoints(Endpoint initiator) {
-    return getNodes().stream().map(node -> node.getSimilarEndpoints(initiator)).collect(toList());
+    return getNodes().stream().map(node -> node.getSimilarEndpoint(initiator)).collect(toList());
   }
 
   public boolean containsNode(UID nodeUID) {
@@ -351,6 +351,10 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   public boolean removeStripe(Stripe stripe) {
     return stripes.remove(stripe);
+  }
+
+  public boolean removeStripe(UID stripeUID) {
+    return stripes.removeIf(stripe -> stripe.getUID().equals(stripeUID));
   }
 
   public boolean removeNode(UID uid) {

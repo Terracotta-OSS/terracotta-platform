@@ -68,13 +68,13 @@ public class CodecTest {
     test(REQ_RUNTIME_CLUSTER, cluster);
     test(REQ_UPCOMING_CLUSTER, cluster);
 
-    test(EVENT_NODE_ADDITION, asList(stripe.getUID(), node));
-    test(EVENT_NODE_REMOVAL, asList(stripe.getUID(), node));
+    test(EVENT_NODE_ADDITION, asList(cluster, node.getUID()));
+    test(EVENT_NODE_REMOVAL, asList(cluster, stripe.getUID(), node));
 
-    test(EVENT_SETTING_CHANGED, asList(Configuration.valueOf("cluster-name=foo"), cluster));
+    test(EVENT_SETTING_CHANGED, asList(cluster, Configuration.valueOf("cluster-name=foo")));
 
-    test(EVENT_STRIPE_ADDITION, stripe);
-    test(EVENT_STRIPE_REMOVAL, stripe);
+    test(EVENT_STRIPE_ADDITION, asList(cluster, stripe.getUID()));
+    test(EVENT_STRIPE_REMOVAL, asList(cluster, stripe));
   }
 
   private static void test(Type type, Object payload) throws MessageCodecException {

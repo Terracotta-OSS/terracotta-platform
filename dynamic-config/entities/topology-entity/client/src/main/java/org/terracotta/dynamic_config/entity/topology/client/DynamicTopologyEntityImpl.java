@@ -62,34 +62,39 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
     endpoint.setDelegate(new EndpointDelegate<Response>() {
       @Override
       public void handleMessage(Response messageFromServer) {
-        switch (messageFromServer.getType()) {
-          case EVENT_NODE_ADDITION: {
-            List<Object> payload = messageFromServer.getPayload();
-            listener.onNodeAddition((UID) payload.get(0), (Node) payload.get(1));
-            break;
+        try {
+          LOGGER.trace("handleMessage({})", messageFromServer);
+          switch (messageFromServer.getType()) {
+            case EVENT_NODE_ADDITION: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onNodeAddition((Cluster) payload.get(0), (UID) payload.get(1));
+              break;
+            }
+            case EVENT_NODE_REMOVAL: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onNodeRemoval((Cluster) payload.get(0), (UID) payload.get(1), (Node) payload.get(2));
+              break;
+            }
+            case EVENT_SETTING_CHANGED: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onSettingChange((Cluster) payload.get(0), (Configuration) payload.get(1));
+              break;
+            }
+            case EVENT_STRIPE_ADDITION: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onStripeAddition((Cluster) payload.get(0), (UID) payload.get(1));
+              break;
+            }
+            case EVENT_STRIPE_REMOVAL: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onStripeRemoval((Cluster) payload.get(0), (Stripe) payload.get(1));
+              break;
+            }
+            default:
+              throw new AssertionError(messageFromServer);
           }
-          case EVENT_NODE_REMOVAL: {
-            List<Object> payload = messageFromServer.getPayload();
-            listener.onNodeRemoval((UID) payload.get(0), (Node) payload.get(1));
-            break;
-          }
-          case EVENT_SETTING_CHANGED: {
-            List<Object> payload = messageFromServer.getPayload();
-            listener.onSettingChange((Configuration) payload.get(0), (Cluster) payload.get(1));
-            break;
-          }
-          case EVENT_STRIPE_ADDITION: {
-            List<Object> payload = messageFromServer.getPayload();
-            listener.onStripeAddition((Stripe) payload.get(0));
-            break;
-          }
-          case EVENT_STRIPE_REMOVAL: {
-            List<Object> payload = messageFromServer.getPayload();
-            listener.onStripeRemoval((Stripe) payload.get(0));
-            break;
-          }
-          default:
-            throw new AssertionError(messageFromServer);
+        } catch (RuntimeException e) {
+          LOGGER.error("Error handling message: " + messageFromServer + ": " + e.getMessage(), e);
         }
       }
 

@@ -391,7 +391,7 @@ public class Node implements Cloneable, PropertyHolder {
     return getPublicEndpoint().orElseGet(this::getInternalEndpoint);
   }
 
-  public Endpoint getSimilarEndpoints(Endpoint initiator) {
+  public Endpoint getSimilarEndpoint(Endpoint initiator) {
     return ADDR_GROUP_INTERNAL.equals(initiator.getGroup()) ?
         getInternalEndpoint() :
         getPublicEndpoint().orElseGet(this::getInternalEndpoint);

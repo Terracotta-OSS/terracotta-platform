@@ -36,7 +36,7 @@ public class StripeRemovalNomadChange extends StripeNomadChange {
     }
 
     Cluster updated = original.clone();
-    updated.removeStripe(getStripe());
+    updated.removeStripe(getStripe().getUID());
     return updated;
   }
 

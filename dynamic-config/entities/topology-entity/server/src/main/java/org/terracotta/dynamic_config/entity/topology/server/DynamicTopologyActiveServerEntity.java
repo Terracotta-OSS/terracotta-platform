@@ -139,28 +139,36 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Mes
       eventRegistration = eventService.register(new DynamicConfigListener() {
         @Override
         public void onNodeAddition(UID stripeUID, Node addedNode) {
-          fire(new Response(EVENT_NODE_ADDITION, asList(stripeUID, addedNode)));
+          Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+          cluster.getStripe(stripeUID).get().addNode(addedNode);
+          fire(new Response(EVENT_NODE_ADDITION, asList(cluster, addedNode.getUID())));
         }
 
         @Override
         public void onNodeRemoval(UID stripeUID, Node removedNode) {
-          fire(new Response(EVENT_NODE_REMOVAL, asList(stripeUID, removedNode)));
+          Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+          cluster.getStripe(stripeUID).get().removeNode(removedNode.getUID());
+          fire(new Response(EVENT_NODE_REMOVAL, asList(cluster, stripeUID, removedNode)));
         }
 
         @Override
         public void onStripeAddition(Stripe addedStripe) {
-          fire(new Response(EVENT_STRIPE_ADDITION, addedStripe));
+          Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+          cluster.addStripe(addedStripe);
+          fire(new Response(EVENT_STRIPE_ADDITION, asList(cluster, addedStripe.getUID())));
         }
 
         @Override
         public void onStripeRemoval(Stripe removedStripe) {
-          fire(new Response(EVENT_STRIPE_REMOVAL, removedStripe));
+          Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+          cluster.removeStripe(removedStripe.getUID());
+          fire(new Response(EVENT_STRIPE_REMOVAL, asList(cluster, removedStripe)));
         }
 
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
           Configuration configuration = change.toConfiguration(updated);
-          fire(new Response(EVENT_SETTING_CHANGED, asList(configuration, updated)));
+          fire(new Response(EVENT_SETTING_CHANGED, asList(updated, configuration)));
         }
       });
     }
@@ -168,7 +176,7 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Mes
 
   private void fire(Response msg) {
     if (!clients.isEmpty()) {
-      LOGGER.trace("fire({})", msg);
+      LOGGER.trace("fire({}): clients: {}", msg, clients);
       for (ClientDescriptor client : clients) {
         try {
           clientCommunicator.sendNoResponse(client, msg);
