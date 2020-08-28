@@ -34,6 +34,7 @@ import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -96,16 +97,25 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
 
     // cause failover when in commit phase
     if (killAtCommit.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
+      Path path = null;
       try {
         // We create a marker on disk to know that we have triggered the failover once.
         // When the node will be restarted, and the repair command triggered again to re-execute the commit,
         // the file will be there, so 'createFile()' will fail and the node won't be killed.
         // This hack is so only trigger the commit failure once
-        Files.createFile(path().resolve("killed"));
+        path = path().resolve("killed");
+        Files.createFile(path);
         platformService.stopPlatform();
-      } catch (IOException e) {
+      } catch (FileAlreadyExistsException e) {
         // this exception si normal for teh second run
         LOGGER.warn(e.getMessage(), e);
+        try {
+          org.terracotta.utilities.io.Files.deleteIfExists(path);
+        } catch (IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
 

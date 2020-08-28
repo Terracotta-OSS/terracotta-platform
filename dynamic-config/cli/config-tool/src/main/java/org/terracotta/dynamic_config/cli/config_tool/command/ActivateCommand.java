@@ -54,8 +54,8 @@ public class ActivateCommand extends RemoteCommand {
   @Parameter(names = {"-l"}, description = "License file", converter = PathConverter.class)
   private Path licenseFile;
 
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
+  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
 
   @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);

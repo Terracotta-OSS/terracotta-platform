@@ -44,7 +44,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
   public final NodeOutputRule out = new NodeOutputRule();
 
   public DetachInConsistency1x2IT() {
-    super(Duration.ofSeconds(180));
+    super(Duration.ofSeconds(300));
   }
 
   @Override
@@ -95,6 +95,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
       //stop partition
       disruptor.undisrupt();
+      waitForPassive(1, passiveId);
     }
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));

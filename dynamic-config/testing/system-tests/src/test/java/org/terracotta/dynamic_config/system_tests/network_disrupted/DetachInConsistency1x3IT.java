@@ -47,7 +47,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
   public final NodeOutputRule out = new NodeOutputRule();
 
   public DetachInConsistency1x3IT() {
-    super(Duration.ofSeconds(180));
+    super(Duration.ofSeconds(300));
   }
 
   @Override
@@ -85,10 +85,15 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
   public void test_detach_when_active_passive_disrupted() throws Exception {
     TerracottaServer active = angela.tsa().getActive();
     Collection<TerracottaServer> passives = angela.tsa().getPassives();
+    Iterator<TerracottaServer> iterator = passives.iterator();
+    TerracottaServer passive1 = iterator.next();
+    TerracottaServer passive2 = iterator.next();
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passives);
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int oldActiveId = findActive(1).getAsInt();
+    int passiveId1 = findPassives(1)[0];
+    int passiveId2 = findPassives(1)[1];
+    int newActiveId;
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
 
       //start partition
@@ -97,12 +102,23 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
       //verify active gets blocked
       waitForServerBlocked(active);
 
+      TerracottaServer newActive = isActive(passive1, passive2);
+      assertThat(newActive, is(notNullValue()));
+      if (newActive == passive1) {
+        newActiveId = passiveId1;
+      } else {
+        newActiveId = passiveId2;
+      }
+
       assertThat(
-          () -> invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+          () -> invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, oldActiveId), "-s", "localhost:" + getNodePort(1, newActiveId)),
           exceptionMatcher("Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update."));
 
       //stop partition
       disruptor.undisrupt();
+      stopNode(1, oldActiveId);
+      startNode(1, oldActiveId);
+      waitForPassive(1, oldActiveId);
     }
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(3)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(3)));

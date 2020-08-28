@@ -46,7 +46,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
   public final NodeOutputRule out = new NodeOutputRule();
 
   public AttachInConsistency1x3IT() {
-    super(Duration.ofSeconds(180));
+    super(Duration.ofSeconds(300));
   }
 
   @Override
@@ -104,6 +104,9 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
       //stop partition
       disruptor.undisrupt();
+      stopNode(1, passiveId);
+      startNode(1, passiveId);
+      waitForPassive(1, passiveId);
     }
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
@@ -154,12 +157,15 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
       }
       //stop partition
       disruptor.undisrupt();
+      stopNode(1, passiveId);
+      startNode(1, passiveId);
+      waitForPassive(1, passiveId);
     }
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(3)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(3)));
 
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(3)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(3)));

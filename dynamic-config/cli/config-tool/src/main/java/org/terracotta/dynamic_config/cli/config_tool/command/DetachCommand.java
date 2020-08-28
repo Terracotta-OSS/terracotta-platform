@@ -51,8 +51,8 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
 @Usage("detach [-t node|stripe] -d <hostname[:port]> -s [<hostname[:port]>|uid|name] [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
 public class DetachCommand extends TopologyCommand {
 
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to stop. Default: 60s", converter = TimeUnitConverter.class)
-  protected Measure<TimeUnit> stopWaitTime = Measure.of(60, TimeUnit.SECONDS);
+  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to stop. Default: 120s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> stopWaitTime = Measure.of(120, TimeUnit.SECONDS);
 
   @Parameter(names = {"-D"}, description = "Delay before the server stops itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> stopDelay = Measure.of(2, TimeUnit.SECONDS);
