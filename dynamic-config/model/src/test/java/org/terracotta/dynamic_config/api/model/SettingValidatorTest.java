@@ -168,16 +168,16 @@ public class SettingValidatorTest {
       setting.validate("0s"); // ok - 0 allowed
       assertThat(
           () -> setting.validate("foo"),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: 'foo'. <quantity> is missing. Measure should be specified in <quantity><unit> format.")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: 'foo'. <unit> is missing or not recognized. It must be one of " + setting.getAllowedUnits() + ".")))));
       assertThat(
           () -> setting.validate("1"),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1'. <unit> is missing. Measure should be specified in <quantity><unit> format.")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1'. <unit> is missing or not recognized. It must be one of " + setting.getAllowedUnits() + ".")))));
       assertThat(
           () -> setting.validate("1_"),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1_'. <unit> must be one of " + setting.getAllowedUnits() + ".")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1_'. <unit> is missing or not recognized. It must be one of " + setting.getAllowedUnits() + ".")))));
       assertThat(
           () -> setting.validate("1bad-unit"),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1bad-unit'. <unit> must be one of " + setting.getAllowedUnits() + ".")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1bad-unit'. <unit> is missing or not recognized. It must be one of " + setting.getAllowedUnits() + ".")))));
       assertThat(
           () -> setting.validate("-1s"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Quantity measure cannot be negative")))));
@@ -274,10 +274,10 @@ public class SettingValidatorTest {
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("offheap-resources should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...")))));
     assertThat(
         () -> OFFHEAP_RESOURCES.validate(null, "bar:1,second:2GB"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("offheap-resources.bar is invalid: Invalid measure: '1'. <unit> is missing. Measure should be specified in <quantity><unit> format.")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("offheap-resources.bar is invalid: Invalid measure: '1'. <unit> is missing or not recognized. It must be one of [B, KB, MB, GB, TB, PB].")))));
     assertThat(
         () -> OFFHEAP_RESOURCES.validate("foo", "bar"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("offheap-resources.foo is invalid: Invalid measure: 'bar'. <quantity> is missing. Measure should be specified in <quantity><unit> format.")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("offheap-resources.foo is invalid: Invalid measure: 'bar'. <unit> is missing or not recognized. It must be one of [B, KB, MB, GB, TB, PB].")))));
   }
 
   @Test

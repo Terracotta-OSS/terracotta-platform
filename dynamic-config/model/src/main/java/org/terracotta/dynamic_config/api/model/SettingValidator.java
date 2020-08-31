@@ -72,7 +72,7 @@ class SettingValidator {
   static final BiConsumer<String, Tuple2<String, String>> TIME_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
     Setting s = Setting.fromName(setting);
-    Measure.parse(kv.t2, TimeUnit.class, null, s.getAllowedUnits());
+    Measure.parse(kv.t2, TimeUnit.class, s.getAllowedUnits());
   };
 
   static final BiConsumer<String, Tuple2<String, String>> PORT_VALIDATOR = (setting, kv) -> {
@@ -116,7 +116,7 @@ class SettingValidator {
     if (kv.t2 != null && !kv.t2.isEmpty()) {
       validateMappings(kv, setting + " should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...", (k, v) -> {
         try {
-          Measure.parse(v, MemoryUnit.class, null, Setting.fromName(setting).getAllowedUnits());
+          Measure.parse(v, MemoryUnit.class, Setting.fromName(setting).getAllowedUnits());
         } catch (RuntimeException e) {
           throw new IllegalArgumentException(setting + "." + k + " is invalid: " + e.getMessage());
         }
