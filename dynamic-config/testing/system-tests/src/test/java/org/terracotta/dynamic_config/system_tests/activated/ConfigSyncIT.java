@@ -118,7 +118,6 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
-    stopNode(1, passiveNodeId);
     stopNode(1, activeNodeId);
     assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsAfterRestart(4, 3);
@@ -143,8 +142,11 @@ public class ConfigSyncIT extends DynamicConfigIT {
         is(throwing(instanceOf(RuntimeException.class))));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
-    stopNode(1, passiveNodeId);
+
+    // wait for some time to ensure the Nomad Message gets applied to passive
+    Thread.sleep(5000);
     stopNode(1, activeNodeId);
+    stopNode(1, passiveNodeId);
     assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsAfterRestart(4, 5);
     // Start only the former active for now (the passive startup would be done later, and should fail)
