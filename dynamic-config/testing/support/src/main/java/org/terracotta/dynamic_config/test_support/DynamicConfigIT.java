@@ -37,6 +37,7 @@ import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.angela.common.topology.Topology;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.connection.ConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
@@ -467,7 +468,7 @@ public class DynamicConfigIT {
     Thread.sleep(15_000);
   }
 
-  protected final Cluster getUpcomingCluster(int stripeId, int nodeId) throws Exception {
+  protected final Cluster getUpcomingCluster(int stripeId, int nodeId) {
     return getUpcomingCluster("localhost", getNodePort(stripeId, nodeId));
   }
 
@@ -475,34 +476,34 @@ public class DynamicConfigIT {
   // information retrieval
   // =========================================
 
-  protected final Cluster getUpcomingCluster(String host, int port) throws Exception {
+  protected final Cluster getUpcomingCluster(String host, int port) {
     return usingTopologyService(host, port, topologyService -> topologyService.getUpcomingNodeContext().getCluster());
   }
 
-  protected final Cluster getRuntimeCluster(int stripeId, int nodeId) throws Exception {
+  protected final Cluster getRuntimeCluster(int stripeId, int nodeId) {
     return getUpcomingCluster("localhost", getNodePort(stripeId, nodeId));
   }
 
-  protected final Cluster getRuntimeCluster(String host, int port) throws Exception {
+  protected final Cluster getRuntimeCluster(String host, int port) {
     return usingTopologyService(host, port, topologyService -> topologyService.getRuntimeNodeContext().getCluster());
   }
 
-  protected final void withTopologyService(int stripeId, int nodeId, Consumer<TopologyService> consumer) throws Exception {
+  protected final void withTopologyService(int stripeId, int nodeId, Consumer<TopologyService> consumer) {
     withTopologyService("localhost", getNodePort(stripeId, nodeId), consumer);
   }
 
-  protected final void withTopologyService(String host, int port, Consumer<TopologyService> consumer) throws Exception {
+  protected final void withTopologyService(String host, int port, Consumer<TopologyService> consumer) {
     usingTopologyService(host, port, topologyService -> {
       consumer.accept(topologyService);
       return null;
     });
   }
 
-  protected final <T> T usingTopologyService(int stripeId, int nodeId, Function<TopologyService, T> fn) throws Exception {
+  protected final <T> T usingTopologyService(int stripeId, int nodeId, Function<TopologyService, T> fn) {
     return usingTopologyService("localhost", getNodePort(stripeId, nodeId), fn);
   }
 
-  protected final <T> T usingTopologyService(String host, int port, Function<TopologyService, T> fn) throws Exception {
+  protected final <T> T usingTopologyService(String host, int port, Function<TopologyService, T> fn) {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
@@ -511,6 +512,8 @@ public class DynamicConfigIT {
         null,
         objectMapperFactory)) {
       return fn.apply(diagnosticService.getProxy(TopologyService.class));
+    } catch (ConnectionException e) {
+      throw new RuntimeException(e);
     }
   }
 
