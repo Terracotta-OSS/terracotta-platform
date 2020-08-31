@@ -42,7 +42,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 public class RepairCommand1x2IT extends DynamicConfigIT {
 
   public RepairCommand1x2IT() {
-    super(Duration.ofSeconds(240));
+    super(Duration.ofSeconds(300));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
