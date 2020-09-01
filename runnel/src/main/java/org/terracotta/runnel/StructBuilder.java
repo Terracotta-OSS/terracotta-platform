@@ -143,6 +143,12 @@ public class StructBuilder {
     return this;
   }
 
+  public StructBuilder byteBuffers(String name, int index) {
+    checkParams(name, index);
+    structField.addField(new ArrayField(name, index, new ByteBufferField(name, index)));
+    return this;
+  }
+
   public StructBuilder structs(String name, int index, Struct struct) {
     checkParams(name, index);
     structField.addField(new ArrayField(name, index, struct.alias(name, index)));
