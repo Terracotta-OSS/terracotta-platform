@@ -154,6 +154,15 @@ public final class UID implements java.io.Serializable, Comparable<UID> {
     return bytes;
   }
 
+  public byte[] toBytes() {
+    return toBytes(new long[]{value.getMostSignificantBits(), value.getLeastSignificantBits()});
+  }
+
+  public static UID fromBytes(byte[] bytes) {
+    long[] longs = toLongs(bytes);
+    return new UID(new UUID(longs[0], longs[1]));
+  }
+
   static String encodeB64(byte[] data) {
     return Base64.getEncoder().encodeToString(data)
         // java-8 and other - compatible B64 url decoder use - and _ instead of + and /
