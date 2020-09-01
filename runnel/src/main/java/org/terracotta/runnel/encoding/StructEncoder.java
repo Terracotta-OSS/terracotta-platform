@@ -217,6 +217,18 @@ public class StructEncoder<P> implements PrimitiveEncodingSupport<StructEncoder<
     };
   }
 
+  public ArrayEncoder<ByteBuffer, StructEncoder<P>> byteBuffers(String name) {
+    final ArrayField field = fieldSearcher.findField(name, ArrayField.class, ByteBufferField.class);
+    List<DataHolder> values = new ArrayList<DataHolder>();
+    data.add(new ArrayDataHolder(values, field.index()));
+    return new ArrayEncoder<ByteBuffer, StructEncoder<P>>(values, this) {
+      @Override
+      protected DataHolder buildDataHolder(ByteBuffer value) {
+        return new ByteBufferDataHolder(value, field.index());
+      }
+    };
+  }
+
   public StructArrayEncoder<StructEncoder<P>> structs(String name) {
     final ArrayField field = fieldSearcher.findField(name, ArrayField.class, StructField.class);
     List<StructDataHolder> values = new ArrayList<StructDataHolder>();
