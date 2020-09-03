@@ -31,9 +31,9 @@ public enum Requirement {
   NODE_RESTART,
 
   /**
-   * Setting change needs only active servers to be online plus eventually some passive servers, but not all
+   * Setting change needs only active servers to be online plus the targeted objects (which can be nodes, stripes or the cluster)
    */
-  ACTIVES_ONLINE,
+  TARGETS_ONLINE,
 
   /**
    * Setting change needs all nodes online (active and passives)
