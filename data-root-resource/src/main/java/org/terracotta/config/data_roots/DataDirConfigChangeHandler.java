@@ -37,12 +37,12 @@ import static java.util.stream.Collectors.toMap;
 public class DataDirConfigChangeHandler implements ConfigChangeHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(DataDirConfigChangeHandler.class);
 
-  private final DataDirectoriesConfig dataDirectoriesConfig;
+  private final DataDirsConfig dataDirsConfig;
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
 
-  public DataDirConfigChangeHandler(DataDirectoriesConfig dataDirectoriesConfig, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
-    this.dataDirectoriesConfig = dataDirectoriesConfig;
+  public DataDirConfigChangeHandler(DataDirsConfig dataDirsConfig, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
+    this.dataDirsConfig = dataDirsConfig;
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
   }
@@ -96,7 +96,7 @@ public class DataDirConfigChangeHandler implements ConfigChangeHandler {
   public void apply(Configuration change) {
     String dataDirectoryName = change.getKey();
     String dataDirectoryPath = change.getValue().get();
-    dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
+    dataDirsConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
   }
 
   public boolean overLaps(Path existing, Path newDataDirPath) {

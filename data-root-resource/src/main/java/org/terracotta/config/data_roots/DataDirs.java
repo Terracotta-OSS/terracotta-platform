@@ -26,7 +26,7 @@ import java.util.Set;
  * DataDirectories
  */
 @CommonComponent
-public interface DataDirectories extends Closeable {
+public interface DataDirs extends Closeable {
 
   /**
    * Returns data directory for given {@code name} which is specified in the server's configuration

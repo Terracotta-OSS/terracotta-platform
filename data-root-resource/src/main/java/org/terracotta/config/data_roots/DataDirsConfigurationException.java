@@ -18,7 +18,7 @@ package org.terracotta.config.data_roots;
 /**
  * @author vmad
  */
-public class DataDirectoriesConfigurationException extends RuntimeException {
+public class DataDirsConfigurationException extends RuntimeException {
 
   private static final long serialVersionUID = 6738773592638813440L;
 
@@ -29,7 +29,7 @@ public class DataDirectoriesConfigurationException extends RuntimeException {
    * @param message the detail message. The detail message is saved for later retrieval by the {@link #getMessage()}
    *                method.
    */
-  public DataDirectoriesConfigurationException(String message) {
+  public DataDirsConfigurationException(String message) {
     super(message);
   }
 
@@ -42,7 +42,7 @@ public class DataDirectoriesConfigurationException extends RuntimeException {
    *                value is permitted, and indicates that the cause is nonexistent or unknown.)
    * @since 1.4
    */
-  public DataDirectoriesConfigurationException(String message, Throwable cause) {
+  public DataDirsConfigurationException(String message, Throwable cause) {
     super(message, cause);
   }
 }

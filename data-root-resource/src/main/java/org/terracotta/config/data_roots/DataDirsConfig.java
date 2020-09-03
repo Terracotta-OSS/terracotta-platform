@@ -48,14 +48,14 @@ import static java.util.Optional.ofNullable;
  * entity implementors should use some kind of isolation to store data to avoid polluting data directories</p>
  */
 @CommonComponent
-public interface DataDirectoriesConfig extends Closeable {
+public interface DataDirsConfig extends Closeable {
 
   static String cleanStringForPath(String input) {
     return ofNullable(input).orElse("").replace(":", "-");
   }
 
   /**
-   * Returns a {@link DataDirectories} that will append the server name to all paths.
+   * Returns a {@link DataDirs} that will append the server name to all paths.
    * <p>
    * Since the server name cannot be injected during configuration parsing
    * as we do not yet know which server is being started, we have to resort to this trick and make sure it gets used.
@@ -63,7 +63,7 @@ public interface DataDirectoriesConfig extends Closeable {
    * @param platformConfiguration the platform configuration to source the server name from
    * @return a {@code DataDirectories}
    */
-  DataDirectories getDataDirectoriesForServer(PlatformConfiguration platformConfiguration);
+  DataDirs getDataDirectoriesForServer(PlatformConfiguration platformConfiguration);
 
   void addDataDirectory(String name, String path);
 

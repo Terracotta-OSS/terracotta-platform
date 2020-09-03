@@ -25,15 +25,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-class DataDirectoriesWithServerName implements DataDirectories {
+class DataDirsWithServerName implements DataDirs {
 
-  private final DataDirectoriesConfigImpl wrapped;
+  private final DataDirsConfigImpl wrapped;
   private final String serverName;
   private final Map<String, FileLocking> fileLockingMap = new HashMap<>();
 
-  DataDirectoriesWithServerName(DataDirectoriesConfigImpl wrapped, String serverName) {
+  DataDirsWithServerName(DataDirsConfigImpl wrapped, String serverName) {
     this.wrapped = wrapped;
-    this.serverName = DataDirectoriesConfig.cleanStringForPath(serverName);
+    this.serverName = DataDirsConfig.cleanStringForPath(serverName);
 
     for (String dataRoot : wrapped.getRootIdentifiers()) {
       Path resolved = wrapped.getRoot(dataRoot).resolve(serverName);
@@ -41,7 +41,7 @@ class DataDirectoriesWithServerName implements DataDirectories {
         wrapped.ensureDirectory(resolved);
         lockDirectory(dataRoot, resolved);
       } catch (IOException e) {
-        throw new DataDirectoriesConfigurationException(e.toString(), e);
+        throw new DataDirsConfigurationException(e.toString(), e);
       }
     }
   }
@@ -57,10 +57,10 @@ class DataDirectoriesWithServerName implements DataDirectories {
       } catch (IOException e1) {
         // Ignore
       }
-      throw new DataDirectoriesConfigurationException("Unable to lock directory " + resolved, e);
+      throw new DataDirsConfigurationException("Unable to lock directory " + resolved, e);
     }
     if (fileLock == null) {
-      throw new DataDirectoriesConfigurationException("Directory " + resolved + " is already locked. " +
+      throw new DataDirsConfigurationException("Directory " + resolved + " is already locked. " +
                                                       "Make sure multiple servers on this host do not end up having equal data directory and server name defined.");
     }
 

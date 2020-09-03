@@ -50,8 +50,8 @@ public class DataDirConfigChangeHandlerTest {
 
   @Test
   public void testGetConfigWithChange() throws Exception {
-    DataDirectoriesConfig dataDirectoriesConfig = mock(DataDirectoriesConfig.class);
-    DataDirConfigChangeHandler dataDirConfigChangeHandler = new DataDirConfigChangeHandler(dataDirectoriesConfig, identity(), new PathResolver(tmpDir.getRoot()));
+    DataDirsConfig dataDirsConfig = mock(DataDirsConfig.class);
+    DataDirConfigChangeHandler dataDirConfigChangeHandler = new DataDirConfigChangeHandler(dataDirsConfig, identity(), new PathResolver(tmpDir.getRoot()));
     dataDirConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
 
     assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().orDefault().entrySet(), hasSize(1));
@@ -60,10 +60,10 @@ public class DataDirConfigChangeHandlerTest {
 
   @Test
   public void testApplyChange() {
-    DataDirectoriesConfig dataDirectoriesConfig = mock(DataDirectoriesConfig.class);
-    DataDirConfigChangeHandler dataDirConfigChangeHandler = new DataDirConfigChangeHandler(dataDirectoriesConfig, identity(), new PathResolver(tmpDir.getRoot()));
+    DataDirsConfig dataDirsConfig = mock(DataDirsConfig.class);
+    DataDirConfigChangeHandler dataDirConfigChangeHandler = new DataDirConfigChangeHandler(dataDirsConfig, identity(), new PathResolver(tmpDir.getRoot()));
     dataDirConfigChangeHandler.apply(set.toConfiguration(topology.getCluster()));
 
-    verify(dataDirectoriesConfig).addDataDirectory("new-root", "path/to/data/root");
+    verify(dataDirsConfig).addDataDirectory("new-root", "path/to/data/root");
   }
 }

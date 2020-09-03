@@ -44,7 +44,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class DataDirectoriesConfigImplTest {
+public class DataDirsConfigImplTest {
 
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
@@ -62,7 +62,7 @@ public class DataDirectoriesConfigImplTest {
 
     String[] ids = {"a", "b"};
     String[] dataRootPaths = new String[ids.length];
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
     DataRootBinding[] bindings = new DataRootBinding[ids.length];
 
     for (int i = 0; i < ids.length; i++) {
@@ -85,7 +85,7 @@ public class DataDirectoriesConfigImplTest {
   public void getRootIdentifiers() throws Exception {
     String[] ids = {"a", "b"};
     String[] dataRootPaths = new String[ids.length];
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
 
     Set<String> expectedIds = new HashSet<>();
     Collections.addAll(expectedIds, ids);
@@ -96,7 +96,7 @@ public class DataDirectoriesConfigImplTest {
   public void testGetRootWitNull() throws Exception {
     String[] ids = {"a", "b"};
     String[] dataRootPaths = new String[ids.length];
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
 
     expectedException.expect(NullPointerException.class);
     dataRootConfig.getRoot(null);
@@ -106,7 +106,7 @@ public class DataDirectoriesConfigImplTest {
   public void testGetRootInvalidId() throws Exception {
     String[] ids = {"a", "b"};
     String[] dataRootPaths = new String[ids.length];
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
+    DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths);
 
     expectedException.expect(IllegalArgumentException.class);
     dataRootConfig.getRoot("this_id_does_not_exists");
@@ -117,7 +117,7 @@ public class DataDirectoriesConfigImplTest {
     String[] ids = {"a", "a"};
     String[] dataRootPaths = new String[ids.length];
 
-    expectedException.expect(DataDirectoriesConfigurationException.class);
+    expectedException.expect(DataDirsConfigurationException.class);
     expectedException.expectMessage("already exists");
     configureDataRoot(ids, dataRootPaths);
   }
@@ -129,7 +129,7 @@ public class DataDirectoriesConfigImplTest {
     dataRootPaths[0] = "./dataroot/../dataroot";
     dataRootPaths[1] = "dataroot";
 
-    expectedException.expect(DataDirectoriesConfigurationException.class);
+    expectedException.expect(DataDirsConfigurationException.class);
     expectedException.expectMessage("overlap");
 
     configureDataRoot(ids, dataRootPaths);
@@ -142,7 +142,7 @@ public class DataDirectoriesConfigImplTest {
     dataRootPaths[0] = "/tmp/dataroot/dir/dir";
     dataRootPaths[1] = "/tmp/dataroot/dir";
 
-    expectedException.expect(DataDirectoriesConfigurationException.class);
+    expectedException.expect(DataDirsConfigurationException.class);
     expectedException.expectMessage("overlap");
     configureDataRoot(ids, dataRootPaths);
   }
@@ -154,7 +154,7 @@ public class DataDirectoriesConfigImplTest {
     dataRootPaths[0] = "/tmp/dataroot/dir/dir";
     dataRootPaths[1] = "/tmp/dataroot/dir";
 
-    expectedException.expect(DataDirectoriesConfigurationException.class);
+    expectedException.expect(DataDirsConfigurationException.class);
     expectedException.expectMessage("overlap");
     configureDataRoot(ids, dataRootPaths);
   }
@@ -167,7 +167,7 @@ public class DataDirectoriesConfigImplTest {
     dataRootPaths[0] = sameDataPath;
     dataRootPaths[1] = sameDataPath;
 
-    expectedException.expect(DataDirectoriesConfigurationException.class);
+    expectedException.expect(DataDirsConfigurationException.class);
     expectedException.expectMessage("overlap");
     configureDataRoot(ids, dataRootPaths);
   }
@@ -179,7 +179,7 @@ public class DataDirectoriesConfigImplTest {
     dataRootPaths[0] = "dir";
     dataRootPaths[1] = Paths.get("dir").toAbsolutePath().toString();
 
-    expectedException.expect(DataDirectoriesConfigurationException.class);
+    expectedException.expect(DataDirsConfigurationException.class);
     expectedException.expectMessage("overlap");
     configureDataRoot(ids, dataRootPaths);
   }
@@ -194,7 +194,7 @@ public class DataDirectoriesConfigImplTest {
     dataRootMappings[0].setName(ids[0]);
     dataRootMappings[0].setValue(configuredPath + "-%h");
 
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(dataRootMappings);
+    DataDirsConfigImpl dataRootConfig = configureDataRoot(dataRootMappings);
     String hostName = ParameterSubstitutor.getHostName();
     assertThat(dataRootConfig.getRoot(ids[0]), is(Paths.get(configuredPath + "-" + hostName)));
   }
@@ -205,7 +205,7 @@ public class DataDirectoriesConfigImplTest {
     String[] dataRootPaths = new String[ids.length];
     String source = folder.newFile("config.xml").getParent();
 
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths, source);
+    DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths, source);
     assertThat(dataRootConfig.getRoot(ids[0]).getParent(), is(Paths.get(source)));
   }
 
@@ -216,19 +216,19 @@ public class DataDirectoriesConfigImplTest {
     String[] dataRootPaths = new String[ids.length];
     String source = new URL("http://example.com/test/tc-config.xml").getPath();
 
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths, source);
+    DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths, source);
     assertThat(dataRootConfig.getRoot(ids[0]).getParent(), is(Paths.get(".")));
   }
 
   @Test
   public void testPlatformRootNotSpecified() throws Exception {
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(new String[]{"data"}, new String[1]);
+    DataDirsConfigImpl dataRootConfig = configureDataRoot(new String[]{"data"}, new String[1]);
     assertThat(dataRootConfig.getPlatformRootIdentifier(), is(Optional.empty()));
   }
 
   @Test
   public void testPlatformRootSpecified() throws Exception {
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(new String[]{"data"}, new String[1], null, 0);
+    DataDirsConfigImpl dataRootConfig = configureDataRoot(new String[]{"data"}, new String[1], null, 0);
     assertThat(dataRootConfig.getPlatformRootIdentifier().orElse("busted"), is("data"));
   }
 
@@ -247,20 +247,20 @@ public class DataDirectoriesConfigImplTest {
     dataRootMapping.setUseForPlatform(true);
     dataRootMappings[1] = dataRootMapping;
 
-    expectedException.expect(DataDirectoriesConfigurationException.class);
+    expectedException.expect(DataDirsConfigurationException.class);
     expectedException.expectMessage("More than one");
     configureDataRoot(dataRootMappings);
   }
 
-  private DataDirectoriesConfigImpl configureDataRoot(String[] ids, String[] dataRootPaths) throws IOException {
+  private DataDirsConfigImpl configureDataRoot(String[] ids, String[] dataRootPaths) throws IOException {
     return configureDataRoot(ids, dataRootPaths, (String) null);
   }
 
-  private DataDirectoriesConfigImpl configureDataRoot(String[] ids, String[] dataRootPaths, String source) throws IOException {
+  private DataDirsConfigImpl configureDataRoot(String[] ids, String[] dataRootPaths, String source) throws IOException {
     return configureDataRoot(ids, dataRootPaths, source, -1);
   }
 
-  private DataDirectoriesConfigImpl configureDataRoot(String[] ids, String[] dataRootPaths, String source, int platformRootIndex) throws IOException {
+  private DataDirsConfigImpl configureDataRoot(String[] ids, String[] dataRootPaths, String source, int platformRootIndex) throws IOException {
     DataDirectories dataDirectories = new DataDirectories();
     for (int i = 0; i < ids.length; i++) {
       DataRootMapping dataRootMapping = new DataRootMapping();
@@ -275,10 +275,10 @@ public class DataDirectoriesConfigImplTest {
       dataDirectories.getDirectory().add(dataRootMapping);
     }
 
-    return new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(source), dataDirectories);
+    return new DataDirsConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(source), dataDirectories);
   }
 
-  private DataDirectoriesConfigImpl configureDataRoot(DataRootMapping[] dataRootMappings) throws IOException {
+  private DataDirsConfigImpl configureDataRoot(DataRootMapping[] dataRootMappings) throws IOException {
     DataDirectories dataDirectories = new DataDirectories();
     for (int i = 0; i < dataRootMappings.length; i++) {
       if (dataRootMappings[i].getValue() == null) {
@@ -287,6 +287,6 @@ public class DataDirectoriesConfigImplTest {
       dataDirectories.getDirectory().add(dataRootMappings[i]);
     }
 
-    return new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(null), dataDirectories);
+    return new DataDirsConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(null), dataDirectories);
   }
 }

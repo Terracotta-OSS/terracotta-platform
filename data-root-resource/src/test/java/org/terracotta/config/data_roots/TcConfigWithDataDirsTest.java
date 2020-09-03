@@ -34,42 +34,42 @@ import static org.mockito.Mockito.when;
 /**
  * TcConfigWithDataDirectoriesTest
  */
-public class TcConfigWithDataDirectoriesTest {
+public class TcConfigWithDataDirsTest {
 
-  private DataDirectoriesConfig dataDirectoriesConfig;
+  private DataDirsConfig dataDirsConfig;
 
   @After
   public void tearDown() throws Exception {
-    dataDirectoriesConfig.close();
+    dataDirsConfig.close();
   }
 
   @Test
   public void testCanParseConfigWithDataRoot() throws Exception {
     TcConfiguration configuration = TCConfigurationParser.parse(
         new File(getClass().getResource("/configs/tc-config-data.xml").getPath()));
-    List<DataDirectoriesConfig> dataRoots = configuration.getExtendedConfiguration(DataDirectoriesConfig.class);
+    List<DataDirsConfig> dataRoots = configuration.getExtendedConfiguration(DataDirsConfig.class);
 
     assertThat(dataRoots, hasSize(1));
 
-    dataDirectoriesConfig = dataRoots.get(0);
+    dataDirsConfig = dataRoots.get(0);
 
     PlatformConfiguration platformConfiguration = mock(PlatformConfiguration.class);
     when(platformConfiguration.getServerName()).thenReturn("server");
 
-    assertThat(dataDirectoriesConfig.getDataDirectoriesForServer(platformConfiguration).getDataDirectory("data"), notNullValue());
+    assertThat(dataDirsConfig.getDataDirectoriesForServer(platformConfiguration).getDataDirectory("data"), notNullValue());
   }
 
   @Test
   public void testProperlySetsPlatformRootId() throws Exception {
     TcConfiguration configuration = TCConfigurationParser.parse(
         new File(getClass().getResource("/configs/tc-config-data.xml").getPath()));
-    List<DataDirectoriesConfig> dataRoots = configuration.getExtendedConfiguration(DataDirectoriesConfig.class);
+    List<DataDirsConfig> dataRoots = configuration.getExtendedConfiguration(DataDirsConfig.class);
 
-    dataDirectoriesConfig = dataRoots.get(0);
+    dataDirsConfig = dataRoots.get(0);
 
     PlatformConfiguration platformConfiguration = mock(PlatformConfiguration.class);
     when(platformConfiguration.getServerName()).thenReturn("server");
 
-    assertThat(dataDirectoriesConfig.getDataDirectoriesForServer(platformConfiguration).getPlatformDataDirectoryIdentifier().get(), is("data"));
+    assertThat(dataDirsConfig.getDataDirectoriesForServer(platformConfiguration).getPlatformDataDirectoryIdentifier().get(), is("data"));
   }
 }
