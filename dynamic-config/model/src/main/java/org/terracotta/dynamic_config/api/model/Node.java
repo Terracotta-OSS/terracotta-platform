@@ -518,7 +518,7 @@ public class Node implements Cloneable, PropertyHolder {
 
     @Override
     public String toString() {
-      return getNodeName() + ":" + getNodeUID() + "@" + getAddress();
+      return getNodeName() + "@" + getAddress();
     }
 
     @Override
