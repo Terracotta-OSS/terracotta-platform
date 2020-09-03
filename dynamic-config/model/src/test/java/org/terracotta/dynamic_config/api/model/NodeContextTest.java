@@ -65,7 +65,7 @@ public class NodeContextTest {
   public void test_ctors() {
     assertThat(
         () -> new NodeContext(cluster, Testing.N_UIDS[4]),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node UID: x6tPuzj0Tq2Qs1niISqVMg not found in cluster: my-cluster ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1:jUhhu1kRQd-x6iNgpo9Xyw@localhost:9410 ), stripe-2:RUHaurjcQA-57mpGqtovOA ( node2:VOVyu3kuQxCRIu7dK_UZZA@localhost:9411 ) )")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node UID: x6tPuzj0Tq2Qs1niISqVMg not found in cluster: my-cluster ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1@localhost:9410 ), stripe-2:RUHaurjcQA-57mpGqtovOA ( node2@localhost:9411 ) )")))));
   }
 
   @Test

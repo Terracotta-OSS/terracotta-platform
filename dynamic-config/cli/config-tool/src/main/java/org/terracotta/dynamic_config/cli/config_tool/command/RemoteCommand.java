@@ -25,12 +25,12 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
-import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
@@ -46,7 +46,6 @@ import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopProgress;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
-import org.terracotta.nomad.entity.client.NomadEntityProvider;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadChangeInfo;
 
@@ -98,7 +97,6 @@ public abstract class RemoteCommand extends Command {
   @Inject public NomadManager<NodeContext> nomadManager;
   @Inject public RestartService restartService;
   @Inject public StopService stopService;
-  @Inject public NomadEntityProvider nomadEntityProvider;
 
   protected void licenseValidation(Endpoint endpoint, Cluster cluster) {
     licenseValidation(endpoint.getAddress(), cluster);
@@ -106,12 +104,11 @@ public abstract class RemoteCommand extends Command {
 
   protected void licenseValidation(InetSocketAddress node, Cluster cluster) {
     logger.trace("licenseValidation({}, {})", node, cluster);
-    logger.debug("Validating the new configuration change(s) against the license");
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
       if (diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(cluster)) {
-        logger.info("License validation passed: configuration change(s) can be applied");
+        logger.debug("License validation passed: configuration change(s) can be applied");
       } else {
-        logger.warn("License validation skipped: no license installed");
+        logger.debug("License validation skipped: no license installed");
       }
     }
   }

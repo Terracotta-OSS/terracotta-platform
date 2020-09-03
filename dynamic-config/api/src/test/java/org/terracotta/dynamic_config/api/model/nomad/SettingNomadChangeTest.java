@@ -100,9 +100,9 @@ public class SettingNomadChangeTest {
 
     assertThat(
         () -> set(node(Testing.A_UID), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Stripe not found in cluster: <no name> ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1:jUhhu1kRQd-x6iNgpo9Xyw@localhost:9410 ) ) with applicability: node UID: YLQguzhRSdS6y5M9vnA5mw")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Stripe not found in cluster: <no name> ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1@localhost:9410 ) ) with applicability: node UID: YLQguzhRSdS6y5M9vnA5mw")))));
     assertThat(
         () -> set(stripe(Testing.A_UID), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Stripe not found in cluster: <no name> ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1:jUhhu1kRQd-x6iNgpo9Xyw@localhost:9410 ) ) with applicability: stripe UID: YLQguzhRSdS6y5M9vnA5mw")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Stripe not found in cluster: <no name> ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1@localhost:9410 ) ) with applicability: stripe UID: YLQguzhRSdS6y5M9vnA5mw")))));
   }
 }
