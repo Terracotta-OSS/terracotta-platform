@@ -15,7 +15,7 @@
  */
 package org.terracotta.config.data_roots.management;
 
-import org.terracotta.config.data_roots.DataDirectoriesConfigImpl;
+import org.terracotta.config.data_roots.DataDirsConfigImpl;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.StatisticRegistry;
 import org.terracotta.management.registry.Named;
@@ -32,9 +32,9 @@ import static org.terracotta.statistics.ValueStatistics.memoize;
 @RequiredContext({@Named("consumerId"), @Named("type"), @Named("alias")})
 @StatisticProvider
 public class DataRootStatisticsManagementProvider extends AbstractStatisticsManagementProvider<DataRootBinding> {
-  private final DataDirectoriesConfigImpl dataRootConfig;
+  private final DataDirsConfigImpl dataRootConfig;
 
-  public DataRootStatisticsManagementProvider(DataDirectoriesConfigImpl dataRootConfig) {
+  public DataRootStatisticsManagementProvider(DataDirsConfigImpl dataRootConfig) {
     super(DataRootBinding.class);
     this.dataRootConfig = dataRootConfig;
   }
@@ -45,7 +45,7 @@ public class DataRootStatisticsManagementProvider extends AbstractStatisticsMana
   }
 
   private static class DataRootBindingExposedStatistics extends AbstractExposedStatistics<DataRootBinding> {
-    DataRootBindingExposedStatistics(Context context, DataRootBinding binding, StatisticRegistry statisticRegistry, final DataDirectoriesConfigImpl dataRootConfig) {
+    DataRootBindingExposedStatistics(Context context, DataRootBinding binding, StatisticRegistry statisticRegistry, final DataDirsConfigImpl dataRootConfig) {
       super(context.with("type", "DataRoot"), binding, statisticRegistry);
 
       getStatisticRegistry().registerStatistic("DataRoot:TotalDiskUsage", memoize(10, SECONDS, gauge(() -> dataRootConfig.getDiskUsageByRootIdentifier(binding.getAlias()))));

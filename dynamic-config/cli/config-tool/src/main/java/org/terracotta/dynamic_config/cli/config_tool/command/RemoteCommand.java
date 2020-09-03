@@ -465,8 +465,7 @@ public abstract class RemoteCommand extends Command {
     Collection<String> expectedPassives = cluster.getNodes().stream().map(Node::getName).collect(toSet());
     expectedPassives.removeAll(actives);
     if (!passives.containsAll(expectedPassives)) {
-      throw new IllegalStateException("Not all cluster nodes are online: expected passive nodes " + toString(expectedPassives) + ", but only got: " + toString(passives)
-          + ". Either some nodes are shutdown, either a hostname/port change has been made and the cluster has not yet been restarted.");
+      throw new IllegalStateException("Expected all nodes to be online, but nodes: " + toString(expectedPassives) + " are not");
     }
   }
 

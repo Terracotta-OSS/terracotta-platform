@@ -24,7 +24,6 @@ import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,15 +34,15 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Handles dynamic data-directory additions
  */
-public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DataDirectoryConfigChangeHandler.class);
+public class DataDirConfigChangeHandler implements ConfigChangeHandler {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DataDirConfigChangeHandler.class);
 
-  private final DataDirectoriesConfig dataDirectoriesConfig;
+  private final DataDirsConfig dataDirsConfig;
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
 
-  public DataDirectoryConfigChangeHandler(DataDirectoriesConfig dataDirectoriesConfig, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
-    this.dataDirectoriesConfig = dataDirectoriesConfig;
+  public DataDirConfigChangeHandler(DataDirsConfig dataDirsConfig, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
+    this.dataDirsConfig = dataDirsConfig;
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
   }
@@ -58,22 +57,38 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
     LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
 
     String dataDirectoryName = change.getKey();
-    Path dataDirectoryPath = Paths.get(change.getValue().get());
+    Path substitutedDataDirPath = substitute(Paths.get(change.getValue().get()));
 
     if (dataDirs.containsKey(dataDirectoryName)) {
       throw new InvalidConfigChangeException("A data directory with name: " + dataDirectoryName + " already exists");
     }
 
     for (Map.Entry<String, Path> entry : dataDirs.entrySet()) {
-      if (overLaps(entry.getValue(), dataDirectoryPath)) {
+      if (overLaps(substitute(entry.getValue()), substitutedDataDirPath)) {
         throw new InvalidConfigChangeException("Data directory: " + dataDirectoryName + " overlaps with: " + entry.getKey());
       }
     }
 
-    try {
-      ensureDirectory(dataDirectoryPath);
-    } catch (IOException e) {
-      throw new InvalidConfigChangeException(e.toString(), e);
+    if (!substitutedDataDirPath.toFile().exists()) {
+      try {
+        Files.createDirectories(substitutedDataDirPath);
+      } catch (Exception e) {
+        throw new InvalidConfigChangeException(e.toString(), e);
+      }
+    } else {
+      if (!Files.isDirectory(substitutedDataDirPath)) {
+        throw new InvalidConfigChangeException(substitutedDataDirPath + " exists, but is not a directory");
+      }
+
+      if (!Files.isReadable(substitutedDataDirPath)) {
+        throw new InvalidConfigChangeException("Directory: " + substitutedDataDirPath + " doesn't have read permissions" +
+            " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
+      }
+
+      if (!Files.isWritable(substitutedDataDirPath)) {
+        throw new InvalidConfigChangeException("Directory: " + substitutedDataDirPath + " doesn't have write permissions" +
+            " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
+      }
     }
   }
 
@@ -81,27 +96,14 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
   public void apply(Configuration change) {
     String dataDirectoryName = change.getKey();
     String dataDirectoryPath = change.getValue().get();
-    dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
+    dataDirsConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
   }
 
-  public boolean overLaps(Path existing, Path newDataDirectoryPath) {
-    Path e = compute(existing);
-    Path n = compute(newDataDirectoryPath);
-    return e.startsWith(n) || n.startsWith(e);
+  public boolean overLaps(Path existing, Path newDataDirPath) {
+    return existing.startsWith(newDataDirPath) || newDataDirPath.startsWith(existing);
   }
 
-  private Path compute(Path path) {
+  private Path substitute(Path path) {
     return parameterSubstitutor.substitute(pathResolver.resolve(path)).normalize();
-  }
-
-  private void ensureDirectory(Path directory) throws IOException, InvalidConfigChangeException {
-    directory = compute(directory);
-    if (!directory.toFile().exists()) {
-      Files.createDirectories(directory);
-    } else {
-      if (!Files.isDirectory(directory)) {
-        throw new InvalidConfigChangeException(directory.getFileName() + " exists under " + directory.getParent() + " but is not a directory");
-      }
-    }
   }
 }

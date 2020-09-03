@@ -56,7 +56,7 @@ public class DataRootConfigParser implements ExtendedConfigParser {
   }
 
   @Override
-  public DataDirectoriesConfigImpl parse(Element element, String source) {
+  public DataDirsConfigImpl parse(Element element, String source) {
     DataDirectories dataDirectories = parser().apply(element);
     DefaultSubstitutor.applyDefaults(dataDirectories);
 
@@ -64,7 +64,7 @@ public class DataRootConfigParser implements ExtendedConfigParser {
 
     // true == skip any file IO when using this parser.
     // this parser is only used by the migration tool now
-    return new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, pathResolver, dataDirectories, true);
+    return new DataDirsConfigImpl(ParameterSubstitutor::substitute, pathResolver, dataDirectories, true);
   }
 
   public Function<Element, DataDirectories> parser() {

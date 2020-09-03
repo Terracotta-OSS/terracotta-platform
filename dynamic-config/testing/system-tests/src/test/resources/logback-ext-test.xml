@@ -21,5 +21,4 @@
   <!--  <logger name="org.terracotta.persistence.sanskrit" level="TRACE"/>-->
   <!--  <logger name="org.terracotta.nomad" level="TRACE"/>-->
   <!--  <logger name="org.terracotta" level="TRACE"/>-->
-  <!--  <logger name="org.terracotta.config.data_roots.DataDirectoryConfigChangeHandler" level="TRACE"/>-->
 </included>

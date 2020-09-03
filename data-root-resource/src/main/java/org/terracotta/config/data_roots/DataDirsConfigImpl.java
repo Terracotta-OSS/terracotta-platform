@@ -49,17 +49,17 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author vmad
  */
-public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, ManageableServerComponent, StateDumpable {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DataDirectoriesConfigImpl.class);
+public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerComponent, StateDumpable {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DataDirsConfigImpl.class);
 
   private final ConcurrentMap<String, Path> dataRootMap = new ConcurrentHashMap<>();
   private final String platformRootIdentifier;
-  private final ConcurrentMap<String, DataDirectories> serverToDataRoots = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, DataDirs> serverToDataRoots = new ConcurrentHashMap<>();
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
   private final Collection<EntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
 
-  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, Path metadataDir, Map<String, Path> dataDirectories) {
+  public DataDirsConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, Path metadataDir, Map<String, Path> dataDirectories) {
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
 
@@ -91,11 +91,11 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     }
   }
 
-  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories) {
+  public DataDirsConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories) {
     this(parameterSubstitutor, pathResolver, dataDirectories, false);
   }
 
-  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories, boolean skipIO) {
+  public DataDirsConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories, boolean skipIO) {
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
 
@@ -106,7 +106,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
         if (tempPlatformRootIdentifier == null) {
           tempPlatformRootIdentifier = mapping.getName();
         } else {
-          throw new DataDirectoriesConfigurationException("More than one data directory is configured to be used by platform");
+          throw new DataDirsConfigurationException("More than one data directory is configured to be used by platform");
         }
       }
     }
@@ -115,7 +115,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
 
 
   @Override
-  public DataDirectories getDataDirectoriesForServer(PlatformConfiguration platformConfiguration) {
+  public DataDirs getDataDirectoriesForServer(PlatformConfiguration platformConfiguration) {
     return getDataRootsForServer(platformConfiguration.getServerName());
   }
 
@@ -148,12 +148,12 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     Path dataDirectory = compute(Paths.get(path));
 
     if (dataRootMap.containsKey(name)) {
-      throw new DataDirectoriesConfigurationException("A data directory with name: " + name + " already exists");
+      throw new DataDirsConfigurationException("A data directory with name: " + name + " already exists");
     }
 
     Path overlapPath = overLapsWith(dataDirectory);
     if (overlapPath != null) {
-      throw new DataDirectoriesConfigurationException(
+      throw new DataDirsConfigurationException(
           String.format(
               "Path for data directory: %s overlaps with the existing data directory path: %s",
               dataDirectory,
@@ -181,11 +181,11 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     registry.addManagementProvider(new DataRootSettingsManagementProvider());
     registry.addManagementProvider(new DataRootStatisticsManagementProvider(this));
 
-    DataDirectories dataDirectories = getDataRootsForServer(registry.getMonitoringService().getServerName());
+    DataDirs dataDirs = getDataRootsForServer(registry.getMonitoringService().getServerName());
 
-    for (String identifier : dataDirectories.getDataDirectoryNames()) {
+    for (String identifier : dataDirs.getDataDirectoryNames()) {
       LOGGER.trace("[{}] onManagementRegistryCreated() - Exposing DataDirectory:{}", consumerId, identifier);
-      registry.register(new DataRootBinding(identifier, dataDirectories.getDataDirectory(identifier)));
+      registry.register(new DataRootBinding(identifier, dataDirs.getDataDirectory(identifier)));
     }
 
     registry.refresh();
@@ -207,8 +207,8 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
 
   @Override
   public void close() throws IOException {
-    for (DataDirectories dataDirectories : serverToDataRoots.values()) {
-      dataDirectories.close();
+    for (DataDirs dataDirs : serverToDataRoots.values()) {
+      dataDirs.close();
     }
   }
 
@@ -246,9 +246,9 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     }
   }
 
-  private DataDirectories getDataRootsForServer(String serverName) {
+  private DataDirs getDataRootsForServer(String serverName) {
     return serverToDataRoots.computeIfAbsent(serverName,
-        name -> new DataDirectoriesWithServerName(this, DataDirectoriesConfig.cleanStringForPath(name)));
+        name -> new DataDirsWithServerName(this, DataDirsConfig.cleanStringForPath(name)));
   }
 
   private Path compute(Path path) {
