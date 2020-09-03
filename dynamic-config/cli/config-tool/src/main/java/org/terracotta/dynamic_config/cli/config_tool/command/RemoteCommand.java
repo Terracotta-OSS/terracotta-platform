@@ -106,12 +106,11 @@ public abstract class RemoteCommand extends Command {
 
   protected void licenseValidation(InetSocketAddress node, Cluster cluster) {
     logger.trace("licenseValidation({}, {})", node, cluster);
-    logger.debug("Validating the new configuration change(s) against the license");
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
       if (diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(cluster)) {
-        logger.info("License validation passed: configuration change(s) can be applied");
+        logger.debug("License validation passed: configuration change(s) can be applied");
       } else {
-        logger.warn("License validation skipped: no license installed");
+        logger.debug("License validation skipped: no license installed");
       }
     }
   }
