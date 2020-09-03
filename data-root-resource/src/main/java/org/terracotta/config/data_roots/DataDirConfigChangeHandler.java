@@ -34,14 +34,14 @@ import static java.util.stream.Collectors.toMap;
 /**
  * Handles dynamic data-directory additions
  */
-public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DataDirectoryConfigChangeHandler.class);
+public class DataDirConfigChangeHandler implements ConfigChangeHandler {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DataDirConfigChangeHandler.class);
 
   private final DataDirectoriesConfig dataDirectoriesConfig;
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
 
-  public DataDirectoryConfigChangeHandler(DataDirectoriesConfig dataDirectoriesConfig, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
+  public DataDirConfigChangeHandler(DataDirectoriesConfig dataDirectoriesConfig, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
     this.dataDirectoriesConfig = dataDirectoriesConfig;
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
