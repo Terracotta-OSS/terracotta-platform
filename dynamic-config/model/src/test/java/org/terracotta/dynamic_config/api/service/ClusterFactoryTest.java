@@ -63,7 +63,8 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterFactoryTest {
 
-  private final ClusterFactory clusterFactory = new ClusterFactory();
+  private final ClusterValidator clusterValidator = new OssClusterValidator();
+  private final ClusterFactory clusterFactory = new ClusterFactory(clusterValidator);
 
   public IParameterSubstitutor substitutor = source -> {
     if (source == null) {
@@ -321,7 +322,7 @@ public class ClusterFactoryTest {
           tuple.t1,
           is(equalTo(expectedProps)));
 
-      Cluster expectedCluster = new ClusterFactory().create(expectedProps);
+      Cluster expectedCluster = new ClusterFactory(clusterValidator).create(expectedProps);
 
       assertThat(
           "File: " + tuple.t2,
@@ -333,7 +334,7 @@ public class ClusterFactoryTest {
   @Test
   public void test_parsing_expanded_values_does_not_add_defaults() throws URISyntaxException, IOException {
     Properties expectedProps = Props.load(Paths.get(getClass().getResource("/config-property-files/config_expanded_default.properties").toURI()));
-    Cluster expectedCluster = new ClusterFactory().create(expectedProps);
+    Cluster expectedCluster = new ClusterFactory(clusterValidator).create(expectedProps);
     assertThat(
         "\nclusterWithDefaults: " + json.writeValueAsString(clusterWithDefaults) + "\nexpectedCluster:     " + json.writeValueAsString(expectedCluster),
         expectedCluster, is(equalTo(clusterWithDefaults)));
@@ -343,7 +344,7 @@ public class ClusterFactoryTest {
   public void test_mapping_props_json_without_defaults() throws URISyntaxException, IOException {
     Properties props = Props.load(read("/config1_without_defaults.properties"));
     Cluster fromJson = json.readValue(read("/config2.json"), Cluster.class);
-    Cluster fromProps = new ClusterFactory().create(props);
+    Cluster fromProps = new ClusterFactory(clusterValidator).create(props);
 
     assertThat(json.writeValueAsString(fromProps), fromProps, is(equalTo(fromJson)));
     assertThat(
@@ -363,7 +364,7 @@ public class ClusterFactoryTest {
   @Test
   public void test_mapping_props_json_with_defaults() throws URISyntaxException, IOException {
     Properties props = Props.load(read("/config1_with_defaults.properties"));
-    Cluster fromProps = new ClusterFactory().create(props);
+    Cluster fromProps = new ClusterFactory(clusterValidator).create(props);
     Cluster fromJson = json.readValue(read("/config1.json"), Cluster.class);
 
     assertThat(json.writeValueAsString(fromProps), fromProps, is(equalTo(fromJson)));

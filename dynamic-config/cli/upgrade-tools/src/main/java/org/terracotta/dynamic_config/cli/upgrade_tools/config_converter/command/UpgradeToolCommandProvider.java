@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.command;
 
-package org.terracotta.dynamic_config.cli.config_tool.command;
-
-import com.tc.util.ManagedServiceLoader;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.CommandProvider;
 
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
-public interface CommandProvider {
-  Set<Command> getCommands();
-
-  static CommandProvider get() {
-    Collection<CommandProvider> services = ManagedServiceLoader.loadServices(CommandProvider.class, CommandProvider.class.getClassLoader());
-    if (services.size() != 1) {
-      throw new AssertionError("expected exactly one command provider, but found :" + services.size());
-    }
-    return services.iterator().next();
+/**
+ * @author Mathieu Carbou
+ */
+public class UpgradeToolCommandProvider implements CommandProvider {
+  @Override
+  public Set<Command> getCommands() {
+    Set<Command> commands = new HashSet<>();
+    commands.add(new ConvertCommand());
+    return commands;
   }
 }

@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.api.model.nomad;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
 
 import java.util.Random;
@@ -77,8 +76,6 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
       // Existing node names should not be touched
       NameGenerator.assignFriendlyStripeNames(upgraded, new Random(clusterName.hashCode()));
     }
-
-    new ClusterValidator(upgraded).validate();
 
     return upgraded;
   }

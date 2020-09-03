@@ -34,6 +34,7 @@ import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.command.Command;
@@ -97,6 +98,7 @@ public abstract class RemoteCommand extends Command {
   @Inject public NomadManager<NodeContext> nomadManager;
   @Inject public RestartService restartService;
   @Inject public StopService stopService;
+  @Inject public ClusterValidator clusterValidator;
 
   protected void licenseValidation(Endpoint endpoint, Cluster cluster) {
     licenseValidation(endpoint.getAddress(), cluster);

@@ -23,6 +23,7 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
@@ -48,10 +49,12 @@ public class ConfigRepoProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigRepoProcessor.class);
 
   private final Path outputFolderPath;
+  private final ClusterValidator clusterValidator;
   private final NomadServerFactory nomadServerFactory = new NomadServerFactory(new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()));
 
-  public ConfigRepoProcessor(Path outputFolderPath) {
+  public ConfigRepoProcessor(Path outputFolderPath, ClusterValidator clusterValidator) {
     this.outputFolderPath = outputFolderPath;
+    this.clusterValidator = clusterValidator;
   }
 
   public void process(Cluster cluster) {
@@ -97,7 +100,7 @@ public class ConfigRepoProcessor {
     };
 
     try {
-      return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, node.getName(), null);
+      return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, node.getName(), null, clusterValidator);
     } catch (SanskritException | NomadException | ConfigStorageException e) {
       throw new RuntimeException(e);
     }

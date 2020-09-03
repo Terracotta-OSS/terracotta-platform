@@ -35,6 +35,11 @@
       <artifactId>dynamic-config-model</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>common</artifactId>
+      <version>${terracotta-core.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>com.beust</groupId>

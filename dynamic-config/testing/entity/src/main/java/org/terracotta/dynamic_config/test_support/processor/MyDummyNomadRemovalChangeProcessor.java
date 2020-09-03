@@ -43,7 +43,7 @@ import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.util.Objects.requireNonNull;
 
 public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<NodeRemovalNomadChange> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(MyDummyNomadAdditionChangeProcessor.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MyDummyNomadRemovalChangeProcessor.class);
   private static final String PLATFORM_MBEAN_OPERATION_NAME = "removePassive";
   private static final String failAtPrepare = "prepareDeletion-failure";
   private static final String killAtPrepare = "killDeletion-prepare";
@@ -56,13 +56,15 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+  private final ClusterValidator clusterValidator;
 
-  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, PlatformService platformService, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
+  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, PlatformService platformService, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, ClusterValidator clusterValidator) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
     this.platformService = platformService;
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
+    this.clusterValidator = clusterValidator;
   }
 
   @Override
@@ -77,7 +79,7 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
     try {
       checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
-      new ClusterValidator(updated).validate();
+      clusterValidator.validate(updated);
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

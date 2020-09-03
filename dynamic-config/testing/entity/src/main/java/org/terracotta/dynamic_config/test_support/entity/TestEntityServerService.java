@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
@@ -104,17 +105,19 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
       PlatformService platformService = serviceRegistry.getService(new BasicServiceConfiguration<>(PlatformService.class));
       IParameterSubstitutor parameterSubstitutor = serviceRegistry.getService(new BasicServiceConfiguration<>(IParameterSubstitutor.class));
       PathResolver pathResolver = serviceRegistry.getService(new BasicServiceConfiguration<>(PathResolver.class));
+      ClusterValidator clusterValidator = serviceRegistry.getService(new BasicServiceConfiguration<>(ClusterValidator.class));
       requireNonNull(nomadRoutingChangeProcessor);
       requireNonNull(topologyService);
       requireNonNull(dynamicConfigEventFiring);
+      requireNonNull(clusterValidator);
 
       nomadRoutingChangeProcessor.register(
           NodeAdditionNomadChange.class,
-          new MyDummyNomadAdditionChangeProcessor(topologyService, dynamicConfigEventFiring, platformService));
+          new MyDummyNomadAdditionChangeProcessor(topologyService, dynamicConfigEventFiring, platformService, clusterValidator));
 
       nomadRoutingChangeProcessor.register(
           NodeRemovalNomadChange.class,
-          new MyDummyNomadRemovalChangeProcessor(topologyService, dynamicConfigEventFiring, platformService, parameterSubstitutor, pathResolver));
+          new MyDummyNomadRemovalChangeProcessor(topologyService, dynamicConfigEventFiring, platformService, parameterSubstitutor, pathResolver, clusterValidator));
 
       LOGGER.info("Installing: " + SimulationHandler.class.getName());
       ConfigChangeHandler handler = manager.findConfigChangeHandler(NODE_LOGGER_OVERRIDES).get();

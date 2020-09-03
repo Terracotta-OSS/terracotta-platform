@@ -26,7 +26,6 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
@@ -77,7 +76,7 @@ public class ImportCommand extends RemoteCommand {
     runtimePeers = cluster.getEndpoints(node);
 
     // validate the topology
-    new ClusterValidator(cluster).validate();
+    clusterValidator.validate(cluster);
 
     if (node != null) {
       // verify the activated state of the nodes
@@ -107,7 +106,7 @@ public class ImportCommand extends RemoteCommand {
   }
 
   private Cluster loadCluster() {
-    ClusterFactory clusterCreator = new ClusterFactory();
+    ClusterFactory clusterCreator = new ClusterFactory(clusterValidator);
     Cluster cluster = clusterCreator.create(configPropertiesFile);
     logger.debug("Config property file parsed and cluster topology validation successful");
     return cluster;

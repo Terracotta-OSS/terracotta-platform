@@ -19,6 +19,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.service.OssClusterValidator;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.testing.TmpDir;
 
@@ -55,7 +56,7 @@ public class FileConfigStorageTest {
 
     Properties properties = Props.load(new StringReader(new String(Files.readAllBytes(Paths.get(getClass().getResource("/config.properties").toURI())), StandardCharsets.UTF_8).replace("\\", "/")));
 
-    FileConfigStorage storage = new FileConfigStorage(root, "node-1");
+    FileConfigStorage storage = new FileConfigStorage(root, "node-1", new OssClusterValidator());
 
     assertFalse(Files.exists(root.resolve("node-1.1.properties")));
     storage.saveConfig(1L, topology);

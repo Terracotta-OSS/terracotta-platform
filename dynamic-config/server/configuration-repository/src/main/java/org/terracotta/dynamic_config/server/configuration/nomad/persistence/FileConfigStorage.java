@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.Props;
 
 import java.io.IOException;
@@ -48,10 +49,12 @@ public class FileConfigStorage implements ConfigStorage {
 
   private final Path root;
   private final String nodeName;
+  private final ClusterValidator clusterValidator;
 
-  public FileConfigStorage(Path root, String nodeName) {
+  public FileConfigStorage(Path root, String nodeName, ClusterValidator clusterValidator) {
     this.root = requireNonNull(root);
     this.nodeName = requireNonNull(nodeName);
+    this.clusterValidator = requireNonNull(clusterValidator);
   }
 
   @SuppressWarnings("unused")
@@ -84,13 +87,14 @@ public class FileConfigStorage implements ConfigStorage {
       // Note: this is really important to use the parser matching the version of the config.
       // Reason is that Nomad is computing a hash based on the "output" of the change, and verifies this hash
       // back when re-loading. So the reloaded value cannot be parsed differently.
-      Cluster cluster = new ClusterFactory(configFormatVersion).create(properties, configuration -> {
+      Cluster cluster = new ClusterFactory(clusterValidator, configFormatVersion).create(properties, configuration -> {
       }); // do not over-log added configs
 
       // we are eagerly applying the upgrade in memory.
       // It will be re-applied after through a nomad change and persisted
       // this si required because everything is working based on the UIDs now...
       cluster = new FormatUpgradeNomadChange(configFormatVersion, CURRENT).apply(cluster);
+      clusterValidator.validate(cluster);
 
       // V1 => V2: nodeUID is in V2, nodeName in V1
       if (nodeUID == null) {

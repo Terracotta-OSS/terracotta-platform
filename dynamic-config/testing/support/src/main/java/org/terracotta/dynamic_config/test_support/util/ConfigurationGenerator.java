@@ -15,6 +15,8 @@
  */
 package org.terracotta.dynamic_config.test_support.util;
 
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.api.service.OssClusterValidator;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverter;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigRepoProcessor;
 
@@ -61,14 +63,16 @@ public class ConfigurationGenerator {
 
   private final Path root;
   private final PortSupplier portSupplier;
+  private final ClusterValidator clusterValidator;
 
-  public ConfigurationGenerator(Path root, PortSupplier portSupplier) {
+  public ConfigurationGenerator(ClusterValidator clusterValidator, Path root, PortSupplier portSupplier) {
     this.root = root;
     this.portSupplier = portSupplier;
+    this.clusterValidator = clusterValidator;
   }
 
-  public ConfigurationGenerator(Path root, int nodesPerStripe, int... ports) {
-    this(root, PortSupplier.fromList(nodesPerStripe, ports));
+  public ConfigurationGenerator(ClusterValidator clusterValidator, Path root, int nodesPerStripe, int... ports) {
+    this(clusterValidator, root, PortSupplier.fromList(nodesPerStripe, ports));
   }
 
   public void generate2Stripes2Nodes() {
@@ -128,8 +132,8 @@ public class ConfigurationGenerator {
     try {
       assertFalse("Directory already exists: " + root, root.toFile().exists());
       createDirectories(root);
-      ConfigRepoProcessor resultProcessor = skipCommit ? new CommitSkippingConfigRepoProcessor(root) : new ConfigRepoProcessor(root);
-      ConfigConverter converter = new ConfigConverter(resultProcessor::process);
+      ConfigRepoProcessor resultProcessor = skipCommit ? new CommitSkippingConfigRepoProcessor(root, clusterValidator) : new ConfigRepoProcessor(root, clusterValidator);
+      ConfigConverter converter = new ConfigConverter(clusterValidator, resultProcessor::process);
       List<String> stripeNames = IntStream.range(0, tcConfigPaths.length).mapToObj(idx -> "stripe[" + idx + "]").collect(toList());
       converter.processInput("testCluster", stripeNames, tcConfigPaths);
 
@@ -154,8 +158,8 @@ public class ConfigurationGenerator {
   }
 
   public static void main(String[] args) {
-    new ConfigurationGenerator(Paths.get("target/test-data/repos/single-stripe-single-node"), 1, 9410, 9430).generate1Stripe1Node();
-    new ConfigurationGenerator(Paths.get("target/test-data/repos/single-stripe-multi-node"), 2, 9410, 9430, 9510, 9530).generate1Stripe2Nodes();
-    new ConfigurationGenerator(Paths.get("target/test-data/repos/multi-stripe"), 2, 9410, 9430, 9510, 9530, 9610, 9630, 9710, 9730).generate2Stripes2Nodes();
+    new ConfigurationGenerator(new OssClusterValidator(), Paths.get("target/test-data/repos/single-stripe-single-node"), 1, 9410, 9430).generate1Stripe1Node();
+    new ConfigurationGenerator(new OssClusterValidator(), Paths.get("target/test-data/repos/single-stripe-multi-node"), 2, 9410, 9430, 9510, 9530).generate1Stripe2Nodes();
+    new ConfigurationGenerator(new OssClusterValidator(), Paths.get("target/test-data/repos/multi-stripe"), 2, 9410, 9430, 9510, 9530, 9610, 9630, 9710, 9730).generate2Stripes2Nodes();
   }
 }

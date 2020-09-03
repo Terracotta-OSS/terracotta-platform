@@ -28,6 +28,7 @@ import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -77,6 +78,7 @@ public class NomadServerManager {
   private final IParameterSubstitutor parameterSubstitutor;
   private final ConfigChangeHandlerManager configChangeHandlerManager;
   private final LicenseService licenseService;
+  private final ClusterValidator clusterValidator;
   private final DefaultNomadRoutingChangeProcessor router = new DefaultNomadRoutingChangeProcessor();
   private final NomadPermissionChangeProcessorImpl nomadPermissionChangeProcessor = new NomadPermissionChangeProcessorImpl();
 
@@ -87,12 +89,13 @@ public class NomadServerManager {
   private volatile DynamicConfigEventService eventRegistrationService;
   private volatile DynamicConfigEventFiring eventFiringService;
 
-  public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseService licenseService, ObjectMapperFactory objectMapperFactory) {
+  public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseService licenseService, ObjectMapperFactory objectMapperFactory, ClusterValidator clusterValidator) {
     this.objectMapperFactory = requireNonNull(objectMapperFactory);
     this.nomadServerFactory = new NomadServerFactory(objectMapperFactory);
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.configChangeHandlerManager = requireNonNull(configChangeHandlerManager);
     this.licenseService = requireNonNull(licenseService);
+    this.clusterValidator = requireNonNull(clusterValidator);
   }
 
   public UpgradableNomadServer<NodeContext> getNomadServer() {
@@ -175,12 +178,12 @@ public class NomadServerManager {
     this.eventFiringService = eventService;
 
     try {
-      this.nomadServer = nomadServerFactory.createServer(getConfigurationManager(), null, nodeName.get(), getEventFiringService());
+      this.nomadServer = nomadServerFactory.createServer(getConfigurationManager(), null, nodeName.get(), getEventFiringService(), clusterValidator);
     } catch (SanskritException | NomadException | ConfigStorageException e) {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
-    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory);
+    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory, clusterValidator);
     this.dynamicConfigService = new AuditService(dynamicConfigService);
     this.topologyService = dynamicConfigService;
 
@@ -205,18 +208,19 @@ public class NomadServerManager {
     }
 
     router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(getTopologyService(), configChangeHandlerManager, getEventFiringService()));
-    router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
-    router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService()));
+    router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService(), clusterValidator));
+    router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), clusterValidator));
     router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(nodeUID));
-    router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService));
-    router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
-    router.register(FormatUpgradeNomadChange.class, new FormatUpgradeNomadChangeProcessor());
+    router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService, clusterValidator));
+    router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService(), clusterValidator));
+    router.register(FormatUpgradeNomadChange.class, new FormatUpgradeNomadChangeProcessor(clusterValidator));
     router.register(LockConfigNomadChange.class, new LockConfigNomadChangeProcessor());
     router.register(UnlockConfigNomadChange.class, new UnlockConfigNomadChangeProcessor());
 
     getNomadServer().setChangeApplicator(
         new ConfigChangeApplicator(
             nodeUID,
+            clusterValidator,
             new LockAwareNomadChangeProcessor(
                 new MultiSettingNomadChangeProcessor(
                     nomadPermissionChangeProcessor.then(new ApplicabilityNomadChangeProcessor(getTopologyService(), router))

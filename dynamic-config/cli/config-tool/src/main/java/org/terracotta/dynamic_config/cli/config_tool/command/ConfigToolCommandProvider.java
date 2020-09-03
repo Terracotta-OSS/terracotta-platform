@@ -16,11 +16,12 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.CommandProvider;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class OssCommandProvider implements CommandProvider {
+public class ConfigToolCommandProvider implements CommandProvider {
   @Override
   public Set<Command> getCommands() {
     Set<Command> commands = new HashSet<>();

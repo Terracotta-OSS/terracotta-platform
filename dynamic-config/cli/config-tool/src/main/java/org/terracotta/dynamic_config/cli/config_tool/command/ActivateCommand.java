@@ -24,7 +24,6 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
@@ -96,7 +95,7 @@ public class ActivateCommand extends RemoteCommand {
       throw new IllegalArgumentException("Cluster name is missing");
     }
 
-    new ClusterValidator(cluster).validate();
+    clusterValidator.validate(cluster);
 
     // getting the list of nodes where to push the same topology
 
@@ -140,7 +139,7 @@ public class ActivateCommand extends RemoteCommand {
 
   private Optional<Cluster> loadTopologyFromConfig() {
     return Optional.ofNullable(configPropertiesFile).map(path -> {
-      ClusterFactory clusterCreator = new ClusterFactory();
+      ClusterFactory clusterCreator = new ClusterFactory(clusterValidator);
       Cluster cluster = clusterCreator.create(configPropertiesFile);
       logger.info("Cluster topology loaded and validated from configuration file: " + cluster.toShapeString());
       return cluster;

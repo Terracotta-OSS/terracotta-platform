@@ -78,24 +78,26 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private final NomadServerManager nomadServerManager;
   private final Path licensePath;
   private final ObjectMapper objectMapper;
+  private final ClusterValidator clusterValidator;
 
   private volatile NodeContext upcomingNodeContext;
   private volatile NodeContext runtimeNodeContext;
   private volatile boolean clusterActivated;
 
-  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, ObjectMapperFactory objectMapperFactory) {
+  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, ObjectMapperFactory objectMapperFactory, ClusterValidator clusterValidator) {
     this.upcomingNodeContext = requireNonNull(nodeContext);
     this.runtimeNodeContext = requireNonNull(nodeContext);
     this.licenseService = requireNonNull(licenseService);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.licensePath = nomadServerManager.getConfigurationManager().getLicensePath().resolve(LICENSE_FILE_NAME);
     this.objectMapper = objectMapperFactory.create();
+    this.clusterValidator = requireNonNull(clusterValidator);
     if (hasLicenseFile()) {
       validateAgainstLicense(upcomingNodeContext.getCluster());
     }
 
     // This check is only present to safeguard against the possibility of a missing cluster validation in the call path
-    new ClusterValidator(nodeContext.getCluster()).validate();
+    clusterValidator.validate(nodeContext.getCluster());
   }
 
   // do not move this method up in the interface otherwise any client could access the license content through diagnostic port
@@ -297,7 +299,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     requireNonNull(updatedCluster);
 
-    new ClusterValidator(updatedCluster).validate();
+    clusterValidator.validate(updatedCluster);
 
     Node newMe = findMe(updatedCluster);
 

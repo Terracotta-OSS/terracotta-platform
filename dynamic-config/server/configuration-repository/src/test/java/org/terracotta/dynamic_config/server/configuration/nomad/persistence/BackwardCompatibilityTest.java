@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.api.service.OssClusterValidator;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.json.ObjectMapperFactory;
@@ -75,7 +76,8 @@ public class BackwardCompatibilityTest {
         nomadConfigurationManager,
         ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()),
         "default-node1",
-        null)) {
+        null,
+        new OssClusterValidator())) {
 
       // upgrade should have been done
       Properties after = Props.load(config.resolve("cluster").resolve("default-node1.2.properties"));

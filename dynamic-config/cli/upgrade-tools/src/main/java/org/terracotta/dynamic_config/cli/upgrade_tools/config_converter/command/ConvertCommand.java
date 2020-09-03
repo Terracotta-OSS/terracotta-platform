@@ -19,7 +19,9 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverter;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigPropertiesProcessor;
@@ -43,6 +45,9 @@ import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.C
 @Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration directory format")
 @Usage("convert -c <tc-config>,<tc-config>... ( -t directory [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
 public class ConvertCommand extends Command {
+
+  @Inject public ClusterValidator clusterValidator;
+
   @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
   private List<Path> tcConfigFiles;
 
@@ -96,8 +101,8 @@ public class ConvertCommand extends Command {
   @Override
   public final void run() {
     if (conversionFormat == DIRECTORY) {
-      ConfigRepoProcessor resultProcessor = new ConfigRepoProcessor(destinationDir);
-      ConfigConverter converter = new ConfigConverter(resultProcessor::process, force);
+      ConfigRepoProcessor resultProcessor = new ConfigRepoProcessor(destinationDir, clusterValidator);
+      ConfigConverter converter = new ConfigConverter(clusterValidator, resultProcessor::process, force);
       converter.processInput(newClusterName, stripeNames, tcConfigFiles.toArray(new Path[0]));
 
       if (licensePath != null) {
@@ -118,7 +123,7 @@ public class ConvertCommand extends Command {
 
     } else if (conversionFormat == PROPERTIES) {
       ConfigPropertiesProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, newClusterName);
-      ConfigConverter converter = new ConfigConverter(resultProcessor::process, force);
+      ConfigConverter converter = new ConfigConverter(clusterValidator, resultProcessor::process, force);
       converter.processInput(newClusterName, stripeNames, tcConfigFiles.toArray(new Path[0]));
       logger.info("Configuration properties file saved under: {}", destinationDir.toAbsolutePath().normalize());
 

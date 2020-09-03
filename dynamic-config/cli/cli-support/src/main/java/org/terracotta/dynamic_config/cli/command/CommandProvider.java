@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.cli.config_tool.command;
+
+package org.terracotta.dynamic_config.cli.command;
 
 import com.tc.util.ManagedServiceLoader;
-import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
 
 import java.util.Collection;
+import java.util.Set;
 
-public interface ServiceProvider {
-  Collection<Object> createServices(RemoteMainCommand mainCommand);
+public interface CommandProvider {
+  Set<Command> getCommands();
 
-  static ServiceProvider get() {
-    Collection<ServiceProvider> services = ManagedServiceLoader.loadServices(ServiceProvider.class, ServiceProvider.class.getClassLoader());
+  static CommandProvider get() {
+    Collection<CommandProvider> services = ManagedServiceLoader.loadServices(CommandProvider.class, CommandProvider.class.getClassLoader());
     if (services.size() != 1) {
-      throw new AssertionError("expected exactly one service provider, but found :" + services.size());
+      throw new AssertionError("expected exactly one command provider, but found :" + services.size());
     }
     return services.iterator().next();
   }

@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.test_support.util;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigRepoProcessor;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -32,8 +33,8 @@ import java.nio.file.Path;
 
 public class CommitSkippingConfigRepoProcessor extends ConfigRepoProcessor {
 
-  public CommitSkippingConfigRepoProcessor(Path outputFolderPath) {
-    super(outputFolderPath);
+  public CommitSkippingConfigRepoProcessor(Path outputFolderPath, ClusterValidator clusterValidator) {
+    super(outputFolderPath, clusterValidator);
   }
 
   @Override

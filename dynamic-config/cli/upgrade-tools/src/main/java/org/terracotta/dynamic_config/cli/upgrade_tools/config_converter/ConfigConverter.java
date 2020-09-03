@@ -44,12 +44,14 @@ public class ConfigConverter {
 
   private final Consumer<Cluster> postConversionProcessor;
   private final boolean acceptRelativePaths;
+  private final ClusterValidator clusterValidator;
 
-  public ConfigConverter(Consumer<Cluster> conversionProcessor) {
-    this(conversionProcessor, false);
+  public ConfigConverter(ClusterValidator clusterValidator, Consumer<Cluster> conversionProcessor) {
+    this(clusterValidator, conversionProcessor, false);
   }
 
-  public ConfigConverter(Consumer<Cluster> postConversionProcessor, boolean acceptRelativePaths) {
+  public ConfigConverter(ClusterValidator clusterValidator, Consumer<Cluster> postConversionProcessor, boolean acceptRelativePaths) {
+    this.clusterValidator = requireNonNull(clusterValidator);
     this.postConversionProcessor = requireNonNull(postConversionProcessor);
     this.acceptRelativePaths = acceptRelativePaths;
   }
@@ -63,7 +65,7 @@ public class ConfigConverter {
     Cluster cluster = mapper.parseConfig(clusterName, stripeNames, tcConfigPaths);
     validateAgainstRelativePath(cluster);
 
-    new ClusterValidator(cluster).validate();
+    clusterValidator.validate(cluster);
 
     postConversionProcessor.accept(cluster);
   }

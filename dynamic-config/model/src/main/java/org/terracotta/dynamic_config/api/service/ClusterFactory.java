@@ -43,13 +43,15 @@ public class ClusterFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClusterFactory.class);
 
+  private final ClusterValidator clusterValidator;
   private final Version version;
 
-  public ClusterFactory() {
-    this(Version.CURRENT);
+  public ClusterFactory(ClusterValidator clusterValidator) {
+    this(clusterValidator, Version.CURRENT);
   }
 
-  public ClusterFactory(Version version) {
+  public ClusterFactory(ClusterValidator clusterValidator, Version version) {
+    this.clusterValidator = clusterValidator;
     this.version = version;
   }
 
@@ -116,7 +118,7 @@ public class ClusterFactory {
   }
 
   private Cluster validated(Cluster cluster) {
-    new ClusterValidator(cluster).validate(version);
+    clusterValidator.validate(cluster, version);
     return cluster;
   }
 

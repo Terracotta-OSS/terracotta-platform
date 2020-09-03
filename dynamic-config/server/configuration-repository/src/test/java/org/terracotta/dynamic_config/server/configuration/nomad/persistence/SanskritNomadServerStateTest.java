@@ -29,7 +29,7 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.api.service.OssClusterValidator;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeRequest;
@@ -78,7 +78,7 @@ public class SanskritNomadServerStateTest {
   @Before
   public void before() {
     Testing.replaceUIDs(topology.getCluster());
-    new ClusterValidator(topology.getCluster()).validate();
+    new OssClusterValidator().validate(topology.getCluster());
     ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
     when(sanskrit.newMutableSanskritObject()).thenReturn(new SanskritObjectImpl(ObjectMapperSupplier.notVersioned(objectMapper)));
     state = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer());

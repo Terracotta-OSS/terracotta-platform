@@ -35,11 +35,13 @@ public class StripeAdditionNomadChangeProcessor implements NomadChangeProcessor<
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
   private final LicenseService licenseService;
+  private final ClusterValidator clusterValidator;
 
-  public StripeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, LicenseService licenseService) {
+  public StripeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, LicenseService licenseService, ClusterValidator clusterValidator) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
     this.licenseService = requireNonNull(licenseService);
+    this.clusterValidator = requireNonNull(clusterValidator);
   }
 
   @Override
@@ -50,7 +52,7 @@ public class StripeAdditionNomadChangeProcessor implements NomadChangeProcessor<
     }
     try {
       Cluster updated = change.apply(baseConfig.getCluster());
-      new ClusterValidator(updated).validate();
+      clusterValidator.validate(updated);
       topologyService.getLicense().ifPresent(l -> licenseService.validate(l, updated));
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);

@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ClusterConfigFilename;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Config;
@@ -72,7 +73,8 @@ public class NomadServerFactory {
   public UpgradableNomadServer<NodeContext> createServer(NomadConfigurationManager configurationManager,
                                                          ChangeApplicator<NodeContext> changeApplicator,
                                                          String nodeName,
-                                                         DynamicConfigEventFiring dynamicConfigEventFiring) throws SanskritException, NomadException, ConfigStorageException {
+                                                         DynamicConfigEventFiring dynamicConfigEventFiring,
+                                                         ClusterValidator clusterValidator) throws SanskritException, NomadException, ConfigStorageException {
 
     FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(configurationManager.getChangesPath());
 
@@ -90,7 +92,7 @@ public class NomadServerFactory {
     Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapperSupplier);
 
     Path clusterDir = configurationManager.getClusterPath();
-    InitialConfigStorage configStorage = new InitialConfigStorage(new ConfigStorageAdapter(new FileConfigStorage(clusterDir, nodeName)) {
+    InitialConfigStorage configStorage = new InitialConfigStorage(new ConfigStorageAdapter(new FileConfigStorage(clusterDir, nodeName, clusterValidator)) {
       @Override
       public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
         super.saveConfig(version, config);

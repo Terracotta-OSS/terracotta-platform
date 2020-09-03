@@ -56,6 +56,7 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  */
 public class CompatibilityTest {
 
+  private final ClusterValidator clusterValidator = new OssClusterValidator();
   private final ObjectMapper mapper = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
   private final Cluster clusterV1 = new Cluster().setName("my-cluster").setFailoverPriority(availability()).addStripe(new Stripe().addNodes(
@@ -119,7 +120,7 @@ public class CompatibilityTest {
     // - config file format is V2
     // - config has V2 settings
     {
-      Cluster parsed = new ClusterFactory(V2).create(Props.load(read("/V2.properties")));
+      Cluster parsed = new ClusterFactory(clusterValidator, V2).create(Props.load(read("/V2.properties")));
       replaceUIDs(parsed);
       Cluster expected = mapper.readValue(getClass().getResource("/V2.json"), Cluster.class);
       assertThat(mapper.writeValueAsString(parsed), parsed, is(equalTo(expected)));
@@ -128,7 +129,7 @@ public class CompatibilityTest {
     // - config has V1 settings only
     // defaults will be applied
     {
-      Cluster parsed = new ClusterFactory(V2).create(Props.load(read("/V1.properties")));
+      Cluster parsed = new ClusterFactory(clusterValidator, V2).create(Props.load(read("/V1.properties")));
 
       assertThat(parsed.getSingleStripe().get().getName(), startsWith("stripe-"));
       parsed.getSingleStripe().get().setName("stripe-XYZ");
@@ -141,7 +142,7 @@ public class CompatibilityTest {
     // - config has V1 settings only
     // - output is V1 only
     {
-      Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/V1.properties")));
+      Cluster parsed = new ClusterFactory(clusterValidator, V1).create(Props.load(read("/V1.properties")));
       Cluster expected = mapper.readValue(getClass().getResource("/V1.json"), Cluster.class);
       assertThat(parsed, is(equalTo(expected)));
     }
@@ -149,13 +150,13 @@ public class CompatibilityTest {
     // - output is V1 only
     // example of older client that only knows about V1 config and are getting a V2 config
     {
-      Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/V2.properties")));
+      Cluster parsed = new ClusterFactory(clusterValidator, V1).create(Props.load(read("/V2.properties")));
       Cluster expected = mapper.readValue(getClass().getResource("/V1.json"), Cluster.class);
       assertThat(parsed, is(equalTo(expected)));
     }
     // json and properties checks
     {
-      Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/default-node1.1.properties")));
+      Cluster parsed = new ClusterFactory(clusterValidator, V1).create(Props.load(read("/default-node1.1.properties")));
       Cluster expected = mapper.readValue(getClass().getResource("/default-node1.1.json"), Cluster.class);
       assertThat(mapper.writeValueAsString(parsed),
           mapper.valueToTree(parsed),

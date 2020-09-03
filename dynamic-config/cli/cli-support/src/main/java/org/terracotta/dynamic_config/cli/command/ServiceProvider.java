@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.api.service;
+package org.terracotta.dynamic_config.cli.command;
 
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Version;
+import com.tc.util.ManagedServiceLoader;
 
-/**
- * @author Mathieu Carbou
- */
-public interface ClusterValidator {
-  default void validate(Cluster cluster) throws MalformedClusterException {
-    validate(cluster, Version.CURRENT);
-  }
+import java.util.Collection;
 
-  void validate(Cluster cluster, Version version) throws MalformedClusterException;
+public interface ServiceProvider {
+  Collection<Object> createServices(LocalMainCommand mainCommand);
 
-  static ClusterValidator noop() {
-    return (cluster, version) -> {
-    };
+  static ServiceProvider get() {
+    Collection<ServiceProvider> services = ManagedServiceLoader.loadServices(ServiceProvider.class, ServiceProvider.class.getClassLoader());
+    if (services.size() != 1) {
+      throw new AssertionError("expected exactly one service provider, but found :" + services.size());
+    }
+    return services.iterator().next();
   }
 }

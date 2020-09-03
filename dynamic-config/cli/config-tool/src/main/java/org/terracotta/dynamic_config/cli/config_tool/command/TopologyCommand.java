@@ -21,7 +21,6 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
@@ -89,7 +88,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     Cluster result = updateTopology();
 
     // triggers validation
-    new ClusterValidator(result).validate();
+    clusterValidator.validate(result);
 
     if (logger.isDebugEnabled()) {
       try {

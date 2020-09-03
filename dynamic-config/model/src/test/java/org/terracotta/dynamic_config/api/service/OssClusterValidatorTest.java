@@ -24,11 +24,13 @@ import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Testing;
 
 import java.util.Random;
+import java.util.ServiceLoader;
 import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.common.struct.MemoryUnit.GB;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
@@ -38,12 +40,17 @@ import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
-public class ClusterValidatorTest {
+public class OssClusterValidatorTest {
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
   private final Random random = new Random();
+
+  @Test
+  public void testService() {
+    assertNotNull(ServiceLoader.load(ClusterValidator.class, getClass().getClassLoader()).iterator().next());
+  }
 
   @Test
   public void testDuplicateNodeUIDs() {
@@ -150,14 +157,14 @@ public class ClusterValidatorTest {
   @Test
   public void testSamePublicAndPrivateAddressOnSameNode() {
     Node node = newTestNode("foo1", "host").setPort(9410).setPublicHostname("host").setPublicPort(9410);
-    new ClusterValidator(newTestCluster(newTestStripe("stripe1").addNodes(node))).validate();
+    new OssClusterValidator().validate(newTestCluster(newTestStripe("stripe1").addNodes(node)));
   }
 
   @Test
   public void testSamePublicAndPrivateAddressAcrossNodes() {
     Node node1 = newTestNode("foo1", "host1").setPort(9410).setPublicHostname("host2").setPublicPort(9410);
     Node node2 = newTestNode("foo2", "host2", Testing.N_UIDS[2]).setPort(9410).setPublicHostname("host1").setPublicPort(9410);
-    new ClusterValidator(newTestCluster(newTestStripe("stripe1").addNodes(node1, node2))).validate();
+    new OssClusterValidator().validate(newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)));
   }
 
   @Test
@@ -200,7 +207,7 @@ public class ClusterValidatorTest {
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]);
     node1.setBackupDir(RawPath.valueOf("backup"));
     node2.setBackupDir(RawPath.valueOf("backup"));
-    new ClusterValidator(newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2))).validate();
+    new OssClusterValidator().validate(newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2)));
   }
 
   @Test
@@ -209,7 +216,7 @@ public class ClusterValidatorTest {
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]);
     node1.setBackupDir(RawPath.valueOf("backup-1"));
     node2.setBackupDir(RawPath.valueOf("backup-2"));
-    new ClusterValidator(newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2))).validate();
+    new OssClusterValidator().validate(newTestCluster(newTestStripe("stripe1").addNodes(node1), newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(node2)));
   }
 
   @Test
@@ -250,7 +257,7 @@ public class ClusterValidatorTest {
         .setFailoverPriority(consistency())
         .setClientReconnectWindow(100L, SECONDS)
         .setClientLeaseDuration(100L, SECONDS);
-    new ClusterValidator(cluster).validate();
+    new OssClusterValidator().validate(cluster);
   }
 
   @Test
@@ -259,7 +266,7 @@ public class ClusterValidatorTest {
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
 
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecuritySslTls(false).setSecurityWhitelist(true);
-    new ClusterValidator(cluster).validate();
+    new OssClusterValidator().validate(cluster);
   }
 
   @Test
@@ -268,7 +275,7 @@ public class ClusterValidatorTest {
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("security-audit-dir"));
 
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecurityWhitelist(true);
-    new ClusterValidator(cluster).validate();
+    new OssClusterValidator().validate(cluster);
   }
 
   @Test
@@ -276,7 +283,7 @@ public class ClusterValidatorTest {
     Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-root-dir"));
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-root-dir"));
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecurityAuthc("file");
-    new ClusterValidator(cluster).validate();
+    new OssClusterValidator().validate(cluster);
   }
 
   @Test
@@ -285,7 +292,7 @@ public class ClusterValidatorTest {
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-root-dir"));
 
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecuritySslTls(true).setSecurityAuthc("certificate");
-    new ClusterValidator(cluster).validate();
+    new OssClusterValidator().validate(cluster);
   }
 
   @Test
@@ -297,7 +304,7 @@ public class ClusterValidatorTest {
         .setSecuritySslTls(true)
         .setSecurityAuthc("certificate")
         .setSecurityWhitelist(true);
-    new ClusterValidator(cluster).validate();
+    new OssClusterValidator().validate(cluster);
   }
 
   @Test
@@ -374,6 +381,6 @@ public class ClusterValidatorTest {
   }
 
   private void assertClusterValidationFails(String message, Cluster cluster) {
-    assertThat(() -> new ClusterValidator(cluster).validate(), is(throwing(instanceOf(MalformedClusterException.class)).andMessage(is(equalTo(message)))));
+    assertThat(() -> new OssClusterValidator().validate(cluster), is(throwing(instanceOf(MalformedClusterException.class)).andMessage(is(equalTo(message)))));
   }
 }

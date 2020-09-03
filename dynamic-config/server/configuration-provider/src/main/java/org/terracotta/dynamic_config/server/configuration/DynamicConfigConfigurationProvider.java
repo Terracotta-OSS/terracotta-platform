@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration;
 
+import com.tc.util.ManagedServiceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationProvider;
@@ -22,6 +23,7 @@ import org.terracotta.diagnostic.server.api.DiagnosticServicesHolder;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -55,6 +57,7 @@ import org.terracotta.server.StopAction;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -81,8 +84,10 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // service containing the list of dynamic change handlers per settings
       ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
 
+      ClusterValidator clusterValidator = findService(ClusterValidator.class, serviceClassLoader);
+
       // service used to create a topology from input CLI or config file
-      ClusterFactory clusterFactory = new ClusterFactory();
+      ClusterFactory clusterFactory = new ClusterFactory(clusterValidator);
 
       // This path resolver is used when converting a model to XML.
       // It makes sure to resolve any relative path to absolute ones based on the working directory.
@@ -101,7 +106,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
       // Service used to manage and initialize the Nomad 2PC system
-      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory);
+      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, clusterValidator);
       synCodec = new DynamicConfigSyncData.Codec(objectMapperFactory);
 
       // Configuration generator class
@@ -134,6 +139,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration = configurationGeneratorVisitor.generateConfiguration();
 
       //  exposes services through org.terracotta.entity.PlatformConfiguration
+      configuration.registerExtendedConfiguration(ClusterValidator.class, clusterValidator);
       configuration.registerExtendedConfiguration(ObjectMapperFactory.class, objectMapperFactory);
       configuration.registerExtendedConfiguration(IParameterSubstitutor.class, parameterSubstitutor);
       configuration.registerExtendedConfiguration(ConfigChangeHandlerManager.class, configChangeHandlerManager);
@@ -246,4 +252,13 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     return options;
   }
 
+  private static <T> T findService(Class<T> type, ClassLoader serviceClassLoader) {
+    Collection<T> services = ManagedServiceLoader.loadServices(type, serviceClassLoader);
+    if (services.size() != 1) {
+      throw new AssertionError("expected exactly one command provider, but found :" + services.size());
+    }
+    final T service = services.iterator().next();
+    LOGGER.info("Loaded service implementation: {} for service {}", service, type.getName());
+    return service;
+  }
 }

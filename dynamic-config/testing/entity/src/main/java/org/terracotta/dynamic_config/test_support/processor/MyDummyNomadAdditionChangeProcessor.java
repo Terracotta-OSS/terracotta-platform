@@ -48,11 +48,13 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
   private final PlatformService platformService;
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+  private final ClusterValidator clusterValidator;
 
-  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, PlatformService platformService) {
+  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, PlatformService platformService, ClusterValidator clusterValidator) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
     this.platformService = platformService;
+    this.clusterValidator = clusterValidator;
   }
 
   @Override
@@ -68,7 +70,7 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
     try {
       checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
-      new ClusterValidator(updated).validate();
+      clusterValidator.validate(updated);
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

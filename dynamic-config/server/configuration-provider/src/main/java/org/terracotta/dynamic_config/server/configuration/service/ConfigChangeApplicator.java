@@ -35,10 +35,12 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigChangeApplicator.class);
 
   private final UID nodeUID;
+  private final ClusterValidator clusterValidator;
   private final NomadChangeProcessor<DynamicConfigNomadChange> processor;
 
-  public ConfigChangeApplicator(UID nodeUID, NomadChangeProcessor<DynamicConfigNomadChange> processor) {
+  public ConfigChangeApplicator(UID nodeUID, ClusterValidator clusterValidator, NomadChangeProcessor<DynamicConfigNomadChange> processor) {
     this.nodeUID = nodeUID;
+    this.clusterValidator = clusterValidator;
     this.processor = processor;
   }
 
@@ -61,7 +63,7 @@ public class ConfigChangeApplicator implements ChangeApplicator<NodeContext> {
     NodeContext newConfiguration = newConfiguration(baseConfig, updated);
 
     try {
-      new ClusterValidator(updated).validate();
+      clusterValidator.validate(updated);
       // validate the change thanks to external processors
       processor.validate(baseConfig, dynamicConfigNomadChange);
       return PotentialApplicationResult.allow(newConfiguration);

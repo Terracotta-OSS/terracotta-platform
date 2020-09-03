@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import org.junit.Test;
+import org.terracotta.dynamic_config.api.service.OssClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Metadata;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 
@@ -39,7 +40,7 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   }
 
   protected final C newCommand() {
-    return inject(newTopologyCommand(), asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, objectMapperFactory, nomadEntityProvider));
+    return inject(newTopologyCommand(), asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, objectMapperFactory, nomadEntityProvider, new OssClusterValidator()));
   }
 
   protected abstract C newTopologyCommand();

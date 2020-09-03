@@ -24,6 +24,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.service.OssClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 import org.terracotta.dynamic_config.cli.config_tool.NomadTestHelper;
@@ -300,7 +301,7 @@ public class ActivateCommandTest extends BaseTest {
 
   private ActivateCommand command() {
     ActivateCommand command = new ActivateCommand();
-    inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider));
+    inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider, new OssClusterValidator()));
     return command;
   }
 

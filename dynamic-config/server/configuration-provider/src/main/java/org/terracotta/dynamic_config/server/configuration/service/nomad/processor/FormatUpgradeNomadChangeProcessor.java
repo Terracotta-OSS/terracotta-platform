@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.service.nomad.processor;
 
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -22,9 +23,17 @@ import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
 
 public class FormatUpgradeNomadChangeProcessor implements NomadChangeProcessor<FormatUpgradeNomadChange> {
+
+  private final ClusterValidator clusterValidator;
+
+  public FormatUpgradeNomadChangeProcessor(ClusterValidator clusterValidator) {
+    this.clusterValidator = clusterValidator;
+  }
+
   @Override
   public void validate(NodeContext baseConfig, FormatUpgradeNomadChange change) throws NomadException {
-    new ClusterValidator(change.apply(baseConfig.getCluster())).validate();
+    Cluster updated  = change.apply(baseConfig.getCluster());
+    clusterValidator.validate(updated);
   }
 
   @Override

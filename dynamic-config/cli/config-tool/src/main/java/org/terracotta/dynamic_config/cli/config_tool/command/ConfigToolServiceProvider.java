@@ -15,6 +15,8 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
+import com.tc.util.ManagedServiceLoader;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
@@ -22,7 +24,10 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.cli.command.LocalMainCommand;
 import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
+import org.terracotta.dynamic_config.cli.command.ServiceProvider;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.DefaultNomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
@@ -41,9 +46,12 @@ import static java.util.Arrays.asList;
 /**
  * @author Mathieu Carbou
  */
-public class OssServiceProvider implements ServiceProvider {
+public class ConfigToolServiceProvider implements ServiceProvider {
+
+  @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
   @Override
-  public Collection<Object> createServices(RemoteMainCommand mainCommand) {
+  public Collection<Object> createServices(LocalMainCommand cmd) {
+    RemoteMainCommand mainCommand = (RemoteMainCommand) cmd;
     return asList(
         createDiagnosticServiceProvider(mainCommand),
         createMultiDiagnosticServiceProvider(mainCommand),
@@ -51,7 +59,16 @@ public class OssServiceProvider implements ServiceProvider {
         createRestartService(mainCommand),
         createStopService(mainCommand),
         createObjectMapperFactory(mainCommand),
-        createNomadEntityProvider(mainCommand));
+        createNomadEntityProvider(mainCommand),
+        createClusterValidator(mainCommand));
+  }
+
+  protected ClusterValidator createClusterValidator(RemoteMainCommand mainCommand) {
+    Collection<ClusterValidator> services = ManagedServiceLoader.loadServices(ClusterValidator.class, getClass().getClassLoader());
+    if (services.size() != 1) {
+      throw new AssertionError("expected exactly one service provider, but found :" + services.size());
+    }
+    return services.iterator().next();
   }
 
   protected StopService createStopService(RemoteMainCommand mainCommand) {

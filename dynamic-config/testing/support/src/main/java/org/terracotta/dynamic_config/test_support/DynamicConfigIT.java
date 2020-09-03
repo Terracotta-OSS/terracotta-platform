@@ -44,6 +44,8 @@ import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.RawPath;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.api.service.OssClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
@@ -384,7 +386,7 @@ public class DynamicConfigIT {
   protected Path generateNodeConfigDir(int stripeId, int nodeId, Consumer<ConfigurationGenerator> fn) throws Exception {
     Path nodeConfigurationDir = getBaseDir().resolve(getNodeConfigDir(stripeId, nodeId).toPath());
     Path configDirs = getBaseDir().resolve("generated-configs");
-    ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(configDirs, new ConfigurationGenerator.PortSupplier() {
+    ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(getClusterValidator(), configDirs, new ConfigurationGenerator.PortSupplier() {
       @Override
       public int getNodePort(int stripeId, int nodeId) {
         return angela.getNodePort(stripeId, nodeId);
@@ -410,6 +412,10 @@ public class DynamicConfigIT {
           props.setProperty(("GROUP-PORT-" + stripeId + "-" + nodeId), String.valueOf(angela.getNodeGroupPort(stripeId, nodeId)));
         }));
     return props;
+  }
+
+  protected ClusterValidator getClusterValidator() {
+    return new OssClusterValidator();
   }
 
   // =========================================

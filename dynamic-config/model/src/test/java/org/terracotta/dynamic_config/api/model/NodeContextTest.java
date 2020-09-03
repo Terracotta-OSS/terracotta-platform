@@ -18,7 +18,7 @@ package org.terracotta.dynamic_config.api.model;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.common.struct.MemoryUnit;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.api.service.OssClusterValidator;
 
 import java.util.stream.Stream;
 
@@ -58,7 +58,7 @@ public class NodeContextTest {
 
   @Before
   public void setUp() throws Exception {
-    new ClusterValidator(cluster).validate();
+    new OssClusterValidator().validate(cluster);
   }
 
   @Test

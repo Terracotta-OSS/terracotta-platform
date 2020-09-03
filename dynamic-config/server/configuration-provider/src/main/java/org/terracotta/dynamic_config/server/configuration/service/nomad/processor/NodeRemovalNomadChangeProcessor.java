@@ -45,10 +45,12 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+  private final ClusterValidator clusterValidator;
 
-  public NodeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
+  public NodeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, ClusterValidator clusterValidator) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
+    this.clusterValidator = requireNonNull(clusterValidator);
   }
 
   @Override
@@ -60,7 +62,7 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
     try {
       checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
-      new ClusterValidator(updated).validate();
+      clusterValidator.validate(updated);
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

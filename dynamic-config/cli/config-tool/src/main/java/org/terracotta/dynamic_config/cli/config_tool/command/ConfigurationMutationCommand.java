@@ -26,7 +26,6 @@ import org.terracotta.dynamic_config.api.model.PropertyHolder;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
 
 import java.util.Collection;
 import java.util.Map;
@@ -76,7 +75,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
             });
       }
     }
-    new ClusterValidator(updatedCluster).validate();
+    clusterValidator.validate(updatedCluster);
 
     // get the current state of the nodes
     // this call can take some time and we can have some timeout

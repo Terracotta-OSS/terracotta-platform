@@ -33,10 +33,12 @@ public class StripeRemovalNomadChangeProcessor implements NomadChangeProcessor<S
 
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
+  private final ClusterValidator clusterValidator;
 
-  public StripeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
+  public StripeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, ClusterValidator clusterValidator) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
+    this.clusterValidator = requireNonNull(clusterValidator);
   }
 
   @Override
@@ -47,7 +49,7 @@ public class StripeRemovalNomadChangeProcessor implements NomadChangeProcessor<S
     }
     try {
       Cluster updated = change.apply(baseConfig.getCluster());
-      new ClusterValidator(updated).validate();
+      clusterValidator.validate(updated);
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

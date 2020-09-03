@@ -24,6 +24,7 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
@@ -317,7 +318,7 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private Cluster decodeCluster(String payload) {
     requireNonNull(payload);
-    return new ClusterFactory().create(Props.load(payload), configuration -> {
+    return new ClusterFactory(ClusterValidator.noop()).create(Props.load(payload), configuration -> {
     });
   }
 

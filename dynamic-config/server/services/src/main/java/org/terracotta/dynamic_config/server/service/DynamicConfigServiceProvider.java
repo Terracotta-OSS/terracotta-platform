@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -47,8 +48,8 @@ import java.util.Collection;
 
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
-import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
+import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
@@ -131,7 +132,8 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         NomadRoutingChangeProcessor.class,
         NomadPermissionChangeProcessor.class,
         LicenseService.class,
-        PathResolver.class
+        PathResolver.class,
+        ClusterValidator.class
     );
   }
 

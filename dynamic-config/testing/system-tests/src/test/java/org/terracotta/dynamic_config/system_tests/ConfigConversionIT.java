@@ -30,6 +30,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.api.service.OssClusterValidator;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
@@ -67,7 +68,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
 
     assertThat(cluster.getName(), is("my-cluster"));
     assertThat(cluster.getDataDirNames().size(), is(1));
@@ -98,7 +99,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
 
     assertThat(cluster.getNodeByName("node-1").get().getName(), is("node-1"));
     // IMPORTANT: see NonSubstitutingTCConfigurationParser and TCConfigurationParser
@@ -122,7 +123,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
 
     assertTrue(cluster.getOffheapResources().isConfigured());
     assertThat(cluster.getOffheapResources().get().size(), is(0));
@@ -159,7 +160,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getNodeByName("node-1").get().getLogDir().get(), is(RawPath.valueOf("%h-logs")));
     assertThat(cluster.getNodeByName("node-2").get().getLogDir().get(), is(RawPath.valueOf("%h-logs")));
   }
@@ -174,7 +175,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertFalse(cluster.getClientLeaseDuration().isConfigured());
     assertThat(cluster.getClientLeaseDuration().orDefault(), is(Measure.of(150, TimeUnit.SECONDS)));
   }
@@ -189,7 +190,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
   }
 
@@ -203,7 +204,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertFalse(cluster.getClientReconnectWindow().isConfigured());
     assertThat(cluster.getClientReconnectWindow().orDefault(), is(Measure.of(120, TimeUnit.SECONDS)));
   }
@@ -218,7 +219,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getClientLeaseDuration().get(), is(Measure.of(5, TimeUnit.SECONDS)));
   }
 
@@ -232,7 +233,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
   }
 
@@ -246,7 +247,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getClientReconnectWindow().get(), is(Measure.of(125, TimeUnit.SECONDS)));
   }
 
@@ -260,7 +261,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getNodeByName("server11").get().getPort().get(), is(9411));
   }
 
@@ -274,7 +275,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-port-bind-address.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getNodeByName("server11").get().getBindAddress().get(), is("1.1.1.1"));
   }
 
@@ -288,7 +289,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getNodeByName("server11").get().getGroupPort().get(), is(9431));
   }
 
@@ -302,7 +303,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-group-port-group-bind-address.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getNodeByName("server11").get().getGroupBindAddress().get(), is("2.2.2.2"));
   }
 
@@ -316,7 +317,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getNodeByName("server11").get().getLogDir().get(), is(RawPath.valueOf("abcd")));
   }
 
@@ -330,7 +331,7 @@ public class ConfigConversionIT {
         "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster-log-dir-tc-prop.properties");
     assertTrue(Files.exists(config));
-    Cluster cluster = new ClusterFactory().create(config);
+    Cluster cluster = new ClusterFactory(new OssClusterValidator()).create(config);
     assertThat(cluster.getNodeByName("server11").get().getTcProperties().orDefault().size(), is(1));
     assertThat(cluster.getNodeByName("server11").get().getTcProperties().orDefault().get("myserver"), is("server"));
   }
@@ -370,7 +371,7 @@ public class ConfigConversionIT {
     ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
     NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
 
-    try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, null, "testServer0", null)) {
+    try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, null, "testServer0", null, new OssClusterValidator())) {
       nomadServer.discover().getLatestChange().getResult();
     }
   }

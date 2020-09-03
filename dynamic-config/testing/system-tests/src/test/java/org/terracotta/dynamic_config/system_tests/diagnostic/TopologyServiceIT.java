@@ -47,7 +47,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
   @Override
   protected void startNode(int stripeId, int nodeId) {
     config = copyConfigProperty("/config-property-files/single-stripe.properties");
-    cluster = new ClusterFactory().create(Props.load(config));
+    cluster = new ClusterFactory(getClusterValidator()).create(Props.load(config));
     startNode(1, 1,
         "--config-dir", getNodePath(stripeId, nodeId).append("/config").toString(),
         "-f", config.toString()

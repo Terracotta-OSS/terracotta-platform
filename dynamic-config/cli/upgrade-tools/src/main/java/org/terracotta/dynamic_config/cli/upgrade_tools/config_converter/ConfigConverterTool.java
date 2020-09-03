@@ -18,13 +18,15 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.CommandProvider;
 import org.terracotta.dynamic_config.cli.command.CommandRepository;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.command.LocalMainCommand;
-import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.command.ConvertCommand;
+import org.terracotta.dynamic_config.cli.command.ServiceProvider;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.Set;
 
 public class ConfigConverterTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigConverterTool.class);
@@ -45,22 +47,24 @@ public class ConfigConverterTool {
 
   public static void start(String... args) {
     LOGGER.debug("Registering commands with CommandRepository");
+    CommandProvider commandProvider = CommandProvider.get();
     LocalMainCommand mainCommand = new LocalMainCommand();
     CommandRepository commandRepository = new CommandRepository();
-    commandRepository.addAll(
-        new HashSet<>(
-            Arrays.asList(
-                mainCommand,
-                new ConvertCommand()
-            )
-        )
-    );
+    Set<Command> commands = commandProvider.getCommands();
+    commands.add(mainCommand);
+    commandRepository.addAll(commands);
 
     LOGGER.debug("Parsing command-line arguments");
     CustomJCommander jCommander = parseArguments(commandRepository, args, mainCommand);
 
     // Process arguments like '-v'
     mainCommand.run();
+
+    // create services
+    Collection<Object> services = ServiceProvider.get().createServices(mainCommand);
+
+    LOGGER.debug("Injecting services in CommandRepository");
+    commandRepository.inject(services);
 
     jCommander.getAskedCommand().map(command -> {
       // check for help
