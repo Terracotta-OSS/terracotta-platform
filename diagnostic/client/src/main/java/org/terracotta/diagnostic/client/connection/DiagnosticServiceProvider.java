@@ -55,4 +55,8 @@ public class DiagnosticServiceProvider {
       throw new DiagnosticServiceProviderException(e);
     }
   }
+
+  public boolean isSecurityConfigured() {
+    return securityRootDirectory != null && !securityRootDirectory.isEmpty();
+  }
 }
