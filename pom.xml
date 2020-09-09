@@ -34,7 +34,7 @@
     <slf4j.version>1.7.25</slf4j.version>
     <logback.version>1.2.3</logback.version>
     <terracotta-apis.version>1.7.0</terracotta-apis.version>
-    <terracotta-configuration.version>10.7.0</terracotta-configuration.version>
+    <terracotta-configuration.version>10.7.1-pre1</terracotta-configuration.version>
     <passthrough-testing.version>1.7.0</passthrough-testing.version>
     <terracotta-core.version>5.7.1-pre1</terracotta-core.version>
     <tripwire.version>1.0.0</tripwire.version>
@@ -210,16 +210,6 @@
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-jsr310</artifactId>
         <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jaxb</groupId>
-        <artifactId>jaxb-runtime</artifactId>
-        <!--
-        Do not use 2.3.1
-        Jars are not correctly built (https://github.com/mojohaus/jaxb2-maven-plugin/issues/43)
-        We never saw that because we were not using -Xlint:all -Werror
-        -->
-        <version>2.3.2</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
