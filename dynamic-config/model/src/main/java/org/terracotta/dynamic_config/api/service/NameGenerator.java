@@ -92,8 +92,7 @@ public class NameGenerator {
       Stripe stripe = cluster.getStripeByNode(node.getUID()).get();
       List<String> used = stripe.getNodes().stream().map(Node::getName).collect(toList());
       List<String> dict = readLines("dict/greek.txt");
-      dict.removeAll(used);
-      node.setName(stripe.getName() + "-" + pickRandomNodeName(dict, random));
+      node.setName(pickRandomNodeName(dict, used, random, stripe.getName() + "-"));
     }
   }
 
@@ -115,8 +114,7 @@ public class NameGenerator {
         fileName = dictionaryFiles[category.get(allreadyGeneratedStripeName)];
       }
       List<String> dict = readLines("dict/" + fileName);
-      dict.removeAll(used);
-      stripe.setName(pickRandomStripeName(dict, random));
+      stripe.setName(pickRandomStripeName(dict, used, random));
     }
   }
 
@@ -173,25 +171,43 @@ public class NameGenerator {
     return list;
   }
 
-  private static String pickRandomNodeName(List<String> dict, Random random) {
+  private static String pickRandomNodeName(List<String> dict, List<String> used, Random random, String prefix) {
+    dict = new ArrayList<>(dict);
+    dict.removeAll(used);
+
     if (dict.isEmpty()) {
-      nodeFallbackCount++;
-      return String.valueOf(nodeFallbackCount);
+      String name;
+      do {
+        nodeFallbackCount++;
+        name = prefix + nodeFallbackCount;
+      } while (used.contains(name));
+      return name;
     }
+
     if (dict.size() == 1) {
-      return dict.get(0);
+      return prefix + dict.get(0);
     }
-    return dict.get(random.nextInt(dict.size()));
+
+    return prefix + dict.get(random.nextInt(dict.size()));
   }
 
-  private static String pickRandomStripeName(List<String> dict, Random random) {
+  private static String pickRandomStripeName(List<String> dict, List<String> used, Random random) {
+    dict = new ArrayList<>(dict);
+    dict.removeAll(used);
+
     if (dict.isEmpty()) {
-      stripeFallbackCount++;
-      return "stripe-" + stripeFallbackCount;
+      String name;
+      do {
+        stripeFallbackCount++;
+        name = "stripe-" + stripeFallbackCount;
+      } while (used.contains(name));
+      return name;
     }
+
     if (dict.size() == 1) {
       return dict.get(0);
     }
+
     return dict.get(random.nextInt(dict.size()));
   }
 
