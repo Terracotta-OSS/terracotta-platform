@@ -78,7 +78,6 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
@@ -268,7 +267,7 @@ public abstract class RemoteCommand extends Command {
     runConfigurationChange(destinationCluster, onlineNodes, new UnlockConfigNomadChange(force));
     logger.info("Unlocked the config.");
     if (nomadManager instanceof LockAwareNomadManager) {
-      this.nomadManager = ((LockAwareNomadManager<NodeContext>)nomadManager).getUnderlying();
+      this.nomadManager = ((LockAwareNomadManager<NodeContext>) nomadManager).getUnderlying();
     }
   }
 
@@ -460,12 +459,30 @@ public abstract class RemoteCommand extends Command {
    * in the stripes.
    */
   protected final void ensurePassivesAreAllOnline(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
-    Collection<String> actives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isActive()).map(Map.Entry::getKey).map(Endpoint::getNodeName).collect(toSet());
-    Collection<String> passives = onlineNodes.entrySet().stream().filter(e -> e.getValue().isPassive()).map(Map.Entry::getKey).map(Endpoint::getNodeName).collect(toSet());
-    Collection<String> expectedPassives = cluster.getNodes().stream().map(Node::getName).collect(toSet());
+    // current actives
+    Collection<String> actives = onlineNodes.entrySet()
+        .stream()
+        .filter(e -> e.getValue().isActive())
+        .map(Map.Entry::getKey)
+        .map(Endpoint::getNodeName)
+        .collect(Collectors.toCollection(TreeSet::new));
+    // current passives
+    Collection<String> passives = onlineNodes.entrySet()
+        .stream()
+        .filter(e -> e.getValue().isPassive())
+        .map(Map.Entry::getKey)
+        .map(Endpoint::getNodeName)
+        .collect(Collectors.toCollection(TreeSet::new));
+    // expected passives
+    Collection<String> expectedPassives = cluster.getNodes()
+        .stream()
+        .map(Node::getName)
+        .collect(Collectors.toCollection(TreeSet::new));
     expectedPassives.removeAll(actives);
     if (!passives.containsAll(expectedPassives)) {
-      throw new IllegalStateException("Expected all nodes to be online, but nodes: " + toString(expectedPassives) + " are not");
+      Collection<String> missing = new TreeSet<>(expectedPassives);
+      missing.removeAll(passives);
+      throw new IllegalStateException("Expected these nodes to be in PASSIVE state: " + toString(expectedPassives) + ", but nodes: " + toString(missing) + " are not");
     }
   }
 
