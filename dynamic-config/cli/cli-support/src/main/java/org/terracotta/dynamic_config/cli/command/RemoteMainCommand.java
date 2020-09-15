@@ -32,9 +32,6 @@ public class RemoteMainCommand extends LocalMainCommand {
   @Parameter(names = {"-er", "--entity-request-timeout"}, hidden = true, description = "Entity operation timeout. Default: 120s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> entityOperationTimeout;
 
-  @Parameter(names = {"-et", "--entity-connection-timeout"}, hidden = true, description = "Entity Connection timeout. Default: 30s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> entityConnectionTimeout;
-
   @Parameter(names = {"-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> requestTimeout = Measure.of(10, TimeUnit.SECONDS);
 
@@ -59,10 +56,6 @@ public class RemoteMainCommand extends LocalMainCommand {
     return entityOperationTimeout;
   }
 
-  public Measure<TimeUnit> getEntityConnectionTimeout() {
-    return entityConnectionTimeout;
-  }
-
   public String getSecurityRootDirectory() {
     return securityRootDirectory;
   }
@@ -78,11 +71,6 @@ public class RemoteMainCommand extends LocalMainCommand {
       entityOperationTimeout = Measure.of(
           requestTimeout.getExactQuantity().multiply(BigInteger.valueOf(12)),
           requestTimeout.getUnit());
-    }
-    if (entityConnectionTimeout == null) {
-      entityConnectionTimeout = Measure.of(
-          connectionTimeout.getExactQuantity().multiply(BigInteger.valueOf(3)),
-          connectionTimeout.getUnit());
     }
   }
 }
