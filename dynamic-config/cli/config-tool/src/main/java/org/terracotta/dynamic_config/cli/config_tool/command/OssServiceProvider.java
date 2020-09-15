@@ -73,7 +73,7 @@ public class OssServiceProvider implements ServiceProvider {
   protected NomadEntityProvider createNomadEntityProvider(RemoteMainCommand mainCommand) {
     return new NomadEntityProvider(
         "CONFIG-TOOL",
-        getEntityConnectionTimeout(mainCommand),
+        getConnectionTimeout(mainCommand),
         // A long timeout is important here.
         // We need to block the call and wait for any return.
         // We cannot timeout shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
@@ -98,10 +98,6 @@ public class OssServiceProvider implements ServiceProvider {
 
   protected ObjectMapperFactory createObjectMapperFactory(RemoteMainCommand mainCommand) {
     return new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
-  }
-
-  protected Duration getEntityConnectionTimeout(RemoteMainCommand mainCommand) {
-    return Duration.ofMillis(mainCommand.getEntityConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
   }
 
   protected Duration getEntityOperationTimeout(RemoteMainCommand mainCommand) {
