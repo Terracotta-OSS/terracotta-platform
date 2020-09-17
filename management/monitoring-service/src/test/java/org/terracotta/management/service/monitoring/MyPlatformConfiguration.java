@@ -18,7 +18,11 @@ package org.terracotta.management.service.monitoring;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.PathResolver;
+import org.terracotta.dynamic_config.server.configuration.service.ParameterSubstitutor;
 import org.terracotta.entity.PlatformConfiguration;
 
 import java.util.Collection;
@@ -39,6 +43,9 @@ public class MyPlatformConfiguration implements PlatformConfiguration {
       .setName("stripe[0]")
       .addNode(Testing.newTestNode("bar", "localhost"))), N_UIDS[1]);
   private final TopologyService topologyService = mock(TopologyService.class);
+  private final DynamicConfigEventService dynamicConfigEventService = mock(DynamicConfigEventService.class);
+  private final PathResolver pathResolver = mock(PathResolver.class);
+  private final IParameterSubstitutor parameterSubstitutor = mock(ParameterSubstitutor.class);
 
   public MyPlatformConfiguration(String serverName, String host, int port) {
     this.serverName = serverName;
@@ -67,6 +74,15 @@ public class MyPlatformConfiguration implements PlatformConfiguration {
   public <T> Collection<T> getExtendedConfiguration(Class<T> aClass) {
     if (TopologyService.class == aClass) {
       return Collections.singletonList(aClass.cast(topologyService));
+    }
+    if (DynamicConfigEventService.class == aClass) {
+      return Collections.singletonList(aClass.cast(dynamicConfigEventService));
+    }
+    if (IParameterSubstitutor.class == aClass) {
+      return Collections.singletonList(aClass.cast(parameterSubstitutor));
+    }
+    if (PathResolver.class == aClass) {
+      return Collections.singletonList(aClass.cast(pathResolver));
     }
     return Collections.emptyList();
   }

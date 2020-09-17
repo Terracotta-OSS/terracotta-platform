@@ -113,6 +113,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
   }
 
+  // This test failed for me on 9/22/20... intermittent
   @Test
   public void testRestrictedActivationToAttachANewActivatedNode() throws Exception {
     String config = copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString();

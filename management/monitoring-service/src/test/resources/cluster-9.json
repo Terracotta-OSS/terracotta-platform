@@ -11,6 +11,7 @@
         "consumerId" : 1,
         "managementRegistry" : null
       } ],
+      "uid": null,
       "serverName" : "server-1",
       "hostName" : "localhost",
       "hostAddress" : "127.0.0.1",
@@ -22,7 +23,15 @@
       "buildId" : "b1",
       "startTime" : 1476304913984,
       "upTimeSec" : 0,
-      "activateTime" : 1476304913984
+      "activateTime" : 1476304913984,
+      "backupDir": null,
+      "securityDir": null,
+      "securityAuditLogDir": null,
+      "logDir": null,
+      "tcProperties": null,
+      "loggerOverrides": null,
+      "dataDirs": null,
+      "metadataDir": null
     }, {
       "id" : "server-2",
       "serverEntities" : [ {
@@ -46,6 +55,7 @@
           } ]
         }
       } ],
+      "uid": null,
       "serverName" : "server-2",
       "hostName" : "localhost",
       "hostAddress" : "127.0.0.1",
@@ -57,7 +67,15 @@
       "buildId" : "b1",
       "startTime" : 1476304913984,
       "upTimeSec" : 0,
-      "activateTime" : 0
+      "activateTime" : 0,
+      "backupDir": null,
+      "securityDir": null,
+      "securityAuditLogDir": null,
+      "logDir": null,
+      "tcProperties": null,
+      "loggerOverrides": null,
+      "dataDirs": null,
+      "metadataDir": null
     } ]
   } ],
   "clients" : [ {

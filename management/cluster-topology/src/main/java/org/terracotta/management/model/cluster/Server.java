@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.management.model.context.Context;
 
 import java.time.Clock;
@@ -35,6 +36,8 @@ public final class Server extends AbstractNode<Stripe> {
   public static final String KEY = "serverId";
   public static final String NAME_KEY = "serverName";
 
+  private UID uid;
+
   private final Map<String, ServerEntity> serverEntities = new TreeMap<>();
   private final String serverName; // matches xml config
 
@@ -43,12 +46,20 @@ public final class Server extends AbstractNode<Stripe> {
   private String bindAddress; // matches xml config
   private int bindPort; // matches xml config
   private int groupPort; // matches xml config
+  private String backupDir; // taken at runtime from servers
+  private String securityDir;  // taken at runtime from servers
+  private String securityAuditLogDir;  // taken at runtime from servers
+  private String logDir; // taken at runtime from servers
   private State state = State.UNKNOWN; // taken at runtime from servers
   private String version; // taken at runtime from servers
   private String buildId; // taken at runtime from servers
   private long startTime; // taken at runtime from servers
   private long upTimeSec; // taken at runtime from servers
   private long activateTime; // taken at runtime from servers
+  private Map<String, String> tcProperties; // taken at runtime from servers
+  private Map<String, String> loggerOverrides; // taken at runtime from servers
+  private String metadataDir;
+  private Map<String, String> dataDirs;
 
   private Server(String serverId, String serverName) {
     super(serverId);
@@ -133,6 +144,87 @@ public final class Server extends AbstractNode<Stripe> {
   public Server setHostAddress(String hostAddress) {
     this.hostAddress = hostAddress;
     return this;
+  }
+
+  public UID getUID() {
+    return uid;
+  }
+
+  public Server setUID(UID uid) {
+    this.uid = uid;
+    return this;
+  }
+
+  public Optional<String> getBackupDir() {
+    return backupDir != null ? Optional.of(backupDir) : Optional.empty();
+  }
+
+  public Server setBackupDir(String backupDir) {
+    this.backupDir = backupDir;
+    return this;
+  }
+
+  public Optional<String> getSecurityDir() {
+    return securityDir != null ? Optional.of(securityDir) : Optional.empty();
+  }
+
+  public Server setSecurityDir(String securityDir) {
+    this.securityDir = securityDir;
+    return this;
+  }
+
+  public Optional<String> getSecurityAuditLogDir() {
+    return securityAuditLogDir != null ? Optional.of(securityAuditLogDir) : Optional.empty();
+  }
+
+  public Server setSecurityAuditLogDir(String securityAuditLogDir) {
+    this.securityAuditLogDir = securityAuditLogDir;
+    return this;
+  }
+
+  public Server setLogDir(String logDir) {
+    this.logDir = logDir;
+    return this;
+  }
+
+  public String getMetadataDir() {
+    return metadataDir;
+  }
+
+  public Server setMetadataDir(String metadataDir) {
+    this.metadataDir = metadataDir;
+    return this;
+  }
+
+  public String getLogDir() {
+    return logDir;
+  }
+
+  public Server setTcProperties(Map<String, String> tcProperties) {
+    this.tcProperties = tcProperties;
+    return this;
+  }
+
+  public Map<String, String> getTcProperties() {
+    return tcProperties;
+  }
+
+  public Server setLoggerOverrides(Map<String, String> loggerOverrides) {
+    this.loggerOverrides = loggerOverrides;
+    return this;
+  }
+
+  public Map<String, String> getLoggerOverrides() {
+    return loggerOverrides;
+  }
+
+  public Server setDataDirs(Map<String, String> dataDirs) {
+    this.dataDirs = dataDirs;
+    return this;
+  }
+
+  public Map<String, String> getDataDirs() {
+    return dataDirs;
   }
 
   public long getStartTime() {
@@ -284,24 +376,33 @@ public final class Server extends AbstractNode<Stripe> {
 
     Server server = (Server) o;
 
+    if (!Objects.equals(uid, server.uid)) return false;
     if (bindPort != server.bindPort) return false;
     if (groupPort != server.groupPort) return false;
     if (startTime != server.startTime) return false;
     if (activateTime != server.activateTime) return false;
     if (!serverEntities.equals(server.serverEntities)) return false;
     if (!serverName.equals(server.serverName)) return false;
-    if (hostName != null ? !hostName.equals(server.hostName) : server.hostName != null) return false;
-    if (hostAddress != null ? !hostAddress.equals(server.hostAddress) : server.hostAddress != null) return false;
-    if (bindAddress != null ? !bindAddress.equals(server.bindAddress) : server.bindAddress != null) return false;
+    if (!Objects.equals(hostName, server.hostName)) return false;
+    if (!Objects.equals(hostAddress, server.hostAddress)) return false;
+    if (!Objects.equals(bindAddress, server.bindAddress)) return false;
     if (state != server.state) return false;
-    if (version != null ? !version.equals(server.version) : server.version != null) return false;
+    if (!Objects.equals(version, server.version)) return false;
+    if (!Objects.equals(backupDir, server.backupDir)) return false;
+    if (!Objects.equals(securityDir, server.securityDir)) return false;
+    if (!Objects.equals(securityAuditLogDir, server.securityAuditLogDir)) return false;
+    if (!Objects.equals(logDir, server.logDir)) return false;
+    if (!Objects.equals(tcProperties, server.tcProperties)) return false;
+    if (!Objects.equals(loggerOverrides, server.loggerOverrides)) return false;
+    if (!Objects.equals(dataDirs, server.dataDirs)) return false;
+    if (!Objects.equals(metadataDir, server.metadataDir)) return false;
     return buildId != null ? buildId.equals(server.buildId) : server.buildId == null;
-
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
+    result = 31 * result + (uid != null ? uid.hashCode() : 0);
     result = 31 * result + serverEntities.hashCode();
     result = 31 * result + serverName.hashCode();
     result = 31 * result + (hostName != null ? hostName.hashCode() : 0);
@@ -314,6 +415,14 @@ public final class Server extends AbstractNode<Stripe> {
     result = 31 * result + (buildId != null ? buildId.hashCode() : 0);
     result = 31 * result + (int) (startTime ^ (startTime >>> 32));
     result = 31 * result + (int) (activateTime ^ (activateTime >>> 32));
+    result = 31 * result + (backupDir != null ? backupDir.hashCode() : 0);
+    result = 31 * result + (securityDir != null ? securityDir.hashCode() : 0);
+    result = 31 * result + (securityAuditLogDir != null ? securityAuditLogDir.hashCode() : 0);
+    result = 31 * result + (logDir != null ? logDir.hashCode() : 0);
+    result = 31 * result + (tcProperties != null ? tcProperties.hashCode() : 0);
+    result = 31 * result + (loggerOverrides != null ? loggerOverrides.hashCode() : 0);
+    result = 31 * result + (dataDirs != null ? dataDirs.hashCode() : 0);
+    result = 31 * result + (metadataDir != null ? metadataDir.hashCode() : 0);
     return result;
   }
 
@@ -321,6 +430,7 @@ public final class Server extends AbstractNode<Stripe> {
   public Map<String, Object> toMap() {
     Map<String, Object> map = super.toMap();
     map.put("serverEntities", serverEntityStream().sorted((o1, o2) -> o1.getId().compareTo(o2.getId())).map(ServerEntity::toMap).collect(Collectors.toList()));
+    map.put("uid", uid != null ? this.uid.toString() : null);
     map.put("serverName", this.getServerName());
     map.put("hostName", this.hostName);
     map.put("hostAddress", this.hostAddress);
@@ -333,6 +443,14 @@ public final class Server extends AbstractNode<Stripe> {
     map.put("startTime", this.startTime);
     map.put("upTimeSec", this.upTimeSec);
     map.put("activateTime", this.activateTime);
+    map.put("backupDir", this.backupDir);
+    map.put("securityDir", this.securityDir);
+    map.put("securityAuditLogDir", this.securityAuditLogDir);
+    map.put("logDir", this.logDir);
+    map.put("tcProperties", this.tcProperties);
+    map.put("loggerOverrides", this.loggerOverrides);
+    map.put("dataDirs", this.dataDirs);
+    map.put("metadataDir", this.metadataDir);
     return map;
   }
 

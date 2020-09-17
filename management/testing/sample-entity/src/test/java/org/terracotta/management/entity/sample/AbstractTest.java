@@ -29,7 +29,10 @@ import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
@@ -59,6 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -120,6 +124,9 @@ public abstract class AbstractTest {
       server.registerExtendedConfiguration(new OffHeapResourcesProvider(resources));
 
       server.registerExtendedConfiguration(topologyServiceServiceProvider.getService(0, new BasicServiceConfiguration<>(TopologyService.class)));
+      server.registerExtendedConfiguration(topologyServiceServiceProvider.getService(0, new BasicServiceConfiguration<>(DynamicConfigEventService.class)));
+      server.registerExtendedConfiguration(topologyServiceServiceProvider.getService(0, new BasicServiceConfiguration<>(IParameterSubstitutor.class)));
+      server.registerExtendedConfiguration(topologyServiceServiceProvider.getService(0, new BasicServiceConfiguration<>(PathResolver.class)));
       server.registerServiceProvider(topologyServiceServiceProvider, null);
     });
 
@@ -234,6 +241,9 @@ public abstract class AbstractTest {
         .setName("stripe[0]")
         .addNode(Testing.newTestNode("bar", "localhost"))), N_UIDS[1]);
     TopologyService topologyService = mock(TopologyService.class);
+    DynamicConfigEventService dynamicConfigEventService = mock(DynamicConfigEventService.class);
+    IParameterSubstitutor parameterSubstitutor = IParameterSubstitutor.identity();
+    PathResolver pathResolver = new PathResolver(Paths.get("."));
 
     public TopologyServiceServiceProvider() {
       when(topologyService.getRuntimeNodeContext()).thenReturn(topology);
@@ -248,6 +258,15 @@ public abstract class AbstractTest {
     public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
       if (configuration.getServiceType() == TopologyService.class) {
         return configuration.getServiceType().cast(topologyService);
+      }
+      if (configuration.getServiceType() == DynamicConfigEventService.class) {
+        return configuration.getServiceType().cast(dynamicConfigEventService);
+      }
+      if (configuration.getServiceType() == IParameterSubstitutor.class) {
+        return configuration.getServiceType().cast(parameterSubstitutor);
+      }
+      if (configuration.getServiceType() == PathResolver.class) {
+        return configuration.getServiceType().cast(pathResolver);
       }
       return null;
     }

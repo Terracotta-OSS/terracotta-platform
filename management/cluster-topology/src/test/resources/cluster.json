@@ -21,6 +21,7 @@
           } ]
         }
       } ],
+      "uid": "YLQguzhRSdS6y5M9vnA5mw",
       "serverName" : "server-1",
       "hostName" : "hostname-1",
       "hostAddress" : null,
@@ -32,8 +33,17 @@
       "buildId" : null,
       "startTime" : 0,
       "upTimeSec" : 0,
-      "activateTime" : 0
+      "activateTime" : 0,
+      "backupDir": null,
+      "securityDir": null,
+      "securityAuditLogDir": null,
+      "logDir": null,
+      "tcProperties": null,
+      "loggerOverrides": null,
+      "dataDirs": null,
+      "metadataDir": null
     }, {
+      "uid": "YLQguzhRSdS6y5M9vnA5mw",
       "id" : "server-2",
       "serverEntities" : [ ],
       "serverName" : "server-2",
@@ -47,7 +57,15 @@
       "buildId" : null,
       "startTime" : 0,
       "upTimeSec" : 0,
-      "activateTime" : 0
+      "activateTime" : 0,
+      "backupDir": null,
+      "securityDir": null,
+      "securityAuditLogDir": null,
+      "logDir": null,
+      "tcProperties": null,
+      "loggerOverrides": null,
+      "dataDirs": null,
+      "metadataDir": null
     } ]
   }, {
     "id" : "stripe-2",
@@ -71,6 +89,7 @@
           } ]
         }
       } ],
+      "uid": "YLQguzhRSdS6y5M9vnA5mw",
       "serverName" : "server-1",
       "hostName" : "hostname-3",
       "hostAddress" : null,
@@ -82,8 +101,17 @@
       "buildId" : null,
       "startTime" : 0,
       "upTimeSec" : 0,
-      "activateTime" : 0
+      "activateTime" : 0,
+      "backupDir": null,
+      "securityDir": null,
+      "securityAuditLogDir": null,
+      "logDir": null,
+      "tcProperties": null,
+      "loggerOverrides": null,
+      "dataDirs": null,
+      "metadataDir": null
     }, {
+      "uid": "YLQguzhRSdS6y5M9vnA5mw",
       "id" : "server-2",
       "serverEntities" : [ ],
       "serverName" : "server-2",
@@ -97,7 +125,15 @@
       "buildId" : null,
       "startTime" : 0,
       "upTimeSec" : 0,
-      "activateTime" : 0
+      "activateTime" : 0,
+      "backupDir": null,
+      "securityDir": null,
+      "securityAuditLogDir": null,
+      "logDir": null,
+      "tcProperties": null,
+      "loggerOverrides": null,
+      "dataDirs": null,
+      "metadataDir": null
     } ]
   } ],
   "clients" : [ {

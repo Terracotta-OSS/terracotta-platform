@@ -17,6 +17,13 @@ package org.terracotta.management.service.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.management.model.capabilities.Capability;
@@ -43,7 +50,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,14 +97,29 @@ class TopologyService implements PlatformListener {
   private final List<TopologyEventListener> topologyEventListeners = new CopyOnWriteArrayList<>();
 
   private volatile Server currentActive;
+  private final org.terracotta.dynamic_config.api.service.TopologyService topologyService;
+  private IParameterSubstitutor parameterSubstitutor;
+  private PathResolver pathResolver;
 
   TopologyService(FiringService firingService, PlatformConfiguration platformConfiguration) {
-    org.terracotta.dynamic_config.api.service.TopologyService topologyService =
-        platformConfiguration.getExtendedConfiguration(org.terracotta.dynamic_config.api.service.TopologyService.class).iterator().next();
+    topologyService = platformConfiguration.getExtendedConfiguration(org.terracotta.dynamic_config.api.service.TopologyService.class).iterator().next();
+
     this.firingService = Objects.requireNonNull(firingService);
     this.platformConfiguration = platformConfiguration;
     this.cluster = Cluster.create();
     this.cluster.addStripe(stripe = Stripe.create(topologyService.getRuntimeNodeContext().getStripe().getName()));
+
+    platformConfiguration.getExtendedConfiguration(DynamicConfigEventService.class).iterator().next()
+        .register(new DynamicConfigListener() {
+          @Override
+          public void onNewConfigurationSaved(NodeContext nodeContext, Long version) {
+            for (Node node : nodeContext.getStripe().getNodes()) {
+              stripe.getServerByName(node.getName()).ifPresent(server -> addServerDynamicConfigAttributes(server, node));
+            }
+          }
+        });
+    parameterSubstitutor = platformConfiguration.getExtendedConfiguration(IParameterSubstitutor.class).iterator().next();
+    pathResolver = platformConfiguration.getExtendedConfiguration(PathResolver.class).iterator().next();
   }
 
   // ================================================
@@ -117,6 +141,10 @@ class TopologyService implements PlatformListener {
         .setHostAddress(self.getHostAddress())
         .setVersion(self.getVersion())
         .computeUpTime();
+
+    topologyService.getRuntimeNodeContext().getCluster()
+        .getNodeByName(self.getServerName())
+        .ifPresent(node -> addServerDynamicConfigAttributes(server, node));
 
     if (stripe.addServer(server)) {
       currentActive = stripe.getServerByName(self.getServerName()).get();
@@ -145,9 +173,58 @@ class TopologyService implements PlatformListener {
         .setVersion(platformServer.getVersion())
         .computeUpTime();
 
+    topologyService.getRuntimeNodeContext().getCluster()
+        .getNodeByName(platformServer.getServerName())
+        .ifPresent(node -> addServerDynamicConfigAttributes(server, node));
+
     if (stripe.addServer(server)) {
       firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
     }
+  }
+
+  private void addServerDynamicConfigAttributes(Server server, Node node) {
+    server.setUID(node.getUID());
+
+    RawPath backDir = node.getBackupDir().orDefault();
+    if (backDir != null) {
+      Path backupPath = parameterSubstitutor.substitute(pathResolver.resolve(backDir.toPath()));
+      server.setBackupDir(backupPath.toString());
+    }
+
+    RawPath securityDir = node.getSecurityDir().orDefault();
+    if (securityDir != null) {
+      Path securityPath = parameterSubstitutor.substitute(pathResolver.resolve(securityDir.toPath()));
+      server.setSecurityDir(securityPath.toString());
+    }
+
+    RawPath securityAuditLogDir = node.getSecurityAuditLogDir().orDefault();
+    if (securityAuditLogDir != null) {
+      Path securityAuditLogPath = parameterSubstitutor.substitute(pathResolver.resolve(securityAuditLogDir.toPath()));
+      server.setSecurityAuditLogDir(securityAuditLogPath.toString());
+    }
+
+    RawPath logDir = node.getLogDir().orDefault();
+    Path logPath = parameterSubstitutor.substitute(pathResolver.resolve(logDir.toPath()));
+    server.setLogDir(logPath.toString());
+
+    RawPath metadataDir = node.getMetadataDir().orDefault();
+    Path metadataPath = parameterSubstitutor.substitute(pathResolver.resolve(metadataDir.toPath()));
+    server.setMetadataDir(metadataPath.toString());
+
+    server.setTcProperties(node.getTcProperties().orDefault());
+    server.setLoggerOverrides(node.getLoggerOverrides().orDefault());
+
+    Map<String, RawPath> dataDirs = node.getDataDirs().get();
+    if (dataDirs != null) {
+      Map<String, String> dataDirPaths = new HashMap<>();
+      for(Map.Entry<String, RawPath> me : dataDirs.entrySet()) {
+        Path dataDirPath = parameterSubstitutor.substitute(pathResolver.resolve(me.getValue().toPath()));
+        dataDirPaths.put(me.getKey(), dataDirPath.toString());
+      }
+      server.setDataDirs(dataDirPaths);
+    }
+
+    LOGGER.info("{}: {}", server.getServerName(), server.toMap().toString());
   }
 
   @Override

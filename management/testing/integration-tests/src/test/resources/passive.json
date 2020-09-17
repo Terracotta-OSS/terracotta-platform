@@ -423,6 +423,7 @@
       }
     }
   ],
+  "uid": "<uid>",
   "serverName": "stripe-PASSIVE",
   "hostName": "<hostname>",
   "hostAddress": "127.0.0.1",
@@ -434,5 +435,15 @@
   "buildId": "Build ID",
   "startTime": 0,
   "upTimeSec": 0,
-  "activateTime": 0
+  "activateTime": 0,
+  "backupDir": null,
+  "securityDir": null,
+  "securityAuditLogDir": null,
+  "logDir": "<log>",
+  "tcProperties": {
+    "terracotta.management.assert": "true"
+  },
+  "loggerOverrides": {},
+  "dataDirs": {},
+  "metadataDir": "<metadata>"
 }

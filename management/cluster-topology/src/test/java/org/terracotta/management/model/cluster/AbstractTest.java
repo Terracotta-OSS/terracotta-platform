@@ -18,6 +18,8 @@ package org.terracotta.management.model.cluster;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
@@ -62,7 +64,9 @@ public abstract class AbstractTest {
     cluster1 = Cluster.create();
     Stripe stripe11 = Stripe.create("stripe-1");
     cluster1.addStripe(stripe11);
+    UID uid = Testing.A_UID;
     Server server111 = Server.create("server-1")
+        .setUID(uid)
         .setHostName("hostname-1")
         .setBindAddress("0.0.0.0")
         .setBindPort(8881)
@@ -70,6 +74,7 @@ public abstract class AbstractTest {
     stripe11.addServer(server111);
     server111.addServerEntity(ehcache_server_entity = serverEntitySupplier.get());
     stripe11.addServer(Server.create("server-2")
+        .setUID(uid)
         .setHostName("hostname-2")
         .setBindAddress("0.0.0.0")
         .setBindPort(8881)
@@ -77,6 +82,7 @@ public abstract class AbstractTest {
     Stripe stripe12 = Stripe.create("stripe-2");
     cluster1.addStripe(stripe12);
     Server server121 = Server.create("server-1")
+        .setUID(uid)
         .setHostName("hostname-3")
         .setBindAddress("0.0.0.0")
         .setBindPort(8881)
@@ -84,6 +90,7 @@ public abstract class AbstractTest {
     stripe12.addServer(server121);
     server121.addServerEntity(serverEntitySupplier.get());
     stripe12.addServer(Server.create("server-2")
+        .setUID(uid)
         .setHostName("hostname-4")
         .setBindAddress("0.0.0.0")
         .setBindPort(8881)
@@ -104,6 +111,7 @@ public abstract class AbstractTest {
     Stripe stripe21 = Stripe.create("stripe-1");
     cluster2.addStripe(stripe21);
     Server server211 = Server.create("server-1")
+        .setUID(uid)
         .setHostName("hostname-1")
         .setBindAddress("0.0.0.0")
         .setBindPort(8881)
@@ -111,6 +119,7 @@ public abstract class AbstractTest {
     stripe21.addServer(server211);
     server211.addServerEntity(serverEntitySupplier.get());
     stripe21.addServer(Server.create("server-2")
+        .setUID(uid)
         .setHostName("hostname-2")
         .setBindAddress("0.0.0.0")
         .setBindPort(8881)
@@ -118,6 +127,7 @@ public abstract class AbstractTest {
     Stripe stripe22 = Stripe.create("stripe-2");
     cluster2.addStripe(stripe22);
     Server server221 = Server.create("server-1")
+        .setUID(uid)
         .setHostName("hostname-3")
         .setBindAddress("0.0.0.0")
         .setBindPort(8881)
@@ -125,6 +135,7 @@ public abstract class AbstractTest {
     stripe22.addServer(server221);
     server221.addServerEntity(serverEntitySupplier.get());
     stripe22.addServer(Server.create("server-2")
+        .setUID(uid)
         .setHostName("hostname-4")
         .setBindAddress("0.0.0.0")
         .setBindPort(8881)
