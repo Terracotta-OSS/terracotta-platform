@@ -26,7 +26,7 @@ import org.terracotta.entity.ClientSourceId;
 
 public class ClientTrackerImplTest {
 
-  private ClientTrackerImpl<Object, Object> clientTracker = new ClientTrackerImpl<>(null);
+  private ClientTrackerImpl<Object, Object> clientTracker = new ClientTrackerImpl<>();
 
   @Test
   public void getMessageTracker() throws Exception {

@@ -17,19 +17,16 @@ package org.terracotta.client.message.tracker;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 import org.terracotta.entity.StateDumpCollector;
 
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 class TrackerImpl<M, R> implements Tracker<M, R> {
 
-  private final Predicate<Object> trackerPolicy;
   private final SortedMap<Long, RequestResponse<M, R>> trackedValues;
+  private volatile long reconciledMarker = 0L;
 
   /**
    * Constructor taking a predicate to define the tracking policy. If the predicate returns true, the source will
@@ -38,14 +35,13 @@ class TrackerImpl<M, R> implements Tracker<M, R> {
    * @param trackerPolicy defines if a source is tracked or not
    */
   @SuppressWarnings("unchecked")
-  TrackerImpl(Predicate<?> trackerPolicy) {
-    this.trackerPolicy = (Predicate<Object>) trackerPolicy;
+  TrackerImpl() {
     this.trackedValues = new TreeMap<>();
   }
 
   @Override
   public void track(long track, long id, M source, R value) {
-    if (id > 0 && trackerPolicy.test(source)) {
+    if (id > 0) {
       placeTrackedValue(track, id, source, value);
     }
   }
@@ -58,13 +54,6 @@ class TrackerImpl<M, R> implements Tracker<M, R> {
   public synchronized R getTrackedValue(long id) {
     return Optional.ofNullable(trackedValues.get(id)).map(RequestResponse::getResponse).orElse(null);
   }
-
-  @Override
-  public synchronized R getTrackedValue(M id) {
-    return trackedValues.values().stream()
-      .filter(rr->rr.getRequest().equals(id))
-      .findAny().map(rr->rr.getResponse()).get();
-  }
   
   @Override
   public synchronized M getTrackedRequest(long id) {
@@ -73,28 +62,17 @@ class TrackerImpl<M, R> implements Tracker<M, R> {
 
   @Override
   public synchronized void reconcile(long id) {
+    reconciledMarker = Math.max(id, reconciledMarker);// don't go backwards
     trackedValues.headMap(id).clear();
   }
 
-  synchronized Collection<RequestResponse<M, R>> getTrackedValues() {
-    return trackedValues.values();
-  }
-  /**
-   * only used in a deprecated call {@link OOOMessageHandler#loadTrackedResponsesForSegment(int, org.terracotta.entity.ClientSourceId, java.util.Map) }
-   */
-  synchronized void loadOnSync(Map<Long, R> mappedResponses) {
-    for (Map.Entry<Long, R> e : mappedResponses.entrySet()) {
-      this.trackedValues.put(e.getKey(), new RequestResponse<>(-1, e.getKey(), null, e.getValue()));
-    }
+  @Override
+  public boolean wasReconciled(long id) {
+    return id < reconciledMarker;
   }
 
-  @Override
-  public synchronized void loadOnSync(Stream<RecordedMessage<M, R>> trackedValues) {
-    trackedValues.forEach(e->{
-      M request = e.getRequest();
-      R response = e.getResponse();
-      this.trackedValues.put(e.getTransactionId(), new RequestResponse<>(e.getSequenceId(), e.getTransactionId(), request, response));
-    });
+  synchronized Collection<RequestResponse<M, R>> getTrackedValues() {
+    return new ArrayList<>(trackedValues.values());
   }
 
   @Override

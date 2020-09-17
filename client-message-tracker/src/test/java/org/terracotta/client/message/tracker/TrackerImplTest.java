@@ -15,22 +15,15 @@
  */
 package org.terracotta.client.message.tracker;
 
-import java.util.Collection;
 import org.junit.Test;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
-import java.util.Collections;
-import java.util.Map;
-
-import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
-import org.terracotta.entity.ClientDescriptor;
-import org.terracotta.entity.ClientSourceId;
 
 public class TrackerImplTest {
 
@@ -39,21 +32,10 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    TrackerImpl<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> true);
+    TrackerImpl<EntityMessage, EntityResponse> tracker = new TrackerImpl<>();
     tracker.track(1L, 1L, message, response);
 
     assertThat(tracker.getTrackedValue(1L), sameInstance(response));
-  }
-
-  @Test
-  public void trackUnTrackableMessage() throws Exception {
-    EntityMessage message = mock(EntityMessage.class);
-    EntityResponse response = mock(EntityResponse.class);
-
-    Tracker<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> false);
-    tracker.track(1L, 1L, message, response);
-
-    assertThat(tracker.getTrackedValue(1L), nullValue());
   }
 
   @Test
@@ -61,7 +43,7 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> true);
+    Tracker<EntityMessage, EntityResponse> tracker = new TrackerImpl<>();
     tracker.track(1L, -1L, message, response);  // a message with non-positive message id
 
     assertThat(tracker.getTrackedValue(-1L), nullValue());
@@ -72,7 +54,7 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    TrackerImpl<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> true);
+    TrackerImpl<EntityMessage, EntityResponse> tracker = new TrackerImpl<>();
     tracker.track(1L, 1L, message, response);
     tracker.track(2L, 2L, message, response);
     tracker.track(3L, 3L, message, response);
@@ -102,7 +84,7 @@ public class TrackerImplTest {
     EntityMessage message = mock(EntityMessage.class);
     EntityResponse response = mock(EntityResponse.class);
 
-    Tracker<EntityMessage, EntityResponse> tracker = new TrackerImpl<>(o -> true);
+    Tracker<EntityMessage, EntityResponse> tracker = new TrackerImpl<>();
     tracker.track(1L, 1L, message, response);
     tracker.track(2L, 2L, message, response);
     tracker.track(3L, 3L, message, response);
