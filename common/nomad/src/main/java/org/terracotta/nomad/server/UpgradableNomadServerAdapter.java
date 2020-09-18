@@ -79,7 +79,7 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
   }
 
   @Override
-  public Optional<T> getCurrentCommittedChangeResult() throws NomadException {return delegate.getCurrentCommittedChangeResult();}
+  public Optional<T> getCurrentCommittedConfig() throws NomadException {return delegate.getCurrentCommittedConfig();}
 
   @Override
   public void reset() throws NomadException {

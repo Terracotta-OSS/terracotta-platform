@@ -178,10 +178,10 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public Optional<T> getCurrentCommittedChangeResult() throws NomadException {
+  public Optional<T> getCurrentCommittedConfig() throws NomadException {
     lock.lock();
     try {
-      return underlying.getCurrentCommittedChangeResult();
+      return underlying.getCurrentCommittedConfig();
     } finally {
       lock.unlock();
     }

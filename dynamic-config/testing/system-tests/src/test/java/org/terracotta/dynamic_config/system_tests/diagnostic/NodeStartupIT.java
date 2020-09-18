@@ -218,7 +218,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--config-dir", configurationRepo.toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the configuration directory and try again."));
+      waitUntil(out.getLog(1, 1), containsLog("Node has not been activated or migrated properly"));
       waitUntil(out.getLog(1, 1), not(containsLog("Moved to State[ ACTIVE-COORDINATOR ]")));
     }
   }

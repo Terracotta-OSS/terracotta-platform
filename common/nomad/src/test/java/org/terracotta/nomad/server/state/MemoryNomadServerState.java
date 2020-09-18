@@ -64,7 +64,7 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Optional<T> getCurrentCommittedChangeResult() {
+  public Optional<T> getCurrentCommittedConfig() {
     long currentVersion = getCurrentVersion();
     if (currentVersion == 0L) {
       return Optional.empty();

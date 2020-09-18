@@ -236,7 +236,7 @@ public class NomadServerManager {
    */
   public Optional<NodeContext> getConfiguration() throws UncheckedNomadException {
     try {
-      return getNomadServer().getCurrentCommittedChangeResult();
+      return getNomadServer().getCurrentCommittedConfig();
     } catch (NomadException e) {
       throw new UncheckedNomadException("Exception while making discover call to Nomad", e);
     }

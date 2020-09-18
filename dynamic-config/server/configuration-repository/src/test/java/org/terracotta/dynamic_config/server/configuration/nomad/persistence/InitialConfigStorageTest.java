@@ -23,11 +23,16 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
 
+import java.util.NoSuchElementException;
+
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
+import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 @RunWith(MockitoJUnitRunner.class)
 public class InitialConfigStorageTest {
@@ -40,7 +45,7 @@ public class InitialConfigStorageTest {
   @Test
   public void getInitialVersion() throws Exception {
     InitialConfigStorage storage = new InitialConfigStorage(underlying);
-    assertNull(storage.getConfig(0L));
+    assertThat(() -> storage.getConfig(0L), is(throwing(instanceOf(NoSuchElementException.class))));
   }
 
   @Test(expected = AssertionError.class)
