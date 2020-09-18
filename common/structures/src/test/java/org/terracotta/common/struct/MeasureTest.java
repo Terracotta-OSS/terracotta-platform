@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.common.struct.MemoryUnit.B;
 import static org.terracotta.common.struct.MemoryUnit.GB;
+import static org.terracotta.common.struct.MemoryUnit.MB;
 import static org.terracotta.common.struct.TimeUnit.HOURS;
 import static org.terracotta.common.struct.TimeUnit.MINUTES;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
@@ -170,6 +171,25 @@ public class MeasureTest {
     String json = this.json.writeValueAsString(config);
     assertThat(json, is(equalTo("{\"leaseTime\":{\"quantity\":3,\"unit\":\"SECONDS\",\"type\":\"TIME\"},\"offheap\":{\"quantity\":1,\"unit\":\"GB\",\"type\":\"MEMORY\"}}")));
     assertThat(this.json.readValue(json, Config.class), is(equalTo(config)));
+  }
+
+  @Test
+  public void test_add() {
+    Measure<MemoryUnit> size = Measure.of(1, GB);
+
+    assertThat(size.add(1).getQuantity(), is(equalTo(2L)));
+    assertThat(size.add(1).getUnit(), is(equalTo(GB)));
+
+    assertThat(size.add(1024, MB).getQuantity(), is(equalTo(2L)));
+    assertThat(size.add(1024, MB).getUnit(), is(equalTo(GB)));
+  }
+
+  @Test
+  public void test_multiply() {
+    Measure<MemoryUnit> size = Measure.of(1, GB);
+
+    assertThat(size.multiply(2).getQuantity(), is(equalTo(2L)));
+    assertThat(size.multiply(2).getUnit(), is(equalTo(GB)));
   }
 
   public static class Config {

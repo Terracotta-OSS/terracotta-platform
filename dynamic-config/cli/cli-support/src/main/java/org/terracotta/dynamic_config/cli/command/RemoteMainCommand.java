@@ -21,8 +21,6 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
-import java.math.BigInteger;
-
 /**
  * @author Mathieu Carbou
  */
@@ -68,9 +66,7 @@ public class RemoteMainCommand extends LocalMainCommand {
   public void validate() {
     super.validate();
     if (entityOperationTimeout == null) {
-      entityOperationTimeout = Measure.of(
-          requestTimeout.getExactQuantity().multiply(BigInteger.valueOf(12)),
-          requestTimeout.getUnit());
+      entityOperationTimeout = requestTimeout.multiply(12);
     }
   }
 }
