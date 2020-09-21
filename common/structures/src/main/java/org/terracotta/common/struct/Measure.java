@@ -124,6 +124,30 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
     return unit;
   }
 
+  public Measure<T> add(long quantity, T unit) {
+    return add(BigInteger.valueOf(quantity), unit);
+  }
+
+  public Measure<T> add(BigInteger quantity, T unit) {
+    return add(this.unit.convert(quantity, unit));
+  }
+
+  public Measure<T> add(long amount) {
+    return add(BigInteger.valueOf(amount));
+  }
+
+  public Measure<T> add(BigInteger amount) {
+    return Measure.of(this.quantity.add(amount), this.unit);
+  }
+
+  public Measure<T> multiply(long factor) {
+    return multiply(BigInteger.valueOf(factor));
+  }
+
+  public Measure<T> multiply(BigInteger factor) {
+    return Measure.of(this.quantity.multiply(factor), this.unit);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
