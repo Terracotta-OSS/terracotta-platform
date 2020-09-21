@@ -370,7 +370,7 @@ public class ConfigConversionIT {
     ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
     NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
 
-    try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, null, "testServer0", null)) {
+    try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, "testServer0", null)) {
       nomadServer.discover().getLatestChange().getResult();
     }
   }

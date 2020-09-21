@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
@@ -44,7 +43,6 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Noma
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ApplicabilityNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ClusterActivationNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.DefaultNomadRoutingChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.FormatUpgradeNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockAwareNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockConfigNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.MultiSettingNomadChangeProcessor;
@@ -175,7 +173,7 @@ public class NomadServerManager {
     this.eventFiringService = eventService;
 
     try {
-      this.nomadServer = nomadServerFactory.createServer(getConfigurationManager(), null, nodeName.get(), getEventFiringService());
+      this.nomadServer = nomadServerFactory.createServer(getConfigurationManager(), nodeName.get(), getEventFiringService());
     } catch (SanskritException | NomadException | ConfigStorageException e) {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
@@ -192,17 +190,17 @@ public class NomadServerManager {
 
   public void downgradeForRead() {
     getNomadServer().setChangeApplicator(null);
-    getNomadServer().setChangeApplicator(null);
   }
 
   /**
    * Makes Nomad server capable of write operations.
    */
-  public void upgradeForWrite(UID nodeUID) {
-    requireNonNull(nodeUID);
+  public void upgradeForWrite() {
     if (getNomadServer().getChangeApplicator() != null) {
       throw new IllegalStateException("Nomad is already upgraded");
     }
+
+    UID nodeUID = topologyService.getUpcomingNodeContext().getNodeUID();
 
     router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(getTopologyService(), configChangeHandlerManager, getEventFiringService()));
     router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
@@ -210,7 +208,6 @@ public class NomadServerManager {
     router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(nodeUID));
     router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService));
     router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
-    router.register(FormatUpgradeNomadChange.class, new FormatUpgradeNomadChangeProcessor());
     router.register(LockConfigNomadChange.class, new LockConfigNomadChangeProcessor());
     router.register(UnlockConfigNomadChange.class, new UnlockConfigNomadChangeProcessor());
 

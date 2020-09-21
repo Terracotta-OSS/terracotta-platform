@@ -338,7 +338,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     this.installLicense(licenseContent);
 
     LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster().toShapeString());
-    nomadServerManager.upgradeForWrite(upcomingNodeContext.getNodeUID());
+    nomadServerManager.upgradeForWrite();
     LOGGER.debug("Setting nomad writable successful");
 
     clusterActivated = true;

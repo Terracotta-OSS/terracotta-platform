@@ -71,11 +71,8 @@ public class BackwardCompatibilityTest {
     ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
     NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
 
-    try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(
-        nomadConfigurationManager,
-        ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()),
-        "default-node1",
-        null)) {
+    try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, "default-node1", null)) {
+      nomadServer.setChangeApplicator(ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()));
 
       // upgrade should have been done
       Properties after = Props.load(config.resolve("cluster").resolve("default-node1.2.properties"));

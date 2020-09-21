@@ -37,6 +37,7 @@ import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.PotentialApplicationResult;
+import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.persistence.sanskrit.SanskritException;
 
 import java.nio.file.Path;
@@ -97,7 +98,9 @@ public class ConfigRepoProcessor {
     };
 
     try {
-      return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, node.getName(), null);
+      UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, node.getName(), null);
+      nomadServer.setChangeApplicator(changeApplicator);
+      return nomadServer;
     } catch (SanskritException | NomadException | ConfigStorageException e) {
       throw new RuntimeException(e);
     }
