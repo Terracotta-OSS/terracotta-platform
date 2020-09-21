@@ -39,7 +39,7 @@ public interface UpgradableNomadServer<T> extends NomadServer<T> {
    */
   boolean hasIncompleteChange();
 
-  Optional<T> getCurrentCommittedChangeResult() throws NomadException;
+  Optional<T> getCurrentCommittedConfig() throws NomadException;
 
   void reset() throws NomadException;
 

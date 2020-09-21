@@ -216,8 +216,8 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public Optional<T> getCurrentCommittedChangeResult() throws NomadException {
-    return state.getCurrentCommittedChangeResult();
+  public Optional<T> getCurrentCommittedConfig() throws NomadException {
+    return state.getCurrentCommittedConfig();
   }
 
   @Override
@@ -295,7 +295,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     }
 
     // null when preparing for the first time, when no config is available
-    T existing = getCurrentCommittedChangeResult().orElse(null);
+    T existing = getCurrentCommittedConfig().orElse(null);
     NomadChange change = message.getChange();
 
     PotentialApplicationResult<T> result = changeApplicator.tryApply(existing, change);

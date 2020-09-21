@@ -188,13 +188,14 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
   }
 
   @Override
-  public Optional<NodeContext> getCurrentCommittedChangeResult() throws NomadException {
+  public Optional<NodeContext> getCurrentCommittedConfig() throws NomadException {
     long currentVersion = getCurrentVersion();
     if (currentVersion == 0L) {
       return Optional.empty();
     }
     try {
-      return Optional.ofNullable(configStorage.getConfig(currentVersion).getTopology());
+      final Config config = configStorage.getConfig(currentVersion);
+      return Optional.ofNullable(config.getTopology());
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to load current configuration", e);
     }
