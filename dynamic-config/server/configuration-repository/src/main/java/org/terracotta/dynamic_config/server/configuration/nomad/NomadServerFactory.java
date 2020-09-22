@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ClusterConfigFilename;
@@ -44,7 +45,6 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.NomadServerImpl;
 import org.terracotta.nomad.server.SingleThreadedNomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServer;
@@ -70,7 +70,6 @@ public class NomadServerFactory {
   }
 
   public UpgradableNomadServer<NodeContext> createServer(NomadConfigurationManager configurationManager,
-                                                         ChangeApplicator<NodeContext> changeApplicator,
                                                          String nodeName,
                                                          DynamicConfigEventFiring dynamicConfigEventFiring) throws SanskritException, NomadException, ConfigStorageException {
 
@@ -102,7 +101,7 @@ public class NomadServerFactory {
 
     SanskritNomadServerState serverState = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer());
 
-    SingleThreadedNomadServer<NodeContext> nomadServer = new SingleThreadedNomadServer<>(new UpgradableNomadServerAdapter<NodeContext>(new NomadServerImpl<>(serverState, changeApplicator)) {
+    SingleThreadedNomadServer<NodeContext> nomadServer = new SingleThreadedNomadServer<>(new UpgradableNomadServerAdapter<NodeContext>(new NomadServerImpl<>(serverState)) {
       @Override
       public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
         AcceptRejectResponse response = super.prepare(message);
@@ -144,7 +143,6 @@ public class NomadServerFactory {
     long currentVersion = serverState.getCurrentVersion();
     if (currentVersion != 0) {
       upgrade(configStorage, nomadServer, currentVersion);
-
     }
 
     currentVersion = serverState.getCurrentVersion();
@@ -164,7 +162,7 @@ public class NomadServerFactory {
         new org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1()).create();
   }
 
-  private void upgrade(InitialConfigStorage configStorage, NomadServer<NodeContext> nomadServer, long currentVersion) throws ConfigStorageException {
+  private void upgrade(InitialConfigStorage configStorage, UpgradableNomadServer<NodeContext> nomadServer, long currentVersion) throws ConfigStorageException {
     final Config config = configStorage.getConfig(currentVersion);
     final Node node = config.getTopology().getNode();
     final String filename = ClusterConfigFilename.with(node.getName(), currentVersion).getFilename();
@@ -176,16 +174,28 @@ public class NomadServerFactory {
 
     LOGGER.info("Upgrading configuration version: {} stored in: {} from format version: {} to format version: {}", currentVersion, filename, config.getVersion(), to);
 
-    NomadEnvironment environment = new NomadEnvironment();
+    // prepare server with a change applicator that will always apply
+    nomadServer.setChangeApplicator(ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()));
 
-    List<NomadEndpoint<NodeContext>> endpoints = singletonList(new NomadEndpoint<>(node.getInternalAddress(), nomadServer));
-    // Note: do NOT close this nomad client - it would close the server and sanskrit!
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
-    NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
-    nomadClient.tryApplyChange(failureRecorder, new FormatUpgradeNomadChange(config.getVersion(), to));
+    // upgrade
+    try {
+      NomadEnvironment environment = new NomadEnvironment();
 
-    // this is important to rethrow eagerly in the nomad server creation flow to avoid starting a server ending with a prepared change,
-    // which cannot be migrated sadly since we cannot alter the append log entries.
-    failureRecorder.reThrowErrors();
+      List<NomadEndpoint<NodeContext>> endpoints = singletonList(new NomadEndpoint<>(node.getInternalAddress(), nomadServer));
+      // Note: do NOT close this nomad client - it would close the server and sanskrit!
+      NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
+      NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
+      nomadClient.tryApplyChange(failureRecorder, new FormatUpgradeNomadChange(config.getVersion(), to));
+
+      // this is important to rethrow eagerly in the nomad server creation flow to avoid starting a server ending with a prepared change,
+      // which cannot be migrated sadly since we cannot alter the append log entries.
+      failureRecorder.reThrowErrors();
+
+    } finally {
+      // remove the change applicator, because the factory needs to return a nomad server without any
+      nomadServer.setChangeApplicator(null);
+    }
+
+    LOGGER.debug("Successfully completed upgradeForWrite procedure");
   }
 }
