@@ -24,12 +24,11 @@ import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.config.ConfigurationContext;
-import org.terracotta.angela.client.config.TsaConfigurationContext;
 import org.terracotta.angela.client.filesystem.RemoteFolder;
 import org.terracotta.angela.client.support.junit.AngelaRule;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
-import org.terracotta.angela.common.ConfigToolExecutionResult;
 import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
+import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.angela.common.distribution.Distribution;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
@@ -86,6 +85,7 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
+import static org.terracotta.angela.common.TerracottaConfigTool.configTool;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
@@ -224,13 +224,13 @@ public class DynamicConfigIT {
     return InetSocketAddress.createUnresolved("localhost", getNodePort(stripeId, nodeId));
   }
 
-  protected ConfigToolExecutionResult activateCluster() {
+  protected ToolExecutionResult activateCluster() {
     return activateCluster(CLUSTER_NAME);
   }
 
-  protected ConfigToolExecutionResult activateCluster(String name) {
+  protected ToolExecutionResult activateCluster(String name) {
     Path licensePath = getLicensePath();
-    ConfigToolExecutionResult result = licensePath == null ?
+    ToolExecutionResult result = licensePath == null ?
         invokeConfigTool("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
         invokeConfigTool("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
     assertThat(result, is(successful()));
@@ -238,7 +238,7 @@ public class DynamicConfigIT {
     return result;
   }
 
-  protected ConfigToolExecutionResult invokeConfigTool(String... cli) {
+  protected ToolExecutionResult invokeConfigTool(String... cli) {
     List<String> enhancedCli = new ArrayList<>(cli.length);
     List<String> configToolOptions = getConfigToolOptions(cli);
 
@@ -265,7 +265,7 @@ public class DynamicConfigIT {
     } else {
       cmd = cli;
     }
-    return angela.tsa().configTool(getNode(1, 1)).executeCommand(cmd);
+    return angela.configTool().executeCommand(cmd);
   }
 
   private List<String> getConfigToolOptions(String[] cli) {
@@ -287,25 +287,29 @@ public class DynamicConfigIT {
   // =========================================
 
   protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe, boolean netDisruptionEnabled) {
-    return customConfigurationContext().tsa(tsa -> tsa
-        .clusterName(CLUSTER_NAME)
-        .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
-        .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT
-            .withJavaOpts("-Xms32m -Xmx256m")
-            .withJavaHome(System.getProperty("java.home")))
-        .terracottaCommandLineEnvironment(TsaConfigurationContext.TerracottaCommandLineEnvironmentKeys.CONFIG_TOOL,
-            TerracottaCommandLineEnvironment.DEFAULT
+    return customConfigurationContext()
+        .tsa(tsa -> tsa
+            .clusterName(CLUSTER_NAME)
+            .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
+            .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT
+                .withJavaOpts("-Xms32m -Xmx256m")
+                .withJavaHome(System.getProperty("java.home")))
+            .topology(new Topology(
+                getDistribution(),
+                netDisruptionEnabled,
+                dynamicCluster(
+                    rangeClosed(1, stripes)
+                        .mapToObj(stripeId -> stripe(rangeClosed(1, nodesPerStripe)
+                            .mapToObj(nodeId -> createNode(stripeId, nodeId))
+                            .toArray(TerracottaServer[]::new)))
+                        .toArray(Stripe[]::new)))))
+        .configTool(context -> context
+            .distribution(getDistribution())
+            .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
+            .commandLineEnv(TerracottaCommandLineEnvironment.DEFAULT
                 .withJavaOpts("-Xms8m -Xmx128m")
                 .withJavaHome(System.getProperty("java.home")))
-        .topology(new Topology(
-            getDistribution(),
-            netDisruptionEnabled,
-            dynamicCluster(
-                rangeClosed(1, stripes)
-                    .mapToObj(stripeId -> stripe(rangeClosed(1, nodesPerStripe)
-                        .mapToObj(nodeId -> createNode(stripeId, nodeId))
-                        .toArray(TerracottaServer[]::new)))
-                    .toArray(Stripe[]::new)))));
+            .configTool(configTool("config-tool", "localhost")));
   }
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
@@ -416,7 +420,7 @@ public class DynamicConfigIT {
   // assertions
   // =========================================
 
-  protected final void waitUntil(ConfigToolExecutionResult result, Matcher<ConfigToolExecutionResult> matcher) {
+  protected final void waitUntil(ToolExecutionResult result, Matcher<ToolExecutionResult> matcher) {
     waitUntil(() -> result, matcher, getAssertTimeout());
   }
 
@@ -530,7 +534,7 @@ public class DynamicConfigIT {
   }
 
   protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {
-    stripeServer.forEach((k, v) -> angela.tsa().setServerToServerDisruptionLinks(k, v));
+    stripeServer.forEach((k, v) -> angela.configTool().setServerToServerDisruptionLinks(k, v));
   }
 
   protected void setClientServerDisruptionLinks(Map<Integer, Integer> stripeServerNumMap) {
@@ -539,7 +543,7 @@ public class DynamicConfigIT {
       int serverList = entry.getValue();
       for (int i = 1; i <= serverList; ++i) {
         TerracottaServer terracottaServer = getNode(stripeId, i);
-        angela.tsa().setClientToServerDisruptionLinks(terracottaServer);
+        angela.configTool().setClientToServerDisruptionLinks(terracottaServer);
       }
     }
   }
