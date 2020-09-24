@@ -18,7 +18,6 @@ package org.terracotta.client.message.tracker;
 import org.terracotta.entity.StateDumpable;
 
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * Keeps track of an entity's objects with their ids and their corresponding values.
@@ -57,8 +56,6 @@ interface Tracker<M, R> extends StateDumpable {
    */
   R getTrackedValue(long id);
 
-  R getTrackedValue(M message);
-
   /**
    * 
    * @param id Tracked entity ID
@@ -72,12 +69,12 @@ interface Tracker<M, R> extends StateDumpable {
    * @param id Incoming entity ID
    */
   void reconcile(long id);
-
   /**
-   * Bulk load a set of ids, value mappings.
-   * To be used by a passive entity when the active syncs its message tracker data.
+   * determines if the transaction id is old enough that it was cleared from
+   * the cached message stream
    *
-   * @param trackedValues a map of id, value mappings
+   * @param id transactionid of the message in question
+   * @return true if the message has been removed from the cached stream 
    */
-  void loadOnSync(Stream<RecordedMessage<M, R>> trackedValues);
+  boolean wasReconciled(long id);
 }
