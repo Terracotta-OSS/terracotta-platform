@@ -41,6 +41,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static java.lang.System.lineSeparator;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
@@ -118,7 +119,7 @@ public class AttachCommand extends TopologyCommand {
 
       Stripe destinationStripe = destinationCluster.getStripeByNode(destination.getNodeUID()).get();
       FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
-      if (failoverPriority.equals(consistency())) {
+      if (failoverPriority.getType() == CONSISTENCY) {
         int voterCount = failoverPriority.getVoters();
         int nodeCount = destinationStripe.getNodes().size();
         int sum = voterCount + nodeCount;

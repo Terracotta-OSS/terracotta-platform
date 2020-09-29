@@ -171,22 +171,6 @@ public class ClusterValidator {
     if (failoverPriority == null) {
       throw new MalformedClusterException(Setting.FAILOVER_PRIORITY + " setting is missing");
     }
-
-    if (failoverPriority.equals(consistency())) {
-      int voterCount = failoverPriority.getVoters();
-      for (Stripe stripe : cluster.getStripes()) {
-        int nodeCount = stripe.getNodes().size();
-        int sum = voterCount + nodeCount;
-        if (sum % 2 == 0) {
-          LOGGER.warn(lineSeparator() +
-              "===================================================================================================================" + lineSeparator() +
-              "The sum (" + sum + ") of voter count (" + voterCount + ") and number of nodes (" + nodeCount + ") " +
-              "in stripe '" + stripe.getName() + "' is an even number." + lineSeparator() +
-              "An even-numbered configuration is more likely to experience split-brain situations." + lineSeparator() +
-              "===================================================================================================================" + lineSeparator());
-        }
-      }
-    }
   }
 
   private void validateNodeNames() {

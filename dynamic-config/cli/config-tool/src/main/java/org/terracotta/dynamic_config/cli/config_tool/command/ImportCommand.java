@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import static java.lang.System.lineSeparator;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 
 /**
@@ -58,7 +59,7 @@ public class ImportCommand extends RemoteCommand {
   public void validate() {
     cluster = loadCluster();
     FailoverPriority failoverPriority = cluster.getFailoverPriority();
-    if (failoverPriority.equals(consistency())) {
+    if (failoverPriority.getType() == CONSISTENCY) {
       int voterCount = failoverPriority.getVoters();
       for (Stripe stripe : cluster.getStripes()) {
         int nodeCount = stripe.getNodes().size();
