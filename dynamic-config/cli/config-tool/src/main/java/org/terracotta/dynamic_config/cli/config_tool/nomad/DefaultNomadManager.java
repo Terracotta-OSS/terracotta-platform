@@ -25,11 +25,11 @@ import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvide
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -57,13 +57,11 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
@@ -118,7 +116,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
     }
   }
 
-  public void runConfigurationRepair(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
+  public void runConfigurationRepair(ConsistencyAnalyzer consistencyAnalyzer, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
     LOGGER.debug("Attempting to repair configuration on nodes: {}", consistencyAnalyzer.getAllNodes().keySet());
     Map<Node.Endpoint, LogicalServerState> onlineActivatedNodes = consistencyAnalyzer.getOnlineActivatedNodes();
     List<Node.Endpoint> orderedList = keepOnlineAndOrderPassivesFirst(onlineActivatedNodes);

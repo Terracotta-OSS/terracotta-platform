@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.cli.config_tool.nomad;
+package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.messages.ChangeDetails;
@@ -43,17 +44,17 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.ACCEPTING;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.CONCURRENT_ACCESS;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.DESYNCHRONIZED;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.DISCOVERY_FAILURE;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.INCONSISTENT;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_COMMITTED;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_ROLLED_BACK;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.MAYBE_UNKNOWN;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.PARTIALLY_COMMITTED;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.PARTIALLY_PREPARED;
-import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.PARTIALLY_ROLLED_BACK;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.ACCEPTING;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.CONCURRENT_ACCESS;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.DESYNCHRONIZED;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.DISCOVERY_FAILURE;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.INCONSISTENT;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_COMMITTED;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_ROLLED_BACK;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.MAYBE_UNKNOWN;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.PARTIALLY_COMMITTED;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.PARTIALLY_PREPARED;
+import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.PARTIALLY_ROLLED_BACK;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -63,7 +64,7 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
  *
  * @author Mathieu Carbou
  */
-public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
+public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext> {
 
   public enum GlobalState {
     ACCEPTING,
@@ -85,7 +86,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     MAYBE_UNKNOWN
   }
 
-  private final Map<Endpoint, DiscoverResponse<T>> responses;
+  private final Map<Endpoint, DiscoverResponse<NodeContext>> responses;
   private final Map<Endpoint, LogicalServerState> allNodes;
 
   private volatile Throwable discoverFailure;
@@ -109,7 +110,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   }
 
   @Override
-  public void discovered(InetSocketAddress nodeAddress, DiscoverResponse<T> discovery) {
+  public void discovered(InetSocketAddress nodeAddress, DiscoverResponse<NodeContext> discovery) {
     responses.put(findEndpoint(nodeAddress), discovery);
   }
 
@@ -152,7 +153,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     return allNodes.get(findEndpoint(nodeUID));
   }
 
-  public Optional<DiscoverResponse<T>> getDiscoveryResponse(Endpoint endpoint) {
+  public Optional<DiscoverResponse<NodeContext>> getDiscoveryResponse(Endpoint endpoint) {
     return Optional.ofNullable(responses.get(endpoint));
   }
 
@@ -264,7 +265,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     return responses.containsKey(endpoint) && responses.get(endpoint).getLatestChange() == null && allNodes.get(endpoint) == STARTING;
   }
 
-  public Optional<T> getNodeContext() {
+  public Optional<NodeContext> getNodeContext() {
     return responses.values().stream().map(DiscoverResponse::getLatestChange).filter(Objects::nonNull).map(ChangeDetails::getResult).findAny();
   }
 
@@ -359,7 +360,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
         MAYBE_UNKNOWN; // some nodes are not reachable and we were not able to determine the state
   }
 
-  private Collector<Map.Entry<Endpoint, DiscoverResponse<T>>, ?, LinkedHashMap<Endpoint, LogicalServerState>> responseEntryToMap() {
+  private Collector<Map.Entry<Endpoint, DiscoverResponse<NodeContext>>, ?, LinkedHashMap<Endpoint, LogicalServerState>> responseEntryToMap() {
     return toMap(
         Map.Entry::getKey,
         e -> allNodes.getOrDefault(e.getKey(), UNKNOWN),

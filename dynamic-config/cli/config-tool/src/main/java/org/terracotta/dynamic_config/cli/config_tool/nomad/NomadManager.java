@@ -18,8 +18,8 @@ package org.terracotta.dynamic_config.cli.config_tool.nomad;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
 import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
@@ -35,5 +35,5 @@ public interface NomadManager<T> {
 
   void runConfigurationChange(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, DynamicConfigNomadChange changes, ChangeResultReceiver<T> results);
 
-  void runConfigurationRepair(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer, RecoveryResultReceiver<T> results, ChangeRequestState forcedState);
+  void runConfigurationRepair(ConsistencyAnalyzer consistencyAnalyzer, RecoveryResultReceiver<T> results, ChangeRequestState forcedState);
 }

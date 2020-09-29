@@ -18,12 +18,12 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
+import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.server.NomadServerMode;
@@ -62,7 +62,7 @@ public class DiagnosticCommand extends RemoteCommand {
     // this call can take some time and we can have some timeout
     Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
 
-    ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = analyzeNomadConsistency(allNodes);
+    ConsistencyAnalyzer consistencyAnalyzer = analyzeNomadConsistency(allNodes);
     Collection<Endpoint> onlineNodes = sort(consistencyAnalyzer.getOnlineNodes().keySet());
     Collection<Endpoint> onlineActivatedNodes = sort(consistencyAnalyzer.getOnlineActivatedNodes().keySet());
     Collection<Endpoint> onlineInConfigurationNodes = sort(consistencyAnalyzer.getOnlineInConfigurationNodes().keySet());
@@ -216,7 +216,7 @@ public class DiagnosticCommand extends RemoteCommand {
     return sorted;
   }
 
-  private String meaningOf(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
+  private String meaningOf(ConsistencyAnalyzer consistencyAnalyzer) {
     switch (consistencyAnalyzer.getGlobalState()) {
       case ACCEPTING:
         return "The cluster configuration is healthy. " + getLockingInfo(consistencyAnalyzer);
@@ -286,7 +286,7 @@ public class DiagnosticCommand extends RemoteCommand {
     }
   }
 
-  private static String getLockingInfo(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
+  private static String getLockingInfo(ConsistencyAnalyzer consistencyAnalyzer) {
     return consistencyAnalyzer.getNodeContext()
                               .map(NodeContext::getCluster)
                               .map(Cluster::getConfigurationLockContext)

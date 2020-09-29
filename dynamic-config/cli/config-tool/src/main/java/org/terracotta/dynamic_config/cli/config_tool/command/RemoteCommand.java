@@ -34,11 +34,11 @@ import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
+import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartProgress;
@@ -210,9 +210,9 @@ public abstract class RemoteCommand extends Command {
   /**
    * Returns the current consistency of the configuration in the cluster
    */
-  protected final ConsistencyAnalyzer<NodeContext> analyzeNomadConsistency(Map<Endpoint, LogicalServerState> allNodes) {
+  protected final ConsistencyAnalyzer analyzeNomadConsistency(Map<Endpoint, LogicalServerState> allNodes) {
     logger.trace("analyzeNomadConsistency({})", allNodes);
-    ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = new ConsistencyAnalyzer<>(allNodes);
+    ConsistencyAnalyzer consistencyAnalyzer = new ConsistencyAnalyzer(allNodes);
     nomadManager.runConfigurationDiscovery(allNodes, consistencyAnalyzer);
     return consistencyAnalyzer;
   }
@@ -221,7 +221,7 @@ public abstract class RemoteCommand extends Command {
    * Runs a Nomad recovery by providing a map of activated nodes plus their state.
    * This method will create an ordered list of nodes to contact by moving the passives first and actives last.
    */
-  protected final void runConfigurationRepair(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer, ChangeRequestState forcedState) {
+  protected final void runConfigurationRepair(ConsistencyAnalyzer consistencyAnalyzer, ChangeRequestState forcedState) {
     logger.trace("runConfigurationRepair({}, {})", toString(consistencyAnalyzer.getAllNodes().keySet()), forcedState);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runConfigurationRepair(consistencyAnalyzer, failures, forcedState);
