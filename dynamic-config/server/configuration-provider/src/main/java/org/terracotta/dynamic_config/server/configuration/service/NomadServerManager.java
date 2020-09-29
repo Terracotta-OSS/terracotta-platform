@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
@@ -43,6 +44,7 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Noma
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ApplicabilityNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ClusterActivationNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.DefaultNomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.FormatUpgradeNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockAwareNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockConfigNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.MultiSettingNomadChangeProcessor;
@@ -190,6 +192,7 @@ public class NomadServerManager {
 
   public void downgradeForRead() {
     getNomadServer().setChangeApplicator(null);
+    getNomadServer().setChangeApplicator(null);
   }
 
   /**
@@ -208,6 +211,7 @@ public class NomadServerManager {
     router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(nodeUID));
     router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService));
     router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
+    router.register(FormatUpgradeNomadChange.class, new FormatUpgradeNomadChangeProcessor());
     router.register(LockConfigNomadChange.class, new LockConfigNomadChangeProcessor());
     router.register(UnlockConfigNomadChange.class, new UnlockConfigNomadChangeProcessor());
 
