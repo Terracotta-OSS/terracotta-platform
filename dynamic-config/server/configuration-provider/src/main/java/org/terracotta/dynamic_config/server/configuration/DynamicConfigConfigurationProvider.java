@@ -50,6 +50,7 @@ import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
 
@@ -73,7 +74,9 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   @Override
   public void initialize(List<String> args) {
     withMyClassLoader(() -> {
-      ClassLoader serviceClassLoader = getServiceClassLoader();
+      Server server = ServerEnv.getServer();
+
+      ClassLoader serviceClassLoader = getServiceClassLoader(server);
 
       // substitution service from placeholders
       IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
@@ -101,18 +104,18 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
       // Service used to manage and initialize the Nomad 2PC system
-      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory);
+      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, server);
       synCodec = new DynamicConfigSyncData.Codec(objectMapperFactory);
 
       // Configuration generator class
       // Initialized when processing the CLI depending oin the user input, and called to generate a configuration
-      ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver, objectMapperFactory);
+      ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver, objectMapperFactory, server);
 
       // CLI parsing
       Options options = parseCommandLineOrExit(args);
 
       // processors for the CLI
-      CommandLineProcessor commandLineProcessor = new MainCommandLineProcessor(options, clusterFactory, configurationGeneratorVisitor, parameterSubstitutor);
+      CommandLineProcessor commandLineProcessor = new MainCommandLineProcessor(options, clusterFactory, configurationGeneratorVisitor, parameterSubstitutor, server);
 
       // process the CLI and initialize the Nomad system and ConfigurationGeneratorVisitor
       commandLineProcessor.process();
@@ -194,11 +197,12 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       }
 
       if (requires.contains(RESTART_REQUIRED)) {
+        Server server = ServerEnv.getServer();
         if (requires.contains(ZAP_REQUIRED)) {
-          ServerEnv.getServer().warn("Zapping server");
-          ServerEnv.getServer().stop(StopAction.ZAP, StopAction.RESTART);
+          server.warn("Zapping server");
+          server.stop(StopAction.ZAP, StopAction.RESTART);
         } else {
-          ServerEnv.getServer().stop(StopAction.RESTART);
+          server.stop(StopAction.RESTART);
         }
       }
 
@@ -232,8 +236,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     }
   }
 
-  private ClassLoader getServiceClassLoader() {
-    return ServerEnv.getServer().getServiceClassLoader(getClass().getClassLoader(),
+  private ClassLoader getServiceClassLoader(Server server) {
+    return server.getServiceClassLoader(getClass().getClassLoader(),
         DynamicConfigExtension.class,
         LicenseService.class);
   }

@@ -30,7 +30,6 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.server.Server;
-import org.terracotta.server.ServerEnv;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -80,13 +79,12 @@ public class CommandLineProcessorChainTest {
 
   @Before
   public void setUp() {
-    ServerEnv.setDefaultServer(mock(Server.class));
     options = mock(Options.class);
     paramValueMap = new HashMap<>();
     clusterCreator = mock(ClusterFactory.class);
     configurationGeneratorVisitor = mock(ConfigurationGeneratorVisitor.class);
     parameterSubstitutor = mock(IParameterSubstitutor.class);
-    mainCommandLineProcessor = new MainCommandLineProcessor(options, clusterCreator, configurationGeneratorVisitor, parameterSubstitutor);
+    mainCommandLineProcessor = new MainCommandLineProcessor(options, clusterCreator, configurationGeneratorVisitor, parameterSubstitutor, mock(Server.class));
   }
 
   @Test

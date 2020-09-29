@@ -20,7 +20,6 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.server.ServerEnv;
 import org.terracotta.server.ServerJMX;
 
 import java.util.EnumSet;
@@ -52,6 +51,12 @@ class ServerStateCheck implements NomadPermissionChangeProcessor.Check {
       SYNCHRONIZING // we can allow any change to happen if the server is
   );
 
+  private final ServerJMX serverJMX;
+
+  public ServerStateCheck(ServerJMX serverJMX) {
+    this.serverJMX = serverJMX;
+  }
+
   @Override
   public void check(NodeContext config, DynamicConfigNomadChange change) throws NomadException {
     LogicalServerState state = getLogicalServerState();
@@ -62,7 +67,6 @@ class ServerStateCheck implements NomadPermissionChangeProcessor.Check {
 
   private LogicalServerState getLogicalServerState() throws NomadException {
     try {
-      ServerJMX serverJMX = ServerEnv.getServer().getManagement();
       return LogicalServerState.parse(serverJMX.call("LogicalServerState", "getLogicalServerState", null));
     } catch (Exception e) {
       throw new NomadException(e.getMessage(), e);

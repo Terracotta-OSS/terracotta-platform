@@ -19,7 +19,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.server.Server;
-import org.terracotta.server.ServerEnv;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -29,9 +28,9 @@ public class AuditService implements DynamicConfigService {
   private final DynamicConfigService dynamicConfigService;
   private final Server server;
 
-  public AuditService(DynamicConfigService dynamicConfigService) {
+  public AuditService(DynamicConfigService dynamicConfigService, Server server) {
     this.dynamicConfigService = dynamicConfigService;
-    this.server = ServerEnv.getServer();
+    this.server = server;
   }
 
   @Override

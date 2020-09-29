@@ -51,7 +51,7 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.UpgradableNomadServer;
-import org.terracotta.server.ServerEnv;
+import org.terracotta.server.Server;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -81,18 +81,20 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private final NomadServerManager nomadServerManager;
   private final Path licensePath;
   private final ObjectMapper objectMapper;
+  private final Server server;
 
   private volatile NodeContext upcomingNodeContext;
   private volatile NodeContext runtimeNodeContext;
   private volatile boolean clusterActivated;
 
-  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, ObjectMapperFactory objectMapperFactory) {
+  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, ObjectMapperFactory objectMapperFactory, Server server) {
     this.upcomingNodeContext = requireNonNull(nodeContext);
     this.runtimeNodeContext = requireNonNull(nodeContext);
     this.licenseService = requireNonNull(licenseService);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.licensePath = nomadServerManager.getConfigurationManager().getLicensePath().resolve(LICENSE_FILE_NAME);
     this.objectMapper = objectMapperFactory.create();
+    this.server = requireNonNull(server);
     if (hasLicenseFile()) {
       validateAgainstLicense(upcomingNodeContext.getCluster());
     }
@@ -369,7 +371,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.info("Will restart node in {} seconds", delayInSeconds.getSeconds());
     runAfterDelay(delayInSeconds, () -> {
       LOGGER.info("Restarting node");
-      ServerEnv.getServer().stop(RESTART);
+      server.stop(RESTART);
     });
   }
 
@@ -378,7 +380,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.info("Will stop node in {} seconds", delayInSeconds.getSeconds());
     runAfterDelay(delayInSeconds, () -> {
       LOGGER.info("Stopping node");
-      ServerEnv.getServer().stop(ZAP);
+      server.stop(ZAP);
     });
   }
 

@@ -59,6 +59,7 @@ import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.persistence.sanskrit.SanskritException;
+import org.terracotta.server.Server;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -77,6 +78,7 @@ public class NomadServerManager {
   private final IParameterSubstitutor parameterSubstitutor;
   private final ConfigChangeHandlerManager configChangeHandlerManager;
   private final LicenseService licenseService;
+  private final Server server;
   private final DefaultNomadRoutingChangeProcessor router = new DefaultNomadRoutingChangeProcessor();
   private final NomadPermissionChangeProcessorImpl nomadPermissionChangeProcessor = new NomadPermissionChangeProcessorImpl();
 
@@ -87,12 +89,17 @@ public class NomadServerManager {
   private volatile DynamicConfigEventService eventRegistrationService;
   private volatile DynamicConfigEventFiring eventFiringService;
 
-  public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseService licenseService, ObjectMapperFactory objectMapperFactory) {
+  public NomadServerManager(IParameterSubstitutor parameterSubstitutor,
+                            ConfigChangeHandlerManager configChangeHandlerManager,
+                            LicenseService licenseService,
+                            ObjectMapperFactory objectMapperFactory,
+                            Server server) {
     this.objectMapperFactory = requireNonNull(objectMapperFactory);
     this.nomadServerFactory = new NomadServerFactory(objectMapperFactory);
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.configChangeHandlerManager = requireNonNull(configChangeHandlerManager);
     this.licenseService = requireNonNull(licenseService);
+    this.server = server;
   }
 
   public UpgradableNomadServer<NodeContext> getNomadServer() {
@@ -180,12 +187,12 @@ public class NomadServerManager {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
-    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory);
-    this.dynamicConfigService = new AuditService(dynamicConfigService);
+    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory, server);
+    this.dynamicConfigService = new AuditService(dynamicConfigService, server);
     this.topologyService = dynamicConfigService;
 
     getEventRegistrationService().register(dynamicConfigService);
-    getEventRegistrationService().register(new AuditListener());
+    getEventRegistrationService().register(new AuditListener(server));
 
     LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(configPath.toString()));
   }
