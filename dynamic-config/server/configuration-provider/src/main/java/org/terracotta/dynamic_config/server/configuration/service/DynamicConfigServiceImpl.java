@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -63,9 +64,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;
 import static org.terracotta.server.StopAction.RESTART;
 import static org.terracotta.server.StopAction.ZAP;
 
@@ -256,8 +259,10 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
       if (runtimeNodeContext.equals(upcomingNodeContext)) {
         LOGGER.info("New cluster configuration: {}{}", lineSeparator(), Props.toString(runtimeNodeContext.getCluster().toProperties(false, false, true)));
+        warnIfProblematicConsistency(runtimeNodeContext);
       } else {
         LOGGER.info("Pending cluster configuration: {}{}", lineSeparator(), Props.toString(upcomingNodeContext.getCluster().toProperties(false, false, true)));
+        warnIfProblematicConsistency(upcomingNodeContext);
       }
     } else {
       LOGGER.warn("Nomad change {} failed to commit: {}", message.getChangeUuid(), response);
@@ -343,6 +348,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     clusterActivated = true;
     LOGGER.info("Node activation successful");
+
+    warnIfProblematicConsistency(upcomingNodeContext);
   }
 
   @Override
@@ -491,5 +498,26 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
         runnable.run();
       }
     }.start();
+  }
+
+  private void warnIfProblematicConsistency(NodeContext nodeContext) {
+    FailoverPriority failover = nodeContext.getCluster().getFailoverPriority();
+    if (failover.getType() == CONSISTENCY) {
+      int voters = failover.getVoters();
+      List<Stripe> evenNodeStripes = nodeContext.getCluster().getStripes()
+              .stream().filter(s -> (s.getNodeCount() + voters) % 2 == 0).collect(Collectors.toList());
+      if (evenNodeStripes.size() > 0) {
+         StringBuilder warn = new StringBuilder(lineSeparator());
+          warn.append("===================================================================================================================" + lineSeparator());
+          warn.append("When a cluster is configured with failover-priority=consistency, stripes with an even number" + lineSeparator());
+          warn.append("of nodes plus voters are more likely to experience split brain situations." + lineSeparator());
+          warn.append("The following stripe(s) have an even number of nodes plus voters:" + lineSeparator());
+          for (Stripe s : evenNodeStripes) {
+            warn.append("   Stripe: '" + s.getName() + "' has " + s.getNodeCount() + " nodes and " + voters + " voters." + lineSeparator());
+          }
+          warn.append("===================================================================================================================" + lineSeparator());
+          LOGGER.warn(warn.toString());
+      }
+    }
   }
 }
