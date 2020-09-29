@@ -32,6 +32,7 @@ import java.util.Map;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toMap;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
@@ -149,7 +150,11 @@ public class RepairCommand extends RemoteCommand {
           logger.warn("Forcing a " + forcedRepairAction.name().toLowerCase() + "...");
         }
 
-        runConfigurationRepair(consistencyAnalyzer, forcedRepairAction == RepairAction.COMMIT ? COMMITTED : forcedRepairAction == RepairAction.ROLLBACK ? ROLLED_BACK : null);
+        Collection<InetSocketAddress> onlineActivatedAddresses = consistencyAnalyzer.getOnlineActivatedNodes().keySet();
+        Map<Endpoint, LogicalServerState> onlineActivatedEndpoints = allNodes.entrySet().stream()
+            .filter(e -> onlineActivatedAddresses.contains(e.getKey().getAddress()))
+            .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+        runConfigurationRepair(onlineActivatedEndpoints, allNodes.size(), forcedRepairAction == RepairAction.COMMIT ? COMMITTED : forcedRepairAction == RepairAction.ROLLBACK ? ROLLED_BACK : null);
         logger.info("Configuration is repaired.");
 
         break;

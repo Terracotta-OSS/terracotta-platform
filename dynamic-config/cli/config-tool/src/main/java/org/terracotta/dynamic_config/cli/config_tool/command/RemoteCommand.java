@@ -212,7 +212,8 @@ public abstract class RemoteCommand extends Command {
    */
   protected final ConsistencyAnalyzer analyzeNomadConsistency(Map<Endpoint, LogicalServerState> allNodes) {
     logger.trace("analyzeNomadConsistency({})", allNodes);
-    ConsistencyAnalyzer consistencyAnalyzer = new ConsistencyAnalyzer(allNodes);
+    Map<InetSocketAddress, LogicalServerState> addresses = allNodes.entrySet().stream().collect(toMap(e -> e.getKey().getAddress(), Map.Entry::getValue));
+    ConsistencyAnalyzer consistencyAnalyzer = new ConsistencyAnalyzer(addresses);
     nomadManager.runConfigurationDiscovery(allNodes, consistencyAnalyzer);
     return consistencyAnalyzer;
   }
@@ -221,10 +222,10 @@ public abstract class RemoteCommand extends Command {
    * Runs a Nomad recovery by providing a map of activated nodes plus their state.
    * This method will create an ordered list of nodes to contact by moving the passives first and actives last.
    */
-  protected final void runConfigurationRepair(ConsistencyAnalyzer consistencyAnalyzer, ChangeRequestState forcedState) {
-    logger.trace("runConfigurationRepair({}, {})", toString(consistencyAnalyzer.getAllNodes().keySet()), forcedState);
+  protected final void runConfigurationRepair(Map<Endpoint, LogicalServerState> onlineActivatedNodes, int totalNodeCount, ChangeRequestState forcedState) {
+    logger.trace("runConfigurationRepair({}, {})", toString(onlineActivatedNodes.keySet()), forcedState);
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
-    nomadManager.runConfigurationRepair(consistencyAnalyzer, failures, forcedState);
+    nomadManager.runConfigurationRepair(onlineActivatedNodes, totalNodeCount, failures, forcedState);
     failures.reThrowReasons();
   }
 

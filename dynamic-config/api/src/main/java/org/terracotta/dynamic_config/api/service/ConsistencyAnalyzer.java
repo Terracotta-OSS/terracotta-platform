@@ -16,9 +16,7 @@
 package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.DiscoverResponse;
@@ -86,8 +84,8 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
     MAYBE_UNKNOWN
   }
 
-  private final Map<Endpoint, DiscoverResponse<NodeContext>> responses;
-  private final Map<Endpoint, LogicalServerState> allNodes;
+  private final Map<InetSocketAddress, DiscoverResponse<NodeContext>> responses;
+  private final Map<InetSocketAddress, LogicalServerState> allNodes;
 
   private volatile Throwable discoverFailure;
   private volatile boolean discoveredInconsistentCluster;
@@ -104,14 +102,14 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
   private volatile String otherClientHost;
   private volatile String otherClientUser;
 
-  public ConsistencyAnalyzer(Map<Endpoint, LogicalServerState> allNodes) {
+  public ConsistencyAnalyzer(Map<InetSocketAddress, LogicalServerState> allNodes) {
     this.allNodes = allNodes;
     this.responses = new LinkedHashMap<>(allNodes.size());
   }
 
   @Override
   public void discovered(InetSocketAddress nodeAddress, DiscoverResponse<NodeContext> discovery) {
-    responses.put(findEndpoint(nodeAddress), discovery);
+    responses.put(nodeAddress, discovery);
   }
 
   @Override
@@ -145,15 +143,15 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
     return allNodes.size();
   }
 
-  public Map<Endpoint, LogicalServerState> getAllNodes() {
+  public Map<InetSocketAddress, LogicalServerState> getAllNodes() {
     return allNodes;
   }
 
-  public LogicalServerState getState(UID nodeUID) {
-    return allNodes.get(findEndpoint(nodeUID));
+  public LogicalServerState getState(InetSocketAddress endpoint) {
+    return allNodes.get(endpoint);
   }
 
-  public Optional<DiscoverResponse<NodeContext>> getDiscoveryResponse(Endpoint endpoint) {
+  public Optional<DiscoverResponse<NodeContext>> getDiscoveryResponse(InetSocketAddress endpoint) {
     return Optional.ofNullable(responses.get(endpoint));
   }
 
@@ -220,13 +218,13 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
     return Math.toIntExact(responses.entrySet().stream().filter(e -> e.getValue().getLatestChange() != null).count());
   }
 
-  public Map<Endpoint, LogicalServerState> getOnlineNodes() {
+  public Map<InetSocketAddress, LogicalServerState> getOnlineNodes() {
     return responses.entrySet()
         .stream()
         .collect(responseEntryToMap());
   }
 
-  public Map<Endpoint, LogicalServerState> getOnlineActivatedNodes() {
+  public Map<InetSocketAddress, LogicalServerState> getOnlineActivatedNodes() {
     // activated nodes are passive / actives that have some nomad changes
     return responses.entrySet()
         .stream()
@@ -234,7 +232,7 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
         .collect(responseEntryToMap());
   }
 
-  public Map<Endpoint, LogicalServerState> getOnlineInRepairNodes() {
+  public Map<InetSocketAddress, LogicalServerState> getOnlineInRepairNodes() {
     // nodes in repair are started in diagnostic mode and have nomad changes
     return responses.entrySet()
         .stream()
@@ -242,7 +240,7 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
         .collect(responseEntryToMap());
   }
 
-  public Map<Endpoint, LogicalServerState> getOnlineInConfigurationNodes() {
+  public Map<InetSocketAddress, LogicalServerState> getOnlineInConfigurationNodes() {
     // new nodes in configuration are started in diagnostic mode and have no nomad change yet
     return responses.entrySet()
         .stream()
@@ -250,18 +248,15 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
         .collect(responseEntryToMap());
   }
 
-  public boolean isOnlineAndActivated(UID nodeUID) {
-    Endpoint endpoint = findEndpoint(nodeUID);
+  public boolean isOnlineAndActivated(InetSocketAddress endpoint) {
     return responses.containsKey(endpoint) && responses.get(endpoint).getLatestChange() != null && allNodes.get(endpoint) != STARTING;
   }
 
-  public boolean isOnlineAndInRepair(UID nodeUID) {
-    Endpoint endpoint = findEndpoint(nodeUID);
+  public boolean isOnlineAndInRepair(InetSocketAddress endpoint) {
     return responses.containsKey(endpoint) && responses.get(endpoint).getLatestChange() != null && allNodes.get(endpoint) == STARTING;
   }
 
-  public boolean isOnlineAndInConfiguration(UID nodeUID) {
-    Endpoint endpoint = findEndpoint(nodeUID);
+  public boolean isOnlineAndInConfiguration(InetSocketAddress endpoint) {
     return responses.containsKey(endpoint) && responses.get(endpoint).getLatestChange() == null && allNodes.get(endpoint) == STARTING;
   }
 
@@ -360,7 +355,7 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
         MAYBE_UNKNOWN; // some nodes are not reachable and we were not able to determine the state
   }
 
-  private Collector<Map.Entry<Endpoint, DiscoverResponse<NodeContext>>, ?, LinkedHashMap<Endpoint, LogicalServerState>> responseEntryToMap() {
+  private Collector<Map.Entry<InetSocketAddress, DiscoverResponse<NodeContext>>, ?, LinkedHashMap<InetSocketAddress, LogicalServerState>> responseEntryToMap() {
     return toMap(
         Map.Entry::getKey,
         e -> allNodes.getOrDefault(e.getKey(), UNKNOWN),
@@ -368,13 +363,5 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
           throw new UnsupportedOperationException();
         },
         LinkedHashMap::new);
-  }
-
-  private Endpoint findEndpoint(InetSocketAddress address) {
-    return allNodes.keySet().stream().filter(e -> e.getAddress().equals(address)).findAny().get();
-  }
-
-  private Endpoint findEndpoint(UID nodeUID) {
-    return allNodes.keySet().stream().filter(e -> e.getNodeUID().equals(nodeUID)).findAny().get();
   }
 }

@@ -20,7 +20,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
-import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
 import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
@@ -55,8 +54,8 @@ public class LockAwareNomadManager<T> implements NomadManager<T> {
   }
 
   @Override
-  public void runConfigurationRepair(ConsistencyAnalyzer consistencyAnalyzer, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
-    this.underlying.runConfigurationRepair(consistencyAnalyzer, results, forcedState);
+  public void runConfigurationRepair(Map<Endpoint, LogicalServerState> onlineActivatedNodes, int totalNodeCount, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
+    this.underlying.runConfigurationRepair(onlineActivatedNodes, totalNodeCount, results, forcedState);
   }
 
   public NomadManager<T> getUnderlying() {
