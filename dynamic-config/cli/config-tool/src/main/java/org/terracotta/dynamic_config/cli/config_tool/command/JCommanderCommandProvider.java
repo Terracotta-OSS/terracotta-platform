@@ -17,16 +17,16 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.tc.util.ManagedServiceLoader;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 
 import java.util.Collection;
 import java.util.Set;
 
-public interface CommandProvider {
-  Set<Command> getCommands();
+public interface JCommanderCommandProvider {
+  Set<JCommanderCommand> getCommands();
 
-  static CommandProvider get() {
-    Collection<CommandProvider> services = ManagedServiceLoader.loadServices(CommandProvider.class, CommandProvider.class.getClassLoader());
+  static JCommanderCommandProvider get() {
+    Collection<JCommanderCommandProvider> services = ManagedServiceLoader.loadServices(JCommanderCommandProvider.class, JCommanderCommandProvider.class.getClassLoader());
     if (services.size() != 1) {
       throw new AssertionError("expected exactly one command provider, but found :" + services.size());
     }

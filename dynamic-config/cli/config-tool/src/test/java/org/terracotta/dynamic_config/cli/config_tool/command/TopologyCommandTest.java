@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import org.junit.Test;
-import org.terracotta.dynamic_config.cli.command.Metadata;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 
 import static java.util.Arrays.asList;
@@ -35,7 +34,6 @@ public abstract class TopologyCommandTest<C extends TopologyCommand> extends Bas
   public void test_defaults() {
     C command = newCommand();
     assertThat(command.getOperationType(), is(equalTo(NODE)));
-    assertThat(Metadata.getName(command), is(equalTo(command.getClass().getSimpleName().toLowerCase().substring(0, 6))));
   }
 
   protected final C newCommand() {

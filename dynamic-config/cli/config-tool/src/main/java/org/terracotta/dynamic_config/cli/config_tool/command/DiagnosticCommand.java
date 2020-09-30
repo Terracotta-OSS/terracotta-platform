@@ -15,16 +15,12 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
-import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.server.NomadServerMode;
 
@@ -45,16 +41,12 @@ import static java.util.stream.Collectors.toSet;
 /**
  * @author Mathieu Carbou
  */
-@Parameters(commandNames = "diagnostic", commandDescription = "Diagnose a cluster configuration")
-@Usage("diagnostic -s <hostname[:port]>")
 public class DiagnosticCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
+  private InetSocketAddress node;
 
-  @Override
-  public void validate() {
-    requireNonNull(node);
+  public void setNode(InetSocketAddress node) {
+    this.node = node;
   }
 
   @Override

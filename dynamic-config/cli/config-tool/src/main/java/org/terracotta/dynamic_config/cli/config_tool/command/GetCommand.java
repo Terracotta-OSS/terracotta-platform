@@ -15,30 +15,27 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.beust.jcommander.converters.BooleanConverter;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
-import org.terracotta.dynamic_config.cli.command.Usage;
 
 import java.util.Map;
 import java.util.TreeMap;
 
-@Parameters(commandNames = "get", commandDescription = "Read configuration properties")
-@Usage("get -s <hostname[:port]> [-r] -c <[namespace:]property>,<[namespace:]property>...")
 public class GetCommand extends ConfigurationCommand {
-
-  @Parameter(names = {"-r"}, description = "Read the properties from the current runtime configuration instead of reading them from the last configuration saved on disk", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
   public GetCommand() {
     super(Operation.GET);
   }
 
+  public void setRuntimConfig(boolean wantsRuntimeConfig) {
+    this.wantsRuntimeConfig = wantsRuntimeConfig;
+  }
+
   @Override
   public void run() {
+    super.validate();
     Cluster cluster = wantsRuntimeConfig ? getRuntimeCluster(node) : getUpcomingCluster(node);
     Map<String, String> properties = new TreeMap<>();
     // we put both expanded and non expanded properties

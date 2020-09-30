@@ -47,6 +47,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
 
   @Override
   public void run() {
+    validate();
     logger.debug("Validating the new configuration change(s) against the topology of: {}", node);
 
     // get the remote topology, apply the parameters, and validate that the cluster is still valid

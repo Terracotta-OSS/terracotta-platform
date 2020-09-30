@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
 @Parameters(commandNames = LocalMainCommand.NAME)
-public class LocalMainCommand extends Command {
+public class LocalMainCommand extends JCommanderCommand {
   public static final String NAME = "main";
 
   @Parameter(names = {"-v", "--verbose"}, description = "Verbose mode. Default: false")
@@ -52,5 +52,15 @@ public class LocalMainCommand extends Command {
 
   public boolean isVerbose() {
     return verbose;
+  }
+
+  @Override
+  public boolean isDeprecated() {
+    return false;
+  }
+
+  @Override
+  public Command getCommand() {
+    return null;
   }
 }

@@ -15,15 +15,11 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
-import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.converter.RepairAction;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -31,7 +27,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import static java.lang.System.lineSeparator;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -39,19 +34,17 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 /**
  * @author Mathieu Carbou
  */
-@Parameters(commandNames = "repair", commandDescription = "Repair a cluster configuration")
-@Usage("repair -s <hostname[:port]> [-f commit|rollback|reset|unlock]")
 public class RepairCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
-
-  @Parameter(names = {"-f"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairAction.RepairActionConverter.class)
-  RepairAction forcedRepairAction;
-
-  @Override
-  public void validate() {
-    requireNonNull(node);
+  private InetSocketAddress node;
+  private RepairAction forcedRepairAction;
+  
+  public void setNode(InetSocketAddress node) {
+    this.node = node;
+  }
+  
+  public void setForcedRepairAction(RepairAction forcedRepairAction) {
+    this.forcedRepairAction = forcedRepairAction;  
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.WrappedParameter;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.server.configuration.service.ParameterSubstitutor;
+import org.terracotta.dynamic_config.server.configuration.startup.parsing.OptionsParsing;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,7 +40,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.STRIPE_NAME;
 public class CustomJCommander extends JCommander {
   private final Collection<String> userSpecifiedOptions = new HashSet<>();
 
-  public CustomJCommander(Options object) {
+  public CustomJCommander(OptionsParsing object) {
     super(object);
     setUsageFormatter(new UsageFormatter(this));
 

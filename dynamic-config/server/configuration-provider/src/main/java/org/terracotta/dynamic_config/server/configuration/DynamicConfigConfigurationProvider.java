@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration;
 
+import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationProvider;
@@ -43,6 +44,9 @@ import org.terracotta.dynamic_config.server.configuration.startup.CustomJCommand
 import org.terracotta.dynamic_config.server.configuration.startup.MainCommandLineProcessor;
 import org.terracotta.dynamic_config.server.configuration.startup.Options;
 import org.terracotta.dynamic_config.server.configuration.startup.StartupConfiguration;
+import org.terracotta.dynamic_config.server.configuration.startup.deprecated_parsing.DeprecatedOptionsParsingImpl;
+import org.terracotta.dynamic_config.server.configuration.startup.parsing.OptionsParsing;
+import org.terracotta.dynamic_config.server.configuration.startup.parsing.OptionsParsingImpl;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
 import org.terracotta.dynamic_config.server.configuration.sync.Require;
@@ -173,7 +177,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   @Override
   public String getConfigurationParamsDescription() {
     StringBuilder out = new StringBuilder();
-    CustomJCommander jCommander = new CustomJCommander(new Options());
+    CustomJCommander jCommander = new CustomJCommander(new OptionsParsingImpl());
     jCommander.getUsageFormatter().usage(out);
     return out.toString();
   }
@@ -243,11 +247,22 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   }
 
   private static Options parseCommandLineOrExit(List<String> args) {
-    Options options = new Options();
-    CustomJCommander jCommander = new CustomJCommander(options);
-    jCommander.parse(args.toArray(new String[0]));
-    options.process(jCommander);
-    return options;
+    try {
+      OptionsParsing optionsParsing = new OptionsParsingImpl();
+      CustomJCommander jCommander = new CustomJCommander(optionsParsing);
+      jCommander.parse(args.toArray(new String[0]));
+      return optionsParsing.process(jCommander);
+    } catch (ParameterException e) {
+      // Fallback to deprecated options
+      try {
+        DeprecatedOptionsParsingImpl deprecatedOptionsParsing = new DeprecatedOptionsParsingImpl();
+        CustomJCommander jCommander = new CustomJCommander(deprecatedOptionsParsing);
+        jCommander.parse(args.toArray(new String[0]));
+        return deprecatedOptionsParsing.process(jCommander);
+      } catch (ParameterException de) {
+        throw e;
+      }
+    }
   }
 
 }

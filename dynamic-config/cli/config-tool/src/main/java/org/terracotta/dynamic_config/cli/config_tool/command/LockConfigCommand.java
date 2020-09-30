@@ -18,33 +18,23 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockContext;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
-import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 
 import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static java.util.Objects.requireNonNull;
-
-@Parameters(commandNames = "lock-config", commandDescription = "Locks the config", hidden = true)
-@Usage("lock-config -s <hostname[:port]> --lock-context <context>")
 public class LockConfigCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
+  private InetSocketAddress node;
+  private String lockContext;
 
-  @Parameter(names = {"--lock-context"}, description = "Lock context", required = true)
-  String lockContext;
+  public void setNode(InetSocketAddress node) {
+    this.node = node;
+  }
 
-  @Override
-  public void validate() {
-    requireNonNull(node);
+  public void setLockContext(String lockContext) {
+    this.lockContext = lockContext;
   }
 
   @Override

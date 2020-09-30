@@ -15,10 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.Parameters;
-import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -26,9 +22,6 @@ import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
-import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
@@ -38,50 +31,48 @@ import java.util.Optional;
 import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 
-@Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
-@Usage("activate (-s <hostname[:port]> | -f <config-file>) [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class ActivateCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
-
-  @Parameter(names = {"-f"}, description = "Configuration properties file containing nodes to be activated", converter = PathConverter.class)
   private Path configPropertiesFile;
-
-  @Parameter(names = {"-n"}, description = "Cluster name")
   private String clusterName;
-
-  @Parameter(names = {"-l"}, description = "License file", converter = PathConverter.class)
   private Path licenseFile;
-
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-
-  @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
+  protected boolean restrictedActivation;
 
-  @Parameter(names = {"-R"}, description = "Restrict the activation process to the node only")
-  protected boolean restrictedActivation = false;
+  public void setNode(InetSocketAddress node) {
+    this.node = node;
+  }
 
-  private Cluster cluster;
-  private Collection<Endpoint> runtimePeers;
+  public void setConfigPropertiesFile(Path configPropertiesFile) {
+    this.configPropertiesFile = configPropertiesFile;
+  }
+
+  public void setClusterName(String clusterName) {
+    this.clusterName = clusterName;
+  }
+
+  public void setLicenseFile(Path licenseFile) {
+    this.licenseFile = licenseFile;
+  }
+
+  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
+    this.restartWaitTime = restartWaitTime;
+  }
+
+  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
+    this.restartDelay = restartDelay;
+  }
+
+  public void setRestrictedActivation(boolean restrictedActivation) {
+    this.restrictedActivation = restrictedActivation;
+  }
+
+  Cluster cluster;
 
   @Override
-  public void validate() {
-    // basic validations first
-
-    if (!restrictedActivation && node != null && configPropertiesFile != null) {
-      throw new IllegalArgumentException("Either node or config properties file should be specified, not both");
-    }
-
-    if (restrictedActivation && node == null) {
-      throw new IllegalArgumentException("A node must be supplied for a restricted activation");
-    }
-
-    if (licenseFile != null && !licenseFile.toFile().exists()) {
-      throw new ParameterException("License file not found: " + licenseFile);
-    }
-
+  public final void run() {
     // loading cluster from available sources, then validating
 
     cluster = loadTopologyFromConfig()
@@ -100,7 +91,7 @@ public class ActivateCommand extends RemoteCommand {
 
     // getting the list of nodes where to push the same topology
 
-    runtimePeers = restrictedActivation ?
+    Collection<Endpoint> runtimePeers = restrictedActivation ?
         singletonList(getEndpoint(node)) : // if restrictive activation, we only activate the node supplied
         cluster.getEndpoints(node); // if normal activation the nodes to activate are those found in the config file or in the topology loaded from the node
 
@@ -108,34 +99,11 @@ public class ActivateCommand extends RemoteCommand {
     if (areAllNodesActivated(runtimePeers)) {
       throw new IllegalStateException("Nodes are already activated: " + toString(runtimePeers));
     }
-  }
-
-  @Override
-  public final void run() {
     if (!restrictedActivation) {
       NameGenerator.assignFriendlyNames(cluster);
     }
     activateNodes(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
     logger.info("Command successful!" + lineSeparator());
-  }
-
-  Cluster getCluster() {
-    return cluster;
-  }
-
-  ActivateCommand setNode(InetSocketAddress node) {
-    this.node = node;
-    return this;
-  }
-
-  ActivateCommand setConfigPropertiesFile(Path configPropertiesFile) {
-    this.configPropertiesFile = configPropertiesFile;
-    return this;
-  }
-
-  ActivateCommand setClusterName(String clusterName) {
-    this.clusterName = clusterName;
-    return this;
   }
 
   private Optional<Cluster> loadTopologyFromConfig() {
@@ -153,5 +121,9 @@ public class ActivateCommand extends RemoteCommand {
       logger.debug("Cluster topology loaded from node: " + cluster.toShapeString());
       return cluster;
     });
+  }
+
+  Cluster getCluster() {
+    return cluster;
   }
 }

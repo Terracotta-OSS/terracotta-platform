@@ -15,12 +15,8 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.net.InetSocketAddress;
@@ -37,12 +33,13 @@ import static java.util.stream.Collectors.joining;
 /**
  * @author Mathieu Carbou
  */
-@Parameters(commandNames = "log", commandDescription = "Log all the configuration changes of a node and their details")
-@Usage("log -s <hostname[:port]>")
 public class LogCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class, required = true)
   private InetSocketAddress node;
+
+  public void setNode(InetSocketAddress node) {
+    this.node = node;
+  }
 
   @Override
   public void run() {

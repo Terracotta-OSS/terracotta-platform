@@ -22,8 +22,16 @@ public class ConsoleParamsUtils {
     return param.substring(2);
   }
 
+  public static String stripDash(String param) {
+    return param.substring(1);
+  }
+
   public static String addDashDash(String param) {
     return "--" + param;
+  }
+
+  public static String addDash(String param) {
+    return "-" + param;
   }
 
   public static String addDashDash(Setting param) {
