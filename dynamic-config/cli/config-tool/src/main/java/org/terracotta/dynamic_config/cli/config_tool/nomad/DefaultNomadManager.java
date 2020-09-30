@@ -211,11 +211,11 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
         // We consider that the commit response on the passive servers will be the same on the active servers.
         InetSocketAddress address = getAddress();
         UID stripeUID = onlineNodesPerStripe.entrySet()
-                                            .stream()
-                                            .filter(e -> e.getValue().stream().anyMatch(endpoint -> endpoint.getAddress().equals(address)))
-                                            .findAny()
-                                            .map(Map.Entry::getKey)
-                                            .get();
+            .stream()
+            .filter(e -> e.getValue().stream().anyMatch(endpoint -> endpoint.getAddress().equals(address)))
+            .findAny()
+            .map(Map.Entry::getKey)
+            .get();
 
         CompletableFuture<AcceptRejectResponse> result = cache.computeIfAbsent(stripeUID, uid -> {
           LOGGER.info("Committing topology change to stripe UID: {}", stripeUID);

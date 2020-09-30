@@ -57,8 +57,8 @@ public class StripeAdditionNomadChange extends StripeNomadChange {
   @Override
   public String toString() {
     return "StripeAdditionChange{" +
-      "stripe=" + getStripe().toShapeString() +
-      ", cluster=" + getCluster().toShapeString() +
-      '}';
+        "stripe=" + getStripe().toShapeString() +
+        ", cluster=" + getCluster().toShapeString() +
+        '}';
   }
 }

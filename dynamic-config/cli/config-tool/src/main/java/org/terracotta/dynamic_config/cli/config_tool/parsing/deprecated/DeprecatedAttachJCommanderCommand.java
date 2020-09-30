@@ -50,9 +50,9 @@ public class DeprecatedAttachJCommanderCommand extends JCommanderCommand {
 
   @Parameter(required = true, names = {"-s"}, description = "Source node or stripe", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress sourceAddress;
-  
-  private final AttachCommand underlying  = new AttachCommand();
-  
+
+  private final AttachCommand underlying = new AttachCommand();
+
   @Override
   public void validate() {
     underlying.setOperationType(operationType);

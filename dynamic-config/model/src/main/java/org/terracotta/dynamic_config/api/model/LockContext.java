@@ -58,10 +58,10 @@ public class LockContext {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final LockContext that = (LockContext)o;
+    final LockContext that = (LockContext) o;
     return Objects.equals(token, that.token) &&
-           Objects.equals(ownerName, that.ownerName) &&
-           Objects.equals(ownerTags, that.ownerTags);
+        Objects.equals(ownerName, that.ownerName) &&
+        Objects.equals(ownerTags, that.ownerTags);
   }
 
   @Override

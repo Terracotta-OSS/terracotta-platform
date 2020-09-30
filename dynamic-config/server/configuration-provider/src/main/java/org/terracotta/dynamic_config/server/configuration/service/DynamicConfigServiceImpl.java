@@ -473,7 +473,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private synchronized Node findMe(Cluster updatedCluster) {
     final Node me = upcomingNodeContext.getNode();
     for (Node node : updatedCluster.getNodes()) {
-      if(node.getUID().equals(me.getUID())
+      if (node.getUID().equals(me.getUID())
           || node.getInternalAddress().equals(me.getInternalAddress())
           || node.getName().equals(me.getName())) {
         return node;
@@ -507,18 +507,18 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (failover.getType() == CONSISTENCY) {
       int voters = failover.getVoters();
       List<Stripe> evenNodeStripes = nodeContext.getCluster().getStripes()
-              .stream().filter(s -> (s.getNodeCount() + voters) % 2 == 0).collect(Collectors.toList());
+          .stream().filter(s -> (s.getNodeCount() + voters) % 2 == 0).collect(Collectors.toList());
       if (evenNodeStripes.size() > 0) {
-         StringBuilder warn = new StringBuilder(lineSeparator());
-          warn.append("===================================================================================================================" + lineSeparator());
-          warn.append("When a cluster is configured with failover-priority=consistency, stripes with an even number" + lineSeparator());
-          warn.append("of nodes plus voters are more likely to experience split brain situations." + lineSeparator());
-          warn.append("The following stripe(s) have an even number of nodes plus voters:" + lineSeparator());
-          for (Stripe s : evenNodeStripes) {
-            warn.append("   Stripe: '" + s.getName() + "' has " + s.getNodeCount() + " nodes and " + voters + " voters." + lineSeparator());
-          }
-          warn.append("===================================================================================================================" + lineSeparator());
-          LOGGER.warn(warn.toString());
+        StringBuilder warn = new StringBuilder(lineSeparator());
+        warn.append("===================================================================================================================" + lineSeparator());
+        warn.append("When a cluster is configured with failover-priority=consistency, stripes with an even number" + lineSeparator());
+        warn.append("of nodes plus voters are more likely to experience split brain situations." + lineSeparator());
+        warn.append("The following stripe(s) have an even number of nodes plus voters:" + lineSeparator());
+        for (Stripe s : evenNodeStripes) {
+          warn.append("   Stripe: '" + s.getName() + "' has " + s.getNodeCount() + " nodes and " + voters + " voters." + lineSeparator());
+        }
+        warn.append("===================================================================================================================" + lineSeparator());
+        LOGGER.warn(warn.toString());
       }
     }
   }

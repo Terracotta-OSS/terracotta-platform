@@ -53,8 +53,8 @@ public class StripeRemovalNomadChange extends StripeNomadChange {
   @Override
   public String toString() {
     return "StripeRemovalChange{" +
-      "stripe=" + getStripe().toShapeString() +
-      ", cluster=" + getCluster().toShapeString() +
-      '}';
+        "stripe=" + getStripe().toShapeString() +
+        ", cluster=" + getCluster().toShapeString() +
+        '}';
   }
 }

@@ -63,7 +63,7 @@ public class ExportCommand extends RemoteCommand {
   public void setOutputFormat(OutputFormat outputFormat) {
     this.outputFormat = outputFormat;
   }
-  
+
   @Override
   public final void run() {
     if (outputFile != null && outputFile.toFile().exists() && !Files.isRegularFile(outputFile)) {
@@ -124,7 +124,7 @@ public class ExportCommand extends RemoteCommand {
           out.write(Props.EOL);
           out.write("#");
           out.write(Props.EOL);
-          
+
           // this one is always non empty since we have at least failover-priority
           Props.store(out, userDefined, "User-defined configurations");
           if (!defaults.isEmpty() && includeDefaultValues) {

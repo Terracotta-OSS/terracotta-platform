@@ -59,7 +59,7 @@ public abstract class ConfigurationCommand extends RemoteCommand {
     // validate all configurations passes on CLI
     for (Configuration configuration : configurations) {
       if (NOT_SUPPORTED_SETTINGS.contains(configuration.getSetting())) {
-        throw new IllegalArgumentException(format("'%s' is not supported" , configuration.getSetting()));
+        throw new IllegalArgumentException(format("'%s' is not supported", configuration.getSetting()));
       }
       configuration.validate(clusterState, operation);
     }

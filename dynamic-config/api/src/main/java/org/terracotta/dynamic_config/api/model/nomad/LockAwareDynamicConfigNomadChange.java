@@ -63,9 +63,9 @@ public class LockAwareDynamicConfigNomadChange implements DynamicConfigNomadChan
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final LockAwareDynamicConfigNomadChange that = (LockAwareDynamicConfigNomadChange)o;
+    final LockAwareDynamicConfigNomadChange that = (LockAwareDynamicConfigNomadChange) o;
     return Objects.equals(lockToken, that.lockToken) &&
-           Objects.equals(change, that.change);
+        Objects.equals(change, that.change);
   }
 
   @Override

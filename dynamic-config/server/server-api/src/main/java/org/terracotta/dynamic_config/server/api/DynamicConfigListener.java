@@ -71,7 +71,7 @@ public interface DynamicConfigListener extends DynamicConfigEventFiring {
    * <p>
    * Only the nodes targeted by the applicability filter will be called through this listener after the {@link ConfigChangeHandler} is called
    *
-   * @param stripeUID  the stripe UID where the nodes have been added
+   * @param stripeUID the stripe UID where the nodes have been added
    * @param addedNode the details of the added node
    */
   default void onNodeAddition(UID stripeUID, Node addedNode) {}

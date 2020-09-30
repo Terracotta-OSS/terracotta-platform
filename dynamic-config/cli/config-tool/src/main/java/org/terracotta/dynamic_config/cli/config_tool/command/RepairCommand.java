@@ -38,13 +38,13 @@ public class RepairCommand extends RemoteCommand {
 
   private InetSocketAddress node;
   private RepairAction forcedRepairAction;
-  
+
   public void setNode(InetSocketAddress node) {
     this.node = node;
   }
-  
+
   public void setForcedRepairAction(RepairAction forcedRepairAction) {
-    this.forcedRepairAction = forcedRepairAction;  
+    this.forcedRepairAction = forcedRepairAction;
   }
 
   @Override
