@@ -51,7 +51,7 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
     requireNonNull(original);
     Cluster upgraded = original.clone();
 
-    if(from == Version.V1) {
+    if (from == Version.V1) {
       // From V1 to V2, added required settings are: UIDs, stripe name
       // this migration process happens independently for each node and
       // has to output the exact same result for all the nodes

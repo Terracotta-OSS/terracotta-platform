@@ -386,13 +386,13 @@ public class ConfigConversionIT {
       protected boolean matchesSafely(Path path) {
         this.path = path;
         this.props = Props.load(path);
-        props.entrySet().forEach(e-> {
-          if(e.getKey().toString().endsWith("-uid")) {
+        props.entrySet().forEach(e -> {
+          if (e.getKey().toString().endsWith("-uid")) {
             e.setValue("<uid>");
           }
         });
-        props.entrySet().forEach(e-> {
-          if(e.getKey().toString().endsWith(".stripe-name")) {
+        props.entrySet().forEach(e -> {
+          if (e.getKey().toString().endsWith(".stripe-name")) {
             e.setValue("<generated>");
           }
         });

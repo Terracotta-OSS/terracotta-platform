@@ -57,7 +57,7 @@ public class ConfigurationParserTest {
   private final List<Configuration> added = new ArrayList<>();
 
   private Consumer<Configuration> addedListener = configuration -> {
-    if (configuration.getSetting().toString().endsWith("-uid") || configuration.getValue().get().startsWith("node-")  || configuration.getValue().get().startsWith("stripe-")) {
+    if (configuration.getSetting().toString().endsWith("-uid") || configuration.getValue().get().startsWith("node-") || configuration.getValue().get().startsWith("stripe-")) {
       added.add(Configuration.valueOf(configuration.toString().replace(configuration.getValue().get(), "<GENERATED>")));
     } else {
       added.add(configuration);

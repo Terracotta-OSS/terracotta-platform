@@ -44,9 +44,9 @@ import org.terracotta.dynamic_config.server.configuration.startup.CustomJCommand
 import org.terracotta.dynamic_config.server.configuration.startup.MainCommandLineProcessor;
 import org.terracotta.dynamic_config.server.configuration.startup.Options;
 import org.terracotta.dynamic_config.server.configuration.startup.StartupConfiguration;
-import org.terracotta.dynamic_config.server.configuration.startup.parsing.deprecated.DeprecatedOptionsParsingImpl;
 import org.terracotta.dynamic_config.server.configuration.startup.parsing.OptionsParsing;
 import org.terracotta.dynamic_config.server.configuration.startup.parsing.OptionsParsingImpl;
+import org.terracotta.dynamic_config.server.configuration.startup.parsing.deprecated.DeprecatedOptionsParsingImpl;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
 import org.terracotta.dynamic_config.server.configuration.sync.Require;

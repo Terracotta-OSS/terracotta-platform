@@ -46,7 +46,7 @@ public class LockAwareNomadChangeProcessor implements NomadChangeProcessor<Dynam
       LockContext lockContext = baseConfig.getCluster().getConfigurationLockContext().orElse(null);
       if (change instanceof LockAwareDynamicConfigNomadChange) {
         if (lockContext != null) {
-          LockAwareDynamicConfigNomadChange lockAwareDynamicConfigNomadChange = (LockAwareDynamicConfigNomadChange)change;
+          LockAwareDynamicConfigNomadChange lockAwareDynamicConfigNomadChange = (LockAwareDynamicConfigNomadChange) change;
           String tokenFromClient = lockAwareDynamicConfigNomadChange.getLockToken();
           if (!lockContext.getToken().equals(tokenFromClient) && notForced(change)) {
             throw new NomadException(format(REJECT_MESSAGE, lockContext.ownerInfo()));
@@ -64,7 +64,7 @@ public class LockAwareNomadChangeProcessor implements NomadChangeProcessor<Dynam
 
   private static boolean notForced(DynamicConfigNomadChange change) {
     DynamicConfigNomadChange unwrapped = change.unwrap();
-    return !(unwrapped instanceof UnlockConfigNomadChange) || !((UnlockConfigNomadChange)unwrapped).isForced();
+    return !(unwrapped instanceof UnlockConfigNomadChange) || !((UnlockConfigNomadChange) unwrapped).isForced();
   }
 
   @Override

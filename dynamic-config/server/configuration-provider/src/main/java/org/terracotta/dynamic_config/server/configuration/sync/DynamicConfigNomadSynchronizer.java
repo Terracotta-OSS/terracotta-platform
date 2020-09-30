@@ -167,7 +167,7 @@ public class DynamicConfigNomadSynchronizer {
   private NomadChange getFirstNomadChange(List<NomadChangeInfo> nomadChanges) {
     NomadChange firstNomadChange = nomadChanges.get(0).getNomadChange();
     if (firstNomadChange instanceof LockAwareDynamicConfigNomadChange) {
-      firstNomadChange = ((LockAwareDynamicConfigNomadChange)firstNomadChange).getChange();
+      firstNomadChange = ((LockAwareDynamicConfigNomadChange) firstNomadChange).getChange();
     }
     return firstNomadChange;
   }

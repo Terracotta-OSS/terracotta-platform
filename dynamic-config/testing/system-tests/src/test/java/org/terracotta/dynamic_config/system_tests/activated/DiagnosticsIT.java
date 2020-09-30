@@ -31,7 +31,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 
-@ClusterDefinition (autoActivate = true)
+@ClusterDefinition(autoActivate = true)
 public class DiagnosticsIT extends DynamicConfigIT {
   @Test
   public void testGetConfigByAddingOffheapResource() throws Exception {

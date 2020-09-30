@@ -70,10 +70,10 @@ public class License {
   @Override
   public String toString() {
     return "License{" +
-           "capabilityLimitMap=" + capabilityLimitMap +
-           ", expiryDate=" + expiryDate +
-           ", flagsMap=" + flagsMap +
-           "}";
+        "capabilityLimitMap=" + capabilityLimitMap +
+        ", expiryDate=" + expiryDate +
+        ", flagsMap=" + flagsMap +
+        "}";
   }
 
   @Override
@@ -83,8 +83,8 @@ public class License {
 
     License license = (License) o;
     return capabilityLimitMap.equals(license.capabilityLimitMap) &&
-           expiryDate.equals(license.expiryDate) &&
-           flagsMap.equals(license.flagsMap);
+        expiryDate.equals(license.expiryDate) &&
+        flagsMap.equals(license.flagsMap);
   }
 
   @Override

@@ -280,10 +280,10 @@ public class DiagnosticCommand extends RemoteCommand {
 
   private static String getLockingInfo(ConsistencyAnalyzer consistencyAnalyzer) {
     return consistencyAnalyzer.getNodeContext()
-                              .map(NodeContext::getCluster)
-                              .map(Cluster::getConfigurationLockContext)
-                              .flatMap(OptionalConfig::asOptional)
-                              .map((c) -> format("No changes are possible as config is locked by '%s'.", c.ownerInfo()))
-                              .orElse("New configuration changes are possible.");
+        .map(NodeContext::getCluster)
+        .map(Cluster::getConfigurationLockContext)
+        .flatMap(OptionalConfig::asOptional)
+        .map((c) -> format("No changes are possible as config is locked by '%s'.", c.ownerInfo()))
+        .orElse("New configuration changes are possible.");
   }
 }

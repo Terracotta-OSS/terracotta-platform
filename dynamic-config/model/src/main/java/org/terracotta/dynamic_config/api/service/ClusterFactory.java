@@ -106,8 +106,8 @@ public class ClusterFactory {
             toDisplayParams("--", paramValueMap),
             lineSeparator(),
             toDisplayParams("--", defaultsAdded.stream()
-                    .filter(configuration -> configuration.getValue().isPresent())
-                    .collect(toMap(Configuration::getSetting, cfg -> cfg.getValue().get()))
+                .filter(configuration -> configuration.getValue().isPresent())
+                .collect(toMap(Configuration::getSetting, cfg -> cfg.getValue().get()))
             )
         )
     );
