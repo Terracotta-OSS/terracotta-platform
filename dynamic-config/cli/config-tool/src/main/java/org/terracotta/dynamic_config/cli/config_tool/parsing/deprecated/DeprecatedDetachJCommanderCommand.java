@@ -22,13 +22,27 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Identifier;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.DetachCommand;
+import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.IdentifierConverter;
+import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
+
+import java.net.InetSocketAddress;
 
 @Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
 @DeprecatedUsage("detach [-t node|stripe] -d <hostname[:port]> -s [<hostname[:port]>|uid|name] [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
-public class DeprecatedDetachJCommanderCommand extends DeprecatedTopologyJCommanderCommand {
+public class DeprecatedDetachJCommanderCommand extends JCommanderCommand {
+
+  @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = OperationType.TypeConverter.class)
+  protected OperationType operationType = OperationType.NODE;
+
+  @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress destinationAddress;
+
+  @Parameter(names = {"-f"}, description = "Force the operation")
+  protected boolean force;
 
   @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to stop. Default: 120s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> stopWaitTime = Measure.of(120, TimeUnit.SECONDS);
@@ -54,11 +68,6 @@ public class DeprecatedDetachJCommanderCommand extends DeprecatedTopologyJComman
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return true;
   }
 
   @Override

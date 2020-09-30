@@ -21,7 +21,9 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.AttachCommand;
+import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
@@ -29,7 +31,17 @@ import java.net.InetSocketAddress;
 
 @Parameters(commandNames = "attach", commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
 @DeprecatedUsage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
-public class DeprecatedAttachJCommanderCommand extends DeprecatedTopologyJCommanderCommand {
+public class DeprecatedAttachJCommanderCommand extends JCommanderCommand {
+
+  @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = OperationType.TypeConverter.class)
+  protected OperationType operationType = OperationType.NODE;
+
+  @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
+  protected InetSocketAddress destinationAddress;
+
+  @Parameter(names = {"-f"}, description = "Force the operation")
+  protected boolean force;
+
   @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
 
@@ -50,17 +62,12 @@ public class DeprecatedAttachJCommanderCommand extends DeprecatedTopologyJComman
     underlying.setRestartWaitTime(restartWaitTime);
     underlying.setRestartDelay(restartDelay);
   }
-  
+
   @Override
   public void run() {
     underlying.run();
   }
 
-  @Override
-  public boolean isDeprecated() {
-    return true;
-  }
-  
   @Override
   public Command getCommand() {
     return underlying;

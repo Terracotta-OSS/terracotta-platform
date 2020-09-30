@@ -34,10 +34,10 @@ public abstract class ConfigurationCommand extends RemoteCommand {
   protected List<Configuration> configurations;
 
   private final EnumSet<Setting> NOT_SUPPORTED_SETTINGS = EnumSet.of(Setting.LOCK_CONTEXT);
+
   protected final Operation operation;
 
   protected boolean isActivated;
-  
   protected ClusterState clusterState;
 
   protected ConfigurationCommand(Operation operation) {
@@ -59,7 +59,7 @@ public abstract class ConfigurationCommand extends RemoteCommand {
     // validate all configurations passes on CLI
     for (Configuration configuration : configurations) {
       if (NOT_SUPPORTED_SETTINGS.contains(configuration.getSetting())) {
-        throw new IllegalArgumentException(format("'%s' is not supported", configuration.getSetting()));
+        throw new IllegalArgumentException(format("'%s' is not supported" , configuration.getSetting()));
       }
       configuration.validate(clusterState, operation);
     }

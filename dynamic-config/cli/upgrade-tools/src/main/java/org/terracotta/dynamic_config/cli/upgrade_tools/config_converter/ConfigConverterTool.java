@@ -18,11 +18,11 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
 import org.terracotta.dynamic_config.cli.command.LocalMainCommand;
-import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.deprecated.DeprecatedConvertJCommanderCommand;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.ConvertJCommanderCommand;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.deprecated.DeprecatedConvertJCommanderCommand;
 
 import java.util.Arrays;
 import java.util.HashSet;

@@ -41,9 +41,8 @@ public class ExportCommand extends RemoteCommand {
   private boolean includeDefaultValues;
   private boolean wantsRuntimeConfig;
   private OutputFormat outputFormat = OutputFormat.PROPERTIES;
-  
-  @Inject
-  public ObjectMapperFactory objectMapperFactory;
+
+  @Inject public ObjectMapperFactory objectMapperFactory;
 
   public void setNode(InetSocketAddress node) {
     this.node = node;

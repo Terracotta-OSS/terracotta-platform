@@ -18,8 +18,8 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.cli.command.Command;
-import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.command.LockConfigCommand;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 @Parameters(commandNames = "lock-config", commandDescription = "Locks the config", hidden = true)
 @Usage("lock-config -connect-to <hostname[:port]> -lock-context <context>")
 public class LockConfigJCommanderCommand extends JCommanderCommand {
+
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
@@ -45,11 +46,6 @@ public class LockConfigJCommanderCommand extends JCommanderCommand {
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return false;
   }
 
   @Override

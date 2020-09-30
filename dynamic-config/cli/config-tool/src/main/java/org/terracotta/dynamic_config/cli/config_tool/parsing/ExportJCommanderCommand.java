@@ -65,11 +65,6 @@ public class ExportJCommanderCommand extends JCommanderCommand {
   }
 
   @Override
-  public boolean isDeprecated() {
-    return false;
-  }
-
-  @Override
   public Command getCommand() {
     return underlying;
   }

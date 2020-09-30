@@ -35,7 +35,6 @@ import java.util.TreeSet;
 
 import static java.lang.String.format;
 import static java.lang.System.lineSeparator;
-import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 
 /**

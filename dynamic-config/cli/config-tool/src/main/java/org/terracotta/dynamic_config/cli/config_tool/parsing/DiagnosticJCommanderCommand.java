@@ -25,11 +25,10 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 
-import static java.util.Objects.requireNonNull;
-
 @Parameters(commandNames = "diagnostic", commandDescription = "Diagnose a cluster configuration")
 @Usage("diagnostic -connect-to <hostname[:port]>")
 public class DiagnosticJCommanderCommand extends JCommanderCommand {
+
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
@@ -37,19 +36,12 @@ public class DiagnosticJCommanderCommand extends JCommanderCommand {
 
   @Override
   public void validate() {
-    // basic validations first
-    requireNonNull(node);
     underlying.setNode(node);
   }
 
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return false;
   }
 
   @Override

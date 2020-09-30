@@ -64,6 +64,7 @@ import static org.terracotta.dynamic_config.server.configuration.startup.Console
 
 @Parameters(separators = "=")
 public class OptionsParsingImpl implements OptionsParsing {
+
   @Parameter(names = {"-" + NODE_HOSTNAME}, description = "node host name")
   private String hostname;
 

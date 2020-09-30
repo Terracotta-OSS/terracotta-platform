@@ -18,15 +18,28 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.BooleanConverter;
+import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.GetCommand;
+import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
+import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 
-import static java.util.Objects.requireNonNull;
+import java.net.InetSocketAddress;
+import java.util.List;
 
 @Parameters(commandNames = "get", commandDescription = "Read configuration properties")
 @DeprecatedUsage("get -s <hostname[:port]> [-r] -c <[namespace:]property>,<[namespace:]property>...")
-public class DeprecatedGetJCommanderCommand extends DeprecatedConfigurationJCommanderCommand {
+public class DeprecatedGetJCommanderCommand extends JCommanderCommand {
+
+  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
+  InetSocketAddress node;
+
+  @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
+  List<Configuration> configurations;
+
   @Parameter(names = {"-r"}, description = "Read the properties from the current runtime configuration instead of reading them from the last configuration saved on disk", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
@@ -34,8 +47,6 @@ public class DeprecatedGetJCommanderCommand extends DeprecatedConfigurationJComm
 
   @Override
   public void validate() {
-    requireNonNull(node);
-    requireNonNull(configurations);
     underlying.setNode(node);
     underlying.setConfigurations(configurations);
     underlying.setRuntimConfig(wantsRuntimeConfig);
@@ -44,11 +55,6 @@ public class DeprecatedGetJCommanderCommand extends DeprecatedConfigurationJComm
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return true;
   }
 
   @Override

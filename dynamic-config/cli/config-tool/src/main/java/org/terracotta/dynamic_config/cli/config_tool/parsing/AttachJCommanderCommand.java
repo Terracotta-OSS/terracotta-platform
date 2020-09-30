@@ -33,16 +33,16 @@ import java.net.InetSocketAddress;
 @Usage("attach (-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>) [-force] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class AttachJCommanderCommand extends JCommanderCommand {
 
-  @Parameter(names = {"-to-cluster"}, description = "Cluster to Attach To", converter = InetSocketAddressConverter.class)
+  @Parameter(names = {"-to-cluster"}, description = "Cluster to attach to", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress destinationClusterAddress;
 
-  @Parameter(names = {"-stripe"}, description = "Stripe to be Attached", converter = InetSocketAddressConverter.class)
+  @Parameter(names = {"-stripe"}, description = "Stripe to be attached", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress sourceStripeAddress;
 
-  @Parameter(names = {"-to-stripe"}, description = "Stripe to Attach To", converter = InetSocketAddressConverter.class)
+  @Parameter(names = {"-to-stripe"}, description = "Stripe to attach to", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress destinationStripeAddress;
 
-  @Parameter(names = {"-node"}, description = "Node to be Attached", converter = InetSocketAddressConverter.class)
+  @Parameter(names = {"-node"}, description = "Node to be attached", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress sourceNodeAddress;
 
   @Parameter(names = {"-restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
@@ -87,11 +87,6 @@ public class AttachJCommanderCommand extends JCommanderCommand {
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return false;
   }
 
   @Override

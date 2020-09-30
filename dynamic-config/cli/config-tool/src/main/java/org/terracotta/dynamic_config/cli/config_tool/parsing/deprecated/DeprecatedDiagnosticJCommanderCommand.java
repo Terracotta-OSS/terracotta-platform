@@ -25,8 +25,6 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 
-import static java.util.Objects.requireNonNull;
-
 @Parameters(commandNames = "diagnostic", commandDescription = "Diagnose a cluster configuration")
 @DeprecatedUsage("diagnostic -s <hostname[:port]>")
 public class DeprecatedDiagnosticJCommanderCommand extends JCommanderCommand {
@@ -37,19 +35,12 @@ public class DeprecatedDiagnosticJCommanderCommand extends JCommanderCommand {
 
   @Override
   public void validate() {
-    // basic validations first
-    requireNonNull(node);
     underlying.setNode(node);
   }
 
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return true;
   }
 
   @Override

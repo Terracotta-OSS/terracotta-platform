@@ -25,7 +25,7 @@ public class Metadata {
   public static String getName(JCommanderCommand command) {
     Parameters annotation = command.getClass().getAnnotation(Parameters.class);
     if (annotation != null && annotation.commandNames().length > 0) {
-      return annotation.commandNames()[0] + (command.isDeprecated() ? "-deprecated" : "");
+      return annotation.commandNames()[0] + (command.getClass().isAnnotationPresent(DeprecatedUsage.class) ? "-deprecated" : "");
     }
     return command.getClass().getSimpleName().toLowerCase().replace("command", "");
   }

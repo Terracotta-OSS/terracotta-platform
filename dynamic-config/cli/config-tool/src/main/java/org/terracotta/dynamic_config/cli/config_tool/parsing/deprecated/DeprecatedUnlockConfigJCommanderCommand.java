@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 @Parameters(commandNames = "unlock-config", commandDescription = "Unlocks the config", hidden = true)
 @DeprecatedUsage("unlock-config -s <hostname[:port]>")
 public class DeprecatedUnlockConfigJCommanderCommand extends JCommanderCommand {
+
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
@@ -41,11 +42,6 @@ public class DeprecatedUnlockConfigJCommanderCommand extends JCommanderCommand {
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return true;
   }
 
   @Override

@@ -34,6 +34,7 @@ import java.nio.file.Path;
 @Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
 @Usage("activate (-connect-to <hostname[:port]> | -config-file <config-file>) [-cluster-name <cluster-name>] [-restrict] [-license-file <license-file>] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class ActivateJCommanderCommand extends JCommanderCommand {
+
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
 
@@ -84,11 +85,6 @@ public class ActivateJCommanderCommand extends JCommanderCommand {
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return false;
   }
 
   @Override

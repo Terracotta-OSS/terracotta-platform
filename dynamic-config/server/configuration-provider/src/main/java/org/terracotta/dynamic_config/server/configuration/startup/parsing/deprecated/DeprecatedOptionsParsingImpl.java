@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.server.configuration.startup.deprecated_parsing;
+package org.terracotta.dynamic_config.server.configuration.startup.parsing.deprecated;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
@@ -65,6 +65,7 @@ import static org.terracotta.dynamic_config.server.configuration.startup.Console
 
 @Parameters(separators = "=")
 public class DeprecatedOptionsParsingImpl implements OptionsParsing {
+
   @Parameter(names = {"-s", "--" + NODE_HOSTNAME}, description = "node host name")
   private String hostname;
 

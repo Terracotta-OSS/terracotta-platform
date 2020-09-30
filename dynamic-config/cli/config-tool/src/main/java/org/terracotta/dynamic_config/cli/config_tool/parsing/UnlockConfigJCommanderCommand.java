@@ -18,8 +18,8 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.cli.command.Command;
-import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.command.UnlockConfigCommand;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
@@ -28,6 +28,7 @@ import java.net.InetSocketAddress;
 @Parameters(commandNames = "unlock-config", commandDescription = "Unlocks the config", hidden = true)
 @Usage("unlock-config -connect-to <hostname[:port]>")
 public class UnlockConfigJCommanderCommand extends JCommanderCommand {
+
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
@@ -41,11 +42,6 @@ public class UnlockConfigJCommanderCommand extends JCommanderCommand {
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return false;
   }
 
   @Override

@@ -31,5 +31,4 @@ public abstract class JCommanderCommand implements Runnable {
 
   public abstract Command getCommand();
 
-  public abstract boolean isDeprecated();
 }

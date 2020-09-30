@@ -26,11 +26,10 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 
-import static java.util.Objects.requireNonNull;
-
 @Parameters(commandNames = "repair", commandDescription = "Repair a cluster configuration")
 @DeprecatedUsage("repair -s <hostname[:port]> [-f commit|rollback|reset|unlock]")
 public class DeprecatedRepairJCommanderCommand extends JCommanderCommand {
+
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
@@ -41,7 +40,6 @@ public class DeprecatedRepairJCommanderCommand extends JCommanderCommand {
 
   @Override
   public void validate() {
-    requireNonNull(node);
     underlying.setNode(node);
     underlying.setForcedRepairAction(forcedRepairAction);
   }
@@ -49,11 +47,6 @@ public class DeprecatedRepairJCommanderCommand extends JCommanderCommand {
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return true;
   }
 
   @Override

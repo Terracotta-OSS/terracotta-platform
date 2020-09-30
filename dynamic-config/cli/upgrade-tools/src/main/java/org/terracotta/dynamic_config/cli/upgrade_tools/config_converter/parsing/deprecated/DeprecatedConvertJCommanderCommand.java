@@ -74,11 +74,6 @@ public class DeprecatedConvertJCommanderCommand extends JCommanderCommand {
   }
 
   @Override
-  public boolean isDeprecated() {
-    return true;
-  }
-
-  @Override
   public Command getCommand() {
     return underlying;
   }

@@ -60,7 +60,6 @@ public class DeprecatedActivateJCommanderCommand extends JCommanderCommand {
   @Override
   public void validate() {
     // basic validations first
-
     if (!restrictedActivation && node != null && configPropertiesFile != null) {
       throw new IllegalArgumentException("Either node or config properties file should be specified, not both");
     }
@@ -84,11 +83,6 @@ public class DeprecatedActivateJCommanderCommand extends JCommanderCommand {
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return true;
   }
 
   @Override

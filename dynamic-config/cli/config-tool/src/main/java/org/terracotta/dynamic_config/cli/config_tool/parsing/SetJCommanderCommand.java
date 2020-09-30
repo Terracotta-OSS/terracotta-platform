@@ -15,22 +15,34 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.parsing;
 
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.command.SetCommand;
+import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
+import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 
-import static java.util.Objects.requireNonNull;
+import java.net.InetSocketAddress;
+import java.util.List;
 
 @Parameters(commandNames = "set", commandDescription = "Set configuration properties")
 @Usage("set -connect-to <hostname[:port]> -setting <[namespace:]property=value>,<[namespace:]property=value>...")
-public class SetJCommanderCommand extends ConfigurationJCommanderCommand {
+public class SetJCommanderCommand extends JCommanderCommand {
+
+  @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
+  InetSocketAddress node;
+
+  @Parameter(names = {"-setting"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
+  List<Configuration> configurations;
+
   private final SetCommand underlying = new SetCommand();
 
   @Override
   public void validate() {
-    requireNonNull(node);
-    requireNonNull(configurations);
     underlying.setNode(node);
     underlying.setConfigurations(configurations);
   }
@@ -38,11 +50,6 @@ public class SetJCommanderCommand extends ConfigurationJCommanderCommand {
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return false;
   }
 
   @Override

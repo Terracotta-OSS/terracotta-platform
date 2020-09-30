@@ -35,16 +35,16 @@ import java.net.InetSocketAddress;
 @Usage("detach(-from-cluster <hostname[:port]> -stripe [<hostname[:port]>|uid|name] | -from-stripe <hostname[:port]> -node [<hostname[:port]>|uid|name]) [-force] [-stop-wait-time <stop-wait-time>] [-stop-delay <stop-delay>]")
 public class DetachJCommanderCommand extends JCommanderCommand {
 
-  @Parameter(names = {"-from-cluster"}, description = "Cluster to Detach from", converter = InetSocketAddressConverter.class)
+  @Parameter(names = {"-from-cluster"}, description = "Cluster to detach from", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress destinationClusterAddress;
 
   @Parameter(names = {"-stripe"}, description = "Source node or stripe (address, name or UID)", converter = IdentifierConverter.class)
   protected Identifier sourceStripeIdentifier;
 
-  @Parameter(names = {"-from-stripe"}, description = "Stripe to Detach from", converter = InetSocketAddressConverter.class)
+  @Parameter(names = {"-from-stripe"}, description = "Stripe to detach from", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress destinationStripeAddress;
 
-  @Parameter(names = {"-node"}, description = "Node to be Detached", converter = IdentifierConverter.class)
+  @Parameter(names = {"-node"}, description = "Node to be detached", converter = IdentifierConverter.class)
   protected Identifier sourceNodeIdentifier;
 
   @Parameter(names = {"-stop-wait-time"}, description = "Maximum time to wait for the nodes to stop. Default: 120s", converter = TimeUnitConverter.class)
@@ -89,11 +89,6 @@ public class DetachJCommanderCommand extends JCommanderCommand {
   @Override
   public void run() {
     underlying.run();
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    return false;
   }
 
   @Override

@@ -44,11 +44,6 @@ public class DeprecatedLogJCommanderCommand extends JCommanderCommand {
   }
 
   @Override
-  public boolean isDeprecated() {
-    return true;
-  }
-
-  @Override
   public Command getCommand() {
     return underlying;
   }

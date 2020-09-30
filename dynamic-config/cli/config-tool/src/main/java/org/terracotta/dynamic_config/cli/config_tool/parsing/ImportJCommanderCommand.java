@@ -55,8 +55,4 @@ public class ImportJCommanderCommand extends JCommanderCommand {
     return underlying;
   }
 
-  @Override
-  public boolean isDeprecated() {
-    return false;
-  }
 }

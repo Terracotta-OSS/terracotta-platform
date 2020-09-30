@@ -18,11 +18,11 @@ package org.terracotta.dynamic_config.cli.config_tool;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.cli.command.CustomJCommander;
+import org.terracotta.dynamic_config.cli.command.Injector;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
-import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
-import org.terracotta.dynamic_config.cli.command.Injector;
 import org.terracotta.dynamic_config.cli.config_tool.command.JCommanderCommandProvider;
 import org.terracotta.dynamic_config.cli.config_tool.command.ServiceProvider;
 
@@ -156,7 +156,6 @@ public class ConfigTool {
         }
       }
     };
-    
     return jCommander;
   }
 }
