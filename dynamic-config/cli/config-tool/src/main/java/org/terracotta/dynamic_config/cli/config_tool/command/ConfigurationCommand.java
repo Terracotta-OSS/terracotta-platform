@@ -15,32 +15,23 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.Setting;
-import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 
 import java.net.InetSocketAddress;
 import java.util.EnumSet;
 import java.util.List;
 
 import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
 import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 
 public abstract class ConfigurationCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
-
-  @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
-  List<Configuration> configurations;
+  protected InetSocketAddress node;
+  protected List<Configuration> configurations;
 
   private final EnumSet<Setting> NOT_SUPPORTED_SETTINGS = EnumSet.of(Setting.LOCK_CONTEXT);
 
@@ -53,11 +44,15 @@ public abstract class ConfigurationCommand extends RemoteCommand {
     this.operation = operation;
   }
 
-  @Override
-  public void validate() {
-    requireNonNull(node);
-    requireNonNull(configurations);
+  public void setNode(InetSocketAddress node) {
+    this.node = node;
+  }
 
+  public void setConfigurations(List<Configuration> configurations) {
+    this.configurations = configurations;
+  }
+
+  public void validate() {
     isActivated = isActivated(node);
     clusterState = isActivated ? ACTIVATED : CONFIGURING;
 
@@ -75,7 +70,7 @@ public abstract class ConfigurationCommand extends RemoteCommand {
       for (int j = i + 1; j < configurations.size(); j++) {
         Configuration second = configurations.get(j);
         if (second.duplicates(first)) {
-          throw new ParameterException("Duplicate configurations found: " + first + " and " + second);
+          throw new IllegalArgumentException("Duplicate configurations found: " + first + " and " + second);
         }
       }
     }

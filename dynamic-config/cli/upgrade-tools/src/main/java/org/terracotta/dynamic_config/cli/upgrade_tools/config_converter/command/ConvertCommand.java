@@ -15,12 +15,8 @@
  */
 package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.command;
 
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.Parameters;
-import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.dynamic_config.cli.command.Command;
-import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverter;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigPropertiesProcessor;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigRepoProcessor;
@@ -40,31 +36,43 @@ import static java.nio.file.Files.isDirectory;
 import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat.DIRECTORY;
 import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat.PROPERTIES;
 
-@Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration directory format")
-@Usage("convert -c <tc-config>,<tc-config>... ( -t directory [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
 public class ConvertCommand extends Command {
-  @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
   private List<Path> tcConfigFiles;
-
-  @Parameter(names = {"-s"}, required = false, description = "An ordered list of stripe names")
   private List<String> stripeNames;
-
-  @Parameter(names = {"-l"}, description = "Path to license file", converter = PathConverter.class)
   private Path licensePath;
-
-  @Parameter(names = {"-d"}, description = "Destination directory to store converted config. Should not exist. Default: ${current-directory}/converted-configs", converter = PathConverter.class)
   private Path destinationDir = Paths.get(".").resolve("converted-configs");
-
-  @Parameter(names = {"-n"}, description = "New cluster name")
   private String newClusterName;
-
-  @Parameter(names = {"-t"}, description = "Conversion type (directory|properties). Default: directory", converter = ConversionFormat.FormatConverter.class)
   private ConversionFormat conversionFormat = DIRECTORY;
-
-  @Parameter(names = {"-f"}, description = "Force a config conversion, ignoring warnings, if any. Default: false")
   private boolean force;
 
-  @Override
+  public void setTcConfigFiles(List<Path> tcConfigFiles) {
+    this.tcConfigFiles = tcConfigFiles;
+  }
+
+  public void setStripeNames(List<String> stripeNames) {
+    this.stripeNames = stripeNames;
+  }
+
+  public void setLicensePath(Path licensePath) {
+    this.licensePath = licensePath;
+  }
+
+  public void setDestinationDir(Path destinationDir) {
+    this.destinationDir = destinationDir;
+  }
+
+  public void setNewClusterName(String newClusterName) {
+    this.newClusterName = newClusterName;
+  }
+
+  public void setConversionFormat(ConversionFormat conversionFormat) {
+    this.conversionFormat = conversionFormat;
+  }
+
+  public void setForce(boolean force) {
+    this.force = force;
+  }
+
   public void validate() {
     if (stripeNames == null) {
       stripeNames = Collections.emptyList();
@@ -95,6 +103,7 @@ public class ConvertCommand extends Command {
 
   @Override
   public final void run() {
+    validate();
     if (conversionFormat == DIRECTORY) {
       ConfigRepoProcessor resultProcessor = new ConfigRepoProcessor(destinationDir);
       ConfigConverter converter = new ConfigConverter(resultProcessor::process, force);

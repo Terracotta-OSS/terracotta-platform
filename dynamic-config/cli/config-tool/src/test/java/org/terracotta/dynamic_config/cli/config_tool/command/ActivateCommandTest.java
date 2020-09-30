@@ -95,30 +95,14 @@ public class ActivateCommandTest extends BaseTest {
   }
 
   @Test
-  public void test_validate() {
-    assertThat(
-        () -> command().validate(),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("One of node or config properties file must be specified")))));
-
-    assertThat(
-        () -> command()
-            .setNode(InetSocketAddress.createUnresolved("localhost", 9410))
-            .setConfigPropertiesFile(Paths.get("."))
-            .validate(),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Either node or config properties file should be specified, not both")))));
-  }
-
-
-  @Test
   public void test_cluster_name_discovery() {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(false);
     when(topologyServiceMock("localhost", 9421).isActivated()).thenReturn(false);
     when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(false);
 
-    ActivateCommand command = command()
-        .setConfigPropertiesFile(config);
-    command.validate();
-    assertThat(command.getCluster().getName(), is(equalTo("my-cluster")));
+    ActivateCommand command = command();
+    command.setConfigPropertiesFile(config);
+    doRunAndVerify("my-cluster", command);
   }
 
   @Test
@@ -127,12 +111,10 @@ public class ActivateCommandTest extends BaseTest {
     when(topologyServiceMock("localhost", 9421).isActivated()).thenReturn(false);
     when(topologyServiceMock("localhost", 9422).isActivated()).thenReturn(false);
 
-    ActivateCommand command = command()
-        .setClusterName("foo")
-        .setConfigPropertiesFile(config);
-    command.validate();
-    assertThat(command.getCluster().getName(), is(equalTo("foo")));
-
+    ActivateCommand command = command();
+    command.setClusterName("foo");
+    command.setConfigPropertiesFile(config);
+    doRunAndVerify("foo", command);
   }
 
   @Test
@@ -143,8 +125,8 @@ public class ActivateCommandTest extends BaseTest {
 
     assertThat(
         () -> {
-          ActivateCommand cmd = command().setConfigPropertiesFile(config);
-          cmd.validate();
+          ActivateCommand cmd = command();
+          cmd.setConfigPropertiesFile(config);
           cmd.run();
         },
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(startsWith("Nodes are already activated: "))))
@@ -159,8 +141,8 @@ public class ActivateCommandTest extends BaseTest {
 
     assertThat(
         () -> {
-          ActivateCommand cmd = command().setConfigPropertiesFile(config);
-          cmd.validate();
+          ActivateCommand cmd = command();
+          cmd.setConfigPropertiesFile(config);
           cmd.run();
         },
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(is(equalTo("Detected a mix of activated and unconfigured nodes (or being repaired). Activated: [localhost:9411, localhost:9421], Unconfigured: [localhost:9422]"))))
@@ -169,8 +151,8 @@ public class ActivateCommandTest extends BaseTest {
 
   @Test
   public void test_nomad_prepare_fails() {
-    ActivateCommand command = command()
-        .setConfigPropertiesFile(config);
+    ActivateCommand command = command();
+    command.setConfigPropertiesFile(config);
 
     UUID lastChangeUUID = UUID.randomUUID();
 
@@ -182,8 +164,6 @@ public class ActivateCommandTest extends BaseTest {
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(reject(UNACCEPTABLE, "error", "host", "user"));
       when(mock.rollback(any(RollbackMessage.class))).thenReturn(accept());
     }));
-
-    command.validate();
 
     assertThat(
         command::run,
@@ -209,8 +189,8 @@ public class ActivateCommandTest extends BaseTest {
 
   @Test
   public void test_nomad_commit_fails() {
-    ActivateCommand command = command()
-        .setConfigPropertiesFile(config);
+    ActivateCommand command = command();
+    command.setConfigPropertiesFile(config);
 
     UUID lastChangeUUID = UUID.randomUUID();
 
@@ -222,8 +202,6 @@ public class ActivateCommandTest extends BaseTest {
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenThrow(new NomadException("an error"));
     }));
-
-    command.validate();
 
     assertThat(
         command::run,
@@ -249,24 +227,24 @@ public class ActivateCommandTest extends BaseTest {
 
   @Test
   public void test_activate_from_config_file() {
-    ActivateCommand command = command()
-        .setConfigPropertiesFile(config);
+    ActivateCommand command = command();
+    command.setConfigPropertiesFile(config);
     doRunAndVerify("my-cluster", command);
   }
 
   @Test
   public void test_activate_from_config_file_and_cluster_name() {
-    ActivateCommand command = command()
-        .setConfigPropertiesFile(config)
-        .setClusterName("foo");
+    ActivateCommand command = command();
+    command.setConfigPropertiesFile(config);
+    command.setClusterName("foo");
     doRunAndVerify("foo", command);
   }
 
   @Test
   public void test_activate_from_node_and_cluster_name() {
-    ActivateCommand command = command()
-        .setNode(InetSocketAddress.createUnresolved("localhost", 9411))
-        .setClusterName("foo");
+    ActivateCommand command = command();
+    command.setNode(InetSocketAddress.createUnresolved("localhost", 9411));
+    command.setClusterName("foo");
     doRunAndVerify("foo", command);
   }
 
@@ -285,7 +263,6 @@ public class ActivateCommandTest extends BaseTest {
       when(diagnosticService.getLogicalServerState()).thenReturn(PASSIVE);
     }));
 
-    command.validate();
     command.run();
 
     IntStream.of(ports).forEach(rethrow(port -> {

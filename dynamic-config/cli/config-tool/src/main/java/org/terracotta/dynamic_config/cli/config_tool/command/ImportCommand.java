@@ -15,9 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
-import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -27,8 +24,6 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
-import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
@@ -37,27 +32,26 @@ import java.util.Collections;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;
-import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 
 /**
  * @author Mathieu Carbou
  */
-@Parameters(commandNames = "import", commandDescription = "Import a cluster configuration")
-@Usage("import -f <config-file> [-s <hostname[:port]>]")
 public class ImportCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
-
-  @Parameter(names = {"-f"}, description = "Configuration file", required = true, converter = PathConverter.class)
   private Path configPropertiesFile;
 
-  private Cluster cluster;
-  private Collection<Node.Endpoint> runtimePeers;
+  public void setNode(InetSocketAddress node) {
+    this.node = node;
+  }
+
+  public void setConfigPropertiesFile(Path configPropertiesFile) {
+    this.configPropertiesFile = configPropertiesFile;
+  }
 
   @Override
-  public void validate() {
-    cluster = loadCluster();
+  public final void run() {
+    Cluster cluster = loadCluster();
     FailoverPriority failoverPriority = cluster.getFailoverPriority();
     if (failoverPriority.getType() == CONSISTENCY) {
       int voterCount = failoverPriority.getVoters();
@@ -75,7 +69,7 @@ public class ImportCommand extends RemoteCommand {
       }
     }
 
-    runtimePeers = cluster.getEndpoints(node);
+    Collection<Node.Endpoint> runtimePeers = cluster.getEndpoints(node);
 
     // validate the topology
     new ClusterValidator(cluster).validate();
@@ -92,10 +86,6 @@ public class ImportCommand extends RemoteCommand {
         runtimePeers = Collections.singletonList(getEndpoint(node));
       }
     }
-  }
-
-  @Override
-  public final void run() {
     logger.info("Importing cluster configuration from config file: {} to nodes: {}", configPropertiesFile, toString(runtimePeers));
 
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(runtimePeers))) {

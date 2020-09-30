@@ -22,16 +22,24 @@ import com.beust.jcommander.Parameters;
  */
 public class Metadata {
 
-  public static String getName(Command command) {
+  public static String getName(JCommanderCommand command) {
     Parameters annotation = command.getClass().getAnnotation(Parameters.class);
     if (annotation != null && annotation.commandNames().length > 0) {
-      return annotation.commandNames()[0];
+      return annotation.commandNames()[0] + (command.getClass().isAnnotationPresent(DeprecatedUsage.class) ? "-deprecated" : "");
     }
     return command.getClass().getSimpleName().toLowerCase().replace("command", "");
   }
 
-  public static String getUsage(Command command) {
+  public static String getUsage(JCommanderCommand command) {
     Usage annotation = command.getClass().getAnnotation(Usage.class);
+    if (annotation != null) {
+      return annotation.value();
+    }
+    return "";
+  }
+
+  public static String getDeprecatedUsage(JCommanderCommand command) {
+    DeprecatedUsage annotation = command.getClass().getAnnotation(DeprecatedUsage.class);
     if (annotation != null) {
       return annotation.value();
     }

@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -30,9 +28,6 @@ import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterConfigMismatchException;
 import org.terracotta.dynamic_config.api.service.MutualClusterValidator;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
-import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -42,24 +37,16 @@ import java.util.Map;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;
-import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
 /**
  * @author Mathieu Carbou
  */
-@Parameters(commandNames = "attach", commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
-@Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class AttachCommand extends TopologyCommand {
 
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-
-  @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
-
-  @Parameter(required = true, names = {"-s"}, description = "Source node or stripe", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress sourceAddress;
 
   // list of new nodes to add with their backup topology
@@ -69,6 +56,18 @@ public class AttachCommand extends TopologyCommand {
   private Cluster sourceCluster;
   private Stripe addedStripe;
   private Node addedNode;
+
+  public void setSourceAddress(InetSocketAddress sourceAddress) {
+    this.sourceAddress = sourceAddress;
+  }
+
+  public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
+    this.restartWaitTime = restartWaitTime;
+  }
+
+  public void setRestartDelay(Measure<TimeUnit> restartDelay) {
+    this.restartDelay = restartDelay;
+  }
 
   @Override
   public void validate() {
@@ -192,7 +191,7 @@ public class AttachCommand extends TopologyCommand {
 
         if (destinationClusterActivated) {
           NameGenerator.assignFriendlyNames(cluster, addedStripe.getUID());
-        } 
+        }
         break;
       }
 
@@ -257,8 +256,4 @@ public class AttachCommand extends TopologyCommand {
     return newOnlineNodes.keySet();
   }
 
-  AttachCommand setSourceAddress(InetSocketAddress sourceAddress) {
-    this.sourceAddress = sourceAddress;
-    return this;
-  }
 }

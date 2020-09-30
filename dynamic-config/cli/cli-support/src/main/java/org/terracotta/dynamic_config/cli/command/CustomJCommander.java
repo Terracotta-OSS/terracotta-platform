@@ -36,29 +36,49 @@ import static java.util.function.Predicate.isEqual;
  * Class containing overridden usage methods from JCommander.
  */
 public class CustomJCommander extends JCommander {
-  private final CommandRepository commandRepository;
+  private final JCommanderCommandRepository commandRepository;
   private final String toolName;
+  private boolean deprecatedUsage;
 
-  public CustomJCommander(String toolName, CommandRepository commandRepository, Command command) {
+  public CustomJCommander(String toolName, JCommanderCommandRepository commandRepository, JCommanderCommand command) {
     super(command);
     this.toolName = toolName;
     this.commandRepository = commandRepository;
     setUsageFormatter(new UsageFormatter(this));
-    commandRepository.getCommands()
+    commandRepository.getJCommanderCommands()
         .stream()
         .filter(isEqual(command).negate())
         .forEach(cmd -> addCommand(Metadata.getName(cmd), cmd));
   }
 
-  public Optional<Command> getAskedCommand() {
-    return Optional.ofNullable(getParsedCommand()).map(commandRepository::getCommand);
+  public Optional<JCommanderCommand> getAskedCommand() {
+    return Optional.ofNullable(getParsedCommand()).map(commandRepository::getJCommanderCommand);
   }
 
   public void printUsage() {
-    if (getParsedCommand() != null) {
-      getUsageFormatter().usage(getParsedCommand());
-    } else {
-      usage();
+    try {
+      String askedCommand = getParsedCommand();
+      if (askedCommand != null) {
+        if (askedCommand.contains("deprecated")) {
+          this.deprecatedUsage = true;
+        }
+        getUsageFormatter().usage(askedCommand);
+      } else {
+        usage();
+      }
+    } finally {
+      this.deprecatedUsage = false; // reset to false
+    }
+  }
+
+  public void printAskedCommmandUsage(String askedCommand) {
+    try {
+      if (askedCommand.contains("deprecated")) {
+        deprecatedUsage = true;
+      }
+      getUsageFormatter().usage(askedCommand);
+    } finally {
+      deprecatedUsage = false;
     }
   }
 
@@ -103,7 +123,7 @@ public class CustomJCommander extends JCommander {
       if (description != null) {
         out.append(indent).append(description).append(lineSeparator());
       }
-      appendUsage(commandRepository.getCommand(commandName), out, indent);
+      appendUsage(commandRepository.getJCommanderCommand(commandName), out, indent);
       appendOptions(jc, out, indent);
     }
 
@@ -131,13 +151,16 @@ public class CustomJCommander extends JCommander {
       if (hasCommands) {
         out.append(lineSeparator()).append("Commands:").append(lineSeparator());
         for (Map.Entry<String, JCommander> command : commands.entrySet()) {
+          String name = command.getKey();
+          if (name.endsWith("-deprecated")) {
+            continue;
+          }
           Object arg = command.getValue().getObjects().get(0);
           Parameters p = arg.getClass().getAnnotation(Parameters.class);
-          String name = command.getKey();
           if (p == null || !p.hidden()) {
             String description = getCommandDescription(name);
             out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator());
-            appendUsage(commandRepository.getCommand(name), out, indent + "    ");
+            appendUsage(commandRepository.getJCommanderCommand(name), out, indent + "    ");
 
             // Options for this command
             JCommander jc = command.getValue();
@@ -148,9 +171,10 @@ public class CustomJCommander extends JCommander {
       }
     }
 
-    private void appendUsage(Command command, StringBuilder out, String indent) {
+    private void appendUsage(JCommanderCommand command, StringBuilder out, String indent) {
       out.append(indent).append("Usage:").append(lineSeparator());
-      out.append(indent).append("    ").append(Metadata.getUsage(command)
+      String usage = deprecatedUsage ? Metadata.getDeprecatedUsage(command) : Metadata.getUsage(command);
+      out.append(indent).append("    ").append(usage
           .replace(lineSeparator(), lineSeparator() + "    " + indent)).append(lineSeparator());
     }
 

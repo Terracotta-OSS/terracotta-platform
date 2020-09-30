@@ -21,29 +21,21 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class CommandRepository {
-  private final Map<String, Command> commandMap = new LinkedHashMap<>();
+public class JCommanderCommandRepository {
+  private final Map<String, JCommanderCommand> commandMap = new LinkedHashMap<>();
 
-  public void addAll(Set<Command> commands) {
+  public void addAll(Set<JCommanderCommand> commands) {
     commands.forEach(command -> commandMap.put(Metadata.getName(command), command));
   }
 
-  public Collection<Command> getCommands() {
+  public Collection<JCommanderCommand> getJCommanderCommands() {
     return Collections.unmodifiableCollection(commandMap.values());
   }
 
-  public Command getCommand(String name) {
+  public JCommanderCommand getJCommanderCommand(String name) {
     if (!commandMap.containsKey(name)) {
       throw new IllegalArgumentException("Command not found: " + name);
     }
     return commandMap.get(name);
-  }
-
-  public void inject(Object[] services) {
-    commandMap.values().forEach(command -> Injector.inject(command, services));
-  }
-
-  public void inject(Collection<Object> services) {
-    commandMap.values().forEach(command -> Injector.inject(command, services));
   }
 }

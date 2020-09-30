@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -24,7 +23,6 @@ import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.UncheckedIOException;
@@ -41,13 +39,8 @@ import static java.lang.System.lineSeparator;
  * @author Mathieu Carbou
  */
 public abstract class TopologyCommand extends RemoteCommand {
-  @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = OperationType.TypeConverter.class)
   protected OperationType operationType = OperationType.NODE;
-
-  @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress destinationAddress;
-
-  @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
 
   @Inject public ObjectMapperFactory objectMapperFactory;
@@ -58,7 +51,18 @@ public abstract class TopologyCommand extends RemoteCommand {
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
 
-  @Override
+  public void setOperationType(OperationType operationType) {
+    this.operationType = operationType;
+  }
+
+  public void setDestinationAddress(InetSocketAddress destinationAddress) {
+    this.destinationAddress = destinationAddress;
+  }
+
+  public void setForce(boolean force) {
+    this.force = force;
+  }
+
   public void validate() {
     destination = getEndpoint(destinationAddress);
 
@@ -85,6 +89,7 @@ public abstract class TopologyCommand extends RemoteCommand {
 
   @Override
   public void run() {
+    validate();
     // build an updated topology
     Cluster result = updateTopology();
 
@@ -129,20 +134,6 @@ public abstract class TopologyCommand extends RemoteCommand {
   /*<-- Test methods --> */
   OperationType getOperationType() {
     return operationType;
-  }
-
-  TopologyCommand setOperationType(OperationType operationType) {
-    this.operationType = operationType;
-    return this;
-  }
-
-  TopologyCommand setDestinationAddress(InetSocketAddress destinationAddress) {
-    this.destinationAddress = destinationAddress;
-    return this;
-  }
-
-  TopologyCommand setDestinationAddress(String host, int port) {
-    return setDestinationAddress(InetSocketAddress.createUnresolved(host, port));
   }
 
   protected final void validateLogOrFail(Supplier<Boolean> expectedCondition, String error) {

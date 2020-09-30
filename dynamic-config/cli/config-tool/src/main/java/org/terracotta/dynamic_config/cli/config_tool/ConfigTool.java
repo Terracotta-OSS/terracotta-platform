@@ -18,11 +18,12 @@ package org.terracotta.dynamic_config.cli.config_tool;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.dynamic_config.cli.command.Command;
-import org.terracotta.dynamic_config.cli.command.CommandRepository;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
+import org.terracotta.dynamic_config.cli.command.Injector;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
 import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.CommandProvider;
+import org.terracotta.dynamic_config.cli.config_tool.command.JCommanderCommandProvider;
 import org.terracotta.dynamic_config.cli.config_tool.command.ServiceProvider;
 
 import java.util.Collection;
@@ -55,11 +56,11 @@ public class ConfigTool {
   }
 
   public static void start(String... args) {
-    CommandProvider commandProvider = CommandProvider.get();
+    JCommanderCommandProvider commandProvider = JCommanderCommandProvider.get();
     final RemoteMainCommand mainCommand = new RemoteMainCommand();
-    LOGGER.debug("Registering commands with CommandRepository");
-    CommandRepository commandRepository = new CommandRepository();
-    Set<Command> commands = commandProvider.getCommands();
+    LOGGER.debug("Registering commands with JCommanderCommandRepository");
+    JCommanderCommandRepository commandRepository = new JCommanderCommandRepository();
+    Set<JCommanderCommand> commands = commandProvider.getCommands();
     commands.add(mainCommand);
     commandRepository.addAll(commands);
 
@@ -73,20 +74,20 @@ public class ConfigTool {
     // create services
     Collection<Object> services = ServiceProvider.get().createServices(mainCommand);
 
-    LOGGER.debug("Injecting services in CommandRepository");
-    commandRepository.inject(services);
-
     jCommander.getAskedCommand().map(command -> {
       // check for help
       if (command.isHelp()) {
         jCommander.printUsage();
         return true;
+      } else {
+        LOGGER.debug("Injecting services in specified command");
+        Injector.inject(command.getCommand(), services);
+        // validate the real command
+        command.validate();
+        // run the real command
+        command.run();
+        return true;
       }
-      // validate the real command
-      command.validate();
-      // run the real command
-      command.run();
-      return true;
     }).orElseGet(() -> {
       // If no command is provided, process help command
       jCommander.usage();
@@ -94,7 +95,39 @@ public class ConfigTool {
     });
   }
 
-  private static CustomJCommander parseArguments(CommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
+  private static CustomJCommander parseArguments(JCommanderCommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
+    CustomJCommander jCommander = getCustomJCommander(commandRepository, mainCommand);
+    try {
+      jCommander.parse(args);
+    } catch (ParameterException e) {
+      String command = jCommander.getParsedCommand();
+      if (command != null) {
+        if (!command.contains("-deprecated")) {
+          // Fallback to deprecated version
+          try {
+            for (int i = 0; i < args.length; ++i) {
+              if (args[i].equals(command)) {
+                args[i] = args[i].concat("-deprecated");
+                break;
+              }
+            }
+            // Create New JCommander object to avoid repeated main command error.
+            jCommander = getCustomJCommander(commandRepository, mainCommand);
+            jCommander.parse(args);
+          } catch (ParameterException pe) {
+            jCommander.printAskedCommmandUsage(command);
+            throw pe;
+          }
+        }
+      } else {
+        jCommander.printUsage();
+        throw e;
+      }
+    }
+    return jCommander;
+  }
+
+  private static CustomJCommander getCustomJCommander(JCommanderCommandRepository commandRepository, RemoteMainCommand mainCommand) {
     CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand) {
       @Override
       public void appendDefinitions(StringBuilder out, String indent) {
@@ -123,13 +156,6 @@ public class ConfigTool {
         }
       }
     };
-
-    try {
-      jCommander.parse(args);
-    } catch (ParameterException e) {
-      jCommander.printUsage();
-      throw e;
-    }
     return jCommander;
   }
 }

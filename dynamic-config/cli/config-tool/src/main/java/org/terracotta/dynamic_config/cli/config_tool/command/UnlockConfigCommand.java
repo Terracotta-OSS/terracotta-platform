@@ -17,30 +17,18 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
-import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 
 import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static java.util.Objects.requireNonNull;
-
-@Parameters(commandNames = "unlock-config", commandDescription = "Unlocks the config", hidden = true)
-@Usage("unlock-config -s <hostname[:port]>")
 public class UnlockConfigCommand extends RemoteCommand {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
+  private InetSocketAddress node;
 
-  @Override
-  public void validate() {
-    requireNonNull(node);
+  public void setNode(InetSocketAddress node) {
+    this.node = node;
   }
 
   @Override

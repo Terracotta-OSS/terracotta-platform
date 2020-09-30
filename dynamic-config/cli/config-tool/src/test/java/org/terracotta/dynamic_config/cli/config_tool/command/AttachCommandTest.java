@@ -96,12 +96,12 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_validate_failures() {
+    AttachCommand command = newCommand();
+    command.setSourceAddress(InetSocketAddress.createUnresolved("localhost", 9410));
+    command.setOperationType(NODE);
+    command.setDestinationAddress(InetSocketAddress.createUnresolved("localhost", 9410));
     assertThat(
-        () -> newCommand()
-            .setSourceAddress(InetSocketAddress.createUnresolved("localhost", 9410))
-            .setOperationType(NODE)
-            .setDestinationAddress(InetSocketAddress.createUnresolved("localhost", 9410))
-            .validate(),
+        command::run,
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("The destination and the source endpoints must not be the same")))));
   }
 
@@ -109,13 +109,13 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   public void test_attach_node_validation_fail_src_activated() {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
 
-    TopologyCommand command = newCommand()
-        .setSourceAddress(createUnresolved("localhost", 9411))
-        .setOperationType(NODE)
-        .setDestinationAddress("localhost", 9410);
+    AttachCommand command = newCommand();
+    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setOperationType(NODE);
+    command.setDestinationAddress(createUnresolved("localhost", 9410));
 
     assertThat(
-        command::validate,
+        command::run,
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("cannot be attached since it is part of an existing cluster")))));
   }
 
@@ -124,13 +124,13 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNodes(node1, node2)), node1.getUID());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
-    TopologyCommand command = newCommand()
-        .setSourceAddress(createUnresolved("localhost", 9411))
-        .setOperationType(NODE)
-        .setDestinationAddress("localhost", 9410);
+    AttachCommand command = newCommand();
+    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setOperationType(NODE);
+    command.setDestinationAddress(createUnresolved("localhost", 9410));
 
     assertThat(
-        command::validate,
+        command::run,
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("is part of a stripe containing more than 1 nodes")))));
   }
 
@@ -139,13 +139,13 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getUID());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
-    TopologyCommand command = newCommand()
-        .setSourceAddress(createUnresolved("localhost", 9411))
-        .setOperationType(NODE)
-        .setDestinationAddress("localhost", 9410);
+    AttachCommand command = newCommand();
+    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setOperationType(NODE);
+    command.setDestinationAddress(createUnresolved("localhost", 9410));
 
     assertThat(
-        command::validate,
+        command::run,
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(
             "Mismatch found in failover-priority setting")))));
   }
@@ -155,11 +155,10 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
-    TopologyCommand command = newCommand()
-        .setSourceAddress(createUnresolved("localhost", 9411))
-        .setOperationType(NODE)
-        .setDestinationAddress("localhost", 9410);
-    command.validate();
+    AttachCommand command = newCommand();
+    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setOperationType(NODE);
+    command.setDestinationAddress(createUnresolved("localhost", 9410));
     command.run();
 
     // capture the new topology set calls
@@ -184,13 +183,13 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   public void test_attach_stripe_validation_fail_src_activated() {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
 
-    TopologyCommand command = newCommand()
-        .setSourceAddress(createUnresolved("localhost", 9411))
-        .setOperationType(STRIPE)
-        .setDestinationAddress("localhost", 9410);
+    AttachCommand command = newCommand();
+    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setOperationType(STRIPE);
+    command.setDestinationAddress(createUnresolved("localhost", 9410));
 
     assertThat(
-        command::validate,
+        command::run,
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("cannot be attached since it is part of an existing cluster")))));
   }
 
@@ -199,13 +198,13 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1), new Stripe().addNode(node2)), node1.getUID());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
-    TopologyCommand command = newCommand()
-        .setSourceAddress(createUnresolved("localhost", 9411))
-        .setOperationType(STRIPE)
-        .setDestinationAddress("localhost", 9410);
+    AttachCommand command = newCommand();
+    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setOperationType(STRIPE);
+    command.setDestinationAddress(createUnresolved("localhost", 9410));
 
     assertThat(
-        command::validate,
+        command::run,
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString("is part of a cluster containing more than 1 stripes")))));
   }
 
@@ -217,11 +216,10 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
-    TopologyCommand command = newCommand()
-        .setSourceAddress(createUnresolved("localhost", 9411))
-        .setOperationType(STRIPE)
-        .setDestinationAddress("localhost", 9410);
-    command.validate();
+    AttachCommand command = newCommand();
+    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setOperationType(STRIPE);
+    command.setDestinationAddress(createUnresolved("localhost", 9410));
     command.run();
 
     // capture the new topology set calls
@@ -249,13 +247,13 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getUID());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
-    TopologyCommand command = newCommand()
-        .setSourceAddress(createUnresolved("localhost", 9411))
-        .setOperationType(STRIPE)
-        .setDestinationAddress("localhost", 9410);
+    AttachCommand command = newCommand();
+    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setOperationType(STRIPE);
+    command.setDestinationAddress(createUnresolved("localhost", 9410));
 
     assertThat(
-        command::validate,
+        command::run,
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(
             "Mismatch found in failover-priority setting")))));
   }
