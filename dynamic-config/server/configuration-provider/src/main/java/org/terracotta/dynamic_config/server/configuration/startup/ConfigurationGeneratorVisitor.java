@@ -35,7 +35,7 @@ import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
-import org.terracotta.server.ServerEnv;
+import org.terracotta.server.Server;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -65,6 +65,7 @@ public class ConfigurationGeneratorVisitor {
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
   private final ObjectMapperFactory objectMapperFactory;
+  private final Server server;
 
   private NodeContext nodeContext;
   private boolean repairMode;
@@ -74,12 +75,14 @@ public class ConfigurationGeneratorVisitor {
                                        NomadServerManager nomadServerManager,
                                        ClassLoader classLoader,
                                        PathResolver pathResolver,
-                                       ObjectMapperFactory objectMapperFactory) {
+                                       ObjectMapperFactory objectMapperFactory,
+                                       Server server) {
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
     this.objectMapperFactory = requireNonNull(objectMapperFactory);
+    this.server = server;
   }
 
   public boolean isUnConfiguredMode() {
@@ -111,7 +114,7 @@ public class ConfigurationGeneratorVisitor {
 
   void startUnconfigured(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {
     String nodeName = nodeContext.getNode().getName();
-    ServerEnv.getServer().console("Starting unconfigured node: {}", nodeName);
+    server.console("Starting unconfigured node: {}", nodeName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
 
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
@@ -142,9 +145,9 @@ public class ConfigurationGeneratorVisitor {
     nodeContext = nodeContext.withCluster(new FormatUpgradeNomadChange(Version.V1, Version.CURRENT).apply(nodeContext.getCluster())).get();
 
     String nodeName = nodeContext.getNode().getName();
-    ServerEnv.getServer().console("Starting node: {} in cluster: {}", nodeName, clusterName);
+    server.console("Starting node: {} in cluster: {}", nodeName, clusterName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirectoryFromCLI);
-    ServerEnv.getServer().console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
+    server.console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
@@ -157,7 +160,7 @@ public class ConfigurationGeneratorVisitor {
   }
 
   void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode, NodeContext alternate) {
-    ServerEnv.getServer().console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
+    server.console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
     nomadServerManager.init(nodeConfigurationDir, nodeName, alternate);
 
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
@@ -169,7 +172,7 @@ public class ConfigurationGeneratorVisitor {
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the TcConfig created will be stripped to make platform think this node is alone
-      ServerEnv.getServer().console(lineSeparator() + lineSeparator()
+      server.console(lineSeparator() + lineSeparator()
           + "=================================================================================================================" + lineSeparator()
           + "Node is starting in repair mode. This mode is used to manually repair a broken configuration on a node.      " + lineSeparator()
           + "No further configuration change can happen on the cluster while this node is in repair mode and not repaired." + lineSeparator()
@@ -205,10 +208,10 @@ public class ConfigurationGeneratorVisitor {
     Node node;
     // See if we find a match for a node based on the specified logParams. If not, we see if the config file contains just one node
     if (!isHostnameSpecified && !isPortSpecified && allNodes.size() == 1) {
-      ServerEnv.getServer().console("Found only one node information in config file: {}", configFilePath);
+      server.console("Found only one node information in config file: {}", configFilePath);
       node = allNodes.iterator().next();
     } else if (matchingNode.isPresent()) {
-      ServerEnv.getServer().console(log("Found matching node entry", configFilePath, logParams));
+      server.console(log("Found matching node entry", configFilePath, logParams));
       node = matchingNode.get();
     } else {
       throw new IllegalArgumentException(log("Did not find a matching node entry", configFilePath, logParams));
@@ -228,7 +231,7 @@ public class ConfigurationGeneratorVisitor {
     HashMap<String, String> logParams = new HashMap<>();
     logParams.put(NODE_NAME, specifiedNodeName);
     if (matchingNodes.size() == 1) {
-      ServerEnv.getServer().console(log("Found matching node entry", configFilePath, logParams));
+      server.console(log("Found matching node entry", configFilePath, logParams));
       return matchingNodes.get(0);
     } else if (matchingNodes.size() > 1) {
       throw new IllegalArgumentException(log("Found multiple matching node entries", configFilePath, logParams));

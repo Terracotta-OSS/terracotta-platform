@@ -18,12 +18,12 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
+import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.server.NomadServerMode;
@@ -60,14 +60,15 @@ public class DiagnosticCommand extends RemoteCommand {
   @Override
   public final void run() {
     // this call can take some time and we can have some timeout
-    Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
+    Map<Node.Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
 
-    ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = analyzeNomadConsistency(allNodes);
-    Collection<Endpoint> onlineNodes = sort(consistencyAnalyzer.getOnlineNodes().keySet());
-    Collection<Endpoint> onlineActivatedNodes = sort(consistencyAnalyzer.getOnlineActivatedNodes().keySet());
-    Collection<Endpoint> onlineInConfigurationNodes = sort(consistencyAnalyzer.getOnlineInConfigurationNodes().keySet());
-    Collection<Endpoint> onlineInRepairNodes = sort(consistencyAnalyzer.getOnlineInRepairNodes().keySet());
-    Collection<Endpoint> nodesPendingRestart = sort(allNodes.keySet().stream()
+    ConsistencyAnalyzer consistencyAnalyzer = analyzeNomadConsistency(allNodes);
+    Collection<InetSocketAddress> onlineNodes = sort(consistencyAnalyzer.getOnlineNodes().keySet());
+    Collection<InetSocketAddress> onlineActivatedNodes = sort(consistencyAnalyzer.getOnlineActivatedNodes().keySet());
+    Collection<InetSocketAddress> onlineInConfigurationNodes = sort(consistencyAnalyzer.getOnlineInConfigurationNodes().keySet());
+    Collection<InetSocketAddress> onlineInRepairNodes = sort(consistencyAnalyzer.getOnlineInRepairNodes().keySet());
+    Collection<InetSocketAddress> nodesPendingRestart = sort(allNodes.keySet().stream()
+        .map(Node.Endpoint::getAddress)
         .filter(onlineNodes::contains)
         .filter(this::mustBeRestarted)
         .collect(toSet()));
@@ -125,29 +126,29 @@ public class DiagnosticCommand extends RemoteCommand {
 
       // node status
       sb.append(" - Node state: ")
-          .append(consistencyAnalyzer.getState(endpoint.getNodeUID()))
+          .append(consistencyAnalyzer.getState(endpoint.getAddress()))
           .append(lineSeparator());
       sb.append(" - Node online, configured and activated: ")
-          .append(consistencyAnalyzer.isOnlineAndActivated(endpoint.getNodeUID()) ?
+          .append(consistencyAnalyzer.isOnlineAndActivated(endpoint.getAddress()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
       sb.append(" - Node online, configured and in repair: ")
-          .append(consistencyAnalyzer.isOnlineAndInRepair(endpoint.getNodeUID()) ?
+          .append(consistencyAnalyzer.isOnlineAndInRepair(endpoint.getAddress()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
       sb.append(" - Node online, new and being configured: ")
-          .append(consistencyAnalyzer.isOnlineAndInConfiguration(endpoint.getNodeUID()) ?
+          .append(consistencyAnalyzer.isOnlineAndInConfiguration(endpoint.getAddress()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
 
       // if node is online, display more information
-      if (onlineNodes.contains(endpoint)) {
+      if (onlineNodes.contains(endpoint.getAddress())) {
 
         sb.append(" - Node restart required: ")
-            .append(nodesPendingRestart.contains(endpoint) ?
+            .append(nodesPendingRestart.contains(endpoint.getAddress()) ?
                 "YES" :
                 "NO")
             .append(lineSeparator());
@@ -156,7 +157,7 @@ public class DiagnosticCommand extends RemoteCommand {
             "NO")
             .append(lineSeparator());
 
-        consistencyAnalyzer.getDiscoveryResponse(endpoint).ifPresent(discoverResponse -> {
+        consistencyAnalyzer.getDiscoveryResponse(endpoint.getAddress()).ifPresent(discoverResponse -> {
 
           sb.append(" - Node can accept new changes: ")
               .append(discoverResponse.getMode() == NomadServerMode.ACCEPTING ? "YES" : "NO")
@@ -206,17 +207,17 @@ public class DiagnosticCommand extends RemoteCommand {
     logger.info(sb.toString());
   }
 
-  private static String details(Collection<Endpoint> addresses) {
-    return addresses.isEmpty() ? "" : " (" + toString(addresses) + ")";
+  private static String details(Collection<?> items) {
+    return items.isEmpty() ? "" : " (" + toString(items) + ")";
   }
 
-  private static Collection<Endpoint> sort(Collection<Endpoint> addrs) {
-    TreeSet<Endpoint> sorted = new TreeSet<>(Comparator.comparing(Endpoint::toString));
+  private static Collection<InetSocketAddress> sort(Collection<InetSocketAddress> addrs) {
+    TreeSet<InetSocketAddress> sorted = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
     sorted.addAll(addrs);
     return sorted;
   }
 
-  private String meaningOf(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
+  private String meaningOf(ConsistencyAnalyzer consistencyAnalyzer) {
     switch (consistencyAnalyzer.getGlobalState()) {
       case ACCEPTING:
         return "The cluster configuration is healthy. " + getLockingInfo(consistencyAnalyzer);
@@ -286,7 +287,7 @@ public class DiagnosticCommand extends RemoteCommand {
     }
   }
 
-  private static String getLockingInfo(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer) {
+  private static String getLockingInfo(ConsistencyAnalyzer consistencyAnalyzer) {
     return consistencyAnalyzer.getNodeContext()
                               .map(NodeContext::getCluster)
                               .map(Cluster::getConfigurationLockContext)

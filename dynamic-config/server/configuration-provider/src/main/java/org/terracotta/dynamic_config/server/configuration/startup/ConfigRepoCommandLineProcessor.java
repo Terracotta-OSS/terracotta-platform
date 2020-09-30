@@ -21,7 +21,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-import org.terracotta.server.ServerEnv;
+import org.terracotta.server.Server;
 
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -30,19 +30,28 @@ import java.util.Optional;
 
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 
+;
+
 public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
   private final Options options;
   private final CommandLineProcessor nextStarter;
   private final ConfigurationGeneratorVisitor configurationGeneratorVisitor;
   private final IParameterSubstitutor parameterSubstitutor;
   private final ClusterFactory clusterCreator;
+  private final Server server;
 
-  ConfigRepoCommandLineProcessor(CommandLineProcessor nextStarter, Options options, ConfigurationGeneratorVisitor configurationGeneratorVisitor, IParameterSubstitutor parameterSubstitutor, ClusterFactory clusterCreator) {
+  ConfigRepoCommandLineProcessor(CommandLineProcessor nextStarter,
+                                 Options options,
+                                 ConfigurationGeneratorVisitor configurationGeneratorVisitor,
+                                 IParameterSubstitutor parameterSubstitutor,
+                                 ClusterFactory clusterCreator,
+                                 Server server) {
     this.options = options;
     this.nextStarter = nextStarter;
     this.configurationGeneratorVisitor = configurationGeneratorVisitor;
     this.parameterSubstitutor = parameterSubstitutor;
     this.clusterCreator = clusterCreator;
+    this.server = server;
   }
 
   @Override
@@ -50,7 +59,7 @@ public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
     Path configPath = configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(options.getConfigDir());
     Optional<String> nodeName = configurationGeneratorVisitor.findNodeName(configPath, parameterSubstitutor);
     if (nodeName.isPresent()) {
-      ServerEnv.getServer().console("Found configuration directory at: {}. Other parameters will be ignored", parameterSubstitutor.substitute(configPath));
+      server.console("Found configuration directory at: {}. Other parameters will be ignored", parameterSubstitutor.substitute(configPath));
 
       // Build an alternate topology from the CLI in case we cannot load any config from the existing config repo.
       // This can happen in case a node is not properly activated
@@ -64,7 +73,7 @@ public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
     }
 
     // Couldn't start node - pass the responsibility to the next starter
-    ServerEnv.getServer().console("Did not find configuration directory at: {}", parameterSubstitutor.substitute(configPath));
+    server.console("Did not find configuration directory at: {}", parameterSubstitutor.substitute(configPath));
     nextStarter.process();
   }
 }

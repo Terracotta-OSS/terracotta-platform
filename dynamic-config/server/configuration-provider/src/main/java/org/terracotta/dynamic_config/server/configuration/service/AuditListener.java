@@ -26,12 +26,13 @@ import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.server.Server;
-import org.terracotta.server.ServerEnv;
 
 import java.util.Properties;
 
 public class AuditListener implements DynamicConfigListener {
-  private final Server server = ServerEnv.getServer();
+  private final Server server;
+
+  public AuditListener(Server server) {this.server = server;}
 
   @Override
   public void onSettingChanged(SettingNomadChange change, Cluster updated) {

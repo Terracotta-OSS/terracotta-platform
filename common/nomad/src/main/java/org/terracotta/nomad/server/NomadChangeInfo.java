@@ -77,7 +77,6 @@ public class NomadChangeInfo {
     return version;
   }
 
-  // do not add "result": it might be different on each node
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -92,7 +91,6 @@ public class NomadChangeInfo {
         Objects.equals(creationTimestamp, that.creationTimestamp);
   }
 
-  // do not add "result": it might be different on each node
   @Override
   public int hashCode() {
     return Objects.hash(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser, creationTimestamp);

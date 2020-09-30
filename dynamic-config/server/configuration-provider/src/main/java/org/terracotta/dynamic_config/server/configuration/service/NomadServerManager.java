@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
@@ -43,6 +44,7 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Noma
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ApplicabilityNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ClusterActivationNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.DefaultNomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.FormatUpgradeNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockAwareNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockConfigNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.MultiSettingNomadChangeProcessor;
@@ -57,6 +59,7 @@ import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.persistence.sanskrit.SanskritException;
+import org.terracotta.server.Server;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -75,6 +78,7 @@ public class NomadServerManager {
   private final IParameterSubstitutor parameterSubstitutor;
   private final ConfigChangeHandlerManager configChangeHandlerManager;
   private final LicenseService licenseService;
+  private final Server server;
   private final DefaultNomadRoutingChangeProcessor router = new DefaultNomadRoutingChangeProcessor();
   private final NomadPermissionChangeProcessorImpl nomadPermissionChangeProcessor = new NomadPermissionChangeProcessorImpl();
 
@@ -85,12 +89,17 @@ public class NomadServerManager {
   private volatile DynamicConfigEventService eventRegistrationService;
   private volatile DynamicConfigEventFiring eventFiringService;
 
-  public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseService licenseService, ObjectMapperFactory objectMapperFactory) {
+  public NomadServerManager(IParameterSubstitutor parameterSubstitutor,
+                            ConfigChangeHandlerManager configChangeHandlerManager,
+                            LicenseService licenseService,
+                            ObjectMapperFactory objectMapperFactory,
+                            Server server) {
     this.objectMapperFactory = requireNonNull(objectMapperFactory);
     this.nomadServerFactory = new NomadServerFactory(objectMapperFactory);
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.configChangeHandlerManager = requireNonNull(configChangeHandlerManager);
     this.licenseService = requireNonNull(licenseService);
+    this.server = server;
   }
 
   public UpgradableNomadServer<NodeContext> getNomadServer() {
@@ -178,17 +187,18 @@ public class NomadServerManager {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
-    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory);
-    this.dynamicConfigService = new AuditService(dynamicConfigService);
+    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this, objectMapperFactory, server);
+    this.dynamicConfigService = new AuditService(dynamicConfigService, server);
     this.topologyService = dynamicConfigService;
 
     getEventRegistrationService().register(dynamicConfigService);
-    getEventRegistrationService().register(new AuditListener());
+    getEventRegistrationService().register(new AuditListener(server));
 
     LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(configPath.toString()));
   }
 
   public void downgradeForRead() {
+    getNomadServer().setChangeApplicator(null);
     getNomadServer().setChangeApplicator(null);
   }
 
@@ -208,6 +218,7 @@ public class NomadServerManager {
     router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(nodeUID));
     router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService));
     router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
+    router.register(FormatUpgradeNomadChange.class, new FormatUpgradeNomadChangeProcessor());
     router.register(LockConfigNomadChange.class, new LockConfigNomadChangeProcessor());
     router.register(UnlockConfigNomadChange.class, new UnlockConfigNomadChangeProcessor());
 

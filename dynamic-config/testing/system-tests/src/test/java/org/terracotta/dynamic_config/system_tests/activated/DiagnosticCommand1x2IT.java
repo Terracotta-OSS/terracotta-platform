@@ -43,7 +43,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     startNode(1, 1);
     waitForDiagnostic(1, 1);
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        invokeConfigTool( "-v", "diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic1.txt").toURI())).collect(toList())));
   }
 
