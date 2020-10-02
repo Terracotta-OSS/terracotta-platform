@@ -27,15 +27,12 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
  */
 public interface NomadEntity<T> extends Entity, NomadServer<T> {
-  @Override
-  default DiscoverResponse<T> discover() {
-    throw new UnsupportedOperationException();
-  }
 
   @Override
   default AcceptRejectResponse prepare(PrepareMessage message) {
@@ -54,6 +51,26 @@ public interface NomadEntity<T> extends Entity, NomadServer<T> {
 
   @Override
   default AcceptRejectResponse takeover(TakeoverMessage message) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  default DiscoverResponse<T> discover() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  default boolean hasIncompleteChange() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  default Optional<T> getCurrentCommittedConfig() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  default void reset() {
     throw new UnsupportedOperationException();
   }
 

@@ -16,8 +16,8 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import org.terracotta.diagnostic.client.DiagnosticService;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.net.InetSocketAddress;
 import java.time.Clock;

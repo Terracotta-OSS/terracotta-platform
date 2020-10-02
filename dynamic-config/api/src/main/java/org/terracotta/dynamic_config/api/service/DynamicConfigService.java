@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.time.Duration;
 import java.util.Optional;

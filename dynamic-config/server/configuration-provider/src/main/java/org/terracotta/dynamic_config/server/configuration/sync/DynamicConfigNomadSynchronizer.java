@@ -23,13 +23,13 @@ import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChang
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.DiscoverResponse;
-import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.UpgradableNomadServer;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -44,9 +44,9 @@ public class DynamicConfigNomadSynchronizer {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigNomadSynchronizer.class);
 
   private final NodeContext nodeStartupConfiguration;
-  private final UpgradableNomadServer<NodeContext> nomadServer;
+  private final DynamicConfigNomadServer nomadServer;
 
-  public DynamicConfigNomadSynchronizer(NodeContext nodeStartupConfiguration, UpgradableNomadServer<NodeContext> nomadServer) {
+  public DynamicConfigNomadSynchronizer(NodeContext nodeStartupConfiguration, DynamicConfigNomadServer nomadServer) {
     this.nodeStartupConfiguration = nodeStartupConfiguration;
     this.nomadServer = nomadServer;
   }
