@@ -36,11 +36,9 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
-import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadServerMode;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 import static java.util.Collections.singletonList;
@@ -66,7 +64,6 @@ public class NomadJsonModule extends SimpleModule {
     setMixInAnnotation(TakeoverMessage.class, TakeoverMessageMixin.class);
 
     setMixInAnnotation(ChangeRequest.class, ChangeRequestMixin.class);
-    setMixInAnnotation(NomadChangeInfo.class, NomadChangeInfoMixin.class);
   }
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
@@ -154,9 +151,8 @@ public class NomadJsonModule extends SimpleModule {
                                  @JsonProperty(value = "lastMutationTimestamp") Instant lastMutationTimestamp,
                                  @JsonProperty(value = "currentVersion", required = true) long currentVersion,
                                  @JsonProperty(value = "highestVersion", required = true) long highestVersion,
-                                 @JsonProperty(value = "latestChange") ChangeDetails<T> latestChange,
-                                 @JsonProperty(value = "checkpoints") List<NomadChangeInfo> checkpoints) {
-      super(mode, mutativeMessageCount, lastMutationHost, lastMutationUser, lastMutationTimestamp, currentVersion, highestVersion, latestChange, checkpoints);
+                                 @JsonProperty(value = "latestChange") ChangeDetails<T> latestChange) {
+      super(mode, mutativeMessageCount, lastMutationHost, lastMutationUser, lastMutationTimestamp, currentVersion, highestVersion, latestChange);
     }
   }
 
@@ -202,19 +198,6 @@ public class NomadJsonModule extends SimpleModule {
     public ChangeRequestMixin(ChangeRequestState state, long version, String prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser, Instant creationTimestamp) {
       super(state, version, prevChangeId, change, changeResult, creationHost, creationUser, creationTimestamp);
       this.changeResult = changeResult;
-    }
-  }
-
-  public static class NomadChangeInfoMixin extends NomadChangeInfo {
-    @JsonCreator
-    public NomadChangeInfoMixin(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
-                                @JsonProperty(value = "nomadChange", required = true) NomadChange nomadChange,
-                                @JsonProperty(value = "changeRequestState", required = true) ChangeRequestState changeRequestState,
-                                @JsonProperty(value = "version", required = true) long version,
-                                @JsonProperty(value = "creationHost", required = true) String creationHost,
-                                @JsonProperty(value = "creationUser", required = true) String creationUser,
-                                @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
-      super(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser, creationTimestamp);
     }
   }
 }

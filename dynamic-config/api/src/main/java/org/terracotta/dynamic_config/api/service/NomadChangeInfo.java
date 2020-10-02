@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.nomad.server;
+package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
+import org.terracotta.nomad.server.ChangeRequestState;
 
 import java.time.Instant;
 import java.util.Objects;

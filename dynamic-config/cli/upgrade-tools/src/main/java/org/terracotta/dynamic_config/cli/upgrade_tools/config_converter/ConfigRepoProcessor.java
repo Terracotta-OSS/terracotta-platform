@@ -24,6 +24,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
@@ -37,7 +38,6 @@ import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.nomad.server.PotentialApplicationResult;
-import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.persistence.sanskrit.SanskritException;
 
 import java.nio.file.Path;
@@ -98,7 +98,7 @@ public class ConfigRepoProcessor {
     };
 
     try {
-      UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, node.getName(), null);
+      DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, node.getName(), null);
       nomadServer.setChangeApplicator(changeApplicator);
       return nomadServer;
     } catch (SanskritException | NomadException | ConfigStorageException e) {

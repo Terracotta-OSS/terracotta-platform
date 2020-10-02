@@ -26,18 +26,17 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.testing.TmpDir;
 
@@ -370,7 +369,7 @@ public class ConfigConversionIT {
     ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
     NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
 
-    try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, "testServer0", null)) {
+    try (DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, "testServer0", null)) {
       nomadServer.discover().getLatestChange().getResult();
     }
   }

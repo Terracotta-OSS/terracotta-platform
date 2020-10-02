@@ -6,7 +6,6 @@ Diagnostic result:
  - Nodes online, configured and in repair: 0
  - Nodes online, new and being configured: 0
  - Configuration state: The cluster configuration is healthy. No changes are possible as config is locked by
- - Configuration checkpoint found across all online configured nodes (activated or in repair): YES (Version: 2, UUID:
  - Node state: ACTIVE
  - Node online, configured and activated: YES
  - Node online, configured and in repair: NO

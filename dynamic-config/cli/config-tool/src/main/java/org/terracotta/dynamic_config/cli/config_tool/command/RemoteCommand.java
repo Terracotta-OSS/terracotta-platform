@@ -36,6 +36,7 @@ import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
@@ -47,7 +48,6 @@ import org.terracotta.dynamic_config.cli.config_tool.stop.StopProgress;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
-import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

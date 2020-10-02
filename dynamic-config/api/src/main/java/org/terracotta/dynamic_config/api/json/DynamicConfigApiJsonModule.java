@@ -47,11 +47,16 @@ import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.inet.json.InetJsonModule;
 import org.terracotta.json.TerracottaJsonModule;
+import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.json.NomadJsonModule;
+import org.terracotta.nomad.server.ChangeRequestState;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static java.util.Arrays.asList;
 
@@ -94,6 +99,7 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     setMixInAnnotation(FormatUpgradeNomadChange.class, FormatUpgradeNomadChangeMixIn.class);
     setMixInAnnotation(LockConfigNomadChange.class, LockConfigNomadChangeMixIn.class);
     setMixInAnnotation(UnlockConfigNomadChange.class, UnlockConfigNomadChangeMixIn.class);
+    setMixInAnnotation(NomadChangeInfo.class, NomadChangeInfoMixin.class);
   }
 
   @Override
@@ -202,6 +208,19 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     @JsonCreator
     public UnlockConfigNomadChangeMixIn(@JsonProperty(value = "forced", required = true) boolean forced) {
       super(forced);
+    }
+  }
+
+  public static class NomadChangeInfoMixin extends NomadChangeInfo {
+    @JsonCreator
+    public NomadChangeInfoMixin(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
+                                @JsonProperty(value = "nomadChange", required = true) NomadChange nomadChange,
+                                @JsonProperty(value = "changeRequestState", required = true) ChangeRequestState changeRequestState,
+                                @JsonProperty(value = "version", required = true) long version,
+                                @JsonProperty(value = "creationHost", required = true) String creationHost,
+                                @JsonProperty(value = "creationUser", required = true) String creationUser,
+                                @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
+      super(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser, creationTimestamp);
     }
   }
 }
