@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.nomad.server;
+package org.terracotta.dynamic_config.server.api;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -22,6 +24,8 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
+import org.terracotta.nomad.server.ChangeApplicator;
+import org.terracotta.nomad.server.NomadException;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,25 +35,20 @@ import java.util.function.BiFunction;
 /**
  * @author Mathieu Carbou
  */
-public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T> {
+public class DynamicConfigNomadServerAdapter implements DynamicConfigNomadServer {
 
-  private final UpgradableNomadServer<T> delegate;
+  private final DynamicConfigNomadServer delegate;
 
-  public UpgradableNomadServerAdapter(UpgradableNomadServer<T> delegate) {
+  public DynamicConfigNomadServerAdapter(DynamicConfigNomadServer delegate) {
     this.delegate = delegate;
   }
 
   @Override
-  public void setChangeApplicator(ChangeApplicator<T> changeApplicator) {delegate.setChangeApplicator(changeApplicator);}
+  public void setChangeApplicator(ChangeApplicator<NodeContext> changeApplicator) {delegate.setChangeApplicator(changeApplicator);}
 
   @Override
-  public ChangeApplicator<T> getChangeApplicator() {
+  public ChangeApplicator<NodeContext> getChangeApplicator() {
     return delegate.getChangeApplicator();
-  }
-
-  @Override
-  public Optional<NomadChangeInfo> getNomadChangeInfo(UUID uuid) throws NomadException {
-    return delegate.getNomadChangeInfo(uuid);
   }
 
   @Override
@@ -59,7 +58,7 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
   public Optional<NomadChangeInfo> getNomadChange(UUID uuid) throws NomadException {return delegate.getNomadChange(uuid);}
 
   @Override
-  public DiscoverResponse<T> discover() throws NomadException {return delegate.discover();}
+  public DiscoverResponse<NodeContext> discover() throws NomadException {return delegate.discover();}
 
   @Override
   public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {return delegate.prepare(message);}
@@ -79,7 +78,7 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
   }
 
   @Override
-  public Optional<T> getCurrentCommittedConfig() throws NomadException {return delegate.getCurrentCommittedConfig();}
+  public Optional<NodeContext> getCurrentCommittedConfig() throws NomadException {return delegate.getCurrentCommittedConfig();}
 
   @Override
   public void reset() throws NomadException {
@@ -87,7 +86,7 @@ public class UpgradableNomadServerAdapter<T> implements UpgradableNomadServer<T>
   }
 
   @Override
-  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<T, NomadChange, T> fn) throws NomadException {
+  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {
     delegate.forceSync(changes, fn);
   }
 

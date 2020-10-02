@@ -25,6 +25,7 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
 import java.net.InetSocketAddress;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 
@@ -68,6 +69,15 @@ public class NomadEndpoint<T> implements NomadServer<T> {
 
   @Override
   public void close() {server.close();}
+
+  @Override
+  public boolean hasIncompleteChange() {return server.hasIncompleteChange();}
+
+  @Override
+  public Optional<T> getCurrentCommittedConfig() throws NomadException {return server.getCurrentCommittedConfig();}
+
+  @Override
+  public void reset() throws NomadException {server.reset();}
 
   @Override
   public String toString() {

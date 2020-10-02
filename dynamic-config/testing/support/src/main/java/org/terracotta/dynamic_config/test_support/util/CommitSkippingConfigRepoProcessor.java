@@ -21,12 +21,8 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigRepoProcessor;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
-import org.terracotta.nomad.messages.DiscoverResponse;
-import org.terracotta.nomad.messages.PrepareMessage;
-import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.messages.TakeoverMessage;
-import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.nomad.server.NomadServerAdapter;
 
 import java.nio.file.Path;
 
@@ -38,36 +34,10 @@ public class CommitSkippingConfigRepoProcessor extends ConfigRepoProcessor {
 
   @Override
   protected NomadServer<NodeContext> getNomadServer(Cluster cluster, Node node) {
-    NomadServer<NodeContext> nomadServer = super.getNomadServer(cluster, node);
-    return new NomadServer<NodeContext>() {
-      @Override
-      public DiscoverResponse<NodeContext> discover() throws NomadException {
-        return nomadServer.discover();
-      }
-
-      @Override
-      public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
-        return nomadServer.prepare(message);
-      }
-
+    return new NomadServerAdapter<NodeContext>(super.getNomadServer(cluster, node)) {
       @Override
       public AcceptRejectResponse commit(CommitMessage message) {
         return AcceptRejectResponse.accept();
-      }
-
-      @Override
-      public AcceptRejectResponse rollback(RollbackMessage message) throws NomadException {
-        return nomadServer.rollback(message);
-      }
-
-      @Override
-      public AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException {
-        return nomadServer.takeover(message);
-      }
-
-      @Override
-      public void close() {
-        nomadServer.close();
       }
     };
   }

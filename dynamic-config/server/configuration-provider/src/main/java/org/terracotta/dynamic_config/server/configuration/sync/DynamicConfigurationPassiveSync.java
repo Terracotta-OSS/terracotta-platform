@@ -20,8 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.UpgradableNomadServer;
 
 import java.util.Objects;
 import java.util.Set;
@@ -31,14 +31,14 @@ public class DynamicConfigurationPassiveSync {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigurationPassiveSync.class);
 
-  private final UpgradableNomadServer<NodeContext> nomadServer;
+  private final DynamicConfigNomadServer nomadServer;
   private final DynamicConfigService dynamicConfigService;
   private final TopologyService topologyService;
   private final Supplier<String> licenseContent;
   private final DynamicConfigNomadSynchronizer nomadSynchronizer;
 
   public DynamicConfigurationPassiveSync(NodeContext nodeStartupConfiguration,
-                                         UpgradableNomadServer<NodeContext> nomadServer,
+                                         DynamicConfigNomadServer nomadServer,
                                          DynamicConfigService dynamicConfigService,
                                          TopologyService topologyService,
                                          Supplier<String> licenseContent) {

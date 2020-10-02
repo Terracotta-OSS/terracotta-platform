@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.nomad.server;
+package org.terracotta.dynamic_config.server.configuration.nomad;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -22,6 +25,8 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
+import org.terracotta.nomad.server.ChangeApplicator;
+import org.terracotta.nomad.server.NomadException;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,11 +34,11 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 
-public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
-  private final UpgradableNomadServer<T> underlying;
-  private final ReentrantLock lock = new ReentrantLock(true);
+public class SingleThreadedNomadServer implements DynamicConfigNomadServer {
+  private final DynamicConfigNomadServer underlying;
+  protected final ReentrantLock lock = new ReentrantLock(true);
 
-  public SingleThreadedNomadServer(UpgradableNomadServer<T> underlying) {
+  public SingleThreadedNomadServer(DynamicConfigNomadServer underlying) {
     this.underlying = underlying;
   }
 
@@ -42,16 +47,6 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
     lock.lock();
     try {
       underlying.reset();
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  @Override
-  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<T, NomadChange, T> fn) throws NomadException {
-    lock.lock();
-    try {
-      underlying.forceSync(changes, fn);
     } finally {
       lock.unlock();
     }
@@ -68,7 +63,7 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public DiscoverResponse<T> discover() throws NomadException {
+  public DiscoverResponse<NodeContext> discover() throws NomadException {
     lock.lock();
     try {
       return underlying.discover();
@@ -118,7 +113,37 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public void setChangeApplicator(ChangeApplicator<T> changeApplicator) {
+  public boolean hasIncompleteChange() {
+    lock.lock();
+    try {
+      return underlying.hasIncompleteChange();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public Optional<NodeContext> getCurrentCommittedConfig() throws NomadException {
+    lock.lock();
+    try {
+      return underlying.getCurrentCommittedConfig();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {
+    lock.lock();
+    try {
+      underlying.forceSync(changes, fn);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
+  public void setChangeApplicator(ChangeApplicator<NodeContext> changeApplicator) {
     lock.lock();
     try {
       underlying.setChangeApplicator(changeApplicator);
@@ -128,20 +153,10 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public ChangeApplicator<T> getChangeApplicator() {
+  public ChangeApplicator<NodeContext> getChangeApplicator() {
     lock.lock();
     try {
       return underlying.getChangeApplicator();
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  @Override
-  public Optional<NomadChangeInfo> getNomadChangeInfo(UUID uuid) throws NomadException {
-    lock.lock();
-    try {
-      return underlying.getNomadChangeInfo(uuid);
     } finally {
       lock.unlock();
     }
@@ -162,26 +177,6 @@ public class SingleThreadedNomadServer<T> implements UpgradableNomadServer<T> {
     lock.lock();
     try {
       return underlying.getNomadChange(uuid);
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  @Override
-  public boolean hasIncompleteChange() {
-    lock.lock();
-    try {
-      return underlying.hasIncompleteChange();
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  @Override
-  public Optional<T> getCurrentCommittedConfig() throws NomadException {
-    lock.lock();
-    try {
-      return underlying.getCurrentCommittedConfig();
     } finally {
       lock.unlock();
     }

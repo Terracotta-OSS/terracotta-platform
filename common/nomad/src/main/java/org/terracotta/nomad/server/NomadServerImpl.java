@@ -29,12 +29,8 @@ import org.terracotta.nomad.server.state.NomadServerState;
 import org.terracotta.nomad.server.state.NomadStateChange;
 
 import java.time.Instant;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import static org.terracotta.nomad.messages.AcceptRejectResponse.accept;
 import static org.terracotta.nomad.messages.RejectionReason.BAD;
@@ -44,7 +40,7 @@ import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
-public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
+public class NomadServerImpl<T> implements NomadServer<T> {
   private final NomadServerState<T> state;
   private ChangeApplicator<T> changeApplicator;
 
@@ -58,6 +54,14 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
     this(state, null);
   }
 
+  public ChangeApplicator<T> getChangeApplicator() {
+    return changeApplicator;
+  }
+
+  public void setChangeApplicator(ChangeApplicator<T> changeApplicator) {
+    this.changeApplicator = changeApplicator;
+  }
+
   @Override
   public void reset() throws NomadException {
     state.reset();
@@ -65,136 +69,9 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
-  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<T, NomadChange, T> fn) throws NomadException {
-    ChangeApplicator<T> backup = this.changeApplicator;
-    try {
-      this.changeApplicator = ChangeApplicator.allow(fn);
-      for (NomadChangeInfo change : changes) {
-        switch (change.getChangeRequestState()) {
-          case PREPARED: {
-            long mutativeMessageCount = state.getMutativeMessageCount();
-            AcceptRejectResponse response = prepare(change.toPrepareMessage(mutativeMessageCount));
-            if (!response.isAccepted()) {
-              throw new NomadException("Prepare failure. " +
-                  "Reason: " + response + ". " +
-                  "Change:" + change.getNomadChange().getSummary());
-            }
-            break;
-          }
-          case COMMITTED: {
-            long mutativeMessageCount = state.getMutativeMessageCount();
-            AcceptRejectResponse response = prepare(change.toPrepareMessage(mutativeMessageCount));
-            if (!response.isAccepted()) {
-              throw new NomadException("Prepare failure. " +
-                  "Reason: " + response + ". " +
-                  "Change:" + change.getNomadChange().getSummary());
-            }
-            response = commit(change.toCommitMessage(mutativeMessageCount + 1));
-            if (!response.isAccepted()) {
-              throw new NomadException("Unexpected commit failure. " +
-                  "Reason: " + response + ". " +
-                  "Change:" + change.getNomadChange().getSummary());
-            }
-            break;
-          }
-          case ROLLED_BACK: {
-            long mutativeMessageCount = state.getMutativeMessageCount();
-            AcceptRejectResponse response = prepare(change.toPrepareMessage(mutativeMessageCount));
-            if (!response.isAccepted()) {
-              throw new NomadException("Prepare failure. " +
-                  "Reason: " + response + ". " +
-                  "Change:" + change.getNomadChange().getSummary());
-            }
-            response = rollback(change.toRollbackMessage(mutativeMessageCount + 1));
-            if (!response.isAccepted()) {
-              throw new NomadException("Unexpected rollback failure. " +
-                  "Reason: " + response + ". " +
-                  "Change:" + change.getNomadChange().getSummary());
-            }
-            break;
-          }
-          default:
-            throw new AssertionError(change.getChangeRequestState());
-        }
-      }
-    } finally {
-      this.changeApplicator = backup;
-    }
-  }
-
-  @Override
   public void close() {
     // has to be empty in this implementation.
     // Only there to support closing server "stubs" used for client <-> server communication through diagnostic or entity channels
-  }
-
-  @Override
-  public ChangeApplicator<T> getChangeApplicator() {
-    return changeApplicator;
-  }
-
-  @Override
-  public void setChangeApplicator(ChangeApplicator<T> changeApplicator) {
-    if (this.changeApplicator != null && changeApplicator != null) {
-      throw new IllegalArgumentException("Variable changeApplicator is already set");
-    }
-    this.changeApplicator = changeApplicator;
-  }
-
-  @Override
-  public Optional<NomadChangeInfo> getNomadChangeInfo(UUID uuid) throws NomadException {
-    return Optional.ofNullable(state.getChangeRequest(uuid))
-        .map(changeRequest -> new NomadChangeInfo(
-            uuid,
-            changeRequest.getChange(),
-            changeRequest.getState(),
-            changeRequest.getVersion(),
-            changeRequest.getCreationHost(),
-            changeRequest.getCreationUser(),
-            changeRequest.getCreationTimestamp()
-        ));
-  }
-
-  @Override
-  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
-    LinkedList<NomadChangeInfo> allNomadChanges = new LinkedList<>();
-    UUID changeUuid = state.getLatestChangeUuid();
-    while (changeUuid != null) {
-      ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
-      allNomadChanges.addFirst(
-          new NomadChangeInfo(
-              changeUuid,
-              changeRequest.getChange(),
-              changeRequest.getState(),
-              changeRequest.getVersion(),
-              changeRequest.getCreationHost(),
-              changeRequest.getCreationUser(),
-              changeRequest.getCreationTimestamp()
-          )
-      );
-      if (changeRequest.getPrevChangeId() != null) {
-        changeUuid = UUID.fromString(changeRequest.getPrevChangeId());
-      } else {
-        changeUuid = null;
-      }
-    }
-    return allNomadChanges;
-  }
-
-  @Override
-  public Optional<NomadChangeInfo> getNomadChange(UUID changeUuid) throws NomadException {
-    ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
-    if (changeRequest == null) {
-      return Optional.empty();
-    }
-    return Optional.of(new NomadChangeInfo(
-        changeUuid,
-        changeRequest.getChange(),
-        changeRequest.getState(),
-        changeRequest.getVersion(),
-        changeRequest.getCreationHost(),
-        changeRequest.getCreationUser(),
-        changeRequest.getCreationTimestamp()));
   }
 
   @Override
@@ -254,10 +131,6 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       );
     }
 
-    List<NomadChangeInfo> checkpoints = getAllNomadChanges().stream()
-        .filter(nomadChangeInfo -> nomadChangeInfo.getChangeRequestState() == COMMITTED)
-        .collect(Collectors.toList());
-
     return new DiscoverResponse<>(
         mode,
         mutativeMessageCount,
@@ -266,8 +139,7 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
         lastMutationTimestamp,
         currentVersion,
         highestVersion,
-        latestChange,
-        checkpoints
+        latestChange
     );
   }
 

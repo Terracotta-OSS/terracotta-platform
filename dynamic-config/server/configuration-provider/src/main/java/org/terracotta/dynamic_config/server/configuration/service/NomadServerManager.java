@@ -34,6 +34,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
 import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
@@ -57,7 +58,6 @@ import org.terracotta.dynamic_config.server.configuration.service.nomad.processo
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.UnlockConfigNomadChangeProcessor;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.server.Server;
 
@@ -82,7 +82,7 @@ public class NomadServerManager {
   private final DefaultNomadRoutingChangeProcessor router = new DefaultNomadRoutingChangeProcessor();
   private final NomadPermissionChangeProcessorImpl nomadPermissionChangeProcessor = new NomadPermissionChangeProcessorImpl();
 
-  private volatile UpgradableNomadServer<NodeContext> nomadServer;
+  private volatile DynamicConfigNomadServer nomadServer;
   private volatile NomadConfigurationManager configurationManager;
   private volatile DynamicConfigService dynamicConfigService;
   private volatile TopologyService topologyService;
@@ -102,7 +102,7 @@ public class NomadServerManager {
     this.server = server;
   }
 
-  public UpgradableNomadServer<NodeContext> getNomadServer() {
+  public DynamicConfigNomadServer getNomadServer() {
     if (nomadServer == null) {
       throw new AssertionError("Not initialized");
     }

@@ -105,11 +105,6 @@ public class DiagnosticCommand extends RemoteCommand {
     sb.append(" - Configuration state: ")
         .append(meaningOf(consistencyAnalyzer))
         .append(lineSeparator());
-    sb.append(" - Configuration checkpoint found across all online configured nodes (activated or in repair): ")
-        .append(consistencyAnalyzer.getCheckpoint()
-            .map(nci -> "YES (Version: " + nci.getVersion() + ", UUID: " + nci.getChangeUuid() + ", At: " + nci.getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601) + ", Details: " + nci.getNomadChange().getSummary() + ")")
-            .orElse("NO"))
-        .append(lineSeparator());
 
     allNodes.keySet().forEach(endpoint -> {
       // header

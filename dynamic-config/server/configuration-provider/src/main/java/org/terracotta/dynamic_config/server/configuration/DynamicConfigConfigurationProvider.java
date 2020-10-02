@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesHolder;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
@@ -30,6 +29,7 @@ import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.LicenseParserDiscovery;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
@@ -53,7 +53,6 @@ import org.terracotta.dynamic_config.server.configuration.sync.Require;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
-import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
@@ -125,7 +124,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       commandLineProcessor.process();
 
       // retrieve initialized services
-      UpgradableNomadServer<NodeContext> nomadServer = nomadServerManager.getNomadServer();
+      DynamicConfigNomadServer nomadServer = nomadServerManager.getNomadServer();
       DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
       TopologyService topologyService = nomadServerManager.getTopologyService();
       DynamicConfigEventService eventService = nomadServerManager.getEventRegistrationService();
@@ -149,7 +148,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration.registerExtendedConfiguration(DynamicConfigService.class, dynamicConfigService);
       configuration.registerExtendedConfiguration(DynamicConfigEventFiring.class, nomadServerManager.getEventFiringService());
       configuration.registerExtendedConfiguration(NomadServer.class, nomadServer);
-      configuration.registerExtendedConfiguration(UpgradableNomadServer.class, nomadServer);
+      configuration.registerExtendedConfiguration(DynamicConfigNomadServer.class, nomadServer);
       configuration.registerExtendedConfiguration(LicenseService.class, licenseService);
       configuration.registerExtendedConfiguration(PathResolver.class, userDirResolver);
       configuration.registerExtendedConfiguration(NomadRoutingChangeProcessor.class, nomadServerManager.getNomadRoutingChangeProcessor());

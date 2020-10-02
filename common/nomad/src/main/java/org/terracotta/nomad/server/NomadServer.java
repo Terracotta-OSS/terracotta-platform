@@ -22,7 +22,13 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 
+import java.util.Optional;
+
 public interface NomadServer<T> extends AutoCloseable {
+  boolean hasIncompleteChange();
+
+  Optional<T> getCurrentCommittedConfig() throws NomadException;
+
   DiscoverResponse<T> discover() throws NomadException;
 
   AcceptRejectResponse prepare(PrepareMessage message) throws NomadException;
@@ -32,6 +38,8 @@ public interface NomadServer<T> extends AutoCloseable {
   AcceptRejectResponse rollback(RollbackMessage message) throws NomadException;
 
   AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException;
+
+  void reset() throws NomadException;
 
   @Override
   void close();

@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.api.service;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.util.Optional;
 

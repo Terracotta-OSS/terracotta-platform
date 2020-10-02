@@ -23,7 +23,10 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServerAdapter;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ClusterConfigFilename;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Config;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageAdapter;
@@ -43,12 +46,7 @@ import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.ChangeApplicator;
-import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.NomadServerImpl;
-import org.terracotta.nomad.server.SingleThreadedNomadServer;
-import org.terracotta.nomad.server.UpgradableNomadServer;
-import org.terracotta.nomad.server.UpgradableNomadServerAdapter;
 import org.terracotta.persistence.sanskrit.ObjectMapperSupplier;
 import org.terracotta.persistence.sanskrit.Sanskrit;
 import org.terracotta.persistence.sanskrit.SanskritException;
@@ -69,9 +67,9 @@ public class NomadServerFactory {
     this.objectMapperFactory = objectMapperFactory;
   }
 
-  public UpgradableNomadServer<NodeContext> createServer(NomadConfigurationManager configurationManager,
-                                                         String nodeName,
-                                                         DynamicConfigEventFiring dynamicConfigEventFiring) throws SanskritException, NomadException, ConfigStorageException {
+  public DynamicConfigNomadServer createServer(NomadConfigurationManager configurationManager,
+                                               String nodeName,
+                                               DynamicConfigEventFiring dynamicConfigEventFiring) throws SanskritException, NomadException, ConfigStorageException {
 
     FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(configurationManager.getChangesPath());
 
@@ -101,7 +99,7 @@ public class NomadServerFactory {
 
     SanskritNomadServerState serverState = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer());
 
-    SingleThreadedNomadServer<NodeContext> nomadServer = new SingleThreadedNomadServer<>(new UpgradableNomadServerAdapter<NodeContext>(new NomadServerImpl<>(serverState)) {
+    SingleThreadedNomadServer nomadServer = new SingleThreadedNomadServer(new DynamicConfigNomadServerAdapter(new DynamicConfigNomadServerImpl(serverState)) {
       @Override
       public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
         AcceptRejectResponse response = super.prepare(message);
@@ -162,7 +160,7 @@ public class NomadServerFactory {
         new org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1()).create();
   }
 
-  private void upgrade(InitialConfigStorage configStorage, UpgradableNomadServer<NodeContext> nomadServer, long currentVersion) throws ConfigStorageException {
+  private void upgrade(InitialConfigStorage configStorage, DynamicConfigNomadServer nomadServer, long currentVersion) throws ConfigStorageException {
     final Config config = configStorage.getConfig(currentVersion);
     final Node node = config.getTopology().getNode();
     final String filename = ClusterConfigFilename.with(node.getName(), currentVersion).getFilename();

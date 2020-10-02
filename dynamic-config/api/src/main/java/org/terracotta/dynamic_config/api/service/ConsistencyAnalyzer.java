@@ -21,12 +21,10 @@ import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.ChangeRequestState;
-import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadServerMode;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -38,7 +36,6 @@ import java.util.stream.Collector;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
@@ -195,18 +192,6 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
 
   public boolean hasUnreachableNodes() {
     return getNodeCount() > responses.size();
-  }
-
-  public Optional<NomadChangeInfo> getCheckpoint() {
-    int configuredNodeCount = getOnlineConfiguredNodes();
-    return responses.values()
-        .stream()
-        .flatMap(response -> response.getCheckpoints().stream())
-        .collect(groupingBy(NomadChangeInfo::getChangeUuid, toList())) // Map<UUID, List<NomadChangeInfo>>
-        .entrySet().stream()
-        .filter(e -> e.getValue().size() == configuredNodeCount) // only consider entries having the change UUID on all the nodes
-        .max(Comparator.comparing(e -> e.getValue().get(0).getVersion())) // select the UUID having the maximum version ID
-        .map(e -> e.getValue().get(0));
   }
 
   /**

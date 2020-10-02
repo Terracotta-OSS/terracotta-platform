@@ -17,6 +17,8 @@ package org.terracotta.nomad.entity.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
@@ -27,9 +29,7 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 import org.terracotta.nomad.server.ChangeRequestState;
-import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.UpgradableNomadServer;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -41,9 +41,9 @@ public class NomadCommonServerEntity<T> implements CommonServerEntity<NomadEntit
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  private final UpgradableNomadServer<T> nomadServer;
+  private final DynamicConfigNomadServer nomadServer;
 
-  public NomadCommonServerEntity(UpgradableNomadServer<T> nomadServer) {
+  public NomadCommonServerEntity(DynamicConfigNomadServer nomadServer) {
     this.nomadServer = nomadServer;
   }
 
@@ -75,7 +75,7 @@ public class NomadCommonServerEntity<T> implements CommonServerEntity<NomadEntit
 
   private AcceptRejectResponse prepare(PrepareMessage nomadMessage) throws NomadException {
     final UUID uuid = nomadMessage.getChangeUuid();
-    final Optional<NomadChangeInfo> info = nomadServer.getNomadChangeInfo(uuid);
+    final Optional<NomadChangeInfo> info = nomadServer.getNomadChange(uuid);
     if (!info.isPresent()) {
       // the change UUId is not yet in Nomad - first call probably
       return nomadServer.prepare(nomadMessage);
@@ -94,7 +94,7 @@ public class NomadCommonServerEntity<T> implements CommonServerEntity<NomadEntit
 
   private AcceptRejectResponse rollback(RollbackMessage nomadMessage) throws NomadException {
     final UUID uuid = nomadMessage.getChangeUuid();
-    final Optional<NomadChangeInfo> info = nomadServer.getNomadChangeInfo(uuid);
+    final Optional<NomadChangeInfo> info = nomadServer.getNomadChange(uuid);
     if (!info.isPresent()) {
       // oups! we miss an entry!
       return AcceptRejectResponse.reject(BAD, "Change: " + uuid + " is missing", nomadMessage.getMutationHost(), nomadMessage.getMutationUser());
@@ -120,7 +120,7 @@ public class NomadCommonServerEntity<T> implements CommonServerEntity<NomadEntit
 
   private AcceptRejectResponse commit(CommitMessage nomadMessage) throws NomadException {
     final UUID uuid = nomadMessage.getChangeUuid();
-    final Optional<NomadChangeInfo> info = nomadServer.getNomadChangeInfo(uuid);
+    final Optional<NomadChangeInfo> info = nomadServer.getNomadChange(uuid);
     if (!info.isPresent()) {
       // oups! we miss an entry!
       return AcceptRejectResponse.reject(BAD, "Change: " + uuid + " is missing", nomadMessage.getMutationHost(), nomadMessage.getMutationUser());
