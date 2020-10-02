@@ -23,10 +23,10 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.ChangeApplicator;
-import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.testing.TmpDir;
 
 import java.io.IOException;
@@ -71,7 +71,7 @@ public class BackwardCompatibilityTest {
     ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
     NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
 
-    try (UpgradableNomadServer<NodeContext> nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, "default-node1", null)) {
+    try (DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, "default-node1", null)) {
       nomadServer.setChangeApplicator(ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()));
 
       // upgrade should have been done

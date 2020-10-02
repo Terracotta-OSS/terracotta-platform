@@ -21,7 +21,6 @@ import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadServerMode;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.UUID;
 
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
@@ -58,8 +57,7 @@ public class NomadTestHelper {
             "testCreationHost",
             "testCreationUser",
             Instant.now()
-        ),
-        Collections.emptyList()
+        )
     );
   }
 }

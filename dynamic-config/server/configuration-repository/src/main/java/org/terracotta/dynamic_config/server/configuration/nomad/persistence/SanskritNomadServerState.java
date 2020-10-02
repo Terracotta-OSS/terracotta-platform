@@ -18,11 +18,9 @@ package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.nomad.client.change.NomadChange;
-import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerMode;
-import org.terracotta.nomad.server.state.NomadServerState;
 import org.terracotta.nomad.server.state.NomadStateChange;
 import org.terracotta.persistence.sanskrit.Sanskrit;
 import org.terracotta.persistence.sanskrit.SanskritException;
@@ -51,7 +49,7 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
 
-public class SanskritNomadServerState implements NomadServerState<NodeContext> {
+public class SanskritNomadServerState implements DynamicConfigNomadServerState {
   private final Sanskrit sanskrit;
   private final ConfigStorage configStorage;
   private final HashComputer hashComputer;
@@ -119,7 +117,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
   }
 
   @Override
-  public ChangeRequest<NodeContext> getChangeRequest(UUID changeUuid) throws NomadException {
+  public DynamicConfigChangeRequest getChangeRequest(UUID changeUuid) throws NomadException {
     try {
       String uuidString = changeUuid.toString();
       SanskritObject child = getObject(uuidString);
@@ -151,7 +149,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
         throw new NomadException("Bad hash for change: " + changeUuid + ". " + e.getMessage());
       }
 
-      return new ChangeRequest<>(state, version, prevChangeUuid, change, config.getTopology(), creationHost, creationUser, creationTimestamp);
+      return new DynamicConfigChangeRequest(state, version, prevChangeUuid, change, config.getTopology(), creationHost, creationUser, creationTimestamp);
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to read configuration: " + changeUuid, e);
     }

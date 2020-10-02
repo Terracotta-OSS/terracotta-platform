@@ -23,7 +23,6 @@ import org.terracotta.nomad.server.NomadServerMode;
 
 import java.time.Clock;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -66,8 +65,7 @@ public class NomadTestHelper {
             "testCreationHost",
             "testCreationUser",
             Clock.systemDefaultZone().instant()
-        ),
-        Collections.emptyList()
+        )
     );
   }
 }
