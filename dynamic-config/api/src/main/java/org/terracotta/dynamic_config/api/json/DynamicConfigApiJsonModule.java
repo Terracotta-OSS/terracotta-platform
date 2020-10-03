@@ -219,8 +219,9 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
                                 @JsonProperty(value = "version", required = true) long version,
                                 @JsonProperty(value = "creationHost", required = true) String creationHost,
                                 @JsonProperty(value = "creationUser", required = true) String creationUser,
-                                @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
-      super(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser, creationTimestamp);
+                                @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp,
+                                @JsonProperty(value = "changeResultHash", required = true) String changeResultHash) {
+      super(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser, creationTimestamp, changeResultHash);
     }
   }
 }

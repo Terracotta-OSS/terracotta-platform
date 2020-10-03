@@ -127,7 +127,8 @@ public class DynamicConfigNomadServerImpl extends NomadServerImpl<NodeContext> i
               changeState.getVersion(),
               changeState.getCreationHost(),
               changeState.getCreationUser(),
-              changeState.getCreationTimestamp()
+              changeState.getCreationTimestamp(),
+              changeState.getChangeResultHash()
           )
       );
       changeUuid = changeState.getPrevChangeId();

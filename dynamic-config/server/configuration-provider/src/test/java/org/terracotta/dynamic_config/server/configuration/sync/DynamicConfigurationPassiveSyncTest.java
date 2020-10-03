@@ -63,7 +63,7 @@ public class DynamicConfigurationPassiveSyncTest {
       Testing.newTestCluster("foo",
           Testing.newTestStripe("stripe-1").addNodes(
               Testing.newTestNode("bar", "localhost"))), Testing.N_UIDS[1]);
-  private NomadChangeInfo activation = new NomadChangeInfo(UUID.randomUUID(), new ClusterActivationNomadChange(startupTopology.getCluster()), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now);
+  private NomadChangeInfo activation = new NomadChangeInfo(UUID.randomUUID(), new ClusterActivationNomadChange(startupTopology.getCluster()), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, "");
   private DynamicConfigSyncData.Codec codec = new DynamicConfigSyncData.Codec(new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()));
   private TopologyService topologyService;
 
@@ -76,8 +76,8 @@ public class DynamicConfigurationPassiveSyncTest {
   @Test
   public void testCodec() {
     List<NomadChangeInfo> nomadChanges = new ArrayList<>();
-    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
-    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
+    nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
 
     List<NomadChangeInfo> decodedChanges = codec.decode(codec.encode(new DynamicConfigSyncData(nomadChanges, startupTopology.getCluster(), null))).getNomadChanges();
     assertThat(decodedChanges, is(nomadChanges));
@@ -89,7 +89,7 @@ public class DynamicConfigurationPassiveSyncTest {
     List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
     UUID firstChange = UUID.randomUUID();
     activeNomadChanges.add(activation);
-    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer activeNomadServer = mock(DynamicConfigNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), topologyService, () -> null);
@@ -98,8 +98,8 @@ public class DynamicConfigurationPassiveSyncTest {
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
-    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
-    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
+    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer nomadServer = mock(DynamicConfigNomadServer.class);
     when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
@@ -115,7 +115,7 @@ public class DynamicConfigurationPassiveSyncTest {
   public void testSyncLicense() throws NomadException {
     List<NomadChangeInfo> sameChanges = new ArrayList<>();
     sameChanges.add(activation);
-    sameChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    sameChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer activeNomadServer = mock(DynamicConfigNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), topologyService, () -> "license content");
@@ -139,8 +139,8 @@ public class DynamicConfigurationPassiveSyncTest {
   public void testSyncWhenPassiveChangeHistoryNotMatchWithActive() throws NomadException {
     List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
     activeNomadChanges.add(activation);
-    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
-    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer activeNomadServer = mock(DynamicConfigNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), topologyService, () -> null);
@@ -149,7 +149,7 @@ public class DynamicConfigurationPassiveSyncTest {
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
-    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    passiveNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer nomadServer = mock(DynamicConfigNomadServer.class);
     when(nomadServer.getAllNomadChanges()).thenReturn(passiveNomadChanges);
@@ -166,8 +166,8 @@ public class DynamicConfigurationPassiveSyncTest {
     List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
     UUID firstChange = UUID.randomUUID();
     activeNomadChanges.add(activation);
-    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
-    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.PREPARED, 2L, "SYSTEM", "SYSTEM", now));
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.PREPARED, 2L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer activeNomadServer = mock(DynamicConfigNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), topologyService, () -> null);
@@ -176,7 +176,7 @@ public class DynamicConfigurationPassiveSyncTest {
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
-    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer nomadServer = mock(DynamicConfigNomadServer.class);
     DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
@@ -198,8 +198,8 @@ public class DynamicConfigurationPassiveSyncTest {
     List<NomadChangeInfo> activeNomadChanges = new ArrayList<>();
     UUID firstChange = UUID.randomUUID();
     activeNomadChanges.add(activation);
-    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
-    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
+    activeNomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer activeNomadServer = mock(DynamicConfigNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), topologyService, () -> null);
@@ -208,7 +208,7 @@ public class DynamicConfigurationPassiveSyncTest {
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
-    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer nomadServer = mock(DynamicConfigNomadServer.class);
     DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
@@ -232,8 +232,8 @@ public class DynamicConfigurationPassiveSyncTest {
     UUID firstChange = UUID.randomUUID();
     UUID secondChange = UUID.randomUUID();
     activeNomadChanges.add(activation);
-    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
-    activeNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
+    activeNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
+    activeNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now, ""));
 
     DynamicConfigNomadServer activeNomadServer = mock(DynamicConfigNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), topologyService, () -> null);
@@ -242,8 +242,8 @@ public class DynamicConfigurationPassiveSyncTest {
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
-    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
-    passiveNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now));
+    passiveNomadChanges.add(new NomadChangeInfo(firstChange, createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
+    passiveNomadChanges.add(new NomadChangeInfo(secondChange, createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 2L, "SYSTEM", "SYSTEM", now, ""));
     DynamicConfigNomadServer nomadServer = mock(DynamicConfigNomadServer.class);
     DiscoverResponse<NodeContext> discoverResponse = mock(DiscoverResponse.class);
     AcceptRejectResponse acceptRejectResponse = mock(AcceptRejectResponse.class);
