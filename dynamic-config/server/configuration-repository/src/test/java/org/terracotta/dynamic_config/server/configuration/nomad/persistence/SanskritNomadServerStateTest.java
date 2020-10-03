@@ -196,7 +196,7 @@ public class SanskritNomadServerStateTest {
     assertEquals("host", changeRequest.getCreationHost());
     assertEquals("user", changeRequest.getCreationUser());
     assertEquals(now, changeRequest.getCreationTimestamp());
-    assertEquals(prevuuid.toString(), changeRequest.getPrevChangeId());
+    assertEquals(prevuuid, changeRequest.getPrevChangeId());
     assertEquals("set offheap-resources.primary-server-resource=2GB", change.getSummary());
   }
 

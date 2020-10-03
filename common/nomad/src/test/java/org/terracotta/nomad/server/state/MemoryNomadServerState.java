@@ -38,7 +38,7 @@ import static org.terracotta.nomad.server.state.StateKeys.MODE;
 import static org.terracotta.nomad.server.state.StateKeys.MUTATIVE_MESSAGE_COUNT;
 
 public class MemoryNomadServerState<T> implements NomadServerState<T> {
-  private Map<String, Object> state = new HashMap<>();
+  private final Map<String, Object> state = new HashMap<>();
 
   @Override
   @SuppressWarnings("unchecked")
@@ -145,7 +145,7 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
     String creationHost = (String) changeRequestState.get(StateKeys.CREATION_HOST);
     String creationUser = (String) changeRequestState.get(StateKeys.CREATION_USER);
     Instant creationTimestamp = (Instant) changeRequestState.get(StateKeys.CREATION_TIMESTAMP);
-    String prevChangeUuid = (String) changeRequestState.get(StateKeys.PREV_CHANGE_UUID);
+    UUID prevChangeUuid = (UUID) changeRequestState.get(StateKeys.PREV_CHANGE_UUID);
     T changeResult = (T) state.get(Long.toString(version));
 
     return new ChangeRequest<>(requestState, version, prevChangeUuid, change, changeResult, creationHost, creationUser, creationTimestamp);

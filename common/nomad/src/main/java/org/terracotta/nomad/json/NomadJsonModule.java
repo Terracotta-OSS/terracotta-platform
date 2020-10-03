@@ -195,7 +195,7 @@ public class NomadJsonModule extends SimpleModule {
     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
     private final T changeResult;
 
-    public ChangeRequestMixin(ChangeRequestState state, long version, String prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser, Instant creationTimestamp) {
+    public ChangeRequestMixin(ChangeRequestState state, long version, UUID prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser, Instant creationTimestamp) {
       super(state, version, prevChangeId, change, changeResult, creationHost, creationUser, creationTimestamp);
       this.changeResult = changeResult;
     }
