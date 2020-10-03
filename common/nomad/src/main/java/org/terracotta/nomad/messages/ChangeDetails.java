@@ -32,6 +32,7 @@ public class ChangeDetails<T> {
   private final String creationHost;
   private final String creationUser;
   private final Instant creationTimestamp;
+  private final String changeResultHash;
 
   public ChangeDetails(UUID changeUuid,
                        ChangeRequestState state,
@@ -40,7 +41,8 @@ public class ChangeDetails<T> {
                        T result,
                        String creationHost,
                        String creationUser,
-                       Instant creationTimestamp) {
+                       Instant creationTimestamp,
+                       String changeResultHash) {
     this.changeUuid = requireNonNull(changeUuid);
     this.state = requireNonNull(state);
     this.version = version;
@@ -49,6 +51,7 @@ public class ChangeDetails<T> {
     this.creationHost = requireNonNull(creationHost);
     this.creationUser = requireNonNull(creationUser);
     this.creationTimestamp = creationTimestamp;
+    this.changeResultHash = changeResultHash;
   }
 
   public Instant getCreationTimestamp() {
@@ -81,5 +84,9 @@ public class ChangeDetails<T> {
 
   public String getCreationUser() {
     return creationUser;
+  }
+
+  public String getChangeResultHash() {
+    return changeResultHash;
   }
 }

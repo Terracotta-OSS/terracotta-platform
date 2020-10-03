@@ -33,6 +33,7 @@ public class NomadChangeInfo {
   private final String creationHost;
   private final String creationUser;
   private final Instant creationTimestamp;
+  private final String changeResultHash;
 
   public NomadChangeInfo(UUID changeUuid,
                          NomadChange nomadChange,
@@ -40,7 +41,8 @@ public class NomadChangeInfo {
                          long version,
                          String creationHost,
                          String creationUser,
-                         Instant creationTimestamp) {
+                         Instant creationTimestamp,
+                         String changeResultHash) {
     this.changeUuid = changeUuid;
     this.nomadChange = nomadChange;
     this.changeRequestState = changeRequestState;
@@ -48,6 +50,11 @@ public class NomadChangeInfo {
     this.creationHost = creationHost;
     this.creationUser = creationUser;
     this.creationTimestamp = creationTimestamp;
+    this.changeResultHash = changeResultHash;
+  }
+
+  public String getChangeResultHash() {
+    return changeResultHash;
   }
 
   public Instant getCreationTimestamp() {
@@ -106,6 +113,7 @@ public class NomadChangeInfo {
         ", creationHost=" + creationHost +
         ", creationUser=" + creationUser +
         ", creationTimestamp=" + creationTimestamp +
+        ", changeResultHash=" + changeResultHash +
         ", nomadChange=" + nomadChange.getSummary() +
         '}';
   }

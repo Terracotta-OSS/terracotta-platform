@@ -29,8 +29,9 @@ public class ChangeState<T> {
   private final String creationHost;
   private final String creationUser;
   private final Instant creationTimestamp;
+  private final String changeResultHash;
 
-  public ChangeState(ChangeRequestState state, long version, UUID prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser, Instant creationTimestamp) {
+  public ChangeState(ChangeRequestState state, long version, UUID prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser, Instant creationTimestamp, String changeResultHash) {
     this.state = state;
     this.version = version;
     this.prevChangeId = prevChangeId;
@@ -39,6 +40,7 @@ public class ChangeState<T> {
     this.creationHost = creationHost;
     this.creationUser = creationUser;
     this.creationTimestamp = creationTimestamp;
+    this.changeResultHash = changeResultHash;
   }
 
   public ChangeRequestState getState() {
@@ -71,5 +73,9 @@ public class ChangeState<T> {
 
   public Instant getCreationTimestamp() {
     return creationTimestamp;
+  }
+
+  public String getChangeResultHash() {
+    return changeResultHash;
   }
 }

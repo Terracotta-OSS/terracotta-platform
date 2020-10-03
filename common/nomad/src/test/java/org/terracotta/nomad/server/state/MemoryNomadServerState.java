@@ -148,6 +148,6 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
     UUID prevChangeUuid = (UUID) changeRequestState.get(StateKeys.PREV_CHANGE_UUID);
     T changeResult = (T) state.get(Long.toString(version));
 
-    return new ChangeState<>(requestState, version, prevChangeUuid, change, changeResult, creationHost, creationUser, creationTimestamp);
+    return new ChangeState<T>(requestState, version, prevChangeUuid, change, changeResult, creationHost, creationUser, creationTimestamp, changeResult == null ? null : changeResult.toString());
   }
 }
