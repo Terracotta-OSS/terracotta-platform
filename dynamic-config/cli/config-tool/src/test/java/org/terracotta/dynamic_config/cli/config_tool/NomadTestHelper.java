@@ -56,7 +56,8 @@ public class NomadTestHelper {
             "testChangeResult",
             "testCreationHost",
             "testCreationUser",
-            Instant.now()
+            Instant.now(),
+            "testChangeResultHash"
         )
     );
   }

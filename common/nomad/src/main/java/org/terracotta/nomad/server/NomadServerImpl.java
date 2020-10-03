@@ -115,24 +115,25 @@ public class NomadServerImpl<T> implements NomadServer<T> {
 
     ChangeDetails<T> latestChange = null;
     if (latestChangeUuid != null) {
-      ChangeState<T> changeRequest = state.getChangeState(latestChangeUuid);
-      ChangeRequestState changeState = changeRequest.getState();
-      long changeVersion = changeRequest.getVersion();
-      NomadChange change = changeRequest.getChange();
-      T changeResult = changeRequest.getChangeResult();
-      String changeCreationHost = changeRequest.getCreationHost();
-      String changeCreationUser = changeRequest.getCreationUser();
-      Instant changeCreationTimestamp = changeRequest.getCreationTimestamp();
+      ChangeState<T> changeState = state.getChangeState(latestChangeUuid);
+      ChangeRequestState changeRequestState = changeState.getState();
+      long changeVersion = changeState.getVersion();
+      NomadChange change = changeState.getChange();
+      T changeResult = changeState.getChangeResult();
+      String changeCreationHost = changeState.getCreationHost();
+      String changeCreationUser = changeState.getCreationUser();
+      Instant changeCreationTimestamp = changeState.getCreationTimestamp();
 
       latestChange = new ChangeDetails<>(
           latestChangeUuid,
-          changeState,
+          changeRequestState,
           changeVersion,
           change,
           changeResult,
           changeCreationHost,
           changeCreationUser,
-          changeCreationTimestamp
+          changeCreationTimestamp,
+          changeState.getChangeResultHash()
       );
     }
 

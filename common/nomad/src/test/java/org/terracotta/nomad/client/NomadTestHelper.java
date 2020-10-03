@@ -64,7 +64,8 @@ public class NomadTestHelper {
             "testChangeResult",
             "testCreationHost",
             "testCreationUser",
-            Clock.systemDefaultZone().instant()
+            Clock.systemDefaultZone().instant(),
+            "testChangeResultHash"
         )
     );
   }

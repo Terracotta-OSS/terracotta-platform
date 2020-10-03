@@ -110,8 +110,9 @@ public class NomadJsonModule extends SimpleModule {
                               @JsonProperty(value = "result") T result,
                               @JsonProperty(value = "creationHost", required = true) String creationHost,
                               @JsonProperty(value = "creationUser", required = true) String creationUser,
-                              @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
-      super(changeUuid, state, version, operation, result, creationHost, creationUser, creationTimestamp);
+                              @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp,
+                              @JsonProperty(value = "changeResultHash", required = true) String changeResultHash) {
+      super(changeUuid, state, version, operation, result, creationHost, creationUser, creationTimestamp, changeResultHash);
       this.result = result;
     }
   }
@@ -204,8 +205,9 @@ public class NomadJsonModule extends SimpleModule {
                             @JsonProperty(value = "changeResult", required = true) T changeResult,
                             @JsonProperty(value = "creationHost", required = true) String creationHost,
                             @JsonProperty(value = "creationUser", required = true) String creationUser,
-                            @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
-      super(state, version, prevChangeId, change, changeResult, creationHost, creationUser, creationTimestamp);
+                            @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp,
+                            @JsonProperty(value = "changeResultHash", required = true) String changeResultHash) {
+      super(state, version, prevChangeId, change, changeResult, creationHost, creationUser, creationTimestamp, changeResultHash);
       this.changeResult = changeResult;
     }
   }

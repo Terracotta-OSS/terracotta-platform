@@ -151,7 +151,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
         throw new NomadException("Bad hash for change: " + changeUuid + ". " + e.getMessage());
       }
 
-      return new ChangeState<>(state, version, prevChangeUuid, change, config.getTopology(), creationHost, creationUser, creationTimestamp);
+      return new ChangeState<>(state, version, prevChangeUuid, change, config.getTopology(), creationHost, creationUser, creationTimestamp, expectedHash);
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to read configuration: " + changeUuid, e);
     }
