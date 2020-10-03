@@ -573,7 +573,7 @@ public class NomadServerTest {
     ));
 
     assertTrue(response.isAccepted());
-    assertState(ACCEPTING, 5L, "testhost2", "testuser2", nextChangeUuid, 2L, 2L, ChangeRequestState.COMMITTED, 2L, firstChangeUuid.toString(), "change1", "change-applied1", "testhost1", "testuser1", "summary1");
+    assertState(ACCEPTING, 5L, "testhost2", "testuser2", nextChangeUuid, 2L, 2L, ChangeRequestState.COMMITTED, 2L, firstChangeUuid, "change1", "change-applied1", "testhost1", "testuser1", "summary1");
     verify(changeApplicator).tryApply("change-applied", new SimpleNomadChange("change1", "summary1"));
     verify(changeApplicator).apply(new SimpleNomadChange("change1", "summary1"));
   }
@@ -707,7 +707,7 @@ public class NomadServerTest {
       long highestVersion,
       ChangeRequestState changeState,
       Long changeVersion,
-      String prevChangeUuid,
+      UUID prevChangeUuid,
       String changeOperation,
       String changeResult,
       String changeCreationHost,

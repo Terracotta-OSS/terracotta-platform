@@ -147,11 +147,7 @@ public class DynamicConfigNomadServerImpl extends NomadServerImpl<NodeContext> i
               changeRequest.getCreationTimestamp()
           )
       );
-      if (changeRequest.getPrevChangeId() != null) {
-        changeUuid = UUID.fromString(changeRequest.getPrevChangeId());
-      } else {
-        changeUuid = null;
-      }
+      changeUuid = changeRequest.getPrevChangeId();
     }
     return allNomadChanges;
   }
