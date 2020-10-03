@@ -178,11 +178,7 @@ public class NomadServerImpl<T> implements NomadServer<T> {
     String mutationUser = message.getMutationUser();
     Instant mutationTimestamp = message.getMutationTimestamp();
     UUID prevChangeUuid = state.getLatestChangeUuid();
-    String prevChangeId = null;
-    if (prevChangeUuid != null) {
-      prevChangeId = prevChangeUuid.toString();
-    }
-    ChangeRequest<T> changeRequest = new ChangeRequest<>(ChangeRequestState.PREPARED, versionNumber, prevChangeId, change, newConfiguration, mutationHost, mutationUser, mutationTimestamp);
+    ChangeRequest<T> changeRequest = new ChangeRequest<>(ChangeRequestState.PREPARED, versionNumber, prevChangeUuid, change, newConfiguration, mutationHost, mutationUser, mutationTimestamp);
 
     // All nodes must have the same append log.
     // So we always run `applyStateChange` regardless of the result, which will "sync" sanskrit state with the prepared change

@@ -127,7 +127,7 @@ public class SanskritNomadStateChange implements NomadStateChange<NodeContext> {
     child.setString(CHANGE_STATE, changeRequest.getState().name());
     child.setLong(CHANGE_VERSION, changeRequest.getVersion());
     if (changeRequest.getPrevChangeId() != null) {
-      child.setString(PREV_CHANGE_UUID, changeRequest.getPrevChangeId());
+      child.setString(PREV_CHANGE_UUID, changeRequest.getPrevChangeId().toString());
     }
     child.setExternal(CHANGE_OPERATION, changeRequest.getChange(), Version.CURRENT.getValue());
     child.setString(CHANGE_FORMAT_VERSION, Version.CURRENT.getValue());

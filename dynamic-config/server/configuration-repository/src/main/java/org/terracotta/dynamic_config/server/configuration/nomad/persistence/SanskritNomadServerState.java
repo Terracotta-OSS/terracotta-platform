@@ -137,7 +137,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
         changeFormatVersion = Version.V1.getValue();
       }
       NomadChange change = child.getObject(CHANGE_OPERATION, NomadChange.class, changeFormatVersion);
-      String prevChangeUuid = child.getString(PREV_CHANGE_UUID);
+      UUID prevChangeUuid = child.getString(PREV_CHANGE_UUID) == null ? null : UUID.fromString(child.getString(PREV_CHANGE_UUID));
       String expectedHash = child.getString(CHANGE_RESULT_HASH);
       String creationHost = child.getString(CHANGE_CREATION_HOST);
       String creationUser = child.getString(CHANGE_CREATION_USER);
