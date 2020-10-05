@@ -154,8 +154,9 @@ public class NomadJsonModule extends SimpleModule {
                                  @JsonProperty(value = "lastMutationTimestamp") Instant lastMutationTimestamp,
                                  @JsonProperty(value = "currentVersion", required = true) long currentVersion,
                                  @JsonProperty(value = "highestVersion", required = true) long highestVersion,
-                                 @JsonProperty(value = "latestChange") ChangeDetails<T> latestChange) {
-      super(mode, mutativeMessageCount, lastMutationHost, lastMutationUser, lastMutationTimestamp, currentVersion, highestVersion, latestChange);
+                                 @JsonProperty(value = "latestChange") ChangeDetails<T> latestChange,
+                                 @JsonProperty(value = "latestCommittedChange") ChangeDetails<T> latestCommittedChange) {
+      super(mode, mutativeMessageCount, lastMutationHost, lastMutationUser, lastMutationTimestamp, currentVersion, highestVersion, latestChange, latestCommittedChange);
     }
   }
 

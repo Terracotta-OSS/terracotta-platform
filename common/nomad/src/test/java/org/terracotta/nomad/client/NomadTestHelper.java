@@ -27,6 +27,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
+import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 
 public class NomadTestHelper {
@@ -48,6 +49,17 @@ public class NomadTestHelper {
   }
 
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid) {
+    final ChangeDetails<String> changeDetails = new ChangeDetails<>(
+        uuid,
+        changeState,
+        1,
+        new SimpleNomadChange("testChange", "testSummary"),
+        "testChangeResult",
+        "testCreationHost",
+        "testCreationUser",
+        Clock.systemDefaultZone().instant(),
+        "testChangeResultHash"
+    );
     return new DiscoverResponse<>(
         changeState == PREPARED ? NomadServerMode.PREPARED : NomadServerMode.ACCEPTING,
         mutativeMessageCount,
@@ -56,17 +68,7 @@ public class NomadTestHelper {
         Clock.systemDefaultZone().instant(),
         1,
         1,
-        new ChangeDetails<>(
-            uuid,
-            changeState,
-            1,
-            new SimpleNomadChange("testChange", "testSummary"),
-            "testChangeResult",
-            "testCreationHost",
-            "testCreationUser",
-            Clock.systemDefaultZone().instant(),
-            "testChangeResultHash"
-        )
-    );
+        changeDetails,
+        changeState == COMMITTED ? changeDetails : null);
   }
 }
