@@ -23,7 +23,6 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
-import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServerAdapter;
@@ -46,6 +45,7 @@ import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.ChangeApplicator;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.persistence.sanskrit.ObjectMapperSupplier;
 import org.terracotta.persistence.sanskrit.Sanskrit;
@@ -112,7 +112,7 @@ public class NomadServerFactory {
       @Override
       public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
         AcceptRejectResponse response = super.commit(message);
-        NomadChangeInfo changeInfo = getNomadChange(message.getChangeUuid()).get();
+        ChangeState<NodeContext> changeInfo = getConfig(message.getChangeUuid()).get();
         if (dynamicConfigEventFiring != null) {
           dynamicConfigEventFiring.onNomadCommit(message, response, changeInfo);
         }

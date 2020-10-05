@@ -18,8 +18,8 @@ package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.nomad.client.change.NomadChange;
-import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerMode;
 import org.terracotta.nomad.server.state.NomadServerState;
@@ -119,7 +119,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
   }
 
   @Override
-  public ChangeRequest<NodeContext> getChangeRequest(UUID changeUuid) throws NomadException {
+  public ChangeState<NodeContext> getChangeState(UUID changeUuid) throws NomadException {
     try {
       String uuidString = changeUuid.toString();
       SanskritObject child = getObject(uuidString);
@@ -151,7 +151,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
         throw new NomadException("Bad hash for change: " + changeUuid + ". " + e.getMessage());
       }
 
-      return new ChangeRequest<>(state, version, prevChangeUuid, change, config.getTopology(), creationHost, creationUser, creationTimestamp);
+      return new ChangeState<>(state, version, prevChangeUuid, change, config.getTopology(), creationHost, creationUser, creationTimestamp);
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to read configuration: " + changeUuid, e);
     }

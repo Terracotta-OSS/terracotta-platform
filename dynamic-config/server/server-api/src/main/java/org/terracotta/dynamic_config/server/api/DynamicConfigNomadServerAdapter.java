@@ -25,6 +25,7 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 import org.terracotta.nomad.server.ChangeApplicator;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 
 import java.util.List;
@@ -55,9 +56,6 @@ public class DynamicConfigNomadServerAdapter implements DynamicConfigNomadServer
   public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {return delegate.getAllNomadChanges();}
 
   @Override
-  public Optional<NomadChangeInfo> getNomadChange(UUID uuid) throws NomadException {return delegate.getNomadChange(uuid);}
-
-  @Override
   public DiscoverResponse<NodeContext> discover() throws NomadException {return delegate.discover();}
 
   @Override
@@ -75,6 +73,11 @@ public class DynamicConfigNomadServerAdapter implements DynamicConfigNomadServer
   @Override
   public boolean hasIncompleteChange() {
     return delegate.hasIncompleteChange();
+  }
+
+  @Override
+  public Optional<ChangeState<NodeContext>> getConfig(UUID changeUUID) throws NomadException {
+    return delegate.getConfig(changeUUID);
   }
 
   @Override

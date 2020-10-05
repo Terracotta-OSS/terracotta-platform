@@ -23,6 +23,7 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @author Mathieu Carbou
@@ -53,6 +54,11 @@ public class NomadServerAdapter<T> implements NomadServer<T> {
   @Override
   public boolean hasIncompleteChange() {
     return delegate.hasIncompleteChange();
+  }
+
+  @Override
+  public Optional<ChangeState<T>> getConfig(UUID changeUUID) throws NomadException {
+    return delegate.getConfig(changeUUID);
   }
 
   @Override
