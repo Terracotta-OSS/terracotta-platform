@@ -15,7 +15,7 @@
  */
 package org.terracotta.nomad.entity.server;
 
-import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveServerEntity;
@@ -25,11 +25,12 @@ import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.nomad.server.NomadServer;
 
 public class NomadPassiveServerEntity<T> extends NomadCommonServerEntity<T> implements PassiveServerEntity<NomadEntityMessage, NomadEntityResponse> {
   private final PlatformService platformService;
 
-  public NomadPassiveServerEntity(DynamicConfigNomadServer nomadServer, PlatformService platformService) {
+  public NomadPassiveServerEntity(NomadServer<NodeContext> nomadServer, PlatformService platformService) {
     super(nomadServer);
     this.platformService = platformService;
   }

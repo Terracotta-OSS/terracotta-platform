@@ -705,7 +705,7 @@ public class NomadServerTest {
       UUID latestChangeUuid,
       long currentVersion,
       long highestVersion,
-      ChangeRequestState changeState,
+      ChangeRequestState changeRequestState,
       Long changeVersion,
       UUID prevChangeUuid,
       String changeOperation,
@@ -724,15 +724,15 @@ public class NomadServerTest {
     assertEquals(highestVersion, state.getHighestVersion());
 
     if (latestChangeUuid != null) {
-      ChangeRequest<String> changeRequest = state.getChangeRequest(latestChangeUuid);
-      assertEquals(changeState, changeRequest.getState());
-      assertEquals(changeVersion, (Long) changeRequest.getVersion());
-      assertEquals(prevChangeUuid, changeRequest.getPrevChangeId());
-      assertEquals(changeOperation, ((SimpleNomadChange) changeRequest.getChange()).getChange());
-      assertEquals(changeResult, changeRequest.getChangeResult());
-      assertEquals(changeCreationHost, changeRequest.getCreationHost());
-      assertEquals(changeCreationUser, changeRequest.getCreationUser());
-      assertEquals(changeSummary, changeRequest.getChange().getSummary());
+      ChangeState<String> changeState = state.getChangeState(latestChangeUuid);
+      assertEquals(changeRequestState, changeState.getState());
+      assertEquals(changeVersion, (Long) changeState.getVersion());
+      assertEquals(prevChangeUuid, changeState.getPrevChangeId());
+      assertEquals(changeOperation, ((SimpleNomadChange) changeState.getChange()).getChange());
+      assertEquals(changeResult, changeState.getChangeResult());
+      assertEquals(changeCreationHost, changeState.getCreationHost());
+      assertEquals(changeCreationUser, changeState.getCreationUser());
+      assertEquals(changeSummary, changeState.getChange().getSummary());
     }
 
     DiscoverResponse<String> discoverResponse = server.discover();
@@ -748,7 +748,7 @@ public class NomadServerTest {
       assertNull(latestChange);
     } else {
       assertEquals(latestChangeUuid, latestChange.getChangeUuid());
-      assertEquals(changeState, latestChange.getState());
+      assertEquals(changeRequestState, latestChange.getState());
       assertEquals((long) changeVersion, latestChange.getVersion());
       assertEquals(changeOperation, ((SimpleNomadChange) latestChange.getOperation()).getChange());
       assertEquals(changeResult, latestChange.getResult());

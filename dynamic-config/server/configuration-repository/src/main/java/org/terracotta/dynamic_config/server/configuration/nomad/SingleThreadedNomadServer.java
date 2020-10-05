@@ -26,6 +26,7 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 import org.terracotta.nomad.server.ChangeApplicator;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 
 import java.util.List;
@@ -123,6 +124,16 @@ public class SingleThreadedNomadServer implements DynamicConfigNomadServer {
   }
 
   @Override
+  public Optional<ChangeState<NodeContext>> getConfig(UUID changeUUID) throws NomadException {
+    lock.lock();
+    try {
+      return underlying.getConfig(changeUUID);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
   public Optional<NodeContext> getCurrentCommittedConfig() throws NomadException {
     lock.lock();
     try {
@@ -167,16 +178,6 @@ public class SingleThreadedNomadServer implements DynamicConfigNomadServer {
     lock.lock();
     try {
       return underlying.getAllNomadChanges();
-    } finally {
-      lock.unlock();
-    }
-  }
-
-  @Override
-  public Optional<NomadChangeInfo> getNomadChange(UUID uuid) throws NomadException {
-    lock.lock();
-    try {
-      return underlying.getNomadChange(uuid);
     } finally {
       lock.unlock();
     }

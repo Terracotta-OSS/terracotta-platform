@@ -36,6 +36,7 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadServerMode;
 
 import java.time.Instant;
@@ -63,6 +64,7 @@ public class NomadJsonModule extends SimpleModule {
     setMixInAnnotation(RollbackMessage.class, RollbackMessageMixin.class);
     setMixInAnnotation(TakeoverMessage.class, TakeoverMessageMixin.class);
 
+    setMixInAnnotation(ChangeState.class, ChangeStateMixin.class);
     setMixInAnnotation(ChangeRequest.class, ChangeRequestMixin.class);
   }
 
@@ -191,11 +193,36 @@ public class NomadJsonModule extends SimpleModule {
   }
 
   @SuppressWarnings({"unused", "FieldCanBeLocal"})
+  public static class ChangeStateMixin<T> extends ChangeState<T> {
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+    private final T changeResult;
+
+    public ChangeStateMixin(@JsonProperty(value = "state", required = true) ChangeRequestState state,
+                            @JsonProperty(value = "version", required = true) long version,
+                            @JsonProperty(value = "prevChangeId", required = true) UUID prevChangeId,
+                            @JsonProperty(value = "change", required = true) NomadChange change,
+                            @JsonProperty(value = "changeResult", required = true) T changeResult,
+                            @JsonProperty(value = "creationHost", required = true) String creationHost,
+                            @JsonProperty(value = "creationUser", required = true) String creationUser,
+                            @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
+      super(state, version, prevChangeId, change, changeResult, creationHost, creationUser, creationTimestamp);
+      this.changeResult = changeResult;
+    }
+  }
+
+  @SuppressWarnings({"unused", "FieldCanBeLocal"})
   public static class ChangeRequestMixin<T> extends ChangeRequest<T> {
     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
     private final T changeResult;
 
-    public ChangeRequestMixin(ChangeRequestState state, long version, UUID prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser, Instant creationTimestamp) {
+    public ChangeRequestMixin(@JsonProperty(value = "state", required = true) ChangeRequestState state,
+                              @JsonProperty(value = "version", required = true) long version,
+                              @JsonProperty(value = "prevChangeId", required = true) UUID prevChangeId,
+                              @JsonProperty(value = "change", required = true) NomadChange change,
+                              @JsonProperty(value = "changeResult", required = true) T changeResult,
+                              @JsonProperty(value = "creationHost", required = true) String creationHost,
+                              @JsonProperty(value = "creationUser", required = true) String creationUser,
+                              @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
       super(state, version, prevChangeId, change, changeResult, creationHost, creationUser, creationTimestamp);
       this.changeResult = changeResult;
     }

@@ -93,6 +93,11 @@ public class NomadServerImpl<T> implements NomadServer<T> {
   }
 
   @Override
+  public Optional<ChangeState<T>> getConfig(UUID changeUUID) throws NomadException {
+    return Optional.ofNullable(state.getChangeState(changeUUID));
+  }
+
+  @Override
   public Optional<T> getCurrentCommittedConfig() throws NomadException {
     return state.getCurrentCommittedConfig();
   }
@@ -110,7 +115,7 @@ public class NomadServerImpl<T> implements NomadServer<T> {
 
     ChangeDetails<T> latestChange = null;
     if (latestChangeUuid != null) {
-      ChangeRequest<T> changeRequest = state.getChangeRequest(latestChangeUuid);
+      ChangeState<T> changeRequest = state.getChangeState(latestChangeUuid);
       ChangeRequestState changeState = changeRequest.getState();
       long changeVersion = changeRequest.getVersion();
       NomadChange change = changeRequest.getChange();
@@ -161,8 +166,8 @@ public class NomadServerImpl<T> implements NomadServer<T> {
     }
 
     UUID changeUuid = message.getChangeUuid();
-    ChangeRequest<T> existingChangeRequest = state.getChangeRequest(changeUuid);
-    if (existingChangeRequest != null) {
+    ChangeState<T> existingChangeState = state.getChangeState(changeUuid);
+    if (existingChangeState != null) {
       return reject(BAD, "Received an alive PrepareMessage for a change that already exists: " + changeUuid);
     }
 
@@ -218,13 +223,13 @@ public class NomadServerImpl<T> implements NomadServer<T> {
     String mutationUser = message.getMutationUser();
     Instant mutationTimestamp = message.getMutationTimestamp();
 
-    ChangeRequest<T> changeRequest = state.getChangeRequest(changeUuid);
-    if (changeRequest == null) {
+    ChangeState<T> changeState = state.getChangeState(changeUuid);
+    if (changeState == null) {
       return reject(BAD, "Received an alive CommitMessage for a change that does not exist: " + changeUuid);
     }
 
-    long changeVersion = changeRequest.getVersion();
-    NomadChange change = changeRequest.getChange();
+    long changeVersion = changeState.getVersion();
+    NomadChange change = changeState.getChange();
 
     changeApplicator.apply(change);
 

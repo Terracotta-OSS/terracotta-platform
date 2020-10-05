@@ -21,14 +21,13 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.server.ChangeApplicator;
-import org.terracotta.nomad.server.ChangeRequest;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerImpl;
 import org.terracotta.nomad.server.state.NomadServerState;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
@@ -115,39 +114,23 @@ public class DynamicConfigNomadServerImpl extends NomadServerImpl<NodeContext> i
   }
 
   @Override
-  public Optional<NomadChangeInfo> getNomadChange(UUID changeUuid) throws NomadException {
-    ChangeRequest<NodeContext> changeRequest = state.getChangeRequest(changeUuid);
-    if (changeRequest == null) {
-      return Optional.empty();
-    }
-    return Optional.of(new NomadChangeInfo(
-        changeUuid,
-        changeRequest.getChange(),
-        changeRequest.getState(),
-        changeRequest.getVersion(),
-        changeRequest.getCreationHost(),
-        changeRequest.getCreationUser(),
-        changeRequest.getCreationTimestamp()));
-  }
-
-  @Override
   public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
     LinkedList<NomadChangeInfo> allNomadChanges = new LinkedList<>();
     UUID changeUuid = state.getLatestChangeUuid();
     while (changeUuid != null) {
-      ChangeRequest<NodeContext> changeRequest = state.getChangeRequest(changeUuid);
+      ChangeState<NodeContext> changeState = state.getChangeState(changeUuid);
       allNomadChanges.addFirst(
           new NomadChangeInfo(
               changeUuid,
-              changeRequest.getChange(),
-              changeRequest.getState(),
-              changeRequest.getVersion(),
-              changeRequest.getCreationHost(),
-              changeRequest.getCreationUser(),
-              changeRequest.getCreationTimestamp()
+              changeState.getChange(),
+              changeState.getState(),
+              changeState.getVersion(),
+              changeState.getCreationHost(),
+              changeState.getCreationUser(),
+              changeState.getCreationTimestamp()
           )
       );
-      changeUuid = changeRequest.getPrevChangeId();
+      changeUuid = changeState.getPrevChangeId();
     }
     return allNomadChanges;
   }
