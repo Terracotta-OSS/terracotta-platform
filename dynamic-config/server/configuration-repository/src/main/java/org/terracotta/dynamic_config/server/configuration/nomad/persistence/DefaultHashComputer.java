@@ -32,7 +32,7 @@ public class DefaultHashComputer implements HashComputer {
   public String computeHash(Config config) {
     String output = Props.toString(config.getTopology().getCluster().toProperties(false, false, true, config.getVersion()));
     String hash = HashUtils.generateHash(output);
-    LOGGER.debug("Computed hash: {} for config:\n{}", hash, output);
+    LOGGER.trace("Computed hash: {} for config:\n{}", hash, output);
     return hash;
   }
 
