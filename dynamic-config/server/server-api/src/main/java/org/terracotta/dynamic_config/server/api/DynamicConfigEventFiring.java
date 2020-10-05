@@ -21,11 +21,11 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
-import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
+import org.terracotta.nomad.server.ChangeState;
 
 /**
  * @author Mathieu Carbou
@@ -42,7 +42,7 @@ public interface DynamicConfigEventFiring {
 
   void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response);
 
-  void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo);
+  void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState);
 
   void onNomadRollback(RollbackMessage message, AcceptRejectResponse response);
 

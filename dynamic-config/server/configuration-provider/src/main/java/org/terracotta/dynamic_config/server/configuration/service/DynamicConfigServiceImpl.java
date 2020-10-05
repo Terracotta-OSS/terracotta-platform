@@ -50,6 +50,7 @@ import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.server.Server;
 
@@ -235,9 +236,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   // this is the only real listener where we act on in this service
 
   @Override
-  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState) {
     if (response.isAccepted()) {
-      DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) changeInfo.getNomadChange();
+      DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) changeState.getChange();
       LOGGER.info("Nomad change {} committed: {}", message.getChangeUuid(), dynamicConfigNomadChange.getSummary());
 
       // extract the changes since there can be multiple settings change

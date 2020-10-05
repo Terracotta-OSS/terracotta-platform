@@ -23,8 +23,6 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.function.BiFunction;
 
 public interface DynamicConfigNomadServer extends NomadServer<NodeContext> {
@@ -33,18 +31,6 @@ public interface DynamicConfigNomadServer extends NomadServer<NodeContext> {
   ChangeApplicator<NodeContext> getChangeApplicator();
 
   List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
-
-  Optional<NomadChangeInfo> getNomadChange(UUID uuid) throws NomadException;
-
-  /**
-   * Last change has not been committed or rolled back yet.
-   * Nomad is in PREPARED mode and won't accept further changes.
-   */
-  boolean hasIncompleteChange();
-
-  Optional<NodeContext> getCurrentCommittedConfig() throws NomadException;
-
-  void reset() throws NomadException;
 
   /**
    * Forces the sync of a stream of changes in a node's append log.

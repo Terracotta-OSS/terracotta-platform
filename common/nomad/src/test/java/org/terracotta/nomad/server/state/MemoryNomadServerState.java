@@ -16,8 +16,8 @@
 package org.terracotta.nomad.server.state;
 
 import org.terracotta.nomad.client.change.NomadChange;
-import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerMode;
 
@@ -132,7 +132,7 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
 
   @Override
   @SuppressWarnings("unchecked")
-  public ChangeRequest<T> getChangeRequest(UUID changeUuid) {
+  public ChangeState<T> getChangeState(UUID changeUuid) {
     Map<String, Object> changeRequestState = (Map<String, Object>) state.get(changeUuid.toString());
 
     if (changeRequestState == null) {
@@ -148,6 +148,6 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
     UUID prevChangeUuid = (UUID) changeRequestState.get(StateKeys.PREV_CHANGE_UUID);
     T changeResult = (T) state.get(Long.toString(version));
 
-    return new ChangeRequest<>(requestState, version, prevChangeUuid, change, changeResult, creationHost, creationUser, creationTimestamp);
+    return new ChangeState<>(requestState, version, prevChangeUuid, change, changeResult, creationHost, creationUser, creationTimestamp);
   }
 }

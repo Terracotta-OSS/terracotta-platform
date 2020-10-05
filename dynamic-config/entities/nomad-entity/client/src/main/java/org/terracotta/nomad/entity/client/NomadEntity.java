@@ -23,11 +23,13 @@ import org.terracotta.nomad.messages.MutativeMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @author Mathieu Carbou
@@ -66,6 +68,11 @@ public interface NomadEntity<T> extends Entity, NomadServer<T> {
 
   @Override
   default Optional<T> getCurrentCommittedConfig() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  default Optional<ChangeState<T>> getConfig(UUID changeUUID) {
     throw new UnsupportedOperationException();
   }
 
