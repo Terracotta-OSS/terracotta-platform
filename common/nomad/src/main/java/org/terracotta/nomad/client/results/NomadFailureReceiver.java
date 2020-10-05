@@ -40,6 +40,10 @@ public class NomadFailureReceiver<T> extends LoggingResultReceiver<T> {
     return reasons;
   }
 
+  public int getCount() {
+    return reasons.size();
+  }
+
   public boolean isEmpty() {
     return reasons.isEmpty();
   }

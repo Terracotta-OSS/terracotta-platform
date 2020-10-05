@@ -36,9 +36,14 @@ import org.terracotta.nomad.server.state.NomadServerState;
 import java.time.Clock;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -745,16 +750,26 @@ public class NomadServerTest {
 
     ChangeDetails<String> latestChange = discoverResponse.getLatestChange();
     if (latestChangeUuid == null) {
-      assertNull(latestChange);
+      assertNull("Expected a null latestChangeUuid", latestChange);
     } else {
-      assertEquals(latestChangeUuid, latestChange.getChangeUuid());
-      assertEquals(changeRequestState, latestChange.getState());
-      assertEquals((long) changeVersion, latestChange.getVersion());
-      assertEquals(changeOperation, ((SimpleNomadChange) latestChange.getOperation()).getChange());
-      assertEquals(changeResult, latestChange.getResult());
-      assertEquals(changeCreationHost, latestChange.getCreationHost());
-      assertEquals(changeCreationUser, latestChange.getCreationUser());
-      assertEquals(changeSummary, latestChange.getOperation().getSummary());
+      if (changeRequestState == ChangeRequestState.ROLLED_BACK) {
+        if (prevChangeUuid == null) {
+          assertNull(latestChange);
+        } else {
+          // a discovery call now ignores rolled back changes and only output prepared or committed ones
+          assertThat(latestChange.getState(), is(not(equalTo(ChangeRequestState.ROLLED_BACK))));
+        }
+      } else {
+        assertNotNull("Expected a non null latest change: " + latestChangeUuid, latestChange);
+        assertEquals(latestChangeUuid, latestChange.getChangeUuid());
+        assertEquals(changeRequestState, latestChange.getState());
+        assertEquals((long) changeVersion, latestChange.getVersion());
+        assertEquals(changeOperation, ((SimpleNomadChange) latestChange.getOperation()).getChange());
+        assertEquals(changeResult, latestChange.getResult());
+        assertEquals(changeCreationHost, latestChange.getCreationHost());
+        assertEquals(changeCreationUser, latestChange.getCreationUser());
+        assertEquals(changeSummary, latestChange.getOperation().getSummary());
+      }
     }
   }
 }

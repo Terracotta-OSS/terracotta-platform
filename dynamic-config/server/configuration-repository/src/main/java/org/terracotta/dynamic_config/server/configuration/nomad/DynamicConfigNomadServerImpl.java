@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.server.ChangeApplicator;
+import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerImpl;
@@ -114,23 +115,25 @@ public class DynamicConfigNomadServerImpl extends NomadServerImpl<NodeContext> i
   }
 
   @Override
-  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
+  public List<NomadChangeInfo> getCommittedNomadChanges() throws NomadException {
     LinkedList<NomadChangeInfo> allNomadChanges = new LinkedList<>();
     UUID changeUuid = state.getLatestChangeUuid();
     while (changeUuid != null) {
       ChangeState<NodeContext> changeState = state.getChangeState(changeUuid);
-      allNomadChanges.addFirst(
-          new NomadChangeInfo(
-              changeUuid,
-              changeState.getChange(),
-              changeState.getState(),
-              changeState.getVersion(),
-              changeState.getCreationHost(),
-              changeState.getCreationUser(),
-              changeState.getCreationTimestamp(),
-              changeState.getChangeResultHash()
-          )
-      );
+      if (changeState.getState() == ChangeRequestState.COMMITTED) {
+        allNomadChanges.addFirst(
+            new NomadChangeInfo(
+                changeUuid,
+                changeState.getChange(),
+                changeState.getState(),
+                changeState.getVersion(),
+                changeState.getCreationHost(),
+                changeState.getCreationUser(),
+                changeState.getCreationTimestamp(),
+                changeState.getChangeResultHash()
+            )
+        );
+      }
       changeUuid = changeState.getPrevChangeId();
     }
     return allNomadChanges;

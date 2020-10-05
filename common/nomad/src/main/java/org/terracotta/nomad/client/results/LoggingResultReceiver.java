@@ -24,7 +24,6 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 
 public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, RecoveryResultReceiver<T> {
@@ -76,13 +75,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
-    error("UNRECOVERABLE: Inconsistent cluster for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
-  }
-
-  @Override
-  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
-    error("UNRECOVERABLE: Desynchronized cluster for last changes: " + lastChangeUuids);
+  public void discoverClusterInconsistent(Collection<UUID> changeUuids, Collection<InetSocketAddress> servers) {
+    error("UNRECOVERABLE: Inconsistent change result for changes: " + changeUuids + " on: " + servers + ": the result is not the same for these last committed changes");
   }
 
   @Override

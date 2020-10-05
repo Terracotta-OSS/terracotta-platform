@@ -126,7 +126,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     List<NomadChangeInfo> backup;
     Cluster thisTopology = upcomingNodeContext.getCluster();
     try {
-      backup = nomadServer.getAllNomadChanges();
+      backup = nomadServer.getCommittedNomadChanges();
     } catch (NomadException e) {
       throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
     }
@@ -398,7 +398,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public NomadChangeInfo[] getChangeHistory() {
     try {
-      return nomadServerManager.getNomadServer().getAllNomadChanges().toArray(new NomadChangeInfo[0]);
+      return nomadServerManager.getNomadServer().getCommittedNomadChanges().toArray(new NomadChangeInfo[0]);
     } catch (NomadException e) {
       throw new IllegalStateException(e);
     }

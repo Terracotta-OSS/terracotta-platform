@@ -19,7 +19,6 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 
 public interface DiscoverResultsReceiver<T> extends WrapUpResultsReceiver {
@@ -29,9 +28,7 @@ public interface DiscoverResultsReceiver<T> extends WrapUpResultsReceiver {
 
   default void discoverFail(InetSocketAddress endpoint, Throwable reason) {}
 
-  default void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {}
-
-  default void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {}
+  default void discoverClusterInconsistent(Collection<UUID> changeUuids, Collection<InetSocketAddress> servers) {}
 
   default void endDiscovery() {}
 

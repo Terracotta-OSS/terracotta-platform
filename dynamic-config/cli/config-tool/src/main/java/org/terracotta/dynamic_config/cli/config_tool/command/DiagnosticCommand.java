@@ -218,8 +218,8 @@ public class DiagnosticCommand extends RemoteCommand {
             + ", On: " + consistencyAnalyzer.getNodeProcessingOtherClient();
 
       case INCONSISTENT:
-        return "Cluster configuration is inconsistent: Change " + consistencyAnalyzer.getInconsistentChangeUuid()
-            + " is committed on " + toString(consistencyAnalyzer.getCommittedNodes())
+        return "Cluster configuration is inconsistent: Change " + consistencyAnalyzer.getInconsistentChangeUuids()
+            + " is committed on " + toString(consistencyAnalyzer.getInconsistentServers())
             + " and rolled back on " + toString(consistencyAnalyzer.getRolledBackNodes());
 
       case DESYNCHRONIZED:

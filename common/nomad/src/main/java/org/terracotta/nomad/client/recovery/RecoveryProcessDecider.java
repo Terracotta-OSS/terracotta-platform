@@ -31,7 +31,7 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
   private final Set<UUID> latestChangeUuids = ConcurrentHashMap.newKeySet();
-  private final AtomicInteger rolledBack = new AtomicInteger();
+  //private final AtomicInteger rolledBack = new AtomicInteger();
   private final AtomicInteger committed = new AtomicInteger();
   private final AtomicInteger prepared = new AtomicInteger();
   private final int expectedNodeCount;

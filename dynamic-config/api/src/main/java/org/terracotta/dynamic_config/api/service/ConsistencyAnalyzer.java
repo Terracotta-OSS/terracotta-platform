@@ -41,7 +41,6 @@ import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
 import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.ACCEPTING;
 import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.CONCURRENT_ACCESS;
-import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.DESYNCHRONIZED;
 import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.DISCOVERY_FAILURE;
 import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.INCONSISTENT;
 import static org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_COMMITTED;
@@ -66,7 +65,6 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
     PREPARED,
 
     INCONSISTENT,
-    DESYNCHRONIZED,
     CONCURRENT_ACCESS,
     DISCOVERY_FAILURE,
 
@@ -88,12 +86,8 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
   private volatile boolean discoveredInconsistentCluster;
   private volatile boolean discoveredOtherClient;
 
-  private volatile UUID inconsistentChangeUuid;
-  private volatile Collection<InetSocketAddress> committedNodes;
-  private volatile Collection<InetSocketAddress> rolledBackNodes;
-
-  private volatile boolean discoveredDesynchronizedCluster;
-  private volatile Map<UUID, Collection<InetSocketAddress>> lastChangeUuids;
+  private volatile Collection<UUID> inconsistentChangeUuids;
+  private volatile Collection<InetSocketAddress> inconsistentServers;
 
   private volatile InetSocketAddress nodeProcessingOtherClient;
   private volatile String otherClientHost;
@@ -115,17 +109,10 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedNodes, Collection<InetSocketAddress> rolledBackNodes) {
-    this.inconsistentChangeUuid = changeUuid;
-    this.committedNodes = committedNodes;
-    this.rolledBackNodes = rolledBackNodes;
+  public void discoverClusterInconsistent(Collection<UUID> changeUuids, Collection<InetSocketAddress> servers) {
+    this.inconsistentChangeUuids = changeUuids;
+    this.inconsistentServers = servers;
     this.discoveredInconsistentCluster = true;
-  }
-
-  @Override
-  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
-    this.discoveredDesynchronizedCluster = true;
-    this.lastChangeUuids = lastChangeUuids;
   }
 
   @Override
@@ -158,20 +145,12 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
 
   // discoverClusterInconsistent
 
-  public UUID getInconsistentChangeUuid() {
-    return inconsistentChangeUuid;
+  public Collection<UUID> getInconsistentChangeUuids() {
+    return inconsistentChangeUuids;
   }
 
-  public Collection<InetSocketAddress> getCommittedNodes() {
-    return committedNodes;
-  }
-
-  public Collection<InetSocketAddress> getRolledBackNodes() {
-    return rolledBackNodes;
-  }
-
-  public Map<UUID, Collection<InetSocketAddress>> getLastChangeUuids() {
-    return lastChangeUuids;
+  public Collection<InetSocketAddress> getInconsistentServers() {
+    return inconsistentServers;
   }
 
   // discoverOtherClient
@@ -258,10 +237,6 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
       return INCONSISTENT;
     }
 
-    if (discoveredDesynchronizedCluster) {
-      return DESYNCHRONIZED;
-    }
-
     if (discoveredOtherClient) {
       return CONCURRENT_ACCESS;
     }
@@ -271,14 +246,19 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
       return ACCEPTING;
     }
 
-    // we are only looking at configured nodes
-    final int nodeCount = getOnlineConfiguredNodes();
-
     // number of different UUIDs seen for the latest changes
     final long uuids = responses.values()
         .stream()
         .filter(r -> r.getLatestChange() != null)
         .map(r -> r.getLatestChange().getChangeUuid())
+        .distinct()
+        .count();
+
+    // number of different change result hash seen for the latest changes
+    final long resultHashes = responses.values()
+        .stream()
+        .filter(r -> r.getLatestChange() != null)
+        .map(r -> r.getLatestChange().getChangeResultHash())
         .distinct()
         .count();
 
@@ -289,16 +269,28 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
         .map(r -> r.getLatestChange().getState())
         .collect(groupingBy(identity(), counting()));
 
-    final long rolledBack = states.getOrDefault(ROLLED_BACK, 0L);
+    if (states.getOrDefault(ROLLED_BACK, 0L) > 0) {
+      throw new AssertionError("Discovery calls should not return any rolled back transaction now");
+    }
+
     final long prepared = states.getOrDefault(PREPARED, 0L);
     final long committed = states.getOrDefault(COMMITTED, 0L);
 
-    if (uuids == 1 && rolledBack == 0 && committed == 0 && prepared > 0 && prepared >= nodeCount) {
+    final int nodeCount = getNodeCount();
+    final int responseCount = getOnlineConfiguredNodes();
+
+    if (resultHashes == 1 && committed == 0 && prepared >= nodeCount) {
       // all nodes are online and prepared for the same change
       return GlobalState.PREPARED;
     }
 
-    if (uuids == 1 && rolledBack == 0 && committed == 0 && prepared > 0) {
+    if (resultHashes == 1 && committed == 0 && prepared >= responseCount) {
+      // all online nodes are prepared for the same change
+      // if some offline nodes have a different append log, they will be re-synced at startup
+      return GlobalState.MAYBE_PREPARED;
+    }
+
+    if (resultHashes == 1 && committed == 0 && prepared >= responseCount) {
       // all online nodes are prepared for the same change, but we do not know the state of the offline ones
       return GlobalState.MAYBE_PREPARED;
     }
@@ -308,12 +300,7 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
       return PARTIALLY_PREPARED;
     }
 
-    if (uuids > 1) {
-      // desynchronized config
-      return DESYNCHRONIZED;
-    }
-
-    if (uuids == 1 && rolledBack == 0 && committed > 0 && prepared > 0 && (prepared + committed >= nodeCount)) {
+    if (uuids == 1 && rolledBack == 0 && committed > 0 && prepared > 0 && (prepared + committed >= responseCount)) {
       // all nodes are either prepared or committed for the same change
       return PARTIALLY_COMMITTED;
     }
@@ -324,7 +311,7 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
       return MAYBE_PARTIALLY_COMMITTED;
     }
 
-    if (uuids == 1 && rolledBack > 0 && committed == 0 && prepared > 0 && (prepared + rolledBack >= nodeCount)) {
+    if (uuids == 1 && rolledBack > 0 && committed == 0 && prepared > 0 && (prepared + rolledBack >= responseCount)) {
       // all nodes are either prepared or rolled back for the same change
       return PARTIALLY_ROLLED_BACK;
     }
@@ -335,7 +322,7 @@ public class ConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext>
       return MAYBE_PARTIALLY_ROLLED_BACK;
     }
 
-    return responses.size() >= nodeCount ?
+    return responses.size() >= responseCount ?
         GlobalState.UNKNOWN : // all nodes are up, but we were not able to determine the state
         MAYBE_UNKNOWN; // some nodes are not reachable and we were not able to determine the state
   }

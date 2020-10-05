@@ -48,7 +48,6 @@ import static org.terracotta.nomad.messages.RejectionReason.DEAD;
 import static org.terracotta.nomad.messages.RejectionReason.UNACCEPTABLE;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
-import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 public class ChangeProcessTest extends NomadClientProcessTest {
 
@@ -128,9 +127,8 @@ public class ChangeProcessTest extends NomadClientProcessTest {
   @Test
   @SuppressWarnings("unchecked")
   public void discoverInconsistentCluster() throws Exception {
-    UUID uuid = UUID.randomUUID();
-    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
-    when(server2.discover()).thenReturn(discovery(ROLLED_BACK, uuid));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1, "hash1"));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid2, "hash2"));
 
     runTest();
 
@@ -141,47 +139,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).startSecondDiscovery();
     verify(results).discoverRepeated(address1);
     verify(results).discoverRepeated(address2);
-    verify(results).discoverClusterInconsistent(eq(uuid), withItems(address1), withItems(address2));
-    verify(results).endSecondDiscovery();
-    verify(results).done(UNRECOVERABLY_INCONSISTENT);
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void discoverDesynchronizedCluster_commits() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
-    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid2));
-
-    runTest();
-
-    verify(results).startDiscovery(withItems(address1, address2));
-    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
-    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
-    verify(results).endDiscovery();
-    verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated(address1);
-    verify(results).discoverRepeated(address2);
-    verify(results).discoverClusterDesynchronized(any());
-    verify(results).endSecondDiscovery();
-    verify(results).done(UNRECOVERABLY_INCONSISTENT);
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void discoverDesynchronizedCluster_rollbacks() throws Exception {
-    when(server1.discover()).thenReturn(discovery(ROLLED_BACK, uuid1));
-    when(server2.discover()).thenReturn(discovery(ROLLED_BACK, uuid2));
-
-    runTest();
-
-    verify(results).startDiscovery(withItems(address1, address2));
-    verify(results).discovered(eq(address1), any(DiscoverResponse.class));
-    verify(results).discovered(eq(address2), any(DiscoverResponse.class));
-    verify(results).endDiscovery();
-    verify(results).startSecondDiscovery();
-    verify(results).discoverRepeated(address1);
-    verify(results).discoverRepeated(address2);
-    verify(results).discoverClusterDesynchronized(any());
+    verify(results).discoverClusterInconsistent(withItems(uuid1, uuid2), withItems(address1, address2));
     verify(results).endSecondDiscovery();
     verify(results).done(UNRECOVERABLY_INCONSISTENT);
   }

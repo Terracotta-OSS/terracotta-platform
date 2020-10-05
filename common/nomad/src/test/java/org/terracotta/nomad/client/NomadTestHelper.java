@@ -41,14 +41,18 @@ public class NomadTestHelper {
   }
 
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount) {
-    return discovery(changeState, mutativeMessageCount, UUID.randomUUID());
+    return discovery(changeState, mutativeMessageCount, UUID.randomUUID(), "testChangeResultHash");
   }
 
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState, UUID uuid) {
-    return discovery(changeState, 1L, uuid);
+    return discovery(changeState, 1L, uuid, "testChangeResultHash");
   }
 
-  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid) {
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, UUID uuid, String changeResultHash) {
+    return discovery(changeState, 1L, uuid, changeResultHash);
+  }
+
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid, String changeResultHash) {
     final ChangeDetails<String> changeDetails = new ChangeDetails<>(
         uuid,
         changeState,
@@ -58,7 +62,7 @@ public class NomadTestHelper {
         "testCreationHost",
         "testCreationUser",
         Clock.systemDefaultZone().instant(),
-        "testChangeResultHash"
+        changeResultHash
     );
     return new DiscoverResponse<>(
         changeState == PREPARED ? NomadServerMode.PREPARED : NomadServerMode.ACCEPTING,

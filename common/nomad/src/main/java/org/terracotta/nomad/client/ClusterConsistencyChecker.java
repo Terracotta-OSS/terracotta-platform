@@ -19,75 +19,55 @@ import org.terracotta.nomad.client.results.AllResultsReceiver;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.DiscoverResponse;
-import org.terracotta.nomad.server.ChangeRequestState;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static java.util.Collections.emptySet;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
-  private final Map<UUID, Collection<InetSocketAddress>> commits = new ConcurrentHashMap<>();
-  private final Map<UUID, Collection<InetSocketAddress>> rollbacks = new ConcurrentHashMap<>();
+  private final Map<InetSocketAddress, ChangeDetails<T>> commits = new ConcurrentHashMap<>();
 
   public void checkClusterConsistency(DiscoverResultsReceiver<T> results) {
-    HashSet<UUID> inconsistentUUIDs = new HashSet<>(commits.keySet());
-    inconsistentUUIDs.retainAll(rollbacks.keySet());
-
-    // check for inconsistency first
-    if (!inconsistentUUIDs.isEmpty()) {
-      for (UUID uuid : inconsistentUUIDs) {
-        results.discoverClusterInconsistent(uuid, commits.get(uuid), rollbacks.get(uuid));
-      }
-    } else {
-      Collection<UUID> lastChangeUUIDs = Stream.of(commits, rollbacks)
-          .map(Map::keySet)
-          .flatMap(Collection::stream)
-          .collect(toSet());
-      if (lastChangeUUIDs.size() > 1) {
-        results.discoverClusterDesynchronized(lastChangeUUIDs.stream().collect(toMap(
-            identity(),
-            uuid -> Stream.of(commits, rollbacks)
-                .flatMap(m -> m.getOrDefault(uuid, emptySet()).stream())
-                .collect(Collectors.toSet()))));
-      }
+    Set<UUID> uuids = commits.values().stream().map(ChangeDetails::getChangeUuid).collect(toSet());
+    if (uuids.size() < 2) {
+      // if we discover nothing or if changes all have the exact same uuid, then cluster is ok
+      return;
     }
+
+    // if we have found several different uuid, then let's look at the result hash to see if the latest
+    // change (prepared or committed) has lead to the same result
+    Set<String> hashes = commits.values().stream().map(ChangeDetails::getChangeResultHash).collect(toSet());
+    if (hashes.size() < 2) {
+      // if we do not have different hashes, then the cluster is consistent.
+      // It means different changes have lead to the same result.
+      // This might be the case for a rolled back concurrent tx, and also for an automatic config upgrade at startup
+      return;
+    }
+
+    // here, we have found some inconsistencies: => fire the event
+    results.discoverClusterInconsistent(uuids, commits.keySet());
   }
 
   @Override
   public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
     ChangeDetails<T> latestChange = discovery.getLatestChange();
-
     if (latestChange != null) {
-      UUID latestChangeUuid = latestChange.getChangeUuid();
-      ChangeRequestState changeState = latestChange.getState();
-      switch (changeState) {
+      switch (latestChange.getState()) {
         case COMMITTED:
-          addChangeState(commits, latestChangeUuid, server);
+          commits.put(server, latestChange);
           break;
         case ROLLED_BACK:
-          addChangeState(rollbacks, latestChangeUuid, server);
-          break;
+          throw new AssertionError("Impossible ChangeRequestState: ROLLED_BACK. Discovery should only output the last non rolled back change");
         case PREPARED:
           // Do nothing
           break;
         default:
-          throw new AssertionError("Unknown ChangeRequestState: " + changeState);
+          throw new AssertionError("Unknown ChangeRequestState: " + latestChange.getState());
       }
     }
-  }
-
-  private void addChangeState(Map<UUID, Collection<InetSocketAddress>> map, UUID latestChangeUuid, InetSocketAddress server) {
-    map.computeIfAbsent(latestChangeUuid, k -> new LinkedHashSet<>()).add(server);
   }
 }

@@ -21,7 +21,6 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
@@ -60,16 +59,9 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverClusterInconsistent(Collection<UUID> changeUuids, Collection<InetSocketAddress> servers) {
     for (AllResultsReceiver<T> receiver : receivers) {
-      receiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
-    }
-  }
-
-  @Override
-  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
-    for (AllResultsReceiver<T> receiver : receivers) {
-      receiver.discoverClusterDesynchronized(lastChangeUuids);
+      receiver.discoverClusterInconsistent(changeUuids, servers);
     }
   }
 

@@ -45,7 +45,6 @@ import static org.terracotta.nomad.messages.AcceptRejectResponse.reject;
 import static org.terracotta.nomad.messages.RejectionReason.DEAD;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
-import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 public class RecoveryProcessTest extends NomadClientProcessTest {
   @Mock
@@ -153,9 +152,10 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
   @Test
   @SuppressWarnings("unchecked")
   public void discoverInconsistentCluster() throws Exception {
-    UUID uuid = UUID.randomUUID();
-    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
-    when(server2.discover()).thenReturn(discovery(ROLLED_BACK, uuid));
+    UUID uuid1 = UUID.randomUUID();
+    UUID uuid2 = UUID.randomUUID();
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1, "hash1"));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid2, "hash2"));
 
     runTest();
 
@@ -166,7 +166,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
     verify(results).startSecondDiscovery();
     verify(results).discoverRepeated(address1);
     verify(results).discoverRepeated(address2);
-    verify(results).discoverClusterInconsistent(eq(uuid), withItems(address1), withItems(address2));
+    verify(results).discoverClusterInconsistent(withItems(uuid1, uuid2), withItems(address1, address2));
     verify(results).endSecondDiscovery();
     verify(results).done(UNRECOVERABLY_INCONSISTENT);
   }

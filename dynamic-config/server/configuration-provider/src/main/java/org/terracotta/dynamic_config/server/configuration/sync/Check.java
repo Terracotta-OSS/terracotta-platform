@@ -81,7 +81,7 @@ class Check {
     for (; from < to; from++) {
       NomadChangeInfo nomadChange = nomadChanges.get(from);
       NomadChangeInfo sourceChange = sourceNomadChanges.get(from);
-      if (!nomadChange.equals(sourceChange)) {
+      if (!nomadChange.matches(sourceChange)) {
         throw new IllegalStateException("Node cannot sync because the configuration change history does not match: no match on source node for this change on the node:" + nomadChange);
       }
     }
@@ -103,7 +103,7 @@ class Check {
   }
 
   static boolean isJointActivation(List<NomadChangeInfo> nomadChanges, List<NomadChangeInfo> sourceNomadChanges) {
-    final boolean b = nomadChanges.get(0).equals(sourceNomadChanges.get(0));
+    final boolean b = nomadChanges.get(0).getChangeUuid().equals(sourceNomadChanges.get(0).getChangeUuid());
     LOGGER.trace("isJointActivation({}, {}): {}", nomadChanges, sourceNomadChanges, b);
     return b;
   }

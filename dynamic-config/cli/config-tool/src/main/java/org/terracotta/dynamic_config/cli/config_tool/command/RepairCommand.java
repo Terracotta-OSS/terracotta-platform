@@ -105,8 +105,8 @@ public class RepairCommand extends RemoteCommand {
 
       case INCONSISTENT:
         //TODO [DYNAMIC-CONFIG]: TDB-4822 - enhance repair command to force a rollback to a checkpoint ?
-        logger.error("Cluster configuration is inconsistent and cannot be automatically repaired. Change " + consistencyAnalyzer.getInconsistentChangeUuid()
-            + " is committed on " + toString(consistencyAnalyzer.getCommittedNodes())
+        logger.error("Cluster configuration is inconsistent and cannot be automatically repaired. Change " + consistencyAnalyzer.getInconsistentChangeUuids()
+            + " is committed on " + toString(consistencyAnalyzer.getInconsistentServers())
             + " and rolled back on " + toString(consistencyAnalyzer.getRolledBackNodes()));
         break;
 

@@ -25,14 +25,11 @@ import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import java.net.InetSocketAddress;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.terracotta.nomad.client.NomadTestHelper.discovery;
 import static org.terracotta.nomad.client.NomadTestHelper.withItems;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
-import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterConsistencyCheckerTest {
@@ -68,45 +65,33 @@ public class ClusterConsistencyCheckerTest {
   }
 
   @Test
-  public void allRollbackForSameUuid() {
-    UUID uuid = UUID.randomUUID();
-
-    consistencyChecker.discovered(address1, discovery(ROLLED_BACK, uuid));
-    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid));
-
-    consistencyChecker.checkClusterConsistency(results);
-  }
-
-  @Test
   public void inconsistentCluster() {
-    UUID uuid = UUID.randomUUID();
-
-    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid));
-    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid));
+    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1, "hash1"));
+    consistencyChecker.discovered(address2, discovery(COMMITTED, uuid2, "hash2"));
 
     consistencyChecker.checkClusterConsistency(results);
 
-    verify(results).discoverClusterInconsistent(eq(uuid), withItems(address1), withItems(address2));
+    verify(results).discoverClusterInconsistent(withItems(uuid1, uuid2), withItems(address1, address2));
   }
 
   @Test
-  public void differentUuids() {
-    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1));
-    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2));
+  public void differentHashes() {
+    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1, "hash1"));
+    consistencyChecker.discovered(address2, discovery(COMMITTED, uuid2, "hash2"));
 
     consistencyChecker.checkClusterConsistency(results);
 
-    verify(results).discoverClusterDesynchronized(any());
+    verify(results).discoverClusterInconsistent(withItems(uuid1, uuid2), withItems(address1, address2));
   }
 
   @Test
-  public void differentCommittedUuids() {
-    consistencyChecker.discovered(address1, discovery(COMMITTED, UUID.randomUUID()));
-    consistencyChecker.discovered(address2, discovery(COMMITTED, UUID.randomUUID()));
+  public void differentCommittedUuidsSameHash() {
+    consistencyChecker.discovered(address1, discovery(COMMITTED, UUID.randomUUID(), "hash"));
+    consistencyChecker.discovered(address2, discovery(COMMITTED, UUID.randomUUID(), "hash"));
 
     consistencyChecker.checkClusterConsistency(results);
 
-    verify(results).discoverClusterDesynchronized(any());
+    verifyNoMoreInteractions(results);
   }
 
   @Test
@@ -114,15 +99,12 @@ public class ClusterConsistencyCheckerTest {
     UUID uuid1 = UUID.randomUUID();
     UUID uuid2 = UUID.randomUUID();
 
-    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1));
-    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid1));
-    consistencyChecker.discovered(address3, discovery(COMMITTED, uuid2));
-    consistencyChecker.discovered(address4, discovery(COMMITTED, uuid2));
-    consistencyChecker.discovered(address5, discovery(ROLLED_BACK, uuid2));
+    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1, "hash1"));
+    consistencyChecker.discovered(address3, discovery(COMMITTED, uuid2, "hash2"));
+    consistencyChecker.discovered(address4, discovery(COMMITTED, uuid2, "hash2"));
 
     consistencyChecker.checkClusterConsistency(results);
 
-    verify(results).discoverClusterInconsistent(eq(uuid1), withItems(address1), withItems(address2));
-    verify(results).discoverClusterInconsistent(eq(uuid2), withItems(address3, address4), withItems(address5));
+    verify(results).discoverClusterInconsistent(withItems(uuid1, uuid2), withItems(address1, address3, address4));
   }
 }

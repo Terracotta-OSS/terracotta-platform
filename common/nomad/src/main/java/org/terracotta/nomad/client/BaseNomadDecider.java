@@ -21,7 +21,6 @@ import org.terracotta.nomad.server.NomadServerMode;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.terracotta.nomad.client.Consistency.CONSISTENT;
@@ -33,7 +32,6 @@ import static org.terracotta.nomad.server.NomadServerMode.PREPARED;
 public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResultsReceiver<T> {
   private volatile boolean discoverFail;
   private volatile boolean discoveryInconsistentCluster;
-  private volatile boolean discoveryDesynchronizedCluster;
   private volatile boolean preparedServer;
   private volatile boolean prepareFail;
   private volatile boolean takeoverFail;
@@ -62,10 +60,6 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   @Override
   public Consistency getConsistency() {
     if (discoveryInconsistentCluster) {
-      return UNRECOVERABLY_INCONSISTENT;
-    }
-
-    if (discoveryDesynchronizedCluster) {
       return UNRECOVERABLY_INCONSISTENT;
     }
 
@@ -98,15 +92,9 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverClusterInconsistent(Collection<UUID> changeUuids, Collection<InetSocketAddress> servers) {
     discoverFail = true;
     discoveryInconsistentCluster = true;
-  }
-
-  @Override
-  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
-    discoverFail = true;
-    discoveryDesynchronizedCluster = true;
   }
 
   @Override

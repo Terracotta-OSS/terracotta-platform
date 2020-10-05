@@ -51,7 +51,7 @@ public class DynamicConfigurationPassiveSync {
 
   public DynamicConfigSyncData getSyncData() {
     try {
-      return new DynamicConfigSyncData(nomadServer.getAllNomadChanges(), topologyService.getUpcomingNodeContext().getCluster(), licenseContent.get());
+      return new DynamicConfigSyncData(nomadServer.getCommittedNomadChanges(), topologyService.getUpcomingNodeContext().getCluster(), licenseContent.get());
     } catch (NomadException e) {
       throw new RuntimeException(e);
     }
