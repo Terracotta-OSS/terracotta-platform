@@ -113,40 +113,59 @@ public class NomadServerImpl<T> implements NomadServer<T> {
     long highestVersion = state.getHighestVersion();
     UUID latestChangeUuid = state.getLatestChangeUuid();
 
-    ChangeDetails<T> latestChange = null;
     if (latestChangeUuid != null) {
       ChangeState<T> changeState = state.getChangeState(latestChangeUuid);
-      ChangeRequestState changeRequestState = changeState.getState();
-      long changeVersion = changeState.getVersion();
-      NomadChange change = changeState.getChange();
-      T changeResult = changeState.getChangeResult();
-      String changeCreationHost = changeState.getCreationHost();
-      String changeCreationUser = changeState.getCreationUser();
-      Instant changeCreationTimestamp = changeState.getCreationTimestamp();
 
-      latestChange = new ChangeDetails<>(
-          latestChangeUuid,
-          changeRequestState,
-          changeVersion,
-          change,
-          changeResult,
-          changeCreationHost,
-          changeCreationUser,
-          changeCreationTimestamp,
-          changeState.getChangeResultHash()
-      );
+      // find the latest change that is not rolled back in the append log
+      ChangeState<T> latestNotRolledBackChangeState = changeState;
+      UUID latestNotRolledBackChangeUuid = latestChangeUuid;
+      if (changeState.getState() == ROLLED_BACK) {
+        while ((latestNotRolledBackChangeUuid = changeState.getPrevChangeId()) != null
+            && (latestNotRolledBackChangeState = state.getChangeState(latestNotRolledBackChangeUuid)).getState() == ROLLED_BACK) ;
+      }
+
+      return new DiscoverResponse<>(
+          mode,
+          mutativeMessageCount,
+          lastMutationHost,
+          lastMutationUser,
+          lastMutationTimestamp,
+          currentVersion,
+          highestVersion,
+          new ChangeDetails<>(
+              latestChangeUuid,
+              changeState.getState(),
+              changeState.getVersion(),
+              changeState.getChange(),
+              changeState.getChangeResult(),
+              changeState.getCreationHost(),
+              changeState.getCreationUser(),
+              changeState.getCreationTimestamp(),
+              changeState.getChangeResultHash()),
+          latestNotRolledBackChangeUuid == null ? null : new ChangeDetails<>(
+              latestNotRolledBackChangeUuid,
+              latestNotRolledBackChangeState.getState(),
+              latestNotRolledBackChangeState.getVersion(),
+              latestNotRolledBackChangeState.getChange(),
+              latestNotRolledBackChangeState.getChangeResult(),
+              latestNotRolledBackChangeState.getCreationHost(),
+              latestNotRolledBackChangeState.getCreationUser(),
+              latestNotRolledBackChangeState.getCreationTimestamp(),
+              latestNotRolledBackChangeState.getChangeResultHash()
+          ));
+
+    } else {
+      return new DiscoverResponse<>(
+          mode,
+          mutativeMessageCount,
+          lastMutationHost,
+          lastMutationUser,
+          lastMutationTimestamp,
+          currentVersion,
+          highestVersion,
+          null,
+          null);
     }
-
-    return new DiscoverResponse<>(
-        mode,
-        mutativeMessageCount,
-        lastMutationHost,
-        lastMutationUser,
-        lastMutationTimestamp,
-        currentVersion,
-        highestVersion,
-        latestChange
-    );
   }
 
   public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {

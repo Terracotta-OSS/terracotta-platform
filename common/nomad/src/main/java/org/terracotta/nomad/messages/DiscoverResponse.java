@@ -30,6 +30,7 @@ public class DiscoverResponse<T> {
   private final long currentVersion;
   private final long highestVersion;
   private final ChangeDetails<T> latestChange;
+  private final ChangeDetails<T> latestNotRolledBackChange;
 
   public DiscoverResponse(NomadServerMode mode,
                           long mutativeMessageCount,
@@ -38,7 +39,8 @@ public class DiscoverResponse<T> {
                           Instant lastMutationTimestamp,
                           long currentVersion,
                           long highestVersion,
-                          ChangeDetails<T> latestChange) {
+                          ChangeDetails<T> latestChange,
+                          ChangeDetails<T> latestNotRolledBackChange) {
     this.mode = requireNonNull(mode);
     this.mutativeMessageCount = mutativeMessageCount;
     this.lastMutationHost = lastMutationHost;
@@ -47,6 +49,7 @@ public class DiscoverResponse<T> {
     this.currentVersion = currentVersion;
     this.highestVersion = highestVersion;
     this.latestChange = latestChange;
+    this.latestNotRolledBackChange = latestNotRolledBackChange;
   }
 
   public NomadServerMode getMode() {
@@ -77,7 +80,17 @@ public class DiscoverResponse<T> {
     return highestVersion;
   }
 
+  /**
+   * @return The latest entry in Nomad append log or null of none
+   */
   public ChangeDetails<T> getLatestChange() {
     return latestChange;
+  }
+
+  /**
+   * @return The latest entry in Nomad append log that has not been rolled back, or null if none
+   */
+  public ChangeDetails<T> getLatestNotRolledBackChange() {
+    return latestNotRolledBackChange;
   }
 }
