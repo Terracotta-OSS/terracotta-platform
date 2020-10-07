@@ -28,5 +28,5 @@ jobs:
     parameters:
       jobName: Linux_Java_8
       timeoutInMinutes: 180
-      options: -B -Dtest.parallel.forks=6 -Djava.test.version=1.8
+      options: -B -Dtest.parallel.forks=1 -Djava.test.version=1.8
       mavenGoals: 'clean verify'
