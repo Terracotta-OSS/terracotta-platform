@@ -147,7 +147,7 @@ public class NomadServerFactory {
     if (currentVersion != 0) {
       Config config = configStorage.getConfig(currentVersion);
       String filename = ClusterConfigFilename.with(nodeName, currentVersion).getFilename();
-      LOGGER.info("Using configuration version: {} with format version: {} at: {}", currentVersion, config.getVersion(), clusterDir.resolve(filename));
+      LOGGER.info("Using configuration version: {} with format version: {} from file: {}", currentVersion, config.getVersion(), filename);
     }
 
     return nomadServer;

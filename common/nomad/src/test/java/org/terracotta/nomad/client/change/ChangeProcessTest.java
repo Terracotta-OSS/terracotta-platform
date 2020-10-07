@@ -40,6 +40,7 @@ import static org.terracotta.nomad.client.Consistency.CONSISTENT;
 import static org.terracotta.nomad.client.Consistency.MAY_NEED_RECOVERY;
 import static org.terracotta.nomad.client.Consistency.UNKNOWN_BUT_NO_CHANGE;
 import static org.terracotta.nomad.client.Consistency.UNRECOVERABLY_INCONSISTENT;
+import static org.terracotta.nomad.client.Consistency.UNRECOVERABLY_PARTITIONNED;
 import static org.terracotta.nomad.client.NomadTestHelper.discovery;
 import static org.terracotta.nomad.client.NomadTestHelper.withItems;
 import static org.terracotta.nomad.messages.AcceptRejectResponse.accept;
@@ -127,7 +128,7 @@ public class ChangeProcessTest extends NomadClientProcessTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void discoverInconsistentCluster() throws Exception {
+  public void discoverInconsistentConfig() throws Exception {
     UUID uuid = UUID.randomUUID();
     when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
     when(server2.discover()).thenReturn(discovery(ROLLED_BACK, uuid));
@@ -141,16 +142,16 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).startSecondDiscovery();
     verify(results).discoverRepeated(address1);
     verify(results).discoverRepeated(address2);
-    verify(results).discoverClusterInconsistent(eq(uuid), withItems(address1), withItems(address2));
+    verify(results).discoverConfigInconsistent(eq(uuid), withItems(address1), withItems(address2));
     verify(results).endSecondDiscovery();
     verify(results).done(UNRECOVERABLY_INCONSISTENT);
   }
 
   @Test
   @SuppressWarnings("unchecked")
-  public void discoverDesynchronizedCluster_commits() throws Exception {
-    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1));
-    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid2));
+  public void discoverPartitionedConfig() throws Exception {
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1, "hash1"));
+    when(server2.discover()).thenReturn(discovery(COMMITTED, uuid2, "hash2"));
 
     runTest();
 
@@ -161,15 +162,15 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).startSecondDiscovery();
     verify(results).discoverRepeated(address1);
     verify(results).discoverRepeated(address2);
-    verify(results).discoverClusterDesynchronized(any());
+    verify(results).discoverConfigPartitioned(any());
     verify(results).endSecondDiscovery();
-    verify(results).done(UNRECOVERABLY_INCONSISTENT);
+    verify(results).done(UNRECOVERABLY_PARTITIONNED);
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void discoverDesynchronizedCluster_rollbacks() throws Exception {
-    when(server1.discover()).thenReturn(discovery(ROLLED_BACK, uuid1));
+    when(server1.discover()).thenReturn(discovery(COMMITTED, uuid1, "hash1"));
     when(server2.discover()).thenReturn(discovery(ROLLED_BACK, uuid2));
 
     runTest();
@@ -181,9 +182,9 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).startSecondDiscovery();
     verify(results).discoverRepeated(address1);
     verify(results).discoverRepeated(address2);
-    verify(results).discoverClusterDesynchronized(any());
+    verify(results).discoverConfigPartitioned(any());
     verify(results).endSecondDiscovery();
-    verify(results).done(UNRECOVERABLY_INCONSISTENT);
+    verify(results).done(UNRECOVERABLY_PARTITIONNED);
   }
 
   @Test

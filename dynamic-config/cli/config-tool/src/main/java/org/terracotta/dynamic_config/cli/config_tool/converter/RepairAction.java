@@ -17,11 +17,18 @@ package org.terracotta.dynamic_config.cli.config_tool.converter;
 
 import com.beust.jcommander.converters.EnumConverter;
 
+import java.util.Locale;
+
 public enum RepairAction {
   COMMIT,
   ROLLBACK,
   RESET,
   UNLOCK;
+
+  @Override
+  public String toString() {
+    return name().toLowerCase(Locale.US);
+  }
 
   public static class RepairActionConverter extends EnumConverter<RepairAction> {
     public RepairActionConverter() {

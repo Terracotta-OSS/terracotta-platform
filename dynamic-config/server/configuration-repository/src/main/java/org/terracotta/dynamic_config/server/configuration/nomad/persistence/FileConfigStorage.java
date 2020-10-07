@@ -52,6 +52,7 @@ public class FileConfigStorage implements ConfigStorage {
   public FileConfigStorage(Path root, String nodeName) {
     this.root = requireNonNull(root);
     this.nodeName = requireNonNull(nodeName);
+    LOGGER.info("Configuration storage location: {}", root);
   }
 
   @SuppressWarnings("unused")
@@ -59,7 +60,7 @@ public class FileConfigStorage implements ConfigStorage {
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   public Config getConfig(long version) throws ConfigStorageException {
     Path file = toPath(version);
-    LOGGER.debug("Loading version: {} from file: {}", version, file);
+    LOGGER.debug("Loading version: {} from file: {}", version, file.getFileName());
     try {
       Properties properties = Props.load(file);
 
@@ -109,7 +110,7 @@ public class FileConfigStorage implements ConfigStorage {
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
     Path file = toPath(version);
-    LOGGER.debug("Saving topology: {} with version: {} to file: {}", config, version, file);
+    LOGGER.debug("Saving version: {} to file: {}", version, file.getFileName());
     try {
       if (file.getParent() != null) {
         Files.createDirectories(file.getParent());

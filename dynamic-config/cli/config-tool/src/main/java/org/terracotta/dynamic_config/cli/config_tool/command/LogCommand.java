@@ -56,6 +56,7 @@ public class LogCommand extends RemoteCommand {
         .map(log -> padCut(String.valueOf(log.getVersion()), 4)
             + " " + log.getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601)
             + " " + log.getChangeUuid().toString()
+            + " " + log.getChangeResultHash()
             + " " + log.getChangeRequestState().name()
             + " | " + log.getCreationUser()
             + "@" + log.getCreationHost()

@@ -16,6 +16,7 @@
 package org.terracotta.nomad.client.results;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.lang.System.lineSeparator;
@@ -30,7 +31,7 @@ public class NomadFailureReceiver<T> extends LoggingResultReceiver<T> {
 
   @Override
   protected void error(String line, Throwable e) {
-    reasons.add(e == null ? line : (line + ". Reason: " + stringify(e)));
+    reasons.add(e == null ? line : e.getMessage() == null ? (line + ". Reason: " + e) : (line + ". Reason: " + e.getMessage()));
     if (e != null) {
       errors.add(e);
     }
@@ -38,6 +39,10 @@ public class NomadFailureReceiver<T> extends LoggingResultReceiver<T> {
 
   public List<String> getReasons() {
     return reasons;
+  }
+
+  public int getCount() {
+    return reasons.size();
   }
 
   public boolean isEmpty() {
@@ -51,10 +56,18 @@ public class NomadFailureReceiver<T> extends LoggingResultReceiver<T> {
   }
 
   public void reThrowErrors() throws IllegalStateException {
+    buildErrors().ifPresent(e -> {
+      throw e;
+    });
+  }
+
+  public Optional<IllegalStateException> buildErrors() {
     if (!isEmpty()) {
       IllegalStateException error = buildError();
       errors.forEach(error::addSuppressed);
-      throw error;
+      return Optional.of(error);
+    } else {
+      return Optional.empty();
     }
   }
 

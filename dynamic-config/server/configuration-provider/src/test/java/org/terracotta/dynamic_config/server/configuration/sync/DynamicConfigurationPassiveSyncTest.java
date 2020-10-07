@@ -15,6 +15,8 @@
  */
 package org.terracotta.dynamic_config.server.configuration.sync;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -74,13 +76,14 @@ public class DynamicConfigurationPassiveSyncTest {
   }
 
   @Test
-  public void testCodec() {
+  public void testCodec() throws JsonProcessingException {
     List<NomadChangeInfo> nomadChanges = new ArrayList<>();
     nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
     nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now, ""));
 
     List<NomadChangeInfo> decodedChanges = codec.decode(codec.encode(new DynamicConfigSyncData(nomadChanges, startupTopology.getCluster(), null))).getNomadChanges();
-    assertThat(decodedChanges, is(nomadChanges));
+    ObjectMapper mapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
+    assertThat(mapper.writeValueAsString(decodedChanges), mapper.writeValueAsString(decodedChanges), is(equalTo(mapper.writeValueAsString(nomadChanges))));
   }
 
   @SuppressWarnings("unchecked")
