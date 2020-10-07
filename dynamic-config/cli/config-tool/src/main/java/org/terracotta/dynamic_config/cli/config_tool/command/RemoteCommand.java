@@ -34,7 +34,7 @@ import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
-import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
+import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyAnalyzer;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -210,12 +210,12 @@ public abstract class RemoteCommand extends Command {
   /**
    * Returns the current consistency of the configuration in the cluster
    */
-  protected final ConsistencyAnalyzer analyzeNomadConsistency(Map<Endpoint, LogicalServerState> allNodes) {
+  protected final ConfigurationConsistencyAnalyzer analyzeNomadConsistency(Map<Endpoint, LogicalServerState> allNodes) {
     logger.trace("analyzeNomadConsistency({})", allNodes);
     Map<InetSocketAddress, LogicalServerState> addresses = allNodes.entrySet().stream().collect(toMap(e -> e.getKey().getAddress(), Map.Entry::getValue));
-    ConsistencyAnalyzer consistencyAnalyzer = new ConsistencyAnalyzer(addresses);
-    nomadManager.runConfigurationDiscovery(allNodes, consistencyAnalyzer);
-    return consistencyAnalyzer;
+    ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = new ConfigurationConsistencyAnalyzer(addresses);
+    nomadManager.runConfigurationDiscovery(allNodes, configurationConsistencyAnalyzer);
+    return configurationConsistencyAnalyzer;
   }
 
   /**

@@ -75,7 +75,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     // cannot automatic repair since 1 node is down
     assertThat(
         () -> invokeConfigTool("repair", "-s", "localhost:" + getNodePort(1, activeId)),
-        exceptionMatcher("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback."));
+        exceptionMatcher("Error: Please use the '-force' option to specify whether a commit or rollback is wanted."));
 
     // forces a repair
     assertThat(
@@ -124,8 +124,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(
         invokeConfigTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration on nodes"),
-            containsOutput("Forcing a commit"),
+            containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));
 
     // the topology is down 1 node
@@ -175,7 +174,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(
         invokeConfigTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration on nodes"),
+            containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));
 
     withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
@@ -214,8 +213,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(
         invokeConfigTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration on nodes"),
-            containsOutput("Forcing a commit"),
+            containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));

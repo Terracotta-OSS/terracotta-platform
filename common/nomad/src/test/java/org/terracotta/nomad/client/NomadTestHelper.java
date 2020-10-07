@@ -41,24 +41,36 @@ public class NomadTestHelper {
   }
 
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount) {
-    return discovery(changeState, mutativeMessageCount, UUID.randomUUID());
+    return discovery(changeState, mutativeMessageCount, UUID.randomUUID(), "testChangeResultHash");
   }
 
   public static DiscoverResponse<String> discovery(ChangeRequestState changeState, UUID uuid) {
-    return discovery(changeState, 1L, uuid);
+    return discovery(changeState, 1L, uuid, "testChangeResultHash");
   }
 
-  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid) {
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, UUID uuid, String changeResultHash) {
+    return discovery(changeState, 1L, uuid, changeResultHash);
+  }
+
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid, String changeResultHash) {
+    return discovery(changeState, mutativeMessageCount, uuid, changeResultHash, changeState == COMMITTED ? uuid : UUID.randomUUID(), "hash");
+  }
+
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, UUID uuid, String changeResultHash, UUID lastCommittedChangeUid, String lastCommittedChangeResultHash) {
+    return discovery(changeState, 1L, uuid, changeResultHash, lastCommittedChangeUid, lastCommittedChangeResultHash);
+  }
+
+  public static DiscoverResponse<String> discovery(ChangeRequestState changeState, long mutativeMessageCount, UUID uuid, String changeResultHash, UUID lastCommittedChangeUid, String lastCommittedChangeResultHash) {
     final ChangeDetails<String> changeDetails = new ChangeDetails<>(
         uuid,
         changeState,
-        1,
+        2,
         new SimpleNomadChange("testChange", "testSummary"),
         "testChangeResult",
         "testCreationHost",
         "testCreationUser",
         Clock.systemDefaultZone().instant(),
-        "testChangeResultHash"
+        changeResultHash
     );
     return new DiscoverResponse<>(
         changeState == PREPARED ? NomadServerMode.PREPARED : NomadServerMode.ACCEPTING,
@@ -66,9 +78,19 @@ public class NomadTestHelper {
         "testMutationHost",
         "testMutationUser",
         Clock.systemDefaultZone().instant(),
-        1,
-        1,
+        2,
+        changeState == COMMITTED ? 2 : 1,
         changeDetails,
-        changeState == COMMITTED ? changeDetails : null);
+        lastCommittedChangeUid == null ? null : lastCommittedChangeUid.equals(uuid) ? changeDetails : new ChangeDetails<>(
+            lastCommittedChangeUid,
+            COMMITTED,
+            1,
+            new SimpleNomadChange("testChange1", "testSummary1"),
+            "testChangeResult1",
+            "testCreationHost1",
+            "testCreationUser1",
+            Clock.systemDefaultZone().instant(),
+            lastCommittedChangeResultHash
+        ));
   }
 }
