@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
+import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
@@ -81,9 +82,17 @@ public abstract class TopologyCommand extends RemoteCommand {
       throw new IllegalArgumentException("Wrong destination endpoint: " + destination + ". It does not match any node in destination cluster: " + destinationCluster.toShapeString());
     }
 
+    checkForOperationSupport();
+
     if (destinationClusterActivated) {
       ensureNodesAreEitherActiveOrPassive(destinationOnlineNodes);
       ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
+    }
+  }
+
+  protected void checkForOperationSupport() {
+    if (destinationClusterActivated && OperationType.STRIPE.equals(getOperationType())) {
+      throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster are not supported");
     }
   }
 
