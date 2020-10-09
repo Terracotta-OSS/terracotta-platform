@@ -71,7 +71,7 @@ public class CustomJCommander extends JCommander {
     }
   }
 
-  public void printAskedCommmandUsage(String askedCommand) {
+  public void printAskedCommandUsage(String askedCommand) {
     try {
       if (askedCommand.contains("deprecated")) {
         deprecatedUsage = true;

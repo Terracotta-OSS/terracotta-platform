@@ -115,7 +115,7 @@ public class ConfigTool {
             jCommander = getCustomJCommander(commandRepository, mainCommand);
             jCommander.parse(args);
           } catch (ParameterException pe) {
-            jCommander.printAskedCommmandUsage(command);
+            jCommander.printAskedCommandUsage(command);
             throw pe;
           }
         }
