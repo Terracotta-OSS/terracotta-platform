@@ -103,9 +103,9 @@ public class ClusterFactory {
         String.format(
             "%sRead the following parameters: %s%sAdded the following defaults: %s",
             lineSeparator(),
-            toDisplayParams("--", paramValueMap),
+            toDisplayParams("-", paramValueMap),
             lineSeparator(),
-            toDisplayParams("--", defaultsAdded.stream()
+            toDisplayParams("-", defaultsAdded.stream()
                 .filter(configuration -> configuration.getValue().isPresent())
                 .collect(toMap(Configuration::getSetting, cfg -> cfg.getValue().get()))
             )
