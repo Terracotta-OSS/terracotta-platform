@@ -19,7 +19,7 @@ import com.beust.jcommander.Parameter;
 
 public abstract class JCommanderCommand implements Runnable {
 
-  @Parameter(names = {"-h", "--help", "-help"}, description = "Help", help = true)
+  @Parameter(names = {"-help", "-h", "--help"}, description = "Help", help = true)
   private boolean help;
 
   public boolean isHelp() {

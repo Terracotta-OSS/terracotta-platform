@@ -102,22 +102,24 @@ public class ConfigTool {
     } catch (ParameterException e) {
       String command = jCommander.getParsedCommand();
       if (command != null) {
-        if (!command.contains("-deprecated")) {
-          // Fallback to deprecated version
-          try {
-            for (int i = 0; i < args.length; ++i) {
-              if (args[i].equals(command)) {
-                args[i] = args[i].concat("-deprecated");
-                break;
-              }
+        // Fallback to deprecated version
+        try {
+          for (int i = 0; i < args.length; ++i) {
+            if (args[i].equals(command)) {
+              args[i] = args[i].concat("-deprecated");
+              break;
             }
-            // Create New JCommander object to avoid repeated main command error.
-            jCommander = getCustomJCommander(commandRepository, mainCommand);
-            jCommander.parse(args);
-          } catch (ParameterException pe) {
-            jCommander.printAskedCommmandUsage(command);
-            throw pe;
           }
+          // Create New JCommander object to avoid repeated main command error.
+          CustomJCommander deprecatedJCommander = getCustomJCommander(commandRepository, mainCommand);
+          deprecatedJCommander.parse(args);
+          // success ?
+          jCommander = deprecatedJCommander;
+        } catch (ParameterException pe) {
+          // error ?
+          // always display help file for new command
+          jCommander.printAskedCommandUsage(command);
+          throw e;
         }
       } else {
         jCommander.printUsage();

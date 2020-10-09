@@ -22,6 +22,7 @@ import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.WrappedParameter;
 import com.beust.jcommander.internal.Lists;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Comparator;
 import java.util.List;
@@ -71,7 +72,7 @@ public class CustomJCommander extends JCommander {
     }
   }
 
-  public void printAskedCommmandUsage(String askedCommand) {
+  public void printAskedCommandUsage(String askedCommand) {
     try {
       if (askedCommand.contains("deprecated")) {
         deprecatedUsage = true;
@@ -133,10 +134,10 @@ public class CustomJCommander extends JCommander {
       boolean hasCommands = !commands.isEmpty();
       out.append(indent).append("Usage: ").append(toolName).append(" [options]");
       if (hasCommands) {
-        out.append(indent).append(" [command] [command-options]");
+        out.append(indent).append(" [command] [command options]");
       }
 
-      out.append(lineSeparator());
+      out.append(lineSeparator()).append(lineSeparator());
       appendOptions(commander, out, indent);
       appendDefinitions(out, indent);
       appendCommands(out, indent, commands, hasCommands);
@@ -149,7 +150,7 @@ public class CustomJCommander extends JCommander {
 
     private void appendCommands(StringBuilder out, String indent, Map<String, JCommander> commands, boolean hasCommands) {
       if (hasCommands) {
-        out.append(lineSeparator()).append("Commands:").append(lineSeparator());
+        out.append(lineSeparator()).append("Commands:").append(lineSeparator()).append(lineSeparator());
         for (Map.Entry<String, JCommander> command : commands.entrySet()) {
           String name = command.getKey();
           if (name.endsWith("-deprecated")) {
@@ -159,53 +160,68 @@ public class CustomJCommander extends JCommander {
           Parameters p = arg.getClass().getAnnotation(Parameters.class);
           if (p == null || !p.hidden()) {
             String description = getCommandDescription(name);
-            out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator());
-            appendUsage(commandRepository.getJCommanderCommand(name), out, indent + "    ");
+            out.append(lineSeparator());
+            out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator()).append(lineSeparator());
+            appendUsage(commandRepository.getJCommanderCommand(name), out, indent + "        ");
+            out.append(lineSeparator());
 
             // Options for this command
             JCommander jc = command.getValue();
-            appendOptions(jc, out, "    ");
-            out.append(lineSeparator());
+            appendOptions(jc, out, "        ");
           }
         }
       }
     }
 
     private void appendUsage(JCommanderCommand command, StringBuilder out, String indent) {
-      out.append(indent).append("Usage:").append(lineSeparator());
+      out.append(indent).append("Usage: ");
       String usage = deprecatedUsage ? Metadata.getDeprecatedUsage(command) : Metadata.getUsage(command);
-      out.append(indent).append("    ").append(usage
-          .replace(lineSeparator(), lineSeparator() + "    " + indent)).append(lineSeparator());
+      out.append(usage.replace(lineSeparator(), lineSeparator() + "    " + indent)).append(lineSeparator());
     }
 
     private void appendOptions(JCommander jCommander, StringBuilder out, String indent) {
       // Align the descriptions at the "longestName" column
-      int longestName = 0;
       List<ParameterDescription> sorted = Lists.newArrayList();
+
+      int colSize = "-security-root-directory".length(); // quick hack to get the largest possible option
       for (ParameterDescription pd : jCommander.getParameters()) {
         if (!pd.getParameter().hidden()) {
           sorted.add(pd);
-          int length = pd.getNames().length() + 2;
-          if (length > longestName) {
-            longestName = length;
+          int length = pd.getParameterAnnotation().names()[0].length();
+          if (length > colSize) {
+            colSize = length;
           }
         }
       }
 
-      // Sort the options
-      sorted.sort(Comparator.comparing(ParameterDescription::getLongestName));
-
       // Display all the names and descriptions
       if (sorted.size() > 0) {
-        out.append(indent).append("Options:").append(lineSeparator());
-      }
 
-      for (ParameterDescription pd : sorted) {
-        WrappedParameter parameter = pd.getParameter();
-        out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "").append(lineSeparator());
-        out.append(indent).append("        ").append(pd.getDescription());
-        out.append(lineSeparator());
+        // Sort the options by only considering the first displayed option
+        // which will be the one with 1 dash (i.e. -help).
+        sorted.sort(Comparator.comparing(pd -> pd.getParameterAnnotation().names()[0]));
+
+        out.append(indent).append("Options:").append(lineSeparator());
+
+        for (ParameterDescription pd : sorted) {
+          WrappedParameter parameter = pd.getParameter();
+          out.append(indent)
+              .append("    ")
+              .append(pad(pd.getParameterAnnotation().names()[0], colSize))
+              .append(parameter.required() ? " (required)    " : " (optional)    ")
+              .append(pd.getDescription())
+              .append(lineSeparator());
+        }
       }
     }
+  }
+
+  @SuppressFBWarnings("SBSC_USE_STRINGBUFFER_CONCATENATION")
+  @SuppressWarnings("StringConcatenationInLoop")
+  private String pad(String str, int colSize) {
+    while (str.length() < colSize) {
+      str += " ";
+    }
+    return str;
   }
 }

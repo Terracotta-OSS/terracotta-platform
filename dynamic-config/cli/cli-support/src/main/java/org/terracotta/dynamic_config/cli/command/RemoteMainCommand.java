@@ -27,19 +27,19 @@ import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 @Parameters(commandNames = LocalMainCommand.NAME)
 public class RemoteMainCommand extends LocalMainCommand {
 
-  @Parameter(names = {"-er", "--entity-request-timeout"}, hidden = true, description = "Entity operation timeout. Default: 120s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-entity-request-timeout", "-er", "--entity-request-timeout"}, hidden = true, description = "Entity operation timeout. Default: 120s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> entityOperationTimeout;
 
-  @Parameter(names = {"-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-request-timeout", "-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> requestTimeout = Measure.of(10, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-t", "--connection-timeout"}, description = "Connection timeout. Default: 10s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-connection-timeout", "-t", "--connection-timeout"}, description = "Connection timeout. Default: 10s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> connectionTimeout = Measure.of(10, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-srd", "--security-root-directory"}, description = "Security root directory")
+  @Parameter(names = {"-security-root-directory", "-srd", "--security-root-directory"}, description = "Security root directory")
   private String securityRootDirectory;
 
-  @Parameter(names = {"--lock-token"}, hidden = true, description = "Lock token")
+  @Parameter(names = {"-lock-token", "--lock-token"}, hidden = true, description = "Lock token")
   private String lockToken;
 
   public Measure<TimeUnit> getRequestTimeout() {
