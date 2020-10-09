@@ -30,7 +30,7 @@ import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 public class LocalMainCommand extends JCommanderCommand {
   public static final String NAME = "main";
 
-  @Parameter(names = {"-v", "--verbose"}, description = "Verbose mode. Default: false")
+  @Parameter(names = {"-verbose", "-v", "--verbose"}, description = "Verbose mode. Default: false")
   private boolean verbose = false;
 
   @Override
