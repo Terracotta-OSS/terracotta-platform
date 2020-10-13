@@ -53,7 +53,7 @@ public class DynamicConfigNomadServerAdapter implements DynamicConfigNomadServer
   }
 
   @Override
-  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {return delegate.getAllNomadChanges();}
+  public List<NomadChangeInfo> getChangeHistory() throws NomadException {return delegate.getChangeHistory();}
 
   @Override
   public DiscoverResponse<NodeContext> discover() throws NomadException {return delegate.discover();}

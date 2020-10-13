@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 
 import java.net.InetSocketAddress;
 import java.time.Clock;
@@ -45,7 +43,7 @@ public class LogCommand extends RemoteCommand {
   public void run() {
     logger.info("Configuration logs from {}:", node);
 
-    NomadChangeInfo[] logs = getLogs();
+    NomadChangeInfo[] logs = getChangeHistory(node);
 
     Arrays.sort(logs, Comparator.comparing(NomadChangeInfo::getVersion));
     Clock clock = Clock.systemDefaultZone();
@@ -68,12 +66,6 @@ public class LogCommand extends RemoteCommand {
     }
 
     logger.info("{}{}{}", lineSeparator(), formattedChanges, lineSeparator());
-  }
-
-  private NomadChangeInfo[] getLogs() {
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
-      return diagnosticService.getProxy(TopologyService.class).getChangeHistory();
-    }
   }
 
   private static String padCut(String s, int length) {

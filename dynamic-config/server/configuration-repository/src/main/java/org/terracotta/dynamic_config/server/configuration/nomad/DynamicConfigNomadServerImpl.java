@@ -114,12 +114,12 @@ public class DynamicConfigNomadServerImpl extends NomadServerImpl<NodeContext> i
   }
 
   @Override
-  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
-    LinkedList<NomadChangeInfo> allNomadChanges = new LinkedList<>();
+  public List<NomadChangeInfo> getChangeHistory() throws NomadException {
+    LinkedList<NomadChangeInfo> output = new LinkedList<>();
     UUID changeUuid = state.getLatestChangeUuid();
     while (changeUuid != null) {
       ChangeState<NodeContext> changeState = state.getChangeState(changeUuid);
-      allNomadChanges.addFirst(
+      output.addFirst(
           new NomadChangeInfo(
               changeUuid,
               changeState.getChange(),
@@ -133,6 +133,6 @@ public class DynamicConfigNomadServerImpl extends NomadServerImpl<NodeContext> i
       );
       changeUuid = changeState.getPrevChangeId();
     }
-    return allNomadChanges;
+    return output;
   }
 }
