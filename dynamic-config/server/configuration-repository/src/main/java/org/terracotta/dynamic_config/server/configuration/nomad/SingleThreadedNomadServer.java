@@ -174,10 +174,10 @@ public class SingleThreadedNomadServer implements DynamicConfigNomadServer {
   }
 
   @Override
-  public List<NomadChangeInfo> getAllNomadChanges() throws NomadException {
+  public List<NomadChangeInfo> getChangeHistory() throws NomadException {
     lock.lock();
     try {
-      return underlying.getAllNomadChanges();
+      return underlying.getChangeHistory();
     } finally {
       lock.unlock();
     }

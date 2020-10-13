@@ -30,7 +30,7 @@ public interface DynamicConfigNomadServer extends NomadServer<NodeContext> {
 
   ChangeApplicator<NodeContext> getChangeApplicator();
 
-  List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
+  List<NomadChangeInfo> getChangeHistory() throws NomadException;
 
   /**
    * Forces the sync of a stream of changes in a node's append log.

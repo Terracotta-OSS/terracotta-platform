@@ -155,7 +155,7 @@ public abstract class RemoteCommand extends Command {
 
     runClusterActivation(newNodes, cluster);
 
-    syncNomadChangesTo(newNodes, getAllNomadChangesFrom(destination), cluster);
+    syncNomadChangesTo(newNodes, getChangeHistory(destination), cluster);
 
     restartNodes(newNodes, restartDelay, restartWaitTime);
   }
@@ -167,9 +167,13 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  private NomadChangeInfo[] getAllNomadChangesFrom(Endpoint node) {
-    logger.trace("getChangeHistory({})", node);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node.getAddress())) {
+  protected final NomadChangeInfo[] getChangeHistory(Endpoint node) {
+    return getChangeHistory(node.getAddress());
+  }
+
+  protected final NomadChangeInfo[] getChangeHistory(InetSocketAddress address) {
+    logger.trace("getChangeHistory({})", address);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
       return diagnosticService.getProxy(TopologyService.class).getChangeHistory();
     }
   }

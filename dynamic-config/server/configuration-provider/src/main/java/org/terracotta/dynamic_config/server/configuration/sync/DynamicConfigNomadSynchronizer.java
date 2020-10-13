@@ -52,7 +52,7 @@ public class DynamicConfigNomadSynchronizer {
   }
 
   public Set<Require> syncNomadChanges(List<NomadChangeInfo> sourceNomadChanges, Cluster sourceTopology) throws NomadException {
-    List<NomadChangeInfo> nomadChanges = nomadServer.getAllNomadChanges();
+    List<NomadChangeInfo> nomadChanges = nomadServer.getChangeHistory();
     NomadChange firstNomadChange = getFirstNomadChange(nomadChanges);
 
     // programming errors
