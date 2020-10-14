@@ -25,7 +25,6 @@ import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
-import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServerAdapter;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ClusterConfigFilename;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Config;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageAdapter;
@@ -99,7 +98,7 @@ public class NomadServerFactory {
 
     SanskritNomadServerState serverState = new SanskritNomadServerState(sanskrit, configStorage, new DefaultHashComputer());
 
-    SingleThreadedNomadServer nomadServer = new SingleThreadedNomadServer(new DynamicConfigNomadServerAdapter(new DynamicConfigNomadServerImpl(serverState)) {
+    DynamicConfigNomadServer nomadServer = new SingleThreadedNomadServer(new DynamicConfigNomadServerImpl(serverState)) {
       @Override
       public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
         AcceptRejectResponse response = super.prepare(message);
@@ -136,7 +135,7 @@ public class NomadServerFactory {
           LOGGER.warn("Error closing Sanskrit: " + e.getMessage(), e);
         }
       }
-    });
+    };
 
     long currentVersion = serverState.getCurrentVersion();
     if (currentVersion != 0) {
