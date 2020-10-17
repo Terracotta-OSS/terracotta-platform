@@ -18,11 +18,13 @@ package org.terracotta.dynamic_config.server.configuration.nomad;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
+import org.terracotta.dynamic_config.api.service.FormatUpgrade;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ClusterConfigFilename;
@@ -171,18 +173,21 @@ public class NomadServerFactory {
 
     LOGGER.info("Upgrading configuration version: {} stored in: {} from format version: {} to format version: {}", currentVersion, filename, config.getVersion(), to);
 
-    // prepare server with a change applicator that will always apply
-    nomadServer.setChangeApplicator(ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()));
-
     // upgrade
+    Cluster upgraded = new FormatUpgrade().upgrade(config.getTopology().getCluster(), config.getVersion());
+
+    // push in Nomad
     try {
+      // prepare server with a change applicator that will always apply
+      nomadServer.setChangeApplicator(ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()));
+
       NomadEnvironment environment = new NomadEnvironment();
 
       List<NomadEndpoint<NodeContext>> endpoints = singletonList(new NomadEndpoint<>(node.getInternalAddress(), nomadServer));
       // Note: do NOT close this nomad client - it would close the server and sanskrit!
       NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
       NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
-      nomadClient.tryApplyChange(failureRecorder, new FormatUpgradeNomadChange(config.getVersion(), to));
+      nomadClient.tryApplyChange(failureRecorder, new FormatUpgradeNomadChange(config.getVersion(), to, upgraded));
 
       // this is important to rethrow eagerly in the nomad server creation flow to avoid starting a server ending with a prepared change,
       // which cannot be migrated sadly since we cannot alter the append log entries.

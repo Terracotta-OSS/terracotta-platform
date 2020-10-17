@@ -23,8 +23,8 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
-import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.FormatUpgrade;
 import org.terracotta.dynamic_config.api.service.Props;
 
 import java.io.IOException;
@@ -91,7 +91,7 @@ public class FileConfigStorage implements ConfigStorage {
       // we are eagerly applying the upgrade in memory.
       // It will be re-applied after through a nomad change and persisted
       // this si required because everything is working based on the UIDs now...
-      cluster = new FormatUpgradeNomadChange(configFormatVersion, CURRENT).apply(cluster);
+      cluster = new FormatUpgrade().upgrade(cluster, configFormatVersion);
 
       // V1 => V2: nodeUID is in V2, nodeName in V1
       if (nodeUID == null) {

@@ -192,8 +192,9 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
   public static class FormatUpgradeNomadChangeMixIn extends FormatUpgradeNomadChange {
     @JsonCreator
     public FormatUpgradeNomadChangeMixIn(@JsonProperty(value = "from", required = true) Version from,
-                                         @JsonProperty(value = "to", required = true) Version to) {
-      super(from, to);
+                                         @JsonProperty(value = "to", required = true) Version to,
+                                         @JsonProperty(value = "cluster", required = true) Cluster cluster) {
+      super(from, to, cluster);
     }
   }
 

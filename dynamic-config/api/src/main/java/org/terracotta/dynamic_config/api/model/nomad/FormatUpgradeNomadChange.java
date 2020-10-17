@@ -18,25 +18,21 @@ package org.terracotta.dynamic_config.api.model.nomad;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
-import org.terracotta.dynamic_config.api.service.NameGenerator;
-
-import java.util.Random;
-
-import static java.util.Objects.requireNonNull;
 
 /**
- * Nomad change that supports upgrading from a config format to another one
+ * Nomad change that supports upgrading from a config format to another one.
+ * <p>
+ * It also acts as a starting point of an append.log for the sync process.
  *
  * @author Mathieu Carbou
  */
-public class FormatUpgradeNomadChange extends FilteredNomadChange {
+public class FormatUpgradeNomadChange extends ClusterActivationNomadChange {
 
   private final Version from;
   private final Version to;
 
-  public FormatUpgradeNomadChange(Version from, Version to) {
-    super(Applicability.cluster());
+  public FormatUpgradeNomadChange(Version from, Version to, Cluster cluster) {
+    super(cluster);
     this.from = from;
     this.to = to;
   }
@@ -48,44 +44,12 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
 
   @Override
   public Cluster apply(Cluster original) {
-    requireNonNull(original);
-    Cluster upgraded = original.clone();
-
-    if (from == Version.V1) {
-      // From V1 to V2, added required settings are: UIDs, stripe name
-      // this migration process happens independently for each node and
-      // has to output the exact same result for all the nodes
-
-      // We need to generate the UIDs.
-      // The UIDs need to be generated the same way for all the nodes on the same cluster.
-      // The "upgrade" process is happening per node, and we have to generate some UIDs
-      // that will lead to the results regardless where we are
-      // We will then use the cluster name as a seed for the random number generator
-      String clusterName = upgraded.getName();
-      requireNonNull(clusterName);
-
-      Random random = new Random(clusterName.hashCode());
-      upgraded.setUID(upgraded.newUID(random));
-      upgraded.getStripes().forEach(stripe -> {
-        stripe.setUID(upgraded.newUID(random));
-        stripe.getNodes().forEach(node -> {
-          node.setUID(upgraded.newUID(random));
-        });
-      });
-
-      // Generate only stripe names when migrating from V1 to V2.
-      // Existing node names should not be touched
-      NameGenerator.assignFriendlyStripeNames(upgraded, new Random(clusterName.hashCode()));
-    }
-
-    new ClusterValidator(upgraded).validate();
-
-    return upgraded;
+    return getCluster();
   }
 
   @Override
   public boolean canApplyAtRuntime(NodeContext currentNode) {
-    return true;
+    return false;
   }
 
   public Version getFrom() {
@@ -101,6 +65,7 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
     return "FormatUpgradeNomadChange{" +
         "from=" + from +
         ", to=" + to +
+        ", cluster=" + getCluster().toShapeString() +
         '}';
   }
 }
