@@ -29,6 +29,7 @@ import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -144,7 +145,7 @@ public class SingleThreadedNomadServer implements DynamicConfigNomadServer {
   }
 
   @Override
-  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {
+  public void forceSync(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {
     lock.lock();
     try {
       underlying.forceSync(changes, fn);

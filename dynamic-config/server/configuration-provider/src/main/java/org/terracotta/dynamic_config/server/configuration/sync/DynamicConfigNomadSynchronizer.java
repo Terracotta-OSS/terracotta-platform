@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static java.util.stream.Collectors.toList;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 
@@ -105,8 +106,7 @@ public class DynamicConfigNomadSynchronizer {
       // by controlling how to save the config written on  disk for all these commits
       if (pos >= 0) {
         LOGGER.info("This node is force-syncing {} historical changes", pos + 1);
-        Iterable<NomadChangeInfo> iterable = () -> sourceNomadChanges.stream().limit(pos + 1).iterator();
-        nomadServer.forceSync(iterable, (previousConfig, nomadChange) -> {
+        nomadServer.forceSync(sourceNomadChanges.stream().limit(pos + 1).collect(toList()), (previousConfig, nomadChange) -> {
           DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) nomadChange;
           dynamicConfigNomadChange = dynamicConfigNomadChange.unwrap();
           Cluster previous = previousConfig == null ? null : previousConfig.getCluster();

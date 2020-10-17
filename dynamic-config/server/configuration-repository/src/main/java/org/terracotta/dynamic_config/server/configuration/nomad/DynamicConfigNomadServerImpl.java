@@ -26,6 +26,7 @@ import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerImpl;
 import org.terracotta.nomad.server.state.NomadServerState;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -56,10 +57,11 @@ public class DynamicConfigNomadServerImpl extends NomadServerImpl<NodeContext> i
   }
 
   @Override
-  public void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {
+  public void forceSync(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {
     ChangeApplicator<NodeContext> backup = getChangeApplicator();
     try {
       super.setChangeApplicator(ChangeApplicator.allow(fn));
+
       for (NomadChangeInfo change : changes) {
         switch (change.getChangeRequestState()) {
           case PREPARED: {

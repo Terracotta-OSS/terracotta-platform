@@ -22,6 +22,7 @@ import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -39,5 +40,5 @@ public interface DynamicConfigNomadServer extends NomadServer<NodeContext> {
    * which will return a new configuration from 2 parameters: the change and
    * the previous configuration, which might be null at the beginning.
    */
-  void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException;
+  void forceSync(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException;
 }
