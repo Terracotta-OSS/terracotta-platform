@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration.service;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,10 +28,12 @@ import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
+import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyAnalyzer;
@@ -46,6 +47,7 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 import org.terracotta.dynamic_config.server.api.LicenseParserDiscovery;
 import org.terracotta.dynamic_config.server.api.LicenseService;
+import org.terracotta.dynamic_config.server.configuration.nomad.UncheckedNomadException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
@@ -71,8 +73,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,12 +97,18 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
 import static org.mockito.Mockito.mock;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.server.configuration.sync.Require.NOTHING;
+import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 
 @RunWith(Parameterized.class)
@@ -112,7 +120,7 @@ public class DesynchronizedNomadConfigTest {
         {"v1-config"},
         {"v1-config-migrated"},
         {"v2-concurrent-tx-rolled-back"},
-        {"v2-config"},
+        {"v2-config"}
     });
   }
 
@@ -123,12 +131,71 @@ public class DesynchronizedNomadConfigTest {
   public String rootName;
 
   @Test
-  @Ignore
   public void test_sync() throws NomadException {
     Path root = copy(rootName);
-    try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config")); FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"))) {
+    try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config"));
+         FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"));
+         NomadClient<NodeContext> nomadClient = createNomadClient(0, active, passive)) {
       DynamicConfigSyncData syncData = active.sync.getSyncData();
       passive.sync.sync(syncData);
+      runNormalChange(nomadClient);
+    }
+  }
+
+  @Test
+  public void test_restricted_activation() throws NomadException {
+    assumeThat(rootName, is(not(equalTo("v2-concurrent-tx-rolled-back"))));
+
+    Path root = copy(rootName);
+
+    // reset the node
+    try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"))) {
+      passive.reset();
+    }
+
+    try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config"));
+         NomadClient<NodeContext> activeNomadClient = active.createNomadClient()) {
+
+      runNormalChange(activeNomadClient);
+      assertThat(active.nomad.getChangeHistory(), hasSize(2));
+
+      // grab last topology
+      Cluster lastTopology = active.nomad.discover().getLatestChange().getResult().getCluster();
+      Node passiveDetails = lastTopology.getSingleStripe().get().getNodes().get(1);
+
+      // activate the un-configured node
+      try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"), passiveDetails);
+           NomadClient<NodeContext> passiveNomadClient = passive.createNomadClient()) {
+        passive.manager.getDynamicConfigService().setUpcomingCluster(lastTopology);
+        passive.manager.getDynamicConfigService().activate(lastTopology, null);
+
+        NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
+        passiveNomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(lastTopology));
+        failureRecorder.reThrowErrors();
+
+        assertThat(passive.nomad.getChangeHistory(), hasSize(1));
+      }
+
+      // force sync the passive to active
+      try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"), passiveDetails)) {
+        assertThat(passive.sync.sync(active.sync.getSyncData()), hasItem(ZAP_REQUIRED));
+        assertThat(passive.nomad.getChangeHistory(), hasSize(2)); // the changes before any upgrade are not synced
+      }
+
+      // run a normal change across the cluster
+      try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"), passiveDetails);
+           NomadClient<NodeContext> clusterNomadClient = createNomadClient(0, active, passive)) {
+        NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
+        clusterNomadClient.tryApplyChange(failureRecorder, SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "3GB"));
+        failureRecorder.reThrowErrors();
+        assertThat(active.nomad.getChangeHistory(), hasSize(3));
+        assertThat(active.nomad.getChangeHistory(), hasSize(3));
+      }
+
+      // nothing to sync next time
+      try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"), passiveDetails)) {
+        assertThat(passive.sync.sync(active.sync.getSyncData()), hasItem(NOTHING));
+      }
     }
   }
 
@@ -138,9 +205,7 @@ public class DesynchronizedNomadConfigTest {
     try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config"));
          FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"));
          NomadClient<NodeContext> nomadClient = createNomadClient(0, active, passive)) {
-      NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
-      nomadClient.tryApplyChange(failureRecorder, SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "1GB"));
-      failureRecorder.reThrowErrors();
+      runNormalChange(nomadClient);
     }
   }
 
@@ -150,12 +215,15 @@ public class DesynchronizedNomadConfigTest {
     try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config"));
          FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"));
          NomadClient<NodeContext> nomadClient = createNomadClient(0, active, passive)) {
+
       NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
       nomadClient.tryApplyChange(failureRecorder, SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "64MB"));
       assertThat(failureRecorder.getReasons(), hasItems(
-          "Prepare rejected for node host1:9410. Reason: 'set offheap-resources.main=64MB': New offheap-resource size: 64MB should be larger than the old size: 512MB",
-          "Prepare rejected for node host2:9412. Reason: 'set offheap-resources.main=64MB': New offheap-resource size: 64MB should be larger than the old size: 512MB"
+          "Prepare rejected for node " + active.getAddress() + ". Reason: 'set offheap-resources.main=64MB': New offheap-resource size: 64MB should be larger than the old size: 512MB",
+          "Prepare rejected for node " + passive.getAddress() + ". Reason: 'set offheap-resources.main=64MB': New offheap-resource size: 64MB should be larger than the old size: 512MB"
       ));
+
+      runNormalChange(nomadClient);
     }
   }
 
@@ -163,9 +231,8 @@ public class DesynchronizedNomadConfigTest {
   public void test_diagnostic() {
     Path root = copy(rootName);
     try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config"));
-         FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"));
-         NomadClient<NodeContext> nomadClient = createNomadClient(0, active, passive)) {
-      ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = analyzeConsistency(nomadClient);
+         FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"))) {
+      ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = analyzeConsistency(active, passive);
       assertThat(configurationConsistencyAnalyzer.getState(), is(equalTo(ConfigurationConsistencyState.ALL_ACCEPTING)));
     }
   }
@@ -225,7 +292,9 @@ public class DesynchronizedNomadConfigTest {
         assertFalse(Thread.currentThread().isInterrupted());
         assertThat(errors.get(), is(greaterThan(0)));
         assertThat(errorRecorders.stream().filter(r -> !r.isEmpty()).findFirst().get().getReasons(), hasItem(containsString("Another process running on")));
-        assertNomadClientsHaveRolledBack(nomadClients);
+        assertNomadClientsHaveRolledBack(nomadClients, active, passive);
+
+        runNormalChange(nomadClients.get(0));
       } finally {
         nomadClients.forEach(NomadClient::close);
         nomadClients.forEach(NomadClient::close);
@@ -233,24 +302,20 @@ public class DesynchronizedNomadConfigTest {
     }
   }
 
-  private void assertNomadClientsHaveRolledBack(List<NomadClient<NodeContext>> nomadClients) {
+  private void assertNomadClientsHaveRolledBack(List<NomadClient<NodeContext>> nomadClients, FakeNode active, FakeNode passive) {
     for (NomadClient<NodeContext> nomadClient : nomadClients) {
-      ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = analyzeConsistency(nomadClient);
+      ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = analyzeConsistency(active, passive);
       assertThat(configurationConsistencyAnalyzer.getState(), is(equalTo(ConfigurationConsistencyState.ALL_ACCEPTING)));
 
       // all tx should be rolled back
-      Stream.of(
-          InetSocketAddress.createUnresolved("host1", 9410),
-          InetSocketAddress.createUnresolved("host2", 9412))
+      Stream.of(active.getAddress(), passive.getAddress())
           .map(addr -> configurationConsistencyAnalyzer.getDiscoveryResponse(addr).get())
           .forEach(discoverResponse -> {
             assertThat(discoverResponse.getLatestChange().getState(), is(ChangeRequestState.ROLLED_BACK));
           });
 
       // last committed change is the same (but eventually different change uuids)
-      Set<String> hash = Stream.of(
-          InetSocketAddress.createUnresolved("host1", 9410),
-          InetSocketAddress.createUnresolved("host2", 9412))
+      Set<String> hash = Stream.of(active.getAddress(), passive.getAddress())
           .map(addr -> configurationConsistencyAnalyzer.getDiscoveryResponse(addr).get())
           .map(discoverResponse -> discoverResponse.getLatestCommittedChange().getChangeResultHash())
           .collect(Collectors.toSet());
@@ -272,46 +337,84 @@ public class DesynchronizedNomadConfigTest {
   }
 
   private NomadClient<NodeContext> createNomadClient(int idx, FakeNode active, FakeNode passive) {
-    List<NomadEndpoint<NodeContext>> endpoints = idx == 0 ? Arrays.asList(
-        new NomadEndpoint<>(InetSocketAddress.createUnresolved("host1", 9410), active.nomadServer),
-        new NomadEndpoint<>(InetSocketAddress.createUnresolved("host2", 9412), passive.nomadServer)
-    ) : Arrays.asList(
-        new NomadEndpoint<>(InetSocketAddress.createUnresolved("host2", 9412), passive.nomadServer),
-        new NomadEndpoint<>(InetSocketAddress.createUnresolved("host1", 9410), active.nomadServer)
-    );
+    List<NomadEndpoint<NodeContext>> endpoints = idx == 0 ?
+        asList(active.getEndpoint(), passive.getEndpoint()) :
+        asList(passive.getEndpoint(), active.getEndpoint());
     NomadEnvironment environment = new NomadEnvironment();
     return new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
   }
 
-  private static ConfigurationConsistencyAnalyzer analyzeConsistency(NomadClient<NodeContext> nomadClient) {
+  private ConfigurationConsistencyAnalyzer analyzeConsistency(FakeNode active, FakeNode passive) {
     Map<InetSocketAddress, LogicalServerState> addresses = Stream.of(
-        new SimpleEntry<>(InetSocketAddress.createUnresolved("host1", 9410), LogicalServerState.ACTIVE),
-        new SimpleEntry<>(InetSocketAddress.createUnresolved("host2", 9412), LogicalServerState.PASSIVE)
+        new SimpleEntry<>(active.getAddress(), LogicalServerState.ACTIVE),
+        new SimpleEntry<>(passive.getAddress(), LogicalServerState.PASSIVE)
     ).collect(toMap(SimpleEntry::getKey, SimpleEntry::getValue));
     ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = new ConfigurationConsistencyAnalyzer(addresses);
-    nomadClient.tryDiscovery(new MultiDiscoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), configurationConsistencyAnalyzer)));
+    try (NomadClient<NodeContext> nomadClient = createNomadClient(0, active, passive)) {
+      nomadClient.tryDiscovery(new MultiDiscoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), configurationConsistencyAnalyzer)));
+    }
     return configurationConsistencyAnalyzer;
+  }
+
+  private static void runNormalChange(NomadClient<NodeContext> nomadClient) {
+    NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
+    nomadClient.tryApplyChange(failureRecorder, SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "2GB"));
+    failureRecorder.reThrowErrors();
   }
 
   static class FakeNode implements Closeable {
 
-    private final DynamicConfigNomadServer nomadServer;
+    private final DynamicConfigNomadServer nomad;
     private final DynamicConfigurationPassiveSync sync;
+    private final NomadServerManager manager;
+    private final NodeContext alternateConfig;
 
-    FakeNode(DynamicConfigNomadServer nomadServer, DynamicConfigurationPassiveSync sync) {
-      this.nomadServer = nomadServer;
+    FakeNode(DynamicConfigNomadServer nomad, DynamicConfigurationPassiveSync sync, NomadServerManager manager, NodeContext alternateConfig) {
+      this.nomad = nomad;
       this.sync = sync;
+      this.manager = manager;
+      this.alternateConfig = alternateConfig;
     }
 
     @Override
     public void close() {
-      nomadServer.close();
+      nomad.close();
+    }
+
+    InetSocketAddress getAddress() {
+      try {
+        return nomad.getCurrentCommittedConfig().map(c -> c.getNode().getInternalAddress()).orElse(alternateConfig.getNode().getInternalAddress());
+      } catch (NomadException e) {
+        throw new UncheckedNomadException(e);
+      }
+    }
+
+    NomadEndpoint<NodeContext> getEndpoint() {
+      return new NomadEndpoint<>(getAddress(), nomad);
+    }
+
+    NomadClient<NodeContext> createNomadClient() {
+      List<NomadEndpoint<NodeContext>> endpoints = Collections.singletonList(getEndpoint());
+      NomadEnvironment environment = new NomadEnvironment();
+      return new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
+    }
+
+    void reset() throws NomadException {
+      nomad.reset();
+      manager.downgradeForRead();
+    }
+
+    /**
+     * if node is configured
+     */
+    static FakeNode create(Path configDir) {
+      return create(configDir, null);
     }
 
     /**
      * Simulate the wiring of real service like it is done in the configuration provider
      */
-    static FakeNode create(Path configDir) {
+    static FakeNode create(Path configDir, Node alternateNode) {
       // initialize services
       IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
       ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
@@ -348,15 +451,20 @@ public class DesynchronizedNomadConfigTest {
       // simulate some empty CLI options (except for failover)
       Map<Setting, String> cliOptions = new LinkedHashMap<>();
       cliOptions.putIfAbsent(FAILOVER_PRIORITY, FailoverPriority.availability().toString());
+      if (alternateNode != null) {
+        cliOptions.putIfAbsent(NODE_HOSTNAME, alternateNode.getHostname());
+        cliOptions.putIfAbsent(NODE_PORT, String.valueOf(alternateNode.getPort().orDefault()));
+        cliOptions.putIfAbsent(NODE_NAME, String.valueOf(alternateNode.getName()));
+      }
       ClusterFactory clusterFactory = new ClusterFactory(Version.CURRENT);
       Cluster cluster = clusterFactory.create(cliOptions, parameterSubstitutor);
-      NodeContext alternate = new NodeContext(cluster, cluster.getSingleNode().get().getUID());
+      NodeContext alternateConfig = new NodeContext(cluster, cluster.getSingleNode().get().getUID());
 
       // determine node name from the config dir
-      String nodeName = NomadConfigurationManager.findNodeName(configDir, parameterSubstitutor).get();
+      String nodeName = NomadConfigurationManager.findNodeName(configDir, parameterSubstitutor).orElse(null);
 
       // initialize nomad
-      nomadServerManager.init(configDir, nodeName, alternate);
+      nomadServerManager.init(configDir, nodeName == null ? alternateConfig.getNode().getName() : nodeName, alternateConfig);
 
       // get the initialized DC services
       DynamicConfigNomadServer nomadServer = nomadServerManager.getNomadServer();
@@ -364,7 +472,9 @@ public class DesynchronizedNomadConfigTest {
       TopologyService topologyService = nomadServerManager.getTopologyService();
 
       // activate the node
-      dynamicConfigService.activate(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
+      if (nodeName != null) {
+        dynamicConfigService.activate(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
+      }
 
       // create the sync service
       DynamicConfigurationPassiveSync sync = new DynamicConfigurationPassiveSync(
@@ -373,7 +483,7 @@ public class DesynchronizedNomadConfigTest {
           dynamicConfigService,
           topologyService, () -> dynamicConfigService.getLicenseContent().orElse(null));
 
-      return new FakeNode(nomadServer, sync);
+      return new FakeNode(nomadServer, sync, nomadServerManager, alternateConfig);
     }
   }
 }

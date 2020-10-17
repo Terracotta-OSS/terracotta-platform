@@ -86,38 +86,17 @@ public class NomadChangeInfo {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    NomadChangeInfo that = (NomadChangeInfo) o;
-    return version == that.version &&
-        Objects.equals(changeUuid, that.changeUuid) &&
-        Objects.equals(nomadChange, that.nomadChange) &&
-        changeRequestState == that.changeRequestState &&
-        Objects.equals(creationHost, that.creationHost) &&
-        Objects.equals(creationUser, that.creationUser) &&
-        Objects.equals(creationTimestamp, that.creationTimestamp);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser, creationTimestamp);
-  }
-
-  @Override
   public String toString() {
-    return "NomadChangeInfo{" +
-        "changeUuid=" + changeUuid +
-        ", changeRequestState=" + changeRequestState +
-        ", version=" + version +
-        ", creationHost=" + creationHost +
-        ", creationUser=" + creationUser +
-        ", creationTimestamp=" + creationTimestamp +
-        ", changeResultHash=" + changeResultHash +
-        ", nomadChange=" + nomadChange.getSummary() +
-        '}';
+    return "Change{uuid=" + changeUuid + ",hash=" + changeResultHash + ",state=" + changeRequestState + ",summary=" + nomadChange.getSummary() + '}';
   }
 
+  public boolean matches(NomadChangeInfo other) {
+    // 2 nomad changes are equivalent if they have the ame UUID (most common case)
+    // or if the nomad change object plus its result are the same (i.e. in case of
+    // automatic config upgrade at startup which)
+    return Objects.equals(changeUuid, other.changeUuid)
+        || Objects.equals(changeResultHash, other.changeResultHash) && Objects.equals(nomadChange, other.nomadChange);
+  }
 
   public PrepareMessage toPrepareMessage(long mutativeMessageCount) {
     return new PrepareMessage(

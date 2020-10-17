@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.server.configuration.nomad;
 
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.nomad.client.change.NomadChange;
@@ -133,7 +134,9 @@ public class DynamicConfigNomadServerImpl extends NomadServerImpl<NodeContext> i
               changeState.getChangeResultHash()
           )
       );
-      changeUuid = changeState.getPrevChangeId();
+      // We have arrived at a starting point of a sync when we reach the first ClusterActivationNomadChange
+      // or FormatUpgradeNomadChange or when there is no more changes
+      changeUuid = changeState.getChange() instanceof ClusterActivationNomadChange ? null : changeState.getPrevChangeId();
     }
     return output;
   }

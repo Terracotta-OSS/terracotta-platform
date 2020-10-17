@@ -45,8 +45,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_STATE;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_VERSION;
@@ -133,7 +131,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
   }
 
   @Test
-  public void testPassiveZapsAppendLogHistoryMismatch() throws Exception {
+  public void testPassiveRestartsIfPartialCommitOnActive() throws Exception {
     // trigger commit failure on active
     // but passive is fine
     // when passive restarts, its history is greater and not equal to the active, so it zaps
@@ -154,12 +152,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertThat(angela.tsa().getActives().size(), is(1));
 
     out.clearLog(1, passiveNodeId);
-    try {
-      angela.tsa().start(getNode(1, passiveNodeId));
-      fail();
-    } catch (Exception e) {
-      waitUntil(out.getLog(1, passiveNodeId), containsLog("Node cannot sync because the configuration change history does not match"));
-    }
+    angela.tsa().start(getNode(1, passiveNodeId));
+    waitForPassive(1, passiveNodeId);
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     angela.tsa().stopAll();
