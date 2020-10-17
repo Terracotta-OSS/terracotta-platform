@@ -132,7 +132,7 @@ public class FileConfigStorage implements ConfigStorage {
 
   @Override
   public void reset() throws ConfigStorageException {
-    String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
+    String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss.SSS"));
     AtomicReference<ConfigStorageException> error = new AtomicReference<>();
     try (Stream<Path> stream = Files.list(root)) {
       stream.filter(Files::isRegularFile).forEach(config -> {
