@@ -99,11 +99,13 @@ public class ConfigConverterTool {
               }
             }
             // Create New JCommander object to avoid repeated main command error.
-            jCommander = getCustomJCommander(commandRepository, mainCommand);
-            jCommander.parse(args);
+            CustomJCommander deprecatedJCommander = getCustomJCommander(commandRepository, mainCommand);
+            deprecatedJCommander.parse(args);
+            //success ?
+            jCommander = deprecatedJCommander;
           } catch (ParameterException pe) {
             jCommander.printAskedCommandUsage(command);
-            throw pe;
+            throw e;
           }
         }
       } else {
