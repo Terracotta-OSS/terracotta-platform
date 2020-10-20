@@ -33,9 +33,11 @@ import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.InvalidLicenseException;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigNomadSynchronizer;
@@ -48,9 +50,8 @@ import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.server.Server;
 
 import java.io.IOException;
@@ -118,14 +119,14 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public void resetAndSync(NomadChangeInfo[] nomadChanges, Cluster cluster) {
-    UpgradableNomadServer<NodeContext> nomadServer = nomadServerManager.getNomadServer();
+    DynamicConfigNomadServer nomadServer = nomadServerManager.getNomadServer();
     DynamicConfigNomadSynchronizer nomadSynchronizer = new DynamicConfigNomadSynchronizer(
         nomadServerManager.getConfiguration().orElse(null), nomadServer);
 
     List<NomadChangeInfo> backup;
     Cluster thisTopology = upcomingNodeContext.getCluster();
     try {
-      backup = nomadServer.getAllNomadChanges();
+      backup = nomadServer.getChangeHistory();
     } catch (NomadException e) {
       throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
     }
@@ -235,9 +236,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   // this is the only real listener where we act on in this service
 
   @Override
-  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState) {
     if (response.isAccepted()) {
-      DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) changeInfo.getNomadChange();
+      DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) changeState.getChange();
       LOGGER.info("Nomad change {} committed: {}", message.getChangeUuid(), dynamicConfigNomadChange.getSummary());
 
       // extract the changes since there can be multiple settings change
@@ -397,7 +398,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public NomadChangeInfo[] getChangeHistory() {
     try {
-      return nomadServerManager.getNomadServer().getAllNomadChanges().toArray(new NomadChangeInfo[0]);
+      return nomadServerManager.getNomadServer().getChangeHistory().toArray(new NomadChangeInfo[0]);
     } catch (NomadException e) {
       throw new IllegalStateException(e);
     }

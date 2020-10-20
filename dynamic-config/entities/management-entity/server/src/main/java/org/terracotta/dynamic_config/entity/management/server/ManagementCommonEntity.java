@@ -40,7 +40,7 @@ import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.nomad.server.ChangeState;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -155,7 +155,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         }
 
         @Override
-        public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
+        public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState) {
           Map<String, String> data = new TreeMap<>();
           data.put("changeUuid", message.getChangeUuid().toString());
           data.put("host", String.valueOf(message.getMutationHost()));

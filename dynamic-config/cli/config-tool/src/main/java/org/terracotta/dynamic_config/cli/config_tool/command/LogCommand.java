@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import org.terracotta.diagnostic.client.DiagnosticService;
-import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 
 import java.net.InetSocketAddress;
 import java.time.Clock;
@@ -45,7 +43,7 @@ public class LogCommand extends RemoteCommand {
   public void run() {
     logger.info("Configuration logs from {}:", node);
 
-    NomadChangeInfo[] logs = getLogs();
+    NomadChangeInfo[] logs = getChangeHistory(node);
 
     Arrays.sort(logs, Comparator.comparing(NomadChangeInfo::getVersion));
     Clock clock = Clock.systemDefaultZone();
@@ -56,6 +54,7 @@ public class LogCommand extends RemoteCommand {
         .map(log -> padCut(String.valueOf(log.getVersion()), 4)
             + " " + log.getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601)
             + " " + log.getChangeUuid().toString()
+            + " " + log.getChangeResultHash()
             + " " + log.getChangeRequestState().name()
             + " | " + log.getCreationUser()
             + "@" + log.getCreationHost()
@@ -67,12 +66,6 @@ public class LogCommand extends RemoteCommand {
     }
 
     logger.info("{}{}{}", lineSeparator(), formattedChanges, lineSeparator());
-  }
-
-  private NomadChangeInfo[] getLogs() {
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
-      return diagnosticService.getProxy(TopologyService.class).getChangeHistory();
-    }
   }
 
   private static String padCut(String s, int length) {

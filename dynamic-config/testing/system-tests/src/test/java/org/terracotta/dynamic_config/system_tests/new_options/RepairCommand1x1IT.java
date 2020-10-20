@@ -60,7 +60,7 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
     assertThat(
         invokeConfigTool("repair", "-connect-to", "localhost:" + getNodePort()),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration"),
+            containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));
 
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));

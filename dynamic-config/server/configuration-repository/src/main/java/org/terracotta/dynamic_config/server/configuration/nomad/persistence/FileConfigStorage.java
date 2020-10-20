@@ -23,8 +23,8 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
-import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.FormatUpgrade;
 import org.terracotta.dynamic_config.api.service.Props;
 
 import java.io.IOException;
@@ -52,6 +52,7 @@ public class FileConfigStorage implements ConfigStorage {
   public FileConfigStorage(Path root, String nodeName) {
     this.root = requireNonNull(root);
     this.nodeName = requireNonNull(nodeName);
+    LOGGER.info("Configuration storage location: {}", root);
   }
 
   @SuppressWarnings("unused")
@@ -59,7 +60,7 @@ public class FileConfigStorage implements ConfigStorage {
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   public Config getConfig(long version) throws ConfigStorageException {
     Path file = toPath(version);
-    LOGGER.debug("Loading version: {} from file: {}", version, file);
+    LOGGER.debug("Loading version: {} from file: {}", version, file.getFileName());
     try {
       Properties properties = Props.load(file);
 
@@ -90,7 +91,7 @@ public class FileConfigStorage implements ConfigStorage {
       // we are eagerly applying the upgrade in memory.
       // It will be re-applied after through a nomad change and persisted
       // this si required because everything is working based on the UIDs now...
-      cluster = new FormatUpgradeNomadChange(configFormatVersion, CURRENT).apply(cluster);
+      cluster = new FormatUpgrade().upgrade(cluster, configFormatVersion);
 
       // V1 => V2: nodeUID is in V2, nodeName in V1
       if (nodeUID == null) {
@@ -109,7 +110,7 @@ public class FileConfigStorage implements ConfigStorage {
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
     Path file = toPath(version);
-    LOGGER.debug("Saving topology: {} with version: {} to file: {}", config, version, file);
+    LOGGER.debug("Saving version: {} to file: {}", version, file.getFileName());
     try {
       if (file.getParent() != null) {
         Files.createDirectories(file.getParent());
@@ -131,7 +132,7 @@ public class FileConfigStorage implements ConfigStorage {
 
   @Override
   public void reset() throws ConfigStorageException {
-    String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
+    String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss.SSS"));
     AtomicReference<ConfigStorageException> error = new AtomicReference<>();
     try (Stream<Path> stream = Files.list(root)) {
       stream.filter(Files::isRegularFile).forEach(config -> {

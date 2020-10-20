@@ -21,14 +21,15 @@ import org.terracotta.nomad.client.Consistency;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
 import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
 import org.terracotta.nomad.messages.DiscoverResponse;
+import org.terracotta.nomad.server.ChangeRequestState;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 
 public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, RecoveryResultReceiver<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(LoggingResultReceiver.class);
+  private volatile ChangeRequestState state;
 
   @Override
   public void startTakeover() {
@@ -76,13 +77,13 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
-    error("UNRECOVERABLE: Inconsistent cluster for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+    error("UNRECOVERABLE: Inconsistent config for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
   }
 
   @Override
-  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
-    error("UNRECOVERABLE: Desynchronized cluster for last changes: " + lastChangeUuids);
+  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+    error("UNRECOVERABLE: Partitioned configuration on cluster. Subsets: " + partitions);
   }
 
   @Override
@@ -137,6 +138,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endPrepare() {
+    state = ChangeRequestState.PREPARED;
     log("Finished asking servers to prepare to make the change");
   }
 
@@ -162,6 +164,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endCommit() {
+    state = ChangeRequestState.COMMITTED;
     log("Finished asking servers to commit the change");
   }
 
@@ -187,6 +190,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endRollback() {
+    state = ChangeRequestState.ROLLED_BACK;
     log("Finished asking servers to rollback the change");
   }
 
@@ -194,7 +198,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   public void done(Consistency consistency) {
     switch (consistency) {
       case CONSISTENT:
-        log("The change has been made successfully");
+        log("The transaction is completed. State: " + state);
         break;
       case MAY_NEED_RECOVERY:
         error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.");
@@ -203,7 +207,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
         log("Unable to determine new configuration consistency: configuration has not changed as no mutative operation has been performed");
         break;
       case UNRECOVERABLY_INCONSISTENT:
-        error("Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent and cannot be trivially recovered.");
+      case UNRECOVERABLY_PARTITIONNED:
+        error("Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent or partitioned and cannot be trivially recovered.");
         break;
       default:
         throw new AssertionError("Unknown Consistency: " + consistency);
@@ -226,15 +231,11 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
     if (e == null) {
       LOGGER.debug(line);
     } else {
-      LOGGER.debug(line + ". Reason: " + stringify(e));
+      LOGGER.debug(line + " Error: " + e.getMessage(), e);
     }
   }
 
   protected void log(String line) {
     LOGGER.debug(line);
-  }
-
-  protected final String stringify(Throwable e) {
-    return e == null ? "" : e.getMessage() == null ? e.getClass().getName() : e.getMessage();
   }
 }

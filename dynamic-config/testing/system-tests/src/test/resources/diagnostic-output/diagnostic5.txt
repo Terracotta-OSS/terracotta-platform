@@ -5,8 +5,7 @@
  - Nodes online, configured and in repair: 0
  - Nodes online, new and being configured: 0
  - Nodes pending restart: 0
- - Configuration state: A new  cluster configuration has been prepared but not yet committed or rolled back on all nodes. No further configuration change can be done until the 'repair' command is run to finalize the configuration change.
- - Configuration checkpoint found across all online configured nodes (activated or in repair): YES (Version: 2, UUID:
+ - Configuration state: A new cluster configuration has been prepared but not yet committed or rolled back on online nodes. Some nodes are unreachable so we do not know if the last configuration change has been committed or rolled back on them. No further configuration change can be done until the 'repair' command is run to finalize the configuration change. If the unreachable nodes do not become available again, you might need to use the '-force' option to force a commit or rollback.
 [node
  - Node state: UNREACHABLE
  - Node online, configured and activated: NO

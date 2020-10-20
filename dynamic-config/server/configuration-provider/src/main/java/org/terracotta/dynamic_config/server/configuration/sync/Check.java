@@ -18,16 +18,16 @@ package org.terracotta.dynamic_config.server.configuration.sync;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
-import org.terracotta.nomad.server.ChangeRequestState;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
+import org.terracotta.nomad.client.change.NomadChange;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.OptionalInt;
-import java.util.function.Supplier;
 
-import static java.lang.Math.min;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 
 /**
@@ -45,17 +45,25 @@ class Check {
     }
   }
 
-  static void assertThat(Supplier<Boolean> check) {
-    if (!check.get()) {
+  static void assertEmpty(Collection<?>... collections) {
+    for (Collection<?> collection : collections) {
+      if (!collection.isEmpty()) {
+        throw new AssertionError(collection);
+      }
+    }
+  }
+
+  static void assertTrue(boolean b) {
+    if (!b) {
       throw new AssertionError();
     }
   }
 
-  static OptionalInt findLastSyncPosition(List<NomadChangeInfo> sourceNomadChanges, Cluster sourceTopology, Cluster currentCluster) {
+  static OptionalInt findLastSyncPosition(Deque<NomadChangeInfo> sourceNomadChanges, Cluster sourceTopology, Cluster currentCluster) {
     // index until which we need to force a sync
     // this will try to find a nomad topology change in the active node that matches the topology used to start the passive node
     // this will cover the case where we need to repair a broken node attachment for example
-    int pos = lastIndexOfSameCommittedSourceTopologyChange(sourceNomadChanges, currentCluster);
+    int pos = lastIndexOfSameTopologyCommitted(sourceNomadChanges, currentCluster);
 
     // if not found:
     // - either there has been some subsequent changes in the active node after the topology change, and the passive node was activated
@@ -67,66 +75,56 @@ class Check {
         pos = sourceNomadChanges.size() - 1;
 
       } else {
+        LOGGER.trace("findLastSyncPosition(): {}", pos);
         return OptionalInt.empty();
       }
     }
 
-    LOGGER.trace("findLastSyncPosition({}, {}): {}", sourceNomadChanges, currentCluster, pos);
+    LOGGER.trace("findLastSyncPosition(): {}", pos);
     return OptionalInt.of(pos);
   }
 
-  static void requireEquals(List<NomadChangeInfo> nomadChanges, List<NomadChangeInfo> sourceNomadChanges, int from, int count) {
-    int to = min(min(from + count, nomadChanges.size()), sourceNomadChanges.size());
-    LOGGER.trace("requireEquals({}, {}, {}, {}, {})", nomadChanges, sourceNomadChanges, count, from, to);
-    for (; from < to; from++) {
-      NomadChangeInfo nomadChange = nomadChanges.get(from);
-      NomadChangeInfo sourceChange = sourceNomadChanges.get(from);
-      if (!nomadChange.equals(sourceChange)) {
-        throw new IllegalStateException("Node cannot sync because the configuration change history does not match: no match on source node for this change on the node:" + nomadChange);
-      }
-    }
-  }
-
-  static boolean canRepair(List<NomadChangeInfo> nomadChanges, List<NomadChangeInfo> sourceNomadChanges) {
-    int last = nomadChanges.size() - 1;
-    NomadChangeInfo lastNomadChange = nomadChanges.get(last);
-    NomadChangeInfo sourceChange = sourceNomadChanges.get(last);
-    return lastNomadChange.getChangeUuid().equals(sourceChange.getChangeUuid())
-        && lastNomadChange.getChangeRequestState() == ChangeRequestState.PREPARED
-        && sourceChange.getChangeRequestState() != ChangeRequestState.PREPARED;
-  }
-
-  static boolean isNodeNew(List<NomadChangeInfo> nomadChanges) {
+  static boolean isNodeNew(Collection<NomadChangeInfo> nomadChanges) {
     final boolean b = nomadChanges.size() == 1;
     LOGGER.trace("isNodeNew({}): {}", nomadChanges, b);
     return b;
   }
 
-  static boolean isJointActivation(List<NomadChangeInfo> nomadChanges, List<NomadChangeInfo> sourceNomadChanges) {
-    final boolean b = nomadChanges.get(0).equals(sourceNomadChanges.get(0));
-    LOGGER.trace("isJointActivation({}, {}): {}", nomadChanges, sourceNomadChanges, b);
+  static boolean isJointActivation(NomadChangeInfo thisFirst, NomadChangeInfo sourceFirst) {
+    final boolean b = thisFirst.getChangeUuid().equals(sourceFirst.getChangeUuid())
+        && thisFirst.getChangeRequestState() == COMMITTED
+        && sourceFirst.getChangeRequestState() == COMMITTED;
+    LOGGER.trace("isJointActivation({}, {}): {}", thisFirst, sourceFirst, b);
     return b;
+  }
+
+  static NomadChange unwrap(NomadChange change) {
+    if (change instanceof LockAwareDynamicConfigNomadChange) {
+      return ((LockAwareDynamicConfigNomadChange) change).getChange();
+    }
+    return change;
   }
 
   private static boolean topologyMatches(Cluster sourceTopology, Cluster currentCluster) {
     final boolean b = currentCluster.equals(sourceTopology);
-    LOGGER.trace("topologyMatches({}, {}): {}", sourceTopology, currentCluster, b);
+    LOGGER.trace("topologyMatches(): {}", b);
     return b;
   }
 
-  private static int lastIndexOfSameCommittedSourceTopologyChange(List<NomadChangeInfo> sourceNomadChanges, Cluster currentCluster) {
+  private static int lastIndexOfSameTopologyCommitted(Deque<NomadChangeInfo> sourceNomadChanges, Cluster currentCluster) {
     // lookup source changes (reverse order) to find the latest change in force that contains the current topology
-    for (int i = sourceNomadChanges.size() - 1; i >= 0; i--) {
-      NomadChangeInfo changeInfo = sourceNomadChanges.get(i);
+    Iterator<NomadChangeInfo> reverseIterator = sourceNomadChanges.descendingIterator();
+    for (int i = sourceNomadChanges.size() - 1; reverseIterator.hasNext() && i >= 0; i--) {
+      NomadChangeInfo changeInfo = reverseIterator.next();
       if (changeInfo.getChangeRequestState() == COMMITTED
-          && changeInfo.getNomadChange() instanceof TopologyNomadChange
-          && ((TopologyNomadChange) changeInfo.getNomadChange()).getCluster().equals(currentCluster)) {
+          && unwrap(changeInfo.getNomadChange()) instanceof TopologyNomadChange
+          && ((TopologyNomadChange) unwrap(changeInfo.getNomadChange())).getCluster().equals(currentCluster)) {
         // we have found the last topology change in the source node matching the topology used to activate the current node
-        LOGGER.trace("lastIndexOfSameCommittedSourceTopologyChange({}, {}): {}", sourceNomadChanges, currentCluster, i);
+        LOGGER.trace("lastIndexOfSameTopologyCommitted(): {}", i);
         return i;
       }
     }
-    LOGGER.trace("lastIndexOfSameCommittedSourceTopologyChange({}, {}): {}", sourceNomadChanges, currentCluster, -1);
+    LOGGER.trace("lastIndexOfSameTopologyCommitted(): {}", -1);
     return -1;
   }
 }

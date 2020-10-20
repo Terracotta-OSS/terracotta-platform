@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.nomad.server;
+package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
+import org.terracotta.nomad.server.ChangeRequestState;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -32,6 +33,7 @@ public class NomadChangeInfo {
   private final String creationHost;
   private final String creationUser;
   private final Instant creationTimestamp;
+  private final String changeResultHash;
 
   public NomadChangeInfo(UUID changeUuid,
                          NomadChange nomadChange,
@@ -39,7 +41,8 @@ public class NomadChangeInfo {
                          long version,
                          String creationHost,
                          String creationUser,
-                         Instant creationTimestamp) {
+                         Instant creationTimestamp,
+                         String changeResultHash) {
     this.changeUuid = changeUuid;
     this.nomadChange = nomadChange;
     this.changeRequestState = changeRequestState;
@@ -47,6 +50,11 @@ public class NomadChangeInfo {
     this.creationHost = creationHost;
     this.creationUser = creationUser;
     this.creationTimestamp = creationTimestamp;
+    this.changeResultHash = changeResultHash;
+  }
+
+  public String getChangeResultHash() {
+    return changeResultHash;
   }
 
   public Instant getCreationTimestamp() {
@@ -78,37 +86,17 @@ public class NomadChangeInfo {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    NomadChangeInfo that = (NomadChangeInfo) o;
-    return version == that.version &&
-        Objects.equals(changeUuid, that.changeUuid) &&
-        Objects.equals(nomadChange, that.nomadChange) &&
-        changeRequestState == that.changeRequestState &&
-        Objects.equals(creationHost, that.creationHost) &&
-        Objects.equals(creationUser, that.creationUser) &&
-        Objects.equals(creationTimestamp, that.creationTimestamp);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser, creationTimestamp);
-  }
-
-  @Override
   public String toString() {
-    return "NomadChangeInfo{" +
-        "changeUuid=" + changeUuid +
-        ", changeRequestState=" + changeRequestState +
-        ", version=" + version +
-        ", creationHost=" + creationHost +
-        ", creationUser=" + creationUser +
-        ", creationTimestamp=" + creationTimestamp +
-        ", nomadChange=" + nomadChange.getSummary() +
-        '}';
+    return "Change{uuid=" + changeUuid + ",hash=" + changeResultHash + ",state=" + changeRequestState + ",summary=" + nomadChange.getSummary() + '}';
   }
 
+  public boolean matches(NomadChangeInfo other) {
+    // 2 nomad changes are equivalent if they have the ame UUID (most common case)
+    // or if the nomad change object plus its result are the same (i.e. in case of
+    // automatic config upgrade at startup which)
+    return Objects.equals(changeUuid, other.changeUuid)
+        || Objects.equals(changeResultHash, other.changeResultHash) && Objects.equals(nomadChange, other.nomadChange);
+  }
 
   public PrepareMessage toPrepareMessage(long mutativeMessageCount) {
     return new PrepareMessage(

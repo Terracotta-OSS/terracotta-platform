@@ -68,7 +68,7 @@ public class ClusterFactory {
     Cluster cluster = create(properties, defaultsAdded::add);
 
     // keep that in trace because DynamicConfigConfiguration is responsible of the logging
-    LOGGER.trace(
+    LOGGER.debug(
         String.format(
             "%sRead the following configurations: %s%sAdded the following defaults: %s",
             lineSeparator(),

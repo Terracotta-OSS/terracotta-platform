@@ -16,8 +16,8 @@
 package org.terracotta.nomad.server.state;
 
 import org.terracotta.nomad.client.change.NomadChange;
-import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerMode;
 
@@ -38,7 +38,7 @@ import static org.terracotta.nomad.server.state.StateKeys.MODE;
 import static org.terracotta.nomad.server.state.StateKeys.MUTATIVE_MESSAGE_COUNT;
 
 public class MemoryNomadServerState<T> implements NomadServerState<T> {
-  private Map<String, Object> state = new HashMap<>();
+  private final Map<String, Object> state = new HashMap<>();
 
   @Override
   @SuppressWarnings("unchecked")
@@ -132,7 +132,7 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
 
   @Override
   @SuppressWarnings("unchecked")
-  public ChangeRequest<T> getChangeRequest(UUID changeUuid) {
+  public ChangeState<T> getChangeState(UUID changeUuid) {
     Map<String, Object> changeRequestState = (Map<String, Object>) state.get(changeUuid.toString());
 
     if (changeRequestState == null) {
@@ -145,9 +145,9 @@ public class MemoryNomadServerState<T> implements NomadServerState<T> {
     String creationHost = (String) changeRequestState.get(StateKeys.CREATION_HOST);
     String creationUser = (String) changeRequestState.get(StateKeys.CREATION_USER);
     Instant creationTimestamp = (Instant) changeRequestState.get(StateKeys.CREATION_TIMESTAMP);
-    String prevChangeUuid = (String) changeRequestState.get(StateKeys.PREV_CHANGE_UUID);
+    UUID prevChangeUuid = (UUID) changeRequestState.get(StateKeys.PREV_CHANGE_UUID);
     T changeResult = (T) state.get(Long.toString(version));
 
-    return new ChangeRequest<>(requestState, version, prevChangeUuid, change, changeResult, creationHost, creationUser, creationTimestamp);
+    return new ChangeState<T>(requestState, version, prevChangeUuid, change, changeResult, creationHost, creationUser, creationTimestamp, changeResult == null ? null : changeResult.toString());
   }
 }

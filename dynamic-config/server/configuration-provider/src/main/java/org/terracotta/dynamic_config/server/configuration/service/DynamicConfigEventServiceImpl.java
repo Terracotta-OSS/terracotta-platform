@@ -29,7 +29,7 @@ import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.nomad.server.ChangeState;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -83,8 +83,8 @@ public class DynamicConfigEventServiceImpl implements DynamicConfigEventService,
   }
 
   @Override
-  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
-    listeners.forEach(c -> c.onNomadCommit(message, response, changeInfo));
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState) {
+    listeners.forEach(c -> c.onNomadCommit(message, response, changeState));
   }
 
   @Override

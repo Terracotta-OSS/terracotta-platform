@@ -34,8 +34,9 @@ import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
-import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
+import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyAnalyzer;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
@@ -47,7 +48,6 @@ import org.terracotta.dynamic_config.cli.config_tool.stop.StopProgress;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
-import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -155,7 +155,7 @@ public abstract class RemoteCommand extends Command {
 
     runClusterActivation(newNodes, cluster);
 
-    syncNomadChangesTo(newNodes, getAllNomadChangesFrom(destination), cluster);
+    syncNomadChangesTo(newNodes, getChangeHistory(destination), cluster);
 
     restartNodes(newNodes, restartDelay, restartWaitTime);
   }
@@ -167,9 +167,13 @@ public abstract class RemoteCommand extends Command {
     }
   }
 
-  private NomadChangeInfo[] getAllNomadChangesFrom(Endpoint node) {
-    logger.trace("getChangeHistory({})", node);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node.getAddress())) {
+  protected final NomadChangeInfo[] getChangeHistory(Endpoint node) {
+    return getChangeHistory(node.getAddress());
+  }
+
+  protected final NomadChangeInfo[] getChangeHistory(InetSocketAddress address) {
+    logger.trace("getChangeHistory({})", address);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
       return diagnosticService.getProxy(TopologyService.class).getChangeHistory();
     }
   }
@@ -210,12 +214,12 @@ public abstract class RemoteCommand extends Command {
   /**
    * Returns the current consistency of the configuration in the cluster
    */
-  protected final ConsistencyAnalyzer analyzeNomadConsistency(Map<Endpoint, LogicalServerState> allNodes) {
+  protected final ConfigurationConsistencyAnalyzer analyzeNomadConsistency(Map<Endpoint, LogicalServerState> allNodes) {
     logger.trace("analyzeNomadConsistency({})", allNodes);
     Map<InetSocketAddress, LogicalServerState> addresses = allNodes.entrySet().stream().collect(toMap(e -> e.getKey().getAddress(), Map.Entry::getValue));
-    ConsistencyAnalyzer consistencyAnalyzer = new ConsistencyAnalyzer(addresses);
-    nomadManager.runConfigurationDiscovery(allNodes, consistencyAnalyzer);
-    return consistencyAnalyzer;
+    ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = new ConfigurationConsistencyAnalyzer(addresses);
+    nomadManager.runConfigurationDiscovery(allNodes, configurationConsistencyAnalyzer);
+    return configurationConsistencyAnalyzer;
   }
 
   /**

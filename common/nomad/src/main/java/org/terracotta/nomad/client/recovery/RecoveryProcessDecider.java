@@ -16,7 +16,6 @@
 package org.terracotta.nomad.client.recovery;
 
 import org.terracotta.nomad.client.BaseNomadDecider;
-import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.ChangeRequestState;
 
@@ -34,11 +33,11 @@ public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
   private final AtomicInteger rolledBack = new AtomicInteger();
   private final AtomicInteger committed = new AtomicInteger();
   private final AtomicInteger prepared = new AtomicInteger();
-  private final int expectedNodeCount;
+  private final int expectedTotalNodeCount;
   private final ChangeRequestState forcedState;
 
-  public RecoveryProcessDecider(int expectedNodeCount, ChangeRequestState forcedState) {
-    this.expectedNodeCount = expectedNodeCount;
+  public RecoveryProcessDecider(int expectedTotalNodeCount, ChangeRequestState forcedState) {
+    this.expectedTotalNodeCount = expectedTotalNodeCount;
     this.forcedState = forcedState; // can be null
   }
 
@@ -57,7 +56,9 @@ public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
     super.discovered(server, discovery);
 
     UUID latestChangeUuid = getLatestChangeUuid(discovery);
-    latestChangeUuids.add(latestChangeUuid);
+    if (latestChangeUuid != null) {
+      latestChangeUuids.add(latestChangeUuid);
+    }
 
     ChangeRequestState changeState = getLatestChangeState(discovery);
     if (changeState != null) {
@@ -77,47 +78,35 @@ public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
     }
   }
 
-  private UUID getLatestChangeUuid(DiscoverResponse<T> discovery) {
-    ChangeDetails<T> latestChange = discovery.getLatestChange();
-
-    if (latestChange == null) {
-      return null;
-    }
-
-    return latestChange.getChangeUuid();
-  }
-
-  private ChangeRequestState getLatestChangeState(DiscoverResponse<T> discovery) {
-    ChangeDetails<T> latestChange = discovery.getLatestChange();
-
-    if (latestChange == null) {
-      return null;
-    }
-
-    return latestChange.getState();
-  }
-
-  private boolean partiallyCommitted() {
+  public boolean partiallyCommitted() {
     return latestChangeUuids.size() == 1 // online servers all have the same change UUID at the end of the append log
         && rolledBack.get() == 0 // AND we have no server online having rolled back this change
         && prepared.get() > 0 // AND we have some servers online that are still prepared
-        && (prepared.get() + committed.get() == expectedNodeCount // AND we have all the nodes that are online and they are all either prepared or committed
+        && (prepared.get() + committed.get() == expectedTotalNodeCount // AND we have all the nodes that are online and they are all either prepared or committed
         || committed.get() > 0 // OR we have some nodes offline, but amongst the online nodes, some are committed, so we can commit
         || committed.get() == 0 && forcedState == COMMITTED // OR we have some nodes offline, but amongst the online ones none are committed (they are all prepared), but user says he wants to force a commit
     );
   }
 
-  private boolean partiallyRolledBack() {
+  public boolean partiallyRolledBack() {
     return latestChangeUuids.size() == 1 // online servers all have the same change UUID at the end of the append log
         && committed.get() == 0 // AND we have no server online having committed this change
         && prepared.get() > 0 // AND we have some servers online that are still prepared
-        && (prepared.get() + rolledBack.get() == expectedNodeCount // AND we have all the nodes that are online and they are all either prepared or rolled back
+        && (prepared.get() + rolledBack.get() == expectedTotalNodeCount // AND we have all the nodes that are online and they are all either prepared or rolled back
         || rolledBack.get() > 0 // OR we have some nodes offline, but amongst the online nodes, some are rolled back, so we can rollback the prepared ones
         || rolledBack.get() == 0 && forcedState == ROLLED_BACK // OR we have some nodes offline, but amongst the online ones none are rolled back (they are all prepared), but user says he wants to force a rollback
     );
   }
 
-  private boolean partiallyPrepared() {
+  public boolean partiallyPrepared() {
     return latestChangeUuids.size() > 1 && prepared.get() > 0;
+  }
+
+  private UUID getLatestChangeUuid(DiscoverResponse<T> discovery) {
+    return discovery.getLatestChange() == null ? null : discovery.getLatestChange().getChangeUuid();
+  }
+
+  private ChangeRequestState getLatestChangeState(DiscoverResponse<T> discovery) {
+    return discovery.getLatestChange() == null ? null : discovery.getLatestChange().getState();
   }
 }

@@ -13,35 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.nomad.server;
+package org.terracotta.dynamic_config.server.api;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.nomad.client.change.NomadChange;
+import org.terracotta.nomad.server.ChangeApplicator;
+import org.terracotta.nomad.server.NomadException;
+import org.terracotta.nomad.server.NomadServer;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.function.BiFunction;
 
-public interface UpgradableNomadServer<T> extends NomadServer<T> {
-  void setChangeApplicator(ChangeApplicator<T> changeApplicator);
+public interface DynamicConfigNomadServer extends NomadServer<NodeContext> {
+  void setChangeApplicator(ChangeApplicator<NodeContext> changeApplicator);
 
-  ChangeApplicator<T> getChangeApplicator();
+  ChangeApplicator<NodeContext> getChangeApplicator();
 
-  Optional<NomadChangeInfo> getNomadChangeInfo(UUID uuid) throws NomadException;
-
-  List<NomadChangeInfo> getAllNomadChanges() throws NomadException;
-
-  Optional<NomadChangeInfo> getNomadChange(UUID uuid) throws NomadException;
-
-  /**
-   * Last change has not been committed or rolled back yet.
-   * Nomad is in PREPARED mode and won't accept further changes.
-   */
-  boolean hasIncompleteChange();
-
-  Optional<T> getCurrentCommittedConfig() throws NomadException;
-
-  void reset() throws NomadException;
+  List<NomadChangeInfo> getChangeHistory() throws NomadException;
 
   /**
    * Forces the sync of a stream of changes in a node's append log.
@@ -50,5 +40,5 @@ public interface UpgradableNomadServer<T> extends NomadServer<T> {
    * which will return a new configuration from 2 parameters: the change and
    * the previous configuration, which might be null at the beginning.
    */
-  void forceSync(Iterable<NomadChangeInfo> changes, BiFunction<T, NomadChange, T> fn) throws NomadException;
+  void forceSync(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException;
 }

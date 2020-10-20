@@ -26,7 +26,7 @@ import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.nomad.server.ChangeState;
 
 /**
  * @author Mathieu Carbou
@@ -78,7 +78,7 @@ public interface DynamicConfigListener extends DynamicConfigEventFiring {
 
   default void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response) {}
 
-  default void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {}
+  default void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState) {}
 
   default void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {}
 

@@ -22,8 +22,8 @@ import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.FormatUpgrade;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.PathResolver;
@@ -142,7 +142,7 @@ public class ConfigurationGeneratorVisitor {
     // and this generation will be done with a controlled random.
     // Note: UIDs cannot be given from the CLI, they are system generated settings.
 
-    nodeContext = nodeContext.withCluster(new FormatUpgradeNomadChange(Version.V1, Version.CURRENT).apply(nodeContext.getCluster())).get();
+    nodeContext = nodeContext.withCluster(new FormatUpgrade().upgrade(nodeContext.getCluster(), Version.V1)).get();
 
     String nodeName = nodeContext.getNode().getName();
     server.console("Starting node: {} in cluster: {}", nodeName, clusterName);

@@ -18,7 +18,8 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
-import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
+import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyAnalyzer;
+import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState;
 import org.terracotta.dynamic_config.cli.config_tool.converter.RepairAction;
 
 import java.net.InetSocketAddress;
@@ -96,65 +97,79 @@ public class RepairCommand extends RemoteCommand {
       logger.warn("Some online nodes are not activated: {}. Automatic repair will only work against activated nodes: {}", toString(unconfigured), toString(activatedNodes.keySet()));
     }
 
-    ConsistencyAnalyzer consistencyAnalyzer = analyzeNomadConsistency(allNodes);
+    ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = analyzeNomadConsistency(allNodes);
+    ConfigurationConsistencyState state = configurationConsistencyAnalyzer.getState();
+    String description = configurationConsistencyAnalyzer.getDescription();
 
-    switch (consistencyAnalyzer.getGlobalState()) {
-      case ACCEPTING:
-        logger.info("Cluster configuration is healthy. No repair needed.");
+    switch (state) {
+      case ALL_ACCEPTING:
+      case ONLINE_ACCEPTING:
+        logger.info(description);
+        break;
+
+      case DISCOVERY_FAILURE:
+        logger.error(description, configurationConsistencyAnalyzer.getDiscoverFailure());
         break;
 
       case INCONSISTENT:
-        //TODO [DYNAMIC-CONFIG]: TDB-4822 - enhance repair command to force a rollback to a checkpoint ?
-        logger.error("Cluster configuration is inconsistent and cannot be automatically repaired. Change " + consistencyAnalyzer.getInconsistentChangeUuid()
-            + " is committed on " + toString(consistencyAnalyzer.getCommittedNodes())
-            + " and rolled back on " + toString(consistencyAnalyzer.getRolledBackNodes()));
-        break;
-
-      case DESYNCHRONIZED:
-        //TODO [DYNAMIC-CONFIG]: TDB-4822 - enhance repair command to force a rollback to a checkpoint ?
-        logger.error("Cluster configuration is desynchronized and cannot be automatically repaired. Nodes are not ending with the same change UUIDs. Details: " + consistencyAnalyzer.getLastChangeUuids());
-        break;
-
-      // normal repair cases
-      case PREPARED:
-      case MAYBE_PREPARED:
-      case PARTIALLY_PREPARED:
-      case PARTIALLY_COMMITTED:
-      case MAYBE_PARTIALLY_COMMITTED:
-      case PARTIALLY_ROLLED_BACK:
-      case MAYBE_PARTIALLY_ROLLED_BACK:
-        // perhaps we won't run into these again when issuing the repair command
-      case DISCOVERY_FAILURE:
-      case CONCURRENT_ACCESS:
-        // let's still try to run a Nomad repair for the cases below. It will likely fail though.
+      case PARTITIONED:
+      case CHANGE_IN_PROGRESS:
       case UNKNOWN:
-      case MAYBE_UNKNOWN: {
-        if (consistencyAnalyzer.hasUnreachableNodes()) {
-          logger.warn("Some nodes are not reachable.");
-        } else {
-          logger.info("All nodes are online.");
-        }
-
-        logger.info("Attempting an automatic repair of the configuration on nodes: {}...", toString(activatedNodes.keySet()));
-
-        if (forcedRepairAction == null) {
-          logger.info("Auto-detecting what needs to be done...");
-        } else {
-          logger.warn("Forcing a " + forcedRepairAction.name().toLowerCase() + "...");
-        }
-
-        Collection<InetSocketAddress> onlineActivatedAddresses = consistencyAnalyzer.getOnlineActivatedNodes().keySet();
-        Map<Endpoint, LogicalServerState> onlineActivatedEndpoints = allNodes.entrySet().stream()
-            .filter(e -> onlineActivatedAddresses.contains(e.getKey().getAddress()))
-            .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-        runConfigurationRepair(onlineActivatedEndpoints, allNodes.size(), forcedRepairAction == RepairAction.COMMIT ? COMMITTED : forcedRepairAction == RepairAction.ROLLBACK ? ROLLED_BACK : null);
-        logger.info("Configuration is repaired.");
-
+        logger.error(description);
         break;
-      }
+
+      case ALL_PREPARED:
+        // run a repair that will do a commit except if the user has specified otherwise by using -force
+        repair(allNodes, configurationConsistencyAnalyzer, RepairAction.COMMIT);
+        break;
+
+      case ONLINE_PREPARED:
+        // run a repair that will do what is asked by the user. -force is required in this case and
+        // the command will fail if no hint is given
+        repair(allNodes, configurationConsistencyAnalyzer, null);
+        break;
+
+      case PARTIALLY_PREPARED:
+        if (forcedRepairAction != RepairAction.ROLLBACK) {
+          throw new IllegalArgumentException("The configuration is partially prepared. A rollback is needed. A " + forcedRepairAction + " cannot be executed.");
+        }
+        // run a repair that will do a rollback
+        repair(allNodes, configurationConsistencyAnalyzer, RepairAction.ROLLBACK);
+        break;
+
+      case PARTIALLY_COMMITTED:
+        if (forcedRepairAction != RepairAction.COMMIT) {
+          throw new IllegalArgumentException("The configuration is partially committed. A commit is needed. A " + forcedRepairAction + " cannot be executed.");
+        }
+        // run a repair that will do a commit
+        repair(allNodes, configurationConsistencyAnalyzer, RepairAction.COMMIT);
+        break;
+
+      case PARTIALLY_ROLLED_BACK:
+        if (forcedRepairAction != RepairAction.ROLLBACK) {
+          throw new IllegalArgumentException("The configuration is partially rolled back. A rollback is needed. A " + forcedRepairAction + " cannot be executed.");
+        }
+        // run a repair that will do a rollback
+        repair(allNodes, configurationConsistencyAnalyzer, RepairAction.ROLLBACK);
+        break;
 
       default:
-        throw new AssertionError(consistencyAnalyzer.getGlobalState());
+        throw new AssertionError(state);
     }
+  }
+
+  private void repair(Map<Endpoint, LogicalServerState> allNodes, ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer, RepairAction fallbackRepairAction) {
+    Collection<InetSocketAddress> onlineActivatedAddresses = configurationConsistencyAnalyzer.getOnlineNodesActivated().keySet();
+    Map<Endpoint, LogicalServerState> onlineActivatedEndpoints = allNodes.entrySet().stream()
+        .filter(e -> onlineActivatedAddresses.contains(e.getKey().getAddress()))
+        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+    RepairAction wanted = forcedRepairAction == null ? fallbackRepairAction : forcedRepairAction;
+    if (wanted == null) {
+      throw new IllegalArgumentException("Please use the '-force' option to specify whether a commit or rollback is wanted.");
+    } else {
+      logger.info("Repairing configuration by running a " + wanted + "...");
+    }
+    runConfigurationRepair(onlineActivatedEndpoints, allNodes.size(), wanted == RepairAction.COMMIT ? COMMITTED : wanted == RepairAction.ROLLBACK ? ROLLED_BACK : null);
+    logger.info("Configuration is repaired.");
   }
 }

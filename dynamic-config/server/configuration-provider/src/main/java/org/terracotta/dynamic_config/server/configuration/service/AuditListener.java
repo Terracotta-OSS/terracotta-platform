@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.server.configuration.service;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
@@ -24,7 +25,7 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.server.Server;
 
 import java.util.Properties;
@@ -60,7 +61,7 @@ public class AuditListener implements DynamicConfigListener {
   }
 
   @Override
-  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState) {
     server.audit("Nomad change " + message.getChangeUuid() + " committed", new Properties());
   }
 

@@ -33,7 +33,7 @@ public class HashChecker {
   private int hashCount;
 
   public HashChecker(String hash0, String hash1) {
-    LOGGER.trace("HashChecker({}, {}})", hash0, hash1);
+    LOGGER.trace("HashChecker({}, {})", hash0, hash1);
     if (hash0 != null) {
       hashes.put(hash0, "hash0");
       hashCount++;
@@ -50,12 +50,12 @@ public class HashChecker {
         throw new SanskritException("Found hashes after the last recorded hash");
       }
       laterHash = true;
-      LOGGER.trace("check({}}): {}", hash, false);
+      LOGGER.trace("check({}): {}", hash, false);
       return false;
     }
 
     String removed = hashes.remove(hash);
-    LOGGER.trace("check({}}): removed: {}", hash, removed);
+    LOGGER.trace("check({}): removed: {}", hash, removed);
 
     if (removed != null) {
       if (removedFirst == null) {
@@ -67,7 +67,7 @@ public class HashChecker {
       }
     }
 
-    LOGGER.trace("check({}}): {}", hash, true);
+    LOGGER.trace("check({}): {}", hash, true);
     return true;
   }
 

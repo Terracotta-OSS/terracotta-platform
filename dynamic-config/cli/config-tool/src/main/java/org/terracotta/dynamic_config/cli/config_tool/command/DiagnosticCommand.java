@@ -16,11 +16,9 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.OptionalConfig;
-import org.terracotta.dynamic_config.api.service.ConsistencyAnalyzer;
+import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyAnalyzer;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.server.NomadServerMode;
 
@@ -33,7 +31,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeSet;
 
-import static java.lang.String.format;
 import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toSet;
 
@@ -53,11 +50,11 @@ public class DiagnosticCommand extends RemoteCommand {
     // this call can take some time and we can have some timeout
     Map<Node.Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
 
-    ConsistencyAnalyzer consistencyAnalyzer = analyzeNomadConsistency(allNodes);
-    Collection<InetSocketAddress> onlineNodes = sort(consistencyAnalyzer.getOnlineNodes().keySet());
-    Collection<InetSocketAddress> onlineActivatedNodes = sort(consistencyAnalyzer.getOnlineActivatedNodes().keySet());
-    Collection<InetSocketAddress> onlineInConfigurationNodes = sort(consistencyAnalyzer.getOnlineInConfigurationNodes().keySet());
-    Collection<InetSocketAddress> onlineInRepairNodes = sort(consistencyAnalyzer.getOnlineInRepairNodes().keySet());
+    ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = analyzeNomadConsistency(allNodes);
+    Collection<InetSocketAddress> onlineNodes = sort(configurationConsistencyAnalyzer.getOnlineNodes().keySet());
+    Collection<InetSocketAddress> onlineActivatedNodes = sort(configurationConsistencyAnalyzer.getOnlineNodesActivated().keySet());
+    Collection<InetSocketAddress> onlineInConfigurationNodes = sort(configurationConsistencyAnalyzer.getOnlineNodesInConfiguration().keySet());
+    Collection<InetSocketAddress> onlineInRepairNodes = sort(configurationConsistencyAnalyzer.getOnlineNodesInRepair().keySet());
     Collection<InetSocketAddress> nodesPendingRestart = sort(allNodes.keySet().stream()
         .map(Node.Endpoint::getAddress)
         .filter(onlineNodes::contains)
@@ -103,12 +100,7 @@ public class DiagnosticCommand extends RemoteCommand {
         .append(details(nodesPendingRestart))
         .append(lineSeparator());
     sb.append(" - Configuration state: ")
-        .append(meaningOf(consistencyAnalyzer))
-        .append(lineSeparator());
-    sb.append(" - Configuration checkpoint found across all online configured nodes (activated or in repair): ")
-        .append(consistencyAnalyzer.getCheckpoint()
-            .map(nci -> "YES (Version: " + nci.getVersion() + ", UUID: " + nci.getChangeUuid() + ", At: " + nci.getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601) + ", Details: " + nci.getNomadChange().getSummary() + ")")
-            .orElse("NO"))
+        .append(configurationConsistencyAnalyzer.getDescription())
         .append(lineSeparator());
 
     allNodes.keySet().forEach(endpoint -> {
@@ -117,20 +109,20 @@ public class DiagnosticCommand extends RemoteCommand {
 
       // node status
       sb.append(" - Node state: ")
-          .append(consistencyAnalyzer.getState(endpoint.getAddress()))
+          .append(configurationConsistencyAnalyzer.getState(endpoint.getAddress()))
           .append(lineSeparator());
       sb.append(" - Node online, configured and activated: ")
-          .append(consistencyAnalyzer.isOnlineAndActivated(endpoint.getAddress()) ?
+          .append(onlineActivatedNodes.contains(endpoint.getAddress()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
       sb.append(" - Node online, configured and in repair: ")
-          .append(consistencyAnalyzer.isOnlineAndInRepair(endpoint.getAddress()) ?
+          .append(onlineInRepairNodes.contains(endpoint.getAddress()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
       sb.append(" - Node online, new and being configured: ")
-          .append(consistencyAnalyzer.isOnlineAndInConfiguration(endpoint.getAddress()) ?
+          .append(onlineInConfigurationNodes.contains(endpoint.getAddress()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
@@ -148,7 +140,7 @@ public class DiagnosticCommand extends RemoteCommand {
             "NO")
             .append(lineSeparator());
 
-        consistencyAnalyzer.getDiscoveryResponse(endpoint.getAddress()).ifPresent(discoverResponse -> {
+        configurationConsistencyAnalyzer.getDiscoveryResponse(endpoint.getAddress()).ifPresent(discoverResponse -> {
 
           sb.append(" - Node can accept new changes: ")
               .append(discoverResponse.getMode() == NomadServerMode.ACCEPTING ? "YES" : "NO")
@@ -206,84 +198,5 @@ public class DiagnosticCommand extends RemoteCommand {
     TreeSet<InetSocketAddress> sorted = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
     sorted.addAll(addrs);
     return sorted;
-  }
-
-  private String meaningOf(ConsistencyAnalyzer consistencyAnalyzer) {
-    switch (consistencyAnalyzer.getGlobalState()) {
-      case ACCEPTING:
-        return "The cluster configuration is healthy. " + getLockingInfo(consistencyAnalyzer);
-
-      case DISCOVERY_FAILURE:
-        return "Failed to analyze cluster configuration. Reason: " + consistencyAnalyzer.getDiscoverFailure().getMessage();
-
-      case CONCURRENT_ACCESS:
-        return "Failed to analyze cluster configuration. Reason: concurrent client access:"
-            + " Host: " + consistencyAnalyzer.getOtherClientHost()
-            + ", By: " + consistencyAnalyzer.getOtherClientUser()
-            + ", On: " + consistencyAnalyzer.getNodeProcessingOtherClient();
-
-      case INCONSISTENT:
-        return "Cluster configuration is inconsistent: Change " + consistencyAnalyzer.getInconsistentChangeUuid()
-            + " is committed on " + toString(consistencyAnalyzer.getCommittedNodes())
-            + " and rolled back on " + toString(consistencyAnalyzer.getRolledBackNodes());
-
-      case DESYNCHRONIZED:
-        return "Cluster configuration is desynchronized: Different last changes UUIDs found: " + consistencyAnalyzer.getLastChangeUuids().keySet();
-
-      case PREPARED:
-        return "A new  cluster configuration has been prepared but not yet committed or rolled back on all nodes."
-            + " No further configuration change can be done until the 'repair' command is run to finalize the configuration change.";
-
-      case MAYBE_PREPARED:
-        return "A new  cluster configuration has been prepared but not yet committed or rolled back on online nodes."
-            + " Some nodes are unreachable so we do not know if the last configuration change has been committed or rolled back on them."
-            + " No further configuration change can be done until the 'repair' command is run to finalize the configuration change."
-            + " If the unreachable nodes do not become available again, you might need to use the '-f' option to force a commit or rollback ";
-
-      case PARTIALLY_PREPARED:
-        return "A new  cluster configuration has been *partially* prepared (some nodes didn't get the new change)."
-            + " No further configuration change can be done until the 'repair' command is run to rollback the prepared nodes.";
-
-      case PARTIALLY_COMMITTED:
-        return "A new  cluster configuration has been *partially* committed (some nodes didn't commit)."
-            + " No further configuration change can be done until the 'repair' command is run to commit all nodes.";
-
-      case MAYBE_PARTIALLY_COMMITTED:
-        return "A new  cluster configuration has been *partially* committed (some nodes didn't commit)."
-            + " Some nodes are unreachable so we do not know their last configuration state."
-            + " No further configuration change can be done until the 'repair' command is run to commit all nodes.";
-
-      case PARTIALLY_ROLLED_BACK:
-        return "A new  cluster configuration has been *partially* rolled back (some nodes didn't rollback)."
-            + " No further configuration change can be done until the 'repair' command is run to rollback all nodes.";
-
-      case MAYBE_PARTIALLY_ROLLED_BACK:
-        return "A new  cluster configuration has been *partially* rolled back (some nodes didn't rollback)."
-            + " Some nodes are unreachable so we do not know their last configuration state."
-            + " No further configuration change can be done until the 'repair' command is run to rollback all nodes.";
-
-      case UNKNOWN:
-        return "Unable to determine the global configuration state."
-            + " There might be some configuration inconsistencies."
-            + " Please look at each node details.";
-
-      case MAYBE_UNKNOWN:
-        return "Unable to determine the global configuration state."
-            + " There might be some configuration inconsistencies."
-            + " Some nodes are unreachable so we do not know their last configuration state."
-            + " Please look at each node details.";
-
-      default:
-        throw new AssertionError(consistencyAnalyzer.getGlobalState());
-    }
-  }
-
-  private static String getLockingInfo(ConsistencyAnalyzer consistencyAnalyzer) {
-    return consistencyAnalyzer.getNodeContext()
-        .map(NodeContext::getCluster)
-        .map(Cluster::getConfigurationLockContext)
-        .flatMap(OptionalConfig::asOptional)
-        .map((c) -> format("No changes are possible as config is locked by '%s'.", c.ownerInfo()))
-        .orElse("New configuration changes are possible.");
   }
 }

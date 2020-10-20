@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
+import org.terracotta.dynamic_config.api.service.FormatUpgrade;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.change.NomadChange;
 
@@ -68,7 +69,7 @@ public class NomadChangeJsonTest {
             SettingNomadChange.set(Applicability.node(N_UIDS[1]), NODE_BACKUP_DIR, "backup"),
             SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "bar", "512MB")
         ),
-        new FormatUpgradeNomadChange(Version.V1, Version.V2)
+        new FormatUpgradeNomadChange(Version.V1, Version.V2, new FormatUpgrade().upgrade(cluster, Version.V1))
     };
 
     for (int i = 0; i < changes.length; i++) {
@@ -97,7 +98,7 @@ public class NomadChangeJsonTest {
             SettingNomadChange.set(new ApplicabilityV1(Scope.NODE, 1, "node1"), NODE_BACKUP_DIR, "backup"),
             SettingNomadChange.set(new ApplicabilityV1(Scope.CLUSTER, null, null), OFFHEAP_RESOURCES, "bar", "512MB")
         ),
-        new FormatUpgradeNomadChange(Version.V1, Version.V2)
+        new FormatUpgradeNomadChange(Version.V1, Version.V2, new FormatUpgrade().upgrade(cluster, Version.V1))
     };
 
     for (int i = 0; i < changes.length; i++) {

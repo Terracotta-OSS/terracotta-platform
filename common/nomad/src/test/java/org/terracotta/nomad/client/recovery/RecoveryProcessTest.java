@@ -152,7 +152,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void discoverInconsistentCluster() throws Exception {
+  public void discoverInconsistentConfig() throws Exception {
     UUID uuid = UUID.randomUUID();
     when(server1.discover()).thenReturn(discovery(COMMITTED, uuid));
     when(server2.discover()).thenReturn(discovery(ROLLED_BACK, uuid));
@@ -166,7 +166,7 @@ public class RecoveryProcessTest extends NomadClientProcessTest {
     verify(results).startSecondDiscovery();
     verify(results).discoverRepeated(address1);
     verify(results).discoverRepeated(address2);
-    verify(results).discoverClusterInconsistent(eq(uuid), withItems(address1), withItems(address2));
+    verify(results).discoverConfigInconsistent(eq(uuid), withItems(address1), withItems(address2));
     verify(results).endSecondDiscovery();
     verify(results).done(UNRECOVERABLY_INCONSISTENT);
   }
