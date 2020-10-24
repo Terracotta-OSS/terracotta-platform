@@ -49,7 +49,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
     config = copyConfigProperty("/config-property-files/single-stripe.properties");
     cluster = new ClusterFactory().create(Props.load(config));
     startNode(1, 1,
-        "--config-dir", getNodePath(stripeId, nodeId).append("/config").toString(),
+        "--config-dir", getBaseDir().resolve(getNodeName(stripeId, nodeId)).resolve("config").toString(),
         "-f", config.toString()
     );
   }

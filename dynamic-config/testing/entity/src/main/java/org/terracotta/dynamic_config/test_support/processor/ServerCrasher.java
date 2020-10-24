@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.testing.rules;
+package org.terracotta.dynamic_config.test_support.processor;
 
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.passthrough.IClusterControl;
-import org.terracotta.testing.ExtendedTestRule;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.net.URI;
-
-public abstract class Cluster extends ExtendedTestRule {
-
-  public abstract URI getConnectionURI();
-
-  public abstract String[] getClusterHostPorts();
-
-  public abstract Connection newConnection() throws ConnectionException;
-
-  public abstract IClusterControl getClusterControl();
+public class ServerCrasher {
+  //  CANNOT BE USED WITH INLINE SERVER TESTS
+  @SuppressFBWarnings("DM_EXIT")
+  static void crash() {
+    if (Boolean.getBoolean("restart.inline")) {
+      throw new RuntimeException("server cannot be crashed in inline mode");
+    }
+    System.exit(99);
+  }
 }

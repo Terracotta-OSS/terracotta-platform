@@ -608,6 +608,22 @@ public enum Setting {
       (key, value) -> PATH_VALIDATOR.accept(SettingName.LICENSE_FILE, tuple2(key, value))
   ),
 
+  //  server home
+  SERVER_HOME(SettingName.SERVER_HOME,
+      of(V2),
+      false,
+      ()->System.getProperty("user.dir"),
+      NODE,
+      o -> Optional.empty(),
+      noop(),
+      singletonList(
+          when(CONFIGURING, ACTIVATED).allow(SET).atLevel(NODE)
+      ),
+      EnumSet.noneOf(Requirement.class),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.SERVER_HOME, tuple2(key, value))
+  ),
   // ==== Security
 
   SECURITY_DIR(SettingName.SECURITY_DIR,

@@ -24,12 +24,22 @@ import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.server.ServerMBean;
 
 import javax.management.InstanceNotFoundException;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
+import javax.management.ObjectName;
 
-import static java.lang.management.ManagementFactory.getPlatformMBeanServer;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import org.mockito.ArgumentMatchers;
+import static org.mockito.ArgumentMatchers.anyString;
+import org.mockito.Mockito;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.ServerJMX;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -41,6 +51,17 @@ public class DefaultDiagnosticServicesRegistrationTest {
 
   @Before
   public void setUp() throws Exception {
+    Server server = mock(Server.class);
+    ServerJMX jmx = mock(ServerJMX.class);
+    MBeanServer mbean = MBeanServerFactory.newMBeanServer();
+    when(server.getManagement()).thenReturn(jmx);
+    when(jmx.getMBeanServer()).thenReturn(mbean);
+    Mockito.doAnswer(a->{
+      ObjectName on = ServerMBean.createMBeanName((String)a.getArgument(0));
+      mbean.registerMBean(a.getArgument(1), on);
+      return null;
+    }).when(jmx).registerMBean(anyString(), ArgumentMatchers.any());
+    ServerEnv.setServer(server);
     diagnosticServices.init();
   }
 
@@ -60,10 +81,10 @@ public class DefaultDiagnosticServicesRegistrationTest {
 
     assertThat(diagnosticServices.findService(MyService2.class).isPresent(), is(false));
     assertThat(
-        () -> getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s2")),
+        () -> ServerEnv.getServer().getManagement().getMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s2")),
         is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=s2")))));
     assertThat(
-        () -> getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("AnotherName")),
+        () -> ServerEnv.getServer().getManagement().getMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("AnotherName")),
         is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=AnotherName")))));
 
     // subsequent init is not failing

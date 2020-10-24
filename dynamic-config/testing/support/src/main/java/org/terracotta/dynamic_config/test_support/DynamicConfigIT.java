@@ -15,6 +15,9 @@
  */
 package org.terracotta.dynamic_config.test_support;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matcher;
 import org.junit.Rule;
@@ -96,6 +99,7 @@ import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASS
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
 import static org.terracotta.angela.common.TerracottaServerState.STOPPED;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
+import org.terracotta.angela.common.distribution.RuntimeOption;
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
 import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
@@ -135,11 +139,31 @@ public class DynamicConfigIT {
     this.timeout = testTimeout.toMillis();
     this.rules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled()), clusterDef.autoStart(), clusterDef.autoActivate()) {
+        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers()), clusterDef.autoStart(), clusterDef.autoActivate()) {
+          ConfigurationContext oldConfiguration;
+
           @Override
           public void startNode(int stripeId, int nodeId) {
             // let the subclasses control the node startup
             DynamicConfigIT.this.startNode(stripeId, nodeId);
+          }
+
+          @Override
+          protected void before(Description description) throws Throwable {
+            InlineServers inline = description.getAnnotation(InlineServers.class);
+            if (inline != null) {
+              oldConfiguration = configure(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), inline.value()));
+            }
+            super.before(description);
+          }
+
+          @Override
+          protected void after(Description description) throws Throwable {
+            super.after(description);
+            if (oldConfiguration != null) {
+              configure(oldConfiguration);
+              oldConfiguration = null;
+            }
           }
         })
         .around(Timeout.builder()
@@ -164,6 +188,23 @@ public class DynamicConfigIT {
                     }
                   });
                 });
+                angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
+                  try {
+                    RemoteFolder folder = angela.tsa().browse(s, "");
+                    Properties props = new Properties();
+                    props.setProperty("serverWorkingDir", folder.getAbsoluteName());
+                    props.setProperty("serverId", s.getServerSymbolicName().getSymbolicName());
+                    props.setProperty("test.displayName", description.getDisplayName());
+                    props.setProperty("test.className", description.getClassName());
+                    props.setProperty("test.methodName", description.getMethodName());
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    props.store(bos, "logging properties");
+                    bos.close();
+                    folder.upload("logbackVars.properties", new ByteArrayInputStream(bos.toByteArray()));
+                  } catch (IOException exp) {
+                    LOGGER.warn("unable to upload logback configuration", exp);
+                  }
+                });
             // wait for server startup if auto-activated
             if (clusterDef.autoStart() && clusterDef.autoActivate()) {
               for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
@@ -181,6 +222,14 @@ public class DynamicConfigIT {
 
   protected final Path getBaseDir() {
     return tmpDir.getRoot();
+  }
+
+  protected final Path getServerHome() {
+    return getServerHome(getNode(1, 1));
+  }
+
+  protected final Path getServerHome(TerracottaServer server) {
+    return Paths.get(angela.tsa().browse(server, "").getAbsoluteName());
   }
 
   // =========================================
@@ -323,14 +372,14 @@ public class DynamicConfigIT {
   // node and topology construction
   // =========================================
 
-  protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe, boolean netDisruptionEnabled) {
+  protected final ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe, boolean netDisruptionEnabled, boolean inlineServers) {
     return customConfigurationContext()
         .tsa(tsa -> tsa
             .clusterName(CLUSTER_NAME)
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
             .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms32m -Xmx256m"))
             .topology(new Topology(
-                getDistribution(),
+                getDistribution(inlineServers),
                 netDisruptionEnabled,
                 dynamicCluster(
                     rangeClosed(1, stripes)
@@ -347,11 +396,11 @@ public class DynamicConfigIT {
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
     return server(getNodeName(stripeId, nodeId), "localhost")
-        .configRepo(getNodePath(stripeId, nodeId).append("/config").toString())
-        .logs(getNodePath(stripeId, nodeId).append("/logs").toString())
-        .dataDir("main:" + getNodePath(stripeId, nodeId).append("/data-dir").toString())
+        .configRepo("config")
+        .logs("logs")
+        .dataDir("main:data-dir")
         .offheap("main:512MB,foo:1GB")
-        .metaData(getNodePath(stripeId, nodeId).append("/metadata").toString())
+        .metaData("metadata")
         .failoverPriority(getFailoverPriority().toString())
         .clientReconnectWindow("10s") // the default client reconnect window of 2min can cause some tests to timeout
         .clusterName(CLUSTER_NAME);
@@ -365,16 +414,20 @@ public class DynamicConfigIT {
     return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
   }
 
+  protected Distribution getDistribution(boolean inline) {
+    if (inline) {
+      return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS, RuntimeOption.INLINE_SERVERS);
+    } else {
+      return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
+    }
+  }
+
   protected String getNodeName(int stripeId, int nodeId) {
     return "node-" + stripeId + "-" + nodeId;
   }
 
-  protected RawPath getNodePath(int stripeId, int nodeId) {
-    return RawPath.valueOf(getNodeName(stripeId, nodeId));
-  }
-
   protected final RawPath getNodeConfigDir(int stripeId, int nodeId) {
-    return getNodePath(stripeId, nodeId).append("/config");
+    return RawPath.valueOf("config");
   }
 
   protected Path getLicensePath() {
@@ -420,9 +473,12 @@ public class DynamicConfigIT {
   }
 
   protected Path generateNodeConfigDir(int stripeId, int nodeId, Consumer<ConfigurationGenerator> fn) throws Exception {
-    Path nodeConfigurationDir = getBaseDir().resolve(getNodeConfigDir(stripeId, nodeId).toPath());
+    TerracottaServer server = getNode(stripeId, nodeId);
+    Path nodeWorkingDir = Paths.get(angela.tsa().browse(server, "").getAbsoluteName());
+    Path nodeConfigurationDir = nodeWorkingDir.resolve("config");
+    Files.createDirectories(nodeWorkingDir);
     Path configDirs = getBaseDir().resolve("generated-configs");
-    ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(configDirs, new ConfigurationGenerator.PortSupplier() {
+    ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(configDirs, nodeWorkingDir, new ConfigurationGenerator.PortSupplier() {
       @Override
       public int getNodePort(int stripeId, int nodeId) {
         return angela.getNodePort(stripeId, nodeId);
@@ -433,7 +489,7 @@ public class DynamicConfigIT {
         return angela.getNodeGroupPort(stripeId, nodeId);
       }
     });
-    LOGGER.debug("Generating cluster node configuration directories into: {}", configDirs);
+    LOGGER.debug("Generating cluster node configuration directories into: {}", nodeConfigurationDir);
     fn.accept(clusterGenerator);
     org.terracotta.utilities.io.Files.copy(configDirs.resolve("stripe-" + stripeId).resolve("node-" + stripeId + "-" + nodeId), nodeConfigurationDir, RECURSIVE);
     LOGGER.debug("Created node configuration directory into: {}", nodeConfigurationDir);
@@ -579,6 +635,7 @@ public class DynamicConfigIT {
     }
   }
 
+  @SuppressFBWarnings("REC_CATCH_EXCEPTION")
   private boolean isServerBlocked(TerracottaServer server) {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(server.getHostName(), server.getTsaPort()),
@@ -587,7 +644,7 @@ public class DynamicConfigIT {
         getConnectionTimeout(),
         null,
         objectMapperFactory)) {
-      return diagnosticService.isBlocked();
+        return diagnosticService.isBlocked();
     } catch (Exception e) {
       return false;
     }

@@ -48,6 +48,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import org.terracotta.testing.config.ConfigConstants;
+import org.terracotta.testing.config.ConfigRepoStartupBuilder;
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
 /**
@@ -72,6 +74,7 @@ public class NmsAgentServiceIT {
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(resourceConfig)
+      .startupBuilder(ConfigRepoStartupBuilder::new)
       .build();
 
   Connection managementConnection;

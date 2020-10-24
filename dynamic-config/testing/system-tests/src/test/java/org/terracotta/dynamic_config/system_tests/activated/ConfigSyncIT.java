@@ -47,6 +47,7 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_STATE;
@@ -169,6 +170,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // passive entity will fail and restart the passive server
     // passive server will sync and repair itself
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + passiveNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"), is(successful()));
+
+    waitUntil(out.getLog(1, passiveNodeId), containsLog("Requesting restart"));
 
     // passive should restart and sync again to repair its non committed change
     waitForPassive(1, passiveNodeId);

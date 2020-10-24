@@ -22,7 +22,7 @@
   <plugins>
     <config>
       <data:data-directories>
-        <data:directory name="root1">%(user.dir)/user-data/main/stripe1</data:directory>
+        <data:directory name="root1">${WORKING-DIR}/user-data/main/stripe1</data:directory>
       </data:data-directories>
     </config>
     <config>

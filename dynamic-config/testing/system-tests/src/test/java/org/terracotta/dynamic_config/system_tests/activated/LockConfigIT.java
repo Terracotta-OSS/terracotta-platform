@@ -97,7 +97,7 @@ public class LockConfigIT extends DynamicConfigIT {
     // The goal is to have an activated cluster with inside its topology some "room" to add a node that is not yet created
     // this situation can happen in case of node failure we need to replace, when auto-activating at startup, etc.
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
-    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "node-1-1");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", getBaseDir().resolve("node-1-1").toString());
     waitForActive(1, 1);
 
     // we lock the configuration

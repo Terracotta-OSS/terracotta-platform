@@ -53,6 +53,7 @@ import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZA
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
+import org.terracotta.server.ServerEnv;
 
 public class DynamicConfigNomadSynchronizer {
 
@@ -105,10 +106,11 @@ public class DynamicConfigNomadSynchronizer {
       LOGGER.trace("This node topology at activation time: {}", currentCluster);
 
       int pos = Check.findLastSyncPosition(sourceRelevantChanges, sourceTopology, currentCluster)
-          .orElseThrow(() -> new IllegalStateException("Unable to find any change in the source node matching the topology used to activate this node.\n" +
+          .orElseThrow(() -> {
+            return new IllegalStateException("Unable to find any change in the source node matching the topology used to activate this node.\n" +
               Props.toString(currentCluster.toProperties(false, false, true), "Passive topology") + "\n" +
-              Props.toString(sourceTopology.toProperties(false, false, true), "Active topology")
-          ));
+              Props.toString(sourceTopology.toProperties(false, false, true), "Active topology"));
+          });
 
       // reset the node's changes
       LOGGER.trace("Reset and clear this node changes");

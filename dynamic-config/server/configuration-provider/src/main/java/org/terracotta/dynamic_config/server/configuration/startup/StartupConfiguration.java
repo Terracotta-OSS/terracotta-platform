@@ -20,7 +20,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.text.PrettyPrintable;
-import com.tc.util.ManagedServiceLoader;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
@@ -43,6 +42,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +54,7 @@ import java.util.function.Supplier;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.common.struct.Tuple2.tuple2;
+import org.terracotta.server.ServerEnv;
 
 public class StartupConfiguration implements Configuration, PrettyPrintable, StateDumpable, PlatformConfiguration, DynamicConfigExtension.Registrar {
 
@@ -77,7 +78,15 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
     this.objectMapper = objectMapperFactory.create();
-    this.groupPortMapper = ManagedServiceLoader.loadServices(GroupPortMapper.class, this.classLoader).stream().findFirst().get();
+    Collection<Class<? extends GroupPortMapper>> mappers = ServerEnv.getServer().getImplementations(GroupPortMapper.class);
+    Class<? extends GroupPortMapper> gi = mappers.iterator().next();
+    GroupPortMapper mapper = null;
+    try {
+      mapper = gi.newInstance();
+    } catch (IllegalAccessException | InstantiationException i) {
+      mapper = new DefaultGroupPortMapperImpl();
+    }
+    this.groupPortMapper = mapper;
   }
 
   @Override

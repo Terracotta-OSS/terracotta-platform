@@ -44,7 +44,6 @@ import org.terracotta.entity.PassiveServerEntity;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
-import org.terracotta.monitoring.PlatformService;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
@@ -101,7 +100,6 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
       NomadRoutingChangeProcessor nomadRoutingChangeProcessor = serviceRegistry.getService(new BasicServiceConfiguration<>(NomadRoutingChangeProcessor.class));
       TopologyService topologyService = serviceRegistry.getService(new BasicServiceConfiguration<>(TopologyService.class));
       DynamicConfigEventFiring dynamicConfigEventFiring = serviceRegistry.getService(new BasicServiceConfiguration<>(DynamicConfigEventFiring.class));
-      PlatformService platformService = serviceRegistry.getService(new BasicServiceConfiguration<>(PlatformService.class));
       IParameterSubstitutor parameterSubstitutor = serviceRegistry.getService(new BasicServiceConfiguration<>(IParameterSubstitutor.class));
       PathResolver pathResolver = serviceRegistry.getService(new BasicServiceConfiguration<>(PathResolver.class));
       requireNonNull(nomadRoutingChangeProcessor);
@@ -110,11 +108,11 @@ public class TestEntityServerService implements EntityServerService<EntityMessag
 
       nomadRoutingChangeProcessor.register(
           NodeAdditionNomadChange.class,
-          new MyDummyNomadAdditionChangeProcessor(topologyService, dynamicConfigEventFiring, platformService));
+          new MyDummyNomadAdditionChangeProcessor(topologyService, dynamicConfigEventFiring));
 
       nomadRoutingChangeProcessor.register(
           NodeRemovalNomadChange.class,
-          new MyDummyNomadRemovalChangeProcessor(topologyService, dynamicConfigEventFiring, platformService, parameterSubstitutor, pathResolver));
+          new MyDummyNomadRemovalChangeProcessor(topologyService, dynamicConfigEventFiring, parameterSubstitutor, pathResolver));
 
       LOGGER.info("Installing: " + SimulationHandler.class.getName());
       ConfigChangeHandler handler = manager.findConfigChangeHandler(NODE_LOGGER_OVERRIDES).get();

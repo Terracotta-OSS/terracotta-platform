@@ -24,15 +24,12 @@ import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.server.ServerMBean;
 
-import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.StandardMBean;
 import java.io.Closeable;
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -45,6 +42,7 @@ import java.util.function.Consumer;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
+import org.terracotta.server.ServerEnv;
 
 /**
  * Common manager holding all diagnostic services registered on a server
@@ -129,19 +127,14 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
   }
 
   private static void registerMBean(String name, StandardMBean mBean) {
-    try {
-      ObjectName beanName = ServerMBean.createMBeanName(name);
-      ManagementFactory.getPlatformMBeanServer().registerMBean(mBean, beanName);
-      LOGGER.info("Registered MBean with name: {}", name);
-    } catch (MalformedObjectNameException | NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException e) {
-      throw new AssertionError(e);
-    }
+    ServerEnv.getServer().getManagement().registerMBean(name, mBean);
+    LOGGER.info("Registered MBean with name: {}", name);
   }
 
   private static void unregisterMBean(String name) {
     try {
       ObjectName beanName = ServerMBean.createMBeanName(name);
-      ManagementFactory.getPlatformMBeanServer().unregisterMBean(beanName);
+      ServerEnv.getServer().getManagement().getMBeanServer().unregisterMBean(beanName);
       LOGGER.info("Unregistered MBean with name: {}", name);
     } catch (MalformedObjectNameException | MBeanRegistrationException e) {
       throw new AssertionError(e);

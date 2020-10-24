@@ -108,7 +108,8 @@ public class DiagnosticServiceFactory {
 
   private static Properties buildProperties(String connectionName, Duration connectionTimeout, String securityRootDirectory) {
     Properties properties = new Properties();
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, String.valueOf(connectionTimeout.toMillis()));
+    // connect once to the server and give up if refused
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "-1");
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, connectionName);
     properties.setProperty(ConnectionPropertyNames.CONNECTION_TYPE, "diagnostic");
     if (securityRootDirectory != null) {

@@ -66,7 +66,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testStartingWithSingleNodeConfigFileWithNodeName() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startNode(1, 1, "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", "config/stripe1/node-1");
+    startNode(1, 1, "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", getBaseDir().resolve(Paths.get("config","stripe1","node-1-1")).toString());
     waitForDiagnostic(1, 1);
   }
 
@@ -121,7 +121,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
+      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
     }
   }
 
@@ -132,7 +132,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
+      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
     }
   }
 
@@ -207,7 +207,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       );
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
+      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
     }
   }
 
@@ -228,10 +228,10 @@ public class NodeStartupIT extends DynamicConfigIT {
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
         "--failover-priority", "availability",
         "--hostname", "localhost",
-        "--log-dir", getNodePath(1, 1).append("/logs").toString(),
-        "--backup-dir", getNodePath(1, 1).append("/backup").toString(),
-        "--metadata-dir", getNodePath(1, 1).append("/metadata").toString(),
-        "--data-dirs", "main:" + getNodePath(1, 1).append("/data-dir").toString()
+        "--log-dir", "logs",
+        "--backup-dir", "backup",
+        "--metadata-dir", "metadata",
+        "--data-dirs", "main:data-dir"
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {

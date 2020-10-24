@@ -91,6 +91,8 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.IntStream.range;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -103,7 +105,9 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
+import org.junit.Before;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
@@ -111,6 +115,8 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.NOTHING;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.ServerJMX;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 
 @RunWith(Parameterized.class)
@@ -132,6 +138,16 @@ public class DesynchronizedNomadConfigTest {
 
   @Parameter
   public String rootName;
+
+  @Before
+  public void setup() {
+    Server server = mock(Server.class);
+    ServerJMX jmx = mock(ServerJMX.class);
+    MBeanServer mbean = MBeanServerFactory.newMBeanServer();
+    when(server.getManagement()).thenReturn(jmx);
+    when(jmx.getMBeanServer()).thenReturn(mbean);
+    ServerEnv.setDefaultServer(server);
+  }
 
   @Test
   public void test_sync() throws NomadException {

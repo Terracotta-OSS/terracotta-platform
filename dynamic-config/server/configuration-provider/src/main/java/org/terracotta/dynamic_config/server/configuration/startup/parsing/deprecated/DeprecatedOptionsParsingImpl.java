@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.startup.parsing.depre
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.Parameters;
+import java.nio.file.Paths;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils;
 import org.terracotta.dynamic_config.server.configuration.startup.CustomJCommander;
@@ -59,6 +60,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.SettingName.SERVER_HOME;
 import static org.terracotta.dynamic_config.api.model.SettingName.STRIPE_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils.addDashDash;
@@ -150,6 +152,9 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-D", "--" + REPAIR_MODE}, description = "node repair mode (true|false)")
   private boolean wantsRepairMode;
 
+  @Parameter(names = {"--" + SERVER_HOME}, hidden = true)
+  private String serverHome;
+
   // hidden option that won't appear in the help file,
   // so that we can start a pre-activated stripe directly in dev / test.
   // no need to have a short option for this one, this is not public.
@@ -167,6 +172,7 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
     options.setConfigDir(configDir);
     options.setConfigFile(configFile);
     options.setLicenseFile(licenseFile);
+    options.setServerHome(serverHome);
     options.setWantsRepairMode(wantsRepairMode);
     options.setAllowsAutoActivation(allowsAutoActivation);
     return options;
@@ -192,6 +198,7 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
           String longestName = pd.getLongestName();
           return !longestName.equals(addDashDash(LICENSE_FILE))
               && !longestName.equals(addDashDash(CONFIG_FILE))
+              && !longestName.equals(addDashDash(SERVER_HOME))
               && !longestName.equals(addDashDash(REPAIR_MODE))
               && !longestName.equals(addDashDash(AUTO_ACTIVATE))
               && !longestName.equals(addDashDash(NODE_CONFIG_DIR));
@@ -214,6 +221,8 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
       filteredOptions.remove(addDashDash(CONFIG_FILE));
       filteredOptions.remove("-f");
 
+      filteredOptions.remove(addDashDash(SERVER_HOME));
+
       filteredOptions.remove(addDashDash(LICENSE_FILE));
       filteredOptions.remove("-l");
 
@@ -232,8 +241,9 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
       if (filteredOptions.size() != 0) {
         throw new IllegalArgumentException(
             String.format(
-                "'%s' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
+                "'%s' parameter can only be used with '%s', '%s', '%s', '%s', '%s' and '%s' parameters",
                 addDashDash(CONFIG_FILE),
+                addDashDash(SERVER_HOME),
                 addDashDash(REPAIR_MODE),
                 addDashDash(NODE_NAME),
                 addDashDash(NODE_HOSTNAME),

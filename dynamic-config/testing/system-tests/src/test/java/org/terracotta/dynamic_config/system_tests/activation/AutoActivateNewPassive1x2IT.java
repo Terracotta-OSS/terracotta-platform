@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import static com.tc.util.Assert.fail;
+import java.nio.file.Paths;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
@@ -86,10 +87,10 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   @Test
   public void test_auto_activation_success_for_1x2_cluster_usingNodeName() {
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
-    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", "config/stripe1/1-1");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", getBaseDir().resolve(Paths.get("config","stripe1","node-1-1")).toString());
     waitForActive(1, 1);
 
-    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-2", "--config-dir", "config/stripe1/1-2");
+    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-2", "--config-dir", getBaseDir().resolve(Paths.get("config","stripe1","node-1-2")).toString());
     waitForPassive(1, 2);
   }
 
@@ -99,7 +100,7 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
     // The goal is to have an activated cluster with inside its topology some "room" to add a node that is not yet created
     // this situation can happen in case of node failure we need to replace, when auto-activating at startup, etc.
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
-    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "node-1-1");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", getBaseDir().resolve("node-1-1").toString());
     waitForActive(1, 1);
 
     // trigger some changes

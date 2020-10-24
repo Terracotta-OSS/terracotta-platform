@@ -57,12 +57,12 @@ import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 
 import static java.lang.System.lineSeparator;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
 
@@ -91,16 +91,6 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // service used to create a topology from input CLI or config file
       ClusterFactory clusterFactory = new ClusterFactory();
 
-      // This path resolver is used when converting a model to XML.
-      // It makes sure to resolve any relative path to absolute ones based on the working directory.
-      // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
-      // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
-      // the config directory: config/cluster.
-      // So this has the effect of putting all defined directories inside such as config/config/logs, config/config/user-data, config/metadata, etc
-      // That is why we need to force the resolving within the XML relatively to the user directory.
-      Path baseDir = parameterSubstitutor.substitute(Paths.get("%(user.dir)"));
-      PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
-
       // optional service enabling license parsing
       LicenseService licenseService = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseService::unsupported);
 
@@ -111,12 +101,24 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, server);
       synCodec = new DynamicConfigSyncData.Codec(objectMapperFactory);
 
+      // CLI parsing
+      Options options = parseCommandLineOrExit(args);
+
+      // This path resolver is used when converting a model to XML.
+      // It makes sure to resolve any relative path to absolute ones based on the working directory.
+      // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
+      // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
+      // the config directory: config/cluster.
+      // So this has the effect of putting all defined directories inside such as config/config/logs, config/config/user-data, config/metadata, etc
+      // That is why we need to force the resolving within the XML relatively to the user directory.
+      String serverHome = options.getServerHome();
+      if (serverHome == null) serverHome = System.getProperty("user.dir");
+      Path baseDir = Paths.get(serverHome);
+      PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
+
       // Configuration generator class
       // Initialized when processing the CLI depending oin the user input, and called to generate a configuration
       ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver, objectMapperFactory, server);
-
-      // CLI parsing
-      Options options = parseCommandLineOrExit(args);
 
       // processors for the CLI
       CommandLineProcessor commandLineProcessor = new MainCommandLineProcessor(options, clusterFactory, configurationGeneratorVisitor, parameterSubstitutor, server);
@@ -168,6 +170,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       warnIfPreparedChange();
     });
   }
+
+
 
   @Override
   public StartupConfiguration getConfiguration() {
@@ -226,7 +230,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   @Override
   public void close() {
-    // Do nothing
+    nomadServerManager.getNomadServer().close();
   }
 
   private void withMyClassLoader(Runnable runnable) {

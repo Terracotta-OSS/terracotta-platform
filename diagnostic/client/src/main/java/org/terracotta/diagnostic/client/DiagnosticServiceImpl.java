@@ -39,6 +39,7 @@ import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_P
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NULL_RETURN;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_REQUEST_TIMEOUT;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_UNKNOWN_COMMAND;
+import org.terracotta.exception.ConnectionClosedException;
 
 /**
  * @author Mathieu Carbou
@@ -219,33 +220,37 @@ class DiagnosticServiceImpl implements DiagnosticService {
     // JMXSubsystem transforms all null returns to empty strings.
     // null returns are in the case of EntityException, InterruptedException or MessageCodecException,
     // or in the case of terminateServer or forceTerminateServer
-    String result = execution.get();
-    if (result == null) {
-      if (allowNull) {
-        return null;
-      } else {
-        // a failure happened (EntityException, InterruptedException or MessageCodecException)
-        throw new DiagnosticConnectionException();
+    try {
+      String result = execution.get();
+      if (result == null) {
+        if (allowNull) {
+          return null;
+        } else {
+          // a failure happened (EntityException, InterruptedException or MessageCodecException)
+          throw new DiagnosticConnectionException();
+        }
       }
+      if (MESSAGE_NULL_RETURN.equals(result)) {
+        // convert back to null empty strings
+        return null;
+      }
+      // Handles all the errors from JMXSubsystem and DiagnosticsHandler
+      if (MESSAGE_NOT_PERMITTED.equals(result)) {
+        throw new DiagnosticOperationNotAllowedException(result);
+      }
+      if (MESSAGE_REQUEST_TIMEOUT.equals(result)) {
+        throw new DiagnosticOperationTimeoutException(result);
+      }
+      if (MESSAGE_UNKNOWN_COMMAND.equals(result)) {
+        throw new DiagnosticOperationUnsupportedException(result);
+      }
+      if (result.startsWith(MESSAGE_INVALID_JMX)) {
+        throw new DiagnosticOperationExecutionException(result);
+      }
+      return result;
+    } catch (ConnectionClosedException closed) {
+      throw new DiagnosticConnectionException();
     }
-    if (MESSAGE_NULL_RETURN.equals(result)) {
-      // convert back to null empty strings
-      return null;
-    }
-    // Handles all the errors from JMXSubsystem and DiagnosticsHandler
-    if (MESSAGE_NOT_PERMITTED.equals(result)) {
-      throw new DiagnosticOperationNotAllowedException(result);
-    }
-    if (MESSAGE_REQUEST_TIMEOUT.equals(result)) {
-      throw new DiagnosticOperationTimeoutException(result);
-    }
-    if (MESSAGE_UNKNOWN_COMMAND.equals(result)) {
-      throw new DiagnosticOperationUnsupportedException(result);
-    }
-    if (result.startsWith(MESSAGE_INVALID_JMX)) {
-      throw new DiagnosticOperationExecutionException(result);
-    }
-    return result;
   }
 
 }

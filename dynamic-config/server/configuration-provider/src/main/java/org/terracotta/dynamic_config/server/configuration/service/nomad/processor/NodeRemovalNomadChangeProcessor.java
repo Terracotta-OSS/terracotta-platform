@@ -29,11 +29,13 @@ import org.terracotta.nomad.server.NomadException;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;
-import java.lang.management.ManagementFactory;
 import java.util.stream.Stream;
 
-import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.util.Objects.requireNonNull;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.ServerMBean;
 
 /**
  * @author Mathieu Carbou
@@ -44,11 +46,17 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
 
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
-  private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+  private final MBeanServer mbeanServer = ServerEnv.getServer().getManagement().getMBeanServer();
+  private final ObjectName TOPOLOGY_MBEAN;
 
   public NodeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
+    try {
+      TOPOLOGY_MBEAN = ServerMBean.createMBeanName("TopologyMBean");
+    } catch (MalformedObjectNameException mal) {
+      throw new RuntimeException(mal);
+    }
   }
 
   @Override

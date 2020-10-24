@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.integration.tests;
 
+import java.nio.file.Path;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -24,6 +25,8 @@ import org.terracotta.management.model.cluster.Server;
 import org.terracotta.testing.rules.Cluster;
 
 import java.nio.file.Paths;
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLUSTER_NAME;
+import org.terracotta.testing.config.ConfigRepoStartupBuilder;
 
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
@@ -46,6 +49,8 @@ public abstract class AbstractHATest extends AbstractTest {
       .withServiceFragment(resourceConfig)
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
+      .inline(false)
+      .startupBuilder(ConfigRepoStartupBuilder::new)
       .build();
 
   @Rule

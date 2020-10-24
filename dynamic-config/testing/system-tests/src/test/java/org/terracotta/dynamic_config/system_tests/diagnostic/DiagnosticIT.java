@@ -37,7 +37,7 @@ public class DiagnosticIT extends DynamicConfigIT {
   @Override
   protected void startNode(int stripeId, int nodeId) {
     startNode(1, 1,
-        "--config-dir", getNodePath(stripeId, nodeId).append("/config").toString(),
+        "--config-dir", "config",
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
     );
   }

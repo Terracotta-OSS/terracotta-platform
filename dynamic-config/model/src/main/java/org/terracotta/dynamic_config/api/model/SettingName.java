@@ -50,6 +50,7 @@ public class SettingName {
   public static final String TC_PROPERTIES = "tc-properties";
   public static final String DATA_DIRS = "data-dirs";
   public static final String LICENSE_FILE = "license-file";
+  public static final String SERVER_HOME = "server-home";
   public static final String CONFIG_FILE = "config-file";
   public static final String REPAIR_MODE = "repair-mode";
   public static final String AUTO_ACTIVATE = "auto-activate";

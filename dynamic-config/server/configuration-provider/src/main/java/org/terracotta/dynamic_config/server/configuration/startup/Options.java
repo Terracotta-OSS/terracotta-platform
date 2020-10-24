@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
+import java.nio.file.Path;
 import org.terracotta.dynamic_config.api.model.Setting;
 
 import java.util.HashMap;
@@ -25,6 +26,7 @@ public class Options {
   private String configDir;
   private String configFile;
   private String licenseFile;
+  private String serverHome;
   private boolean wantsRepairMode;
   private boolean allowsAutoActivation;
 
@@ -80,6 +82,14 @@ public class Options {
 
   public String getLicenseFile() {
     return licenseFile;
+  }
+
+  public void setServerHome(String home) {
+    this.serverHome = home;
+  }
+
+  public String getServerHome() {
+    return serverHome;
   }
 
   public void setWantsRepairMode(boolean wantsRepairMode) {
