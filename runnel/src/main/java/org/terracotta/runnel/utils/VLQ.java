@@ -23,33 +23,28 @@ import java.nio.ByteBuffer;
 public class VLQ {
 
   public static void encode(int value, ByteBuffer out) {
+    encode(value, false, out);
+  }
+
+  public static void encode(int value, boolean pad, ByteBuffer out) {
     if (value < 0) {
       throw new IllegalArgumentException("Cannot encode negative values");
     }
 
-    int b;
+    int shift = 28;
     boolean msbFound = false;
-    b = ((value & 0x70000000) >> 28);
-    if (b != 0) {
-      out.put(((byte) (b | 0x80)));
-      msbFound = true;
+    for (int i = 0; i < 5; i++) {
+      int mask = 0x7F << shift;
+      int b = (value & mask) >> shift;
+      if (msbFound || b != 0 || pad) {
+        if (shift > 0) {
+          b |= 0x80;
+        }
+        out.put(((byte) b));
+        msbFound = true;
+      }
+      shift -= 7;
     }
-    b = ((value & 0xFE00000) >> 21);
-    if (msbFound || b != 0) {
-      out.put(((byte) (b | 0x80)));
-      msbFound = true;
-    }
-    b = ((value & 0x1FC000) >> 14);
-    if (msbFound || b != 0) {
-      out.put(((byte) (b | 0x80)));
-      msbFound = true;
-    }
-    b = ((value & 0x3F80) >> 7);
-    if (msbFound || b != 0) {
-      out.put(((byte) (b | 0x80)));
-    }
-    b = (value & 0x7F);
-    out.put((byte) (b));
   }
 
   public static int decode(ReadBuffer in) {
