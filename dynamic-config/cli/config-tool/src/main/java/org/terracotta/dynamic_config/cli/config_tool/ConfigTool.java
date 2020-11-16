@@ -19,12 +19,12 @@ import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
-import org.terracotta.dynamic_config.cli.command.Injector;
+import org.terracotta.dynamic_config.cli.api.command.Injector;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
-import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.JCommanderCommandProvider;
-import org.terracotta.dynamic_config.cli.config_tool.command.ServiceProvider;
+import org.terracotta.dynamic_config.cli.api.command.ServiceProvider;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainJCommanderCommand;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -57,7 +57,7 @@ public class ConfigTool {
 
   public static void start(String... args) {
     JCommanderCommandProvider commandProvider = JCommanderCommandProvider.get();
-    final RemoteMainCommand mainCommand = new RemoteMainCommand();
+    final RemoteMainJCommanderCommand mainCommand = new RemoteMainJCommanderCommand();
     LOGGER.debug("Registering commands with JCommanderCommandRepository");
     JCommanderCommandRepository commandRepository = new JCommanderCommandRepository();
     Set<JCommanderCommand> commands = commandProvider.getCommands();
@@ -72,7 +72,7 @@ public class ConfigTool {
     mainCommand.run();
 
     // create services
-    Collection<Object> services = ServiceProvider.get().createServices(mainCommand);
+    Collection<Object> services = ServiceProvider.get().createServices(mainCommand.getCommand());
 
     jCommander.getAskedCommand().map(command -> {
       // check for help
@@ -95,7 +95,7 @@ public class ConfigTool {
     });
   }
 
-  private static CustomJCommander parseArguments(JCommanderCommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
+  private static CustomJCommander parseArguments(JCommanderCommandRepository commandRepository, RemoteMainJCommanderCommand mainCommand, String[] args) {
     CustomJCommander jCommander = getCustomJCommander(commandRepository, mainCommand);
     try {
       jCommander.parse(args);
@@ -129,7 +129,7 @@ public class ConfigTool {
     return jCommander;
   }
 
-  private static CustomJCommander getCustomJCommander(JCommanderCommandRepository commandRepository, RemoteMainCommand mainCommand) {
+  private static CustomJCommander getCustomJCommander(JCommanderCommandRepository commandRepository, RemoteMainJCommanderCommand mainCommand) {
     CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand) {
       @Override
       public void appendDefinitions(StringBuilder out, String indent) {

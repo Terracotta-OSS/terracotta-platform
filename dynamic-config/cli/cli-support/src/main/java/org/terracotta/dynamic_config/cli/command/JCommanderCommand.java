@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.cli.command;
 
 import com.beust.jcommander.Parameter;
+import org.terracotta.dynamic_config.cli.api.command.Command;
 
 public abstract class JCommanderCommand implements Runnable {
 

@@ -17,12 +17,13 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.Command;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.config_tool.command.RepairCommand;
-import org.terracotta.dynamic_config.cli.config_tool.converter.RepairAction;
+import org.terracotta.dynamic_config.cli.api.command.RepairCommand;
+import org.terracotta.dynamic_config.cli.api.converter.RepairAction;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.RepairActionConverter;
 
 import java.net.InetSocketAddress;
 
@@ -33,7 +34,7 @@ public class RepairJCommanderCommand extends JCommanderCommand {
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-force"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairAction.RepairActionConverter.class)
+  @Parameter(names = {"-force"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairActionConverter.class)
   RepairAction forcedRepairAction;
 
   private final RepairCommand underlying = new RepairCommand();

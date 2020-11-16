@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
-import org.terracotta.dynamic_config.cli.command.LocalMainCommand;
+import org.terracotta.dynamic_config.cli.command.LocalMainJCommanderCommand;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.ConvertJCommanderCommand;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.deprecated.DeprecatedConvertJCommanderCommand;
 
@@ -46,7 +46,7 @@ public class ConfigConverterTool {
 
   public static void start(String... args) {
     LOGGER.debug("Registering commands with JCommanderCommandRepository");
-    LocalMainCommand mainCommand = new LocalMainCommand();
+    LocalMainJCommanderCommand mainCommand = new LocalMainJCommanderCommand();
     JCommanderCommandRepository commandRepository = new JCommanderCommandRepository();
     commandRepository.addAll(
         new HashSet<>(
@@ -62,6 +62,7 @@ public class ConfigConverterTool {
     CustomJCommander jCommander = parseArguments(commandRepository, args, mainCommand);
 
     // Process arguments like '-v'
+    mainCommand.validate();
     mainCommand.run();
 
     jCommander.getAskedCommand().map(command -> {
@@ -82,7 +83,7 @@ public class ConfigConverterTool {
     });
   }
 
-  private static CustomJCommander parseArguments(JCommanderCommandRepository commandRepository, String[] args, LocalMainCommand mainCommand) {
+  private static CustomJCommander parseArguments(JCommanderCommandRepository commandRepository, String[] args, LocalMainJCommanderCommand mainCommand) {
     CustomJCommander jCommander = getCustomJCommander(commandRepository, mainCommand);
     try {
       jCommander.parse(args);
@@ -116,7 +117,7 @@ public class ConfigConverterTool {
     return jCommander;
   }
 
-  private static CustomJCommander getCustomJCommander(JCommanderCommandRepository commandRepository, LocalMainCommand mainCommand) {
+  private static CustomJCommander getCustomJCommander(JCommanderCommandRepository commandRepository, LocalMainJCommanderCommand mainCommand) {
     return new CustomJCommander("config-converter", commandRepository, mainCommand);
   }
 }

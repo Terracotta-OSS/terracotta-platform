@@ -16,7 +16,7 @@
 package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.command;
 
 import com.beust.jcommander.ParameterException;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.Command;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverter;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigPropertiesProcessor;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigRepoProcessor;

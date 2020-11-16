@@ -36,6 +36,7 @@
     <module>config-tool</module>
     <module>upgrade-tools</module>
     <module>upgrade-tools-oss</module>
+    <module>dynamic-config-cli-api</module>
   </modules>
 
 </project>

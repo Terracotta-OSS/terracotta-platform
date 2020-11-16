@@ -21,10 +21,10 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.Command;
 import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.ActivateCommand;
+import org.terracotta.dynamic_config.cli.api.command.ActivateCommand;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 

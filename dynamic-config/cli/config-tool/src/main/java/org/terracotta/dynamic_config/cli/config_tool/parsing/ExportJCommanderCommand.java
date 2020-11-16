@@ -19,11 +19,12 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.PathConverter;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.Command;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.config_tool.command.ExportCommand;
-import org.terracotta.dynamic_config.cli.config_tool.converter.OutputFormat;
+import org.terracotta.dynamic_config.cli.api.command.ExportCommand;
+import org.terracotta.dynamic_config.cli.api.converter.OutputFormat;
+import org.terracotta.dynamic_config.cli.converter.FormatConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
@@ -45,7 +46,7 @@ public class ExportJCommanderCommand extends JCommanderCommand {
   @Parameter(names = {"-runtime"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
-  @Parameter(names = {"-outputformat"}, hidden = true, description = "Output type (properties|json). Default: properties", converter = OutputFormat.FormatConverter.class)
+  @Parameter(names = {"-outputformat"}, hidden = true, description = "Output type (properties|json). Default: properties", converter = FormatConverter.class)
   private OutputFormat outputFormat = OutputFormat.PROPERTIES;
 
   private final ExportCommand underlying = new ExportCommand();
