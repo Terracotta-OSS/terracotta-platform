@@ -57,14 +57,13 @@ import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Operation.SET;
 import static org.terracotta.dynamic_config.api.model.Operation.UNSET;
 import static org.terracotta.dynamic_config.api.model.Permission.Builder.when;
-import static org.terracotta.dynamic_config.api.model.Requirement.ALL_NODES_ONLINE;
+import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_ONLINE;
 import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
 import static org.terracotta.dynamic_config.api.model.Requirement.CONFIG;
 import static org.terracotta.dynamic_config.api.model.Requirement.HIDDEN;
 import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
 import static org.terracotta.dynamic_config.api.model.Requirement.PRESENCE;
 import static org.terracotta.dynamic_config.api.model.Requirement.RESOLVE_EAGERLY;
-import static org.terracotta.dynamic_config.api.model.Requirement.TARGETS_ONLINE;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
@@ -275,7 +274,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(TARGETS_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> HOST_VALIDATOR.accept(SettingName.NODE_PUBLIC_HOSTNAME, tuple2(key, value))
@@ -291,7 +290,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(TARGETS_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_PUBLIC_PORT, tuple2(key, value))
@@ -361,7 +360,7 @@ public enum Setting {
           when(CONFIGURING).allowAnyOperations().atLevel(CLUSTER),
           when(ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(TARGETS_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> NAME_VALIDATOR.accept(SettingName.CLUSTER_NAME, tuple2(key, value))
@@ -380,7 +379,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(ACTIVATED).allow(SET, UNSET).atLevel(CLUSTER)
       ),
-      of(TARGETS_ONLINE, HIDDEN)
+      of(HIDDEN)
   ),
 
   NODE_CONFIG_DIR(SettingName.NODE_CONFIG_DIR,
@@ -425,7 +424,7 @@ public enum Setting {
           when(CONFIGURING).allow(GET, SET).atAnyLevels(),
           when(ACTIVATED).allow(GET, SET).atAnyLevels()
       ),
-      of(TARGETS_ONLINE, NODE_RESTART, PRESENCE),
+      of(NODE_RESTART, PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_LOG_DIR, tuple2(key, value))
@@ -441,7 +440,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ALL_NODES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_BACKUP_DIR, tuple2(key, value))
@@ -477,7 +476,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(TARGETS_ONLINE, CLUSTER_RESTART),
+      of(CLUSTER_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PROPS_VALIDATOR.accept(SettingName.TC_PROPERTIES, tuple2(key, value))
@@ -513,7 +512,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(TARGETS_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> LOGGER_LEVEL_VALIDATOR.accept(SettingName.NODE_LOGGER_OVERRIDES, tuple2(key, value))
@@ -529,7 +528,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(TARGETS_ONLINE, PRESENCE),
+      of(PRESENCE),
       emptyList(),
       asList(SECONDS, MINUTES, HOURS),
       (key, value) -> TIME_VALIDATOR.accept(SettingName.CLIENT_RECONNECT_WINDOW, tuple2(key, value))
@@ -545,7 +544,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE, CONFIG, RESOLVE_EAGERLY),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE, CONFIG, RESOLVE_EAGERLY),
       emptyList(),
       emptyList(),
       (key, value) -> DEFAULT_VALIDATOR.andThen((k, v) -> FailoverPriority.valueOf(v.t2)).accept(SettingName.FAILOVER_PRIORITY, tuple2(key, value))
@@ -564,7 +563,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(TARGETS_ONLINE, PRESENCE),
+      of(PRESENCE),
       emptyList(),
       asList(MILLISECONDS, SECONDS, MINUTES, HOURS),
       (key, value) -> TIME_VALIDATOR.accept(SettingName.CLIENT_LEASE_DURATION, tuple2(key, value))
@@ -582,7 +581,7 @@ public enum Setting {
       singletonList(
           when(CONFIGURING, ACTIVATED).allow(SET).atLevel(CLUSTER)
       ),
-      of(TARGETS_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.LICENSE_FILE, tuple2(key, value))
@@ -601,7 +600,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART),
+      of(NODE_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_DIR, tuple2(key, value))
@@ -617,7 +616,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART),
+      of(NODE_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_AUDIT_LOG_DIR, tuple2(key, value))
@@ -633,7 +632,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART),
       asList("file", "ldap", "certificate")
   ),
   SECURITY_SSL_TLS(SettingName.SECURITY_SSL_TLS,
@@ -647,7 +646,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("true", "false")
   ),
   SECURITY_WHITELIST(SettingName.SECURITY_WHITELIST,
@@ -661,7 +660,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("true", "false")
   ),
 
@@ -698,7 +697,7 @@ public enum Setting {
           when(CONFIGURING).allowAnyOperations().atLevel(CLUSTER),
           when(ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(TARGETS_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       asList(MemoryUnit.values()),
       (key, value) -> OFFHEAP_VALIDATOR.accept(SettingName.OFFHEAP_RESOURCES, tuple2(key, value))
@@ -738,7 +737,7 @@ public enum Setting {
           when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
           when(ACTIVATED, CONFIGURING).allow(GET, SET).atAnyLevels()
       ),
-      of(ALL_NODES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> DATA_DIRS_VALIDATOR.accept(SettingName.DATA_DIRS, tuple2(key, value))

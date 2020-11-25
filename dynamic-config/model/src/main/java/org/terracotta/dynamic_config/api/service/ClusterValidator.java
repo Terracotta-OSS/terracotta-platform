@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -37,10 +35,10 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Version.V2;
 
 /**
@@ -49,7 +47,6 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  * This class will validate the complete cluster object (inter-field checks and dependency checks).
  */
 public class ClusterValidator {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ClusterValidator.class);
   private final Cluster cluster;
 
   public ClusterValidator(Cluster cluster) {
@@ -236,9 +233,9 @@ public class ClusterValidator {
         .map(Node::getName)
         .collect(toList());
     if (nodesWithBackupDirs.size() != 0 && nodesWithBackupDirs.size() != cluster.getNodeCount()) {
-      throw new MalformedClusterException("Nodes with names: " + nodesWithBackupDirs +
-          " currently have (or will have) backup directories defined, but some nodes in the cluster do not." +
-          " Within a cluster, all nodes must have either a backup directory defined or no backup directory defined.");
+      throw new MalformedClusterException("Nodes: " + nodesWithBackupDirs +
+          " currently have (or will have) backup directories defined, while some nodes in the cluster do not (or will not)." +
+          " Within a cluster, all nodes must have a backup directory defined or no backup directory defined.");
     }
   }
 
