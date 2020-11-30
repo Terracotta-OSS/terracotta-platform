@@ -35,7 +35,7 @@ public class CharDataHolder extends AbstractDataHolder {
   }
 
   @Override
-  protected void encodeValue(WriteBuffer writeBuffer) {
+  protected void encodeValue(WriteBuffer writeBuffer, int indentation) {
     writeBuffer.putChar(value);
   }
 }

@@ -37,7 +37,7 @@ public class EnumDataHolder<E> extends AbstractDataHolder {
   }
 
   @Override
-  protected void encodeValue(WriteBuffer writeBuffer) {
+  protected void encodeValue(WriteBuffer writeBuffer, int indentation) {
     writeBuffer.putVlqInt(value);
   }
 }

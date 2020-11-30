@@ -37,23 +37,26 @@ public class ArrayDataHolder extends AbstractDataHolder {
   }
 
   @Override
-  protected int valueSize() {
-    if (cacheSize < 0) {
-      int size = 0;
-      for (DataHolder value : values) {
-        size += value.size(false);
-      }
-      size += VLQ.encodedSize(values.size()); // length field
-      cacheSize = size;
-    }
-    return cacheSize;
+  public int size(int valueSize) {
+    int lengthFieldSize = VLQ.encodedSize(values.size()); // length field
+    this.cacheSize = valueSize + lengthFieldSize;
+    return super.size(valueSize) + lengthFieldSize;
   }
 
   @Override
-  protected void encodeValue(WriteBuffer writeBuffer) {
+  protected int valueSize() {
+    if (cacheSize < 0) {
+      throw new AssertionError();
+    } else {
+      return cacheSize;
+    }
+  }
+
+  @Override
+  protected void encodeValue(WriteBuffer writeBuffer, int indentation) {
     writeBuffer.putVlqInt(values.size()); // length field
     for (DataHolder value : values) {
-      value.encode(writeBuffer, false);
+      value.encode(writeBuffer, false, indentation + 2);
     }
   }
 }

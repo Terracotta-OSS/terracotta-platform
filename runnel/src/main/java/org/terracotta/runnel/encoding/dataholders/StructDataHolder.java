@@ -38,19 +38,26 @@ public class StructDataHolder extends AbstractDataHolder {
   @Override
   protected int valueSize() {
     if (cacheSize < 0) {
-      int size = 0;
-      for (DataHolder value : values) {
-        size += value.size(true);
-      }
-      cacheSize = size;
+      throw new AssertionError();
+    } else {
+      return cacheSize;
     }
-    return cacheSize;
   }
 
   @Override
-  protected void encodeValue(WriteBuffer writeBuffer) {
+  public int size(int valueSize) {
+    this.cacheSize = valueSize;
+    return super.size(valueSize);
+  }
+
+  @Override
+  protected void encodeValue(WriteBuffer writeBuffer, int indentation) {
     for (DataHolder value : values) {
-      value.encode(writeBuffer, true);
+      value.encode(writeBuffer, true, indentation + 2);
     }
+  }
+
+  public void cacheSize(int valueSize) {
+    this.cacheSize = valueSize;
   }
 }

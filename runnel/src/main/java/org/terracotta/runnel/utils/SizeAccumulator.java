@@ -13,29 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.runnel.encoding.dataholders;
+package org.terracotta.runnel.utils;
 
-import org.terracotta.runnel.utils.WriteBuffer;
+@FunctionalInterface
+public interface SizeAccumulator {
 
-/**
- * @author Ludovic Orban
- */
-public class BoolDataHolder extends AbstractDataHolder {
+  void accumulate(int size);
 
-  private final boolean value;
-
-  public BoolDataHolder(boolean value, int index) {
-    super(index);
-    this.value = value;
-  }
-
-  @Override
-  protected int valueSize() {
-    return 1;
-  }
-
-  @Override
-  protected void encodeValue(WriteBuffer writeBuffer, int indentation) {
-    writeBuffer.putBoolean(value);
-  }
 }
