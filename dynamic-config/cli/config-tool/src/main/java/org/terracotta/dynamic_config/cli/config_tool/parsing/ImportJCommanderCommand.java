@@ -18,10 +18,10 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.Command;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.config_tool.command.ImportCommand;
+import org.terracotta.dynamic_config.cli.api.command.ImportCommand;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;

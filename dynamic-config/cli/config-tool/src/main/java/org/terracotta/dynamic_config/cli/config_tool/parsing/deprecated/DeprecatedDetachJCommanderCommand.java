@@ -20,14 +20,15 @@ import com.beust.jcommander.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Identifier;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.Command;
 import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.DetachCommand;
-import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
+import org.terracotta.dynamic_config.cli.api.command.DetachCommand;
+import org.terracotta.dynamic_config.cli.api.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.IdentifierConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
+import org.terracotta.dynamic_config.cli.converter.TypeConverter;
 
 import java.net.InetSocketAddress;
 
@@ -35,7 +36,7 @@ import java.net.InetSocketAddress;
 @DeprecatedUsage("detach [-t node|stripe] -d <hostname[:port]> -s [<hostname[:port]>|uid|name] [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
 public class DeprecatedDetachJCommanderCommand extends JCommanderCommand {
 
-  @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = OperationType.TypeConverter.class)
+  @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = TypeConverter.class)
   protected OperationType operationType = OperationType.NODE;
 
   @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
