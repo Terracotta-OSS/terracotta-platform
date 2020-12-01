@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -149,6 +150,27 @@ public class ConfigurationTest {
         assertThat(defaultValue, is(not(nullValue())));
       }
     });
+  }
+
+  @Test
+  public void test_expand() {
+    List<Configuration> list = Configuration.valueOf("offheap-resources=foo:512MB").expand();
+    assertThat(list, hasSize(1));
+    assertThat(list.get(0).toString(), is(equalTo("offheap-resources.foo=512MB")));
+
+    list = Configuration.valueOf("offheap-resources=foo:512MB,bar:1GB").expand();
+    assertThat(list, hasSize(2));
+    assertThat(list.get(0).toString(), is(equalTo("offheap-resources.foo=512MB")));
+    assertThat(list.get(1).toString(), is(equalTo("offheap-resources.bar=1GB")));
+
+    list = Configuration.valueOf("stripe.1.node.1.data-dirs=foo:a/b").expand();
+    assertThat(list, hasSize(1));
+    assertThat(list.get(0).toString(), is(equalTo("stripe.1.node.1.data-dirs.foo=a/b")));
+
+    list = Configuration.valueOf("stripe.1.node.1.data-dirs=foo:a/b,bar:c/d").expand();
+    assertThat(list, hasSize(2));
+    assertThat(list.get(0).toString(), is(equalTo("stripe.1.node.1.data-dirs.foo=a/b")));
+    assertThat(list.get(1).toString(), is(equalTo("stripe.1.node.1.data-dirs.bar=c/d")));
   }
 
   @Test

@@ -18,9 +18,9 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.cli.api.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.UnlockConfigCommand;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.api.command.UnlockConfigCommand;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
@@ -35,12 +35,9 @@ public class UnlockConfigJCommanderCommand extends JCommanderCommand {
   private final UnlockConfigCommand underlying = new UnlockConfigCommand();
 
   @Override
-  public void validate() {
-    underlying.setNode(node);
-  }
-
-  @Override
   public void run() {
+    underlying.setNode(node);
+
     underlying.run();
   }
 

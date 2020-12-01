@@ -16,7 +16,9 @@
 package org.terracotta.dynamic_config.api.model;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -548,6 +550,29 @@ public class Configuration {
         getSetting().
 
             getScope());
+  }
+
+  public List<Configuration> expand() {
+    // if the config is not a map or is a map but with one key, we do not have a compound value like:
+    // - data-dirs=foo:bar
+    // - data-dirs=foo:bar,foo2:bar2
+    if (!setting.isMap() || key != null) {
+      return Collections.singletonList(this);
+    }
+    String[] keyValue = rawInput.split("=", 2);
+    return Stream.of(keyValue[1].split(","))
+        .filter(s -> !s.trim().isEmpty()) // in case user sends a lot of commas: data-dirs=,foo:bar,,foo2:bar2,,
+        .map(s -> {
+          String[] nameProperty = s.trim().split(":", 2);
+          if (nameProperty.length != 2) {
+            // we always expect a key and value for maps
+            throw new IllegalArgumentException("Invalid input: " + value);
+          }
+          return keyValue[0] + "." + nameProperty[0] + "=" + nameProperty[1];
+        })
+        .distinct() // in case user sends: data-dirs=foo:bar,foo:bar
+        .map(Configuration::valueOf)
+        .collect(toList());
   }
 
   public static Configuration valueOf(String key, String value) {

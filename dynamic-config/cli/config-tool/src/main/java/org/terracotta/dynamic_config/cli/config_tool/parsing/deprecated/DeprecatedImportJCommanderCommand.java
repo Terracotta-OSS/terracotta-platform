@@ -19,9 +19,9 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.dynamic_config.cli.api.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.ImportCommand;
 import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
-import org.terracotta.dynamic_config.cli.api.command.ImportCommand;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
@@ -40,13 +40,10 @@ public class DeprecatedImportJCommanderCommand extends JCommanderCommand {
   private final ImportCommand underlying = new ImportCommand();
 
   @Override
-  public void validate() {
+  public void run() {
     underlying.setNode(node);
     underlying.setConfigPropertiesFile(configFile);
-  }
 
-  @Override
-  public void run() {
     underlying.run();
   }
 

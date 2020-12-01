@@ -21,10 +21,10 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.dynamic_config.cli.api.command.ActivateCommand;
 import org.terracotta.dynamic_config.cli.api.command.Command;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.api.command.ActivateCommand;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
@@ -59,7 +59,7 @@ public class ActivateJCommanderCommand extends JCommanderCommand {
   private final ActivateCommand underlying = new ActivateCommand();
 
   @Override
-  public void validate() {
+  public void run() {
     // basic validations first
 
     if (!restrictedActivation && node != null && configPropertiesFile != null) {
@@ -80,10 +80,7 @@ public class ActivateJCommanderCommand extends JCommanderCommand {
     underlying.setRestartWaitTime(restartWaitTime);
     underlying.setRestartDelay(restartDelay);
     underlying.setRestrictedActivation(restrictedActivation);
-  }
 
-  @Override
-  public void run() {
     underlying.run();
   }
 

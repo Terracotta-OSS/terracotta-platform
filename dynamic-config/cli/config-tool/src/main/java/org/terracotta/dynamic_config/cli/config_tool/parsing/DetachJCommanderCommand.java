@@ -21,10 +21,10 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Identifier;
 import org.terracotta.dynamic_config.cli.api.command.Command;
-import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
-import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.api.command.DetachCommand;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.IdentifierConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
@@ -59,7 +59,7 @@ public class DetachJCommanderCommand extends JCommanderCommand {
   private final DetachCommand underlying = new DetachCommand();
 
   @Override
-  public void validate() {
+  public void run() {
     if ((destinationClusterAddress != null && sourceStripeIdentifier == null) ||
         (destinationClusterAddress == null && sourceStripeIdentifier != null)) {
       throw new IllegalArgumentException("Both -from-cluster and -stripe must be provided for stripe detachment from cluster");
@@ -68,8 +68,7 @@ public class DetachJCommanderCommand extends JCommanderCommand {
         (destinationStripeAddress == null && sourceNodeIdentifier != null)) {
       throw new IllegalArgumentException("Both -from-stripe and -node must be provided for node deletion from cluster");
     }
-    if ((destinationClusterAddress != null || sourceStripeIdentifier != null) &&
-        (destinationStripeAddress != null || (sourceNodeIdentifier != null))) {
+    if (destinationClusterAddress != null && destinationStripeAddress != null) {
       throw new IllegalArgumentException("Either you can perform stripe deletion from the cluster or node deletion from the stripe");
     }
     if (destinationClusterAddress != null) {
@@ -84,10 +83,7 @@ public class DetachJCommanderCommand extends JCommanderCommand {
     underlying.setForce(force);
     underlying.setStopWaitTime(stopWaitTime);
     underlying.setStopDelay(stopDelay);
-  }
 
-  @Override
-  public void run() {
     underlying.run();
   }
 

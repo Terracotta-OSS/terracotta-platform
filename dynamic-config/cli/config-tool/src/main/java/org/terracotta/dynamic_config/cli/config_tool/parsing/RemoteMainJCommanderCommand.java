@@ -19,8 +19,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.dynamic_config.cli.command.LocalMainJCommanderCommand;
 import org.terracotta.dynamic_config.cli.api.command.RemoteConfig;
+import org.terracotta.dynamic_config.cli.command.LocalMainJCommanderCommand;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 @Parameters(commandNames = LocalMainJCommanderCommand.NAME)
@@ -44,7 +44,7 @@ public class RemoteMainJCommanderCommand extends LocalMainJCommanderCommand {
   private final RemoteConfig underlying = new RemoteConfig();
 
   @Override
-  public void validate() {
+  public void run() {
     if (entityOperationTimeout == null) {
       entityOperationTimeout = requestTimeout.multiply(12);
     }
@@ -54,10 +54,7 @@ public class RemoteMainJCommanderCommand extends LocalMainJCommanderCommand {
     underlying.setLockToken(lockToken);
     underlying.setEntityOperationTimeout(entityOperationTimeout);
     underlying.setRequestTimeout(requestTimeout);
-  }
 
-  @Override
-  public void run() {
     underlying.run();
   }
 

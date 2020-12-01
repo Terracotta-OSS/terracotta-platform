@@ -58,7 +58,7 @@ public class DeprecatedConvertJCommanderCommand extends JCommanderCommand {
   private final ConvertCommand underlying = new ConvertCommand();
 
   @Override
-  public void validate() {
+  public void run() {
     underlying.setTcConfigFiles(tcConfigFiles);
     underlying.setStripeNames(stripeNames);
     underlying.setLicensePath(licensePath);
@@ -66,10 +66,7 @@ public class DeprecatedConvertJCommanderCommand extends JCommanderCommand {
     underlying.setNewClusterName(newClusterName);
     underlying.setConversionFormat(conversionFormat);
     underlying.setForce(force);
-  }
 
-  @Override
-  public void run() {
     underlying.run();
   }
 

@@ -20,9 +20,9 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.BooleanConverter;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.cli.api.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.GetCommand;
 import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
-import org.terracotta.dynamic_config.cli.api.command.GetCommand;
 import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
@@ -46,14 +46,11 @@ public class DeprecatedGetJCommanderCommand extends JCommanderCommand {
   private final GetCommand underlying = new GetCommand();
 
   @Override
-  public void validate() {
+  public void run() {
     underlying.setNode(node);
     underlying.setConfigurations(configurations);
     underlying.setRuntimConfig(wantsRuntimeConfig);
-  }
 
-  @Override
-  public void run() {
     underlying.run();
   }
 

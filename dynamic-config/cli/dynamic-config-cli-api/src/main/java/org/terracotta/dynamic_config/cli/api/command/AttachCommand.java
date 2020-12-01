@@ -70,7 +70,7 @@ public class AttachCommand extends TopologyCommand {
   }
 
   @Override
-  public void validate() {
+  protected void validate() {
     super.validate();
 
     source = getEndpoint(sourceAddress);

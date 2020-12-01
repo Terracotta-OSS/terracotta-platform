@@ -52,7 +52,7 @@ public abstract class ConfigurationCommand extends RemoteCommand {
     this.configurations = configurations;
   }
 
-  public void validate() {
+  protected void validate() {
     isActivated = isActivated(node);
     clusterState = isActivated ? ACTIVATED : CONFIGURING;
 
