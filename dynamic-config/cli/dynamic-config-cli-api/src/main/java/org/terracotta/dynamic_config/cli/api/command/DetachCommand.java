@@ -66,7 +66,7 @@ public class DetachCommand extends TopologyCommand {
   }
 
   @Override
-  public void validate() {
+  protected void validate() {
     super.validate();
 
     if (destinationCluster.getNodeCount() == 1) {

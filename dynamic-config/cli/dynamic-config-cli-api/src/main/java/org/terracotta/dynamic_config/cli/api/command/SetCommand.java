@@ -33,7 +33,7 @@ public class SetCommand extends ConfigurationMutationCommand {
   }
 
   @Override
-  public void validate() {
+  protected void validate() {
     super.validate();
 
     // we support a list in case the user inputs: set -c license-file=foo/one.xml -c license-file=foo/two.xml

@@ -21,8 +21,8 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
-import org.terracotta.dynamic_config.cli.api.converter.OperationType;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
+import org.terracotta.dynamic_config.cli.api.converter.OperationType;
 import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.UncheckedIOException;
@@ -63,7 +63,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     this.force = force;
   }
 
-  public void validate() {
+  protected void validate() {
     destination = getEndpoint(destinationAddress);
 
     // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
