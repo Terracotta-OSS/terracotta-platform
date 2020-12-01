@@ -21,10 +21,10 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Identifier;
 import org.terracotta.dynamic_config.cli.api.command.Command;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
-import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.api.command.DetachCommand;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.converter.IdentifierConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
@@ -57,17 +57,14 @@ public class DeprecatedDetachJCommanderCommand extends JCommanderCommand {
   private final DetachCommand underlying = new DetachCommand();
 
   @Override
-  public void validate() {
+  public void run() {
     underlying.setOperationType(operationType);
     underlying.setDestinationAddress(destinationAddress);
     underlying.setForce(force);
     underlying.setSourceIdentifier(sourceIdentifier);
     underlying.setStopWaitTime(stopWaitTime);
     underlying.setStopDelay(stopDelay);
-  }
 
-  @Override
-  public void run() {
     underlying.run();
   }
 

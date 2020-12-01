@@ -27,9 +27,10 @@ public abstract class JCommanderCommand implements Runnable {
     return help;
   }
 
-  public void validate() {
-  }
-
   public abstract Command getCommand();
 
+  @Override
+  public void run() {
+    getCommand().run();
+  }
 }

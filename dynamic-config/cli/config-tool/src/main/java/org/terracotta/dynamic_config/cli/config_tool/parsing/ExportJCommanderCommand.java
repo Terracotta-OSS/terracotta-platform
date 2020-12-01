@@ -20,10 +20,10 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.dynamic_config.cli.api.command.Command;
-import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
-import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.api.command.ExportCommand;
 import org.terracotta.dynamic_config.cli.api.converter.OutputFormat;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.FormatConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
@@ -52,16 +52,13 @@ public class ExportJCommanderCommand extends JCommanderCommand {
   private final ExportCommand underlying = new ExportCommand();
 
   @Override
-  public void validate() {
+  public void run() {
     underlying.setNode(node);
     underlying.setOutputFile(outputFile);
     underlying.setIncludeDefaultValues(includeDefaultValues);
     underlying.setWantsRuntimeConfig(wantsRuntimeConfig);
     underlying.setOutputFormat(outputFormat);
-  }
 
-  @Override
-  public void run() {
     underlying.run();
   }
 

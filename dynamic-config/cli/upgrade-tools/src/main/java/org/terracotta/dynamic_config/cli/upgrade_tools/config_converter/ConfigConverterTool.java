@@ -62,7 +62,6 @@ public class ConfigConverterTool {
     CustomJCommander jCommander = parseArguments(commandRepository, args, mainCommand);
 
     // Process arguments like '-v'
-    mainCommand.validate();
     mainCommand.run();
 
     jCommander.getAskedCommand().map(command -> {
@@ -71,9 +70,7 @@ public class ConfigConverterTool {
         jCommander.printUsage();
         return true;
       }
-      // validate the real command
-      command.validate();
-      // run the real command
+      // validate and run the real command
       command.run();
       return true;
     }).orElseGet(() -> {

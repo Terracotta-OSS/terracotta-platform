@@ -18,12 +18,12 @@ package org.terracotta.dynamic_config.cli.config_tool;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.api.command.Injector;
+import org.terracotta.dynamic_config.cli.api.command.ServiceProvider;
+import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
 import org.terracotta.dynamic_config.cli.config_tool.command.JCommanderCommandProvider;
-import org.terracotta.dynamic_config.cli.api.command.ServiceProvider;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainJCommanderCommand;
 
 import java.util.Collection;
@@ -68,7 +68,6 @@ public class ConfigTool {
     CustomJCommander jCommander = parseArguments(commandRepository, mainCommand, args);
 
     // Process arguments like '-v'
-    mainCommand.validate();
     mainCommand.run();
 
     // create services
@@ -82,8 +81,6 @@ public class ConfigTool {
       } else {
         LOGGER.debug("Injecting services in specified command");
         Injector.inject(command.getCommand(), services);
-        // validate the real command
-        command.validate();
         // run the real command
         command.run();
         return true;

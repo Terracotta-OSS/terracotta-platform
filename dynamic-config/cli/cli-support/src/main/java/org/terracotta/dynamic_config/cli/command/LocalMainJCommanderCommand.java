@@ -30,12 +30,8 @@ public class LocalMainJCommanderCommand extends JCommanderCommand {
   private final LocalConfig underlying = new LocalConfig();
 
   @Override
-  public void validate() {
-    underlying.setVerbose(verbose);
-  }
-
-  @Override
   public void run() {
+    underlying.setVerbose(verbose);
     underlying.run();
   }
 

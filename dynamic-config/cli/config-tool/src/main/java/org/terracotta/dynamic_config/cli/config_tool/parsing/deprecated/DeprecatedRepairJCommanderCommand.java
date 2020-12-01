@@ -18,10 +18,10 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.cli.api.command.Command;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
-import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.api.command.RepairCommand;
 import org.terracotta.dynamic_config.cli.api.converter.RepairAction;
+import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
+import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.RepairActionConverter;
 
@@ -40,13 +40,10 @@ public class DeprecatedRepairJCommanderCommand extends JCommanderCommand {
   private final RepairCommand underlying = new RepairCommand();
 
   @Override
-  public void validate() {
+  public void run() {
     underlying.setNode(node);
     underlying.setForcedRepairAction(forcedRepairAction);
-  }
 
-  @Override
-  public void run() {
     underlying.run();
   }
 

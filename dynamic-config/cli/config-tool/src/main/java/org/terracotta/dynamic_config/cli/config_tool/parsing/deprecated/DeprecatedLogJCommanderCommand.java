@@ -18,9 +18,9 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.cli.api.command.Command;
+import org.terracotta.dynamic_config.cli.api.command.LogCommand;
 import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
-import org.terracotta.dynamic_config.cli.api.command.LogCommand;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
@@ -34,12 +34,9 @@ public class DeprecatedLogJCommanderCommand extends JCommanderCommand {
   private final LogCommand underlying = new LogCommand();
 
   @Override
-  public void validate() {
-    underlying.setNode(node);
-  }
-
-  @Override
   public void run() {
+    underlying.setNode(node);
+
     underlying.run();
   }
 
