@@ -62,10 +62,12 @@ import org.terracotta.nomad.client.status.MultiDiscoveryResultReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.server.Server;
+import org.terracotta.testing.Retry;
 import org.terracotta.testing.TmpDir;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -244,10 +246,17 @@ public class DesynchronizedNomadConfigTest {
   }
 
   @Test(timeout = 10 * 1000)
-  public void test_concurrent_prepare_leading_to_accept() {
+  public void test_concurrent_prepare_leading_to_accept() throws InterruptedException {
     assumeThat(Runtime.getRuntime().availableProcessors(), is(greaterThanOrEqualTo(4)));
-    AtomicInteger memory = new AtomicInteger();
-    runConcurrentNomadTx(4, idx -> SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", (1 + memory.incrementAndGet()) + "GB"));
+    Retry.untilInterrupted(() -> {
+      try {
+        org.terracotta.utilities.io.Files.deleteTree(temporaryFolder.getRoot().toAbsolutePath());
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      AtomicInteger memory = new AtomicInteger();
+      runConcurrentNomadTx(4, idx -> SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", (1 + memory.incrementAndGet()) + "GB"));
+    });
   }
 
   private void runConcurrentNomadTx(int concurrency, Function<Integer, NomadChange> changeFactory) {
