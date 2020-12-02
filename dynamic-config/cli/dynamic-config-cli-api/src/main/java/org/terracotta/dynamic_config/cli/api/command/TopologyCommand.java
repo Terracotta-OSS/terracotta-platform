@@ -81,17 +81,9 @@ public abstract class TopologyCommand extends RemoteCommand {
       throw new IllegalArgumentException("Wrong destination endpoint: " + destination + ". It does not match any node in destination cluster: " + destinationCluster.toShapeString());
     }
 
-    checkForOperationSupport();
-
     if (destinationClusterActivated) {
       ensureNodesAreEitherActiveOrPassive(destinationOnlineNodes);
       ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
-    }
-  }
-
-  protected void checkForOperationSupport() {
-    if (destinationClusterActivated && OperationType.STRIPE.equals(getOperationType())) {
-      throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster are not supported");
     }
   }
 

@@ -17,7 +17,6 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import com.terracotta.connection.api.TerracottaConnectionService;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.UID;
@@ -36,7 +35,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@Ignore("Attaching *any* stripes to an activated cluster is currently unsupported")
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
 public class AttachStripeIT extends DynamicConfigIT {
 

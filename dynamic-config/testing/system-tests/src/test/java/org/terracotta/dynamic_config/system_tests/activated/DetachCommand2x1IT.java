@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
@@ -27,7 +26,6 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-@Ignore("Detaching *any* stripes from an activated cluster is currently unsupported")
 @ClusterDefinition(stripes = 2, nodesPerStripe = 1, autoActivate = true)
 public class DetachCommand2x1IT extends DynamicConfigIT {
 
