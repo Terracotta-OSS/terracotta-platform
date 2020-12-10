@@ -22,7 +22,7 @@ import com.beust.jcommander.Parameters;
  */
 public class Metadata {
 
-  public static String getName(JCommanderCommand command) {
+  public static String getName(Command command) {
     Parameters annotation = command.getClass().getAnnotation(Parameters.class);
     if (annotation != null && annotation.commandNames().length > 0) {
       return annotation.commandNames()[0] + (command.getClass().isAnnotationPresent(DeprecatedUsage.class) ? "-deprecated" : "");
@@ -30,7 +30,7 @@ public class Metadata {
     return command.getClass().getSimpleName().toLowerCase().replace("command", "");
   }
 
-  public static String getUsage(JCommanderCommand command) {
+  public static String getUsage(Command command) {
     Usage annotation = command.getClass().getAnnotation(Usage.class);
     if (annotation != null) {
       return annotation.value();
@@ -38,7 +38,7 @@ public class Metadata {
     return "";
   }
 
-  public static String getDeprecatedUsage(JCommanderCommand command) {
+  public static String getDeprecatedUsage(Command command) {
     DeprecatedUsage annotation = command.getClass().getAnnotation(DeprecatedUsage.class);
     if (annotation != null) {
       return annotation.value();

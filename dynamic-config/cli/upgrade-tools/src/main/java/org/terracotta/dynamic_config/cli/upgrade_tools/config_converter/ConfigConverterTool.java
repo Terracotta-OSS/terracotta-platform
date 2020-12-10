@@ -19,10 +19,10 @@ import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
-import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
-import org.terracotta.dynamic_config.cli.command.LocalMainJCommanderCommand;
-import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.ConvertJCommanderCommand;
-import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.deprecated.DeprecatedConvertJCommanderCommand;
+import org.terracotta.dynamic_config.cli.command.CommandRepository;
+import org.terracotta.dynamic_config.cli.command.LocalMainCommand;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.ConvertCommand;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.deprecated.DeprecatedConvertCommand;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -46,14 +46,14 @@ public class ConfigConverterTool {
 
   public static void start(String... args) {
     LOGGER.debug("Registering commands with JCommanderCommandRepository");
-    LocalMainJCommanderCommand mainCommand = new LocalMainJCommanderCommand();
-    JCommanderCommandRepository commandRepository = new JCommanderCommandRepository();
+    LocalMainCommand mainCommand = new LocalMainCommand();
+    CommandRepository commandRepository = new CommandRepository();
     commandRepository.addAll(
         new HashSet<>(
             Arrays.asList(
                 mainCommand,
-                new ConvertJCommanderCommand(),
-                new DeprecatedConvertJCommanderCommand()
+                new ConvertCommand(),
+                new DeprecatedConvertCommand()
             )
         )
     );
@@ -80,7 +80,7 @@ public class ConfigConverterTool {
     });
   }
 
-  private static CustomJCommander parseArguments(JCommanderCommandRepository commandRepository, String[] args, LocalMainJCommanderCommand mainCommand) {
+  private static CustomJCommander parseArguments(CommandRepository commandRepository, String[] args, LocalMainCommand mainCommand) {
     CustomJCommander jCommander = getCustomJCommander(commandRepository, mainCommand);
     try {
       jCommander.parse(args);
@@ -114,7 +114,7 @@ public class ConfigConverterTool {
     return jCommander;
   }
 
-  private static CustomJCommander getCustomJCommander(JCommanderCommandRepository commandRepository, LocalMainJCommanderCommand mainCommand) {
+  private static CustomJCommander getCustomJCommander(CommandRepository commandRepository, LocalMainCommand mainCommand) {
     return new CustomJCommander("config-converter", commandRepository, mainCommand);
   }
 }

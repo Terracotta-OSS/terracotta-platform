@@ -15,18 +15,14 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import com.tc.util.ManagedServiceLoader;
+import org.terracotta.dynamic_config.api.model.Operation;
 
-import java.util.Collection;
+/**
+ * @author Mathieu Carbou
+ */
+public class UnsetAction extends ConfigurationMutationAction {
 
-public interface ServiceProvider {
-  Collection<Object> createServices(Configuration config);
-
-  static ServiceProvider get() {
-    Collection<ServiceProvider> services = ManagedServiceLoader.loadServices(ServiceProvider.class, ServiceProvider.class.getClassLoader());
-    if (services.size() != 1) {
-      throw new AssertionError("expected exactly one service provider, but found :" + services.size());
-    }
-    return services.iterator().next();
+  public UnsetAction() {
+    super(Operation.UNSET);
   }
 }

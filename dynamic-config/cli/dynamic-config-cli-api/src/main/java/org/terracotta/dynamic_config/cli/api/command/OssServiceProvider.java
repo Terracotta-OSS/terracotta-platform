@@ -42,7 +42,7 @@ import static java.util.Arrays.asList;
  */
 public class OssServiceProvider implements ServiceProvider {
   @Override
-  public Collection<Object> createServices(RemoteConfig config) {
+  public Collection<Object> createServices(Configuration config) {
     return asList(
         createDiagnosticServiceProvider(config),
         createMultiDiagnosticServiceProvider(config),
@@ -53,15 +53,15 @@ public class OssServiceProvider implements ServiceProvider {
         createNomadEntityProvider(config));
   }
 
-  protected StopService createStopService(RemoteConfig config) {
+  protected StopService createStopService(Configuration config) {
     return new StopService(createDiagnosticServiceProvider(config), getConcurrencySizing(config));
   }
 
-  protected RestartService createRestartService(RemoteConfig config) {
+  protected RestartService createRestartService(Configuration config) {
     return new RestartService(createDiagnosticServiceProvider(config), getConcurrencySizing(config));
   }
 
-  protected NomadManager<NodeContext> createNomadManager(RemoteConfig config) {
+  protected NomadManager<NodeContext> createNomadManager(Configuration config) {
     NomadManager<NodeContext> nomadManager = new DefaultNomadManager<>(new NomadEnvironment(), createMultiDiagnosticServiceProvider(config), createNomadEntityProvider(config));
     if (config.getLockToken() != null) {
       nomadManager = new LockAwareNomadManager<>(config.getLockToken(), nomadManager);
@@ -69,7 +69,7 @@ public class OssServiceProvider implements ServiceProvider {
     return nomadManager;
   }
 
-  protected NomadEntityProvider createNomadEntityProvider(RemoteConfig config) {
+  protected NomadEntityProvider createNomadEntityProvider(Configuration config) {
     return new NomadEntityProvider(
         "CONFIG-TOOL",
         getConnectionTimeout(config),
@@ -80,14 +80,14 @@ public class OssServiceProvider implements ServiceProvider {
         config.getSecurityRootDirectory());
   }
 
-  protected ConcurrentDiagnosticServiceProvider<UID> createMultiDiagnosticServiceProvider(RemoteConfig config) {
+  protected ConcurrentDiagnosticServiceProvider<UID> createMultiDiagnosticServiceProvider(Configuration config) {
     return new ConcurrentDiagnosticServiceProvider<>(
         createDiagnosticServiceProvider(config),
         getConnectionTimeout(config),
         getConcurrencySizing(config));
   }
 
-  protected DiagnosticServiceProvider createDiagnosticServiceProvider(RemoteConfig config) {
+  protected DiagnosticServiceProvider createDiagnosticServiceProvider(Configuration config) {
     return new DiagnosticServiceProvider("CONFIG-TOOL",
         getConnectionTimeout(config),
         getRequestTimeout(config),
@@ -95,23 +95,23 @@ public class OssServiceProvider implements ServiceProvider {
         createObjectMapperFactory(config));
   }
 
-  protected ObjectMapperFactory createObjectMapperFactory(RemoteConfig config) {
+  protected ObjectMapperFactory createObjectMapperFactory(Configuration config) {
     return new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
   }
 
-  protected Duration getEntityOperationTimeout(RemoteConfig config) {
+  protected Duration getEntityOperationTimeout(Configuration config) {
     return Duration.ofMillis(config.getEntityOperationTimeout().getQuantity(TimeUnit.MILLISECONDS));
   }
 
-  protected Duration getRequestTimeout(RemoteConfig config) {
+  protected Duration getRequestTimeout(Configuration config) {
     return Duration.ofMillis(config.getRequestTimeout().getQuantity(TimeUnit.MILLISECONDS));
   }
 
-  protected Duration getConnectionTimeout(RemoteConfig config) {
+  protected Duration getConnectionTimeout(Configuration config) {
     return Duration.ofMillis(config.getConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
   }
 
-  protected ConcurrencySizing getConcurrencySizing(RemoteConfig config) {
+  protected ConcurrencySizing getConcurrencySizing(Configuration config) {
     return new ConcurrencySizing();
   }
 

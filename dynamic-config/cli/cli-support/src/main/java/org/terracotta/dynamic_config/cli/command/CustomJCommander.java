@@ -37,23 +37,23 @@ import static java.util.function.Predicate.isEqual;
  * Class containing overridden usage methods from JCommander.
  */
 public class CustomJCommander extends JCommander {
-  private final JCommanderCommandRepository commandRepository;
+  private final CommandRepository commandRepository;
   private final String toolName;
   private boolean deprecatedUsage;
 
-  public CustomJCommander(String toolName, JCommanderCommandRepository commandRepository, JCommanderCommand command) {
+  public CustomJCommander(String toolName, CommandRepository commandRepository, Command command) {
     super(command);
     this.toolName = toolName;
     this.commandRepository = commandRepository;
     setUsageFormatter(new UsageFormatter(this));
-    commandRepository.getJCommanderCommands()
+    commandRepository.getCommands()
         .stream()
         .filter(isEqual(command).negate())
         .forEach(cmd -> addCommand(Metadata.getName(cmd), cmd));
   }
 
-  public Optional<JCommanderCommand> getAskedCommand() {
-    return Optional.ofNullable(getParsedCommand()).map(commandRepository::getJCommanderCommand);
+  public Optional<Command> getAskedCommand() {
+    return Optional.ofNullable(getParsedCommand()).map(commandRepository::getCommand);
   }
 
   public void printUsage() {
@@ -124,7 +124,7 @@ public class CustomJCommander extends JCommander {
       if (description != null) {
         out.append(indent).append(description).append(lineSeparator());
       }
-      appendUsage(commandRepository.getJCommanderCommand(commandName), out, indent);
+      appendUsage(commandRepository.getCommand(commandName), out, indent);
       appendOptions(jc, out, indent);
     }
 
@@ -162,7 +162,7 @@ public class CustomJCommander extends JCommander {
             String description = getCommandDescription(name);
             out.append(lineSeparator());
             out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator()).append(lineSeparator());
-            appendUsage(commandRepository.getJCommanderCommand(name), out, indent + "        ");
+            appendUsage(commandRepository.getCommand(name), out, indent + "        ");
             out.append(lineSeparator());
 
             // Options for this command
@@ -173,7 +173,7 @@ public class CustomJCommander extends JCommander {
       }
     }
 
-    private void appendUsage(JCommanderCommand command, StringBuilder out, String indent) {
+    private void appendUsage(Command command, StringBuilder out, String indent) {
       out.append(indent).append("Usage: ");
       String usage = deprecatedUsage ? Metadata.getDeprecatedUsage(command) : Metadata.getUsage(command);
       out.append(usage.replace(lineSeparator(), lineSeparator() + "    " + indent)).append(lineSeparator());

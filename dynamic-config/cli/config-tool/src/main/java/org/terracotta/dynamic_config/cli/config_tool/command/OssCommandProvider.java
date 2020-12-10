@@ -15,67 +15,67 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.ActivateJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.AttachJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.DetachJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.DiagnosticJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.ExportJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.GetJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.ImportJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.LockConfigJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.LogJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.RepairJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.SetJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.UnlockConfigJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.UnsetJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedActivateJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedAttachJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedDetachJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedDiagnosticJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedExportJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedGetJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedImportJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedLockConfigJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedLogJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedRepairJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedSetJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedUnlockConfigJCommanderCommand;
-import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedUnsetJCommanderCommand;
+import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.ActivateCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.AttachCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.DetachCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.DiagnosticCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.ExportCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.GetCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.ImportCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.LockConfigCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.LogCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.RepairCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.SetCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.UnlockConfigCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.UnsetCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedActivateCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedAttachCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedDetachCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedDiagnosticCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedExportCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedGetCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedImportCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedLockConfigCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedLogCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedRepairCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedSetCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedUnlockConfigCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedUnsetCommand;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class OssCommandProvider implements JCommanderCommandProvider {
+public class OssCommandProvider implements CommandProvider {
   @Override
-  public Set<JCommanderCommand> getCommands() {
-    Set<JCommanderCommand> commands = new HashSet<>();
-    commands.add(new ActivateJCommanderCommand());
-    commands.add(new DeprecatedActivateJCommanderCommand());
-    commands.add(new AttachJCommanderCommand());
-    commands.add(new DeprecatedAttachJCommanderCommand());
-    commands.add(new DetachJCommanderCommand());
-    commands.add(new DeprecatedDetachJCommanderCommand());
-    commands.add(new ImportJCommanderCommand());
-    commands.add(new DeprecatedImportJCommanderCommand());
-    commands.add(new ExportJCommanderCommand());
-    commands.add(new DeprecatedExportJCommanderCommand());
-    commands.add(new GetJCommanderCommand());
-    commands.add(new DeprecatedGetJCommanderCommand());
-    commands.add(new SetJCommanderCommand());
-    commands.add(new DeprecatedSetJCommanderCommand());
-    commands.add(new UnsetJCommanderCommand());
-    commands.add(new DeprecatedUnsetJCommanderCommand());
-    commands.add(new DiagnosticJCommanderCommand());
-    commands.add(new DeprecatedDiagnosticJCommanderCommand());
-    commands.add(new RepairJCommanderCommand());
-    commands.add(new DeprecatedRepairJCommanderCommand());
-    commands.add(new LogJCommanderCommand());
-    commands.add(new DeprecatedLogJCommanderCommand());
-    commands.add(new LockConfigJCommanderCommand());
-    commands.add(new DeprecatedLockConfigJCommanderCommand());
-    commands.add(new UnlockConfigJCommanderCommand());
-    commands.add(new DeprecatedUnlockConfigJCommanderCommand());
+  public Set<Command> getCommands() {
+    Set<Command> commands = new HashSet<>();
+    commands.add(new ActivateCommand());
+    commands.add(new DeprecatedActivateCommand());
+    commands.add(new AttachCommand());
+    commands.add(new DeprecatedAttachCommand());
+    commands.add(new DetachCommand());
+    commands.add(new DeprecatedDetachCommand());
+    commands.add(new ImportCommand());
+    commands.add(new DeprecatedImportCommand());
+    commands.add(new ExportCommand());
+    commands.add(new DeprecatedExportCommand());
+    commands.add(new GetCommand());
+    commands.add(new DeprecatedGetCommand());
+    commands.add(new SetCommand());
+    commands.add(new DeprecatedSetCommand());
+    commands.add(new UnsetCommand());
+    commands.add(new DeprecatedUnsetCommand());
+    commands.add(new DiagnosticCommand());
+    commands.add(new DeprecatedDiagnosticCommand());
+    commands.add(new RepairCommand());
+    commands.add(new DeprecatedRepairCommand());
+    commands.add(new LogCommand());
+    commands.add(new DeprecatedLogCommand());
+    commands.add(new LockConfigCommand());
+    commands.add(new DeprecatedLockConfigCommand());
+    commands.add(new UnlockConfigCommand());
+    commands.add(new DeprecatedUnlockConfigCommand());
     return commands;
   }
 }
