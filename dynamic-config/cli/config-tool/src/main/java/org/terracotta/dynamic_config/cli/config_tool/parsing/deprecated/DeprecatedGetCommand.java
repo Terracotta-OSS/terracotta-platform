@@ -21,8 +21,8 @@ import com.beust.jcommander.converters.BooleanConverter;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.cli.api.command.GetAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
@@ -30,8 +30,8 @@ import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 import java.net.InetSocketAddress;
 import java.util.List;
 
-@Parameters(commandNames = "get", commandDescription = "Read configuration properties")
-@DeprecatedUsage("get -s <hostname[:port]> [-r] -c <[namespace:]property>,<[namespace:]property>...")
+@Parameters(commandDescription = "Read configuration properties")
+@Usage("-s <hostname[:port]> [-r] -c <[namespace:]property>,<[namespace:]property>...")
 public class DeprecatedGetCommand extends Command {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

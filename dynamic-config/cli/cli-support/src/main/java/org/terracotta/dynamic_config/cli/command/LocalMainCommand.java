@@ -21,21 +21,14 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.slf4j.LoggerFactory;
 
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
-@Parameters(commandNames = LocalMainCommand.NAME)
 public class LocalMainCommand extends Command {
-  public static final String NAME = "main";
 
   @Parameter(names = {"-verbose", "-v", "--verbose"}, description = "Verbose mode. Default: false")
   public boolean verbose = false;
-
-  public LocalMainCommand() {
-
-  }
 
   @Override
   public void run() {

@@ -18,8 +18,8 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.command.ConvertAction;
 
@@ -29,8 +29,8 @@ import java.util.List;
 
 import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat.DIRECTORY;
 
-@Parameters(commandNames = "convert", commandDescription = "Convert tc-config files to configuration directory format")
-@DeprecatedUsage("convert -c <tc-config>,<tc-config>... ( -t directory [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
+@Parameters(commandDescription = "Convert tc-config files to configuration directory format")
+@Usage("-c <tc-config>,<tc-config>... ( -t directory [-l <license-file>] -n <new-cluster-name> | -t properties [-n <new-cluster-name>]) [-d <destination-dir>] [-f]")
 public class DeprecatedConvertCommand extends Command {
 
   @Parameter(names = {"-c"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)

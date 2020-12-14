@@ -29,8 +29,8 @@ import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 import java.net.InetSocketAddress;
 import java.util.List;
 
-@Parameters(commandNames = "set", commandDescription = "Set configuration properties")
-@Usage("set -connect-to <hostname[:port]> -setting <[namespace:]property=value>,<[namespace:]property=value>...")
+@Parameters(commandDescription = "Set configuration properties")
+@Usage("-connect-to <hostname[:port]> -setting <[namespace:]property=value>,<[namespace:]property=value>...")
 public class SetCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

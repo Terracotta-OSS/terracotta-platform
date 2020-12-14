@@ -27,8 +27,8 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
-@Parameters(commandNames = "import", commandDescription = "Import a cluster configuration")
-@Usage("import -config-file <config-file> [-connect-to <hostname[:port]>]")
+@Parameters(commandDescription = "Import a cluster configuration")
+@Usage("-config-file <config-file> [-connect-to <hostname[:port]>]")
 public class ImportCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)

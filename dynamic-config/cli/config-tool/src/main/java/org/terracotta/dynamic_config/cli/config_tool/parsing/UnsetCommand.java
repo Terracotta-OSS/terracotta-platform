@@ -29,8 +29,8 @@ import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 import java.net.InetSocketAddress;
 import java.util.List;
 
-@Parameters(commandNames = "unset", commandDescription = "Unset configuration properties")
-@Usage("unset -connect-to <hostname[:port]> -setting <[namespace:]property>,<[namespace:]property>...")
+@Parameters(commandDescription = "Unset configuration properties")
+@Usage("-connect-to <hostname[:port]> -setting <[namespace:]property>,<[namespace:]property>...")
 public class UnsetCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

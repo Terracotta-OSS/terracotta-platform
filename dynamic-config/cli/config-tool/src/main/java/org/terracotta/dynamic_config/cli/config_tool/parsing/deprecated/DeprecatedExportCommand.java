@@ -22,16 +22,16 @@ import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.dynamic_config.cli.api.command.ExportAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OutputFormat;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.FormatConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
-@Parameters(commandNames = "export", commandDescription = "Export a cluster configuration")
-@DeprecatedUsage("export -s <hostname[:port]> [-f <config-file>] [-i] [-r]")
+@Parameters(commandDescription = "Export a cluster configuration")
+@Usage("-s <hostname[:port]> [-f <config-file>] [-i] [-r]")
 public class DeprecatedExportCommand extends Command {
 
   @Parameter(names = {"-s"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)

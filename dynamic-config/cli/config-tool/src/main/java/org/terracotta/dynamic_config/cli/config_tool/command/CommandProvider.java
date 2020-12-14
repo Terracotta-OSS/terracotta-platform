@@ -18,12 +18,18 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.tc.util.ManagedServiceLoader;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainCommand;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.Map;
 
 public interface CommandProvider {
-  Set<Command> getCommands();
+
+  RemoteMainCommand getMainCommand();
+
+  Map<String, Command> getCommands();
+
+  Map<String, Command> getDeprecatedCommands();
 
   static CommandProvider get() {
     Collection<CommandProvider> services = ManagedServiceLoader.loadServices(CommandProvider.class, CommandProvider.class.getClassLoader());

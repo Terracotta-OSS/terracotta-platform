@@ -31,56 +31,39 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import static java.lang.System.lineSeparator;
-import static java.util.function.Predicate.isEqual;
 
 /**
  * Class containing overridden usage methods from JCommander.
  */
-public class CustomJCommander extends JCommander {
-  private final CommandRepository commandRepository;
+public class CustomJCommander<M extends Command> extends JCommander {
+  private final M mainCommand;
+  private final Map<String, Command> commands;
   private final String toolName;
-  private boolean deprecatedUsage;
 
-  public CustomJCommander(String toolName, CommandRepository commandRepository, Command command) {
-    super(command);
+  public CustomJCommander(String toolName, Map<String, Command> commands, M mainCommand) {
+    super(mainCommand);
     this.toolName = toolName;
-    this.commandRepository = commandRepository;
+    this.mainCommand = mainCommand;
+    this.commands = commands;
     setUsageFormatter(new UsageFormatter(this));
-    commandRepository.getCommands()
-        .stream()
-        .filter(isEqual(command).negate())
-        .forEach(cmd -> addCommand(Metadata.getName(cmd), cmd));
+    commands.forEach(this::addCommand);
   }
 
   public Optional<Command> getAskedCommand() {
-    return Optional.ofNullable(getParsedCommand()).map(commandRepository::getCommand);
+    return Optional.ofNullable(getParsedCommand()).map(commands::get);
   }
 
   public void printUsage() {
-    try {
-      String askedCommand = getParsedCommand();
-      if (askedCommand != null) {
-        if (askedCommand.contains("deprecated")) {
-          this.deprecatedUsage = true;
-        }
-        getUsageFormatter().usage(askedCommand);
-      } else {
-        usage();
-      }
-    } finally {
-      this.deprecatedUsage = false; // reset to false
+    String askedCommand = getParsedCommand();
+    if (askedCommand != null) {
+      printAskedCommandUsage(askedCommand);
+    } else {
+      usage();
     }
   }
 
   public void printAskedCommandUsage(String askedCommand) {
-    try {
-      if (askedCommand.contains("deprecated")) {
-        deprecatedUsage = true;
-      }
-      getUsageFormatter().usage(askedCommand);
-    } finally {
-      deprecatedUsage = false;
-    }
+    getUsageFormatter().usage(askedCommand);
   }
 
   @Override
@@ -91,6 +74,10 @@ public class CustomJCommander extends JCommander {
 
   protected void appendDefinitions(StringBuilder out, String indent) {
 
+  }
+
+  public M getMainCommand() {
+    return mainCommand;
   }
 
   private class UsageFormatter implements IUsageFormatter {
@@ -124,7 +111,7 @@ public class CustomJCommander extends JCommander {
       if (description != null) {
         out.append(indent).append(description).append(lineSeparator());
       }
-      appendUsage(commandRepository.getCommand(commandName), out, indent);
+      appendUsage(commandName, commands.get(commandName), out, indent);
       appendOptions(jc, out, indent);
     }
 
@@ -148,21 +135,18 @@ public class CustomJCommander extends JCommander {
       return new DefaultUsageFormatter(commander).getCommandDescription(commandName);
     }
 
-    private void appendCommands(StringBuilder out, String indent, Map<String, JCommander> commands, boolean hasCommands) {
+    private void appendCommands(StringBuilder out, String indent, Map<String, JCommander> jcommanders, boolean hasCommands) {
       if (hasCommands) {
         out.append(lineSeparator()).append("Commands:").append(lineSeparator()).append(lineSeparator());
-        for (Map.Entry<String, JCommander> command : commands.entrySet()) {
+        for (Map.Entry<String, JCommander> command : jcommanders.entrySet()) {
           String name = command.getKey();
-          if (name.endsWith("-deprecated")) {
-            continue;
-          }
           Object arg = command.getValue().getObjects().get(0);
           Parameters p = arg.getClass().getAnnotation(Parameters.class);
           if (p == null || !p.hidden()) {
             String description = getCommandDescription(name);
             out.append(lineSeparator());
             out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator()).append(lineSeparator());
-            appendUsage(commandRepository.getCommand(name), out, indent + "        ");
+            appendUsage(name, CustomJCommander.this.commands.get(name), out, indent + "        ");
             out.append(lineSeparator());
 
             // Options for this command
@@ -173,9 +157,9 @@ public class CustomJCommander extends JCommander {
       }
     }
 
-    private void appendUsage(Command command, StringBuilder out, String indent) {
+    private void appendUsage(String name, Command command, StringBuilder out, String indent) {
       out.append(indent).append("Usage: ");
-      String usage = deprecatedUsage ? Metadata.getDeprecatedUsage(command) : Metadata.getUsage(command);
+      String usage = name + " " + getUsage(command);
       out.append(usage.replace(lineSeparator(), lineSeparator() + "    " + indent)).append(lineSeparator());
     }
 
@@ -218,10 +202,18 @@ public class CustomJCommander extends JCommander {
 
   @SuppressFBWarnings("SBSC_USE_STRINGBUFFER_CONCATENATION")
   @SuppressWarnings("StringConcatenationInLoop")
-  private String pad(String str, int colSize) {
+  private static String pad(String str, int colSize) {
     while (str.length() < colSize) {
       str += " ";
     }
     return str;
+  }
+
+  public static String getUsage(Command command) {
+    Usage annotation = command.getClass().getAnnotation(Usage.class);
+    if (annotation != null) {
+      return annotation.value();
+    }
+    return "";
   }
 }

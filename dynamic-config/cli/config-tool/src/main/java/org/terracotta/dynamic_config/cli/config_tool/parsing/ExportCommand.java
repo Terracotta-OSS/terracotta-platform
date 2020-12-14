@@ -30,8 +30,8 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
-@Parameters(commandNames = "export", commandDescription = "Export a cluster configuration")
-@Usage("export -connect-to <hostname[:port]> [-output-file <config-file>] [-include-defaults] [-runtime]")
+@Parameters(commandDescription = "Export a cluster configuration")
+@Usage("-connect-to <hostname[:port]> [-output-file <config-file>] [-include-defaults] [-runtime]")
 public class ExportCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)

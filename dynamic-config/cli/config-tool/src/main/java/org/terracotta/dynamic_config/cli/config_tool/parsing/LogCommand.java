@@ -25,8 +25,8 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "log", commandDescription = "Log all the configuration changes of a node and their details")
-@Usage("log -connect-to <hostname[:port]>")
+@Parameters(commandDescription = "Log all the configuration changes of a node and their details")
+@Usage("-connect-to <hostname[:port]>")
 public class LogCommand extends Command {
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;

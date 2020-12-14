@@ -16,14 +16,12 @@
 package org.terracotta.dynamic_config.cli.config_tool.parsing;
 
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.cli.api.command.Configuration;
 import org.terracotta.dynamic_config.cli.command.LocalMainCommand;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
-@Parameters(commandNames = LocalMainCommand.NAME)
 public class RemoteMainCommand extends LocalMainCommand {
 
   @Parameter(names = {"-entity-request-timeout", "-er", "--entity-request-timeout"}, hidden = true, description = "Entity operation timeout. Default: 120s", converter = TimeUnitConverter.class)

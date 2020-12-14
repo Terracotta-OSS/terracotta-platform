@@ -31,7 +31,7 @@ import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
-@Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
+@Parameters(commandDescription = "Activate a cluster")
 @Usage("activate (-connect-to <hostname[:port]> | -config-file <config-file>) [-cluster-name <cluster-name>] [-restrict] [-license-file <license-file>] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class ActivateCommand extends Command {
 

@@ -31,8 +31,8 @@ import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@Usage("detach(-from-cluster <hostname[:port]> -stripe [<hostname[:port]>|uid|name] | -from-stripe <hostname[:port]> -node [<hostname[:port]>|uid|name]) [-force] [-stop-wait-time <stop-wait-time>] [-stop-delay <stop-delay>]")
+@Parameters(commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
+@Usage("(-from-cluster <hostname[:port]> -stripe [<hostname[:port]>|uid|name] | -from-stripe <hostname[:port]> -node [<hostname[:port]>|uid|name]) [-force] [-stop-wait-time <stop-wait-time>] [-stop-delay <stop-delay>]")
 public class DetachCommand extends Command {
 
   @Parameter(names = {"-from-cluster"}, description = "Cluster to detach from", converter = InetSocketAddressConverter.class)

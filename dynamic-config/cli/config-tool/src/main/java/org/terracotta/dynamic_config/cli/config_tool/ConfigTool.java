@@ -22,14 +22,12 @@ import org.terracotta.dynamic_config.cli.api.command.Injector;
 import org.terracotta.dynamic_config.cli.api.command.ServiceProvider;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.command.Command;
-import org.terracotta.dynamic_config.cli.command.CommandRepository;
 import org.terracotta.dynamic_config.cli.config_tool.command.CommandProvider;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainCommand;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import static java.lang.System.lineSeparator;
 
@@ -56,18 +54,11 @@ public class ConfigTool {
   }
 
   public static void start(String... args) {
-    CommandProvider commandProvider = CommandProvider.get();
-    final RemoteMainCommand mainCommand = new RemoteMainCommand();
-    LOGGER.debug("Registering commands with CommandRepository");
-    CommandRepository commandRepository = new CommandRepository();
-    Set<Command> commands = commandProvider.getCommands();
-    commands.add(mainCommand);
-    commandRepository.addAll(commands);
-
     LOGGER.debug("Parsing command-line arguments");
-    CustomJCommander jCommander = parseArguments(commandRepository, mainCommand, args);
+    CustomJCommander<RemoteMainCommand> jCommander = parseArguments(CommandProvider.get(), args);
 
     // Process arguments like '-v'
+    RemoteMainCommand mainCommand = jCommander.getMainCommand();
     mainCommand.run();
 
     // create services
@@ -92,8 +83,9 @@ public class ConfigTool {
     });
   }
 
-  private static CustomJCommander parseArguments(CommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
-    CustomJCommander jCommander = getCustomJCommander(commandRepository, mainCommand);
+  private static CustomJCommander<RemoteMainCommand> parseArguments(CommandProvider commandProvider, String[] args) {
+    LOGGER.debug("Attempting parse using regular commands");
+    CustomJCommander<RemoteMainCommand> jCommander = getCustomJCommander(commandProvider.getCommands(), commandProvider.getMainCommand());
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {
@@ -101,17 +93,12 @@ public class ConfigTool {
       if (command != null) {
         // Fallback to deprecated version
         try {
-          for (int i = 0; i < args.length; ++i) {
-            if (args[i].equals(command)) {
-              args[i] = args[i].concat("-deprecated");
-              break;
-            }
-          }
+          LOGGER.debug("Attempting parse using deprecated commands");
           // Create New JCommander object to avoid repeated main command error.
-          CustomJCommander deprecatedJCommander = getCustomJCommander(commandRepository, mainCommand);
+          CustomJCommander<RemoteMainCommand> deprecatedJCommander = getCustomJCommander(commandProvider.getDeprecatedCommands(), commandProvider.getMainCommand());
           deprecatedJCommander.parse(args);
           // success ?
-          jCommander = deprecatedJCommander;
+          return deprecatedJCommander;
         } catch (ParameterException pe) {
           // error ?
           // always display help file for new command
@@ -126,8 +113,8 @@ public class ConfigTool {
     return jCommander;
   }
 
-  private static CustomJCommander getCustomJCommander(CommandRepository commandRepository, RemoteMainCommand mainCommand) {
-    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand) {
+  private static CustomJCommander<RemoteMainCommand> getCustomJCommander(Map<String, Command> commands, RemoteMainCommand mainCommand) {
+    return new CustomJCommander<RemoteMainCommand>("config-tool", commands, mainCommand) {
       @Override
       public void appendDefinitions(StringBuilder out, String indent) {
         out.append(indent).append(lineSeparator()).append("Definitions:").append(lineSeparator());
@@ -155,6 +142,5 @@ public class ConfigTool {
         }
       }
     };
-    return jCommander;
   }
 }

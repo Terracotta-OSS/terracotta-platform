@@ -27,8 +27,8 @@ import org.terracotta.dynamic_config.cli.converter.RepairActionConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "repair", commandDescription = "Repair a cluster configuration")
-@Usage("repair -connect-to <hostname[:port]> [-force commit|rollback|reset|unlock]")
+@Parameters(commandDescription = "Repair a cluster configuration")
+@Usage("-connect-to <hostname[:port]> [-force commit|rollback|reset|unlock]")
 public class RepairCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

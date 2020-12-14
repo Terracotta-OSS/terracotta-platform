@@ -19,14 +19,14 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.command.LockConfigAction;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "lock-config", commandDescription = "Locks the config", hidden = true)
-@DeprecatedUsage("lock-config -s <hostname[:port]> --lock-context <context>")
+@Parameters(commandDescription = "Locks the config", hidden = true)
+@Usage("-s <hostname[:port]> --lock-context <context>")
 public class DeprecatedLockConfigCommand extends Command {
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;

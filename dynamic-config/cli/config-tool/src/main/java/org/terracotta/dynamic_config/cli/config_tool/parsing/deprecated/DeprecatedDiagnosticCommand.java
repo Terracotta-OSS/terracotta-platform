@@ -19,14 +19,14 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.dynamic_config.cli.api.command.DiagnosticAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "diagnostic", commandDescription = "Diagnose a cluster configuration")
-@DeprecatedUsage("diagnostic -s <hostname[:port]>")
+@Parameters(commandDescription = "Diagnose a cluster configuration")
+@Usage("-s <hostname[:port]>")
 public class DeprecatedDiagnosticCommand extends Command {
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;

@@ -22,16 +22,16 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.cli.api.command.AttachAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.dynamic_config.cli.converter.TypeConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "attach", commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
-@DeprecatedUsage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
+@Parameters(commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
+@Usage("[-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class DeprecatedAttachCommand extends Command {
 
   @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = TypeConverter.class)

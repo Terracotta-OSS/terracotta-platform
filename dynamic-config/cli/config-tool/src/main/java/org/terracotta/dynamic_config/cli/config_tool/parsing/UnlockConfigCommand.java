@@ -25,8 +25,8 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "unlock-config", commandDescription = "Unlocks the config", hidden = true)
-@Usage("unlock-config -connect-to <hostname[:port]>")
+@Parameters(commandDescription = "Unlocks the config", hidden = true)
+@Usage("-connect-to <hostname[:port]>")
 public class UnlockConfigCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

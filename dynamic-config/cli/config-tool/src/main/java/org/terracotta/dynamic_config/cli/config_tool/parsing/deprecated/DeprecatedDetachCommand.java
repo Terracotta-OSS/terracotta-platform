@@ -23,8 +23,8 @@ import org.terracotta.dynamic_config.api.model.Identifier;
 import org.terracotta.dynamic_config.cli.api.command.DetachAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.IdentifierConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
@@ -32,8 +32,8 @@ import org.terracotta.dynamic_config.cli.converter.TypeConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "detach", commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@DeprecatedUsage("detach [-t node|stripe] -d <hostname[:port]> -s [<hostname[:port]>|uid|name] [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
+@Parameters(commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
+@Usage("[-t node|stripe] -d <hostname[:port]> -s [<hostname[:port]>|uid|name] [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
 public class DeprecatedDetachCommand extends Command {
 
   @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = TypeConverter.class)

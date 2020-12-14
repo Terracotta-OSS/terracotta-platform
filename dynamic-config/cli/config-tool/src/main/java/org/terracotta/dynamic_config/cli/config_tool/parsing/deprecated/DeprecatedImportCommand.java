@@ -20,15 +20,15 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.dynamic_config.cli.api.command.ImportAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.command.DeprecatedUsage;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
-@Parameters(commandNames = "import", commandDescription = "Import a cluster configuration")
-@DeprecatedUsage("import -f <config-file> [-s <hostname[:port]>]")
+@Parameters(commandDescription = "Import a cluster configuration")
+@Usage("-f <config-file> [-s <hostname[:port]>]")
 public class DeprecatedImportCommand extends Command {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)

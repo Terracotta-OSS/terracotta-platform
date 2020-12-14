@@ -25,8 +25,8 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "lock-config", commandDescription = "Locks the config", hidden = true)
-@Usage("lock-config -connect-to <hostname[:port]> -lock-context <context>")
+@Parameters(commandDescription = "Locks the config", hidden = true)
+@Usage("-connect-to <hostname[:port]> -lock-context <context>")
 public class LockConfigCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

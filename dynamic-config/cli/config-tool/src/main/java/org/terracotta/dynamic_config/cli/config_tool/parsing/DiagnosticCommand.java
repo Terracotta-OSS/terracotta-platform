@@ -25,8 +25,8 @@ import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "diagnostic", commandDescription = "Diagnose a cluster configuration")
-@Usage("diagnostic -connect-to <hostname[:port]>")
+@Parameters(commandDescription = "Diagnose a cluster configuration")
+@Usage("-connect-to <hostname[:port]>")
 public class DiagnosticCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

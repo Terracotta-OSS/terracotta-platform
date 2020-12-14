@@ -29,8 +29,8 @@ import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
 
-@Parameters(commandNames = "attach", commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
-@Usage("attach (-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>) [-force] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
+@Parameters(commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
+@Usage("(-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>) [-force] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class AttachCommand extends Command {
 
   @Parameter(names = {"-to-cluster"}, description = "Cluster to attach to", converter = InetSocketAddressConverter.class)

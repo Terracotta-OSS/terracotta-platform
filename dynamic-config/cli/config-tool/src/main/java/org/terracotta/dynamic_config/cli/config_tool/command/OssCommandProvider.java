@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.cli.config_tool.parsing.GetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.ImportCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.LockConfigCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.LogCommand;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.RepairCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.SetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.UnlockConfigCommand;
@@ -43,39 +44,53 @@ import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.Deprecat
 import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedUnlockConfigCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated.DeprecatedUnsetCommand;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+
+import static java.util.Collections.unmodifiableMap;
 
 public class OssCommandProvider implements CommandProvider {
+
   @Override
-  public Set<Command> getCommands() {
-    Set<Command> commands = new HashSet<>();
-    commands.add(new ActivateCommand());
-    commands.add(new DeprecatedActivateCommand());
-    commands.add(new AttachCommand());
-    commands.add(new DeprecatedAttachCommand());
-    commands.add(new DetachCommand());
-    commands.add(new DeprecatedDetachCommand());
-    commands.add(new ImportCommand());
-    commands.add(new DeprecatedImportCommand());
-    commands.add(new ExportCommand());
-    commands.add(new DeprecatedExportCommand());
-    commands.add(new GetCommand());
-    commands.add(new DeprecatedGetCommand());
-    commands.add(new SetCommand());
-    commands.add(new DeprecatedSetCommand());
-    commands.add(new UnsetCommand());
-    commands.add(new DeprecatedUnsetCommand());
-    commands.add(new DiagnosticCommand());
-    commands.add(new DeprecatedDiagnosticCommand());
-    commands.add(new RepairCommand());
-    commands.add(new DeprecatedRepairCommand());
-    commands.add(new LogCommand());
-    commands.add(new DeprecatedLogCommand());
-    commands.add(new LockConfigCommand());
-    commands.add(new DeprecatedLockConfigCommand());
-    commands.add(new UnlockConfigCommand());
-    commands.add(new DeprecatedUnlockConfigCommand());
-    return commands;
+  public RemoteMainCommand getMainCommand() {
+    return new RemoteMainCommand();
+  }
+
+  @Override
+  public Map<String, Command> getCommands() {
+    Map<String, Command> commands = new HashMap<>();
+    commands.put("activate", new ActivateCommand());
+    commands.put("attach", new AttachCommand());
+    commands.put("detach", new DetachCommand());
+    commands.put("import", new ImportCommand());
+    commands.put("export", new ExportCommand());
+    commands.put("get", new GetCommand());
+    commands.put("set", new SetCommand());
+    commands.put("unset", new UnsetCommand());
+    commands.put("diagnostic", new DiagnosticCommand());
+    commands.put("repair", new RepairCommand());
+    commands.put("log", new LogCommand());
+    commands.put("lock-config", new LockConfigCommand());
+    commands.put("unlock-config", new UnlockConfigCommand());
+    return unmodifiableMap(commands);
+  }
+
+  @Override
+  public Map<String, Command> getDeprecatedCommands() {
+    Map<String, Command> commands = new HashMap<>();
+    commands.put("activate", new DeprecatedActivateCommand());
+    commands.put("attach", new DeprecatedAttachCommand());
+    commands.put("detach", new DeprecatedDetachCommand());
+    commands.put("import", new DeprecatedImportCommand());
+    commands.put("export", new DeprecatedExportCommand());
+    commands.put("get", new DeprecatedGetCommand());
+    commands.put("set", new DeprecatedSetCommand());
+    commands.put("unset", new DeprecatedUnsetCommand());
+    commands.put("diagnostic", new DeprecatedDiagnosticCommand());
+    commands.put("repair", new DeprecatedRepairCommand());
+    commands.put("log", new DeprecatedLogCommand());
+    commands.put("lock-config", new DeprecatedLockConfigCommand());
+    commands.put("unlock-config", new DeprecatedUnlockConfigCommand());
+    return unmodifiableMap(commands);
   }
 }
