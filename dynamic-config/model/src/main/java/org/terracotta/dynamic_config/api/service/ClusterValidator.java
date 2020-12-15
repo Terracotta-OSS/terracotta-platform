@@ -38,9 +38,9 @@ import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
-import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Version.V2;
 
 /**
@@ -243,45 +243,71 @@ public class ClusterValidator {
   }
 
   private void validateSecurity() {
-    validateAuthc();
-    validateSecurityRequirements();
-    validateAuditLogDir();
+    boolean securityDirIsConfigured = validateSecurityDirs();
+    validateSecurityRequirements(securityDirIsConfigured);
+    validateAuditLogDir(securityDirIsConfigured);
   }
 
-  private void validateAuthc() {
-    if (cluster.getSecurityAuthc().is("certificate") && !cluster.getSecuritySslTls().orDefault()) {
-      throw new MalformedClusterException(SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
-    }
-  }
-
-  private void validateSecurityRequirements() {
-    for (Node node : cluster.getNodes()) {
-      boolean securityDirConfigured = node.getSecurityDir().isConfigured();
-      if (!securityDirConfigured) {
-        if (cluster.getSecurityAuthc().isConfigured() || node.getSecurityAuditLogDir().isConfigured() ||
-            cluster.getSecuritySslTls().orDefault() || cluster.getSecurityWhitelist().orDefault()) {
-          throw new MalformedClusterException(SECURITY_DIR + " is mandatory for any of the security configuration, but not found on node with name: " + node.getName());
-        }
-      }
-
-      if (securityDirConfigured && !cluster.getSecuritySslTls().orDefault() && !cluster.getSecurityAuthc().isConfigured() && !cluster.getSecurityWhitelist().orDefault()) {
-        throw new MalformedClusterException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST +
-            " is required for security configuration, but not found on node with name: " + node.getName());
-      }
-    }
-  }
-
-  private void validateAuditLogDir() {
-    List<String> nodesWithNoAuditLogDirs = cluster.getStripes()
-        .stream()
-        .flatMap(s -> s.getNodes().stream())
-        .filter(node -> !node.getSecurityAuditLogDir().isConfigured())
+  private boolean validateSecurityDirs() {
+    // 'security-dir' is an 'all-or-none' node configuration.
+    // Check that all nodes have/do not have a security root directory configured
+    List<String> nodesWithSecurityRootDirs = cluster.getNodes().stream()
+        .filter(node -> node.getSecurityDir().isConfigured())
         .map(Node::getName)
         .collect(toList());
-    if (nodesWithNoAuditLogDirs.size() != 0 && nodesWithNoAuditLogDirs.size() != cluster.getNodeCount()) {
-      throw new MalformedClusterException("Nodes with names: " + nodesWithNoAuditLogDirs +
-          " don't have audit log directories defined, but other nodes in the cluster do." +
-          " Mutative operations on audit log dirs must be done simultaneously on every node in the cluster");
+    int count = nodesWithSecurityRootDirs.size();
+    if (count > 0 && count != cluster.getNodeCount()) {
+      throw new MalformedClusterException("Nodes: " + nodesWithSecurityRootDirs +
+          " currently have (or will have) security root directories defined, while some nodes in the cluster do not (or will not)." +
+          " Within a cluster, all nodes must have a security root directory defined or no security root directory defined.");
+    }
+    return count > 0; // security-dir is or is not configured
+  }
+
+  private void validateSecurityRequirements(boolean securityDirIsConfigured) {
+
+    boolean minimumRequired = cluster.getSecurityAuthc().isConfigured() ||
+            cluster.getSecuritySslTls().orDefault() ||
+            cluster.getSecurityWhitelist().orDefault();
+    if (securityDirIsConfigured) {
+      if (!minimumRequired) {
+        throw new MalformedClusterException("When security root directories are configured across the cluster" +
+            " at least one of " + SECURITY_AUTHC + ", " + SECURITY_SSL_TLS + " or " + SECURITY_WHITELIST +
+            " must also be configured.");
+      }
+      if (cluster.getSecurityAuthc().is("certificate") && !cluster.getSecuritySslTls().orDefault()) {
+        throw new MalformedClusterException("When " + SECURITY_AUTHC + "=certificate " + SECURITY_SSL_TLS + " must be configured.");
+      }
+    } else if (minimumRequired) {
+      throw new MalformedClusterException("There are no (or will be no) security root directories configured across the cluster." +
+          " But " + SECURITY_AUTHC + ", " + SECURITY_SSL_TLS + ", and/or " + SECURITY_WHITELIST +
+          " is (or will be) configured.  When no security root directories are configured" +
+          " all other security settings should also be unconfigured (unset).");
+    }
+  }
+
+  private void validateAuditLogDir(boolean securityDirIsConfigured) {
+    // 'audit-log-dir' is an 'all-or-none' node configuration.
+    // Check that all nodes have/do not have an audit log directory configured
+    List<String> nodesWithAuditLogDirs = cluster.getNodes().stream()
+        .filter(node -> node.getSecurityAuditLogDir().isConfigured())
+        .map(Node::getName)
+        .collect(toList());
+    int count = nodesWithAuditLogDirs.size();
+    if (securityDirIsConfigured) {
+      if (count > 0 && count != cluster.getNodeCount()) {
+        throw new MalformedClusterException("Nodes: " + nodesWithAuditLogDirs +
+            " currently have (or will have) audit log directories defined, while some nodes in the cluster do not (or will not)." +
+            " Within a cluster, all nodes must have an audit log directory defined or no audit log directory defined.");
+      }
+    }
+    else {
+      if (count > 0) {
+        throw new MalformedClusterException("There are no (or will be no) security root directories configured across the cluster." +
+            " But nodes: " + nodesWithAuditLogDirs +
+            " currently have (or will have) audit log directories defined.  When no security root directories are" +
+            " configured "  + SECURITY_AUDIT_LOG_DIR + " should also be unconfigured (unset) for all nodes in the cluster.");
+      }
     }
   }
 }

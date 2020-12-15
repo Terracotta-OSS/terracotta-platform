@@ -225,11 +225,18 @@ public class SettingValidatorTest {
   }
 
   @Test
-  public void test_booleans() {
+  public void test_WHITELIST_SSLTLS() {
     Stream.of(SECURITY_SSL_TLS, SECURITY_WHITELIST).forEach(setting -> {
       validateDefaults(setting);
+      setting.validate(null);
+      setting.validate("");
       setting.validate("true");
       setting.validate("false");
+      setting.validate(null, null);
+      setting.validate(null, "");
+      setting.validate(null, "true");
+      setting.validate(null, "false");
+
       assertThat(
           () -> setting.validate("foo"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " should be one of: [true, false]")))));
@@ -239,9 +246,6 @@ public class SettingValidatorTest {
       assertThat(
           () -> setting.validate("TRUE"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " should be one of: [true, false]")))));
-      assertThat(
-          () -> setting.validate(""),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
     });
   }
 
