@@ -18,14 +18,14 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
-import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
-import org.terracotta.dynamic_config.cli.command.LocalMainJCommanderCommand;
-import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.ConvertJCommanderCommand;
-import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.deprecated.DeprecatedConvertJCommanderCommand;
+import org.terracotta.dynamic_config.cli.command.LocalMainCommand;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.ConvertCommand;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing.deprecated.DeprecatedConvertCommand;
 
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Map;
 
 public class ConfigConverterTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigConverterTool.class);
@@ -45,24 +45,13 @@ public class ConfigConverterTool {
   }
 
   public static void start(String... args) {
-    LOGGER.debug("Registering commands with JCommanderCommandRepository");
-    LocalMainJCommanderCommand mainCommand = new LocalMainJCommanderCommand();
-    JCommanderCommandRepository commandRepository = new JCommanderCommandRepository();
-    commandRepository.addAll(
-        new HashSet<>(
-            Arrays.asList(
-                mainCommand,
-                new ConvertJCommanderCommand(),
-                new DeprecatedConvertJCommanderCommand()
-            )
-        )
-    );
-
     LOGGER.debug("Parsing command-line arguments");
-    CustomJCommander jCommander = parseArguments(commandRepository, args, mainCommand);
+    Map<String, Command> commands = Collections.singletonMap("convert", new ConvertCommand());
+    Map<String, Command> depCommands = Collections.singletonMap("convert", new DeprecatedConvertCommand());
+    CustomJCommander<LocalMainCommand> jCommander = parseArguments(commands, depCommands, args);
 
     // Process arguments like '-v'
-    mainCommand.run();
+    jCommander.getMainCommand().run();
 
     jCommander.getAskedCommand().map(command -> {
       // check for help
@@ -80,41 +69,39 @@ public class ConfigConverterTool {
     });
   }
 
-  private static CustomJCommander parseArguments(JCommanderCommandRepository commandRepository, String[] args, LocalMainJCommanderCommand mainCommand) {
-    CustomJCommander jCommander = getCustomJCommander(commandRepository, mainCommand);
+  private static CustomJCommander<LocalMainCommand> parseArguments(Map<String, Command> commands, Map<String, Command> deprecatedCommands, String[] args) {
+    LOGGER.debug("Attempting parse using regular commands");
+
+    CustomJCommander<LocalMainCommand> jCommander = getCustomJCommander(commands, new LocalMainCommand());
     try {
       jCommander.parse(args);
+      return jCommander;
     } catch (ParameterException e) {
       String command = jCommander.getParsedCommand();
       if (command != null) {
-        if (!command.contains("-deprecated")) {
-          // Fallback to deprecated version
-          try {
-            for (int i = 0; i < args.length; ++i) {
-              if (args[i].equals(command)) {
-                args[i] = args[i].concat("-deprecated");
-                break;
-              }
-            }
-            // Create New JCommander object to avoid repeated main command error.
-            CustomJCommander deprecatedJCommander = getCustomJCommander(commandRepository, mainCommand);
-            deprecatedJCommander.parse(args);
-            //success ?
-            jCommander = deprecatedJCommander;
-          } catch (ParameterException pe) {
-            jCommander.printAskedCommandUsage(command);
-            throw e;
-          }
+        // Fallback to deprecated version
+        try {
+          LOGGER.debug("Attempting parse using deprecated commands");
+
+          // Create New JCommander object to avoid repeated main command error.
+          CustomJCommander<LocalMainCommand> deprecatedJCommander = getCustomJCommander(deprecatedCommands, new LocalMainCommand());
+          deprecatedJCommander.parse(args);
+          // success ?
+          return deprecatedJCommander;
+        } catch (ParameterException pe) {
+          // error ?
+          // always display help file for new command
+          jCommander.printAskedCommandUsage(command);
+          throw e;
         }
       } else {
         jCommander.printUsage();
         throw e;
       }
     }
-    return jCommander;
   }
 
-  private static CustomJCommander getCustomJCommander(JCommanderCommandRepository commandRepository, LocalMainJCommanderCommand mainCommand) {
-    return new CustomJCommander("config-converter", commandRepository, mainCommand);
+  private static CustomJCommander<LocalMainCommand> getCustomJCommander(Map<String, Command> commands, LocalMainCommand mainCommand) {
+    return new CustomJCommander<>("config-converter", commands, mainCommand);
   }
 }

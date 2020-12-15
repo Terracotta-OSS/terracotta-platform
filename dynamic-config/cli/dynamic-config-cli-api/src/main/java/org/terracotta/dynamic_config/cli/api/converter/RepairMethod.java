@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.cli.api.command;
+package org.terracotta.dynamic_config.cli.api.converter;
 
-import com.tc.util.ManagedServiceLoader;
+import java.util.Locale;
 
-import java.util.Collection;
+public enum RepairMethod {
+  COMMIT,
+  ROLLBACK,
+  RESET,
+  UNLOCK;
 
-public interface ServiceProvider {
-  Collection<Object> createServices(Configuration config);
-
-  static ServiceProvider get() {
-    Collection<ServiceProvider> services = ManagedServiceLoader.loadServices(ServiceProvider.class, ServiceProvider.class.getClassLoader());
-    if (services.size() != 1) {
-      throw new AssertionError("expected exactly one service provider, but found :" + services.size());
-    }
-    return services.iterator().next();
+  @Override
+  public String toString() {
+    return name().toLowerCase(Locale.US);
   }
 }

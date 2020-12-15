@@ -36,12 +36,17 @@ public class Injector {
     Stream.of(target.getClass().getFields())
         .filter(field -> field.isAnnotationPresent(Inject.class))
         .forEach(field -> {
-          Object found = services.stream()
-              .filter(service -> field.getType().isInstance(service))
-              .findAny()
-              .orElseThrow(() -> new IllegalStateException("No service found to inject into " + field));
           try {
-            field.set(target, found);
+            Object targetValue = field.get(target);
+            if (targetValue == null) {
+              Object found = services.stream()
+                      .filter(service -> field.getType().isInstance(service))
+                      .findAny()
+                      .orElseThrow(() -> new IllegalStateException("No service found to inject into " + field));
+              field.set(target, found);
+            } else {
+              inject(targetValue, services);
+            }
           } catch (IllegalAccessException e) {
             throw new IllegalStateException(e);
           }

@@ -16,10 +16,10 @@
 package org.terracotta.dynamic_config.cli.converter;
 
 import com.beust.jcommander.converters.EnumConverter;
-import org.terracotta.dynamic_config.cli.api.converter.RepairAction;
+import org.terracotta.dynamic_config.cli.api.converter.RepairMethod;
 
-public class RepairActionConverter extends EnumConverter<RepairAction> {
+public class RepairActionConverter extends EnumConverter<RepairMethod> {
   public RepairActionConverter() {
-    super("-f", RepairAction.class);
+    super("-f", RepairMethod.class);
   }
 }

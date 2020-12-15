@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.cli.api.command;
+package org.terracotta.dynamic_config.cli.command;
 
-import com.tc.util.ManagedServiceLoader;
+import com.beust.jcommander.Parameter;
 
-import java.util.Collection;
+public abstract class Command implements Runnable {
 
-public interface ServiceProvider {
-  Collection<Object> createServices(Configuration config);
+  @Parameter(names = {"-help", "-h", "--help"}, description = "Help", help = true)
+  private boolean help;
 
-  static ServiceProvider get() {
-    Collection<ServiceProvider> services = ManagedServiceLoader.loadServices(ServiceProvider.class, ServiceProvider.class.getClassLoader());
-    if (services.size() != 1) {
-      throw new AssertionError("expected exactly one service provider, but found :" + services.size());
-    }
-    return services.iterator().next();
+  public boolean isHelp() {
+    return help;
   }
 }
