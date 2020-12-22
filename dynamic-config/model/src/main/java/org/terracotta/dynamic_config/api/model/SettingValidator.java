@@ -48,9 +48,10 @@ class SettingValidator {
     Setting s = Setting.fromName(setting);
     requireNonNull(kv);
     requireNull(s, kv.t1);
-    // prevent null or empty if property is required
+    // prevent null or empty if property is required and unsetting it is not permitted
     // Note: the 0-length string is allowed: it means that the user has specifically asked for a reset
-    if (s.mustBePresent() && (kv.t2 == null || kv.t2.trim().isEmpty())) {
+
+    if (s.mustBePresent() && !s.allows(Operation.UNSET) && (kv.t2 == null || kv.t2.trim().isEmpty())) {
       throw new IllegalArgumentException(s + " cannot be null or empty");
     }
     if (kv.t2 != null && kv.t2.length() > 0 && kv.t2.trim().isEmpty()) {

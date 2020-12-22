@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.common.struct.MemoryUnit.GB;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
@@ -39,6 +40,13 @@ import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 public class ClusterValidatorTest {
+
+  private static final String securityDirError = "Within a cluster, all nodes must have a security root directory defined or no security root directory defined";
+  private static final String minimumSecurityError = "When security root directories are configured across the cluster at least one of authc, ssl-tls or whitelist must also be configured";
+  private static final String certificateSslTlsError = "When authc=certificate ssl-tls must be configured";
+  private static final String securityDisallowedError = "When no security root directories are configured all other security settings should also be unconfigured (unset)";
+  private static final String auditLogDirError = "Within a cluster, all nodes must have an audit log directory defined or no audit log directory defined";
+  private static final String auditLogDirDisallowedError = "When no security root directories are configured audit-log-dir should also be unconfigured (unset) for all nodes in the cluster";
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -301,13 +309,32 @@ public class ClusterValidatorTest {
   }
 
   @Test
-  public void testBadSecurity_authcWithoutSslTls() {
+  public void testBadSecurity_notAllNodesHaveSecurityDir() {
+    Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir"));
+    Node node2 = newTestNode("node2", "localhost2");
+    Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2));
+
+    assertClusterValidationFailsContainsMessage(securityDirError, cluster);
+  }
+
+  @Test
+  public void testBadSecurity_authcWithoutSslTlsWithoutSecurityDir() {
     Node node = newTestNode("node1", "localhost1");
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node))
         .setSecuritySslTls(false)
         .setSecurityAuthc("certificate");
 
-    assertClusterValidationFails("ssl-tls is required for authc=certificate", cluster);
+    assertClusterValidationFailsContainsMessage(securityDisallowedError, cluster);
+  }
+
+  @Test
+  public void testBadSecurity_authcWithoutSslTlsWithSecurityDir() {
+    Node node = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir"));
+    Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node))
+            .setSecuritySslTls(false)
+            .setSecurityAuthc("certificate");
+
+    assertClusterValidationFailsContainsMessage(certificateSslTlsError, cluster);
   }
 
   @Test
@@ -317,7 +344,7 @@ public class ClusterValidatorTest {
         .setSecuritySslTls(true)
         .setSecurityAuthc("certificate");
 
-    assertClusterValidationFails("security-dir is mandatory for any of the security configuration, but not found on node with name: node1", cluster);
+    assertClusterValidationFailsContainsMessage(securityDisallowedError, cluster);
   }
 
   @Test
@@ -325,7 +352,7 @@ public class ClusterValidatorTest {
     Node node = newTestNode("node1", "localhost1");
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node)).setSecuritySslTls(true);
 
-    assertClusterValidationFails("security-dir is mandatory for any of the security configuration, but not found on node with name: node1", cluster);
+    assertClusterValidationFailsContainsMessage(securityDisallowedError, cluster);
   }
 
   @Test
@@ -333,7 +360,7 @@ public class ClusterValidatorTest {
     Node node = newTestNode("node1", "localhost1");
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node)).setSecurityAuthc("file");
 
-    assertClusterValidationFails("security-dir is mandatory for any of the security configuration, but not found on node with name: node1", cluster);
+    assertClusterValidationFailsContainsMessage(securityDisallowedError, cluster);
   }
 
   @Test
@@ -341,7 +368,7 @@ public class ClusterValidatorTest {
     Node node = newTestNode("node1", "localhost1").setSecurityAuditLogDir(RawPath.valueOf("."));
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node));
 
-    assertClusterValidationFails("security-dir is mandatory for any of the security configuration, but not found on node with name: node1", cluster);
+    assertClusterValidationFailsContainsMessage(auditLogDirDisallowedError, cluster);
   }
 
   @Test
@@ -349,7 +376,7 @@ public class ClusterValidatorTest {
     Node node = newTestNode("node1", "localhost1");
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node)).setSecurityWhitelist(true);
 
-    assertClusterValidationFails("security-dir is mandatory for any of the security configuration, but not found on node with name: node1", cluster);
+    assertClusterValidationFailsContainsMessage(securityDisallowedError, cluster);
   }
 
   @Test
@@ -357,16 +384,25 @@ public class ClusterValidatorTest {
     Node node = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir"));
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node));
 
-    assertClusterValidationFails("One of ssl-tls, authc, or whitelist is required for security configuration, but not found on node with name: node1", cluster);
+    assertClusterValidationFailsContainsMessage(minimumSecurityError, cluster);
   }
 
   @Test
-  public void testBadSecurity_notAllNodesHaveAuditLogDir() {
+  public void testBadSecurity_notAllNodesHaveAuditLogDirWithSecurityDir() {
     Node node1 = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir")).setSecurityAuditLogDir(RawPath.valueOf("audit"));
     Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]).setSecurityDir(RawPath.valueOf("security-dir"));
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)).setSecurityWhitelist(true);
 
-    assertClusterValidationFails("Nodes with names: [node2] don't have audit log directories defined, but other nodes in the cluster do. Mutative operations on audit log dirs must be done simultaneously on every node in the cluster", cluster);
+    assertClusterValidationFailsContainsMessage(auditLogDirError, cluster);
+  }
+
+  @Test
+  public void testBadSecurity_notAllNodesHaveAuditLogDirWithoutSecurityDir() {
+    Node node1 = newTestNode("node1", "localhost1").setSecurityAuditLogDir(RawPath.valueOf("audit"));
+    Node node2 = newTestNode("node2", "localhost2", Testing.N_UIDS[2]);
+    Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node1, node2));
+
+    assertClusterValidationFailsContainsMessage(auditLogDirDisallowedError, cluster);
   }
 
   private String generateAddress() {
@@ -375,5 +411,8 @@ public class ClusterValidatorTest {
 
   private void assertClusterValidationFails(String message, Cluster cluster) {
     assertThat(() -> new ClusterValidator(cluster).validate(), is(throwing(instanceOf(MalformedClusterException.class)).andMessage(is(equalTo(message)))));
+  }
+  private void assertClusterValidationFailsContainsMessage(String message, Cluster cluster) {
+    assertThat(() -> new ClusterValidator(cluster).validate(), is(throwing(instanceOf(MalformedClusterException.class)).andMessage(is(containsString(message)))));
   }
 }

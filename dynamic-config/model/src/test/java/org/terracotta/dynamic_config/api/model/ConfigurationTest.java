@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -709,7 +710,7 @@ public class ConfigurationTest {
     });
 
     // client-reconnect-window, client-lease-duration, failover-priority
-    Stream.of("client-reconnect-window", "client-lease-duration", "failover-priority", "ssl-tls", "whitelist").forEach(setting -> {
+    Stream.of("client-reconnect-window", "client-lease-duration", "failover-priority").forEach(setting -> {
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
       Stream.of(CONFIGURING).forEach(state -> state.filter(GET).forEach(op -> {
         allow(state, op, setting);
@@ -733,7 +734,14 @@ public class ConfigurationTest {
         reject(state, op, "stripe.1.node.1." + setting + "=availability");
       }));
     });
+
+    //ssl-tls, whitelist
     Stream.of("ssl-tls", "whitelist").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET, UNSET).forEach(op -> {
+        allow(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        reject(state, op, "stripe.1.node.1." + setting);
+      }));
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET, IMPORT).forEach(op -> {
         allow(state, op, setting + "=true");
         reject(state, op, setting + "=");
@@ -953,6 +961,55 @@ public class ConfigurationTest {
   @Test
   public void test_stripe_setting() {
     Configuration.valueOf("stripe.1.stripe-name=stripe1");
+  }
+
+  @Test
+  public void test_unset_ssltls() {
+    Cluster cluster = Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("node1", "localhost")));
+
+    assertFalse(cluster.getSecuritySslTls().isConfigured());
+    assertEquals(cluster.getSecuritySslTls().toString(), "ssl-tls=<unset>");
+    assertFalse(cluster.getSecuritySslTls().orDefault());
+
+    Configuration.valueOf("ssl-tls=true").apply(cluster);
+    assertTrue(cluster.getSecuritySslTls().isConfigured());
+    assertEquals(cluster.getSecuritySslTls().toString(), "ssl-tls=true");
+    assertTrue(cluster.getSecuritySslTls().orDefault());
+
+    Configuration.valueOf("ssl-tls=false").apply(cluster);
+    assertTrue(cluster.getSecuritySslTls().isConfigured());
+    assertEquals(cluster.getSecuritySslTls().toString(), "ssl-tls=false");
+    assertFalse(cluster.getSecuritySslTls().orDefault());
+
+    Configuration.valueOf("ssl-tls").apply(cluster);
+    assertFalse(cluster.getSecuritySslTls().isConfigured());
+    assertEquals(cluster.getSecuritySslTls().toString(), "ssl-tls=<unset>");
+    assertFalse(cluster.getSecuritySslTls().orDefault());
+  }
+
+  @Test
+  public void test_unset_whitelist() {
+    Cluster cluster = Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("node1", "localhost")));
+
+    assertFalse(cluster.getSecurityWhitelist().isConfigured());
+    assertEquals(cluster.getSecurityWhitelist().toString(), "whitelist=<unset>");
+    assertFalse(cluster.getSecurityWhitelist().orDefault());
+
+    Configuration.valueOf("whitelist=true").apply(cluster);
+    assertTrue(cluster.getSecurityWhitelist().isConfigured());
+    assertEquals(cluster.getSecurityWhitelist().toString(), "whitelist=true");
+    assertTrue(cluster.getSecurityWhitelist().orDefault());
+
+    Configuration.valueOf("whitelist=false").apply(cluster);
+    assertTrue(cluster.getSecurityWhitelist().isConfigured());
+    assertEquals(cluster.getSecurityWhitelist().toString(), "whitelist=false");
+    assertFalse(cluster.getSecurityWhitelist().orDefault());
+
+
+    Configuration.valueOf("whitelist").apply(cluster);
+    assertFalse(cluster.getSecurityWhitelist().isConfigured());
+    assertEquals(cluster.getSecurityWhitelist().toString(), "whitelist=<unset>");
+    assertFalse(cluster.getSecurityWhitelist().orDefault());
   }
 
   private Matcher<String> duplicating(String value) {

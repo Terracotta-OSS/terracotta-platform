@@ -84,59 +84,75 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
 
 /**
  * <pre>
- *  Here is below a summary of all the settings and their permissions, which can be generated with the following code:
+ *  Summary of all settings and their permissions, which can be generated with the following code:
  *
  *  Stream.of(Setting.values()).collect(Collectors.groupingBy(Setting::getPermissions)).entrySet().forEach(System.out::println);
  *
+ *  authc, ssl-tls, whitelist
+ *      Permission: when: [configuring] allow: [import] at levels: [cluster]
+ *      Permission: when: [activated, configuring] allow: [set, unset, get] at levels: [cluster]
+ *
  *  config-dir
- *  No permission
+ *      No Permissions
  *
- *  license-file
- *  Permission: when: [activated, configuring] allow: [set] at levels: [cluster]
- *
- *  metadata-dir
- *    * Permission: when: [configuring] allow: [import] at levels: [node],
- *    * Permission: when: [configuring] allow: [set, get] at levels: [node, stripe, cluster],
- *    * Permission: when: [activated] allow: [get] at levels: [node, stripe, cluster]
- *
- *  hostname, port
- *    * Permission: when: [activated, configuring] allow: [get] at levels: [node, stripe, cluster],
- *    * Permission: when: [configuring] allow: [import] at levels: [node]
- *
- *  group-port, bind-address, group-bind-address
- *    * Permission: when: [activated, configuring] allow: [get] at levels: [node, stripe, cluster],
- *    * Permission: when: [configuring] allow: [set] at levels: [node, stripe, cluster],
- *    * Permission: when: [configuring] allow: [import] at levels: [node]
- *
- *  data-dirs
- *    * Permission: when: [configuring] allow: [import] at levels: [node]
- *    * Permission: when: [configuring] allow: [set, get, unset] at levels: [node, stripe, cluster]
- *    * Permission: when: [activated, configuring] allow: [set, get] at levels: [node, stripe, cluster]
+ *  node-uid, hostname, port
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
  *
  *  name
- *    * Permission: when: [activated, configuring] allow: [get] at levels: [node, stripe, cluster],
- *    * Permission: when: [configuring] allow: [set, import] at levels: [node]
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [import, set] at levels: [node]
+ *
+ *  client-reconnect-window, failover-priority, client-lease-duration
+ *      Permission: when: [configuring] allow: [import] at levels: [cluster]
+ *      Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster]
  *
  *  public-hostname, public-port, backup-dir, tc-properties, logger-overrides, security-dir, audit-log-dir
- *    * Permission: when: [configuring] allow: [import] at levels: [node],
- *    * Permission: when: [activated, configuring] allow: [set, get, unset] at levels: [node, stripe, cluster]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [activated, configuring] allow: [set, unset, get] at levels: [cluster, stripe, node]
  *
- *  authc
- *    * Permission: when: [configuring] allow: [import] at levels: [cluster],
- *    * Permission: when: [activated, configuring] allow: [set, get, unset] at levels: [cluster]
- *
- *  client-reconnect-window, failover-priority, client-lease-duration, ssl-tls, whitelist
- *    * Permission: when: [configuring] allow: [import] at levels: [cluster],
- *    * Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster]
+ *  stripe-uid
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe]
+ *      Permission: when: [configuring] allow: [import] at levels: [stripe]
  *
  *  log-dir
- *    * Permission: when: [configuring] allow: [import] at levels: [node],
- *    * Permission: when: [configuring] allow: [set, get] at levels: [node, stripe, cluster],
- *    * Permission: when: [activated] allow: [set, get] at levels: [node, stripe, cluster]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [configuring] allow: [set, get] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated] allow: [set, get] at levels: [cluster, stripe, node]
+ *
+ *  metadata-dir
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [configuring] allow: [set, get] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated] allow: [get] at levels: [cluster, stripe, node]
+ *
+ *  lock-context
+ *      Permission: when: [configuring] allow: [import] at levels: [cluster]
+ *      Permission: when: [activated] allow: [set, unset] at levels: [cluster]
+ *
+ *  stripe-name
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe]
+ *      Permission: when: [configuring] allow: [import, set] at levels: [stripe]
  *
  *  cluster-name, offheap-resources
- *    * Permission: when: [configuring] allow: [set, get, import, unset] at levels: [cluster],
- *    * Permission: when: [activated] allow: [set, get] at levels: [cluster]
+ *      Permission: when: [configuring] allow: [import, set, unset, get] at levels: [cluster]
+ *      Permission: when: [activated] allow: [set, get] at levels: [cluster]
+ *
+ *  cluster-uid
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster]
+ *      Permission: when: [configuring] allow: [import] at levels: [cluster]
+ *
+ *  group-port, bind-address, group-bind-address
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [set] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *
+ *  license-file
+ *      Permission: when: [activated, configuring] allow: [set] at levels: [cluster]
+ *
+ *  data-dirs
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [configuring] allow: [set, unset, get] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster, stripe, node]
  * </pre>
  *
  * @author Mathieu Carbou
@@ -626,10 +642,10 @@ public enum Setting {
       always(false),
       CLUSTER,
       fromCluster(Cluster::getSecuritySslTls),
-      intoCluster((cluster, value) -> cluster.setSecuritySslTls(Boolean.parseBoolean(value))),
+      intoCluster((cluster, value) -> cluster.setSecuritySslTls(value == null ? null : Boolean.parseBoolean(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
-          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
       of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("true", "false")
@@ -640,10 +656,10 @@ public enum Setting {
       always(false),
       CLUSTER,
       fromCluster(Cluster::getSecurityWhitelist),
-      intoCluster((cluster, value) -> cluster.setSecurityWhitelist(Boolean.parseBoolean(value))),
+      intoCluster((cluster, value) -> cluster.setSecurityWhitelist(value == null ? null : Boolean.parseBoolean(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
-          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
       of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("true", "false")
@@ -946,7 +962,7 @@ public enum Setting {
     // for most of the settings, "empty" means nullify.
     // but for maps, "empty" means specifically set an empty map and do not use the default values
     if (!isMap() && empty(value)) {
-      // if the setting is not a map, threat any "" like null
+      // if the setting is not a map, treat any "" like null
       value = null;
     }
     validate(key, value);
