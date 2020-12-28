@@ -90,7 +90,7 @@ public class ImportAction extends RemoteAction {
         runtimePeers = Collections.singletonList(getEndpoint(node));
       }
     }
-    LOGGER.info("Importing cluster configuration from config file: {} to nodes: {}", configPropertiesFile, toString(runtimePeers));
+    output.info("Importing cluster configuration from config file: {} to nodes: {}", configPropertiesFile, toString(runtimePeers));
 
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(runtimePeers))) {
       dynamicConfigServices(diagnosticServices)
@@ -98,7 +98,7 @@ public class ImportAction extends RemoteAction {
           .forEach(service -> service.setUpcomingCluster(cluster));
     }
 
-    LOGGER.info("Command successful!" + lineSeparator());
+    output.info("Command successful!");
   }
 
   private Cluster loadCluster() {

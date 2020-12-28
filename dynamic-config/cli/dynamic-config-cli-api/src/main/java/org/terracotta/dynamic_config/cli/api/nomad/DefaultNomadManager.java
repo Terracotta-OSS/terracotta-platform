@@ -218,7 +218,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
             .get();
 
         CompletableFuture<AcceptRejectResponse> result = cache.computeIfAbsent(stripeUID, uid -> {
-          LOGGER.info("Committing topology change to stripe UID: {}", stripeUID);
+          LOGGER.trace("Committing topology change to stripe UID: {}", stripeUID);
 
           LOGGER.trace("Sending commit message: {} to stripe UID: {}", message, stripeUID);
           CompletableFuture<AcceptRejectResponse> c = new CompletableFuture<>();

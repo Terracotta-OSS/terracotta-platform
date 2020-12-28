@@ -18,6 +18,8 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.command
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
+import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverter;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigPropertiesProcessor;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigRepoProcessor;
@@ -32,7 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static java.lang.System.lineSeparator;
 import static java.nio.file.Files.isDirectory;
 import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat.DIRECTORY;
 import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat.PROPERTIES;
@@ -48,6 +49,8 @@ public class ConvertAction implements Runnable {
   private String newClusterName;
   private ConversionFormat conversionFormat = DIRECTORY;
   private boolean force;
+  
+  @Inject public OutputService output;
 
   public void setTcConfigFiles(List<Path> tcConfigFiles) {
     this.tcConfigFiles = tcConfigFiles;
@@ -127,18 +130,18 @@ public class ConvertAction implements Runnable {
           throw new UncheckedIOException(e);
         }
       }
-      LOGGER.info("Configuration directories saved under: {}", destinationDir.toAbsolutePath().normalize());
+      output.info("Configuration directories saved under: {}", destinationDir.toAbsolutePath().normalize());
 
     } else if (conversionFormat == PROPERTIES) {
       ConfigPropertiesProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, newClusterName);
       ConfigConverter converter = new ConfigConverter(resultProcessor::process, force);
       converter.processInput(newClusterName, stripeNames, tcConfigFiles.toArray(new Path[0]));
-      LOGGER.info("Configuration properties file saved under: {}", destinationDir.toAbsolutePath().normalize());
+      output.info("Configuration properties file saved under: {}", destinationDir.toAbsolutePath().normalize());
 
     } else {
       throw new AssertionError("Unexpected conversion format: " + conversionFormat);
     }
 
-    LOGGER.info("Command successful!" + lineSeparator());
+    output.info("Command successful!");
   }
 }

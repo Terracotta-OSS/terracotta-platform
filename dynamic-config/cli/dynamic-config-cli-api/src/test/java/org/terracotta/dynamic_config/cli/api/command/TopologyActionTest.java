@@ -37,7 +37,7 @@ public abstract class TopologyActionTest<C extends TopologyAction> extends BaseT
   }
 
   protected final C newCommand() {
-    return inject(newTopologyCommand(), asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, objectMapperFactory, nomadEntityProvider));
+    return inject(newTopologyCommand(), asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, objectMapperFactory, nomadEntityProvider, outputService));
   }
 
   protected abstract C newTopologyCommand();

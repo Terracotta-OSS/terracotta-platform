@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -40,8 +38,6 @@ import static java.util.stream.Collectors.toSet;
  * @author Mathieu Carbou
  */
 public class DiagnosticAction extends RemoteAction {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticAction.class);
 
   private InetSocketAddress node;
 
@@ -191,7 +187,7 @@ public class DiagnosticAction extends RemoteAction {
         });
       }
     });
-    LOGGER.info(sb.toString());
+    output.out(sb.toString());
   }
 
   private static String details(Collection<?> items) {

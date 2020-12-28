@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.parsing
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
+import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat;
@@ -54,7 +55,7 @@ public class ConvertCommand extends Command {
   @Parameter(names = {"-force"}, description = "Force a config conversion, ignoring warnings, if any. Default: false")
   private boolean force;
 
-  private final ConvertAction action;
+  @Inject public final ConvertAction action;
 
   public ConvertCommand() {
     this(new ConvertAction());

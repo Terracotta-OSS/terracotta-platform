@@ -40,13 +40,14 @@ import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyAnalyze
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
+import org.terracotta.dynamic_config.cli.api.nomad.LockAwareNomadManager;
+import org.terracotta.dynamic_config.cli.api.nomad.NomadManager;
+import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.api.restart.RestartProgress;
 import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopProgress;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
-import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.api.nomad.LockAwareNomadManager;
-import org.terracotta.dynamic_config.cli.api.nomad.NomadManager;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
 
@@ -99,6 +100,7 @@ public abstract class RemoteAction implements Runnable {
   @Inject public NomadManager<NodeContext> nomadManager;
   @Inject public RestartService restartService;
   @Inject public StopService stopService;
+  @Inject public OutputService output;
 
   protected void licenseValidation(Endpoint endpoint, Cluster cluster) {
     licenseValidation(endpoint.getAddress(), cluster);
@@ -116,22 +118,22 @@ public abstract class RemoteAction implements Runnable {
   }
 
   private void activateNomadSystem(Collection<Endpoint> newNodes, Cluster cluster, String licenseContent) {
-    LOGGER.info("Activating nodes: {}", toString(newNodes));
+    output.info("Activating nodes: " + toString(newNodes));
 
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(newNodes))) {
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
           .forEach(service -> service.activate(cluster, licenseContent));
       if (licenseContent == null) {
-        LOGGER.info("No license installed. If you are attaching a node, the license will be synced.");
+        output.info("No license installed. If you are attaching a node, the license will be synced.");
       } else {
-        LOGGER.info("License installation successful");
+        output.info("License installation successful");
       }
     }
   }
 
   private void restartNodes(Collection<Endpoint> newNodes, Measure<TimeUnit> restartDelay, Measure<TimeUnit> restartWaitTime) {
-    LOGGER.info("Restarting nodes: {}", toString(newNodes));
+    output.info("Restarting nodes: " + toString(newNodes));
     restartNodes(
         newNodes,
         Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
@@ -140,7 +142,7 @@ public abstract class RemoteAction implements Runnable {
         // In dynamic config, restarted means that a node has reach a state that is after the STARTING state
         // and has consequently bootstrapped the configuration from Nomad.
         EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING));
-    LOGGER.info("All nodes came back up");
+    output.info("All nodes came back up");
   }
 
   protected final void activateNodes(Collection<Endpoint> newNodes, Cluster cluster, Path licenseFile,
@@ -182,13 +184,13 @@ public abstract class RemoteAction implements Runnable {
   }
 
   private void syncNomadChangesTo(Collection<Endpoint> newNodes, NomadChangeInfo[] nomadChanges, Cluster cluster) {
-    LOGGER.info("Sync'ing nomad changes to nodes : {}", toString(newNodes));
+    output.info("Sync'ing nomad changes to nodes : {}", toString(newNodes));
 
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(newNodes))) {
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
           .forEach(service -> service.resetAndSync(nomadChanges, cluster));
-      LOGGER.info("Nomad changes sync successful");
+      output.info("Nomad changes sync successful");
     }
   }
 
@@ -255,9 +257,9 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final String lock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, LockContext lockContext) {
-    LOGGER.info("Trying to lock the config...");
+    output.info("Trying to lock the config...");
     runConfigurationChange(destinationCluster, onlineNodes, new LockConfigNomadChange(lockContext));
-    LOGGER.info("Locked the config.");
+    output.info("Config locked.");
     this.nomadManager = new LockAwareNomadManager<>(lockContext.getToken(), nomadManager);
     return lockContext.getToken();
   }
@@ -271,9 +273,9 @@ public abstract class RemoteAction implements Runnable {
   }
 
   private void unlockInternal(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, boolean force) {
-    LOGGER.info("Trying to unlock the config...");
+    output.info("Trying to unlock the config...");
     runConfigurationChange(destinationCluster, onlineNodes, new UnlockConfigNomadChange(force));
-    LOGGER.info("Unlocked the config.");
+    output.info("Config unlocked.");
     if (nomadManager instanceof LockAwareNomadManager) {
       this.nomadManager = ((LockAwareNomadManager<NodeContext>) nomadManager).getUnderlying();
     }
@@ -356,7 +358,7 @@ public abstract class RemoteAction implements Runnable {
           restartDelay,
           acceptedStates);
       progress.getErrors().forEach((address, e) -> LOGGER.warn("Unable to ask node: {} to restart: please restart it manually.", address));
-      progress.onRestarted((endpoint, state) -> LOGGER.info("Node: {} has restarted in state: {}", endpoint, state));
+      progress.onRestarted((endpoint, state) -> output.info("Node: {} has restarted in state: {}", endpoint, state));
       Map<Endpoint, LogicalServerState> restarted = progress.await(maximumWaitTime);
       // check where we are
       Collection<Endpoint> missing = new TreeSet<>(Comparator.comparing(Endpoint::toString));
@@ -381,7 +383,7 @@ public abstract class RemoteAction implements Runnable {
     try {
       StopProgress progress = stopService.stopNodes(addresses, restartDelay);
       progress.getErrors().forEach((address, e) -> LOGGER.warn("Unable to ask node: {} to stop: please stop it manually.", address));
-      progress.onStopped(endpoint -> LOGGER.info("Node: {} has stopped", endpoint));
+      progress.onStopped(endpoint -> output.info("Node: {} has stopped", endpoint));
       Collection<Endpoint> stopped = progress.await(maximumWaitTime);
       // check where we are
       Collection<Endpoint> missing = new TreeSet<>(Comparator.comparing(Endpoint::toString));
@@ -412,7 +414,7 @@ public abstract class RemoteAction implements Runnable {
     LOGGER.trace("findRuntimePeersStatus({})", expectedOnlineNode);
     Cluster cluster = getRuntimeCluster(expectedOnlineNode);
     Collection<Endpoint> endpoints = cluster.getEndpoints(expectedOnlineNode);
-    LOGGER.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(endpoints));
+    output.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(endpoints));
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(endpointsToMap(endpoints))) {
       LinkedHashMap<Endpoint, LogicalServerState> status = endpoints.stream()
           .collect(toMap(
@@ -424,7 +426,7 @@ public abstract class RemoteAction implements Runnable {
               LinkedHashMap::new));
       status.forEach((address, state) -> {
         if (state.isUnreacheable()) {
-          LOGGER.info(" - {} is not reachable", address);
+          output.info(" - {} is not reachable", address);
         }
       });
       return status;
@@ -528,7 +530,7 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final void resetAndStop(InetSocketAddress expectedOnlineNode) {
-    LOGGER.info("Reset node: {}. Node will stop in 5 seconds", expectedOnlineNode);
+    output.info("Reset node: {}. Node will stop in 5 seconds", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
       proxy.reset();
@@ -541,7 +543,7 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final void reset(InetSocketAddress expectedOnlineNode) {
-    LOGGER.info("Reset node: {}", expectedOnlineNode);
+    output.info("Reset node: {}", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
       proxy.reset();

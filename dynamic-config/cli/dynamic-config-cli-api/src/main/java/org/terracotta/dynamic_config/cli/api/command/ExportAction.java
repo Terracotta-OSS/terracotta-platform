@@ -21,21 +21,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.Props;
-import org.terracotta.dynamic_config.cli.api.converter.OutputFormat;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
+import org.terracotta.dynamic_config.cli.api.converter.OutputFormat;
+import org.terracotta.dynamic_config.cli.api.output.FileOutputService;
 import org.terracotta.json.ObjectMapperFactory;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Properties;
-
-import static java.lang.System.lineSeparator;
 
 public class ExportAction extends RemoteAction {
 
@@ -75,29 +75,30 @@ public class ExportAction extends RemoteAction {
       throw new IllegalArgumentException(outputFile + " is not a file");
     }
     Cluster cluster = wantsRuntimeConfig ? getRuntimeCluster(node) : getUpcomingCluster(node);
-    String output = buildOutput(cluster, outputFormat);
+    String out = buildOutput(cluster, outputFormat);
 
-    if (outputFile == null) {
-      LOGGER.info(output);
-
-    } else {
-      try {
-        if (outputFile.toFile().exists()) {
-          LOGGER.warn(outputFile + " already exists. Replacing this file.");
-        } else {
-          // try to create the parent directories
-          Path dir = outputFile.toAbsolutePath().getParent();
-          if (dir != null && !dir.toFile().exists()) {
+    if (outputFile != null) {
+      if (outputFile.toFile().exists()) {
+        LOGGER.warn(outputFile + " already exists. Replacing this file.");
+      } else {
+        // try to create the parent directories
+        Path dir = outputFile.toAbsolutePath().getParent();
+        if (dir != null && !dir.toFile().exists()) {
+          try {
             Files.createDirectories(dir);
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
           }
         }
-        Files.write(outputFile, output.getBytes(StandardCharsets.UTF_8));
-        LOGGER.info("Output saved to: {}" + lineSeparator(), outputFile);
-        LOGGER.info("Command successful!" + lineSeparator());
+      }
+      try {
+        output = new FileOutputService(outputFile);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
     }
+    output.out(out);
+    output.info("Command successful!");
   }
 
   private String buildOutput(Cluster cluster, OutputFormat outputFormat) {

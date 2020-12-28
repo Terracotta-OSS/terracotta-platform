@@ -166,7 +166,7 @@ public class AttachAction extends TopologyAction {
     switch (operationType) {
 
       case NODE: {
-        LOGGER.info("Attaching node: {} to stripe: {}", source, cluster.getStripeByNode(destination.getNodeUID()).get().toShapeString());
+        output.info("Attaching node: {} to stripe: {}", source, cluster.getStripeByNode(destination.getNodeUID()).get().toShapeString());
         Stripe stripe = cluster.getStripeByNode(destination.getNodeUID()).get();
         Node node = sourceCluster.getNode(source.getNodeUID()).get();
 
@@ -184,7 +184,7 @@ public class AttachAction extends TopologyAction {
 
       case STRIPE: {
         Stripe stripe = sourceCluster.getStripeByNode(source.getNodeUID()).get();
-        LOGGER.info("Attaching a new stripe: {} to cluster: {}", stripe.toShapeString(), destinationCluster.getName());
+        output.info("Attaching a new stripe: {} to cluster: {}", stripe.toShapeString(), destinationCluster.getName());
 
         addedStripe = stripe.clone();
         cluster.addStripe(addedStripe);
@@ -249,7 +249,7 @@ public class AttachAction extends TopologyAction {
         "The node/stripe to attach won't be activated and restarted, and their topology will be rolled back to their initial value."
     );
     newOnlineNodes.forEach((endpoint, cluster) -> {
-      LOGGER.info("Rollback topology of node: {}", endpoint);
+      output.info("Rollback topology of node: {}", endpoint);
       setUpcomingCluster(Collections.singletonList(endpoint), cluster);
     });
     throw error;
