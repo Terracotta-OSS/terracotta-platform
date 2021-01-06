@@ -32,7 +32,7 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 @Parameters(commandDescription = "Activate a cluster")
-@Usage("activate (-s <hostname[:port]> | -f <config-file>) [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
+@Usage("(-s <hostname[:port]> | -f <config-file>) [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class DeprecatedActivateCommand extends Command {
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
