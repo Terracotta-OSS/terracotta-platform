@@ -240,9 +240,16 @@ public class DesynchronizedNomadConfigTest {
   }
 
   @Test(timeout = 10 * 1000)
-  public void test_concurrent_prepare_leading_to_reject_and_rollback() {
+  public void test_concurrent_prepare_leading_to_reject_and_rollback() throws InterruptedException {
     assumeThat(Runtime.getRuntime().availableProcessors(), is(greaterThanOrEqualTo(4)));
-    runConcurrentNomadTx(4, idx -> SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "64MB"));
+    Retry.untilInterrupted(() -> {
+      try {
+        org.terracotta.utilities.io.Files.deleteTree(temporaryFolder.getRoot().toAbsolutePath());
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      runConcurrentNomadTx(4, idx -> SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "64MB"));
+    });
   }
 
   @Test(timeout = 10 * 1000)
