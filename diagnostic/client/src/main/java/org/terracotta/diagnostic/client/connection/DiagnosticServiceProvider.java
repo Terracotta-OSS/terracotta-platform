@@ -52,6 +52,23 @@ public class DiagnosticServiceProvider {
     try {
       return DiagnosticServiceFactory.fetch(address, connectionName, connectTimeout, diagnosticInvokeTimeout, securityRootDirectory, objectMapperFactory);
     } catch (ConnectionException e) {
+      if (e.getMessage().contains("Client was able to establish connection with server but handshake with server failed")) {
+        String warning;
+        if (this.securityRootDirectory == null)
+        {
+          warning = "The client used a non-secure connection to connect with server '" + address.toString() + "'. " +
+                  "The connection was successful but the handshake failed. " +
+                  "This failure can occur if the server was configured to use secured connections. ";
+        }
+        else
+        {
+          warning = "The client used a secure connection to connect with server '" + address.toString() + "'. " +
+                  "The connection was successful but the handshake failed. " +
+                  "This failure can occur if the server was configured to not use secured connections. ";
+        }
+        warning += "Check the client and server logs for more information.";
+        throw new DiagnosticServiceProviderException(new Throwable(warning));
+      }
       throw new DiagnosticServiceProviderException(e);
     }
   }
