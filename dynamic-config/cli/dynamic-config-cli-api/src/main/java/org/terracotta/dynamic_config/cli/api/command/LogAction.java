@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 
 import java.net.InetSocketAddress;
@@ -27,16 +25,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import static java.lang.System.lineSeparator;
-import static java.util.stream.Collectors.joining;
-
 /**
  * @author Mathieu Carbou
  */
 public class LogAction extends RemoteAction {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(LogAction.class);
-  
   private InetSocketAddress node;
 
   public void setNode(InetSocketAddress node) {
@@ -45,8 +38,6 @@ public class LogAction extends RemoteAction {
 
   @Override
   public void run() {
-    LOGGER.info("Configuration logs from {}:", node);
-
     NomadChangeInfo[] logs = getChangeHistory(node);
 
     Arrays.sort(logs, Comparator.comparing(NomadChangeInfo::getVersion));
@@ -54,7 +45,7 @@ public class LogAction extends RemoteAction {
     ZoneId zoneId = clock.getZone();
     DateTimeFormatter ISO_8601 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
-    String formattedChanges = Stream.of(logs)
+    Stream.of(logs)
         .map(log -> padCut(String.valueOf(log.getVersion()), 4)
             + " " + log.getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601)
             + " " + log.getChangeUuid().toString()
@@ -63,13 +54,7 @@ public class LogAction extends RemoteAction {
             + " | " + log.getCreationUser()
             + "@" + log.getCreationHost()
             + " - " + log.getNomadChange().getSummary())
-        .collect(joining(lineSeparator()));
-
-    if (formattedChanges.isEmpty()) {
-      formattedChanges = "<empty>";
-    }
-
-    LOGGER.info("{}{}{}", lineSeparator(), formattedChanges, lineSeparator());
+        .forEach(output::out);
   }
 
   private static String padCut(String s, int length) {

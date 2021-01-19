@@ -114,7 +114,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       }
 
       ensureActivesAreAllOnline(originalCluster, onlineNodes);
-      LOGGER.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodes.keySet()));
+      output.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodes.keySet()));
       MultiSettingNomadChange changes = getNomadChanges(updatedCluster);
       if (!changes.getChanges().isEmpty()) {
         runConfigurationChange(updatedCluster, onlineNodes, changes);
@@ -135,7 +135,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
     } else {
       // cluster is not active, we just need to replace the topology
-      LOGGER.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodes.keySet()));
+      output.info("Applying new configuration change(s) to nodes: {}", toString(onlineNodes.keySet()));
       try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(onlineNodes.keySet()))) {
         dynamicConfigServices(diagnosticServices)
             .map(Tuple2::getT2)
@@ -143,7 +143,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       }
     }
 
-    LOGGER.info("Command successful!" + lineSeparator());
+    output.info("Command successful!");
   }
 
   private MultiSettingNomadChange getNomadChanges(Cluster cluster) {

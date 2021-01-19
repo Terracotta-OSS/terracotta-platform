@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toMap;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -61,7 +60,7 @@ public class RepairAction extends RemoteAction {
     } else {
       nomadRepair();
     }
-    LOGGER.info("Command successful!" + lineSeparator());
+    output.info("Command successful!");
   }
 
   private void forceUnlock() {
@@ -171,9 +170,9 @@ public class RepairAction extends RemoteAction {
     if (wanted == null) {
       throw new IllegalArgumentException("Please use the '-force' option to specify whether a commit or rollback is wanted.");
     } else {
-      LOGGER.info("Repairing configuration by running a " + wanted + "...");
+      output.info("Repairing configuration by running a " + wanted + "...");
     }
     runConfigurationRepair(onlineActivatedEndpoints, allNodes.size(), wanted == RepairMethod.COMMIT ? COMMITTED : wanted == RepairMethod.ROLLBACK ? ROLLED_BACK : null);
-    LOGGER.info("Configuration is repaired.");
+    output.info("Configuration is repaired.");
   }
 }

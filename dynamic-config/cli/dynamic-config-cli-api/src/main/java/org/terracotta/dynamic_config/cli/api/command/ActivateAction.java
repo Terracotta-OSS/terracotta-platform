@@ -30,7 +30,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 
-import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 
 public class ActivateAction extends RemoteAction {
@@ -107,14 +106,14 @@ public class ActivateAction extends RemoteAction {
       NameGenerator.assignFriendlyNames(cluster);
     }
     activateNodes(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
-    LOGGER.info("Command successful!" + lineSeparator());
+    output.info("Command successful!");
   }
 
   private Optional<Cluster> loadTopologyFromConfig() {
     return Optional.ofNullable(configPropertiesFile).map(path -> {
       ClusterFactory clusterCreator = new ClusterFactory();
       Cluster cluster = clusterCreator.create(configPropertiesFile);
-      LOGGER.info("Cluster topology loaded and validated from configuration file: " + cluster.toShapeString());
+      output.info("Cluster topology loaded and validated from configuration file: " + cluster.toShapeString());
       return cluster;
     });
   }
@@ -122,7 +121,7 @@ public class ActivateAction extends RemoteAction {
   private Optional<Cluster> loadTopologyFromNode() {
     return Optional.ofNullable(node).map(node -> {
       Cluster cluster = getUpcomingCluster(node);
-      LOGGER.debug("Cluster topology loaded from node: " + cluster.toShapeString());
+      output.info("Cluster topology loaded from node: " + cluster.toShapeString());
       return cluster;
     });
   }

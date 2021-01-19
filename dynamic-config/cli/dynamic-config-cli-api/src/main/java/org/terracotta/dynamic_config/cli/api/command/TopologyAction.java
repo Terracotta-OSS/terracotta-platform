@@ -116,7 +116,7 @@ public abstract class TopologyAction extends RemoteAction {
       TopologyNomadChange nomadChange = buildNomadChange(result);
       licenseValidation(destination, nomadChange.getCluster());
       onNomadChangeReady(nomadChange);
-      LOGGER.info("Sending the topology change");
+      output.info("Sending the topology change");
       try {
         runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
       } catch (RuntimeException e) {
@@ -125,14 +125,14 @@ public abstract class TopologyAction extends RemoteAction {
       onNomadChangeSuccess(nomadChange);
 
     } else {
-      LOGGER.info("Sending the topology change");
+      output.info("Sending the topology change");
       Set<Endpoint> allOnlineNodes = new HashSet<>(getAllOnlineSourceNodes());
       allOnlineNodes.addAll(destinationOnlineNodes.keySet());
       setUpcomingCluster(allOnlineNodes, result);
     }
 
-    LOGGER.info("Resulting cluster: " + result.toShapeString());
-    LOGGER.info("Command successful!" + lineSeparator());
+    output.info("Resulting cluster: " + result.toShapeString());
+    output.info("Command successful!");
   }
 
   /*<-- Test methods --> */

@@ -15,18 +15,16 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class GetAction extends ConfigurationAction {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(GetAction.class);
 
   private boolean wantsRuntimeConfig;
 
@@ -50,13 +48,16 @@ public class GetAction extends ConfigurationAction {
 
     // for each configuration asked by the user we try to find it
     for (Configuration configuration : configurations) {
-      String output = properties.entrySet()
+      List<String> out = properties.entrySet()
           .stream()
           .filter(e -> configuration.matchConfigPropertyKey(e.getKey()))
           .map(e -> e.getKey() + "=" + e.getValue())
-          .reduce((result, line) -> result + System.lineSeparator() + line)
-          .orElse(configuration + "=");
-      LOGGER.info(output);
+          .collect(Collectors.toList());
+      if (out.isEmpty()) {
+        output.out(configuration + "=");
+      } else {
+        out.forEach(s -> output.out(s));
+      }
     }
   }
 }

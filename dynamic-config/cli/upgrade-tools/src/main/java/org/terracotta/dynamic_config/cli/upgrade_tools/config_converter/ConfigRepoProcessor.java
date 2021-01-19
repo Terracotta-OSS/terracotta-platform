@@ -77,7 +77,7 @@ public class ConfigRepoProcessor {
     int stripeId = cluster.getStripeIdByNode(node.getUID()).getAsInt();
     Stripe stripe = cluster.getStripeByNode(node.getUID()).get();
     Path configPath = outputFolderPath.resolve("stripe-" + stripeId).resolve(node.getName());
-    LOGGER.info("Preparing configuration folder for node: " + node.getName() + " in stripe: " + stripe.getName() + " at: " + configPath.toAbsolutePath());
+    LOGGER.trace("Preparing configuration folder for node: " + node.getName() + " in stripe: " + stripe.getName() + " at: " + configPath.toAbsolutePath());
     return createServer(configPath, node);
   }
 

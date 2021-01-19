@@ -150,13 +150,13 @@ public class DetachAction extends TopologyAction {
     switch (operationType) {
 
       case NODE: {
-        LOGGER.info("Detaching node: {} from cluster: {}", source.getName(), destinationCluster.getName());
+        output.info("Detaching node: {} from cluster: {}", source.getName(), destinationCluster.getName());
         cluster.removeNode(source.getUID());
         break;
       }
 
       case STRIPE: {
-        LOGGER.info("Detaching stripe: {} from cluster: {}", source.getName(), destinationCluster.getName());
+        output.info("Detaching stripe: {} from cluster: {}", source.getName(), destinationCluster.getName());
         cluster.removeStripe(source.getUID());
         break;
       }
@@ -212,7 +212,7 @@ public class DetachAction extends TopologyAction {
   private void resetAndStopNodesToRemove() {
     if (!onlineNodesToRemove.isEmpty()) {
 
-      LOGGER.info("Reset nodes: {}", toString(onlineNodesToRemove));
+      output.info("Reset nodes: {}", toString(onlineNodesToRemove));
 
       for (Endpoint endpoint : onlineNodesToRemove) {
         try {
@@ -222,7 +222,7 @@ public class DetachAction extends TopologyAction {
         }
       }
 
-      LOGGER.info("Stopping nodes: {}", toString(onlineNodesToRemove));
+      output.info("Stopping nodes: {}", toString(onlineNodesToRemove));
 
       stopNodes(
           onlineNodesToRemove,

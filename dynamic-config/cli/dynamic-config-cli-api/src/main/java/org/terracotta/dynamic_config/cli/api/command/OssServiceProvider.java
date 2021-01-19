@@ -22,11 +22,12 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
-import org.terracotta.dynamic_config.cli.api.restart.RestartService;
-import org.terracotta.dynamic_config.cli.api.stop.StopService;
 import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.NomadManager;
+import org.terracotta.dynamic_config.cli.api.output.OutputService;
+import org.terracotta.dynamic_config.cli.api.restart.RestartService;
+import org.terracotta.dynamic_config.cli.api.stop.StopService;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.entity.client.NomadEntity;
@@ -50,7 +51,12 @@ public class OssServiceProvider implements ServiceProvider {
         createRestartService(config),
         createStopService(config),
         createObjectMapperFactory(config),
-        createNomadEntityProvider(config));
+        createNomadEntityProvider(config),
+        createOutputService());
+  }
+
+  protected OutputService createOutputService() {
+    return new OutputService();
   }
 
   protected StopService createStopService(Configuration config) {

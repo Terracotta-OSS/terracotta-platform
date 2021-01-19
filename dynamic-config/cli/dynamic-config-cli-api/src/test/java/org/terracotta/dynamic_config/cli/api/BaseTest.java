@@ -32,6 +32,7 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.NomadManager;
+import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
 import org.terracotta.json.ObjectMapperFactory;
@@ -69,6 +70,7 @@ public abstract class BaseTest {
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
   protected ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
   protected ObjectMapper objectMapper = objectMapperFactory.create();
+  protected OutputService outputService;
 
   private final Cache<InetSocketAddress, TopologyService> topologyServices = new Cache<>(addr -> mock(TopologyService.class, addr.toString()));
 
@@ -115,6 +117,7 @@ public abstract class BaseTest {
     nomadManager = new DefaultNomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
     stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
+    outputService = new OutputService();
   }
 
   protected DiagnosticService diagnosticServiceMock(String host, int port) {
