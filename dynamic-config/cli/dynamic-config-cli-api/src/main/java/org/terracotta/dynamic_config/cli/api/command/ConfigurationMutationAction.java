@@ -36,7 +36,7 @@ import java.util.TreeSet;
 
 import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
-import static org.terracotta.dynamic_config.api.model.Requirement.ALL_NODES_ONLINE;
+import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_ONLINE;
 import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
 import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
@@ -80,6 +80,13 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
               }
             });
       }
+    }
+    if (updatedCluster.equals(originalCluster)) {
+      LOGGER.warn(lineSeparator() +
+          "=======================================================================================" + lineSeparator() +
+          "The requested update will not result in any change to the cluster configuration." + lineSeparator() +
+          "=======================================================================================" + lineSeparator());
+      return;
     }
     new ClusterValidator(updatedCluster).validate();
 
@@ -157,6 +164,6 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
   }
 
   private boolean requiresAllNodesAlive() {
-    return configurations.stream().map(Configuration::getSetting).anyMatch(setting -> setting.requires(ALL_NODES_ONLINE));
+    return configurations.stream().map(Configuration::getSetting).anyMatch(setting -> setting.requires(CLUSTER_ONLINE));
   }
 }

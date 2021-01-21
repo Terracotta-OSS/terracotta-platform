@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 
@@ -30,7 +31,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
@@ -160,5 +163,53 @@ public class ClusterTest {
   @Test
   public void test_getNodeCount() {
     assertThat(cluster.getNodeCount(), is(equalTo(1)));
+  }
+
+  @Test
+  public void test_clusterEqualityWithDefaultValues() {
+    // New cluster with no values set
+    Cluster cluster = new Cluster();
+    Cluster workingCluster = cluster.clone();
+    assertTrue(cluster.equals(workingCluster));
+
+    // get the value for a setting which possesses a default value and explicitly set that same value in the working cluster
+    int defaultReconnectWindow = cluster.getClientReconnectWindow().orDefault().getExactQuantity(TimeUnit.SECONDS).intValueExact();
+    workingCluster.setClientReconnectWindow(Measure.of(defaultReconnectWindow, TimeUnit.SECONDS));
+    int updatedReconnectWindow = workingCluster.getClientReconnectWindow().get().getExactQuantity(TimeUnit.SECONDS).intValueExact();
+    assertEquals(updatedReconnectWindow, defaultReconnectWindow);
+    assertFalse(cluster.equals(workingCluster));
+
+    // remove the value
+    workingCluster.setClientReconnectWindow(null);
+    assertTrue(cluster.equals(workingCluster));
+
+    // repeat with a boolean default setting
+    boolean defaultWhitelist = cluster.getSecurityWhitelist().orDefault().booleanValue();
+    workingCluster.setSecurityWhitelist(defaultWhitelist);
+    boolean updatedWhitelist = workingCluster.getSecurityWhitelist().get();
+    assertEquals(updatedWhitelist, defaultWhitelist);
+    assertFalse(cluster.equals(workingCluster));
+
+    // remove the value
+    workingCluster.setSecurityWhitelist(null);
+    assertTrue(cluster.equals(workingCluster));
+  }
+
+  @Test
+  public void test_clusterEqualityWithNonDefaultValues() {
+    // New cluster with no values set
+    Cluster cluster = new Cluster();
+    Cluster workingCluster = cluster.clone();
+    assertTrue(cluster.equals(workingCluster));
+
+    // set the value for a setting which does not possess a default value
+    String defaultAuthentication = cluster.getSecurityAuthc().orDefault();
+    assertNull(defaultAuthentication);
+    workingCluster.setSecurityAuthc(null);
+    assertTrue(cluster.equals(workingCluster));
+
+    cluster.setSecurityAuthc("availability");
+    workingCluster.setSecurityAuthc("availability");
+    assertTrue(cluster.equals(workingCluster));
   }
 }

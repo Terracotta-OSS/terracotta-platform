@@ -26,10 +26,10 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.common.struct.MemoryUnit.GB;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
@@ -227,7 +227,7 @@ public class ClusterValidatorTest {
     node1.setBackupDir(RawPath.valueOf("backup"));
 
     assertClusterValidationFails(
-        "Nodes with names: [foo] currently have (or will have) backup directories defined, but some nodes in the cluster do not. Within a cluster, all nodes must have either a backup directory defined or no backup directory defined.",
+        "Nodes: [foo] currently have (or will have) backup directories defined, while some nodes in the cluster do not (or will not). Within a cluster, all nodes must have a backup directory defined or no backup directory defined.",
         newTestCluster(newTestStripe("stripe1").addNodes(node1, node2)));
   }
 
@@ -412,6 +412,7 @@ public class ClusterValidatorTest {
   private void assertClusterValidationFails(String message, Cluster cluster) {
     assertThat(() -> new ClusterValidator(cluster).validate(), is(throwing(instanceOf(MalformedClusterException.class)).andMessage(is(equalTo(message)))));
   }
+
   private void assertClusterValidationFailsContainsMessage(String message, Cluster cluster) {
     assertThat(() -> new ClusterValidator(cluster).validate(), is(throwing(instanceOf(MalformedClusterException.class)).andMessage(is(containsString(message)))));
   }
