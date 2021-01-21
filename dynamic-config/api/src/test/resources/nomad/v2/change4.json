@@ -1,15 +1,20 @@
 {
-  "type": "ClusterActivationNomadChange",
+  "type": "NodeAdditionNomadChange",
   "cluster": {
-    "name": "myClusterName",
     "stripes": [
       {
         "name": "stripe-1",
         "nodes": [
           {
-            "nodeHostname": "localhost",
-            "nodeName": "foo",
-            "nodePort": 9410,
+            "hostname": "localhost",
+            "name": "foo",
+            "port": 9410,
+            "uid": "jUhhu1kRQd-x6iNgpo9Xyw"
+          },
+          {
+            "hostname": "localhost2",
+            "name": "bar",
+            "port": 9411,
             "uid": "VOVyu3kuQxCRIu7dK_UZZA"
           }
         ],
@@ -22,6 +27,7 @@
       "type": "TIME"
     },
     "failoverPriority": "availability",
+    "name": "myClusterName",
     "offheapResources": {
       "foo": {
         "quantity": 1,
@@ -36,8 +42,16 @@
     },
     "uid": "YLQguzhRSdS6y5M9vnA5mw"
   },
-  "applicability": {
-    "scope": "CLUSTER"
+  "node": {
+    "hostname": "localhost2",
+    "name": "bar",
+    "port": 9411,
+    "uid": "VOVyu3kuQxCRIu7dK_UZZA"
   },
-  "summary": "Activating cluster: myClusterName"
+  "stripeUID": "5Zv3uphiRLavoGZthy7JNg",
+  "applicability": {
+    "level": "STRIPE",
+    "stripeUID": "5Zv3uphiRLavoGZthy7JNg"
+  },
+  "summary": "Attaching node: bar@localhost2:9411 to stripe: stripe-1"
 }

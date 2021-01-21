@@ -52,14 +52,16 @@ public class BackwardCompatibilityTest {
   @Rule
   public TmpDir temporaryFolder = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
 
+  private String[] newV2Props = new String[]{"stripe.1.stripe-name", "cluster-uid", "stripe.1.stripe-uid", "stripe.1.node.1.node-uid", "this.version", "this.node-uid"};
+
   @Test
   public void test_automatic_upgrade_of_config_repository() throws Exception {
     Tuple2<NodeContext, ObjectMapperFactory> res = upgradedTopology("config-v1", "default-node1", 1);
     ObjectMapper objectMapper = res.getT2().create();
     assertThat(
         objectMapper.writeValueAsString(res.getT1()),
-        objectMapper.valueToTree(res.getT1()),
-        is(equalTo(objectMapper.readTree(read("/topology.json")))));
+        objectMapper.valueToTree(res.getT1()).toString(),
+        is(equalTo(objectMapper.readTree(read("/topology.json")).toString())));
   }
 
   @Test
@@ -74,6 +76,7 @@ public class BackwardCompatibilityTest {
 
   @Test
   public void test_automatic_upgrade_of_config_repository_with_node_addition_change() throws Exception {
+    newV2Props = new String[]{"stripe.1.stripe-name", "cluster-uid", "stripe.1.stripe-uid", "stripe.1.node.1.node-uid", "this.version", "this.node-uid", "stripe.1.node.2.node-uid"};
     upgradedTopology("config-v1_with_addition_change", "node1", 2);
   }
 
@@ -117,7 +120,6 @@ public class BackwardCompatibilityTest {
       Properties after = Props.load(config.resolve("cluster").resolve(nodeName + "." + nextInd + ".properties"));
 
       String[] removedV1Props = {"this.stripe-id", "this.node-id", "this.name"};
-      String[] newV2Props = {"stripe.1.stripe-name", "cluster-uid", "stripe.1.stripe-uid", "stripe.1.node.1.node-uid", "this.version", "this.node-uid"};
       assertThat(after.stringPropertyNames(), hasItems(newV2Props));
 
       // check content should match v1 content plus these 2 fields
