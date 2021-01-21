@@ -1,0 +1,221 @@
+2021-01-21T07:45:07.060Z
+{
+  "mutativeMessageCount" : 1,
+  "currentVersion" : 0,
+  "mode" : "ACCEPTING",
+  "highestVersion" : 0
+}
+46837cf46cb146923118a7615741afc73e2f9e39
+
+2021-01-21T07:45:14.984Z
+{
+  "mutativeMessageCount" : 2,
+  "currentVersion" : 0,
+  "request" : "PREPARE",
+  "mode" : "PREPARED",
+  "latestChangeUuid" : "3e9594f2-918a-4c62-a44e-d9a9e4aaa976",
+  "highestVersion" : 1,
+  "lastMutationHost" : "SAG-2H78NQ2-U",
+  "lastMutationUser" : "mdh@eur.ad.sag",
+  "lastMutationTimestamp" : "2021-01-21T07:45:14.909Z",
+  "3e9594f2-918a-4c62-a44e-d9a9e4aaa976" : {
+    "state" : "PREPARED",
+    "version" : 1,
+    "operation" : {
+      "type" : "ClusterActivationNomadChange",
+      "cluster" : {
+        "name" : "mycluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "dataDirs" : {
+              "main" : "%H/terracotta/user-data/main"
+            },
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "SAG-2H78NQ2-U",
+            "nodeLogDir" : "%H/terracotta/logs",
+            "nodeLoggerOverrides" : { },
+            "nodeMetadataDir" : "%H/terracotta/metadata",
+            "nodeName" : "node-1",
+            "nodePort" : 9410,
+            "tcProperties" : { }
+          } ]
+        } ],
+        "clientLeaseDuration" : {
+          "quantity" : 150,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "clientReconnectWindow" : {
+          "quantity" : 120,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "failoverPriority" : "availability",
+        "offheapResources" : {
+          "main" : {
+            "quantity" : 512,
+            "unit" : "MB",
+            "type" : "MEMORY"
+          }
+        },
+        "securitySslTls" : false,
+        "securityWhitelist" : false
+      },
+      "applicability" : {
+        "scope" : "CLUSTER"
+      },
+      "summary" : "Activating cluster"
+    },
+    "changeResultHash" : "daca66aabd0d2d2e4888a517297885f13432f29d",
+    "creationHost" : "SAG-2H78NQ2-U",
+    "creationUser" : "mdh@eur.ad.sag",
+    "creationTimestamp" : "2021-01-21T07:45:14.909Z"
+  }
+}
+3fd30d1f48a32cd6283e18191ed49415b3de11e7
+
+2021-01-21T07:45:15.044Z
+{
+  "mutativeMessageCount" : 3,
+  "currentVersion" : 1,
+  "request" : "COMMIT",
+  "mode" : "ACCEPTING",
+  "latestChangeUuid" : "3e9594f2-918a-4c62-a44e-d9a9e4aaa976",
+  "lastMutationHost" : "SAG-2H78NQ2-U",
+  "lastMutationUser" : "mdh@eur.ad.sag",
+  "lastMutationTimestamp" : "2021-01-21T07:45:15.008Z",
+  "3e9594f2-918a-4c62-a44e-d9a9e4aaa976" : {
+    "state" : "COMMITTED",
+    "version" : 1,
+    "operation" : {
+      "type" : "ClusterActivationNomadChange",
+      "cluster" : {
+        "name" : "mycluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "dataDirs" : {
+              "main" : "%H/terracotta/user-data/main"
+            },
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "SAG-2H78NQ2-U",
+            "nodeLogDir" : "%H/terracotta/logs",
+            "nodeLoggerOverrides" : { },
+            "nodeMetadataDir" : "%H/terracotta/metadata",
+            "nodeName" : "node-1",
+            "nodePort" : 9410,
+            "tcProperties" : { }
+          } ]
+        } ],
+        "clientLeaseDuration" : {
+          "quantity" : 150,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "clientReconnectWindow" : {
+          "quantity" : 120,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "failoverPriority" : "availability",
+        "offheapResources" : {
+          "main" : {
+            "quantity" : 512,
+            "unit" : "MB",
+            "type" : "MEMORY"
+          }
+        },
+        "securitySslTls" : false,
+        "securityWhitelist" : false
+      },
+      "applicability" : {
+        "scope" : "CLUSTER"
+      },
+      "summary" : "Activating cluster"
+    },
+    "changeResultHash" : "daca66aabd0d2d2e4888a517297885f13432f29d",
+    "creationHost" : "SAG-2H78NQ2-U",
+    "creationUser" : "mdh@eur.ad.sag",
+    "creationTimestamp" : "2021-01-21T07:45:14.909Z"
+  }
+}
+fac85759204e1cc47640afc821e083dde177864c
+
+2021-01-21T07:45:26.271Z
+{
+  "mutativeMessageCount" : 4,
+  "currentVersion" : 1,
+  "request" : "PREPARE",
+  "mode" : "PREPARED",
+  "latestChangeUuid" : "6170e4d1-84bf-4c77-b78d-b6e71bde6cfb",
+  "highestVersion" : 2,
+  "lastMutationHost" : "SAG-2H78NQ2-U",
+  "lastMutationUser" : "mdh@eur.ad.sag",
+  "lastMutationTimestamp" : "2021-01-21T07:45:26.241Z",
+  "6170e4d1-84bf-4c77-b78d-b6e71bde6cfb" : {
+    "state" : "PREPARED",
+    "version" : 2,
+    "prevChangeUuid" : "3e9594f2-918a-4c62-a44e-d9a9e4aaa976",
+    "operation" : {
+      "type" : "MultiSettingNomadChange",
+      "changes" : [ {
+        "type" : "SettingNomadChange",
+        "applicability" : {
+          "scope" : "CLUSTER"
+        },
+        "name" : "main",
+        "operation" : "SET",
+        "setting" : "OFFHEAP_RESOURCES",
+        "value" : "2GB",
+        "summary" : "set offheap-resources.main=2GB"
+      } ],
+      "summary" : "set offheap-resources.main=2GB"
+    },
+    "changeResultHash" : "c7e79a8131e5a14e5678217b6777ff11a3e4ff7d",
+    "creationHost" : "SAG-2H78NQ2-U",
+    "creationUser" : "mdh@eur.ad.sag",
+    "creationTimestamp" : "2021-01-21T07:45:26.241Z"
+  }
+}
+5dd698aba98ada9da10a4e39cc4ff28e8f81ad5f
+
+2021-01-21T07:45:26.315Z
+{
+  "mutativeMessageCount" : 5,
+  "currentVersion" : 2,
+  "request" : "COMMIT",
+  "mode" : "ACCEPTING",
+  "latestChangeUuid" : "6170e4d1-84bf-4c77-b78d-b6e71bde6cfb",
+  "lastMutationHost" : "SAG-2H78NQ2-U",
+  "lastMutationUser" : "mdh@eur.ad.sag",
+  "lastMutationTimestamp" : "2021-01-21T07:45:26.301Z",
+  "6170e4d1-84bf-4c77-b78d-b6e71bde6cfb" : {
+    "state" : "COMMITTED",
+    "version" : 2,
+    "prevChangeUuid" : "3e9594f2-918a-4c62-a44e-d9a9e4aaa976",
+    "operation" : {
+      "type" : "MultiSettingNomadChange",
+      "changes" : [ {
+        "type" : "SettingNomadChange",
+        "applicability" : {
+          "scope" : "CLUSTER"
+        },
+        "name" : "main",
+        "operation" : "SET",
+        "setting" : "OFFHEAP_RESOURCES",
+        "value" : "2GB",
+        "summary" : "set offheap-resources.main=2GB"
+      } ],
+      "summary" : "set offheap-resources.main=2GB"
+    },
+    "changeResultHash" : "c7e79a8131e5a14e5678217b6777ff11a3e4ff7d",
+    "creationHost" : "SAG-2H78NQ2-U",
+    "creationUser" : "mdh@eur.ad.sag",
+    "creationTimestamp" : "2021-01-21T07:45:26.241Z"
+  }
+}
+4f05f730add8b9583d9052b0cfc645e8c47a3693
+

@@ -53,11 +53,9 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
   public DynamicConfigModelJsonModuleV1() {
     super(DynamicConfigModelJsonModuleV1.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
 
-    setMixInAnnotation(Cluster.class, ClusterMixinV1.class);
-    setMixInAnnotation(Stripe.class, StripeMixinV1.class);
     setMixInAnnotation(Node.class, NodeMixinV1.class);
-    setMixInAnnotation(FailoverPriority.class, FailoverPriorityMixin.class);
     setMixInAnnotation(License.class, LicenseMixinV1.class);
+    setMixInAnnotation(NodeContext.class, NodeContextMixin.class);
   }
 
   public static class NodeContextMixin extends NodeContext {
@@ -87,108 +85,33 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
     }
   }
 
-  public static class ClusterMixinV1 extends Cluster {
-    @JsonCreator
-    protected ClusterMixinV1(@JsonProperty(value = "stripes", required = true) List<Stripe> stripes) {
-      super(stripes);
-    }
-
-    @JsonIgnore
-    @Override
-    public Scope getScope() {
-      return super.getScope();
-    }
-
-    @JsonIgnore
-    @Override
-    public Optional<Node> getSingleNode() throws IllegalStateException {
-      return super.getSingleNode();
-    }
-
-    @JsonIgnore
-    @Override
-    public Optional<Stripe> getSingleStripe() {
-      return super.getSingleStripe();
-    }
-
-    @JsonIgnore
-    @Override
-    public boolean isEmpty() {
-      return super.isEmpty();
-    }
-
-    @JsonIgnore
-    @Override
-    public int getNodeCount() {
-      return super.getNodeCount();
-    }
-
-    @JsonIgnore
-    @Override
-    public int getStripeCount() {
-      return super.getStripeCount();
-    }
-
-    @JsonIgnore
-    @Override
-    public Collection<Node> getNodes() {
-      return super.getNodes();
-    }
-
-    @JsonIgnore
-    @Override
-    public Collection<String> getDataDirNames() {
-      return super.getDataDirNames();
-    }
-
-    @JsonIgnore
-    @Override
-    public Collection<Node.Endpoint> getInternalEndpoints() {
-      return super.getInternalEndpoints();
-    }
-  }
-
-  public static class StripeMixinV1 extends Stripe {
-    @JsonIgnore
-    @Override
-    public Optional<Node> getSingleNode() throws IllegalStateException {
-      return super.getSingleNode();
-    }
-
-    @JsonIgnore
-    @Override
-    public boolean isEmpty() {
-      return super.isEmpty();
-    }
-
-    @JsonIgnore
-    @Override
-    public Scope getScope() {
-      return super.getScope();
-    }
-
-    @JsonIgnore
-    @Override
-    public int getNodeCount() {
-      return super.getNodeCount();
-    }
-  }
-
   @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
   public static class NodeMixinV1 extends Node {
 
-    @JsonProperty("nodeName") String name;
-    @JsonProperty("nodeHostname") String hostname;
-    @JsonProperty("nodePublicHostname") String publicHostname;
-    @JsonProperty("nodePort") Integer port;
-    @JsonProperty("nodePublicPort") Integer publicPort;
-    @JsonProperty("nodeGroupPort") Integer groupPort;
-    @JsonProperty("nodeBindAddress") String bindAddress;
-    @JsonProperty("nodeGroupBindAddress") String groupBindAddress;
-    @JsonProperty("nodeMetadataDir") Path metadataDir;
-    @JsonProperty("nodeLogDir") Path logDir;
-    @JsonProperty("nodeBackupDir") Path backupDir;
-    @JsonProperty("nodeLoggerOverrides") Map<String, String> loggerOverrides;
+    @JsonProperty("nodeName")
+    String name;
+    @JsonProperty("nodeHostname")
+    String hostname;
+    @JsonProperty("nodePublicHostname")
+    String publicHostname;
+    @JsonProperty("nodePort")
+    Integer port;
+    @JsonProperty("nodePublicPort")
+    Integer publicPort;
+    @JsonProperty("nodeGroupPort")
+    Integer groupPort;
+    @JsonProperty("nodeBindAddress")
+    String bindAddress;
+    @JsonProperty("nodeGroupBindAddress")
+    String groupBindAddress;
+    @JsonProperty("nodeMetadataDir")
+    Path metadataDir;
+    @JsonProperty("nodeLogDir")
+    Path logDir;
+    @JsonProperty("nodeBackupDir")
+    Path backupDir;
+    @JsonProperty("nodeLoggerOverrides")
+    Map<String, String> loggerOverrides;
 
     @JsonIgnore
     @Override
@@ -218,23 +141,6 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
     @Override
     public Optional<Endpoint> getPublicEndpoint() {
       return super.getPublicEndpoint();
-    }
-  }
-
-  public static class FailoverPriorityMixin extends FailoverPriority {
-    public FailoverPriorityMixin(Type type, Integer voters) {
-      super(type, voters);
-    }
-
-    @JsonCreator
-    public static FailoverPriority valueOf(String str) {
-      return FailoverPriority.valueOf(str);
-    }
-
-    @JsonValue
-    @Override
-    public String toString() {
-      return super.toString();
     }
   }
 

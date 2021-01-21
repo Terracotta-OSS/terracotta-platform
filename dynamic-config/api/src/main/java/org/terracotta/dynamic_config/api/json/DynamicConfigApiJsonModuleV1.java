@@ -41,12 +41,14 @@ public class DynamicConfigApiJsonModuleV1 extends SimpleModule {
 
   public DynamicConfigApiJsonModuleV1() {
     super(DynamicConfigApiJsonModuleV1.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
-
+    
     setAbstractTypes(new SimpleAbstractTypeResolver()
         .addMapping(Applicability.class, ApplicabilityV1.class));
 
     setMixInAnnotation(ApplicabilityV1.class, ApplicabilityV1Mixin.class);
     setMixInAnnotation(DefaultApplicability.class, DefaultApplicabilityMixin.class);
+    setMixInAnnotation(NodeAdditionNomadChange.class, NodeAdditionNomadChangeMixin.class);
+    setMixInAnnotation(NodeRemovalNomadChange.class, NodeRemovalNomadChangeMixin.class);
   }
 
   public static class DefaultApplicabilityMixin extends DefaultApplicability {
