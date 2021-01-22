@@ -269,6 +269,10 @@ public class Configuration {
     return value == null || value.isEmpty() ? empty() : Optional.of(value);
   }
 
+  public boolean hasValue() {
+    return getValue().isPresent();
+  }
+
   private void preValidate(String rawValue) {
     if (!setting.isMap() && key != null) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' is not a map and must not have a key");
@@ -545,11 +549,7 @@ public class Configuration {
 
     // ensure to filter the targets to only chose the roght object type (node, stripe or cluster)
     // depending on which type of object this setting applies to
-    return targets.filter(ph -> ph.getScope() ==
-
-        getSetting().
-
-            getScope());
+    return targets.filter(ph -> ph.getScope() == getSetting().getScope());
   }
 
   public List<Configuration> expand() {

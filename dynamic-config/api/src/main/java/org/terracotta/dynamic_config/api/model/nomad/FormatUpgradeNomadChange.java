@@ -48,7 +48,7 @@ public class FormatUpgradeNomadChange extends ClusterActivationNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(NodeContext currentNode) {
+  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
     return false;
   }
 

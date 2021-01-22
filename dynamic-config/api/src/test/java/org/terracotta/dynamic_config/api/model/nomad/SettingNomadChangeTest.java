@@ -18,19 +18,28 @@ package org.terracotta.dynamic_config.api.model.nomad;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Testing;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.Testing.N_UIDS;
+import static org.terracotta.dynamic_config.api.model.Testing.S_UIDS;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluster;
 import static org.terracotta.dynamic_config.api.model.nomad.Applicability.node;
 import static org.terracotta.dynamic_config.api.model.nomad.Applicability.stripe;
@@ -104,5 +113,63 @@ public class SettingNomadChangeTest {
     assertThat(
         () -> set(stripe(Testing.A_UID), NODE_BACKUP_DIR, "foo").toConfiguration(cluster),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(startsWith("Stripe not found in cluster: <no name> ( stripe-1:5Zv3uphiRLavoGZthy7JNg ( node1@localhost:9410 ) ) with applicability: stripe UID: YLQguzhRSdS6y5M9vnA5mw")))));
+  }
+
+  @Test
+  public void test_set_unset_backup_dir() {
+    Cluster cluster1 = newTestCluster("cluster1", newTestStripe("stripe-1", S_UIDS[1])
+        .addNode(newTestNode("node1", "localhost", 9410, N_UIDS[1]))
+        .addNode(newTestNode("node2", "localhost", 9410, N_UIDS[2])));
+
+    Cluster cluster2 = newTestCluster("cluster2", newTestStripe("stripe-1", S_UIDS[2])
+        .addNode(newTestNode("node1", "localhost", 9410, N_UIDS[1])
+            .setBackupDir(RawPath.valueOf("dir")))
+        .addNode(newTestNode("node2", "localhost", 9410, N_UIDS[2])
+            .setBackupDir(RawPath.valueOf("dir"))));
+
+
+    // set command executed (for apply and after commit) on cluster1 / node1 to set backup dir of cluster1 / node1
+    // => we should apply the change at runtime and update the runtime topology after commit
+    assertTrue(set(node(N_UIDS[1]), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster1, N_UIDS[1])));
+
+    // set command executed (after commit only) on cluster1 / node2 to set backup dir of cluster1 / node1
+    // => we should update the runtime topology after commit (but change won't be applied since not on the right node)
+    assertTrue(set(node(N_UIDS[1]), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster1, N_UIDS[2])));
+
+    // set command executed (for apply and after commit) on cluster2 / node1 to update backup dir of cluster2 / node1
+    // => we should not apply the change at runtime and we should not update the runtime topology after commit
+    // => because we need a restart!
+    assertFalse(set(node(N_UIDS[1]), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[1])));
+
+    // set command executed (after commit only) on cluster2 / node2 to update backup dir of cluster2 / node1
+    // => we should update the runtime topology after commit (but change won't be applied since not on the right node)
+    assertTrue(set(node(N_UIDS[1]), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[2])));
+
+    // unset command executed (for apply and after commit) on cluster2 / node1 to update backup dir of cluster2 / node1
+    // => we should not apply the change at runtime and we should not update the runtime topology after commit
+    // => because we need a restart!
+    assertFalse(unset(node(N_UIDS[1]), NODE_BACKUP_DIR).canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[1])));
+
+    // unset command executed (after commit only) on cluster2 / node2 to update backup dir of cluster2 / node1
+    // => we should update the runtime topology after commit (but change won't be applied since not on the right node)
+    assertTrue(unset(node(N_UIDS[1]), NODE_BACKUP_DIR).canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[2])));
+  }
+
+  @Test
+  public void test_set_log_dir() {
+    Cluster cluster2 = newTestCluster("cluster2", newTestStripe("stripe-1", S_UIDS[2])
+        .addNode(newTestNode("node1", "localhost", 9410, N_UIDS[1])
+            .setLogDir(RawPath.valueOf("dir")))
+        .addNode(newTestNode("node2", "localhost", 9410, N_UIDS[2])
+            .setLogDir(RawPath.valueOf("dir"))));
+
+    // set command executed (for apply and after commit) on cluster2 / node1 to update log dir of cluster2 / node1
+    // => we should not apply the change at runtime and we should not update the runtime topology after commit
+    // => because we need a restart!
+    assertFalse(set(node(N_UIDS[1]), NODE_LOG_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[1])));
+
+    // set command executed (after commit only) on cluster2 / node2 to update log dir of cluster2 / node1
+    // => we should update the runtime topology after commit (but change won't be applied since not on the right node)
+    assertTrue(set(node(N_UIDS[1]), NODE_LOG_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[2])));
   }
 }

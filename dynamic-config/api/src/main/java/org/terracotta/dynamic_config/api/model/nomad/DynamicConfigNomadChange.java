@@ -35,7 +35,7 @@ public interface DynamicConfigNomadChange extends NomadChange {
   /**
    * Check if this change can be applied at runtime on this node
    */
-  boolean canApplyAtRuntime(NodeContext currentNode);
+  boolean canUpdateRuntimeTopology(NodeContext currentNode);
 
   default DynamicConfigNomadChange unwrap() {
     return this;

@@ -102,7 +102,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
           NodeContext nodeContext = topologyService.getRuntimeNodeContext();
-          boolean restartRequired = !change.canApplyAtRuntime(nodeContext);
+          boolean restartRequired = !change.canUpdateRuntimeTopology(nodeContext);
           Map<String, String> data = new TreeMap<>();
           data.put("change", change.toString());
           data.put("result", Props.toString(updated.toProperties(false, false, true)));
