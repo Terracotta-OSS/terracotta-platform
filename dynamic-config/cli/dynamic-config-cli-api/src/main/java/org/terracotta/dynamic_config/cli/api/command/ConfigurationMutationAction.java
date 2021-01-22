@@ -44,7 +44,7 @@ import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 public abstract class ConfigurationMutationAction extends ConfigurationAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigurationMutationAction.class);
-  
+
   protected ConfigurationMutationAction(Operation operation) {
     super(operation);
   }
@@ -59,8 +59,8 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     Cluster updatedCluster = originalCluster.clone();
 
     // will keep track of the targeted nodes for the changes of a node setting
-    Collection<String> missingTargetedNodes = new TreeSet<>();
     Collection<String> nodesRequiringRestart = new TreeSet<>();
+    Collection<String> targetedNodes = new TreeSet<>();
 
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
@@ -74,7 +74,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
             .map(PropertyHolder::getName)
             .filter(originalCluster::containsNode)
             .forEach(name -> {
-              missingTargetedNodes.add(name);
+              targetedNodes.add(name);
               if (c.getSetting().requires(NODE_RESTART)) {
                 nodesRequiringRestart.add(name);
               }
@@ -101,6 +101,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     }
 
     // ensure that the nodes targeted by the set or unset command in the namespaces are all online so that they can validate the change
+    Collection<String> missingTargetedNodes = new TreeSet<>(targetedNodes);
     onlineNodes.keySet().stream().map(Endpoint::getNodeName).forEach(missingTargetedNodes::remove);
     if (!missingTargetedNodes.isEmpty()) {
       throw new IllegalStateException("Some nodes that are targeted by the change are not reachable and thus cannot be validated. " +
@@ -133,11 +134,39 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
             "====================================================================" + lineSeparator() +
             "IMPORTANT: A restart of the cluster is required to apply the changes" + lineSeparator() +
             "====================================================================" + lineSeparator());
-      } else if (!nodesRequiringRestart.isEmpty()) {
-        LOGGER.warn(lineSeparator() +
-            "=======================================================================================" + lineSeparator() +
-            "IMPORTANT: A restart of nodes: " + toString(nodesRequiringRestart) + " is required to apply the changes" + lineSeparator() +
-            "=======================================================================================" + lineSeparator());
+
+      } else {
+        final long numberOfDifferentSettingsToChange = configurations.stream()
+            .map(Configuration::getSetting)
+            .distinct()
+            .count();
+        final long numberOfDifferentSettingsRequiringRestart = configurations.stream()
+            .map(Configuration::getSetting)
+            .distinct()
+            .filter(setting -> setting.requires(NODE_RESTART))
+            .count();
+
+        if (numberOfDifferentSettingsToChange != numberOfDifferentSettingsRequiringRestart) {
+          // if the user updates more than 1 setting that does not require a restart, or a mix of settings which
+          // do and do not require a restart, we will go there.
+          // I.e. set backup-dir
+          // I.e. set log-dir + backup-dir
+          // In that case, we might already have some nodes inside nodesRequiringRestart.
+          // But we need to add into this collection the other nodes that are targeted AND could have vetoed a change to be applied at runtime
+          for (Endpoint endpoint : onlineNodes.keySet()) {
+            if (targetedNodes.contains(endpoint.getNodeName()) && mustBeRestarted(endpoint)) {
+              nodesRequiringRestart.add(endpoint.getNodeName());
+            }
+          }
+        }
+
+        if (!nodesRequiringRestart.isEmpty()) {
+          LOGGER.warn(lineSeparator() +
+              "=======================================================================================" + lineSeparator() +
+              "IMPORTANT: A restart of nodes: " + toString(nodesRequiringRestart) + " is required to apply the changes" + lineSeparator() +
+              "=======================================================================================" + lineSeparator());
+
+        }
       }
 
     } else {

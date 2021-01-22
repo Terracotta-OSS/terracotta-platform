@@ -74,19 +74,40 @@ public class SettingNomadChange extends FilteredNomadChange {
 
   @Override
   public Cluster apply(Cluster original) {
-    Cluster updated = original.clone();
-    Configuration configuration = toConfiguration(updated);
+    Configuration configuration = toConfiguration(original);
     configuration.validate(ACTIVATED, getOperation());
+    Cluster updated = original.clone();
     configuration.apply(updated);
     return updated;
   }
 
   @Override
-  public boolean canApplyAtRuntime(NodeContext currentNode) {
-    Setting setting = getSetting();
-    boolean requiresClusterRestart = setting.requires(CLUSTER_RESTART);
-    boolean requiresThisNodeRestart = setting.requires(NODE_RESTART) && getSetting().isScope(Scope.NODE) && getApplicability().isApplicableTo(currentNode);
-    return !requiresClusterRestart && !requiresThisNodeRestart;
+  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
+    final boolean requiresClusterRestart = setting.requires(CLUSTER_RESTART);
+    if (requiresClusterRestart) {
+      // we cannot apply at runtime any change requiring a cluster restart
+      return false;
+    }
+
+    final boolean thisNodeIsTargeted = getSetting().isScope(Scope.NODE) && getApplicability().isApplicableTo(currentNode);
+    final boolean requiresThisTargetedNodeToRestart = thisNodeIsTargeted && setting.requires(NODE_RESTART);
+    if (requiresThisTargetedNodeToRestart) {
+      // We cannot apply at runtime on this node a change that targets this node and requires a restart.
+      // Yeah you've read it... Complex ;-)
+      // Here is an example with a cluster of 2 nodes node1 and node2.
+      // You run: set stripe.1.node.1.log-dir=foo (which targets node1 and log dir requires a restart)
+      // What you want:
+      // - is to create a new config on disk for all the nodes
+      // - NOT call any config handler #apply() method
+      // - NOT update the runtime topology of node1 (since it requires a restart)
+      // - BUT update the runtime topology of node1 once Nomad commits because node2 is not part of the change
+      return false;
+    }
+
+    boolean vetoFromThisTargetedNode = thisNodeIsTargeted && setting.vetoRuntimeChange(currentNode, toConfiguration(currentNode.getCluster()));
+    // check if this setting wants to veto the change. If "vetoRuntimeChange" returns true,
+    // then the change won't be applied at runtime and will require a restart
+    return !vetoFromThisTargetedNode;
   }
 
   public String getName() {

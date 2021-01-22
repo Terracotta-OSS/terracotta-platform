@@ -444,7 +444,22 @@ public enum Setting {
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_BACKUP_DIR, tuple2(key, value))
-  ),
+  ) {
+    @Override
+    public boolean vetoRuntimeChange(NodeContext currentNode, Configuration configuration) {
+      if (this == configuration.getSetting()) {
+        // - node backup directory is a setting which does not require a restart (so can be applied at runtime)
+        // only in the case where the directory was not configured and the user configures it (so when
+        // the user wants to activate the backup feature).
+        // - if the user wants to unset the directory or change it, we require the node to be restarted because
+        // it could happen that a backup is already in progress
+        boolean isSetOrUpdate = configuration.hasValue();
+        boolean alreadyConfigured = currentNode.getNode().getBackupDir().isConfigured();
+        return alreadyConfigured || !isSetOrUpdate;
+      }
+      return super.vetoRuntimeChange(currentNode, configuration);
+    }
+  },
   TC_PROPERTIES(SettingName.TC_PROPERTIES,
       of(V1, V2),
       true,
@@ -938,6 +953,10 @@ public enum Setting {
 
   public void validate(String value) {
     validate(null, value);
+  }
+
+  public boolean vetoRuntimeChange(NodeContext currentNode, Configuration configuration) {
+    return false;
   }
 
   public Optional<String> getProperty(PropertyHolder o) {

@@ -43,7 +43,7 @@ public class ClusterActivationNomadChange extends TopologyNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(NodeContext currentNode) {
+  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
     return false;
   }
 
