@@ -1,0 +1,28 @@
+{
+  "cluster": {
+    "stripes": [
+      {
+        "name": "Mercury",
+        "nodes": [
+          {
+            "hostname": "SAG-2H78NQ2-U",
+            "name": "node-1",
+            "uid": "seaDBTPKQUGTnJfYoB_cgA"
+          }
+        ],
+        "uid": "KTFjIHqSTjidWNMaD5gcLw"
+      }
+    ],
+    "failoverPriority": "availability",
+    "name": "mycluster",
+    "offheapResources": {
+      "main": {
+        "quantity": 2,
+        "unit": "GB",
+        "type": "MEMORY"
+      }
+    },
+    "uid": "7VN2iCRUTeiLnQrAMjXK6A"
+  },
+  "nodeUID": "seaDBTPKQUGTnJfYoB_cgA"
+}

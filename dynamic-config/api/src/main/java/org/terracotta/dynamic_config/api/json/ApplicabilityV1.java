@@ -31,6 +31,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * This class is for backward compatibility json deserializing and serializing with the V1 json format
  */
+@Deprecated
 public class ApplicabilityV1 implements Applicability {
   private final Scope scope;
   private final String nodeName;

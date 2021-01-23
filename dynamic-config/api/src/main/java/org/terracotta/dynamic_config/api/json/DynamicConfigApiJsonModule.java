@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
-import com.fasterxml.jackson.databind.module.SimpleAbstractTypeResolver;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -84,8 +83,7 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
         new NamedType(UnlockConfigNomadChange.class, "UnlockConfigNomadChange")
     );
 
-    setAbstractTypes(new SimpleAbstractTypeResolver()
-        .addMapping(Applicability.class, DefaultApplicability.class));
+    addAbstractTypeMapping(Applicability.class, DefaultApplicability.class);
 
     setMixInAnnotation(DefaultApplicability.class, DefaultApplicabilityMixin.class);
     setMixInAnnotation(ClusterActivationNomadChange.class, ClusterActivationNomadChangeMixin.class);
