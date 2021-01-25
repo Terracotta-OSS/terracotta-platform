@@ -122,7 +122,8 @@ public class DesynchronizedNomadConfigTest {
         {"v1-config"},
         {"v1-config-migrated"},
         {"v2-concurrent-tx-rolled-back"},
-        {"v2-config"}
+        {"v2-config"},
+        {"v1-config-partial-migrated"}
     });
   }
 
@@ -147,7 +148,7 @@ public class DesynchronizedNomadConfigTest {
   @Test
   public void test_restricted_activation() throws NomadException {
     assumeThat(rootName, is(not(equalTo("v2-concurrent-tx-rolled-back"))));
-
+    assumeThat(rootName, is(not(equalTo("v1-config-partial-migrated"))));
     Path root = copy(rootName);
 
     // reset the node
@@ -203,6 +204,7 @@ public class DesynchronizedNomadConfigTest {
 
   @Test
   public void test_nomad_tx_committed() {
+    assumeThat(rootName, is(not(equalTo("v1-config-partial-migrated"))));
     Path root = copy(rootName);
     try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config"));
          FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"));
@@ -213,6 +215,7 @@ public class DesynchronizedNomadConfigTest {
 
   @Test
   public void test_nomad_tx_rolled_back() {
+    assumeThat(rootName, is(not(equalTo("v1-config-partial-migrated"))));
     Path root = copy(rootName);
     try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config"));
          FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"));
@@ -231,6 +234,7 @@ public class DesynchronizedNomadConfigTest {
 
   @Test
   public void test_diagnostic() {
+    assumeThat(rootName, is(not(equalTo("v1-config-partial-migrated"))));
     Path root = copy(rootName);
     try (FakeNode active = FakeNode.create(root.resolve("node1").resolve("config"));
          FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"))) {
@@ -241,6 +245,7 @@ public class DesynchronizedNomadConfigTest {
 
   @Test(timeout = 10 * 1000)
   public void test_concurrent_prepare_leading_to_reject_and_rollback() throws InterruptedException {
+    assumeThat(rootName, is(not(equalTo("v1-config-partial-migrated"))));
     assumeThat(Runtime.getRuntime().availableProcessors(), is(greaterThanOrEqualTo(4)));
     Retry.untilInterrupted(() -> {
       try {
@@ -254,6 +259,7 @@ public class DesynchronizedNomadConfigTest {
 
   @Test(timeout = 10 * 1000)
   public void test_concurrent_prepare_leading_to_accept() throws InterruptedException {
+    assumeThat(rootName, is(not(equalTo("v1-config-partial-migrated"))));
     assumeThat(Runtime.getRuntime().availableProcessors(), is(greaterThanOrEqualTo(4)));
     Retry.untilInterrupted(() -> {
       try {
