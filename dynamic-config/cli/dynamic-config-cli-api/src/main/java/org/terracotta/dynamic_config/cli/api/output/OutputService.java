@@ -15,33 +15,11 @@
  */
 package org.terracotta.dynamic_config.cli.api.output;
 
-import org.slf4j.helpers.MessageFormatter;
-
-import java.io.PrintStream;
-
 /**
  * Responsible for handling the redirection of the output of config tool commands.
  */
-public class OutputService {
+public interface OutputService {
+  void out(String format, Object... args);
 
-  private final PrintStream outStream;
-  private final PrintStream errStream;
-
-  public OutputService() {
-    outStream = System.out;
-    errStream = System.err;
-  }
-
-  public OutputService(PrintStream outStream, PrintStream errStream) {
-    this.outStream = outStream;
-    this.errStream = errStream;
-  }
-
-  public void out(String format, Object... args) {
-    outStream.println(MessageFormatter.arrayFormat(format, args).getMessage());
-  }
-
-  public void info(String format, Object... args) {
-    errStream.println(MessageFormatter.arrayFormat(format, args).getMessage());
-  }
+  void info(String format, Object... args);
 }
