@@ -15,18 +15,19 @@
  */
 package org.terracotta.dynamic_config.cli.api.output;
 
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.nio.file.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class FileOutputService extends StreamOutputService {
+public class LoggingOutputService implements OutputService {
+  private static final Logger LOGGER = LoggerFactory.getLogger(LoggingOutputService.class);
 
-  private final Path path;
+  @Override
+  public void out(String format, Object... args) {
+    LOGGER.info(format, args);
+  }
 
-  public FileOutputService(Path path) throws FileNotFoundException, UnsupportedEncodingException {
-    super(new PrintStream(path.toString(), Charset.defaultCharset().name()), System.err);
-    this.path = path;
+  @Override
+  public void info(String format, Object... args) {
+    LOGGER.info(format, args);
   }
 }
