@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
+import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
@@ -29,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.BiConsumer;
@@ -447,17 +449,21 @@ public enum Setting {
   ) {
     @Override
     public boolean vetoRuntimeChange(NodeContext currentNode, Configuration configuration) {
+      final boolean vetoed;
       if (this == configuration.getSetting()) {
         // - node backup directory is a setting which does not require a restart (so can be applied at runtime)
         // only in the case where the directory was not configured and the user configures it (so when
         // the user wants to activate the backup feature).
         // - if the user wants to unset the directory or change it, we require the node to be restarted because
         // it could happen that a backup is already in progress
-        boolean isSetOrUpdate = configuration.hasValue();
-        boolean alreadyConfigured = currentNode.getNode().getBackupDir().isConfigured();
-        return alreadyConfigured || !isSetOrUpdate;
+        final String current = currentNode.getNode().getBackupDir().map(RawPath::getValue).orElse(null);
+        vetoed = !configuration.getValue().isPresent() // unset
+            || current != null && !Objects.equals(configuration.getValue().get(), current); // update
+      } else {
+        vetoed = super.vetoRuntimeChange(currentNode, configuration);
       }
-      return super.vetoRuntimeChange(currentNode, configuration);
+      LoggerFactory.getLogger(Setting.class).trace("vetoRuntimeChange({}, {}): {}", configuration, currentNode.getNode(), vetoed);
+      return vetoed;
     }
   },
   TC_PROPERTIES(SettingName.TC_PROPERTIES,

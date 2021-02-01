@@ -53,9 +53,7 @@ public class GetAction extends ConfigurationAction {
           .filter(e -> configuration.matchConfigPropertyKey(e.getKey()))
           .map(e -> e.getKey() + "=" + e.getValue())
           .collect(Collectors.toList());
-      if (out.isEmpty()) {
-        output.out(configuration + "=");
-      } else {
+      if (!out.isEmpty()) {
         out.forEach(s -> output.out(s));
       }
     }

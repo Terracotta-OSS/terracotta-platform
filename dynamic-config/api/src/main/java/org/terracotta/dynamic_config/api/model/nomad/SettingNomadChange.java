@@ -15,6 +15,8 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -40,6 +42,8 @@ import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
  * @author Mathieu Carbou
  */
 public class SettingNomadChange extends FilteredNomadChange {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(SettingNomadChange.class);
 
   private final Operation operation;
   private final Setting setting;
@@ -83,9 +87,12 @@ public class SettingNomadChange extends FilteredNomadChange {
 
   @Override
   public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
+    final Configuration configuration = toConfiguration(currentNode.getCluster());
     final boolean requiresClusterRestart = setting.requires(CLUSTER_RESTART);
+
     if (requiresClusterRestart) {
       // we cannot apply at runtime any change requiring a cluster restart
+      LOGGER.trace("canUpdateRuntimeTopology({}): NO (cluster requires a restart)", configuration);
       return false;
     }
 
@@ -101,12 +108,19 @@ public class SettingNomadChange extends FilteredNomadChange {
       // - NOT call any config handler #apply() method
       // - NOT update the runtime topology of node1 (since it requires a restart)
       // - BUT update the runtime topology of node1 once Nomad commits because node2 is not part of the change
+      LOGGER.trace("canUpdateRuntimeTopology({}, {}, {}): NO (this targeted node requires a restart)", configuration, getApplicability(), currentNode);
       return false;
     }
 
-    boolean vetoFromThisTargetedNode = thisNodeIsTargeted && setting.vetoRuntimeChange(currentNode, toConfiguration(currentNode.getCluster()));
+    boolean vetoFromThisTargetedNode = thisNodeIsTargeted && setting.vetoRuntimeChange(currentNode, configuration);
     // check if this setting wants to veto the change. If "vetoRuntimeChange" returns true,
     // then the change won't be applied at runtime and will require a restart
+    if (vetoFromThisTargetedNode) {
+      LOGGER.trace("canUpdateRuntimeTopology({}, {}, {}): NO (targeted node has vetoed the runtime change and will need to restart)", configuration, getApplicability(), currentNode);
+    } else {
+      LOGGER.trace("canUpdateRuntimeTopology({}, {}, {}): YES", configuration, getApplicability(), currentNode);
+    }
+
     return !vetoFromThisTargetedNode;
   }
 

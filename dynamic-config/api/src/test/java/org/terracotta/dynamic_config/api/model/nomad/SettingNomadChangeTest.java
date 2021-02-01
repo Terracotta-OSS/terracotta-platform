@@ -156,6 +156,29 @@ public class SettingNomadChangeTest {
   }
 
   @Test
+  public void test_set_unset_backup_dir_at_cluster_level() {
+    Cluster cluster1 = newTestCluster("cluster1", newTestStripe("stripe-1", S_UIDS[1])
+        .addNode(newTestNode("node1", "localhost", 9410, N_UIDS[1]))
+        .addNode(newTestNode("node2", "localhost", 9410, N_UIDS[2])));
+
+    Cluster cluster2 = newTestCluster("cluster2", newTestStripe("stripe-1", S_UIDS[2])
+        .addNode(newTestNode("node1", "localhost", 9410, N_UIDS[1])
+            .setBackupDir(RawPath.valueOf("dir")))
+        .addNode(newTestNode("node2", "localhost", 9410, N_UIDS[2])
+            .setBackupDir(RawPath.valueOf("dir"))));
+
+
+    assertTrue(set(cluster(), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster1, N_UIDS[1])));
+    assertTrue(set(cluster(), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster1, N_UIDS[2])));
+
+    assertFalse(set(cluster(), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[1])));
+    assertFalse(set(cluster(), NODE_BACKUP_DIR, "newDir").canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[2])));
+
+    assertFalse(unset(cluster(), NODE_BACKUP_DIR).canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[1])));
+    assertFalse(unset(cluster(), NODE_BACKUP_DIR).canUpdateRuntimeTopology(new NodeContext(cluster2, N_UIDS[2])));
+  }
+
+  @Test
   public void test_set_log_dir() {
     Cluster cluster2 = newTestCluster("cluster2", newTestStripe("stripe-1", S_UIDS[2])
         .addNode(newTestNode("node1", "localhost", 9410, N_UIDS[1])

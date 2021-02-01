@@ -270,7 +270,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void testPublicHostPort() {
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.public-hostname", "-c", "stripe.1.node.1.public-port"),
-        allOf(containsOutput("stripe.1.node.1.public-hostname="), containsOutput("stripe.1.node.1.public-port=")));
+        allOf(not(containsOutput("stripe.1.node.1.public-hostname=")), not(containsOutput("stripe.1.node.1.public-port="))));
 
     String publicHostname = "127.0.0.1";
     int publicPort = getNodePort();
