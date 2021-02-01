@@ -67,6 +67,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
@@ -189,7 +190,11 @@ public class DynamicConfigIT {
   }
 
   protected final void startNode(TerracottaServer node, String... cli) {
-    angela.tsa().start(node, cli);
+    startNode(node, Collections.emptyMap(), cli);
+  }
+
+  protected final void startNode(TerracottaServer node, Map<String, String> env, String... cli) {
+    angela.tsa().start(node, env, cli);
   }
 
   protected final void stopNode(int stripeId, int nodeId) {
@@ -239,6 +244,10 @@ public class DynamicConfigIT {
   }
 
   protected ToolExecutionResult invokeConfigTool(String... cli) {
+    return invokeConfigTool(Collections.emptyMap(), cli);
+  }
+
+  protected ToolExecutionResult invokeConfigTool(Map<String, String> env, String... cli) {
     List<String> enhancedCli = new ArrayList<>(cli.length);
     List<String> configToolOptions = getConfigToolOptions(cli);
 
@@ -265,7 +274,7 @@ public class DynamicConfigIT {
     } else {
       cmd = cli;
     }
-    return angela.configTool().executeCommand(cmd);
+    return angela.configTool().executeCommand(env, cmd);
   }
 
   private List<String> getConfigToolOptions(String[] cli) {
