@@ -66,20 +66,19 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     for (Configuration c : configurations) {
       Collection<? extends PropertyHolder> targets = c.apply(updatedCluster);
 
-      // if the setting is a node setting, keep track of the node targeted by this configuration line
+      // keep track of the node targeted by this configuration line
       // remember: a node setting can be set using a cluster or stripe namespace to target several nodes at once
       // Note: this validation is only for node-specific settings
-      if (c.getSetting().isScope(NODE)) {
-        targets.stream()
-            .map(PropertyHolder::getName)
-            .filter(originalCluster::containsNode)
-            .forEach(name -> {
-              targetedNodes.add(name);
-              if (c.getSetting().requires(NODE_RESTART)) {
-                nodesRequiringRestart.add(name);
-              }
-            });
-      }
+      targets.stream()
+          .filter(o -> o.getScope() == NODE)
+          .map(PropertyHolder::getName)
+          .filter(originalCluster::containsNode)
+          .forEach(name -> {
+            targetedNodes.add(name);
+            if (c.getSetting().requires(NODE_RESTART)) {
+              nodesRequiringRestart.add(name);
+            }
+          });
     }
     if (updatedCluster.equals(originalCluster)) {
       LOGGER.warn(lineSeparator() +

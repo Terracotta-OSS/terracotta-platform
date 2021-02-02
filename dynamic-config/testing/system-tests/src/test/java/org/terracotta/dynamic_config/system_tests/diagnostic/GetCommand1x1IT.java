@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.not;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
 @ClusterDefinition
@@ -29,7 +30,7 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   public void testNode_getOneOffheap_unknownOffheap() {
     assertThat(
         invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.blah"),
-        containsOutput("offheap-resources.blah="));
+        not(containsOutput("offheap-resources.blah=")));
   }
 
   @Test

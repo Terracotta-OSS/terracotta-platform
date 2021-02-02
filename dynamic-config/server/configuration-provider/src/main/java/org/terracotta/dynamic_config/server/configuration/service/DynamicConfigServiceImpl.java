@@ -253,7 +253,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
           upcomingNodeContext = upcomingNodeContext.withCluster(upcomingCluster).orElseGet(upcomingNodeContext::alone);
           // if the change can be applied at runtime, it was previously done in the config change handler.
           // so update also the runtime topology there
-          if (nomadChange.canUpdateRuntimeTopology(upcomingNodeContext)) {
+          if (nomadChange.canUpdateRuntimeTopology(runtimeNodeContext)) {
             Cluster runtimeCluster = nomadChange.apply(runtimeNodeContext.getCluster());
             runtimeNodeContext = runtimeNodeContext.withCluster(runtimeCluster).orElseGet(runtimeNodeContext::alone);
           }
