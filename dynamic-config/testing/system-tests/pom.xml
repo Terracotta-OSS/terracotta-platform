@@ -145,8 +145,7 @@
             <angela.tsa.fullLogging>true</angela.tsa.fullLogging>
             <angela.distribution>${project.version}</angela.distribution>
             <angela.kitInstallationDir>${project.build.directory}/angela/platform-kit-${project.version}</angela.kitInstallationDir>
-            <angela.java.vendor/> <!--empty to allow any vendor-->
-            <angela.java.version>${java.test.version}</angela.java.version>
+            <angela.java.resolver>user</angela.java.resolver>
             <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
           </systemPropertyVariables>
         </configuration>
