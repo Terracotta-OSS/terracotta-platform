@@ -39,7 +39,7 @@
     <terracotta-core.version>5.7.1-pre9</terracotta-core.version>
     <tripwire.version>1.0.0</tripwire.version>
     <galvan.version>1.5.0</galvan.version>
-    <angela.version>3.1.13</angela.version>
+    <angela.version>3.1.14</angela.version>
     <statistics.version>2.1</statistics.version>
     <jackson.version>2.10.5</jackson.version>
     <terracotta-utilities.version>0.0.6</terracotta-utilities.version>

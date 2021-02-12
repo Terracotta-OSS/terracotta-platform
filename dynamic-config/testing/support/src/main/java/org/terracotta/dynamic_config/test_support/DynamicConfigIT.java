@@ -300,9 +300,7 @@ public class DynamicConfigIT {
         .tsa(tsa -> tsa
             .clusterName(CLUSTER_NAME)
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
-            .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT
-                .withJavaOpts("-Xms32m -Xmx256m")
-                .withJavaHome(System.getProperty("java.home")))
+            .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms32m -Xmx256m"))
             .topology(new Topology(
                 getDistribution(),
                 netDisruptionEnabled,
@@ -315,9 +313,7 @@ public class DynamicConfigIT {
         .configTool(context -> context
             .distribution(getDistribution())
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
-            .commandLineEnv(TerracottaCommandLineEnvironment.DEFAULT
-                .withJavaOpts("-Xms8m -Xmx128m")
-                .withJavaHome(System.getProperty("java.home")))
+            .commandLineEnv(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m -Xmx128m"))
             .configTool(configTool("config-tool", "localhost")));
   }
 
