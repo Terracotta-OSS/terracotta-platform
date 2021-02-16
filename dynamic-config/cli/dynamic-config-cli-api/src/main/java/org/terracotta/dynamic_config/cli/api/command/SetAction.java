@@ -63,6 +63,7 @@ public class SetAction extends ConfigurationMutationAction {
       Collection<Node.Endpoint> peers = findRuntimePeers(node);
       LOGGER.debug("Importing license: {} on nodes: {}", licenseFile, toString(peers));
       upgradeLicense(peers, licenseFile);
+      output.info("License installation successful.");
     }
   }
 }
