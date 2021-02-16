@@ -52,6 +52,11 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
   @Override
   public void run() {
     validate();
+    if (configurations.size() == 0) {
+      // no remaining configuration changes left to process
+      output.info("Command successful!");
+      return;
+    }
     LOGGER.debug("Validating the new configuration change(s) against the topology of: {}", node);
 
     // get the remote topology, apply the parameters, and validate that the cluster is still valid
