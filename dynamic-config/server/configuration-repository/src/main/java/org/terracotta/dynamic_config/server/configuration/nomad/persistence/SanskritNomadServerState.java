@@ -195,7 +195,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
     }
     try {
       final Config config = configStorage.getConfig(currentVersion);
-      return Optional.ofNullable(config.getTopology());
+      return Optional.of(config.getTopology());
     } catch (ConfigStorageException e) {
       throw new NomadException("Failed to load current configuration", e);
     }
