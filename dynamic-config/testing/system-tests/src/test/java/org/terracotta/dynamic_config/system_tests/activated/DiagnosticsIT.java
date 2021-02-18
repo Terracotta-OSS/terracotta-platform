@@ -30,6 +30,8 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(autoActivate = true)
 public class DiagnosticsIT extends DynamicConfigIT {
@@ -47,7 +49,7 @@ public class DiagnosticsIT extends DynamicConfigIT {
       assertThat(diagnostics.getConfig(), not(containsString(newOffheapName)));
     }
 
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=" + newOffheapName + ":1GB");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=" + newOffheapName + ":1GB"), is(successful()));
 
     try (Connection connection =
              ConnectionFactory.connect(singletonList(getNodeAddress(1, 1)), properties)) {

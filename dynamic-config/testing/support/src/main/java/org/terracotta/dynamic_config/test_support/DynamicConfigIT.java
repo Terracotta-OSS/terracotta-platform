@@ -28,6 +28,7 @@ import org.terracotta.angela.client.filesystem.RemoteFolder;
 import org.terracotta.angela.client.support.junit.AngelaRule;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
+import org.terracotta.angela.common.TerracottaConfigTool;
 import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.angela.common.distribution.Distribution;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
@@ -47,7 +48,6 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.json.ObjectMapperFactory;
-import org.terracotta.testing.ExceptionMatcher;
 import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.TmpDir;
 
@@ -78,15 +78,12 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.util.stream.IntStream.rangeClosed;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
-import static org.terracotta.angela.common.TerracottaConfigTool.configTool;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
@@ -99,7 +96,6 @@ import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
-import static org.terracotta.testing.ExceptionMatcher.throwing;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
 
@@ -236,18 +232,18 @@ public class DynamicConfigIT {
   protected ToolExecutionResult activateCluster(String name) {
     Path licensePath = getLicensePath();
     ToolExecutionResult result = licensePath == null ?
-        invokeConfigTool("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
-        invokeConfigTool("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
+        configTool("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
+        configTool("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
     assertThat(result, is(successful()));
     waitForActive(1);
     return result;
   }
 
-  protected ToolExecutionResult invokeConfigTool(String... cli) {
-    return invokeConfigTool(Collections.emptyMap(), cli);
+  protected ToolExecutionResult configTool(String... cli) {
+    return configTool(Collections.emptyMap(), cli);
   }
 
-  protected ToolExecutionResult invokeConfigTool(Map<String, String> env, String... cli) {
+  protected ToolExecutionResult configTool(Map<String, String> env, String... cli) {
     List<String> enhancedCli = new ArrayList<>(cli.length);
     List<String> configToolOptions = getConfigToolOptions(cli);
 
@@ -314,7 +310,7 @@ public class DynamicConfigIT {
             .distribution(getDistribution())
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
             .commandLineEnv(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m -Xmx128m"))
-            .configTool(configTool("config-tool", "localhost")));
+            .configTool(TerracottaConfigTool.configTool("config-tool", "localhost")));
   }
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
@@ -532,10 +528,6 @@ public class DynamicConfigIT {
 
   protected Duration getAssertTimeout() {
     return ASSERT_TIMEOUT;
-  }
-
-  protected Matcher<ExceptionMatcher.Closure> exceptionMatcher(String message) {
-    return is(throwing(instanceOf(RuntimeException.class)).andMessage(containsString(message)));
   }
 
   protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {

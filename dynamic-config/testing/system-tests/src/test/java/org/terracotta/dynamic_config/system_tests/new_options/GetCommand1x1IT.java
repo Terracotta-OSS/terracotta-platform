@@ -27,8 +27,8 @@ public class GetCommand1x1IT extends DynamicConfigIT {
 
   @Test
   public void test_getUID() {
-    assertThat(invokeConfigTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "cluster-uid"), containsOutput("cluster-uid="));
-    assertThat(invokeConfigTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "node-uid"), containsOutput("node-uid="));
-    assertThat(invokeConfigTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "stripe-uid"), containsOutput("stripe-uid="));
+    assertThat(configTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "cluster-uid"), containsOutput("cluster-uid="));
+    assertThat(configTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "node-uid"), containsOutput("node-uid="));
+    assertThat(configTool("get", "-connect-to", "localhost:" + getNodePort(), "-setting", "stripe-uid"), containsOutput("stripe-uid="));
   }
 }

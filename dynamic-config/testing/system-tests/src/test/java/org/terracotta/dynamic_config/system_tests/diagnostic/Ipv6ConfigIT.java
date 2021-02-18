@@ -24,8 +24,10 @@ import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 
 import java.nio.file.Path;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class Ipv6ConfigIT extends DynamicConfigIT {
@@ -38,7 +40,7 @@ public class Ipv6ConfigIT extends DynamicConfigIT {
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "[::1]", "-p", String.valueOf(getNodePort()), "-r", "config/stripe1/node-1-1");
     waitForDiagnostic(1, 1);
 
-    invokeConfigTool("export", "-s", "[::1]:" + getNodePort(), "-f", "output.json", "-t", "json");
+    assertThat(configTool("export", "-s", "[::1]:" + getNodePort(), "-f", "output.json", "-t", "json"), is(successful()));
     stopNode(1, 1);
 
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "::1", "-p", String.valueOf(getNodePort()), "-r", "config/stripe1/node-1-1");
@@ -52,7 +54,7 @@ public class Ipv6ConfigIT extends DynamicConfigIT {
     waitForActive(1, 1);
 
     assertThat(
-        invokeConfigTool("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"),
+        configTool("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"),
         containsOutput("offheap-resources.main=512MB"));
   }
 }

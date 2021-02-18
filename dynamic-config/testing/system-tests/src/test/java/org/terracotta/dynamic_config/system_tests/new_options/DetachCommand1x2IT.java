@@ -23,6 +23,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -35,7 +36,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
 
-    invokeConfigTool("detach", "-force", "-from-stripe", "localhost:" + getNodePort(1, passiveId), "-node", "localhost:" + getNodePort(1, activeId));
+    assertThat(configTool("detach", "-force", "-from-stripe", "localhost:" + getNodePort(1, passiveId), "-node", "localhost:" + getNodePort(1, activeId)), is(successful()));
 
     // failover - existing passive becomes active
     waitForActive(1, passiveId);

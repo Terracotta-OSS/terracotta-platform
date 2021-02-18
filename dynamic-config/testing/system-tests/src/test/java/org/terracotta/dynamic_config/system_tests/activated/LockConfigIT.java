@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Test;
+import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -34,6 +35,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class LockConfigIT extends DynamicConfigIT {
@@ -53,8 +55,8 @@ public class LockConfigIT extends DynamicConfigIT {
     lock();
 
     assertThat(
-        () -> invokeWithoutToken("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.test=123MB"),
-        exceptionMatcher("changes are not allowed as config is locked by 'platform (dynamic-scale)'")
+        invokeWithoutToken("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.test=123MB"),
+        containsOutput("changes are not allowed as config is locked by 'platform (dynamic-scale)'")
     );
 
     unlock();
@@ -85,7 +87,7 @@ public class LockConfigIT extends DynamicConfigIT {
     activate();
     lock();
     assertThat(
-        invokeConfigTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort()),
         containsOutput("lock-context=" + lockContext));
   }
 
@@ -106,7 +108,7 @@ public class LockConfigIT extends DynamicConfigIT {
     // we will be able to add it through a restrictive activation
     // For a node to be able to join a topology, it needs to have EXACTLY the same topology information of the target cluster
     Path exportedConfigPath = tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath();
-    invokeConfigTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportedConfigPath.toString());
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportedConfigPath.toString()), is(successful()));
     //System.out.println(new String(Files.readAllBytes(exportedConfigPath), StandardCharsets.UTF_8));
     assertThat(Props.toString(Props.load(exportedConfigPath)), Props.load(exportedConfigPath).stringPropertyNames(), hasItem("lock-context"));
 
@@ -114,7 +116,7 @@ public class LockConfigIT extends DynamicConfigIT {
     waitForDiagnostic(1, 2);
 
     assertThat(
-        invokeConfigTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportedConfigPath.toString()),
+        configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportedConfigPath.toString()),
         allOf(containsOutput("No license installed"), containsOutput("came back up")));
   }
 
@@ -122,16 +124,16 @@ public class LockConfigIT extends DynamicConfigIT {
   public void testLockContextCliUsage() throws Exception {
     activate();
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "lock-context=" + lockContext),
-        exceptionMatcher("'lock-context' is not supported")
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "lock-context=" + lockContext),
+        containsOutput("'lock-context' is not supported")
     );
     assertThat(
-        () -> invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "lock-context"),
-        exceptionMatcher("'lock-context' is not supported")
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "lock-context"),
+        containsOutput("'lock-context' is not supported")
     );
     assertThat(
-        () -> invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "lock-context"),
-        exceptionMatcher("'lock-context' is not supported")
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "lock-context"),
+        containsOutput("'lock-context' is not supported")
     );
   }
 
@@ -143,14 +145,14 @@ public class LockConfigIT extends DynamicConfigIT {
     invokeWithToken("unlock-config", "-s", "localhost:" + getNodePort());
   }
 
-  private void invokeWithoutToken(String... args) {
-    invokeConfigTool(args);
+  private ToolExecutionResult invokeWithoutToken(String... args) {
+    return configTool(args);
   }
 
   private void invokeWithToken(String... args) {
     List<String> newArgs = new ArrayList<>(asList("--lock-token", lockContext.getToken()));
     newArgs.addAll(asList(args));
-    invokeConfigTool(newArgs.toArray(new String[0]));
+    assertThat(configTool(newArgs.toArray(new String[0])), is(successful()));
   }
 
   private void activate() throws Exception {
@@ -164,7 +166,7 @@ public class LockConfigIT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     //Activate cluster
     activateCluster();

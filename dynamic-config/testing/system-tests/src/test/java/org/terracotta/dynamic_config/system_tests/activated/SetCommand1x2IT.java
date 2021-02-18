@@ -20,17 +20,19 @@ import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class SetCommand1x2IT extends DynamicConfigIT {
   @Test
   public void testCluster_setClientReconnectWindow() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s"), is(successful()));
 
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
         containsOutput("client-reconnect-window=10s"));
   }
 
@@ -39,8 +41,8 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     int passiveId = findPassives(1)[0];
     RawPath metadataDir = usingTopologyService(1, passiveId, topologyService -> topologyService.getUpcomingNodeContext().getNode().getMetadataDir().orDefault());
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir=foo"),
-        exceptionMatcher("Setting 'metadata-dir' cannot be set when node is activated"));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir=foo"),
+        containsOutput("Setting 'metadata-dir' cannot be set when node is activated"));
 
     // kill active and wait for passive to become active
     stopNode(1, passiveId == 1 ? 2 : 1);
@@ -52,7 +54,7 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
     // Finally ensure that metadata-dir has remain unchanged
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir"),
         containsOutput(metadataDir.toString()));
   }
 
@@ -63,15 +65,15 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     stopNode(1, passiveId);
 
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node." + passiveId + ".log-dir=foo"),
-        exceptionMatcher("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
+        configTool("-t", "20s", "set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node." + passiveId + ".log-dir=foo"),
+        containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
 
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.log-dir=foo"),
-        exceptionMatcher("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
+        configTool("-t", "20s", "set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.log-dir=foo"),
+        containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
 
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "log-dir=foo"),
-        exceptionMatcher("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
+        configTool("-t", "20s", "set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "log-dir=foo"),
+        containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
   }
 }

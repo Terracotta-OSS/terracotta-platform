@@ -127,7 +127,7 @@ public class ClusterValidator {
         .findFirst()
         .ifPresent(node -> {
           throw new MalformedClusterException("Public address: '" + (node.getPublicHostname().orDefault() + ":" + node.getPublicPort().orDefault())
-              + "' of node with name: " + node.getName() + " isn't well-formed. Public hostname and port need to be set together");
+              + "' of node with name: " + node.getName() + " isn't well-formed. Public hostname and port need to be set (or unset) together");
         });
   }
 

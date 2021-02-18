@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import java.time.Duration;
 
 import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
 /**
  * @author Mathieu Carbou
@@ -36,7 +37,7 @@ public class DetachCommand2x1IT extends DynamicConfigIT {
   @Test
   public void test_cannot_detach_leading_stripe() {
     assertThat(
-        () -> invokeConfigTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(1, 1)),
-        exceptionMatcher("Removing the leading stripe is not allowed"));
+        configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(1, 1)),
+        containsOutput("Removing the leading stripe is not allowed"));
   }
 }
