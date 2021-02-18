@@ -556,7 +556,7 @@ public class Configuration {
     // if the config is not a map or is a map but with one key, we do not have a compound value like:
     // - data-dirs=foo:bar
     // - data-dirs=foo:bar,foo2:bar2
-    if (!setting.isMap() || key != null) {
+    if (!setting.isMap() || key != null || !hasValue()) {
       return Collections.singletonList(this);
     }
     String[] keyValue = rawInput.split("=", 2);

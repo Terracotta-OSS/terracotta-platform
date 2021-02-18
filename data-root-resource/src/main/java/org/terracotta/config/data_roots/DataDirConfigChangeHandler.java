@@ -48,55 +48,59 @@ public class DataDirConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
-    if (!change.hasValue()) {
+  public void validate(NodeContext baseConfig, Configuration changes) throws InvalidConfigChangeException {
+    if (!changes.hasValue()) {
       throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
 
-    Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().toPath()));
-    LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
+    for (Configuration change : changes.expand()) {
+      Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().toPath()));
+      LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
 
-    String dataDirectoryName = change.getKey();
-    Path substitutedDataDirPath = substitute(Paths.get(change.getValue().get()));
+      String dataDirectoryName = change.getKey();
+      Path substitutedDataDirPath = substitute(Paths.get(change.getValue().get()));
 
-    if (dataDirs.containsKey(dataDirectoryName)) {
-      throw new InvalidConfigChangeException("A data directory with name: " + dataDirectoryName + " already exists");
-    }
-
-    for (Map.Entry<String, Path> entry : dataDirs.entrySet()) {
-      if (overLaps(substitute(entry.getValue()), substitutedDataDirPath)) {
-        throw new InvalidConfigChangeException("Data directory: " + dataDirectoryName + " overlaps with: " + entry.getKey());
-      }
-    }
-
-    if (!substitutedDataDirPath.toFile().exists()) {
-      try {
-        Files.createDirectories(substitutedDataDirPath);
-      } catch (Exception e) {
-        throw new InvalidConfigChangeException(e.toString(), e);
-      }
-    } else {
-      if (!Files.isDirectory(substitutedDataDirPath)) {
-        throw new InvalidConfigChangeException(substitutedDataDirPath + " exists, but is not a directory");
+      if (dataDirs.containsKey(dataDirectoryName)) {
+        throw new InvalidConfigChangeException("A data directory with name: " + dataDirectoryName + " already exists");
       }
 
-      if (!Files.isReadable(substitutedDataDirPath)) {
-        throw new InvalidConfigChangeException("Directory: " + substitutedDataDirPath + " doesn't have read permissions" +
-            " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
+      for (Map.Entry<String, Path> entry : dataDirs.entrySet()) {
+        if (overLaps(substitute(entry.getValue()), substitutedDataDirPath)) {
+          throw new InvalidConfigChangeException("Data directory: " + dataDirectoryName + " overlaps with: " + entry.getKey());
+        }
       }
 
-      if (!Files.isWritable(substitutedDataDirPath)) {
-        throw new InvalidConfigChangeException("Directory: " + substitutedDataDirPath + " doesn't have write permissions" +
-            " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
+      if (!substitutedDataDirPath.toFile().exists()) {
+        try {
+          Files.createDirectories(substitutedDataDirPath);
+        } catch (Exception e) {
+          throw new InvalidConfigChangeException(e.toString(), e);
+        }
+      } else {
+        if (!Files.isDirectory(substitutedDataDirPath)) {
+          throw new InvalidConfigChangeException(substitutedDataDirPath + " exists, but is not a directory");
+        }
+
+        if (!Files.isReadable(substitutedDataDirPath)) {
+          throw new InvalidConfigChangeException("Directory: " + substitutedDataDirPath + " doesn't have read permissions" +
+              " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
+        }
+
+        if (!Files.isWritable(substitutedDataDirPath)) {
+          throw new InvalidConfigChangeException("Directory: " + substitutedDataDirPath + " doesn't have write permissions" +
+              " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
+        }
       }
     }
   }
 
   @Override
-  public void apply(Configuration change) {
-    String dataDirectoryName = change.getKey();
-    String dataDirectoryPath = change.getValue().get();
-    dataDirsConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
+  public void apply(Configuration changes) {
+    for (Configuration change : changes.expand()) {
+      String dataDirectoryName = change.getKey();
+      String dataDirectoryPath = change.getValue().get();
+      dataDirsConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
+    }
   }
 
   public boolean overLaps(Path existing, Path newDataDirPath) {

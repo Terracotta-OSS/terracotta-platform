@@ -181,14 +181,14 @@ public class ClusterValidatorTest {
   @Test
   public void testMalformedPublicAddress_missingPublicPort() {
     Node node = newTestNode("foo", "localhost").setPublicHostname("public-host");
-    assertClusterValidationFails("Public address: 'public-host:null' of node with name: foo isn't well-formed. Public hostname and port need to be set together",
+    assertClusterValidationFails("Public address: 'public-host:null' of node with name: foo isn't well-formed. Public hostname and port need to be set (or unset) together",
         newTestCluster(newTestStripe("stripe1").addNodes(node)));
   }
 
   @Test
   public void testMalformedPublicAddress_missingPublicHostname() {
     Node node = newTestNode("foo", "localhost").setPublicPort(9410);
-    assertClusterValidationFails("Public address: 'null:9410' of node with name: foo isn't well-formed. Public hostname and port need to be set together",
+    assertClusterValidationFails("Public address: 'null:9410' of node with name: foo isn't well-formed. Public hostname and port need to be set (or unset) together",
         newTestCluster(newTestStripe("stripe1").addNodes(node)));
   }
 
