@@ -33,11 +33,6 @@ import static java.util.Objects.requireNonNull;
 import static java.util.Optional.empty;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.terracotta.dynamic_config.api.model.Operation.GET;
-import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
-import static org.terracotta.dynamic_config.api.model.Operation.SET;
-import static org.terracotta.dynamic_config.api.model.Operation.UNSET;
-import static org.terracotta.dynamic_config.api.model.Requirement.RESOLVE_EAGERLY;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
@@ -239,10 +234,10 @@ public class Configuration {
     this.stripeId = stripeId;
     this.nodeId = nodeId;
     this.key = key;
-    this.value = value == null ? "" : value.trim();
+    this.value = value == null ? null : value.trim();
 
     // pre-validate with the real value taken from input
-    preValidate(value);
+    preValidate();
   }
 
   public Scope getLevel() {
@@ -273,7 +268,11 @@ public class Configuration {
     return getValue().isPresent();
   }
 
-  private void preValidate(String rawValue) {
+  public boolean isSet() {
+    return value != null;
+  }
+
+  private void preValidate() {
     if (!setting.isMap() && key != null) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' is not a map and must not have a key");
     }
@@ -286,75 +285,18 @@ public class Configuration {
     if (!setting.allows(level)) {
       throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' does not allow any operation at " + level + " level");
     }
-    if (rawValue == null) {
-      // equivalent to a get or unset command - we do not know yet, so we cannot pre-validate
-      // byt if the setting is not supporting both get and unset, then fail
-      if (!setting.allows(GET) && !setting.allows(UNSET)) {
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be read or cleared");
-      }
-    } else if (rawValue.isEmpty()) {
-      // equivalent to an unset or config because no value after equal sign
-      // - cluster-name= (in config file)
-      // - unset backup-dir=
-      // - set backup-dir=
-      if (setting.mustBePresent() || !setting.canBeCleared(level)) {
-        // cannot unset a required value
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' requires a value");
-      }
-    } else {
-      // equivalent to a set because we have a value
-      if (!setting.allows(SET) && !setting.allows(IMPORT)) {
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set");
-      } else if (!setting.allows(SET, level) && !setting.allows(IMPORT, level)) {
-        throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be set at " + level + " level");
-      }
-      // check the value if we have one
-      if (!Substitutor.containsSubstitutionParams(value)) {
-        try {
-          setting.validate(key, value);
-        } catch (RuntimeException e) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + e.getMessage(), e);
-        }
-      }
+    try {
+      setting.validate(key, value, level);
+    } catch (RuntimeException e) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + e.getMessage(), e);
     }
   }
 
   public void validate(ClusterState clusterState, Operation operation) {
-    if (!clusterState.supports(operation)) {
-      throw new AssertionError("Programmatic mistake: tried to validate operation " + operation + " when " + clusterState);
-    }
-    if (!setting.allows(operation)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation);
-    }
-    if (!setting.allows(clusterState, operation)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " when " + clusterState);
-    }
-    if (!setting.allows(clusterState, operation, level)) {
-      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Setting '" + setting + "' cannot be " + operation + " at " + level + " level when " + clusterState);
-    }
-    switch (operation) {
-      case GET:
-      case UNSET:
-        if (getValue().isPresent()) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " must not have a value");
-        }
-        break;
-      case SET:
-        if (!getValue().isPresent()) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
-        }
-        break;
-      case IMPORT:
-        if (!getValue().isPresent() && setting.mustBePresent()) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: Operation " + operation + " requires a value");
-        }
-        // ensure that properties requiring an eager resolve are resolved
-        if (setting.requires(RESOLVE_EAGERLY) && Substitutor.containsSubstitutionParams(value)) {
-          throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Placeholders are not allowed");
-        }
-        break;
-      default:
-        throw new AssertionError(operation);
+    try {
+      setting.validate(key, value, level, clusterState, operation);
+    } catch (RuntimeException e) {
+      throw new IllegalArgumentException("Invalid input: '" + rawInput + "'. Reason: " + e.getMessage(), e);
     }
   }
 
@@ -675,21 +617,6 @@ public class Configuration {
     }
 
     throw new IllegalArgumentException("Invalid input: '" + input + "'");
-  }
-
-  public static Configuration valueOf(Setting setting) {
-    String val = setting.getDefaultProperty().orElse("");
-    return new Configuration(setting + "=" + val, setting, CLUSTER, null, null, null, val);
-  }
-
-  public static Configuration valueOf(Setting setting, int stripeId) {
-    String val = setting.getDefaultProperty().orElse("");
-    return new Configuration("stripe." + stripeId + "." + setting + "=" + val, setting, STRIPE, stripeId, null, null, val);
-  }
-
-  public static Configuration valueOf(Setting setting, int stripeId, int nodeId) {
-    String val = setting.getDefaultProperty().orElse("");
-    return new Configuration("stripe." + stripeId + ".node." + nodeId + "." + setting + "=" + val, setting, NODE, stripeId, nodeId, null, val);
   }
 
   private static Optional<Node> getNode(Stripe stripe, int nodeId) {

@@ -132,7 +132,7 @@ public class ConfigurationParserTest {
     assertConfigFail(config(), "No configuration provided");
 
     // placeholder forbidden for hostname
-    assertConfigFail(config("failover-priority=availability", "stripe.1.node.1.hostname=%h"), "Invalid input: 'stripe.1.node.1.hostname=%h'. Placeholders are not allowed");
+    assertConfigFail(config("failover-priority=availability", "stripe.1.node.1.hostname=%h"), "Invalid input: 'stripe.1.node.1.hostname=%h'. Reason: Placeholders are not allowed");
     assertConfigFail(config(
         "failover-priority=availability",
         "stripe.1.stripe-name=<GENERATED>",
