@@ -30,6 +30,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 3, autoStart = false)
 public class AttachInConsistency1x3IT extends DynamicConfigIT {
@@ -57,7 +59,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     //Activate cluster
     activateCluster();
@@ -68,7 +70,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
   @Test
   public void testAttachNodeFailAtPrepare() throws Exception {
     //create prepare failure on active
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
 
     startNode(1, 3);
     waitForDiagnostic(1, 3);
@@ -76,8 +78,8 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     // attach failure (forcing attach otherwise we have to restart cluster)
     assertThat(
-        () -> invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)),
-        exceptionMatcher("Two-Phase commit failed"));
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)),
+        containsOutput("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
@@ -99,11 +101,11 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     //create failover in prepare phase for active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-prepare";
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     assertThat(
-        () -> invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)),
-        exceptionMatcher("Two-Phase commit failed"));
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)),
+        containsOutput("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
@@ -129,12 +131,12 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     //setup for failover in commit phase on active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     // active died and passive can't become active
     assertThat(
-        () -> invokeConfigTool("-er", "40s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)),
-        exceptionMatcher("Two-Phase commit failed"));
+        configTool("-er", "40s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)),
+        containsOutput("Two-Phase commit failed"));
 
     //start the old active and verify it is in passive state
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());

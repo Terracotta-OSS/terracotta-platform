@@ -39,6 +39,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 3, autoStart = false, netDisruptionEnabled = true)
@@ -73,8 +74,8 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     setClientServerDisruptionLinks(Collections.singletonMap(1, 3));
 
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
     setServerDisruptionLinks(Collections.singletonMap(1, 3));
     activateCluster();
@@ -111,8 +112,8 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
       }
 
       assertThat(
-          () -> invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, oldActiveId), "-s", "localhost:" + getNodePort(1, newActiveId)),
-          exceptionMatcher("Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update."));
+          configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, oldActiveId), "-s", "localhost:" + getNodePort(1, newActiveId)),
+          containsOutput("Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update."));
 
       //stop partition
       disruptor.undisrupt();
@@ -170,8 +171,8 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
         clientToServerDisruptor.disrupt(Collections.singletonList(active.getServerSymbolicName()));
         int newActivePublicPort = map.get(newActive.getServerSymbolicName());
         int newPassivePublicPort = map.get(newPassive.getServerSymbolicName());
-        assertThat(() -> invokeConfigTool("detach", "-f", "-d", "localhost:" + newActivePublicPort, "-s", "localhost:" + newPassivePublicPort),
-            exceptionMatcher("Nomad system is currently not accessible."));
+        assertThat(configTool("detach", "-f", "-d", "localhost:" + newActivePublicPort, "-s", "localhost:" + newPassivePublicPort),
+            containsOutput("Nomad system is currently not accessible."));
         clientToServerDisruptor.undisrupt(Collections.singletonList(active.getServerSymbolicName()));
       }
       //stop partition

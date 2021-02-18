@@ -54,7 +54,7 @@ public class AttachStripeIT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     //Activate cluster
     activateCluster();
@@ -73,10 +73,10 @@ public class AttachStripeIT extends DynamicConfigIT {
     startNode(2, 2);
     waitForDiagnostic(2, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 2)).getNodeCount(), is(equalTo(1)));
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
 
     // attach the new stripe to the activated 1x2 cluster to form a 2x2 cluster
-    assertThat(invokeConfigTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+    assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
     waitForNPassives(2, 1);
 
     // verify the #nodes in the new topology of the cluster
@@ -104,7 +104,7 @@ public class AttachStripeIT extends DynamicConfigIT {
     waitForDiagnostic(2, 1);
     startNode(2, 2);
     waitForDiagnostic(2, 2);
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
 
     final int activeId = findActive(1).getAsInt();
 
@@ -125,7 +125,7 @@ public class AttachStripeIT extends DynamicConfigIT {
         }
       });
 
-      invokeConfigTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(2, 1));
+      assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
 
       called.await();
     }

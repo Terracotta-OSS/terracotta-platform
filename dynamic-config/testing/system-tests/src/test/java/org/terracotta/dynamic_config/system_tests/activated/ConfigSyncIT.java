@@ -40,11 +40,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_STATE;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_VERSION;
@@ -52,7 +53,6 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MODE;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
 import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
-import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
@@ -82,7 +82,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     stopNode(1, passiveNodeId);
     assertThat(angela.tsa().getStopped().size(), is(1));
 
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB"), is(successful()));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
@@ -111,8 +111,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // active entity will return with the failure
     // passive entity will not fail and commit
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
-        is(throwing(instanceOf(RuntimeException.class))));
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
+        is(not(successful())));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
@@ -136,8 +136,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // but passive is fine
     // when passive restarts, its history is greater and not equal to the active, so it zaps
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
-        is(throwing(instanceOf(RuntimeException.class))));
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
+        is(not(successful())));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
 
@@ -166,7 +166,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // active entity will return with no failure
     // passive entity will fail and restart the passive server
     // passive server will sync and repair itself
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + passiveNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + passiveNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"), is(successful()));
 
     waitForPassiveReplication();
 

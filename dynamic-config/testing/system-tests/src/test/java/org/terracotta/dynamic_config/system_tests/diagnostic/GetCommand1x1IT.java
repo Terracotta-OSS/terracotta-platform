@@ -29,21 +29,21 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void testNode_getOneOffheap_unknownOffheap() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.blah"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.blah"),
         not(containsOutput("offheap-resources.blah=")));
   }
 
   @Test
   public void testNode_getOneOffheap() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
         containsOutput("offheap-resources.main=512MB"));
   }
 
   @Test
   public void testNode_getTwoOffheaps() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "offheap-resources.foo"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "offheap-resources.foo"),
         allOf(
             containsOutput("offheap-resources.main=512MB"),
             containsOutput("offheap-resources.foo=1GB")));
@@ -52,35 +52,35 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void testNode_getAllOffheaps() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
         containsOutput("offheap-resources=foo:1GB,main:512MB"));
   }
 
   @Test
   public void testNode_getAllDataDirs() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs"),
         containsOutput("stripe.1.node.1.data-dirs=main:node-1-1/data-dir"));
   }
 
   @Test
   public void testNode_getClientReconnectWindow() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
         containsOutput("client-reconnect-window=120s"));
   }
 
   @Test
   public void testNode_getNodePort() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.port"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.port"),
         containsOutput("stripe.1.node.1.port=" + getNodePort()));
   }
 
   @Test
   public void test_getUID() {
-    assertThat(invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "cluster-uid"), containsOutput("cluster-uid="));
-    assertThat(invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "node-uid"), containsOutput("node-uid="));
-    assertThat(invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe-uid"), containsOutput("stripe-uid="));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "cluster-uid"), containsOutput("cluster-uid="));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "node-uid"), containsOutput("node-uid="));
+    assertThat(configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe-uid"), containsOutput("stripe-uid="));
   }
 }

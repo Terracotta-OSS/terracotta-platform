@@ -39,7 +39,7 @@ public class Ipv6ConfigActivationIT extends DynamicConfigIT {
     waitForActive(1, 1);
 
     assertThat(
-        invokeConfigTool("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"),
+        configTool("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"),
         containsOutput("offheap-resources.main=512MB"));
   }
 }

@@ -20,19 +20,17 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.time.Duration;
-import java.util.Arrays;
 
 import static java.util.Collections.emptyMap;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.both;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.testing.ExceptionMatcher.throwing;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(autoActivate = true)
 public class RepairCommand1x1IT extends DynamicConfigIT {
@@ -45,20 +43,24 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
   @Test
   public void test_auto_repair_commit_failure() throws Exception {
     assertThat(
-        () -> invokeConfigTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
-        is(throwing(instanceOf(RuntimeException.class)).andMessage(allOf(
-            containsString("Commit failed for node localhost:" + getNodePort() + ". Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (on node UID: "),
-            containsString("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")))));
+        configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        is(both(not(successful())).and(allOf(
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (on node UID: "),
+            containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")))));
 
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), is(equalTo(emptyMap())));
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), is(equalTo(emptyMap())));
 
     assertThat(
-        () -> invokeConfigTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
-        is(throwing(instanceOf(RuntimeException.class)).andMessage(stringContainsInOrder(Arrays.asList("Another change (with UUID ", " is already underway on ", ". It was started by ", " on ")))));
+        configTool("set", "-connect-to", "localhost:" + getNodePort(), "-setting", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        is(both(not(successful())).and(allOf(
+            containsOutput("Another change (with UUID "),
+            containsOutput(" is already underway on "),
+            containsOutput(". It was started by ")
+        ))));
 
     assertThat(
-        invokeConfigTool("repair", "-connect-to", "localhost:" + getNodePort()),
+        configTool("repair", "-connect-to", "localhost:" + getNodePort()),
         allOf(
             containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));

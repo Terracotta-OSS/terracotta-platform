@@ -30,6 +30,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AttachInConsistency1x2IT extends DynamicConfigIT {
@@ -59,7 +60,7 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // attach
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     waitForPassive(1, 2);
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
@@ -86,7 +87,7 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
 
     // do a change requiring a restart
     assertThat(
-        invokeConfigTool("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"),
+        configTool("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"),
         containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
 
     // start a second node
@@ -94,7 +95,7 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
     waitForDiagnostic(1, 2);
 
     // try forcing the attach
-    invokeConfigTool("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     waitForPassive(1, 2);
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));

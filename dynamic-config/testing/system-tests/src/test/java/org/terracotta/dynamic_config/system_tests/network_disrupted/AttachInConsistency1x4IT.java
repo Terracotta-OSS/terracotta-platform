@@ -40,6 +40,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 4, autoStart = false, netDisruptionEnabled = true)
@@ -75,9 +76,9 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     setClientServerDisruptionLinks(Collections.singletonMap(1, 3));
 
     //attach the second node
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     //attach the third node
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
     setServerDisruptionLinks(Collections.singletonMap(1, 3));
     //Activate cluster
@@ -111,8 +112,8 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
       assertThat(newActive, is(notNullValue()));
 
       assertThat(
-          () -> invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 4)),
-          exceptionMatcher("Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update."));
+          configTool("attach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 4)),
+          containsOutput("Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update."));
 
       //stop partition
       disruptor.undisrupt();
@@ -163,10 +164,10 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
         clientToServerDisruptor.disrupt(Collections.singletonList(active.getServerSymbolicName()));
         String publicHostName = "stripe.1.node.1.public-hostname=localhost";
         String publicPort = "stripe.1.node.1.public-port=" + getNodePort(1, 4);
-        assertThat(invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 4), "-c",
+        assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 4), "-c",
             publicHostName, "-c", publicPort), is(successful()));
         int publicPassivePort = map.get(passive.getServerSymbolicName());
-        assertThat(invokeConfigTool("attach", "-d", "localhost:" + publicPassivePort, "-s", "localhost:" + getNodePort(1, 4)),
+        assertThat(configTool("attach", "-d", "localhost:" + publicPassivePort, "-s", "localhost:" + getNodePort(1, 4)),
             is(successful()));
         clientToServerDisruptor.undisrupt(Collections.singletonList(active.getServerSymbolicName()));
       }
