@@ -77,6 +77,13 @@ public class ConfigSyncIT extends DynamicConfigIT {
     }
   }
 
+  @Override
+  protected Duration getConnectionTimeout() {
+    // increase connection timeout for test: testPassiveCanSyncAndRepairIfLatestChangeNotCommitted
+    // which needs to wait for a failover to happen
+    return Duration.ofMinutes(1);
+  }
+
   @Test
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
     stopNode(1, passiveNodeId);
