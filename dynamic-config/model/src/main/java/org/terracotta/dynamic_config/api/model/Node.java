@@ -245,14 +245,8 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node unsetLoggerOverrides() {
-    if (this.loggerOverrides != null) {
-      setLoggerOverrides(emptyMap());
-    } else {
-      Map<String, String> def = NODE_LOGGER_OVERRIDES.getDefaultValue();
-      if (def != null && !def.isEmpty()) {
-        setLoggerOverrides(emptyMap());
-      }
-    }
+    Map<String, String> def = NODE_LOGGER_OVERRIDES.getDefaultValue();
+    setLoggerOverrides(def == null || def.isEmpty() ? null : emptyMap());
     return this;
   }
 
@@ -288,14 +282,8 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node unsetTcProperties() {
-    if (this.tcProperties != null) {
-      setTcProperties(emptyMap());
-    } else {
-      Map<String, String> def = TC_PROPERTIES.getDefaultValue();
-      if (def != null && !def.isEmpty()) {
-        setTcProperties(emptyMap());
-      }
-    }
+    Map<String, String> def = TC_PROPERTIES.getDefaultValue();
+    setTcProperties(def == null || def.isEmpty() ? null : emptyMap());
     return this;
   }
 
@@ -331,14 +319,8 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node unsetDataDirs() {
-    if (this.dataDirs != null) {
-      setDataDirs(emptyMap());
-    } else {
-      Map<String, RawPath> def = DATA_DIRS.getDefaultValue();
-      if (def != null && !def.isEmpty()) {
-        setDataDirs(emptyMap());
-      }
-    }
+    Map<String, String> def = DATA_DIRS.getDefaultValue();
+    setDataDirs(def == null || def.isEmpty() ? null : emptyMap());
     return this;
   }
 

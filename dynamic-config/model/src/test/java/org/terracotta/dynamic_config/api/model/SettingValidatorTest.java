@@ -29,10 +29,8 @@ import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_W
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.DATA_DIRS;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
-import static org.terracotta.dynamic_config.api.model.Setting.LICENSE_FILE;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_CONFIG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
@@ -56,8 +54,8 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class SettingValidatorTest {
 
   @Test
-  public void test_defaults() {
-    validateDefaults(CLUSTER_NAME);
+  public void test_CLUSTER_NAME() {
+    validateOptional(CLUSTER_NAME);
     CLUSTER_NAME.validate(null); // cluster name can be set to null when loading config file
     CLUSTER_NAME.validate(""); // cluster name can be set to null when loading config file
     CLUSTER_NAME.validate("foo");
@@ -65,13 +63,10 @@ public class SettingValidatorTest {
 
   @Test
   public void test_NODE_NAME() {
-    validateDefaults(NODE_NAME);
-    assertThat(
-        () -> NODE_NAME.validate(null),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_NAME + " cannot be null or empty")))));
+    validateRequired(NODE_NAME);
     assertThat(
         () -> NODE_NAME.validate(""),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_NAME + " cannot be null or empty")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + NODE_NAME + "' requires a value")))));
     Stream.of("d", "D", "h", "c", "i", "H", "n", "o", "a", "v", "t", "(").forEach(c -> {
       assertThat(
           () -> NODE_NAME.validate("%" + c),
@@ -82,23 +77,20 @@ public class SettingValidatorTest {
 
   @Test
   public void test_NODE_HOSTNAME() {
-    validateDefaults(NODE_HOSTNAME);
+    validateRequired(NODE_HOSTNAME);
     assertThat(
         () -> NODE_HOSTNAME.validate(".."),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<address> specified in hostname=<address> must be a valid hostname or IP address")))));
     assertThat(
-        () -> NODE_HOSTNAME.validate(null),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_HOSTNAME + " cannot be null or empty")))));
-    assertThat(
         () -> NODE_HOSTNAME.validate(""),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_HOSTNAME + " cannot be null or empty")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + NODE_HOSTNAME + "' requires a value")))));
     NODE_HOSTNAME.validate("foo");
   }
 
   @Test
-  public void test_ports() {
-    Stream.of(NODE_PORT, NODE_GROUP_PORT).forEach(setting -> {
-      validateDefaults(setting);
+  public void test_NODE_PORT() {
+    Stream.of(NODE_PORT).forEach(setting -> {
+      validateRequired(setting);
       assertThat(
           () -> setting.validate("foo"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535")))));
@@ -109,50 +101,64 @@ public class SettingValidatorTest {
           () -> setting.validate("65536"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535")))));
       assertThat(
-          () -> setting.validate(null),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+          () -> setting.validate(""),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
+      setting.validate("9410");
+    });
+  }
+
+  @Test
+  public void test_NODE_GROUP_PORT() {
+    Stream.of(NODE_GROUP_PORT).forEach(setting -> {
+      validateRequired(setting);
+      assertThat(
+          () -> setting.validate("foo"),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535")))));
+      assertThat(
+          () -> setting.validate("0"),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535")))));
+      assertThat(
+          () -> setting.validate("65536"),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535")))));
       assertThat(
           () -> setting.validate(""),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
       setting.validate("9410");
+      setting.validate(null); // unset - switch back to default value
     });
   }
 
   @Test
   public void test_bind_addresses() {
     Stream.of(NODE_BIND_ADDRESS, NODE_GROUP_BIND_ADDRESS).forEach(setting -> {
-      validateDefaults(setting);
+      validateRequired(setting);
       assertThat(
           () -> setting.validate("my-hostname"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<address> specified in " + setting + "=<address> must be a valid IP address")))));
       assertThat(
-          () -> setting.validate(null),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
-      assertThat(
           () -> setting.validate(""),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
+      setting.validate(null); // unset - switch back to default value
       setting.validate("0.0.0.0");
     });
   }
 
   @Test
   public void test_paths() {
-    Stream.of(NODE_CONFIG_DIR, NODE_LOG_DIR, NODE_METADATA_DIR).forEach(setting -> {
-      validateDefaults(setting);
+    Stream.of(NODE_LOG_DIR, NODE_METADATA_DIR).forEach(setting -> {
+      validateRequired(setting);
       assertThat(
           () -> setting.validate("/\u0000/"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid path specified for setting " + setting + ": /\u0000/")))));
       assertThat(
-          () -> setting.validate(null),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
-      assertThat(
           () -> setting.validate(""),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
       setting.validate(".");
+      setting.validate(null); // unset - switch back to default value
     });
 
-    Stream.of(NODE_BACKUP_DIR, SECURITY_DIR, SECURITY_AUDIT_LOG_DIR, LICENSE_FILE).forEach(setting -> {
-      validateDefaults(setting);
+    Stream.of(NODE_BACKUP_DIR, SECURITY_DIR, SECURITY_AUDIT_LOG_DIR).forEach(setting -> {
+      validateOptional(setting);
       assertThat(
           () -> setting.validate("/\u0000/"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid path specified for setting " + setting + ": /\u0000/")))));
@@ -164,8 +170,9 @@ public class SettingValidatorTest {
   @Test
   public void test_TIMES() {
     Stream.of(CLIENT_RECONNECT_WINDOW, CLIENT_LEASE_DURATION).forEach(setting -> {
-      validateDefaults(setting);
+      validateRequired(setting);
       setting.validate("0s"); // ok - 0 allowed
+      setting.validate(null); // unset - switch back to default value
       assertThat(
           () -> setting.validate("foo"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: 'foo'. <unit> is missing or not recognized. It must be one of " + setting.getAllowedUnits() + ".")))));
@@ -183,13 +190,13 @@ public class SettingValidatorTest {
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Quantity measure cannot be negative")))));
       assertThat(
           () -> setting.validate(""),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
     });
   }
 
   @Test
   public void test_FAILOVER_PRIORITY() {
-    validateDefaults(FAILOVER_PRIORITY);
+    validateRequired(FAILOVER_PRIORITY);
     Stream.of(
         "foo",
         "availability:8",
@@ -212,7 +219,7 @@ public class SettingValidatorTest {
 
   @Test
   public void test_SECURITY_AUTHC() {
-    validateDefaults(SECURITY_AUTHC);
+    validateOptional(SECURITY_AUTHC);
     SECURITY_AUTHC.validate("ldap");
     SECURITY_AUTHC.validate("certificate");
     SECURITY_AUTHC.validate("file");
@@ -220,23 +227,27 @@ public class SettingValidatorTest {
         () -> SECURITY_AUTHC.validate("foo"),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("authc should be one of: [file, ldap, certificate]"))))
     );
-    SECURITY_AUTHC.validate(null);
+    SECURITY_AUTHC.validate(null); // unset - switch back to default value
     SECURITY_AUTHC.validate("");
   }
 
   @Test
   public void test_WHITELIST_SSLTLS() {
     Stream.of(SECURITY_SSL_TLS, SECURITY_WHITELIST).forEach(setting -> {
-      validateDefaults(setting);
-      setting.validate(null);
-      setting.validate("");
+      validateRequired(setting);
+      setting.validate(null); // unset - switch back to default value
       setting.validate("true");
       setting.validate("false");
-      setting.validate(null, null);
-      setting.validate(null, "");
+      setting.validate(null, null); // unset - switch back to default value
       setting.validate(null, "true");
       setting.validate(null, "false");
 
+      assertThat(
+          () -> setting.validate(""),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
+      assertThat(
+          () -> setting.validate(null, ""),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
       assertThat(
           () -> setting.validate("foo"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " should be one of: [true, false]")))));
@@ -251,7 +262,7 @@ public class SettingValidatorTest {
 
   @Test
   public void test_OFFHEAP_RESOURCES() {
-    OFFHEAP_RESOURCES.validate(null);
+    OFFHEAP_RESOURCES.validate(null); // unset - switch back to default value
     OFFHEAP_RESOURCES.validate(null, null);
     OFFHEAP_RESOURCES.validate("main", null);
     OFFHEAP_RESOURCES.validate("main", "1GB");
@@ -259,7 +270,7 @@ public class SettingValidatorTest {
     OFFHEAP_RESOURCES.validate(null, "main:1GB");
     OFFHEAP_RESOURCES.validate(null, "main:1GB,second:2GB");
     OFFHEAP_RESOURCES.validate(null, "");
-    OFFHEAP_RESOURCES.validate("");
+    OFFHEAP_RESOURCES.validate(""); // set to empty map
 
     assertThat(
         () -> OFFHEAP_RESOURCES.validate(null, "bar"),
@@ -286,12 +297,12 @@ public class SettingValidatorTest {
 
   @Test
   public void test_DATA_DIRS() {
-    DATA_DIRS.validate(null);
+    DATA_DIRS.validate(null); // unset - switch back to default value
     DATA_DIRS.validate(null, null);
     DATA_DIRS.validate("main", null);
     DATA_DIRS.validate("main", "");
     DATA_DIRS.validate(null, "");
-    DATA_DIRS.validate("");
+    DATA_DIRS.validate(""); // set to empty map
 
     // Valid Relative paths
     DATA_DIRS.validate("main", "foo/bar");
@@ -325,8 +336,8 @@ public class SettingValidatorTest {
 
   @Test
   public void test_TC_PROPERTIES() {
-    TC_PROPERTIES.validate(null);
-    TC_PROPERTIES.validate("");
+    TC_PROPERTIES.validate(null); // unset - switch back to default value
+    TC_PROPERTIES.validate(""); // set to empty map
     TC_PROPERTIES.validate(null, null);
     TC_PROPERTIES.validate(null, "");
     TC_PROPERTIES.validate("key", null);
@@ -351,8 +362,8 @@ public class SettingValidatorTest {
 
   @Test
   public void test_NODE_LOGGER_OVERRIDES() {
-    NODE_LOGGER_OVERRIDES.validate(null);
-    NODE_LOGGER_OVERRIDES.validate("");
+    NODE_LOGGER_OVERRIDES.validate(null); // unset - switch back to default value
+    NODE_LOGGER_OVERRIDES.validate(""); // set to empty map
     NODE_LOGGER_OVERRIDES.validate(null, null);
     NODE_LOGGER_OVERRIDES.validate(null, "");
     NODE_LOGGER_OVERRIDES.validate("key", null);
@@ -385,16 +396,24 @@ public class SettingValidatorTest {
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides.com.foo is invalid: Bad level: FATAL")))));
   }
 
-  private void validateDefaults(Setting setting) {
+  private void validateOptional(Setting setting) {
+    assertThat(
+        () -> setting.validate("foo", "bar"),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " is not a map")))));
+    setting.validate("\u0000");
+    setting.validate("  ");
+  }
+
+  private void validateRequired(Setting setting) {
     assertThat(
         () -> setting.validate("foo", "bar"),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " is not a map")))));
     assertThat(
         () -> setting.validate("\u0000"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
     assertThat(
         () -> setting.validate("  "),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting '" + setting + "' requires a value")))));
   }
 
 }

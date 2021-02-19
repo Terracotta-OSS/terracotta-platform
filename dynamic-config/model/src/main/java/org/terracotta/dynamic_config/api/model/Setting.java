@@ -303,10 +303,10 @@ public enum Setting {
       always(9430),
       NODE,
       fromNode(Node::getGroupPort),
-      intoNode((node, value) -> node.setGroupPort(Integer.parseInt(value))),
+      intoNode((node, value) -> node.setGroupPort(value == null ? null : Integer.parseInt(value))),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-          when(CONFIGURING).allow(SET).atAnyLevels(),
+          when(CONFIGURING).allow(SET, UNSET).atAnyLevels(),
           when(CONFIGURING).allow(IMPORT).atLevel(NODE)
       ),
       of(PRESENCE),
@@ -323,7 +323,7 @@ public enum Setting {
       intoNode(Node::setBindAddress),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-          when(CONFIGURING).allow(SET).atAnyLevels(),
+          when(CONFIGURING).allow(SET, UNSET).atAnyLevels(),
           when(CONFIGURING).allow(IMPORT).atLevel(NODE)
       ),
       of(PRESENCE),
@@ -340,7 +340,7 @@ public enum Setting {
       intoNode(Node::setGroupBindAddress),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-          when(CONFIGURING).allow(SET).atAnyLevels(),
+          when(CONFIGURING).allow(SET, UNSET).atAnyLevels(),
           when(CONFIGURING).allow(IMPORT).atLevel(NODE)
       ),
       of(PRESENCE),
@@ -403,10 +403,10 @@ public enum Setting {
       always(RawPath.valueOf(Paths.get("%H", "terracotta", "metadata").toString())),
       NODE,
       fromNode(Node::getMetadataDir),
-      intoNode((node, value) -> node.setMetadataDir(RawPath.valueOf(value))),
+      intoNode((node, value) -> node.setMetadataDir(value == null ? null : RawPath.valueOf(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
-          when(CONFIGURING).allow(GET, SET).atAnyLevels(),
+          when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
           when(ACTIVATED).allow(GET).atAnyLevels()
       ),
       of(PRESENCE),
@@ -420,11 +420,11 @@ public enum Setting {
       always(RawPath.valueOf(Paths.get("%H", "terracotta", "logs").toString())),
       NODE,
       fromNode(Node::getLogDir),
-      intoNode((node, value) -> node.setLogDir(RawPath.valueOf(value))),
+      intoNode((node, value) -> node.setLogDir(value == null ? null : RawPath.valueOf(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
-          when(CONFIGURING).allow(GET, SET).atAnyLevels(),
-          when(ACTIVATED).allow(GET, SET).atAnyLevels()
+          when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
+          when(ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
       of(NODE_RESTART, PRESENCE),
       emptyList(),
@@ -544,10 +544,10 @@ public enum Setting {
       always(Measure.of(120, SECONDS)),
       CLUSTER,
       fromCluster(Cluster::getClientReconnectWindow),
-      intoCluster((cluster, value) -> cluster.setClientReconnectWindow(Measure.parse(value, TimeUnit.class))),
+      intoCluster((cluster, value) -> cluster.setClientReconnectWindow(value == null ? null : Measure.parse(value, TimeUnit.class))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
-          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
       of(PRESENCE),
       emptyList(),
@@ -579,10 +579,10 @@ public enum Setting {
       always(Measure.of(150, SECONDS)),
       CLUSTER,
       fromCluster(Cluster::getClientLeaseDuration),
-      intoCluster((cluster, value) -> cluster.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
+      intoCluster((cluster, value) -> cluster.setClientLeaseDuration(value == null ? null : Measure.parse(value, TimeUnit.class))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
-          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
       of(PRESENCE),
       emptyList(),
@@ -732,7 +732,7 @@ public enum Setting {
       intoNodeMap((node, tuple) -> {
         if (tuple.t1 == null && empty(tuple.t2)) {
           if (tuple.t2 == null) {
-            // null assignment will reset the map or do nothing if map si null
+            // null assignment will reset the map or do nothing if map is null
             node.unsetDataDirs();
           } else {
             // if user sets "" in a config file, he specifically asks for an empty map to be set
@@ -929,10 +929,6 @@ public enum Setting {
     return requires(CONFIG);
   }
 
-  public boolean canBeCleared(Scope scope) {
-    return allows(ACTIVATED, UNSET, scope) || allows(CONFIGURING, UNSET, scope) || getDefaultValue() != null;
-  }
-
   public boolean isWritable() {
     return isWritableWhen(CONFIGURING) || isWritableWhen(ACTIVATED);
   }
@@ -949,16 +945,82 @@ public enum Setting {
     return scope;
   }
 
-  public void validate(String key, String value) {
-    // do not validate if value is null and setting optional
-    if (key == null && value == null && !mustBePresent()) {
-      return;
+  public void validate(String key, String value, Scope level) {
+    value = value == null ? null : value.trim();
+
+    if (value == null) {
+      // equivalent to a get or unset command - we do not know yet, so we cannot pre-validate
+      // but if the setting is not supporting both get and unset, then fail
+      if (!allows(GET) && !allows(UNSET)) {
+        throw new IllegalArgumentException("Setting '" + this + "' cannot be read or cleared");
+      }
+
+    } else if (value.isEmpty()) {
+      // equivalent to a config with no value after equal sign
+      // - cluster-name= (in config file)
+      if (mustBePresent() || mustBeProvided() || !allows(UNSET)) {
+        // cannot set to blank a required value
+        throw new IllegalArgumentException("Setting '" + this + "' requires a value");
+      }
+
+    } else {
+      // equivalent to a set because we have a value
+      if (!allows(SET) && !allows(IMPORT)) {
+        throw new IllegalArgumentException("Setting '" + this + "' cannot be set");
+      } else if (level != null) {
+        // validate in more details with the level of applicability
+        if (!allows(SET, level) && !allows(IMPORT, level)) {
+          throw new IllegalArgumentException("Setting '" + this + "' cannot be set at " + level + " level");
+        }
+      }
+      // check the value if we have one
+      validator.accept(key, value);
     }
-    validator.accept(key, value);
   }
 
-  public void validate(String value) {
-    validate(null, value);
+  public void validate(String key, String value, Scope level, ClusterState clusterState, Operation operation) {
+    validate(key, value, level);
+
+    value = value == null ? null : value.trim();
+
+    if (!clusterState.supports(operation)) {
+      throw new AssertionError("Programmatic mistake: tried to validate operation " + operation + " when " + clusterState);
+    }
+    if (!allows(operation)) {
+      throw new IllegalArgumentException("Setting '" + this + "' cannot be " + operation);
+    }
+    if (!allows(clusterState, operation)) {
+      throw new IllegalArgumentException("Setting '" + this + "' cannot be " + operation + " when " + clusterState);
+    }
+    if (!allows(clusterState, operation, level)) {
+      throw new IllegalArgumentException("Setting '" + this + "' cannot be " + operation + " at " + level + " level when " + clusterState);
+    }
+    switch (operation) {
+      case GET:
+      case UNSET:
+        if (value != null) {
+          throw new IllegalArgumentException("Operation " + operation + " must not have a value");
+        }
+        break;
+      case SET:
+        requireNonNull(value);
+        if (value.isEmpty()) {
+          throw new IllegalArgumentException("Operation " + operation + " requires a value");
+        }
+        break;
+      case IMPORT:
+        requireNonNull(value);
+        if (value.isEmpty() && mustBePresent()) {
+          throw new IllegalArgumentException("Operation " + operation + " requires a value");
+        }
+        // ensure that properties requiring an eager resolve are resolved
+        if (requires(RESOLVE_EAGERLY) && Substitutor.containsSubstitutionParams(value)) {
+          throw new IllegalArgumentException("Placeholders are not allowed");
+        }
+        break;
+      default:
+        throw new AssertionError(operation);
+    }
   }
 
   public boolean vetoRuntimeChange(NodeContext currentNode, Configuration configuration) {
@@ -981,16 +1043,8 @@ public enum Setting {
     if (!isWritable()) {
       throw new IllegalArgumentException("Setting: " + this + " is not writable");
     }
-    // value can be null or "", depending on which system is setting the property:
-    // i.e. configuration parsing will lead to "" which means that the user has specifically decided to "empty" the setting.
-    // for most of the settings, "empty" means nullify.
-    // but for maps, "empty" means specifically set an empty map and do not use the default values
-    if (!isMap() && empty(value)) {
-      // if the setting is not a map, treat any "" like null
-      value = null;
-    }
-    validate(key, value);
-    this.setter.accept(o, tuple2(key, value));
+    validate(key, value, null);
+    this.setter.accept(o, tuple2(key, sanitize(value)));
   }
 
   public Properties toProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues) {
@@ -1037,6 +1091,27 @@ public enum Setting {
 
   public boolean allowsValue(String value) {
     return this.allowedValues.isEmpty() || this.allowedValues.contains(value);
+  }
+
+  // only used by test methods
+  void validate(String value) {
+    validate(null, value, null);
+  }
+
+  // only used by test methods
+  void validate(String key, String value) {
+    validate(key, value, null);
+  }
+
+  private String sanitize(String value) {
+    value = value == null ? null : value.trim();
+    // little sanitization to consider some blank assignment to null for settings in the config file like:
+    // cluster-name=
+    // which is equivalent to not having cluster-name in the config file
+    if (value != null && value.isEmpty() && !isMap() && !mustBePresent() && !mustBeProvided()) {
+      value = null;
+    }
+    return value;
   }
 
   public static Setting fromName(String name) {
@@ -1104,7 +1179,7 @@ public enum Setting {
       if (tuple.t1 != null) {
         throw new IllegalArgumentException("Key must be null: parameter is not a map");
       }
-      setter.accept((Node) node, empty(tuple.t2) ? null : tuple.t2.trim());
+      setter.accept((Node) node, tuple.t2);
     };
   }
 
@@ -1113,7 +1188,7 @@ public enum Setting {
       if (tuple.t1 != null) {
         throw new IllegalArgumentException("Key must be null: parameter is not a map");
       }
-      setter.accept((Stripe) stripe, empty(tuple.t2) ? null : tuple.t2.trim());
+      setter.accept((Stripe) stripe, tuple.t2);
     };
   }
 
@@ -1122,7 +1197,7 @@ public enum Setting {
       if (tuple.t1 != null) {
         throw new IllegalArgumentException("Key must be null: parameter is not a map");
       }
-      setter.accept((Cluster) cluster, empty(tuple.t2) ? null : tuple.t2.trim());
+      setter.accept((Cluster) cluster, tuple.t2);
     };
   }
 
@@ -1144,6 +1219,6 @@ public enum Setting {
   }
 
   private static boolean empty(String s) {
-    return s == null || s.trim().isEmpty();
+    return s == null || s.isEmpty();
   }
 }

@@ -212,14 +212,8 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Cluster unsetOffheapResources() {
-    if (this.offheapResources != null) {
-      setOffheapResources(emptyMap());
-    } else {
-      Map<String, Measure<MemoryUnit>> def = OFFHEAP_RESOURCES.getDefaultValue();
-      if (def != null && !def.isEmpty()) {
-        setOffheapResources(emptyMap());
-      }
-    }
+    Map<String, String> def = OFFHEAP_RESOURCES.getDefaultValue();
+    setOffheapResources(def == null || def.isEmpty() ? null : emptyMap());
     return this;
   }
 
