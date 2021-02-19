@@ -15,4 +15,6 @@
  */
 
 //See Jenkins wiki pages for info
-mavenBuildOSS()
+mavenBuildOSS() {
+    archive_glob         : '**/*.log,**/target/angela/work/**'
+}
