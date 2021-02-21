@@ -48,7 +48,7 @@ import static org.terracotta.dynamic_config.cli.api.converter.OperationType.STRI
 public class AttachAction extends TopologyAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AttachAction.class);
-  
+
   protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
   protected InetSocketAddress sourceAddress;
@@ -249,8 +249,12 @@ public class AttachAction extends TopologyAction {
         "The node/stripe to attach won't be activated and restarted, and their topology will be rolled back to their initial value."
     );
     newOnlineNodes.forEach((endpoint, cluster) -> {
-      output.info("Rollback topology of node: {}", endpoint);
-      setUpcomingCluster(Collections.singletonList(endpoint), cluster);
+      try {
+        output.info("Rollback topology of node: {}", endpoint);
+        setUpcomingCluster(Collections.singletonList(endpoint), cluster);
+      } catch (RuntimeException e) {
+        LOGGER.warn("Unable to rollback configuration on node: {}. Error: {}", endpoint, e.getMessage(), e);
+      }
     });
     throw error;
   }
