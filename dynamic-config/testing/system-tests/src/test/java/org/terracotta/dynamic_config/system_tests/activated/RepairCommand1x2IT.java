@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Test;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -62,12 +63,12 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         containsOutput("Commit failed for node"));
 
-    waitForPassiveReplication();
-
     waitForPassive(1, passiveId);
 
-    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
-    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
+    // wait until we can really connect to the passive and see it has an incomplete change
+    // this is because he passive will restart after sync
+    waitUntil(() -> usingTopologyService(1, activeId, TopologyService::hasIncompleteChange), is(true));
+    waitUntil(() -> usingTopologyService(1, passiveId, TopologyService::hasIncompleteChange), is(true));
 
     // stop passive
     stopNode(1, passiveId);

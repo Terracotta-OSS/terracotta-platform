@@ -21,6 +21,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.persistence.sanskrit.JsonUtils;
@@ -42,6 +43,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -168,9 +170,18 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // passive server will sync and repair itself
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + passiveNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"), is(successful()));
 
-    waitForPassiveReplication();
-
+    // passive should restart and sync again to repair its non committed change
     waitForPassive(1, passiveNodeId);
+
+    // nomad system should commit last change
+    waitUntil(
+        () -> usingTopologyService(1, passiveNodeId, TopologyService::hasIncompleteChange),
+        is(false));
+
+    // passive node should have the key/value at runtime now
+    waitUntil(
+        () -> usingTopologyService(1, passiveNodeId, topologyService -> topologyService.getRuntimeNodeContext().getNode().getLoggerOverrides().orDefault()),
+        hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     stopNode(1, passiveNodeId);

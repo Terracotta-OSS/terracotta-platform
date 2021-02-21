@@ -326,6 +326,7 @@ public class DynamicConfigIT {
         .offheap("main:512MB,foo:1GB")
         .metaData(getNodePath(stripeId, nodeId).append("/metadata").toString())
         .failoverPriority(getFailoverPriority().toString())
+        .clientReconnectWindow("10s") // the default client reconnect window of 2min can cause some tests to timeout
         .clusterName(CLUSTER_NAME);
   }
 
