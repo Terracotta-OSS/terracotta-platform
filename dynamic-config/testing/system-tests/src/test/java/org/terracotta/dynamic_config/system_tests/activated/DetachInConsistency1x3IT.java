@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.system_tests.activated;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -160,11 +161,14 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
 
-    startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, passiveId2);
     waitForPassive(1, activeId);
 
-    withTopologyService(1, passiveId2, topologyService -> assertTrue(topologyService.isActivated()));
+    // the passive server will restart once after startup: start => partial commit => sync => repair partial commit => restart
+    // waitForPassive(1, activeId); will see the first startup but the problem is that the test will continue while the passive is
+    // restarting after teh sync
+    waitUntil(() -> usingTopologyService(1, passiveId2, TopologyService::hasIncompleteChange), is(false));
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(2)));
 

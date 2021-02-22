@@ -67,7 +67,7 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   public void testNode_getClientReconnectWindow() {
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
-        containsOutput("client-reconnect-window=120s"));
+        containsOutput("client-reconnect-window=10s"));
   }
 
   @Test

@@ -57,6 +57,11 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     return FailoverPriority.consistency();
   }
 
+  @Override
+  protected Duration getAssertTimeout() {
+    return Duration.ofMinutes(2);
+  }
+
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
@@ -164,11 +169,9 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
         clientToServerDisruptor.disrupt(Collections.singletonList(active.getServerSymbolicName()));
         String publicHostName = "stripe.1.node.1.public-hostname=localhost";
         String publicPort = "stripe.1.node.1.public-port=" + getNodePort(1, 4);
-        assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 4), "-c",
-            publicHostName, "-c", publicPort), is(successful()));
+        assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 4), "-c", publicHostName, "-c", publicPort), is(successful()));
         int publicPassivePort = map.get(passive.getServerSymbolicName());
-        assertThat(configTool("attach", "-d", "localhost:" + publicPassivePort, "-s", "localhost:" + getNodePort(1, 4)),
-            is(successful()));
+        assertThat(configTool("attach", "-d", "localhost:" + publicPassivePort, "-s", "localhost:" + getNodePort(1, 4)), is(successful()));
         clientToServerDisruptor.undisrupt(Collections.singletonList(active.getServerSymbolicName()));
       }
       disruptor.undisrupt();

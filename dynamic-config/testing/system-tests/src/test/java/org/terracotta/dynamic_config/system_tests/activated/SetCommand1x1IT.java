@@ -66,7 +66,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void addOffheapResource_with_decimal_value() {
     assertThat(
-        configTool("-v", "set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=main2:1.5MB"),
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=main2:1.5MB"),
         containsOutput("Invalid input: 'offheap-resources.main2=1.5MB'. Reason: offheap-resources.main2 is invalid: Invalid measure: '1.5'. <quantity> must be a positive integer."));
   }
 

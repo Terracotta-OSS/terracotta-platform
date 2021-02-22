@@ -19,7 +19,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matcher;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
-import org.junit.rules.Timeout;
 import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,7 @@ import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.testing.ExtendedTestRule;
+import org.terracotta.testing.Timeout;
 import org.terracotta.testing.TmpDir;
 
 import java.io.IOException;
@@ -77,6 +77,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -135,7 +136,11 @@ public class DynamicConfigIT {
             DynamicConfigIT.this.startNode(stripeId, nodeId);
           }
         })
-        .around(Timeout.millis(testTimeout.toMillis()))
+        .around(Timeout.builder()
+            .withLookingForStuckThread(true)
+            .withThreadDump(Paths.get(System.getProperty("user.dir")).resolve("target").resolve("thread-dumps"))
+            .withTimeout(testTimeout.toMillis(), MILLISECONDS)
+            .build())
         .around(new ExtendedTestRule() {
           @Override
           protected void before(Description description) {
@@ -249,14 +254,14 @@ public class DynamicConfigIT {
 
     boolean addedOptions = false;
     String timeout = Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString();
-    if (!configToolOptions.contains("-t")) {
+    if (!configToolOptions.contains("-t") && !configToolOptions.contains("-connection-timeout")) {
       // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
       enhancedCli.add("-t");
       enhancedCli.add(timeout);
       addedOptions = true;
     }
 
-    if (!configToolOptions.contains("-r")) {
+    if (!configToolOptions.contains("-r") && !configToolOptions.contains("-request-timeout")) {
       // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
       enhancedCli.add("-r");
       enhancedCli.add(timeout);
@@ -321,6 +326,7 @@ public class DynamicConfigIT {
         .offheap("main:512MB,foo:1GB")
         .metaData(getNodePath(stripeId, nodeId).append("/metadata").toString())
         .failoverPriority(getFailoverPriority().toString())
+        .clientReconnectWindow("10s") // the default client reconnect window of 2min can cause some tests to timeout
         .clusterName(CLUSTER_NAME);
   }
 
@@ -464,13 +470,6 @@ public class DynamicConfigIT {
 
   protected final void waitForNPassives(int stripeId, int count) {
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
-  }
-
-  protected void waitForPassiveReplication() throws Exception {
-    // this is ugly, but I do not know how we could otherwise wait until replication message gets processed by the passive server, which is causing a restart
-    // Angela is not able to observe a server restart
-    // This wait time is to ensure the passive server got the replicated message, processes it and restarted itself
-    Thread.sleep(15_000);
   }
 
   protected final Cluster getUpcomingCluster(int stripeId, int nodeId) {

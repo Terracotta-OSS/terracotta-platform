@@ -158,8 +158,13 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
           // In that case, we might already have some nodes inside nodesRequiringRestart.
           // But we need to add into this collection the other nodes that are targeted AND could have vetoed a change to be applied at runtime
           for (Endpoint endpoint : onlineNodes.keySet()) {
-            if (targetedNodes.contains(endpoint.getNodeName()) && mustBeRestarted(endpoint)) {
-              nodesRequiringRestart.add(endpoint.getNodeName());
+            try {
+              if (targetedNodes.contains(endpoint.getNodeName()) && mustBeRestarted(endpoint)) {
+                nodesRequiringRestart.add(endpoint.getNodeName());
+              }
+            } catch (RuntimeException e) {
+              // some nodes might have failed over and not be reachable anymore
+              LOGGER.warn("Node " + endpoint + " is not reachable anymore: {}", e.getMessage(), e);
             }
           }
         }
