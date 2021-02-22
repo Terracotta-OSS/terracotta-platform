@@ -140,32 +140,15 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
             "====================================================================" + lineSeparator());
 
       } else {
-        final long numberOfDifferentSettingsToChange = configurations.stream()
-            .map(Configuration::getSetting)
-            .distinct()
-            .count();
-        final long numberOfDifferentSettingsRequiringRestart = configurations.stream()
-            .map(Configuration::getSetting)
-            .distinct()
-            .filter(setting -> setting.requires(NODE_RESTART))
-            .count();
-
-        if (numberOfDifferentSettingsToChange != numberOfDifferentSettingsRequiringRestart) {
-          // if the user updates more than 1 setting that does not require a restart, or a mix of settings which
-          // do and do not require a restart, we will go there.
-          // I.e. set backup-dir
-          // I.e. set log-dir + backup-dir
-          // In that case, we might already have some nodes inside nodesRequiringRestart.
-          // But we need to add into this collection the other nodes that are targeted AND could have vetoed a change to be applied at runtime
-          for (Endpoint endpoint : onlineNodes.keySet()) {
-            try {
-              if (targetedNodes.contains(endpoint.getNodeName()) && mustBeRestarted(endpoint)) {
-                nodesRequiringRestart.add(endpoint.getNodeName());
-              }
-            } catch (RuntimeException e) {
-              // some nodes might have failed over and not be reachable anymore
-              LOGGER.warn("Node " + endpoint + " is not reachable anymore: {}", e.getMessage(), e);
+        //  we need to add into this collection the other nodes that could have vetoed a change to be applied at runtime
+        for (Endpoint endpoint : onlineNodes.keySet()) {
+          try {
+            if (targetedNodes.contains(endpoint.getNodeName()) && mustBeRestarted(endpoint)) {
+              nodesRequiringRestart.add(endpoint.getNodeName());
             }
+          } catch (RuntimeException e) {
+            // some nodes might have failed over and not be reachable anymore
+            LOGGER.warn("Node " + endpoint + " is not reachable anymore: {}", e.getMessage(), e);
           }
         }
 
