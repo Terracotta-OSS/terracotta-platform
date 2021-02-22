@@ -25,7 +25,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -37,6 +36,8 @@ import static org.terracotta.testing.Binary.exec;
  * @author Mathieu Carbou
  */
 public class ThreadDump {
+
+  public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ThreadDump.class);
 
@@ -57,7 +58,7 @@ public class ThreadDump {
   }
 
   public void writeTo(Path out) {
-    LOGGER.info("Saving thread dump of PID: {} to: {}", pid, out);
+    LOGGER.info("Saving thread dump of PID {} to: {}", pid, out);
     try {
       Files.write(out, output.getBytes(StandardCharsets.UTF_8));
     } catch (IOException e) {
@@ -66,37 +67,49 @@ public class ThreadDump {
   }
 
   public static Stream<ThreadDump> dumpAll() {
+    return dumpAll(DEFAULT_TIMEOUT);
+  }
+
+  public static Stream<ThreadDump> dumpAll(Duration timeout) {
     if (JPS == null) {
       return Stream.empty();
     }
     return Stream.of(exec(JPS, "-q").split("\\r?\\n"))
         .map(Long::parseLong)
-        .map(ThreadDump::dump)
+        .map(pid -> dump(pid, timeout))
         .filter(Optional::isPresent)
         .map(Optional::get);
   }
 
   public static void dumpAll(Path outputDir) {
+    dumpAll(outputDir, false, DEFAULT_TIMEOUT);
+  }
+
+  public static void dumpAll(Path outputDir, boolean parallel, Duration timeout) {
     try {
       Files.createDirectories(outputDir);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    dumpAll().parallel().forEach(dump -> dump.writeTo(outputDir.resolve("thread-dump-" + dump.getPid() + ".log")));
+    Stream<ThreadDump> stream = dumpAll(timeout);
+    if (parallel) {
+      stream = stream.parallel();
+    }
+    stream.forEach(dump -> dump.writeTo(outputDir.resolve("thread-dump-" + dump.getPid() + ".log")));
   }
 
   public static Optional<ThreadDump> dump(long pid) {
-    LOGGER.info("Taking thread dump of PID: {} (timeout: 10 seconds)", pid);
-    try {
-      String output = exec(Duration.ofSeconds(10), JSTACK, "-l", "" + pid);
-      if (output.contains("No such process")) {
-        LOGGER.warn("No such process: {}", pid);
-        return Optional.empty();
-      } else {
-        return Optional.of(new ThreadDump(pid, output));
-      }
-    } catch (TimeoutException e) {
-      return Optional.of(new ThreadDump(pid, e.getMessage()));
+    return dump(pid, DEFAULT_TIMEOUT);
+  }
+
+  public static Optional<ThreadDump> dump(long pid, Duration timeout) {
+    LOGGER.info("Taking thread dump of PID {} (timeout: " + (timeout == null ? "none" : timeout.toMillis() + "ms") + ")", pid);
+    String output = exec(timeout, JSTACK, "-l", "" + pid);
+    if (output.contains("No such process")) {
+      LOGGER.warn("No such process: {}", pid);
+      return Optional.empty();
+    } else {
+      return Optional.of(new ThreadDump(pid, output));
     }
   }
 

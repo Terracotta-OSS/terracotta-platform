@@ -47,7 +47,7 @@ public class ThreadDumpTest {
 
   @Test
   public void dump_to_map() {
-    assertThat(ThreadDump.dumpAll().parallel().count(), is(greaterThanOrEqualTo(1L)));
+    assertThat(ThreadDump.dumpAll().count(), is(greaterThanOrEqualTo(1L)));
   }
 
   @Test
