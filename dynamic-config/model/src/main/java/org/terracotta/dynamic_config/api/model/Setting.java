@@ -497,7 +497,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(CLUSTER_RESTART),
+      of(NODE_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PROPS_VALIDATOR.accept(SettingName.TC_PROPERTIES, tuple2(key, value))

@@ -39,14 +39,17 @@ public class ConfigRepoIT extends DynamicConfigIT {
     // runtime topology should be the same as upcoming one
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
 
-    // trigger a change that requires a restart
+    // trigger a change that requires a restart on a specific node
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.foo=bar"), is(successful()));
 
     // config repos written on disk should be the same
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
-    // runtime topology should be the same
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(equalTo(getRuntimeCluster("localhost", getNodePort(1, 2)))));
-    // runtime topology and upcoming one should be different
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(not(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2))))));
+    // runtime topology should not be the same because node 1 needs a restart
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(not(equalTo(getRuntimeCluster("localhost", getNodePort(1, 2))))));
+
+    // runtime topology and upcoming one should be different on node 1
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(not(equalTo(getUpcomingCluster("localhost", getNodePort(1, 1))))));
+    // runtime topology and upcoming one should be the same on node 2
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
   }
 }
