@@ -111,7 +111,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     // do a change requiring a restart
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node.1.tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
+        containsOutput("IMPORTANT: A restart of nodes:"));
 
     stopNode(1, passiveId);
 

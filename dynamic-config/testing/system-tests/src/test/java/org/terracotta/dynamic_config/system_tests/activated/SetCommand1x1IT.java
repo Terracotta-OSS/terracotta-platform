@@ -206,7 +206,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void testTcProperty() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
+        containsOutput("IMPORTANT: A restart of nodes:"));
 
     assertThat(
         configTool("get", "-r", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
