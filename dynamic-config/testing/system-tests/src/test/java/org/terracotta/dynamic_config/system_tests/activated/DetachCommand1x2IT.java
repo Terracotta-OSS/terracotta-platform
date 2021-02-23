@@ -127,6 +127,26 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  public void test_detach_passive_requiring_restart_from_activated_cluster() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    // do a change requiring a restart on the remaining nodes
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(1, passiveId), "-c", "stripe.1.node." + passiveId + ".tc-properties.foo=bar"),
+        containsOutput("IMPORTANT: A restart of nodes:"));
+
+    stopNode(1, passiveId);
+
+    // try to detach the passive node
+    assertThat(
+        configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        is(successful()));
+
+    assertTopologyChanged(activeId);
+  }
+
+  @Test
   public void test_detach_online_node_in_availability_mode() throws Exception {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];

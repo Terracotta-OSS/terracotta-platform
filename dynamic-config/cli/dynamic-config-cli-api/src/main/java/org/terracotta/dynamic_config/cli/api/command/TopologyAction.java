@@ -69,13 +69,6 @@ public abstract class TopologyAction extends RemoteAction {
 
   protected void validate() {
     destination = getEndpoint(destinationAddress);
-
-    // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
-    validateLogOrFail(
-        () -> !mustBeRestarted(destination),
-        "Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes. " +
-            "Please refer to the Troubleshooting Guide for more help.");
-
     destinationCluster = getUpcomingCluster(destination);
     destinationOnlineNodes = findOnlineRuntimePeers(destination);
     destinationClusterActivated = areAllNodesActivated(destinationOnlineNodes.keySet());

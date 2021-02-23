@@ -84,6 +84,14 @@ public class AttachAction extends TopologyAction {
       throw new IllegalArgumentException("The destination and the source endpoints must not be the same");
     }
 
+    // we prevent attaching nodes if some nodes must be restarted
+    for (Endpoint endpoint : destinationOnlineNodes.keySet()) {
+      // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
+      validateLogOrFail(
+          () -> !mustBeRestarted(destination),
+          "Impossible to do any topology change. Node: " + endpoint + " is waiting to be restarted to apply some pending changes. Please refer to the Troubleshooting Guide for more help.");
+    }
+
     Collection<Endpoint> destinationPeers = destinationCluster.getSimilarEndpoints(destination);
     if (destinationPeers.contains(source)) {
       throw new IllegalArgumentException("Source node: " + source + " is already part of cluster: " + destinationCluster.toShapeString());

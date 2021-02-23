@@ -21,8 +21,10 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.time.Duration;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -39,5 +41,29 @@ public class DetachCommand2x1IT extends DynamicConfigIT {
     assertThat(
         configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(1, 1)),
         containsOutput("Removing the leading stripe is not allowed"));
+  }
+
+  @Test
+  public void test_detach_stripe_from_activated_cluster_requiring_restart() throws Exception {
+    // do a change requiring a restart on the remaining nodes
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "tc-properties.foo=bar"),
+        containsOutput("IMPORTANT: A restart of nodes:"));
+
+    assertThat(
+        configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
+        containsOutput("Impossible to do any topology change."));
+  }
+
+  @Test
+  public void test_detach_stripe_requiring_restart_from_activated_cluster() throws Exception {
+    // do a change requiring a restart on the remaining nodes
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(2, 1), "-c", "stripe.2.node.1.tc-properties.foo=bar"),
+        containsOutput("IMPORTANT: A restart of nodes:"));
+
+    assertThat(
+        configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
+        is(successful()));
   }
 }
