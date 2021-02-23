@@ -30,7 +30,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 @Parameters(commandDescription = "Unset configuration properties")
-@Usage("-connect-to <hostname[:port]> -setting <[namespace:]property>,<[namespace:]property>...")
+@Usage("-connect-to <hostname[:port]> -setting <[namespace:]property> -setting <[namespace:]property> ...")
 public class UnsetCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

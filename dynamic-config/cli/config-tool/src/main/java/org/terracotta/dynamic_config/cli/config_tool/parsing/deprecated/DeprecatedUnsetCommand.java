@@ -30,7 +30,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 @Parameters(commandDescription = "Unset configuration properties")
-@Usage("-s <hostname[:port]> -c <[namespace:]property>,<[namespace:]property>...")
+@Usage("-s <hostname[:port]> -c <[namespace:]property> -c <[namespace:]property> ...")
 public class DeprecatedUnsetCommand extends Command {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
