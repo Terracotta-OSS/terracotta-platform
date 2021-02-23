@@ -118,7 +118,7 @@ public class AttachAction extends TopologyAction {
           () -> sourceCluster.getNodeCount() == 1,
           "Source node: " + source + " is part of a stripe containing more than 1 nodes. " +
               "It must be detached first before being attached to a new stripe. " +
-              "You can run the command with the force option to force the attachment, but at the risk of breaking the cluster from where the node is taken.");
+              "Please refer to the Troubleshooting Guide for more help.");
 
       Stripe destinationStripe = destinationCluster.getStripeByNode(destination.getNodeUID()).get();
       FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
@@ -143,7 +143,7 @@ public class AttachAction extends TopologyAction {
           () -> sourceCluster.getStripeCount() == 1,
           "Source stripe from node: " + source + " is part of a cluster containing more than 1 stripes. " +
               "It must be detached first before being attached to a new cluster. " +
-              "You can run the command with the force option to force the attachment, but at the risk of breaking the cluster from where the node is taken.");
+              "Please refer to the Troubleshooting Guide for more help.");
     }
 
     // make sure nodes to attach are online

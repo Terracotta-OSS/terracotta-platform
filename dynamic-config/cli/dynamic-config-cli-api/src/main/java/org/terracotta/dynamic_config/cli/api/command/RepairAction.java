@@ -39,7 +39,7 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 public class RepairAction extends RemoteAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RepairAction.class);
-  
+
   private InetSocketAddress node;
   private RepairMethod forcedRepairMethod;
 
@@ -168,7 +168,7 @@ public class RepairAction extends RemoteAction {
         .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     RepairMethod wanted = forcedRepairMethod == null ? fallbackRepairMethod : forcedRepairMethod;
     if (wanted == null) {
-      throw new IllegalArgumentException("Please use the '-force' option to specify whether a commit or rollback is wanted.");
+      throw new IllegalArgumentException("Some nodes are offline. Unable to determine what kind of repair to run. Please refer to the Troubleshooting Guide.");
     } else {
       output.info("Repairing configuration by running a " + wanted + "...");
     }

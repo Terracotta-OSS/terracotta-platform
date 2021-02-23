@@ -28,13 +28,13 @@ import org.terracotta.dynamic_config.cli.converter.RepairActionConverter;
 import java.net.InetSocketAddress;
 
 @Parameters(commandDescription = "Repair a cluster configuration")
-@Usage("-connect-to <hostname[:port]> [-force commit|rollback|reset|unlock]")
+@Usage("-connect-to <hostname[:port]>")
 public class RepairCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-force"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairActionConverter.class)
+  @Parameter(names = {"-force"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairActionConverter.class, hidden = true)
   RepairMethod forcedRepairMethod;
 
   @Inject

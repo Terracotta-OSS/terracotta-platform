@@ -138,7 +138,7 @@ public class DetachAction extends TopologyAction {
     if (operationType == NODE) {
       if (!onlineNodesToRemove.isEmpty() && areAllNodesActivated(onlineNodesToRemove)) {
         validateLogOrFail(onlineNodesToRemove::isEmpty, "Nodes to be detached: " + toString(onlineNodesToRemove) + " are online. " +
-            "Safely shutdown the nodes first, or use the force option to reset and stop the target nodes before detaching them");
+            "Nodes must be safely shutdown first. Please refer to the Troubleshooting Guide for more help.");
       }
     }
   }

@@ -134,7 +134,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     // detaching an online node needs to be forced
     assertThat(
         configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
-        containsOutput("Safely shutdown the nodes first"));
+        containsOutput("Nodes must be safely shutdown first. Please refer to the Troubleshooting Guide for more help."));
 
     assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId), "-f"), is(successful()));
 

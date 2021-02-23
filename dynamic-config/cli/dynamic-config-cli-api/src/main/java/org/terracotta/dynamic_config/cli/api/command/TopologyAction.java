@@ -74,8 +74,7 @@ public abstract class TopologyAction extends RemoteAction {
     validateLogOrFail(
         () -> !mustBeRestarted(destination),
         "Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes. " +
-            "You can run the command with the force option to force the commit, but at the risk of breaking this cluster configuration consistency. " +
-            "The newly added node will be restarted, but not the existing ones.");
+            "Please refer to the Troubleshooting Guide for more help.");
 
     destinationCluster = getUpcomingCluster(destination);
     destinationOnlineNodes = findOnlineRuntimePeers(destination);

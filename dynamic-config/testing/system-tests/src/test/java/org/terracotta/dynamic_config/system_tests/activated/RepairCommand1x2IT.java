@@ -76,7 +76,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     // cannot automatic repair since 1 node is down
     assertThat(
         configTool("repair", "-s", "localhost:" + getNodePort(1, activeId)),
-        containsOutput("Error: Please use the '-force' option to specify whether a commit or rollback is wanted."));
+        containsOutput("Some nodes are offline. Unable to determine what kind of repair to run. Please refer to the Troubleshooting Guide."));
 
     // forces a repair
     assertThat(

@@ -300,8 +300,8 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
       case ONLINE_PREPARED:
         return "A new cluster configuration has been prepared but not yet committed or rolled back on online nodes."
             + " Some nodes are unreachable so we do not know if the last configuration change has been committed or rolled back on them."
-            + " No further configuration change can be done until the 'repair' command is run to finalize the configuration change."
-            + " If the unreachable nodes do not become available again, you might need to use the '-force' option to force a commit or rollback.";
+            + " No further configuration change can be done until the offline nodes are restarted and the 'repair' command is run again"
+            + " to finalize the configuration change. Please refer to the Troubleshooting Guide if needed.";
 
       case PARTIALLY_PREPARED:
         return "A new  cluster configuration has been *partially* prepared (some nodes didn't get the new change)."

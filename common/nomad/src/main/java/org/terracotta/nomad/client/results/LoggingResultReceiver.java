@@ -217,7 +217,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void cannotDecideOverCommitOrRollback() {
-    error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback.");
+    error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command. Please refer to the troubleshooting guide for more help.");
   }
 
   private void error(String line) {
