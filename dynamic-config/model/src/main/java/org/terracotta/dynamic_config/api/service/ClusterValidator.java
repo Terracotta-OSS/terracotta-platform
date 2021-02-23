@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.api.service;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
@@ -42,7 +43,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST
 import static org.terracotta.dynamic_config.api.model.Version.V2;
 
 /**
- * This class expects all the fields to be first validated by {@link Setting#validate(String)}.
+ * This class expects all the fields to be first validated by {@link Setting#validate(String, String, Scope)}.
  * <p>
  * This class will validate the complete cluster object (inter-field checks and dependency checks).
  */
