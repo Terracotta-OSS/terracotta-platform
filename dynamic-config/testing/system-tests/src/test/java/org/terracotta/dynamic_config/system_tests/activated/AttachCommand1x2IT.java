@@ -116,7 +116,7 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     // do a change requiring a restart
     assertThat(
         configTool("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
+        containsOutput("IMPORTANT: A restart of nodes:"));
 
     // start a second node
     startNode(1, 2);
@@ -125,7 +125,7 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     // try to attach this node to the cluster
     assertThat(
         configTool("attach", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)),
-        containsOutput("is waiting to be restarted to apply some pending changes. You can run the command with the force option to force the commit, but at the risk of breaking this cluster configuration consistency. The newly added node will be restarted, but not the existing ones."));
+        containsOutput("is waiting to be restarted to apply some pending changes. Please refer to the Troubleshooting Guide for more help."));
 
     // try forcing the attach
     assertThat(configTool("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));

@@ -126,7 +126,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       }
 
       ensureActivesAreAllOnline(originalCluster, onlineNodes);
-      output.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodes.keySet()));
+      output.info("Applying new configuration change(s) to activated nodes: {}", toString(onlineNodes.keySet()));
       MultiSettingNomadChange changes = getNomadChanges(updatedCluster);
       if (!changes.getChanges().isEmpty()) {
         runConfigurationChange(updatedCluster, onlineNodes, changes);

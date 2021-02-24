@@ -31,7 +31,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 @Parameters(commandDescription = "Read configuration properties")
-@Usage("-s <hostname[:port]> [-r] -c <[namespace:]property>,<[namespace:]property>...")
+@Usage("-s <hostname[:port]> [-r] -c <[namespace:]property> -c <[namespace:]property> ...")
 public class DeprecatedGetCommand extends Command {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

@@ -30,7 +30,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 @Parameters(commandDescription = "Set configuration properties")
-@Usage("-connect-to <hostname[:port]> -setting <[namespace:]property=value>,<[namespace:]property=value>...")
+@Usage("-connect-to <hostname[:port]> -setting <[namespace:]property=value> -setting <[namespace:]property=value> ...")
 public class SetCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)

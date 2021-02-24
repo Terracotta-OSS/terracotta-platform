@@ -32,7 +32,7 @@ import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import java.net.InetSocketAddress;
 
 @Parameters(commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@Usage("(-from-cluster <hostname[:port]> -stripe [<hostname[:port]>|uid|name] | -from-stripe <hostname[:port]> -node [<hostname[:port]>|uid|name]) [-force] [-stop-wait-time <stop-wait-time>] [-stop-delay <stop-delay>]")
+@Usage("(-from-cluster <hostname[:port]> -stripe [<hostname[:port]>|uid|name] | -from-stripe <hostname[:port]> -node [<hostname[:port]>|uid|name]) [-stop-wait-time <stop-wait-time>] [-stop-delay <stop-delay>]")
 public class DetachCommand extends Command {
 
   @Parameter(names = {"-from-cluster"}, description = "Cluster to detach from", converter = InetSocketAddressConverter.class)
@@ -53,7 +53,7 @@ public class DetachCommand extends Command {
   @Parameter(names = {"-stop-delay"}, description = "Delay before the server stops itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> stopDelay = Measure.of(2, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-force"}, description = "Force the operation")
+  @Parameter(names = {"-force"}, description = "Force the operation", hidden = true)
   protected boolean force;
 
   @Inject

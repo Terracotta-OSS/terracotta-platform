@@ -84,6 +84,14 @@ public class AttachAction extends TopologyAction {
       throw new IllegalArgumentException("The destination and the source endpoints must not be the same");
     }
 
+    // we prevent attaching nodes if some nodes must be restarted
+    for (Endpoint endpoint : destinationOnlineNodes.keySet()) {
+      // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
+      validateLogOrFail(
+          () -> !mustBeRestarted(destination),
+          "Impossible to do any topology change. Node: " + endpoint + " is waiting to be restarted to apply some pending changes. Please refer to the Troubleshooting Guide for more help.");
+    }
+
     Collection<Endpoint> destinationPeers = destinationCluster.getSimilarEndpoints(destination);
     if (destinationPeers.contains(source)) {
       throw new IllegalArgumentException("Source node: " + source + " is already part of cluster: " + destinationCluster.toShapeString());
@@ -118,7 +126,7 @@ public class AttachAction extends TopologyAction {
           () -> sourceCluster.getNodeCount() == 1,
           "Source node: " + source + " is part of a stripe containing more than 1 nodes. " +
               "It must be detached first before being attached to a new stripe. " +
-              "You can run the command with the force option to force the attachment, but at the risk of breaking the cluster from where the node is taken.");
+              "Please refer to the Troubleshooting Guide for more help.");
 
       Stripe destinationStripe = destinationCluster.getStripeByNode(destination.getNodeUID()).get();
       FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
@@ -143,7 +151,7 @@ public class AttachAction extends TopologyAction {
           () -> sourceCluster.getStripeCount() == 1,
           "Source stripe from node: " + source + " is part of a cluster containing more than 1 stripes. " +
               "It must be detached first before being attached to a new cluster. " +
-              "You can run the command with the force option to force the attachment, but at the risk of breaking the cluster from where the node is taken.");
+              "Please refer to the Troubleshooting Guide for more help.");
     }
 
     // make sure nodes to attach are online

@@ -108,20 +108,40 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
 
-    // do a change requiring a restart
+    // do a change requiring a restart on the remaining nodes
     assertThat(
-        configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node.1.tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node." + activeId + ".tc-properties.foo=bar"),
+        containsOutput("IMPORTANT: A restart of nodes:"));
 
     stopNode(1, passiveId);
 
-    // try to detach this node
+    // try to detach the passive node
     assertThat(
         configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
         both(not(successful())).and(containsOutput("Impossible to do any topology change")));
 
     // try forcing the detach
     assertThat(configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+
+    assertTopologyChanged(activeId);
+  }
+
+  @Test
+  public void test_detach_passive_requiring_restart_from_activated_cluster() throws Exception {
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    // do a change requiring a restart on the remaining nodes
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(1, passiveId), "-c", "stripe.1.node." + passiveId + ".tc-properties.foo=bar"),
+        containsOutput("IMPORTANT: A restart of nodes:"));
+
+    stopNode(1, passiveId);
+
+    // try to detach the passive node
+    assertThat(
+        configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        is(successful()));
 
     assertTopologyChanged(activeId);
   }
@@ -134,7 +154,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
     // detaching an online node needs to be forced
     assertThat(
         configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
-        containsOutput("Safely shutdown the nodes first"));
+        containsOutput("Nodes must be safely shutdown first. Please refer to the Troubleshooting Guide for more help."));
 
     assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId), "-f"), is(successful()));
 
