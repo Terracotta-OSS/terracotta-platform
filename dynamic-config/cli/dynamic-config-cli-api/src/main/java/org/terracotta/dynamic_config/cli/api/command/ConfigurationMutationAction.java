@@ -30,7 +30,9 @@ import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 
+import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -138,7 +140,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
             "====================================================================" + lineSeparator() +
             "IMPORTANT: A restart of the cluster is required to apply the changes" + lineSeparator() +
             "====================================================================" + lineSeparator());
-
+        output.out("restart required for cluster");
       } else {
         final long numberOfDifferentSettingsToChange = configurations.stream()
             .map(Configuration::getSetting)
@@ -174,7 +176,12 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
               "=======================================================================================" + lineSeparator() +
               "IMPORTANT: A restart of nodes: " + toString(nodesRequiringRestart) + " is required to apply the changes" + lineSeparator() +
               "=======================================================================================" + lineSeparator());
-
+          List<InetSocketAddress> addresses = onlineNodes.keySet()
+              .stream()
+              .filter(endpoint -> nodesRequiringRestart.contains(endpoint.getNodeName()))
+              .map(Endpoint::getAddress)
+              .collect(toList());
+          output.out("restart required for nodes: {} ", toString(addresses));
         }
       }
 
