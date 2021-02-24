@@ -88,7 +88,7 @@ public class AttachAction extends TopologyAction {
     for (Endpoint endpoint : destinationOnlineNodes.keySet()) {
       // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
       validateLogOrFail(
-          () -> !mustBeRestarted(destination),
+          () -> !mustBeRestarted(endpoint),
           "Impossible to do any topology change. Node: " + endpoint + " is waiting to be restarted to apply some pending changes. Please refer to the Troubleshooting Guide for more help.");
     }
 
