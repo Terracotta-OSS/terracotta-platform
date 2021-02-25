@@ -47,12 +47,17 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
   public final NodeOutputRule out = new NodeOutputRule();
 
   public AttachInConsistency1x3IT() {
-    super(Duration.ofSeconds(300));
+    super(Duration.ofMinutes(5));
   }
 
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency();
+  }
+
+  @Override
+  protected Duration getAssertTimeout() {
+    return Duration.ofMinutes(2);
   }
 
   @Before

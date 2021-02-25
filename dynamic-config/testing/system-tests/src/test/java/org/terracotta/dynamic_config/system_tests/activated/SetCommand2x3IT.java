@@ -37,7 +37,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 public class SetCommand2x3IT extends DynamicConfigIT {
 
   public SetCommand2x3IT() {
-    super(Duration.ofMinutes(4));
+    super(Duration.ofMinutes(5));
   }
 
   @Test
