@@ -26,9 +26,11 @@ import java.util.stream.Stream;
 import static java.util.function.Predicate.isEqual;
 import static java.util.stream.IntStream.rangeClosed;
 import static java.util.stream.Stream.concat;
+import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(stripes = 2, nodesPerStripe = 3, autoActivate = true)
@@ -39,7 +41,7 @@ public class SetCommand2x3IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testAutoRestart() throws InterruptedException {
+  public void testAutoRestart() {
     int passiveId = findPassives(1)[0];
     stopNode(1, passiveId); // simulate a node down
     String exclude = "stripe.1.node." + passiveId + ".tc-properties.foo=bar";
@@ -55,7 +57,7 @@ public class SetCommand2x3IT extends DynamicConfigIT {
             .flatMap(cfg -> Stream.of("-setting", cfg))
     ).toArray(String[]::new);
 
-    assertThat(configTool(cli), is(successful()));
+    assertThat(configTool(cli), both(is(successful())).and(containsOutput("Restart required for nodes:")));
 
     for (int s = 1; s <= 2; s++) {
       for (int n = 1; n <= 3; n++) {

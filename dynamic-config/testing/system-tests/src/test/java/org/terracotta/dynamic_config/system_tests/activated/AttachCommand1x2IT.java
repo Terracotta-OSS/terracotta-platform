@@ -116,7 +116,7 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     // do a change requiring a restart
     assertThat(
         configTool("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of nodes:"));
+        containsOutput("Restart required for nodes:"));
 
     // start a second node
     startNode(1, 2);
