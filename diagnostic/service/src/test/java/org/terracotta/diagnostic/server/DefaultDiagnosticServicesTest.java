@@ -24,19 +24,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 import org.terracotta.diagnostic.server.api.Expose;
 import org.terracotta.json.ObjectMapperFactory;
-import org.terracotta.server.ServerMBean;
 
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanInfo;
 import java.io.Closeable;
-import java.lang.management.ManagementFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.reset;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
@@ -106,38 +100,6 @@ public class DefaultDiagnosticServicesTest {
     assertThat(diagnosticServices.findService(MyService1.class).isPresent(), is(true));
 
     assertThat(diagnosticServices.findService(MyService2.class).isPresent(), is(false));
-  }
-
-  @Test
-  public void test_expose() throws Exception {
-    DiagnosticServicesRegistration<MyService1> s1Registration = diagnosticServices.register(MyService1.class, service1);
-    assertThat(s1Registration, is(instanceOf(DiagnosticServicesRegistration.class)));
-    assertThat(diagnosticServices.register(MyService2.class, service2), is(instanceOf(DiagnosticServicesRegistration.class)));
-
-    MBeanInfo s2 = ManagementFactory.getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s2"));
-    assertThat(s2, is(not(nullValue())));
-
-    assertThat(
-        () -> ManagementFactory.getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s1")),
-        is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=s1")))));
-
-    s1Registration.exposeMBean("s1");
-
-    MBeanInfo s1 = ManagementFactory.getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s1"));
-    assertThat(s1, is(not(nullValue())));
-  }
-
-  @Test
-  public void test_unexpose() throws Exception {
-    assertThat(diagnosticServices.register(MyService2.class, service2), is(instanceOf(DiagnosticServicesRegistration.class)));
-
-    ManagementFactory.getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s2"));
-
-    diagnosticServices.unregister(MyService2.class);
-
-    assertThat(
-        () -> ManagementFactory.getPlatformMBeanServer().getMBeanInfo(ServerMBean.createMBeanName("s2")),
-        is(throwing(instanceOf(InstanceNotFoundException.class)).andMessage(is(equalTo("org.terracotta:name=s2")))));
   }
 
   @Test

@@ -97,7 +97,6 @@
     <dependencySet>
       <outputDirectory>server/plugins/lib</outputDirectory>
       <includes>
-        <include>net.bytebuddy:byte-buddy</include>
         <include>com.beust:jcommander</include>
         <include>org.terracotta:terracotta-utilities-tools</include>
         <include>org.terracotta:offheap-resource</include>
