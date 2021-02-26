@@ -55,7 +55,6 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDiagnosticServices.class);
 
   private final Map<Class<?>, CompletableFuture<?>> listeners = new ConcurrentHashMap<>();
-  private final TerracottaMBeanGenerator generator = new TerracottaMBeanGenerator();
 
   private final DiagnosticRequestHandler handler;
 
@@ -82,10 +81,8 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
     DiagnosticServiceDescriptor<T> added = handler.add(
         serviceInterface,
         serviceImplementation,
-        () -> unregister(serviceInterface),
-        name -> registerMBean(name, serviceInterface));
+        () -> unregister(serviceInterface));
     LOGGER.info("Registered Diagnostic Service: {}", serviceInterface.getName());
-    added.discoverMBeanName().ifPresent(name -> registerMBean(name, added));
     fireOnService(serviceInterface, serviceImplementation);
     return added;
   }
@@ -129,21 +126,6 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
       descriptor.getRegisteredMBeans().forEach(DefaultDiagnosticServices::unregisterMBean);
     }
     listeners.remove(serviceInterface);
-  }
-
-  <T> boolean registerMBean(String name, Class<T> serviceInterface) {
-    DiagnosticServiceDescriptor<T> serviceDescriptor = handler.findService(serviceInterface).orElse(null);
-    if (serviceDescriptor == null) {
-      return false;
-    } else {
-      registerMBean(name, serviceDescriptor);
-      return true;
-    }
-  }
-
-  private <T> void registerMBean(String name, DiagnosticServiceDescriptor<T> descriptor) {
-    registerMBean(name, generator.generateMBean(descriptor));
-    descriptor.addMBean(name);
   }
 
   private static void registerMBean(String name, StandardMBean mBean) {

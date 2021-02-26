@@ -22,11 +22,6 @@ import java.io.Closeable;
  */
 public interface DiagnosticServicesRegistration<T> extends Closeable {
 
-  /**
-   * Exposes the service through JMX
-   */
-  boolean exposeMBean(String name);
-
   Class<T> getServiceInterface();
 
   /**
