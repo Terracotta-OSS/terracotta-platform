@@ -508,6 +508,14 @@ public class DynamicConfigIT {
   }
 
   protected final <T> T usingTopologyService(String host, int port, Function<TopologyService, T> fn) {
+    return usingDiagnosticService(host, port, diagnosticService -> fn.apply(diagnosticService.getProxy(TopologyService.class)));
+  }
+
+  protected final <T> T usingDiagnosticService(int stripeId, int nodeId, Function<DiagnosticService, T> fn) {
+    return usingDiagnosticService("localhost", getNodePort(stripeId, nodeId), fn);
+  }
+
+  protected final <T> T usingDiagnosticService(String host, int port, Function<DiagnosticService, T> fn) {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(host, port),
         getClass().getSimpleName(),
@@ -515,7 +523,7 @@ public class DynamicConfigIT {
         getConnectionTimeout(),
         null,
         objectMapperFactory)) {
-      return fn.apply(diagnosticService.getProxy(TopologyService.class));
+      return fn.apply(diagnosticService);
     } catch (ConnectionException e) {
       throw new RuntimeException(e);
     }
@@ -562,21 +570,17 @@ public class DynamicConfigIT {
     waitUntil(() -> isServerBlocked(server), is(true));
   }
 
-  protected TerracottaServer isActive(TerracottaServer... servers) {
+  protected TerracottaServer waitForNewActive(TerracottaServer... servers) {
     waitUntil(() -> Arrays.stream(servers).anyMatch(server -> angela.tsa().getState(server) == STARTED_AS_ACTIVE), is(true));
     TerracottaServer active = Arrays.stream(servers)
         .filter(server -> angela.tsa().getState(server) == STARTED_AS_ACTIVE)
         .findFirst()
         .get();
     TerracottaServer[] passives = ArrayUtils.removeElements(servers, active);
-    if (passives.length == 0 || isPassive(passives)) {
+    if (passives.length == 0) {
       return active;
     }
-    return null;
-  }
-
-  protected boolean isPassive(TerracottaServer... servers) {
-    waitUntil(() -> Arrays.stream(servers).allMatch(server -> angela.tsa().getState(server) == STARTED_AS_PASSIVE), is(true));
-    return true;
+    waitUntil(() -> Arrays.stream(passives).allMatch(server -> angela.tsa().getState(server) == STARTED_AS_PASSIVE), is(true));
+    return active;
   }
 }

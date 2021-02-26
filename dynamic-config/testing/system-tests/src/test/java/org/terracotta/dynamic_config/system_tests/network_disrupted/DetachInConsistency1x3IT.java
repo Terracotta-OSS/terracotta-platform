@@ -103,8 +103,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
       //verify active gets blocked
       waitForServerBlocked(active);
 
-      TerracottaServer newActive = isActive(passive1, passive2);
-      assertThat(newActive, is(notNullValue()));
+      TerracottaServer newActive = waitForNewActive(passive1, passive2);
       if (newActive == passive1) {
         newActiveId = passiveId1;
       } else {
@@ -157,7 +156,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
       //verify active gets blocked
       waitForServerBlocked(active);
 
-      TerracottaServer newActive = isActive(passive1, passive2);
+      TerracottaServer newActive = waitForNewActive(passive1, passive2);
       TerracottaServer newPassive;
       assertThat(newActive, is(notNullValue()));
       if (newActive == passive1) {
