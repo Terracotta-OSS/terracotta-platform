@@ -352,11 +352,33 @@ public abstract class RemoteAction implements Runnable {
 
   protected final void restartNodes(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
     LOGGER.trace("restartNodes({}, {})", endpoints, maximumWaitTime);
+    RestartProgress progress = restartService.restartNodes(
+        endpoints,
+        restartDelay,
+        acceptedStates);
+    followRestart(progress, endpoints, maximumWaitTime);
+  }
+
+  protected final void restartNodesIfActives(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
+    LOGGER.trace("restartNodesIfActives({}, {})", endpoints, maximumWaitTime);
+    RestartProgress progress = restartService.restartNodesIfActives(
+        endpoints,
+        restartDelay,
+        acceptedStates);
+    followRestart(progress, endpoints, maximumWaitTime);
+  }
+
+  protected final void restartNodesIfPassives(Collection<Endpoint> endpoints, Duration maximumWaitTime, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
+    LOGGER.trace("restartNodesIfPassives({}, {})", endpoints, maximumWaitTime);
+    RestartProgress progress = restartService.restartNodesIfPassives(
+        endpoints,
+        restartDelay,
+        acceptedStates);
+    followRestart(progress, endpoints, maximumWaitTime);
+  }
+
+  private void followRestart(RestartProgress progress, Collection<Endpoint> endpoints, Duration maximumWaitTime) {
     try {
-      RestartProgress progress = restartService.restartNodes(
-          endpoints,
-          restartDelay,
-          acceptedStates);
       progress.getErrors().forEach((address, e) -> LOGGER.warn("Unable to ask node: {} to restart: please restart it manually.", address));
       progress.onRestarted((endpoint, state) -> output.info("Node: {} has restarted in state: {}", endpoint, state));
       Map<Endpoint, LogicalServerState> restarted = progress.await(maximumWaitTime);

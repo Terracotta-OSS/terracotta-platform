@@ -48,7 +48,7 @@ public class DetachCommand2x1IT extends DynamicConfigIT {
     // do a change requiring a restart on the remaining nodes
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of nodes:"));
+        containsOutput("Restart required for nodes:"));
 
     assertThat(
         configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
@@ -60,7 +60,7 @@ public class DetachCommand2x1IT extends DynamicConfigIT {
     // do a change requiring a restart on the remaining nodes
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(2, 1), "-c", "stripe.2.node.1.tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of nodes:"));
+        containsOutput("Restart required for nodes:"));
 
     assertThat(
         configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),

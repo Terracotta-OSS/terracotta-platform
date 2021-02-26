@@ -150,7 +150,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void setNodeLogDir() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=logs/stripe1"),
-        containsOutput("IMPORTANT: A restart of nodes: node-1-1 is required to apply the changes"));
+        containsOutput("Restart required for nodes:"));
 
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),
@@ -206,7 +206,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void testTcProperty() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of nodes:"));
+        containsOutput("Restart required for nodes:"));
 
     assertThat(
         configTool("get", "-r", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
@@ -244,12 +244,12 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     String clusterName = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getCluster().getName());
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=new-name"),
-        not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
+        not(containsOutput("Restart required for cluster")));
     assertThat(configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         allOf(containsOutput("Node restart required: NO"), containsOutput("Node last configuration change details: set cluster-name=new-name")));
 
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=" + clusterName),
-        not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
+        not(containsOutput("Restart required for cluster")));
     assertThat(configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         allOf(containsOutput("Node restart required: NO"), containsOutput("Node last configuration change details: set cluster-name=" + clusterName)));
   }
