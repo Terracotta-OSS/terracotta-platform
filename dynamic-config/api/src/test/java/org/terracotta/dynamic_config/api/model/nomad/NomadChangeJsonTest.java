@@ -40,6 +40,7 @@ import java.util.Arrays;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
@@ -160,5 +161,19 @@ public class NomadChangeJsonTest {
 
       assertThat(tuple.t2 + "\n" + objectMapper.valueToTree(o).toString(), objectMapper.valueToTree(o).toString(), is(equalTo(objectMapper.readTree(json).toString())));
     }
+  }
+
+  @Test
+  public void test_deser_with_unexpected_fields() throws IOException, URISyntaxException {
+    ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
+    Tuple2<Class<ClusterActivationNomadChange>, String> tuple = tuple2(ClusterActivationNomadChange.class, "/nomad/v2/unexpected-fields.json");
+    URL jsonFile = getClass().getResource(tuple.t2);
+    byte[] bytes = Files.readAllBytes(Paths.get(jsonFile.toURI()));
+    String json = new String(bytes, StandardCharsets.UTF_8);
+
+    // this call below should not fail with
+    // UnrecognizedPropertyException: Unrecognized field "foo" [...], not marked as ignorable
+    ClusterActivationNomadChange o = objectMapper.readValue(json, tuple.t1);
+    assertNotNull(o);
   }
 }

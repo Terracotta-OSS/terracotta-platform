@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,7 +88,13 @@ public class ObjectMapperFactory {
         .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
         .enable(SerializationFeature.CLOSE_CLOSEABLE)
         .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-        .configure(SerializationFeature.INDENT_OUTPUT, pretty);
+        .configure(SerializationFeature.INDENT_OUTPUT, pretty)
+        // setting FAIL_ON_UNKNOWN_PROPERTIES to false will help backward compatibility to ignore
+        // some json fields that are present in the input message if they are not needed when deserializing
+        // and mapping to an object. This does not mean that it will achieve complete backward compat, but
+        // it will prevent Jackson from failing when it sees a json input that cannot be mapped to a field in
+        // a target object
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     if (pretty) {
       DefaultIndenter indent = new DefaultIndenter("  ", eol);
       mapper.writer(new DefaultPrettyPrinter()
