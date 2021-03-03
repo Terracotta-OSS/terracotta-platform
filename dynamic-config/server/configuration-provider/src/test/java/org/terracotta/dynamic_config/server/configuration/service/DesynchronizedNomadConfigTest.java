@@ -122,7 +122,8 @@ public class DesynchronizedNomadConfigTest {
         {"v1-config"},
         {"v1-config-migrated"},
         {"v2-concurrent-tx-rolled-back"},
-        {"v2-config"}
+        {"v2-config"},
+        {"v2-config-10.7.0.0.315"},
     });
   }
 
@@ -146,6 +147,8 @@ public class DesynchronizedNomadConfigTest {
 
   @Test
   public void test_restricted_activation() throws NomadException {
+    // This test assumes that we have a stripe with 2 nodes: 1 active and  1 passive
+    // but "v2-concurrent-tx-rolled-back" is a cluster with 2 stripe 1 node each.
     assumeThat(rootName, is(not(equalTo("v2-concurrent-tx-rolled-back"))));
 
     Path root = copy(rootName);
@@ -159,7 +162,7 @@ public class DesynchronizedNomadConfigTest {
          NomadClient<NodeContext> activeNomadClient = active.createNomadClient()) {
 
       runNormalChange(activeNomadClient);
-      assertThat(active.nomad.getChangeHistory(), hasSize(2));
+      assertThat(active.nomad.getChangeHistory().size(), greaterThanOrEqualTo(2));
 
       // grab last topology
       Cluster lastTopology = active.nomad.discover().getLatestChange().getResult().getCluster();
@@ -181,7 +184,7 @@ public class DesynchronizedNomadConfigTest {
       // force sync the passive to active
       try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"), passiveDetails)) {
         assertThat(passive.sync.sync(active.sync.getSyncData()), hasItem(ZAP_REQUIRED));
-        assertThat(passive.nomad.getChangeHistory(), hasSize(2)); // the changes before any upgrade are not synced
+        assertThat(passive.nomad.getChangeHistory().size(), greaterThanOrEqualTo(2)); // the changes before any upgrade are not synced
       }
 
       // run a normal change across the cluster
@@ -190,8 +193,8 @@ public class DesynchronizedNomadConfigTest {
         NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
         clusterNomadClient.tryApplyChange(failureRecorder, SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "3GB"));
         failureRecorder.reThrowErrors();
-        assertThat(active.nomad.getChangeHistory(), hasSize(3));
-        assertThat(active.nomad.getChangeHistory(), hasSize(3));
+        assertThat(active.nomad.getChangeHistory().size(), greaterThanOrEqualTo(3));
+        assertThat(active.nomad.getChangeHistory().size(), greaterThanOrEqualTo(3));
       }
 
       // nothing to sync next time

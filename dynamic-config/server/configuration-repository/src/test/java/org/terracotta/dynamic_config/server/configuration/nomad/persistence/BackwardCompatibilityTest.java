@@ -85,6 +85,11 @@ public class BackwardCompatibilityTest {
     upgradedTopology("config-v1_with_deletion_change", "node1", 2);
   }
 
+  @Test
+  public void test_automatic_upgrade_of_config_repository_for_10_7_0_0_315() throws Exception {
+    assertThatConfigDirIsCompatible("config-v2-10.7.0.0.315", "node1", 2);
+  }
+
   private String read(String resource) throws URISyntaxException, IOException {
     URL url = getClass().getResource(resource);
     if (url == null) {
@@ -94,7 +99,7 @@ public class BackwardCompatibilityTest {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 
-  private Tuple2<NodeContext, ObjectMapperFactory> upgradedTopology(String name, String nodeName, int ind) throws Exception {
+  private Tuple2<NodeContext, ObjectMapperFactory> upgradedTopology(String name, String nodeName, int lastCommittedVersion) throws Exception {
     Path resourcesRoot = Paths.get(getClass().getResource("/" + name).toURI());
 
     // copy config folder in a temporary location
@@ -103,7 +108,7 @@ public class BackwardCompatibilityTest {
     Files.createDirectories(config.resolve("license"));
 
     // before...
-    Properties before = Props.load(config.resolve("cluster").resolve(nodeName + "." + ind + ".properties"));
+    Properties before = Props.load(config.resolve("cluster").resolve(nodeName + "." + lastCommittedVersion + ".properties"));
     assertThat(before.stringPropertyNames(), not(hasItem("stripe.1.stripe-name")));
 
     // create nomad server
@@ -116,7 +121,7 @@ public class BackwardCompatibilityTest {
       nomadServer.setChangeApplicator(ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()));
 
       // upgrade should have been done
-      int nextInd = ind + 1;
+      int nextInd = lastCommittedVersion + 1;
       Properties after = Props.load(config.resolve("cluster").resolve(nodeName + "." + nextInd + ".properties"));
 
       String[] removedV1Props = {"this.stripe-id", "this.node-id", "this.name"};
@@ -125,6 +130,41 @@ public class BackwardCompatibilityTest {
       // check content should match v1 content plus these 2 fields
       Stream.of(newV2Props).forEach(prop -> before.setProperty(prop, after.getProperty(prop)));
       Stream.of(removedV1Props).forEach(before::remove);
+      assertThat(after, is(equalTo(before)));
+
+      // check topology
+      NodeContext topology = nomadServer.discover().getLatestChange().getResult();
+
+      // subsequent calls are outputting the same result always after an upgrade
+      assertThat(nomadServer.discover().getLatestChange().getResult(), is(equalTo(topology)));
+
+      return Tuple2.tuple2(topology, objectMapperFactory);
+    }
+  }
+
+  private Tuple2<NodeContext, ObjectMapperFactory> assertThatConfigDirIsCompatible(String name, String nodeName, int lastCommittedVersion) throws Exception {
+    Path resourcesRoot = Paths.get(getClass().getResource("/" + name).toURI());
+
+    // copy config folder in a temporary location
+    Path config = temporaryFolder.getRoot().resolve(name);
+    org.terracotta.utilities.io.Files.copy(resourcesRoot, config, RECURSIVE);
+    Files.createDirectories(config.resolve("license"));
+
+    // before...
+    Properties before = Props.load(config.resolve("cluster").resolve(nodeName + "." + lastCommittedVersion + ".properties"));
+
+    // create nomad server
+    NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(config, IParameterSubstitutor.identity());
+    nomadConfigurationManager.createDirectories();
+    ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+    NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
+
+    try (DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, nodeName, null)) {
+      nomadServer.setChangeApplicator(ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()));
+
+      // upgrade should have been done
+      int nextInd = lastCommittedVersion;
+      Properties after = Props.load(config.resolve("cluster").resolve(nodeName + "." + nextInd + ".properties"));
       assertThat(after, is(equalTo(before)));
 
       // check topology
