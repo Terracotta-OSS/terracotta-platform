@@ -45,7 +45,7 @@ public class TerracottaJsonModuleV1 extends SimpleModule {
       }
 
       @Override
-      protected Path _deserializeFromEmptyString() throws IOException {
+      protected Path _deserializeFromEmptyString(DeserializationContext ctxt) throws IOException {
         return Paths.get("");
       }
     });

@@ -16,8 +16,6 @@
 package org.terracotta.testing.config;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.terracotta.ipceventbus.proc.AnyProcess;
-import org.terracotta.ipceventbus.proc.AnyProcessBuilder;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

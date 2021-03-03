@@ -49,7 +49,6 @@ public abstract class AbstractHATest extends AbstractTest {
       .withServiceFragment(resourceConfig)
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
-      .inline(false)
       .startupBuilder(ConfigRepoStartupBuilder::new)
       .build();
 
