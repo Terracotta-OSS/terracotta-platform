@@ -116,6 +116,7 @@ public class ConfigFileStartupBuilder extends StartupCommandBuilder {
       AnyProcessBuilder<? extends AnyProcess> builder = AnyProcess.newBuilder()
           .command(command.toArray(new String[0]))
           .workingDir(workingDir.toFile())
+          .env("JAVA_HOME", System.getProperty("java.home"))
           .pipeStdout(System.out)
           .pipeStderr(System.err);
 
