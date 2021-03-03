@@ -73,11 +73,12 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   private volatile NomadServerManager nomadServerManager;
   private volatile DynamicConfigSyncData.Codec synCodec;
   private volatile StartupConfiguration configuration;
+  private volatile Server server;
 
   @Override
   public void initialize(List<String> args) {
     withMyClassLoader(() -> {
-      Server server = ServerEnv.getServer();
+      server = ServerEnv.getServer();
 
       ClassLoader serviceClassLoader = getServiceClassLoader(server);
 
@@ -194,9 +195,19 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       try {
         DynamicConfigSyncData data = synCodec.decode(bytes);
         requires = dynamicConfigurationPassiveSync.sync(data);
-      } catch (NomadException n) {
-        // rely on the server to stop based on uncaught exception
-        throw new RuntimeException(n);
+      } catch (RuntimeException | NomadException e) {
+        // only log the full trace if in trace/debug mode
+        LOGGER.debug("Error: {}", e.getMessage(), e);
+        LOGGER.warn(lineSeparator() + lineSeparator()
+                + "==============================================================================================================================================" + lineSeparator()
+                + "SERVER WILL STOP: PASSIVE SYNC FAILED WITH ERROR: {}" + lineSeparator()
+                + "(please change the logging config to see more details)" + lineSeparator()
+                + "==============================================================================================================================================" + lineSeparator(),
+            e.getMessage());
+        // ask for the server to stop and not restart
+        server.stop();
+        // do not continue anymore
+        return;
       }
 
       if (requires.contains(RESTART_REQUIRED)) {
