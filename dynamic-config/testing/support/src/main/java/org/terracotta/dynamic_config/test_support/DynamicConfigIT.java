@@ -44,6 +44,10 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
+import org.terracotta.dynamic_config.cli.api.output.InMemoryOutputService;
+import org.terracotta.dynamic_config.cli.api.output.OutputService;
+import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.json.ObjectMapperFactory;
@@ -77,6 +81,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static java.lang.System.lineSeparator;
+import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.equalTo;
@@ -275,7 +281,28 @@ public class DynamicConfigIT {
     } else {
       cmd = cli;
     }
-    return angela.configTool().executeCommand(env, cmd);
+
+    // config-tool launched through angela from the kit in
+    // its own process. Slower and harder to debug.
+//    {
+//      return angela.configTool().executeCommand(env, cmd);
+//    }
+
+    // inline config-tool launched from within the test classpath.
+    // faster and easier to debug, but does not test the kit packaging
+    {
+      LOGGER.info("config-tool {}", String.join(" ", cmd));
+      InlineToolExecutionResult result = new InlineToolExecutionResult();
+      OutputService out = new ConsoleOutputService().then(result);
+      try {
+        new ConfigTool(out).run(cmd);
+        result.setExitStatus(0);
+      } catch (Exception e) {
+        result.setExitStatus(1);
+        out.warn("Error: {}", e.getMessage());
+      }
+      return result;
+    }
   }
 
   private List<String> getConfigToolOptions(String[] cli) {
@@ -582,5 +609,54 @@ public class DynamicConfigIT {
     }
     waitUntil(() -> Arrays.stream(passives).allMatch(server -> angela.tsa().getState(server) == STARTED_AS_PASSIVE), is(true));
     return active;
+  }
+
+  public static class InlineToolExecutionResult extends ToolExecutionResult implements OutputService {
+
+    private final InMemoryOutputService delegate = new InMemoryOutputService();
+    private int exitStatus = -1;
+
+    public InlineToolExecutionResult() {
+      super(-1, emptyList());
+    }
+
+    public void setExitStatus(int exitStatus) {
+      this.exitStatus = exitStatus;
+    }
+
+    @Override
+    public int getExitStatus() {
+      return exitStatus;
+    }
+
+    @Override
+    public List<String> getOutput() {
+      return delegate.getOutput();
+    }
+
+    @Override
+    public String toString() {
+      return String.join(lineSeparator(), getOutput());
+    }
+
+    @Override
+    public void out(String format, Object... args) {
+      delegate.out(format, args);
+    }
+
+    @Override
+    public void info(String format, Object... args) {
+      delegate.info(format, args);
+    }
+
+    @Override
+    public void warn(String format, Object... args) {
+      delegate.warn(format, args);
+    }
+
+    @Override
+    public void close() {
+      delegate.close();
+    }
   }
 }

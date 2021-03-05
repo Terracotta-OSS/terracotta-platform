@@ -20,6 +20,7 @@ import org.slf4j.helpers.MessageFormatter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 public class InMemoryOutputService implements OutputService {
 
@@ -48,6 +49,10 @@ public class InMemoryOutputService implements OutputService {
 
   @Override
   public synchronized void out(String format, Object... args) {
-    lines.add(MessageFormatter.arrayFormat(format, args).getMessage());
+    // Split using both Windows and UNIX line separators
+    StringTokenizer st = new StringTokenizer(MessageFormatter.arrayFormat(format, args).getMessage(), "\n\r");
+    while (st.hasMoreTokens()) {
+      lines.add(st.nextToken());
+    }
   }
 }
