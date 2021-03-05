@@ -58,7 +58,7 @@ public class ConfigConversionIT {
 
   @Test
   public void test_basic_conversion() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -89,7 +89,7 @@ public class ConfigConversionIT {
 
   @Test
   public void test_server_defaults() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-4.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -113,7 +113,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testWithoutOffheap() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-3.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -130,7 +130,7 @@ public class ConfigConversionIT {
   @Test
   public void test_conversion_fail_due_to_relative_paths_and_not_forcing_conversion() {
     exceptionRule.expect(RuntimeException.class);
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString());
@@ -140,7 +140,7 @@ public class ConfigConversionIT {
   public void test_conversion_no_server_element() {
     exceptionRule.expect(RuntimeException.class);
     exceptionRule.expectMessage("No server specified.");
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_no_server_element.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -150,7 +150,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithPlaceHolders() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -165,7 +165,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithLeaseMissingInConfig() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
         "-t", "properties",
@@ -180,7 +180,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithoutFailoverPriority() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
         "-t", "properties",
@@ -194,7 +194,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithoutClientReconnectWindow() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
         "-t", "properties",
@@ -209,7 +209,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithLease() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_lease_failover_reconnect_window",
         "-t", "properties",
@@ -223,7 +223,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithFailoverPriority() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_lease_failover_reconnect_window",
         "-t", "properties",
@@ -237,7 +237,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithClientReconnectWindow() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_lease_failover_reconnect_window",
         "-t", "properties",
@@ -251,7 +251,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testNodePort() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-port-bind-address",
         "-t", "properties",
@@ -265,7 +265,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testNodeBindAddress() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-port-bind-address",
         "-t", "properties",
@@ -279,7 +279,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testNodeGroupPort() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-group-port-group-bind-address",
         "-t", "properties",
@@ -293,7 +293,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testNodeGroupBindAddress() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-group-port-group-bind-address",
         "-t", "properties",
@@ -307,7 +307,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testLogDir() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-log-dir-tc-prop",
         "-t", "properties",
@@ -321,7 +321,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testTcProperty() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-log-dir-tc-prop",
         "-t", "properties",
@@ -336,7 +336,7 @@ public class ConfigConversionIT {
 
   @Test
   public void test_conversion_with_explicit_repository_option() throws Exception {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
         "-t", "directory",
@@ -349,7 +349,7 @@ public class ConfigConversionIT {
 
   @Test
   public void test_conversion_with_repository_option() throws Exception {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),

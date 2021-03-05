@@ -18,10 +18,13 @@ package org.terracotta.dynamic_config.cli.config_tool;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.cli.api.command.Configuration;
 import org.terracotta.dynamic_config.cli.api.command.Injector;
 import org.terracotta.dynamic_config.cli.api.command.ServiceProvider;
-import org.terracotta.dynamic_config.cli.command.CustomJCommander;
+import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
+import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.config_tool.command.CommandProvider;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainCommand;
 
@@ -34,28 +37,25 @@ import static java.lang.System.lineSeparator;
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
 
-  public static void main(String... args) {
-    try {
-      ConfigTool.start(args);
-    } catch (Exception e) {
-      String message = e.getMessage();
-      if (message == null || message.isEmpty()) {
-        // an unexpected error without message
-        LOGGER.error("Internal error:", e);
-      } else if (LOGGER.isDebugEnabled()) {
-        // equivalent to verbose mode
-        LOGGER.error("Error:", e);
-      } else {
-        // normal mode: only display message
-        LOGGER.error("Error: {}", message);
-      }
-      System.exit(1);
-    }
+  private final OutputService outputService;
+  private final CommandProvider commandProvider;
+
+  public ConfigTool() {
+    this(new ConsoleOutputService());
   }
 
-  public static void start(String... args) {
+  public ConfigTool(OutputService outputService) {
+    this(outputService, CommandProvider.get());
+  }
+
+  public ConfigTool(OutputService outputService, CommandProvider commandProvider) {
+    this.outputService = outputService;
+    this.commandProvider = commandProvider;
+  }
+
+  public void run(String... args) {
     LOGGER.debug("Parsing command-line arguments");
-    CustomJCommander<RemoteMainCommand> jCommander = parseArguments(CommandProvider.get(), args);
+    CustomJCommander<RemoteMainCommand> jCommander = parseArguments(args);
 
     // Process arguments like '-v'
     RemoteMainCommand mainCommand = jCommander.getMainCommand();
@@ -83,9 +83,9 @@ public class ConfigTool {
     });
   }
 
-  private static CustomJCommander<RemoteMainCommand> parseArguments(CommandProvider commandProvider, String[] args) {
+  private CustomJCommander<RemoteMainCommand> parseArguments(String[] args) {
     LOGGER.debug("Attempting parse using regular commands");
-    CustomJCommander<RemoteMainCommand> jCommander = getCustomJCommander(commandProvider.getCommands(), commandProvider.getMainCommand());
+    CustomJCommander<RemoteMainCommand> jCommander = getCustomJCommander(commandProvider.getCommands(), commandProvider.getMainCommand(new Configuration(outputService)));
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {
@@ -95,7 +95,7 @@ public class ConfigTool {
         try {
           LOGGER.debug("Attempting parse using deprecated commands");
           // Create New JCommander object to avoid repeated main command error.
-          CustomJCommander<RemoteMainCommand> deprecatedJCommander = getCustomJCommander(commandProvider.getDeprecatedCommands(), commandProvider.getMainCommand());
+          CustomJCommander<RemoteMainCommand> deprecatedJCommander = getCustomJCommander(commandProvider.getDeprecatedCommands(), commandProvider.getMainCommand(new Configuration(outputService)));
           deprecatedJCommander.parse(args);
           // success ?
           return deprecatedJCommander;
@@ -111,6 +111,25 @@ public class ConfigTool {
       }
     }
     return jCommander;
+  }
+
+  public static void main(String... args) {
+    try {
+      new ConfigTool().run(args);
+    } catch (Exception e) {
+      String message = e.getMessage();
+      if (message == null || message.isEmpty()) {
+        // an unexpected error without message
+        LOGGER.error("Internal error:", e);
+      } else if (LOGGER.isDebugEnabled()) {
+        // equivalent to verbose mode
+        LOGGER.error("Error:", e);
+      } else {
+        // normal mode: only display message
+        LOGGER.error("Error: {}", message);
+      }
+      System.exit(1);
+    }
   }
 
   private static CustomJCommander<RemoteMainCommand> getCustomJCommander(Map<String, Command> commands, RemoteMainCommand mainCommand) {

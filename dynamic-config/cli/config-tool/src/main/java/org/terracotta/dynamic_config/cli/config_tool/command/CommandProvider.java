@@ -17,6 +17,7 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.tc.util.ManagedServiceLoader;
+import org.terracotta.dynamic_config.cli.api.command.Configuration;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainCommand;
 
@@ -25,7 +26,7 @@ import java.util.Map;
 
 public interface CommandProvider {
 
-  RemoteMainCommand getMainCommand();
+  RemoteMainCommand getMainCommand(Configuration configuration);
 
   Map<String, Command> getCommands();
 
