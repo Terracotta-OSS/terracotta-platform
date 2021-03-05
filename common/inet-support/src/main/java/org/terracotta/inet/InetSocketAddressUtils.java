@@ -27,8 +27,8 @@ public class InetSocketAddressUtils {
   }
 
   public static InetSocketAddress encloseInBracketsIfIpv6(InetSocketAddress address) {
-    if (address != null && isValidIPv6(address.getHostName(), false)) {
-      address = InetSocketAddress.createUnresolved("[" + address.getHostName() + "]", address.getPort());
+    if (address != null && isValidIPv6(address.getHostString(), false)) {
+      address = InetSocketAddress.createUnresolved("[" + address.getHostString() + "]", address.getPort());
     }
     return address;
   }
