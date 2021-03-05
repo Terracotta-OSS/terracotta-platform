@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.server.configuration.startup;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -59,8 +58,6 @@ public class CommandLineProcessorChainTest {
   private static final String NODE_NAME = "node-1";
   private static final String NODE_PORT = "19410";
 
-  @Rule
-  public final SystemOutRule systemOutRule = new SystemOutRule().enableLog().muteForSuccessfulTests();
   @Rule
   public final TemporaryFolder tempFolder = new TemporaryFolder();
   @Rule

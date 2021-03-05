@@ -231,11 +231,6 @@
         <artifactId>logback-classic</artifactId>
         <version>1.2.3</version>
       </dependency>
-      <dependency>
-        <groupId>com.github.stefanbirkner</groupId>
-        <artifactId>system-rules</artifactId>
-        <version>1.19.0</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -389,6 +384,11 @@
                     <requireMavenVersion>
                       <version>[${maven.version},)</version>
                     </requireMavenVersion>
+                    <bannedDependencies>
+                      <excludes>
+                        <exclude>com.github.stefanbirkner:system-rules</exclude>
+                      </excludes>
+                    </bannedDependencies>
                   </rules>
                 </configuration>
               </execution>
