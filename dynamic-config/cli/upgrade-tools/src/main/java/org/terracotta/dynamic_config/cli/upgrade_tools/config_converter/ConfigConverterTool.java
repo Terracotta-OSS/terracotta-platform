@@ -19,7 +19,7 @@ import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.cli.api.command.Injector;
-import org.terracotta.dynamic_config.cli.api.output.StreamOutputService;
+import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
 import org.terracotta.dynamic_config.cli.command.LocalMainCommand;
@@ -62,7 +62,7 @@ public class ConfigConverterTool {
         return true;
       }
       // validate and run the real command
-      Injector.inject(command, Collections.singletonList(new StreamOutputService()));
+      Injector.inject(command, Collections.singletonList(new ConsoleOutputService()));
       command.run();
       return true;
     }).orElseGet(() -> {
