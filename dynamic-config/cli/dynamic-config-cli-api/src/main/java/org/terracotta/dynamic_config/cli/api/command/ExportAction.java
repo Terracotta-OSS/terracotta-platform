@@ -26,11 +26,9 @@ import org.terracotta.dynamic_config.cli.api.converter.OutputFormat;
 import org.terracotta.dynamic_config.cli.api.output.FileOutputService;
 import org.terracotta.json.ObjectMapperFactory;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -97,8 +95,12 @@ public class ExportAction extends RemoteAction {
         throw new UncheckedIOException(e);
       }
     }
-    output.out(out);
-    output.info("Command successful!");
+    try {
+      output.out(out);
+      output.info("Command successful!");
+    } finally {
+      output.close();
+    }
   }
 
   private String buildOutput(Cluster cluster, OutputFormat outputFormat) {
