@@ -21,24 +21,37 @@ import java.io.PrintStream;
 
 public class StreamOutputService implements OutputService {
 
-  private final PrintStream outStream;
-  private final PrintStream errStream;
+  protected final PrintStream out;
+  protected final PrintStream err;
 
-  public StreamOutputService() {
-    outStream = System.out;
-    errStream = System.err;
+  public StreamOutputService(PrintStream out, PrintStream err) {
+    this.out = out;
+    this.err = err;
   }
 
-  public StreamOutputService(PrintStream outStream, PrintStream errStream) {
-    this.outStream = outStream;
-    this.errStream = errStream;
-  }
-
+  @Override
   public void out(String format, Object... args) {
-    outStream.println(MessageFormatter.arrayFormat(format, args).getMessage());
+    out.println(MessageFormatter.arrayFormat(format, args).getMessage());
   }
 
+  @Override
   public void info(String format, Object... args) {
-    errStream.println(MessageFormatter.arrayFormat(format, args).getMessage());
+    err.println(MessageFormatter.arrayFormat(format, args).getMessage());
+  }
+
+  @Override
+  public void warn(String format, Object... args) {
+    err.println(MessageFormatter.arrayFormat(format, args).getMessage());
+  }
+
+  @Override
+  public void close() {
+    out.close();
+    err.close();
+  }
+
+  @Override
+  public String toString() {
+    return "streaming";
   }
 }

@@ -26,7 +26,6 @@ import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.api.output.OutputService;
-import org.terracotta.dynamic_config.cli.api.output.StreamOutputService;
 import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
 import org.terracotta.json.ObjectMapperFactory;
@@ -53,11 +52,12 @@ public class OssServiceProvider implements ServiceProvider {
         createStopService(config),
         createObjectMapperFactory(config),
         createNomadEntityProvider(config),
-        createOutputService());
+        createOutputService(config));
   }
 
-  protected OutputService createOutputService() {
-    return new StreamOutputService();
+  protected OutputService createOutputService(Configuration config) {
+    // we could enhance the output service if we want
+    return config.getOutputService();
   }
 
   protected StopService createStopService(Configuration config) {

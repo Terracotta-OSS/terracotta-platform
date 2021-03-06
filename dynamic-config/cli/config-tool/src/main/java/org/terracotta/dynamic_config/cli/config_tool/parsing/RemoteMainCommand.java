@@ -41,10 +41,6 @@ public class RemoteMainCommand extends LocalMainCommand {
 
   private final Configuration configuration;
 
-  public RemoteMainCommand() {
-    this(new Configuration());
-  }
-
   public RemoteMainCommand(Configuration configuration) {
     this.configuration = configuration;
   }

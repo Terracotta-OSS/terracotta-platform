@@ -15,29 +15,19 @@
  */
 package org.terracotta.dynamic_config.cli.api.output;
 
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.nio.file.Path;
+public class ConsoleOutputService extends StreamOutputService {
 
-public class FileOutputService extends StreamOutputService {
-
-  private final Path path;
-
-  public FileOutputService(Path path) throws FileNotFoundException, UnsupportedEncodingException {
-    super(new PrintStream(path.toFile(), Charset.defaultCharset().name()), System.err);
-    this.path = path;
+  public ConsoleOutputService() {
+    super(System.out, System.err);
   }
 
   @Override
   public void close() {
-    out.close();
-    // do not close err stream
+    // do not close anything
   }
 
   @Override
   public String toString() {
-    return "file:" + path;
+    return "console";
   }
 }

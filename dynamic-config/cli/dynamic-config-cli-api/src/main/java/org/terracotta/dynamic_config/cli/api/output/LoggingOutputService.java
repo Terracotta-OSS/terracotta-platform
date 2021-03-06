@@ -30,4 +30,14 @@ public class LoggingOutputService implements OutputService {
   public void info(String format, Object... args) {
     LOGGER.info(format, args);
   }
+
+  @Override
+  public void warn(String format, Object... args) {
+    LOGGER.warn(format, args);
+  }
+
+  @Override
+  public String toString() {
+    return "logging";
+  }
 }
