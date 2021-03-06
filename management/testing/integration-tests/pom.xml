@@ -186,6 +186,7 @@
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
             <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
           </systemPropertyVariables>
+          <argLine>-XX:+UseG1GC</argLine>
         </configuration>
       </plugin>
     </plugins>

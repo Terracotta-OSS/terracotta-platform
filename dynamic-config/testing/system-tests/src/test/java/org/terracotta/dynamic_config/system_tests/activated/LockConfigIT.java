@@ -102,7 +102,9 @@ public class LockConfigIT extends DynamicConfigIT {
 
     // we lock the configuration
     // but not all nodes are there
-    lock();
+    if (!lock()) {
+      throw new AssertionError("lock failed");
+    }
 
     // we need to repair / or make a node join
     // we will be able to add it through a restrictive activation
@@ -137,8 +139,16 @@ public class LockConfigIT extends DynamicConfigIT {
     );
   }
 
-  private void lock() {
-    invokeWithoutToken("lock-config", "-s", "localhost:" + getNodePort(), "--lock-context", lockContext.toString());
+  private boolean lock() {
+    ToolExecutionResult result = invokeWithoutToken("lock-config", "-s", "localhost:" + getNodePort(), "--lock-context", lockContext.toString());
+    if (result.getExitStatus() != 0) {
+      for (String line : result.getOutput()) {
+        System.out.println("LOCK FAIL:" + line);
+      }
+      return false;
+    } else {
+      return true;
+    }
   }
 
   private void unlock() {

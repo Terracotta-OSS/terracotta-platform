@@ -90,7 +90,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import org.junit.AfterClass;
 import static org.junit.Assert.assertThat;
+import org.junit.BeforeClass;
+import org.terracotta.angela.client.ClusterAgent;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
@@ -101,6 +104,7 @@ import static org.terracotta.angela.common.TerracottaServerState.STOPPED;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
 import org.terracotta.angela.common.distribution.RuntimeOption;
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
+import org.terracotta.angela.common.net.DefaultPortAllocator;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
 import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
@@ -124,6 +128,7 @@ public class DynamicConfigIT {
 
   protected final ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
+  private static ClusterAgent localAgent;
   @Rule public RuleChain rules;
 
   public DynamicConfigIT() {
@@ -139,7 +144,7 @@ public class DynamicConfigIT {
     this.timeout = testTimeout.toMillis();
     this.rules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers()), clusterDef.autoStart(), clusterDef.autoActivate()) {
+        .around(angela = new AngelaRule(localAgent, createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers()), clusterDef.autoStart(), clusterDef.autoActivate()) {
           ConfigurationContext oldConfiguration;
 
           @Override
@@ -214,6 +219,24 @@ public class DynamicConfigIT {
             }
           }
         });
+  }
+
+  @BeforeClass
+  public static void setupTestServers() {
+    System.setProperty("com.tc.server.entity.processor.threads", "4");
+    System.setProperty("com.tc.l2.tccom.workerthreads", "4");
+    System.setProperty("com.tc.l2.seda.stage.stall.warning", "1000");
+    System.setProperty("IGNITE_UPDATE_NOTIFIER", "false");
+    localAgent = new ClusterAgent(true, new DefaultPortAllocator());
+  }
+
+  @AfterClass
+  public static void teardownTestServers() {
+    try {
+      localAgent.close();
+    } catch (IOException io) {
+      LOGGER.error("io error", io);
+    }
   }
 
   // =========================================
