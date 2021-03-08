@@ -16,12 +16,10 @@
 package org.terracotta.dynamic_config.system_tests.network_disrupted;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.net.ClientToServerDisruptor;
 import org.terracotta.angela.client.net.ServerToServerDisruptor;
 import org.terracotta.angela.client.net.SplitCluster;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
@@ -41,8 +39,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false, netDisruptionEnabled = true)
 public class DetachInConsistency1x2IT extends DynamicConfigIT {
-  @Rule
-  public final NodeOutputRule out = new NodeOutputRule();
 
   public DetachInConsistency1x2IT() {
     super(Duration.ofSeconds(300));

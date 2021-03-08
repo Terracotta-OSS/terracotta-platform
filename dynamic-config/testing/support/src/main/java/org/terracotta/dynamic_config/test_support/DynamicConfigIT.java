@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.config.ConfigurationContext;
 import org.terracotta.angela.client.filesystem.RemoteFolder;
 import org.terracotta.angela.client.support.junit.AngelaRule;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
 import org.terracotta.angela.common.TerracottaConfigTool;
 import org.terracotta.angela.common.ToolExecutionResult;
@@ -88,7 +87,9 @@ import static java.lang.System.lineSeparator;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.IntStream.rangeClosed;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertThat;
@@ -179,8 +180,18 @@ public class DynamicConfigIT {
         .around(new ExtendedTestRule() {
           @Override
           protected void before(Description description) {
+            InlineServers inline = description.getAnnotation(InlineServers.class);
+            String baseLogging = "tc-logback.xml";
+            if (inline != null && !inline.value()) {
+              baseLogging = "tc-logback-console.xml";
+            }
+            String extraLogging = "logback-ext-test.xml";
+            ExtraLogging extra = description.getAnnotation(ExtraLogging.class);
+            if (extra != null) {
+              extraLogging = extra.value();
+            }
             // upload tc logging config, but ONLY IF EXISTS !
-            Stream.of(tuple2("tc-logback.xml", "logback-test.xml"), tuple2("logback-ext-test.xml", "logback-ext-test.xml"))
+            Stream.of(tuple2(baseLogging, "logback-test.xml"), tuple2(extraLogging, "logback-ext-test.xml"))
                 .map(loggingConfig -> tuple2(getClass().getResource("/" + loggingConfig.t1), loggingConfig.t2))
                 .filter(tuple -> tuple.t1 != null)
                 .forEach(loggingConfig -> {
@@ -537,8 +548,24 @@ public class DynamicConfigIT {
     waitUntil(() -> result, matcher, getAssertTimeout());
   }
 
-  protected final void waitUntil(NodeOutputRule.NodeLog result, Matcher<NodeOutputRule.NodeLog> matcher) {
-    waitUntil(() -> result, matcher, getAssertTimeout());
+  protected final void waitUntilServerLogs(TerracottaServer server, String matcher) {
+    assertThat(()->serverStdOut(server), within(getAssertTimeout()).matches(hasItem(containsString(matcher))));
+  }
+
+  protected final void assertThatServerLogs(TerracottaServer server, String matcher) {
+    assertThat(serverStdOut(server), hasItem(containsString(matcher)));
+  }
+
+  protected final void assertThatServerLogs(TerracottaServer server, Matcher<String> matcher) {
+    assertThat(serverStdOut(server), hasItem(matcher));
+  }
+
+  private List<String> serverStdOut(TerracottaServer server) {
+    try {
+      return Files.readAllLines(getServerHome(server).resolve("stdout.txt"));
+    } catch (IOException io) {
+      return Collections.emptyList();
+    }
   }
 
   protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher) {

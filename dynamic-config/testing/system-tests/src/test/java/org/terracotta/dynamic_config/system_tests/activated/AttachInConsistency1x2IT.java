@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
@@ -28,14 +26,11 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AttachInConsistency1x2IT extends DynamicConfigIT {
-  @Rule
-  public final NodeOutputRule out = new NodeOutputRule();
 
   public AttachInConsistency1x2IT() {
     super(Duration.ofSeconds(180));
@@ -72,9 +67,8 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
 
-    out.clearLog(1, 2);
     stopNode(1, 1);
-    waitUntil(out.getLog(1, 2), containsLog("Not enough registered voters.  Require override intervention or 1 members of the stripe to be connected for action MOVE_TO_ACTIVE"));
+    waitUntilServerLogs(getNode(1, 2), "Not enough registered voters.  Require override intervention or 1 members of the stripe to be connected for action MOVE_TO_ACTIVE");
   }
 
   @Test

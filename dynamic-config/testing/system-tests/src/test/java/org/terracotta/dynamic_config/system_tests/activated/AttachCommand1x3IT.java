@@ -29,6 +29,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+import org.terracotta.dynamic_config.test_support.ExtraLogging;
 import org.terracotta.dynamic_config.test_support.InlineServers;
 
 /**
@@ -123,7 +124,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     withTopologyService(1, 3, topologyService -> assertFalse(topologyService.isActivated()));
   }
 
-  @Test @InlineServers(false)
+  @Test @InlineServers(false) @ExtraLogging("console.xml")
   public void attachNodeFailingBecauseOfNodeGoingDownInPreparePhase() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
@@ -148,7 +149,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     withTopologyService(1, 3, topologyService -> assertFalse(topologyService.isActivated()));
   }
 
-  @Test @InlineServers(false)
+  @Test @InlineServers(false) @ExtraLogging("console.xml")
   public void testFailoverDuringNomadCommitForPassiveAddition() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];

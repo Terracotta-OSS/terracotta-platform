@@ -15,10 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
-import java.lang.reflect.InvocationTargetException;
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
@@ -30,17 +27,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import static org.hamcrest.Matchers.containsString;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
-  @Rule public final SystemOutRule sout = new SystemOutRule();
 
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
@@ -71,7 +63,6 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
     waitForActive(1, 1);
 
     try {
-      out.clearLog(1, 2);
       startNode(1, 2,
           "--auto-activate",
           "--failover-priority", "availability",
@@ -86,15 +77,7 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
           "--data-dirs", "main:data-dir");
       fail();
     } catch (Throwable e) {
-      do {
-        if (e instanceof InvocationTargetException) {
-          if (((InvocationTargetException)e).getTargetException().getMessage().contains("OverlappingFileLockException")) {
-            return;
-          }
-        }
-        e = e.getCause();
-      } while (e.getCause() != null);
-      waitUntil(sout::getLog, containsString("Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "changes")));
+      assertThatServerLogs(getNode(1, 2), "Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "changes"));
     }
   }
 

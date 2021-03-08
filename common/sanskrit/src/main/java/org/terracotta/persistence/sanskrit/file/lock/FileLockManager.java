@@ -20,6 +20,7 @@ import org.terracotta.persistence.sanskrit.Owner;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -40,6 +41,8 @@ public class FileLockManager implements LockManager {
       }
 
       return new FileCloseLock(channelOwner.release(), fileLockOwner.release());
+    } catch (OverlappingFileLockException over) {
+      throw new IOException("File lock already held: " + path);
     }
   }
 }

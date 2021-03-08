@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
@@ -29,19 +27,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import static org.hamcrest.Matchers.containsString;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 
 @ClusterDefinition(autoStart = false)
 public class NodeStartupIT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
-
+  
   @Test
   public void testStartingWithNonExistentRepo() {
     startSingleNode("-r", getNodeConfigDir(1, 1).toString());
@@ -86,7 +82,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("Failed to read config file"));
+      waitUntilServerLogs(getNode(1, 1), "Failed to read config file");
     }
   }
 
@@ -98,7 +94,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("<port> specified in port=<port> must be an integer between 1 and 65535"));
+      waitUntilServerLogs(getNode(1, 1), "<port> specified in port=<port> must be an integer between 1 and 65535");
     }
   }
 
@@ -110,7 +106,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("When no security root directories are configured all other security settings should also be unconfigured (unset)"));
+      waitUntilServerLogs(getNode(1, 1), "When no security root directories are configured all other security settings should also be unconfigured (unset)");
     }
   }
 
@@ -121,7 +117,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
+      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
     }
   }
 
@@ -132,7 +128,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
+      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
     }
   }
 
@@ -142,7 +138,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--authc=blah", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("authc should be one of: [file, ldap, certificate]"));
+      waitUntilServerLogs(getNode(1, 1), "authc should be one of: [file, ldap, certificate]");
     }
   }
 
@@ -152,7 +148,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "-y", "availability", "--hostname=:::", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("<address> specified in hostname=<address> must be a valid hostname or IP address"));
+      waitUntilServerLogs(getNode(1, 1), "<address> specified in hostname=<address> must be a valid hostname or IP address");
     }
   }
 
@@ -162,7 +158,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--failover-priority", "blah", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)"));
+      waitUntilServerLogs(getNode(1, 1), "failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)");
     }
   }
 
@@ -172,7 +168,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--audit-log-dir", "audit-dir", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("When no security root directories are configured audit-log-dir should also be unconfigured (unset)"));
+      waitUntilServerLogs(getNode(1, 1), "When no security root directories are configured audit-log-dir should also be unconfigured (unset)");
     }
   }
 
@@ -207,7 +203,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       );
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters"));
+      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
     }
   }
 
@@ -218,8 +214,8 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--config-dir", configurationRepo.toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("Node has not been activated or migrated properly"));
-      waitUntil(out.getLog(1, 1), not(containsLog("Moved to State[ ACTIVE-COORDINATOR ]")));
+      waitUntilServerLogs(getNode(1, 1), "Node has not been activated or migrated properly");
+      assertThatServerLogs(getNode(1, 1), not(containsString("Moved to State[ ACTIVE-COORDINATOR ]")));
     }
   }
 

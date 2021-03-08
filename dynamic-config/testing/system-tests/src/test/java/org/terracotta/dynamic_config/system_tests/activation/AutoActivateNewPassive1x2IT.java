@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
@@ -31,14 +29,11 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
   public void test_auto_activation_success_for_1x1_cluster() {
@@ -52,15 +47,14 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
     startNode(1, 1, "--auto-activate", "-f", copyConfigProperty("/config-property-files/1x2.properties").toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/1-1");
     waitForActive(1, 1);
 
-    out.clearLog(1, 2);
     try {
       startNode(1, 2,
           "--auto-activate", "-f", copyConfigProperty("/config-property-files/1x2-diff.properties").toString(),
           "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)),
           "--config-dir", "config/stripe1/node-1-2");
       fail();
-    } catch (Exception e) {
-      assertThat(out.getLog(1, 2), containsLog("Unable to find any change in the source node matching the topology used to activate this node"));
+    } catch (Throwable e) {
+      assertThatServerLogs(getNode(1, 2), "Unable to find any change in the source node matching the topology used to activate this node");
     }
   }
 

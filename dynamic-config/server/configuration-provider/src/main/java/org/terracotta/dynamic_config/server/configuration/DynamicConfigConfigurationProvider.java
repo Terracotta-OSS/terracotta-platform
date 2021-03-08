@@ -202,7 +202,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       } catch (RuntimeException | NomadException e) {
         // only log the full trace if in trace/debug mode
         LOGGER.debug("Error: {}", e.getMessage(), e);
-        LOGGER.warn(lineSeparator() + lineSeparator()
+        server.warn(lineSeparator() + lineSeparator()
                 + "==============================================================================================================================================" + lineSeparator()
                 + "SERVER WILL STOP: PASSIVE SYNC FAILED WITH ERROR: {}" + lineSeparator()
                 + "(please change the logging config to see more details)" + lineSeparator()
