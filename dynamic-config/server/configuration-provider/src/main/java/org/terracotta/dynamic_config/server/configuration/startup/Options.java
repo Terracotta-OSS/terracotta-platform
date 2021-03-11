@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
-import java.nio.file.Path;
 import org.terracotta.dynamic_config.api.model.Setting;
 
 import java.util.HashMap;
