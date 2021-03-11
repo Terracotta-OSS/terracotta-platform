@@ -102,11 +102,13 @@ import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTI
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
 import static org.terracotta.angela.common.TerracottaServerState.STOPPED;
+import org.terracotta.angela.common.ToolException;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
 import org.terracotta.angela.common.distribution.RuntimeOption;
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
 import org.terracotta.angela.common.net.DefaultPortAllocator;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
+import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
@@ -145,7 +147,7 @@ public class DynamicConfigIT {
     this.timeout = testTimeout.toMillis();
     this.rules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(localAgent, createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers()), clusterDef.autoStart(), clusterDef.autoActivate()) {
+        .around(angela = new AngelaRule(localAgent, createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers())) {
           ConfigurationContext oldConfiguration;
 
           @Override
@@ -222,6 +224,19 @@ public class DynamicConfigIT {
                   }
                 });
             // wait for server startup if auto-activated
+            if (clusterDef.autoStart()) {
+              int stripes = angela.getStripeCount();
+              for (int x=1;x<=stripes;x++) {
+                int nodes = angela.getStripe(x).size();
+                for (int n=1;n<=nodes;n++) {
+                  startNode(x, n);
+                }
+              }
+              if (clusterDef.autoActivate()) {
+                attachAll();
+                activateCluster();
+              }
+            }
             if (clusterDef.autoStart() && clusterDef.autoActivate()) {
               for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
                 waitForActive(stripeId);
@@ -238,7 +253,7 @@ public class DynamicConfigIT {
     System.setProperty("com.tc.l2.tccom.workerthreads", "4");
     System.setProperty("com.tc.l2.seda.stage.stall.warning", "1000");
     System.setProperty("IGNITE_UPDATE_NOTIFIER", "false");
-    localAgent = new ClusterAgent(true, new DefaultPortAllocator());
+    localAgent = new ClusterAgent(true);
   }
 
   @AfterClass
@@ -323,13 +338,63 @@ public class DynamicConfigIT {
     return activateCluster(CLUSTER_NAME);
   }
 
+  protected void attachAll() {
+    int stripes = angela.getStripeCount();
+    for (int x=1;x<=stripes;x++) {
+      List<TerracottaServer> stripe = angela.getStripe(x);
+      if (stripe.size() > 1) {
+        // Attach all servers in a stripe to form individual stripes
+        for (int i = 1; i < stripe.size(); i++) {
+          List<String> command = new ArrayList<>();
+          command.add("attach");
+          command.add("-t");
+          command.add("node");
+          command.add("-d");
+          command.add(stripe.get(0).getHostPort());
+          command.add("-s");
+          command.add(stripe.get(i).getHostPort());
+
+          ToolExecutionResult result = configTool(command.toArray(new String[0]));
+          if (result.getExitStatus() != 0) {
+            throw new ToolException("attach failed", String.join(". ", result.getOutput()), result.getExitStatus());
+          }
+        }
+      }
+    }
+
+    if (stripes > 1) {
+      for (int i = 2; i <= stripes; i++) {
+        // Attach all stripes together to form the cluster
+        List<String> command = new ArrayList<>();
+        command.add("attach");
+        command.add("-t");
+        command.add("stripe");
+        command.add("-d");
+        command.add(getNode(1, 1).getHostPort());
+
+        List<TerracottaServer> stripe = angela.getStripe(i);
+        command.add("-s");
+        command.add(stripe.get(0).getHostPort());
+
+        ToolExecutionResult result = configTool(command.toArray(new String[0]));
+        if (result.getExitStatus() != 0) {
+          throw new RuntimeException("ConfigTool::executeCommand with command parameters failed with: " + result);
+        }
+      }
+    }
+  }
+
   protected ToolExecutionResult activateCluster(String name) {
+    return activateStripe(name, 1);
+  }
+
+  protected ToolExecutionResult activateStripe(String name, int stripe) {
     Path licensePath = getLicensePath();
     ToolExecutionResult result = licensePath == null ?
-        configTool("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
-        configTool("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
+        configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name) :
+        configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name, "-l", licensePath.toString());
     assertThat(result, is(successful()));
-    waitForActive(1);
+    waitForActive(stripe);
     return result;
   }
 
@@ -671,7 +736,7 @@ public class DynamicConfigIT {
   }
 
   protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {
-    stripeServer.forEach((k, v) -> angela.configTool().setServerToServerDisruptionLinks(k, v));
+    stripeServer.forEach((k, v) -> setServerToServerDisruptionLinks(k, v));
   }
 
   protected void setClientServerDisruptionLinks(Map<Integer, Integer> stripeServerNumMap) {
@@ -680,7 +745,73 @@ public class DynamicConfigIT {
       int serverList = entry.getValue();
       for (int i = 1; i <= serverList; ++i) {
         TerracottaServer terracottaServer = getNode(stripeId, i);
-        angela.configTool().setClientToServerDisruptionLinks(terracottaServer);
+        setClientToServerDisruptionLinks(terracottaServer);
+      }
+    }
+  }
+  public void setClientToServerDisruptionLinks(TerracottaServer terracottaServer) {
+    // Disabling client redirection from passive to current active.
+    List<String> arguments = new ArrayList<>();
+    String property = "stripe.1.node.1.tc-properties." + "l2.l1redirect.enabled=false";
+    arguments.add("set");
+    arguments.add("-s");
+    arguments.add(terracottaServer.getHostPort());
+    arguments.add("-c");
+    arguments.add(property);
+    ToolExecutionResult executionResult = configTool(arguments.toArray(new String[0]));
+    if (executionResult.getExitStatus() != 0) {
+      throw new RuntimeException("ConfigTool::executeCommand with command parameters failed with: " + executionResult);
+    }
+
+    // Creating disruption links for client to server disruption
+    Map<ServerSymbolicName, Integer> proxyMap = angela.tsa().updateToProxiedPorts();
+    int proxyPort = proxyMap.get(terracottaServer.getServerSymbolicName());
+    String publicHostName = "stripe.1.node.1.public-hostname=" + terracottaServer.getHostName();
+    String publicPort = "stripe.1.node.1.public-port=" + proxyPort;
+
+    List<String> args = new ArrayList<>();
+    args.add("set");
+    args.add("-s");
+    args.add(terracottaServer.getHostPort());
+    args.add("-c");
+    args.add(publicHostName);
+    args.add("-c");
+    args.add(publicPort);
+
+    executionResult = configTool(args.toArray(new String[0]));
+    if (executionResult.getExitStatus() != 0) {
+      throw new RuntimeException("ConfigTool::executeCommand with command parameters failed with: " + executionResult);
+    }
+  }
+
+  public void setServerToServerDisruptionLinks(int stripeId, int size) {
+    List<TerracottaServer> stripeServerList = angela.tsa().getTsaConfigurationContext()
+        .getTopology()
+        .getStripes()
+        .get(stripeId - 1);
+    for (int j = 0; j < size; ++j) {
+      TerracottaServer server = stripeServerList.get(j);
+      Map<ServerSymbolicName, Integer> proxyGroupPortMapping = angela.tsa().getProxyGroupPortsForServer(server);
+      int nodeId = j + 1;
+      StringBuilder propertyBuilder = new StringBuilder();
+      propertyBuilder.append("stripe.")
+          .append(stripeId)
+          .append(".node.")
+          .append(nodeId)
+          .append(".tc-properties.test-proxy-group-port=");
+      propertyBuilder.append("\"");
+      for (Map.Entry<ServerSymbolicName, Integer> entry : proxyGroupPortMapping.entrySet()) {
+        propertyBuilder.append(entry.getKey().getSymbolicName());
+        propertyBuilder.append("->");
+        propertyBuilder.append(entry.getValue());
+        propertyBuilder.append("#");
+      }
+      propertyBuilder.deleteCharAt(propertyBuilder.lastIndexOf("#"));
+      propertyBuilder.append("\"");
+
+      ToolExecutionResult executionResult = configTool("set", "-s", server.getHostPort(), "-c", propertyBuilder.toString());
+      if (executionResult.getExitStatus() != 0) {
+        throw new RuntimeException("ConfigTool::executeCommand with command parameters failed with: " + executionResult);
       }
     }
   }

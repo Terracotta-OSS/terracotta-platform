@@ -144,7 +144,7 @@
             <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
           </systemPropertyVariables>
           <!--argLine>-XX:+FlightRecorder -XX:StartFlightRecording=filename=test.jfr</argLine-->
-          <argLine>-XX:+UseG1GC</argLine>
+          <argLine>-XX:+UseG1GC -Dorg.terracotta.disablePortReleaseCheck=true</argLine>
         </configuration>
       </plugin>
     </plugins>
