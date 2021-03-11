@@ -240,9 +240,8 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
       if (filteredOptions.size() != 0) {
         throw new IllegalArgumentException(
             String.format(
-                "'%s' parameter can only be used with '%s', '%s', '%s', '%s', '%s' and '%s' parameters",
+                "'%s' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
                 addDashDash(CONFIG_FILE),
-                addDashDash(NODE_HOME_DIR),
                 addDashDash(REPAIR_MODE),
                 addDashDash(NODE_NAME),
                 addDashDash(NODE_HOSTNAME),

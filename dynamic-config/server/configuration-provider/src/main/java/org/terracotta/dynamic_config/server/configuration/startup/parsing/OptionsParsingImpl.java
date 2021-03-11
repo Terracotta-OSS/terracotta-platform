@@ -224,9 +224,8 @@ public class OptionsParsingImpl implements OptionsParsing {
       if (!filteredOptions.isEmpty()) {
         throw new IllegalArgumentException(
             String.format(
-                "'%s' parameter can only be used with '%s', '%s', %s', '%s', '%s' and '%s' parameters",
+                "'%s' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
                 addDash(CONFIG_FILE),
-                addDash(NODE_HOME_DIR),
                 addDash(REPAIR_MODE),
                 addDash(NODE_NAME),
                 addDash(NODE_HOSTNAME),
