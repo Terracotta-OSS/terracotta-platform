@@ -35,10 +35,10 @@
   <appender name="LogToJFR" class="org.terracotta.tripwire.EventAppender">
   </appender>
 
-  <appender name="JFR" class="org.terracotta.tripwire.JFRAppender">
+  <!--appender name="JFR" class="org.terracotta.tripwire.JFRAppender">
     <path>${serverWorkingDir}/artifacts</path>
     <dumpOnExit>false</dumpOnExit>
-  </appender>
+  </appender-->
 
   <root level="INFO">
     <appender-ref ref="TC_BASE" />
@@ -51,11 +51,11 @@
     <appender-ref ref="SYSFILE" />
   </logger>
   <logger name="com.tc.async.api" level="WARN">
-    <appender-ref ref="JFR" />
+    <!--appender-ref ref="JFR" /-->
   </logger>
   <logger name="org.terracotta.dump" level="INFO">
     <appender-ref ref="SYSFILE" />
-    <appender-ref ref="JFR" />
+    <!--appender-ref ref="JFR" /-->
   </logger>
     
   <include optional="true" resource="logback-ext-test.xml"/>
