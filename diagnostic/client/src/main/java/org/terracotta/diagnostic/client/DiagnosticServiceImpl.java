@@ -18,12 +18,14 @@ package org.terracotta.diagnostic.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
+import org.terracotta.connection.Diagnostics;
 import org.terracotta.diagnostic.common.Base64DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
 import org.terracotta.diagnostic.model.LogicalServerState;
+import org.terracotta.exception.ConnectionClosedException;
 
 import java.lang.reflect.Proxy;
 import java.util.Optional;
@@ -31,7 +33,6 @@ import java.util.function.Supplier;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import org.terracotta.connection.Diagnostics;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
@@ -39,7 +40,6 @@ import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_P
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NULL_RETURN;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_REQUEST_TIMEOUT;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_UNKNOWN_COMMAND;
-import org.terracotta.exception.ConnectionClosedException;
 
 /**
  * @author Mathieu Carbou
@@ -206,10 +206,10 @@ class DiagnosticServiceImpl implements DiagnosticService {
       throw e;
     });
     return returnType.isPrimitive() ?
-      response.getBody() :
-      returnType.cast(returnType == Optional.class ?
-        Optional.ofNullable(response.getBody()) :
-        response.getBody());
+        response.getBody() :
+        returnType.cast(returnType == Optional.class ?
+            Optional.ofNullable(response.getBody()) :
+            response.getBody());
   }
 
   private String execute(Supplier<String> execution) throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
@@ -248,8 +248,8 @@ class DiagnosticServiceImpl implements DiagnosticService {
         throw new DiagnosticOperationExecutionException(result);
       }
       return result;
-    } catch (ConnectionClosedException closed) {
-      throw new DiagnosticConnectionException();
+    } catch (ConnectionClosedException e) {
+      throw new DiagnosticConnectionException(e);
     }
   }
 

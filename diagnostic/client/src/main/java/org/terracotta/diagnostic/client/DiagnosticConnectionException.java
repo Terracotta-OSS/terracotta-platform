@@ -26,4 +26,11 @@ import org.terracotta.diagnostic.common.DiagnosticException;
  */
 public class DiagnosticConnectionException extends DiagnosticException {
   private static final long serialVersionUID = 1L;
+
+  public DiagnosticConnectionException() {
+  }
+
+  public DiagnosticConnectionException(Throwable cause) {
+    super(cause);
+  }
 }
