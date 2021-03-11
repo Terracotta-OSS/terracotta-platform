@@ -204,7 +204,6 @@ public class RestartService {
     LOGGER.debug("Checking if node: {} has restarted", endpoint);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress())) {
       LogicalServerState state = diagnosticService.getLogicalServerState();
-      // STARTING is the state when server hasn't finished its startup yet
       return state == null || !acceptedStates.contains(state) ? null : state;
     } catch (DiagnosticServiceProviderException | DiagnosticException e) {
       LOGGER.debug("Status query for node: {} failed: {}", endpoint, e.getMessage());

@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toMap;
-import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ALL_ACCEPTING;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ALL_PREPARED;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.CHANGE_IN_PROGRESS;
@@ -188,7 +188,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     // activated nodes are passive / actives that have some nomad changes
     return responses.entrySet()
         .stream()
-        .filter(e -> allNodes.get(e.getKey()) != STARTING && e.getValue().getLatestChange() != null)
+        .filter(e -> allNodes.get(e.getKey()) != DIAGNOSTIC && e.getValue().getLatestChange() != null)
         .collect(responseEntryToMap());
   }
 
@@ -196,7 +196,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     // nodes in repair are started in diagnostic mode and have nomad changes
     return responses.entrySet()
         .stream()
-        .filter(e -> allNodes.get(e.getKey()) == STARTING && e.getValue().getLatestChange() != null)
+        .filter(e -> allNodes.get(e.getKey()) == DIAGNOSTIC && e.getValue().getLatestChange() != null)
         .collect(responseEntryToMap());
   }
 
@@ -204,7 +204,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     // new nodes in configuration are started in diagnostic mode and have no nomad change yet
     return responses.entrySet()
         .stream()
-        .filter(e -> allNodes.get(e.getKey()) == STARTING && e.getValue().getLatestChange() == null)
+        .filter(e -> allNodes.get(e.getKey()) == DIAGNOSTIC && e.getValue().getLatestChange() == null)
         .collect(responseEntryToMap());
   }
 

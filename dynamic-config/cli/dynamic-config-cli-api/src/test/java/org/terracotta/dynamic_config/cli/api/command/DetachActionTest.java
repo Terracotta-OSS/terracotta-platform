@@ -41,7 +41,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
@@ -104,9 +104,9 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
     when(topologyServiceMock(node2_1.getInternalAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node2_1.getUID()));
     when(topologyServiceMock(node2_1.getInternalAddress()).isActivated()).thenReturn(false);
 
-    when(diagnosticServiceMock(node1_1.getInternalAddress()).getLogicalServerState()).thenReturn(STARTING);
-    when(diagnosticServiceMock(node1_2.getInternalAddress()).getLogicalServerState()).thenReturn(STARTING);
-    when(diagnosticServiceMock(node2_1.getInternalAddress()).getLogicalServerState()).thenReturn(STARTING);
+    when(diagnosticServiceMock(node1_1.getInternalAddress()).getLogicalServerState()).thenReturn(DIAGNOSTIC);
+    when(diagnosticServiceMock(node1_2.getInternalAddress()).getLogicalServerState()).thenReturn(DIAGNOSTIC);
+    when(diagnosticServiceMock(node2_1.getInternalAddress()).getLogicalServerState()).thenReturn(DIAGNOSTIC);
     when(diagnosticServiceMock(node2_2.getInternalAddress()).getLogicalServerState()).thenReturn(UNREACHABLE);
   }
 

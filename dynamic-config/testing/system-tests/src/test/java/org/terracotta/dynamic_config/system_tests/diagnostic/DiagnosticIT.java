@@ -52,7 +52,7 @@ public class DiagnosticIT extends DynamicConfigIT {
         null,
         objectMapperFactory)
     ) {
-      assertThat(diagnosticService.getLogicalServerState(), is(equalTo(LogicalServerState.STARTING)));
+      assertThat(diagnosticService.getLogicalServerState(), is(equalTo(LogicalServerState.DIAGNOSTIC)));
     }
   }
 

@@ -381,6 +381,11 @@ public final class Server extends AbstractNode<Stripe> {
     ACTIVE("ACTIVE", "ACTIVE-COORDINATOR"),
 
     /**
+     * DC configuration mode (only diagnostic port is available)
+     */
+    DIAGNOSTIC("DIAGNOSTIC"),
+
+    /**
      * Status returned when parsing failed
      */
     UNKNOWN;

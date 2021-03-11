@@ -102,7 +102,7 @@ public enum LogicalServerState {
     } else if (parsedLogicalServerState == LogicalServerState.STARTING && isBlocked) {
       return LogicalServerState.START_SUSPENDED;
     } else if (parsedLogicalServerState == LogicalServerState.DIAGNOSTIC) {
-      return LogicalServerState.STARTING;
+      return LogicalServerState.DIAGNOSTIC;
     } else {
       return parsedLogicalServerState;
     }
