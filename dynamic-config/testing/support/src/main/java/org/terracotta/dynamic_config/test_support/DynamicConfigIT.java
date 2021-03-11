@@ -16,24 +16,28 @@
 package org.terracotta.dynamic_config.test_support;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matcher;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.angela.client.ClusterAgent;
 import org.terracotta.angela.client.config.ConfigurationContext;
 import org.terracotta.angela.client.filesystem.RemoteFolder;
 import org.terracotta.angela.client.support.junit.AngelaRule;
 import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
 import org.terracotta.angela.common.TerracottaConfigTool;
+import org.terracotta.angela.common.ToolException;
 import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.angela.common.distribution.Distribution;
+import org.terracotta.angela.common.distribution.RuntimeOption;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
+import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.angela.common.topology.Topology;
 import org.terracotta.common.struct.Measure;
@@ -57,6 +61,8 @@ import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.Timeout;
 import org.terracotta.testing.TmpDir;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -91,10 +97,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
-import org.junit.AfterClass;
 import static org.junit.Assert.assertThat;
-import org.junit.BeforeClass;
-import org.terracotta.angela.client.ClusterAgent;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
@@ -102,13 +105,9 @@ import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTI
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
 import static org.terracotta.angela.common.TerracottaServerState.STOPPED;
-import org.terracotta.angela.common.ToolException;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
-import org.terracotta.angela.common.distribution.RuntimeOption;
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
-import org.terracotta.angela.common.net.DefaultPortAllocator;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
-import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
@@ -471,7 +470,7 @@ public class DynamicConfigIT {
   // node and topology construction
   // =========================================
 
-  protected final ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe, boolean netDisruptionEnabled, boolean inlineServers) {
+  protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe, boolean netDisruptionEnabled, boolean inlineServers) {
     return customConfigurationContext()
         .tsa(tsa -> tsa
             .clusterName(CLUSTER_NAME)
