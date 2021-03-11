@@ -241,7 +241,7 @@ public class ConfigurationGeneratorVisitor {
   }
 
   Path getOrDefaultConfigurationDirectory(String configPath) {
-    return configPath != null ? pathResolver.resolve(Paths.get(configPath)) : Setting.NODE_CONFIG_DIR.<RawPath>getDefaultValue().toPath();
+    return pathResolver.resolve(configPath != null ? Paths.get(configPath) : Setting.NODE_CONFIG_DIR.<RawPath>getDefaultValue().toPath());
   }
 
   Optional<String> findNodeName(Path configPath, IParameterSubstitutor parameterSubstitutor) {
