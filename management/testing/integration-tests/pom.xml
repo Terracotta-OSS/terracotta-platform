@@ -182,10 +182,8 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <forkCount>${test.parallel.forks}</forkCount>
-          <reuseForks>true</reuseForks>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
-            <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
           </systemPropertyVariables>
           <argLine>-XX:+UseG1GC</argLine>
         </configuration>

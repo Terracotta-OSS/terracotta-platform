@@ -124,7 +124,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     withTopologyService(1, 3, topologyService -> assertFalse(topologyService.isActivated()));
   }
 
-  @Test @InlineServers(false) @ExtraLogging("console.xml")
+  @Test @InlineServers(false)
   public void attachNodeFailingBecauseOfNodeGoingDownInPreparePhase() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
@@ -149,7 +149,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     withTopologyService(1, 3, topologyService -> assertFalse(topologyService.isActivated()));
   }
 
-  @Test @InlineServers(false) @ExtraLogging("console.xml")
+  @Test @InlineServers(false)
   public void testFailoverDuringNomadCommitForPassiveAddition() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];

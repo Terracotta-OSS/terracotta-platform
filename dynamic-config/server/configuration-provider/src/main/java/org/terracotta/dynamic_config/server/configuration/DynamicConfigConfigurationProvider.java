@@ -57,12 +57,12 @@ import org.terracotta.server.Server;
 import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 
 import static java.lang.System.lineSeparator;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
 
@@ -170,8 +170,6 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       warnIfPreparedChange();
     });
   }
-
-
 
   @Override
   public StartupConfiguration getConfiguration() {

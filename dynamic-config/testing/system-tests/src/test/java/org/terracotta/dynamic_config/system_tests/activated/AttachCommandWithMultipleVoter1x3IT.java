@@ -68,7 +68,7 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
     waitForNPassives(1, 1);
   }
 
-  @Test @InlineServers(false) @ExtraLogging("console.xml")
+  @Test @InlineServers(false)
   public void testFailoverWhileAttachingAndVerifyWithVoter() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];

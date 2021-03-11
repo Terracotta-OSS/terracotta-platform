@@ -29,26 +29,26 @@ jobs:
       jobName: Linux_Java_8
       timeoutInMinutes: 180
       pool: tc_linux_pool
-      options: -B -Dtest.parallel.forks=2 -Djava.test.version=1.8 -Djava.test.vendor=zulu
+      options: -B -Djava.test.version=1.8 -Djava.test.vendor=zulu
       mavenGoals: 'clean verify'
   - template: build-templates/maven-common.yml@templates
     parameters:
       jobName: Linux_Java_11
       timeoutInMinutes: 180
       pool: tc_linux_pool
-      options: -B -Dtest.parallel.forks=2 -Djava.test.version=1.11 -Djava.test.vendor=zulu
+      options: -B -Djava.test.version=1.11 -Djava.test.vendor=zulu
       mavenGoals: 'clean verify'
   - template: build-templates/maven-common.yml@templates
     parameters:
       jobName: Windows_Java_8
       timeoutInMinutes: 180
       pool: tc_windows_pool
-      options: -B -Dtest.parallel.forks=2 -Djava.test.version=1.8 -Djava.test.vendor=zulu
+      options: -B -Djava.test.version=1.8 -Djava.test.vendor=zulu
       mavenGoals: 'clean verify'
   - template: build-templates/maven-common.yml@templates
     parameters:
       jobName: Windows_Java_11
       timeoutInMinutes: 180
       pool: tc_windows_pool
-      options: -B -Dtest.parallel.forks=2 -Djava.test.version=1.11 -Djava.test.vendor=zulu
+      options: -B -Djava.test.version=1.11 -Djava.test.vendor=zulu
       mavenGoals: 'clean verify'

@@ -90,6 +90,7 @@ public class DiagnosticServiceFactoryTest {
     assertThat(address.getValue().iterator().next(), is(equalTo(addr)));
     assertThat(properties.getValue(), hasEntry(ConnectionPropertyNames.CONNECTION_TYPE, "diagnostic"));
     assertThat(properties.getValue(), hasEntry(ConnectionPropertyNames.CONNECTION_NAME, "ConnectionName"));
+    assertThat(properties.getValue(), hasEntry(ConnectionPropertyNames.CONNECTION_TIMEOUT, "2000"));
   }
 
   @Test
