@@ -112,8 +112,10 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // So this has the effect of putting all defined directories inside such as config/config/logs, config/config/user-data, config/metadata, etc
       // That is why we need to force the resolving within the XML relatively to the user directory.
       String serverHome = options.getServerHome();
-      if (serverHome == null) serverHome = System.getProperty("user.dir");
-      Path baseDir = Paths.get(serverHome);
+      if (serverHome == null) {
+        serverHome = System.getProperty("user.dir");
+      }
+      Path baseDir = Paths.get(parameterSubstitutor.substitute(serverHome));
       PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
 
       // Configuration generator class
