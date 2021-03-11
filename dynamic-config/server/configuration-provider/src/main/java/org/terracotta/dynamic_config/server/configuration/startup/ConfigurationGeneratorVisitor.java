@@ -102,13 +102,13 @@ public class ConfigurationGeneratorVisitor {
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the config created will be stripped to make platform think this node is alone;
-      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
+      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory, server);
     } else {
       // configured mode
       return new StartupConfiguration(
           () -> nomadServerManager.getConfiguration()
               .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again.")),
-          unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
+          unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory, server);
     }
   }
 

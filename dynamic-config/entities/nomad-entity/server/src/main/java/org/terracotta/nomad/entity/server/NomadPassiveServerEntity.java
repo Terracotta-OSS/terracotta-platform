@@ -25,14 +25,14 @@ import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.server.Server;
-import org.terracotta.server.ServerEnv;
 import org.terracotta.server.StopAction;
 
 public class NomadPassiveServerEntity<T> extends NomadCommonServerEntity<T> implements PassiveServerEntity<NomadEntityMessage, NomadEntityResponse> {
-  private final Server server = ServerEnv.getServer();
+  private final Server server;
 
-  public NomadPassiveServerEntity(NomadServer<NodeContext> nomadServer) {
+  public NomadPassiveServerEntity(Server server, NomadServer<NodeContext> nomadServer) {
     super(nomadServer);
+    this.server = server;
   }
 
   @Override

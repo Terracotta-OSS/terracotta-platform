@@ -19,21 +19,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.diagnostic.server.api.extension.LogicalServerStateProvider;
+import org.terracotta.server.ServerJMX;
+import org.terracotta.server.ServerMBean;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
-import javax.management.ObjectName;
+import javax.management.StandardMBean;
 import java.util.Set;
 
 import static java.lang.Boolean.parseBoolean;
-import javax.management.StandardMBean;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_CONSISTENCY_MANAGER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
-import org.terracotta.server.ServerEnv;
-import org.terracotta.server.ServerJMX;
-import org.terracotta.server.ServerMBean;
 
 public class LogicalServerStateMBeanImpl extends StandardMBean implements org.terracotta.server.ServerMBean, LogicalServerStateProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(LogicalServerStateMBeanImpl.class);
@@ -45,7 +43,7 @@ public class LogicalServerStateMBeanImpl extends StandardMBean implements org.te
   }
 
   public void expose() {
-    ServerEnv.getServer().getManagement().registerMBean(MBEAN_LOGICAL_SERVER_STATE, this);
+    subsystem.registerMBean(MBEAN_LOGICAL_SERVER_STATE, this);
   }
 
   @Override
@@ -68,7 +66,7 @@ public class LogicalServerStateMBeanImpl extends StandardMBean implements org.te
 
   boolean hasConsistencyManager() {
     try {
-      Set<ObjectInstance> matchingBeans = ServerEnv.getServer().getManagement().getMBeanServer().queryMBeans(
+      Set<ObjectInstance> matchingBeans = subsystem.getMBeanServer().queryMBeans(
           ServerMBean.createMBeanName(MBEAN_CONSISTENCY_MANAGER), null);
       return matchingBeans.iterator().hasNext();
     } catch (MalformedObjectNameException e) {

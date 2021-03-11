@@ -24,7 +24,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 import org.terracotta.diagnostic.server.api.Expose;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.server.ServerJMX;
 
+import javax.management.MBeanServerFactory;
 import java.io.Closeable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,7 +34,9 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -44,10 +48,12 @@ public class DefaultDiagnosticServicesTest {
   @Spy MyService1Impl service1;
   @Spy MyServiceImpl service2;
 
-  DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices(new ObjectMapperFactory());
+  ServerJMX jmx = mock(ServerJMX.class);
+  DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices(jmx, new ObjectMapperFactory());
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
+    when(jmx.getMBeanServer()).thenReturn(MBeanServerFactory.newMBeanServer());
     diagnosticServices.init();
   }
 

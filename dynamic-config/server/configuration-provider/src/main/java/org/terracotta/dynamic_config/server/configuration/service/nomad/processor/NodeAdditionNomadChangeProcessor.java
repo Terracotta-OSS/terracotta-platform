@@ -26,7 +26,6 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.server.ServerEnv;
 import org.terracotta.server.ServerMBean;
 
 import javax.management.JMException;
@@ -45,9 +44,10 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
 
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
-  private final MBeanServer mbeanServer = ServerEnv.getServer().getManagement().getMBeanServer();
+  private final MBeanServer mbeanServer;
 
-  public NodeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
+  public NodeAdditionNomadChangeProcessor(MBeanServer mbeanServer, TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
+    this.mbeanServer = mbeanServer;
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
   }

@@ -34,7 +34,6 @@ import java.util.stream.Stream;
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.test_support.processor.ServerCrasher.crash;
-import org.terracotta.server.ServerEnv;
 
 public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor<NodeAdditionNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(MyDummyNomadAdditionChangeProcessor.class);
@@ -46,13 +45,14 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
   private static final String attachStatusKey = "attachStatus";
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
-  private final MBeanServer mbeanServer = ServerEnv.getServer().getManagement().getMBeanServer();
+  private final MBeanServer mbeanServer;
 
-  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
+  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, MBeanServer mbeanServer) {
+    this.mbeanServer = mbeanServer;
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
   }
-  
+
   @Override
   public void validate(NodeContext baseConfig, NodeAdditionNomadChange change) throws NomadException {
     if (failAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(attachStatusKey))) {

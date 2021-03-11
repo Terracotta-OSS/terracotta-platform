@@ -30,7 +30,7 @@ import org.terracotta.nomad.entity.common.NomadEntityConstants;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.entity.common.NomadMessageCodec;
-import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.server.Server;
 
 @PermanentEntity(type = NomadEntityConstants.ENTITY_TYPE, name = NomadEntityConstants.ENTITY_NAME)
 public class NomadServerEntityService<T> implements EntityServerService<NomadEntityMessage, NomadEntityResponse> {
@@ -53,7 +53,8 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
     try {
       @SuppressWarnings("unchecked")
       DynamicConfigNomadServer nomadServer = registry.getService(new BasicServiceConfiguration<>(DynamicConfigNomadServer.class));
-      return new NomadPassiveServerEntity<>(nomadServer);
+      Server server = registry.getService(new BasicServiceConfiguration<>(Server.class));
+      return new NomadPassiveServerEntity<>(server, nomadServer);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
     }

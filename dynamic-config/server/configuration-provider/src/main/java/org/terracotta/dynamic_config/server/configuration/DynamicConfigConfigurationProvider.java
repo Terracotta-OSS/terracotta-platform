@@ -145,6 +145,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration = configurationGeneratorVisitor.generateConfiguration();
 
       //  exposes services through org.terracotta.entity.PlatformConfiguration
+      configuration.registerExtendedConfiguration(Server.class, server);
       configuration.registerExtendedConfiguration(ObjectMapperFactory.class, objectMapperFactory);
       configuration.registerExtendedConfiguration(IParameterSubstitutor.class, parameterSubstitutor);
       configuration.registerExtendedConfiguration(ConfigChangeHandlerManager.class, configChangeHandlerManager);
@@ -215,7 +216,6 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       }
 
       if (requires.contains(RESTART_REQUIRED)) {
-        Server server = ServerEnv.getServer();
         if (requires.contains(ZAP_REQUIRED)) {
           server.warn("Zapping server");
           server.stop(StopAction.ZAP, StopAction.RESTART);

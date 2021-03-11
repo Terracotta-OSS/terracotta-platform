@@ -37,12 +37,12 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.server.Server;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,6 @@ import java.util.function.Supplier;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.common.struct.Tuple2.tuple2;
-import org.terracotta.server.ServerEnv;
 
 public class StartupConfiguration implements Configuration, PrettyPrintable, StateDumpable, PlatformConfiguration, DynamicConfigExtension.Registrar {
 
@@ -70,7 +69,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   private final ObjectMapper objectMapper;
   private final GroupPortMapper groupPortMapper;
 
-  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory) {
+  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory, Server server) {
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
     this.unConfigured = unConfigured;
     this.repairMode = repairMode;
@@ -78,7 +77,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
     this.objectMapper = objectMapperFactory.create();
-    Collection<Class<? extends GroupPortMapper>> mappers = ServerEnv.getServer().getImplementations(GroupPortMapper.class);
+    Collection<Class<? extends GroupPortMapper>> mappers = server.getImplementations(GroupPortMapper.class);
     Class<? extends GroupPortMapper> gi = mappers.iterator().next();
     GroupPortMapper mapper = null;
     try {

@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.service;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,9 +63,13 @@ import org.terracotta.nomad.client.status.MultiDiscoveryResultReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.ServerJMX;
 import org.terracotta.testing.Retry;
 import org.terracotta.testing.TmpDir;
 
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -91,8 +96,6 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.IntStream.range;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -105,7 +108,6 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
-import org.junit.Before;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
@@ -115,8 +117,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.NOTHING;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
-import org.terracotta.server.ServerEnv;
-import org.terracotta.server.ServerJMX;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 
 @RunWith(Parameterized.class)
@@ -455,7 +455,11 @@ public class DesynchronizedNomadConfigTest {
       ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
       ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
       LicenseService licenseService = new LicenseParserDiscovery(FakeNode.class.getClassLoader()).find().orElseGet(LicenseService::unsupported);
-      NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, mock(Server.class));
+      Server server = mock(Server.class);
+      ServerJMX serverJMX = mock(ServerJMX.class);
+      when(serverJMX.getMBeanServer()).thenReturn(MBeanServerFactory.newMBeanServer());
+      when(server.getManagement()).thenReturn(serverJMX);
+      NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, server);
 
       // add an off-heap change handler
       configChangeHandlerManager.set(Setting.OFFHEAP_RESOURCES, new ConfigChangeHandler() {

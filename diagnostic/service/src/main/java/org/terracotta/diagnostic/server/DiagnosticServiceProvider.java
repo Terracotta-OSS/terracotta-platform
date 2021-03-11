@@ -24,6 +24,7 @@ import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.server.Server;
 
 import java.io.Closeable;
 import java.util.Collection;
@@ -42,7 +43,8 @@ public class DiagnosticServiceProvider implements ServiceProvider, Closeable {
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     ObjectMapperFactory objectMapperFactory = platformConfiguration.getExtendedConfiguration(ObjectMapperFactory.class).iterator().next();
-    diagnosticServices = new DefaultDiagnosticServices(objectMapperFactory);
+    Server server = platformConfiguration.getExtendedConfiguration(Server.class).iterator().next();
+    diagnosticServices = new DefaultDiagnosticServices(server.getManagement(), objectMapperFactory);
     // exposes diagnostic MBean which will make interfaces accessible from clients at this point
     diagnosticServices.init();
     DiagnosticServicesHolder.install(diagnosticServices);
