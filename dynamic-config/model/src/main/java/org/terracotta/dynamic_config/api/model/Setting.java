@@ -392,10 +392,23 @@ public enum Setting {
       o -> Optional.empty(),
       noop(),
       emptyList(),
-      of(PRESENCE, CONFIG),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_CONFIG_DIR, tuple2(key, value))
+  ),
+  NODE_HOME_DIR(SettingName.NODE_HOME_DIR,
+      of(V2),
+      false,
+      always(System.getProperty("user.dir")),
+      NODE,
+      o -> Optional.empty(),
+      noop(),
+      emptyList(),
+      EnumSet.noneOf(Requirement.class),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_HOME_DIR, tuple2(key, value))
   ),
   NODE_METADATA_DIR(SettingName.NODE_METADATA_DIR,
       of(V1, V2),
@@ -608,22 +621,6 @@ public enum Setting {
       (key, value) -> PATH_VALIDATOR.accept(SettingName.LICENSE_FILE, tuple2(key, value))
   ),
 
-  //  server home
-  SERVER_HOME(SettingName.SERVER_HOME,
-      of(V2),
-      false,
-      ()->System.getProperty("user.dir"),
-      NODE,
-      o -> Optional.empty(),
-      noop(),
-      singletonList(
-          when(CONFIGURING, ACTIVATED).allow(SET).atLevel(NODE)
-      ),
-      EnumSet.noneOf(Requirement.class),
-      emptyList(),
-      emptyList(),
-      (key, value) -> PATH_VALIDATOR.accept(SettingName.SERVER_HOME, tuple2(key, value))
-  ),
   // ==== Security
 
   SECURITY_DIR(SettingName.SECURITY_DIR,

@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.server.configuration.startup.parsing;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.Parameters;
-import java.nio.file.Paths;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils;
 import org.terracotta.dynamic_config.server.configuration.startup.CustomJCommander;
@@ -45,6 +44,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_BIND_ADDR
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_CONFIG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_GROUP_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOME_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_METADATA_DIR;
@@ -59,7 +59,6 @@ import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_AUTHC
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_SSL_TLS;
 import static org.terracotta.dynamic_config.api.model.SettingName.SECURITY_WHITELIST;
-import static org.terracotta.dynamic_config.api.model.SettingName.SERVER_HOME;
 import static org.terracotta.dynamic_config.api.model.SettingName.STRIPE_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.server.configuration.startup.ConsoleParamsUtils.addDash;
@@ -148,7 +147,7 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + LICENSE_FILE}, hidden = true)
   private String licenseFile;
 
-  @Parameter(names = {"-" + SERVER_HOME}, hidden = true)
+  @Parameter(names = {"-" + NODE_HOME_DIR}, hidden = true)
   private String serverHome;
   
   @Parameter(names = {"-" + REPAIR_MODE}, description = "node repair mode (true|false)")
@@ -196,7 +195,7 @@ public class OptionsParsingImpl implements OptionsParsing {
           String longestName = pd.getLongestName();
           return !longestName.equals(addDash(LICENSE_FILE))
               && !longestName.equals(addDash(CONFIG_FILE))
-              && !longestName.equals(addDash(SERVER_HOME))
+              && !longestName.equals(addDash(NODE_HOME_DIR))
               && !longestName.equals(addDash(REPAIR_MODE))
               && !longestName.equals(addDash(AUTO_ACTIVATE))
               && !longestName.equals(addDash(NODE_CONFIG_DIR));
@@ -215,7 +214,7 @@ public class OptionsParsingImpl implements OptionsParsing {
       filteredOptions.remove(addDash(AUTO_ACTIVATE));
       filteredOptions.remove(addDash(REPAIR_MODE));
       filteredOptions.remove(addDash(CONFIG_FILE));
-      filteredOptions.remove(addDash(SERVER_HOME));
+      filteredOptions.remove(addDash(NODE_HOME_DIR));
       filteredOptions.remove(addDash(LICENSE_FILE));
       filteredOptions.remove(addDash(NODE_HOSTNAME));
       filteredOptions.remove(addDash(NODE_PORT));
@@ -227,7 +226,7 @@ public class OptionsParsingImpl implements OptionsParsing {
             String.format(
                 "'%s' parameter can only be used with '%s', '%s', %s', '%s', '%s' and '%s' parameters",
                 addDash(CONFIG_FILE),
-                addDash(SERVER_HOME),
+                addDash(NODE_HOME_DIR),
                 addDash(REPAIR_MODE),
                 addDash(NODE_NAME),
                 addDash(NODE_HOSTNAME),
