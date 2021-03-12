@@ -117,7 +117,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
       fail();
     } catch (Exception e) {
-      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
+      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
     }
   }
 
@@ -128,7 +128,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
+      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
     }
   }
 
@@ -203,7 +203,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       );
       fail();
     } catch (Exception e) {
-      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--server-home', '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
+      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
     }
   }
 
