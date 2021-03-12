@@ -60,10 +60,16 @@ public class ConfigurationGenerator {
   }
 
   private final Path root;
+  private final Path workingDir;
   private final PortSupplier portSupplier;
 
   public ConfigurationGenerator(Path root, PortSupplier portSupplier) {
+    this(root, Paths.get(System.getProperty("user.dir")), portSupplier);
+  }
+
+  public ConfigurationGenerator(Path root, Path workingDir, PortSupplier portSupplier) {
     this.root = root;
+    this.workingDir = workingDir;
     this.portSupplier = portSupplier;
   }
 
@@ -109,7 +115,8 @@ public class ConfigurationGenerator {
     for (int i = 1; i <= nodes; i++) {
       configuration = configuration
           .replace("${PORT-" + i + "}", String.valueOf(portSupplier.getNodePort(stripeId, i)))
-          .replace("${GROUP-PORT-" + i + "}", String.valueOf(portSupplier.getNodeGroupPort(stripeId, i)));
+          .replace("${GROUP-PORT-" + i + "}", String.valueOf(portSupplier.getNodeGroupPort(stripeId, i)))
+          .replace("${WORKING-DIR}", workingDir.toString());
     }
 
     try {

@@ -15,23 +15,29 @@
  */
 package org.terracotta.dynamic_config.test_support;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matcher;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.angela.client.ClusterAgent;
 import org.terracotta.angela.client.config.ConfigurationContext;
 import org.terracotta.angela.client.filesystem.RemoteFolder;
 import org.terracotta.angela.client.support.junit.AngelaRule;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
 import org.terracotta.angela.common.TerracottaConfigTool;
+import org.terracotta.angela.common.ToolException;
 import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.angela.common.distribution.Distribution;
+import org.terracotta.angela.common.distribution.RuntimeOption;
 import org.terracotta.angela.common.dynamic_cluster.Stripe;
 import org.terracotta.angela.common.tcconfig.License;
+import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.angela.common.topology.Topology;
 import org.terracotta.common.struct.Measure;
@@ -55,6 +61,8 @@ import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.Timeout;
 import org.terracotta.testing.TmpDir;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -85,7 +93,9 @@ import static java.lang.System.lineSeparator;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.IntStream.rangeClosed;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
@@ -120,6 +130,7 @@ public class DynamicConfigIT {
 
   protected final ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
+  private static ClusterAgent localAgent;
   @Rule public RuleChain rules;
 
   public DynamicConfigIT() {
@@ -135,11 +146,31 @@ public class DynamicConfigIT {
     this.timeout = testTimeout.toMillis();
     this.rules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled()), clusterDef.autoStart(), clusterDef.autoActivate()) {
+        .around(angela = new AngelaRule(localAgent, createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers())) {
+          ConfigurationContext oldConfiguration;
+
           @Override
           public void startNode(int stripeId, int nodeId) {
             // let the subclasses control the node startup
             DynamicConfigIT.this.startNode(stripeId, nodeId);
+          }
+
+          @Override
+          protected void before(Description description) throws Throwable {
+            InlineServers inline = description.getAnnotation(InlineServers.class);
+            if (inline != null) {
+              oldConfiguration = configure(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), inline.value()));
+            }
+            super.before(description);
+          }
+
+          @Override
+          protected void after(Description description) throws Throwable {
+            super.after(description);
+            if (oldConfiguration != null) {
+              configure(oldConfiguration);
+              oldConfiguration = null;
+            }
           }
         })
         .around(Timeout.builder()
@@ -150,8 +181,18 @@ public class DynamicConfigIT {
         .around(new ExtendedTestRule() {
           @Override
           protected void before(Description description) {
+            InlineServers inline = description.getAnnotation(InlineServers.class);
+            String baseLogging = "tc-logback.xml";
+            if (inline != null && !inline.value()) {
+              baseLogging = "tc-logback-console.xml";
+            }
+            String extraLogging = "logback-ext-test.xml";
+            ExtraLogging extra = description.getAnnotation(ExtraLogging.class);
+            if (extra != null) {
+              extraLogging = extra.value();
+            }
             // upload tc logging config, but ONLY IF EXISTS !
-            Stream.of(tuple2("tc-logback.xml", "logback-test.xml"), tuple2("logback-ext-test.xml", "logback-ext-test.xml"))
+            Stream.of(tuple2(baseLogging, "logback-test.xml"), tuple2(extraLogging, "logback-ext-test.xml"))
                 .map(loggingConfig -> tuple2(getClass().getResource("/" + loggingConfig.t1), loggingConfig.t2))
                 .filter(tuple -> tuple.t1 != null)
                 .forEach(loggingConfig -> {
@@ -164,7 +205,37 @@ public class DynamicConfigIT {
                     }
                   });
                 });
+                angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
+                  try {
+                    RemoteFolder folder = angela.tsa().browse(s, "");
+                    Properties props = new Properties();
+                    props.setProperty("serverWorkingDir", folder.getAbsoluteName());
+                    props.setProperty("serverId", s.getServerSymbolicName().getSymbolicName());
+                    props.setProperty("test.displayName", description.getDisplayName());
+                    props.setProperty("test.className", description.getClassName());
+                    props.setProperty("test.methodName", description.getMethodName());
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    props.store(bos, "logging properties");
+                    bos.close();
+                    folder.upload("logbackVars.properties", new ByteArrayInputStream(bos.toByteArray()));
+                  } catch (IOException exp) {
+                    LOGGER.warn("unable to upload logback configuration", exp);
+                  }
+                });
             // wait for server startup if auto-activated
+            if (clusterDef.autoStart()) {
+              int stripes = angela.getStripeCount();
+              for (int x=1;x<=stripes;x++) {
+                int nodes = angela.getStripe(x).size();
+                for (int n=1;n<=nodes;n++) {
+                  startNode(x, n);
+                }
+              }
+              if (clusterDef.autoActivate()) {
+                attachAll();
+                activateCluster();
+              }
+            }
             if (clusterDef.autoStart() && clusterDef.autoActivate()) {
               for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
                 waitForActive(stripeId);
@@ -175,12 +246,38 @@ public class DynamicConfigIT {
         });
   }
 
+  @BeforeClass
+  public static void setupTestServers() {
+    System.setProperty("com.tc.server.entity.processor.threads", "4");
+    System.setProperty("com.tc.l2.tccom.workerthreads", "4");
+    System.setProperty("com.tc.l2.seda.stage.stall.warning", "1000");
+    System.setProperty("IGNITE_UPDATE_NOTIFIER", "false");
+    localAgent = new ClusterAgent(true);
+  }
+
+  @AfterClass
+  public static void teardownTestServers() {
+    try {
+      localAgent.close();
+    } catch (IOException io) {
+      LOGGER.error("io error", io);
+    }
+  }
+
   // =========================================
   // tmp dir
   // =========================================
 
   protected final Path getBaseDir() {
     return tmpDir.getRoot();
+  }
+
+  protected final Path getServerHome() {
+    return getServerHome(getNode(1, 1));
+  }
+
+  protected final Path getServerHome(TerracottaServer server) {
+    return Paths.get(angela.tsa().browse(server, "").getAbsoluteName());
   }
 
   // =========================================
@@ -240,13 +337,63 @@ public class DynamicConfigIT {
     return activateCluster(CLUSTER_NAME);
   }
 
+  protected void attachAll() {
+    int stripes = angela.getStripeCount();
+    for (int x=1;x<=stripes;x++) {
+      List<TerracottaServer> stripe = angela.getStripe(x);
+      if (stripe.size() > 1) {
+        // Attach all servers in a stripe to form individual stripes
+        for (int i = 1; i < stripe.size(); i++) {
+          List<String> command = new ArrayList<>();
+          command.add("attach");
+          command.add("-t");
+          command.add("node");
+          command.add("-d");
+          command.add(stripe.get(0).getHostPort());
+          command.add("-s");
+          command.add(stripe.get(i).getHostPort());
+
+          ToolExecutionResult result = configTool(command.toArray(new String[0]));
+          if (result.getExitStatus() != 0) {
+            throw new ToolException("attach failed", String.join(". ", result.getOutput()), result.getExitStatus());
+          }
+        }
+      }
+    }
+
+    if (stripes > 1) {
+      for (int i = 2; i <= stripes; i++) {
+        // Attach all stripes together to form the cluster
+        List<String> command = new ArrayList<>();
+        command.add("attach");
+        command.add("-t");
+        command.add("stripe");
+        command.add("-d");
+        command.add(getNode(1, 1).getHostPort());
+
+        List<TerracottaServer> stripe = angela.getStripe(i);
+        command.add("-s");
+        command.add(stripe.get(0).getHostPort());
+
+        ToolExecutionResult result = configTool(command.toArray(new String[0]));
+        if (result.getExitStatus() != 0) {
+          throw new RuntimeException("ConfigTool::executeCommand with command parameters failed with: " + result);
+        }
+      }
+    }
+  }
+
   protected ToolExecutionResult activateCluster(String name) {
+    return activateStripe(name, 1);
+  }
+
+  protected ToolExecutionResult activateStripe(String name, int stripe) {
     Path licensePath = getLicensePath();
     ToolExecutionResult result = licensePath == null ?
-        configTool("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
-        configTool("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
+        configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name) :
+        configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name, "-l", licensePath.toString());
     assertThat(result, is(successful()));
-    waitForActive(1);
+    waitForActive(stripe);
     return result;
   }
 
@@ -323,14 +470,14 @@ public class DynamicConfigIT {
   // node and topology construction
   // =========================================
 
-  protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe, boolean netDisruptionEnabled) {
+  protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe, boolean netDisruptionEnabled, boolean inlineServers) {
     return customConfigurationContext()
         .tsa(tsa -> tsa
             .clusterName(CLUSTER_NAME)
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
             .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms32m -Xmx256m"))
             .topology(new Topology(
-                getDistribution(),
+                getDistribution(inlineServers),
                 netDisruptionEnabled,
                 dynamicCluster(
                     rangeClosed(1, stripes)
@@ -347,11 +494,11 @@ public class DynamicConfigIT {
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
     return server(getNodeName(stripeId, nodeId), "localhost")
-        .configRepo(getNodePath(stripeId, nodeId).append("/config").toString())
-        .logs(getNodePath(stripeId, nodeId).append("/logs").toString())
-        .dataDir("main:" + getNodePath(stripeId, nodeId).append("/data-dir").toString())
+        .configRepo("config")
+        .logs("logs")
+        .dataDir("main:data-dir")
         .offheap("main:512MB,foo:1GB")
-        .metaData(getNodePath(stripeId, nodeId).append("/metadata").toString())
+        .metaData("metadata")
         .failoverPriority(getFailoverPriority().toString())
         .clientReconnectWindow("10s") // the default client reconnect window of 2min can cause some tests to timeout
         .clusterName(CLUSTER_NAME);
@@ -365,16 +512,20 @@ public class DynamicConfigIT {
     return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
   }
 
+  protected Distribution getDistribution(boolean inline) {
+    if (inline) {
+      return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS, RuntimeOption.INLINE_SERVERS);
+    } else {
+      return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
+    }
+  }
+
   protected String getNodeName(int stripeId, int nodeId) {
     return "node-" + stripeId + "-" + nodeId;
   }
 
-  protected RawPath getNodePath(int stripeId, int nodeId) {
-    return RawPath.valueOf(getNodeName(stripeId, nodeId));
-  }
-
   protected final RawPath getNodeConfigDir(int stripeId, int nodeId) {
-    return getNodePath(stripeId, nodeId).append("/config");
+    return RawPath.valueOf("config");
   }
 
   protected Path getLicensePath() {
@@ -420,9 +571,12 @@ public class DynamicConfigIT {
   }
 
   protected Path generateNodeConfigDir(int stripeId, int nodeId, Consumer<ConfigurationGenerator> fn) throws Exception {
-    Path nodeConfigurationDir = getBaseDir().resolve(getNodeConfigDir(stripeId, nodeId).toPath());
+    TerracottaServer server = getNode(stripeId, nodeId);
+    Path nodeWorkingDir = Paths.get(angela.tsa().browse(server, "").getAbsoluteName());
+    Path nodeConfigurationDir = nodeWorkingDir.resolve("config");
+    Files.createDirectories(nodeWorkingDir);
     Path configDirs = getBaseDir().resolve("generated-configs");
-    ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(configDirs, new ConfigurationGenerator.PortSupplier() {
+    ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(configDirs, nodeWorkingDir, new ConfigurationGenerator.PortSupplier() {
       @Override
       public int getNodePort(int stripeId, int nodeId) {
         return angela.getNodePort(stripeId, nodeId);
@@ -433,7 +587,7 @@ public class DynamicConfigIT {
         return angela.getNodeGroupPort(stripeId, nodeId);
       }
     });
-    LOGGER.debug("Generating cluster node configuration directories into: {}", configDirs);
+    LOGGER.debug("Generating cluster node configuration directories into: {}", nodeConfigurationDir);
     fn.accept(clusterGenerator);
     org.terracotta.utilities.io.Files.copy(configDirs.resolve("stripe-" + stripeId).resolve("node-" + stripeId + "-" + nodeId), nodeConfigurationDir, RECURSIVE);
     LOGGER.debug("Created node configuration directory into: {}", nodeConfigurationDir);
@@ -458,8 +612,24 @@ public class DynamicConfigIT {
     waitUntil(() -> result, matcher, getAssertTimeout());
   }
 
-  protected final void waitUntil(NodeOutputRule.NodeLog result, Matcher<NodeOutputRule.NodeLog> matcher) {
-    waitUntil(() -> result, matcher, getAssertTimeout());
+  protected final void waitUntilServerLogs(TerracottaServer server, String matcher) {
+    assertThat(()->serverStdOut(server), within(getAssertTimeout()).matches(hasItem(containsString(matcher))));
+  }
+
+  protected final void assertThatServerLogs(TerracottaServer server, String matcher) {
+    assertThat(serverStdOut(server), hasItem(containsString(matcher)));
+  }
+
+  protected final void assertThatServerLogs(TerracottaServer server, Matcher<String> matcher) {
+    assertThat(serverStdOut(server), hasItem(matcher));
+  }
+
+  private List<String> serverStdOut(TerracottaServer server) {
+    try {
+      return Files.readAllLines(getServerHome(server).resolve("stdout.txt"));
+    } catch (IOException io) {
+      return Collections.emptyList();
+    }
   }
 
   protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher) {
@@ -565,7 +735,7 @@ public class DynamicConfigIT {
   }
 
   protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {
-    stripeServer.forEach((k, v) -> angela.configTool().setServerToServerDisruptionLinks(k, v));
+    stripeServer.forEach((k, v) -> setServerToServerDisruptionLinks(k, v));
   }
 
   protected void setClientServerDisruptionLinks(Map<Integer, Integer> stripeServerNumMap) {
@@ -574,11 +744,78 @@ public class DynamicConfigIT {
       int serverList = entry.getValue();
       for (int i = 1; i <= serverList; ++i) {
         TerracottaServer terracottaServer = getNode(stripeId, i);
-        angela.configTool().setClientToServerDisruptionLinks(terracottaServer);
+        setClientToServerDisruptionLinks(terracottaServer);
+      }
+    }
+  }
+  public void setClientToServerDisruptionLinks(TerracottaServer terracottaServer) {
+    // Disabling client redirection from passive to current active.
+    List<String> arguments = new ArrayList<>();
+    String property = "stripe.1.node.1.tc-properties." + "l2.l1redirect.enabled=false";
+    arguments.add("set");
+    arguments.add("-s");
+    arguments.add(terracottaServer.getHostPort());
+    arguments.add("-c");
+    arguments.add(property);
+    ToolExecutionResult executionResult = configTool(arguments.toArray(new String[0]));
+    if (executionResult.getExitStatus() != 0) {
+      throw new RuntimeException("ConfigTool::executeCommand with command parameters failed with: " + executionResult);
+    }
+
+    // Creating disruption links for client to server disruption
+    Map<ServerSymbolicName, Integer> proxyMap = angela.tsa().updateToProxiedPorts();
+    int proxyPort = proxyMap.get(terracottaServer.getServerSymbolicName());
+    String publicHostName = "stripe.1.node.1.public-hostname=" + terracottaServer.getHostName();
+    String publicPort = "stripe.1.node.1.public-port=" + proxyPort;
+
+    List<String> args = new ArrayList<>();
+    args.add("set");
+    args.add("-s");
+    args.add(terracottaServer.getHostPort());
+    args.add("-c");
+    args.add(publicHostName);
+    args.add("-c");
+    args.add(publicPort);
+
+    executionResult = configTool(args.toArray(new String[0]));
+    if (executionResult.getExitStatus() != 0) {
+      throw new RuntimeException("ConfigTool::executeCommand with command parameters failed with: " + executionResult);
+    }
+  }
+
+  public void setServerToServerDisruptionLinks(int stripeId, int size) {
+    List<TerracottaServer> stripeServerList = angela.tsa().getTsaConfigurationContext()
+        .getTopology()
+        .getStripes()
+        .get(stripeId - 1);
+    for (int j = 0; j < size; ++j) {
+      TerracottaServer server = stripeServerList.get(j);
+      Map<ServerSymbolicName, Integer> proxyGroupPortMapping = angela.tsa().getProxyGroupPortsForServer(server);
+      int nodeId = j + 1;
+      StringBuilder propertyBuilder = new StringBuilder();
+      propertyBuilder.append("stripe.")
+          .append(stripeId)
+          .append(".node.")
+          .append(nodeId)
+          .append(".tc-properties.test-proxy-group-port=");
+      propertyBuilder.append("\"");
+      for (Map.Entry<ServerSymbolicName, Integer> entry : proxyGroupPortMapping.entrySet()) {
+        propertyBuilder.append(entry.getKey().getSymbolicName());
+        propertyBuilder.append("->");
+        propertyBuilder.append(entry.getValue());
+        propertyBuilder.append("#");
+      }
+      propertyBuilder.deleteCharAt(propertyBuilder.lastIndexOf("#"));
+      propertyBuilder.append("\"");
+
+      ToolExecutionResult executionResult = configTool("set", "-s", server.getHostPort(), "-c", propertyBuilder.toString());
+      if (executionResult.getExitStatus() != 0) {
+        throw new RuntimeException("ConfigTool::executeCommand with command parameters failed with: " + executionResult);
       }
     }
   }
 
+  @SuppressFBWarnings("REC_CATCH_EXCEPTION")
   private boolean isServerBlocked(TerracottaServer server) {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
         InetSocketAddress.createUnresolved(server.getHostName(), server.getTsaPort()),
@@ -587,7 +824,7 @@ public class DynamicConfigIT {
         getConnectionTimeout(),
         null,
         objectMapperFactory)) {
-      return diagnosticService.isBlocked();
+        return diagnosticService.isBlocked();
     } catch (Exception e) {
       return false;
     }

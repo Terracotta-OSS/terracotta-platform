@@ -34,6 +34,7 @@ public class SettingName {
   public static final String NODE_BIND_ADDRESS = "bind-address";
   public static final String NODE_GROUP_BIND_ADDRESS = "group-bind-address";
   public static final String NODE_CONFIG_DIR = "config-dir";
+  public static final String NODE_HOME_DIR = "server-home";
   public static final String NODE_METADATA_DIR = "metadata-dir";
   public static final String NODE_LOG_DIR = "log-dir";
   public static final String NODE_BACKUP_DIR = "backup-dir";

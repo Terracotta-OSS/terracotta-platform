@@ -26,13 +26,13 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.server.ServerMBean;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;
-import java.lang.management.ManagementFactory;
+import javax.management.ObjectName;
 import java.util.stream.Stream;
 
-import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -44,19 +44,16 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
 
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
-  private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+  private final MBeanServer mbeanServer;
 
-  public NodeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
+  public NodeRemovalNomadChangeProcessor(MBeanServer mbeanServer, TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
+    this.mbeanServer = mbeanServer;
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
   }
 
   @Override
   public void validate(NodeContext baseConfig, NodeRemovalNomadChange change) throws NomadException {
-    LOGGER.info("Validating change: {}", change.getSummary());
-    if (baseConfig == null) {
-      throw new NomadException("Existing config must not be null");
-    }
     try {
       checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
@@ -75,10 +72,11 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
     }
 
     try {
+      ObjectName objectName = ServerMBean.createMBeanName("TopologyMBean");
       LOGGER.info("Removing node: {} from stripe ID: {}", node.getName(), runtime.getStripe(change.getStripeUID()).get().getName());
-      LOGGER.debug("Calling mBean {}#{}", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME);
+      LOGGER.debug("Calling mBean {}#{}", objectName, PLATFORM_MBEAN_OPERATION_NAME);
       mbeanServer.invoke(
-          TOPOLOGY_MBEAN,
+          objectName,
           PLATFORM_MBEAN_OPERATION_NAME,
           new Object[]{node.getHostname(), node.getPort().orDefault(), node.getGroupPort().orDefault()},
           new String[]{String.class.getName(), int.class.getName(), int.class.getName()}
@@ -94,7 +92,7 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
     boolean canCall;
     try {
       canCall = Stream
-          .of(mbeanServer.getMBeanInfo(TOPOLOGY_MBEAN).getOperations())
+          .of(mbeanServer.getMBeanInfo(ServerMBean.createMBeanName("TopologyMBean")).getOperations())
           .anyMatch(attr -> PLATFORM_MBEAN_OPERATION_NAME.equals(attr.getName()));
     } catch (JMException e) {
       LOGGER.error("MBeanServer::getMBeanInfo resulted in:", e);

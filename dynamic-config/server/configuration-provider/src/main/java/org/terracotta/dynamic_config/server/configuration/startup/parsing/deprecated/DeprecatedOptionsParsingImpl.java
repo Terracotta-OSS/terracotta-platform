@@ -45,6 +45,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_BIND_ADDR
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_CONFIG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_GROUP_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOME_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_METADATA_DIR;
@@ -150,6 +151,9 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-D", "--" + REPAIR_MODE}, description = "node repair mode (true|false)")
   private boolean wantsRepairMode;
 
+  @Parameter(names = {"--" + NODE_HOME_DIR}, hidden = true)
+  private String serverHome;
+
   // hidden option that won't appear in the help file,
   // so that we can start a pre-activated stripe directly in dev / test.
   // no need to have a short option for this one, this is not public.
@@ -167,6 +171,7 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
     options.setConfigDir(configDir);
     options.setConfigFile(configFile);
     options.setLicenseFile(licenseFile);
+    options.setServerHome(serverHome);
     options.setWantsRepairMode(wantsRepairMode);
     options.setAllowsAutoActivation(allowsAutoActivation);
     return options;
@@ -192,6 +197,7 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
           String longestName = pd.getLongestName();
           return !longestName.equals(addDashDash(LICENSE_FILE))
               && !longestName.equals(addDashDash(CONFIG_FILE))
+              && !longestName.equals(addDashDash(NODE_HOME_DIR))
               && !longestName.equals(addDashDash(REPAIR_MODE))
               && !longestName.equals(addDashDash(AUTO_ACTIVATE))
               && !longestName.equals(addDashDash(NODE_CONFIG_DIR));
@@ -213,6 +219,8 @@ public class DeprecatedOptionsParsingImpl implements OptionsParsing {
 
       filteredOptions.remove(addDashDash(CONFIG_FILE));
       filteredOptions.remove("-f");
+
+      filteredOptions.remove(addDashDash(NODE_HOME_DIR));
 
       filteredOptions.remove(addDashDash(LICENSE_FILE));
       filteredOptions.remove("-l");

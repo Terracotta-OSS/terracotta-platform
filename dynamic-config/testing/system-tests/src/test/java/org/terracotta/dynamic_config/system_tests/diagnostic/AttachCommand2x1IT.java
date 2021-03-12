@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Test;
-import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -36,13 +35,11 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
     return "foo";
   }
 
-  protected RawPath getNodePath(int stripeId, int nodeId) {
-    return RawPath.valueOf("node-" + stripeId + "-" + nodeId);
-  }
-
   @Test
   public void test_prevent_duplicate_name_during_attach() throws Exception {
     // activate a 1x1 cluster
+    getNode(1,1).configRepo("config-1-1").logs("logs-1-1");
+    getNode(2,1).configRepo("config-2-1").logs("logs-2-1");
     startNode(1, 1);
     waitForDiagnostic(1, 1);
     withTopologyService(1, 1, topologyService -> {

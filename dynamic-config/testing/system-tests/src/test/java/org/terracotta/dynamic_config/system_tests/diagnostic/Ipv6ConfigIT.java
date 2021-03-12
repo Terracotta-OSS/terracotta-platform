@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
@@ -32,20 +30,18 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class Ipv6ConfigIT extends DynamicConfigIT {
 
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
-
   @Test
   public void testStartupFromConfigFileAndExportCommand() {
     Path file = tmpDir.getRoot().resolve("output.json");
 
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_multi-node_ipv6.properties");
-    startNode(1, 1, "-f", configurationFile.toString(), "-s", "[::1]", "-p", String.valueOf(getNodePort()), "-r", "config/stripe1/node-1-1");
+    startNode(1, 1, "-f", configurationFile.toString(), "-s", "[::1]", "-p", String.valueOf(getNodePort()), "-r", "config");
     waitForDiagnostic(1, 1);
 
     assertThat(configTool("export", "-s", "[::1]:" + getNodePort(), "-f", file.toString(), "-t", "json"), is(successful()));
     stopNode(1, 1);
 
-    startNode(1, 1, "-f", configurationFile.toString(), "-s", "::1", "-p", String.valueOf(getNodePort()), "-r", "config/stripe1/node-1-1");
+    startNode(1, 1, "-f", configurationFile.toString(), "-s", "::1", "-p", String.valueOf(getNodePort()), "-r", "config");
     waitForDiagnostic(1, 1);
   }
 

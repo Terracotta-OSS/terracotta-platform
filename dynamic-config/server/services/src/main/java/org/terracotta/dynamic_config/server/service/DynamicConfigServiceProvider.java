@@ -41,7 +41,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.nomad.server.NomadServer;
-import org.terracotta.server.ServerEnv;
+import org.terracotta.server.Server;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -72,6 +72,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     PathResolver pathResolver = findService(platformConfiguration, PathResolver.class);
     ConfigChangeHandlerManager configChangeHandlerManager = findService(platformConfiguration, ConfigChangeHandlerManager.class);
     TopologyService topologyService = findService(platformConfiguration, TopologyService.class);
+    Server server = findService(platformConfiguration, Server.class);
 
     // client-reconnect-window
     ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler();
@@ -108,7 +109,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
     NomadPermissionChangeProcessor permissions = findService(platformConfiguration, NomadPermissionChangeProcessor.class);
     permissions.addCheck(new DisallowSettingChanges());
-    permissions.addCheck(new ServerStateCheck(ServerEnv.getDefaultServer().getManagement()));
+    permissions.addCheck(new ServerStateCheck(server.getManagement()));
 
     return true;
   }
@@ -132,7 +133,8 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         NomadRoutingChangeProcessor.class,
         NomadPermissionChangeProcessor.class,
         LicenseService.class,
-        PathResolver.class
+        PathResolver.class,
+        Server.class
     );
   }
 

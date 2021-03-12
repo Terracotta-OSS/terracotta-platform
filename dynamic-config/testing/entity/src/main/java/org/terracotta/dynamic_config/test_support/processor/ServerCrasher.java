@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.diagnostic.client;
+package org.terracotta.dynamic_config.test_support.processor;
 
-import org.terracotta.diagnostic.common.DiagnosticException;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-/**
- * Thrown when the diagnostic call returns null after a failure such as EntityException, InterruptedException or MessageCodecException.
- * <p>
- * See DiagnosticEntityClientService for implementation details.
- *
- * @author Mathieu Carbou
- */
-public class DiagnosticConnectionException extends DiagnosticException {
-  private static final long serialVersionUID = 1L;
-
-  public DiagnosticConnectionException() {
-  }
-
-  public DiagnosticConnectionException(Throwable cause) {
-    super(cause);
+public class ServerCrasher {
+  //  CANNOT BE USED WITH INLINE SERVER TESTS
+  @SuppressFBWarnings("DM_EXIT")
+  static void crash() {
+    if (Boolean.getBoolean("restart.inline")) {
+      throw new RuntimeException("server cannot be crashed in inline mode");
+    }
+    System.exit(99);
   }
 }

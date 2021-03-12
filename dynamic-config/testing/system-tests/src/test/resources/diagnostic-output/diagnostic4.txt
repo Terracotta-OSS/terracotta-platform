@@ -27,7 +27,7 @@ Diagnostic result:
  - Node last mutation from:
  - Node last mutation by:
 [node-1-
- - Node state: STARTING
+ - Node state: DIAGNOSTIC
  - Node online, configured and activated: NO
  - Node online, configured and in repair: NO
  - Node online, new and being configured: YES

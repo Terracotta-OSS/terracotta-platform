@@ -15,11 +15,11 @@
  */
 package org.terracotta.persistence.sanskrit.file.lock;
 
+import java.io.IOException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -51,7 +51,7 @@ public class FileLockManagerTest {
     }
   }
 
-  @Test(expected = OverlappingFileLockException.class)
+  @Test(expected = IOException.class)
   public void locked() throws Exception {
     Path directory = temporaryFolder.newFolder().toPath();
     FileLockManager lockManager = new FileLockManager();

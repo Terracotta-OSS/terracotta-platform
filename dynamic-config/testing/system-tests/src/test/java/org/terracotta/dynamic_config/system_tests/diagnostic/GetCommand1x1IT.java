@@ -60,7 +60,7 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   public void testNode_getAllDataDirs() {
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs"),
-        containsOutput("stripe.1.node.1.data-dirs=main:node-1-1/data-dir"));
+        containsOutput("stripe.1.node.1.data-dirs=main:data-dir"));
   }
 
   @Test

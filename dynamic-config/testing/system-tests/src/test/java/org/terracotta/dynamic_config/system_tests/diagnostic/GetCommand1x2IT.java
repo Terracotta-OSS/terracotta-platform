@@ -59,8 +59,8 @@ public class GetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
         allOf(
-            containsOutput("stripe.1.node.1.data-dirs=main:node-1-1/data-dir"),
-            containsOutput("stripe.1.node.2.data-dirs=main:node-1-2/data-dir")));
+            containsOutput("stripe.1.node.1.data-dirs=main:"),
+            containsOutput("stripe.1.node.2.data-dirs=main:")));
   }
 
   @Test

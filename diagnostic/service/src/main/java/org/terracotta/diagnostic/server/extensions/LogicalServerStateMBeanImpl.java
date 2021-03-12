@@ -24,9 +24,7 @@ import org.terracotta.server.ServerMBean;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
-import javax.management.ObjectName;
 import javax.management.StandardMBean;
-import java.lang.management.ManagementFactory;
 import java.util.Set;
 
 import static java.lang.Boolean.parseBoolean;
@@ -45,12 +43,7 @@ public class LogicalServerStateMBeanImpl extends StandardMBean implements org.te
   }
 
   public void expose() {
-    try {
-      ObjectName mBeanName = ServerMBean.createMBeanName(MBEAN_LOGICAL_SERVER_STATE);
-      ManagementFactory.getPlatformMBeanServer().registerMBean(this, mBeanName);
-    } catch (Exception e) {
-      LOGGER.warn("LogicalServerState MBean not initialized", e);
-    }
+    subsystem.registerMBean(MBEAN_LOGICAL_SERVER_STATE, this);
   }
 
   @Override
@@ -73,7 +66,7 @@ public class LogicalServerStateMBeanImpl extends StandardMBean implements org.te
 
   boolean hasConsistencyManager() {
     try {
-      Set<ObjectInstance> matchingBeans = ManagementFactory.getPlatformMBeanServer().queryMBeans(
+      Set<ObjectInstance> matchingBeans = subsystem.getMBeanServer().queryMBeans(
           ServerMBean.createMBeanName(MBEAN_CONSISTENCY_MANAGER), null);
       return matchingBeans.iterator().hasNext();
     } catch (MalformedObjectNameException e) {

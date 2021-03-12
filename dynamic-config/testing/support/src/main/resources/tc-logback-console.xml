@@ -8,6 +8,13 @@
     </encoder>
   </appender>
   
+  <appender name="SYSOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.out</target>
+    <encoder>
+      <pattern>[${serverId}] - %d [%t] %p %c - %m%n</pattern>
+    </encoder>
+  </appender>
+    
   <appender name="SYSFILE" class="ch.qos.logback.core.FileAppender">
     <file>${serverWorkingDir}/stdout.txt</file>
     <encoder>
@@ -40,14 +47,13 @@
   </root>
   
   <logger name="org.terracotta.console" level="INFO">
-    <!--appender-ref ref="SYSOUT" /-->
+    <appender-ref ref="SYSOUT" />
     <appender-ref ref="SYSFILE" />
   </logger>
-  <!--logger name="com.tc.async.api" level="WARN">
-    <appender-ref ref="JFR" />
-  </logger-->
+  <logger name="com.tc.async.api" level="WARN">
+    <!--appender-ref ref="JFR" /-->
+  </logger>
   <logger name="org.terracotta.dump" level="INFO">
-    <!--appender-ref ref="SYSOUT" /-->
     <appender-ref ref="SYSFILE" />
     <!--appender-ref ref="JFR" /-->
   </logger>

@@ -72,5 +72,10 @@ public class PassthroughLeasedConnectionService implements LeasedConnectionServi
     public void close() throws IOException {
       connection.close();
     }
+
+    @Override
+    public boolean isValid() {
+      return connection.isValid();
+    }
   }
 }

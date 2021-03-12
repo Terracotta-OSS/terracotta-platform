@@ -33,6 +33,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+import org.terracotta.dynamic_config.test_support.ExtraLogging;
+import org.terracotta.dynamic_config.test_support.InlineServers;
 
 @ClusterDefinition(nodesPerStripe = 3)
 public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
@@ -66,7 +68,7 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
     waitForNPassives(1, 1);
   }
 
-  @Test
+  @Test @InlineServers(false)
   public void testFailoverWhileAttachingAndVerifyWithVoter() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];

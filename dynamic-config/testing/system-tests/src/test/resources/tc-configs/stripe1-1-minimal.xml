@@ -23,7 +23,7 @@
   <plugins>
     <config>
       <data:data-directories>
-        <data:directory name="root1">%(user.dir)/metadata/stripe1</data:directory>
+        <data:directory name="root1">${WORKING-DIR}/metadata/stripe1</data:directory>
       </data:data-directories>
     </config>
     <config>
@@ -34,7 +34,7 @@
   </plugins>
   <servers>
     <server host="localhost" name="node-1-1">
-      <logs>%(user.dir)/logs/stripe1/node-1</logs>
+      <logs>${WORKING-DIR}/logs/stripe1/node-1</logs>
       <tsa-port>${PORT-1}</tsa-port>
       <tsa-group-port>${GROUP-PORT-1}</tsa-group-port>
     </server>

@@ -69,8 +69,8 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 
 public class DefaultNomadManager<T> implements NomadManager<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadManager.class);
@@ -79,7 +79,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
       ACTIVE,
       PASSIVE,
       ACTIVE_RECONNECTING,
-      STARTING // this mode is when a server is forced to start in diagnostic mode for repair
+      DIAGNOSTIC // this mode is when a server is forced to start in diagnostic mode for repair
   );
 
   private final NomadEnvironment environment;

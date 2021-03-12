@@ -87,6 +87,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>galvan-support</artifactId>
+      <version>${terracotta-core.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback.version}</version>
@@ -95,6 +101,11 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.skyscreamer</groupId>
+      <artifactId>jsonassert</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -173,8 +184,8 @@
           <forkCount>${test.parallel.forks}</forkCount>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
-            <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
           </systemPropertyVariables>
+          <argLine>-XX:+UseG1GC</argLine>
         </configuration>
       </plugin>
     </plugins>

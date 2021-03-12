@@ -143,6 +143,7 @@
             <angela.java.resolver>user</angela.java.resolver>
             <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
           </systemPropertyVariables>
+          <argLine>-XX:+UseG1GC -Dorg.terracotta.disablePortReleaseCheck=true</argLine>
         </configuration>
       </plugin>
     </plugins>

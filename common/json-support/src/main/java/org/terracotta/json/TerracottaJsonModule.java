@@ -46,7 +46,7 @@ public class TerracottaJsonModule extends SimpleModule {
 
       @Override
       public void serialize(Path value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-        gen.writeStartArray(value.getNameCount());
+        gen.writeStartArray();
         for (Path segment : value) {
           gen.writeString(segment.toString());
         }

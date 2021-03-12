@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.service;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,9 +63,13 @@ import org.terracotta.nomad.client.status.MultiDiscoveryResultReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.ServerJMX;
 import org.terracotta.testing.Retry;
 import org.terracotta.testing.TmpDir;
 
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -104,6 +109,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
@@ -132,6 +138,16 @@ public class DesynchronizedNomadConfigTest {
 
   @Parameter
   public String rootName;
+
+  @Before
+  public void setup() {
+    Server server = mock(Server.class);
+    ServerJMX jmx = mock(ServerJMX.class);
+    MBeanServer mbean = MBeanServerFactory.newMBeanServer();
+    when(server.getManagement()).thenReturn(jmx);
+    when(jmx.getMBeanServer()).thenReturn(mbean);
+    ServerEnv.setDefaultServer(server);
+  }
 
   @Test
   public void test_sync() throws NomadException {
@@ -439,7 +455,11 @@ public class DesynchronizedNomadConfigTest {
       ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
       ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
       LicenseService licenseService = new LicenseParserDiscovery(FakeNode.class.getClassLoader()).find().orElseGet(LicenseService::unsupported);
-      NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, mock(Server.class));
+      Server server = mock(Server.class);
+      ServerJMX serverJMX = mock(ServerJMX.class);
+      when(serverJMX.getMBeanServer()).thenReturn(MBeanServerFactory.newMBeanServer());
+      when(server.getManagement()).thenReturn(serverJMX);
+      NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, server);
 
       // add an off-heap change handler
       configChangeHandlerManager.set(Setting.OFFHEAP_RESOURCES, new ConfigChangeHandler() {
