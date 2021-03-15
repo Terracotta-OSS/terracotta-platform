@@ -35,6 +35,10 @@
       <artifactId>dynamic-config-api</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-tools</artifactId>
+    </dependency>
 
     <!-- server provided -->
     <dependency>

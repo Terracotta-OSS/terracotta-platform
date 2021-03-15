@@ -407,9 +407,9 @@ public enum Setting {
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
-          when(ACTIVATED).allow(GET).atAnyLevels()
+          when(ACTIVATED).allow(GET, SET).atAnyLevels()
       ),
-      of(PRESENCE),
+      of(NODE_RESTART, PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_METADATA_DIR, tuple2(key, value))
@@ -762,7 +762,20 @@ public enum Setting {
       emptyList(),
       emptyList(),
       (key, value) -> DATA_DIRS_VALIDATOR.accept(SettingName.DATA_DIRS, tuple2(key, value))
-  );
+  ) {
+    @Override
+    public boolean vetoRuntimeChange(NodeContext currentNode, Configuration configuration) {
+      boolean vetoed = false;
+      if (this == configuration.getSetting()) {
+        if (currentNode.getNode().getDataDirs().orDefault().containsKey(configuration.getKey())) {
+          final String current = currentNode.getNode().getDataDirs().orDefault().get(configuration.getKey()).getValue();
+          vetoed = current != null && !Objects.equals(configuration.getValue().get(), current); // update
+        }
+      }
+      LoggerFactory.getLogger(Setting.class).trace("vetoRuntimeChange({}, {}): {}", configuration, currentNode.getNode(), vetoed);
+      return vetoed;
+    }
+  };
 
   private final String name;
   private final Collection<Version> versions;
