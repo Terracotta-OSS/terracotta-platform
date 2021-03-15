@@ -35,6 +35,7 @@ import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
+import org.terracotta.dynamic_config.server.service.handler.MetaDataDirConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.NodeLogDirChangeHandler;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
@@ -52,6 +53,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
@@ -103,6 +105,10 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     configChangeHandlerManager.set(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
         .selector(Configuration::getKey)
         .fallback(accept()));
+
+    // metadata-dir
+    MetaDataDirConfigChangeHandler metaDataDirConfigChangeHandler = new MetaDataDirConfigChangeHandler(parameterSubstitutor, pathResolver);
+    addToManager(configChangeHandlerManager, metaDataDirConfigChangeHandler, NODE_METADATA_DIR);
 
     // initialize the config handlers that need do to something at startup
     loggerOverrideConfigChangeHandler.init();
