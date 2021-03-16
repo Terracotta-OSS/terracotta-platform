@@ -171,12 +171,6 @@ public class CommonMapper {
     }
   }
 
-  public Optional<Map.Entry<String, RawPath>> toMetadataDir(Map<Class<?>, List<Object>> plugins) {
-    // First try to find a deprecated service tag "<persistence:platform-persistence data-directory-id="root1"/>"
-    // that will give us the ID of the dataroot to use for platform persistence
-    return toDataDirs(plugins, DataRootMapping::isUseForPlatform).flatMap(map -> map.entrySet().stream().findAny());
-  }
-
   public Optional<Measure<TimeUnit>> toClientReconnectWindow(TcConfig tcConfig) {
     return tcConfig == null || tcConfig.getServers() == null || tcConfig.getServers().getClientReconnectWindow() == null ?
         Optional.empty() :
