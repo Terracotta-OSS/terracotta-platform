@@ -115,9 +115,9 @@ public class ConfigurationGenerator {
     for (int i = 1; i <= nodes; i++) {
       configuration = configuration
           .replace("${PORT-" + i + "}", String.valueOf(portSupplier.getNodePort(stripeId, i)))
-          .replace("${GROUP-PORT-" + i + "}", String.valueOf(portSupplier.getNodeGroupPort(stripeId, i)))
-          .replace("${WORKING-DIR}", workingDir.toString());
+          .replace("${GROUP-PORT-" + i + "}", String.valueOf(portSupplier.getNodeGroupPort(stripeId, i)));
     }
+    configuration = configuration.replace("${WORKING-DIR}", workingDir.toString());
 
     try {
       Path temporaryTcConfigXml = Files.createTempFile("tc-config-tmp.", ".xml");

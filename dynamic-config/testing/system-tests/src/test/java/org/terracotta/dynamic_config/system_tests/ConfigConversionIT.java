@@ -55,7 +55,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ConfigConversionIT {
   @Rule
-  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
+  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target", "test-data"), false);
   @Rule
   public ExpectedException exceptionRule = ExpectedException.none();
 

@@ -11,7 +11,7 @@
   <appender name="SYSOUT" class="ch.qos.logback.core.ConsoleAppender">
     <target>System.out</target>
     <encoder>
-      <pattern>[${serverId}] - %d [%t] %p %c - %m%n</pattern>
+      <pattern>%d [%t] %p %c - %m%n</pattern>
     </encoder>
   </appender>
     
