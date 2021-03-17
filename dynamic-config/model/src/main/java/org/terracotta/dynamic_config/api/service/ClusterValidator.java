@@ -24,6 +24,7 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import static java.util.Arrays.binarySearch;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
@@ -48,6 +52,28 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  * This class will validate the complete cluster object (inter-field checks and dependency checks).
  */
 public class ClusterValidator {
+
+  // For names, we need to support characters used in domain names (usually used by users)
+  // and we can also support some other characters that are not invalid for Unix/Win/mac paths
+  // Refs:
+  // - https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+  // - https://stackoverflow.com/questions/1976007/what-characters-are-forbidden-in-windows-and-linux-directory-names/31976060#31976060
+  private static final char[] FORBIDDEN_CTRL_CHARS = new char[]{'\u0000', '\u0001', '\u0002', '\u0003', '\u0004', '\u0005', '\u0006', '\u0007', '\u0008', '\u0009', '\n', '\u000B', '\u000C', '\r', '\u000E', '\u000F', '\u0010', '\u0011', '\u0012', '\u0013', '\u0014', '\u0015', '\u0016', '\u0017', '\u0018', '\u0019', '\u001A', '\u001B', '\u001C', '\u001D', '\u001E', '\u001F'};
+  private static final char[] FORBIDDEN_FILE_CHARS = new char[]{':', '/', '\\', '<', '>', '"', '|', '*', '?'};
+  private static final char[] FORBIDDEN_ENDING_CHARS = new char[]{' ', '.'};
+  private static final String[] FORBIDDEN_NAMES_NO_EXT = new String[]{"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
+  // special chars in DC
+  private static final char[] FORBIDDEN_DC_CHARS = new char[]{' ', ',', ':', '=', '%', '{', '}'};
+
+  static {
+    // sorting because using binary search after
+    Arrays.sort(FORBIDDEN_CTRL_CHARS);
+    Arrays.sort(FORBIDDEN_FILE_CHARS);
+    Arrays.sort(FORBIDDEN_DC_CHARS);
+    Arrays.sort(FORBIDDEN_ENDING_CHARS);
+    Arrays.sort(FORBIDDEN_NAMES_NO_EXT);
+  }
+
   private final Cluster cluster;
 
   public ClusterValidator(Cluster cluster) {
@@ -60,6 +86,7 @@ public class ClusterValidator {
 
   public void validate(Version version) throws MalformedClusterException {
     validateNodeNames();
+    validateNames();
     validateAddresses();
     validateBackupDirs();
     validateDataDirs();
@@ -69,6 +96,44 @@ public class ClusterValidator {
       validateStripeNames();
       validateUIDs();
     }
+  }
+
+  private void validateNames() {
+    Stream.concat(Stream.of(cluster), cluster.descendants())
+        .filter(o -> o.getName() != null) // empty names will be validated elsewhere
+        .forEach(o -> {
+          String name = o.getName();
+          // emptiness
+          if (name.isEmpty()) {
+            throw new MalformedClusterException("Empty " + o.getScope().toString().toLowerCase() + " name");
+          }
+          // invalid chars
+          {
+            Character invalid = IntStream.range(0, name.length())
+                .parallel()
+                .mapToObj(name::charAt)
+                .filter(c -> binarySearch(FORBIDDEN_CTRL_CHARS, c) >= 0 || binarySearch(FORBIDDEN_FILE_CHARS, c) >= 0 || binarySearch(FORBIDDEN_DC_CHARS, c) >= 0)
+                .findFirst()
+                .orElse(null);
+            if (invalid != null) {
+              throw new MalformedClusterException("Invalid character in " + o.getScope().toString().toLowerCase() + " name: '" + invalid + "'");
+            }
+          }
+          // invalid ending characters
+          {
+            char last = name.charAt(name.length() - 1);
+            if (binarySearch(FORBIDDEN_ENDING_CHARS, last) >= 0) {
+              throw new MalformedClusterException("Invalid ending character in " + o.getScope().toString().toLowerCase() + " name: '" + last + "'");
+            }
+          }
+          // invalid filenames
+          {
+            String noExt = name.lastIndexOf(".") == -1 ? name : name.substring(0, name.lastIndexOf("."));
+            if (binarySearch(FORBIDDEN_NAMES_NO_EXT, noExt) >= 0) {
+              throw new MalformedClusterException("Invalid name for " + o.getScope().toString().toLowerCase() + ": '" + noExt + "' is a reserved word");
+            }
+          }
+        });
   }
 
   private void validateUIDs() {

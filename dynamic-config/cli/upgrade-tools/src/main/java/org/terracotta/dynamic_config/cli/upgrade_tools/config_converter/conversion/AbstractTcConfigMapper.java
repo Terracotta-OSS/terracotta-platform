@@ -15,10 +15,12 @@
  */
 package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.conversion;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.config.TCConfigurationParser;
+import org.terracotta.config.data_roots.DataDirsConfig;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ConfigConversionException;
@@ -73,6 +75,8 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
 
   static final String TERRACOTTA_CONFIG_NAMESPACE = "http://www.terracotta.org/config";
   static final String NAME_NODE_NAME = "name";
+  static final String NAME_NODE_HOST = "host";
+  static final String PORT_NODE_NAME = "tsa-port";
   static final String SERVERS_NODE_NAME = "servers";
   static final String SERVER_NODE_NAME = "server";
 
@@ -190,6 +194,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     return XmlUtility.getClonedParentDocFromRootNode(rootNode);
   }
 
+  @SuppressFBWarnings("SBSC_USE_STRINGBUFFER_CONCATENATION")
   protected List<String> extractServerNames(Node rootConfigNode) {
     List<String> serverNames = new ArrayList<>();
     for (int i = 0; i < rootConfigNode.getChildNodes().getLength(); i++) {
@@ -199,7 +204,28 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
           Node potentialServerNode = childNode.getChildNodes().item(j);
           if (TERRACOTTA_CONFIG_NAMESPACE.equals(potentialServerNode.getNamespaceURI())
               && SERVER_NODE_NAME.equals(potentialServerNode.getLocalName())) {
-            String serverName = getAttributeValue(potentialServerNode, NAME_NODE_NAME);
+            String serverName = getAttributeValue(potentialServerNode, NAME_NODE_NAME, false);
+            if (serverName == null) {
+              // try the hostname
+              serverName = getAttributeValue(potentialServerNode, NAME_NODE_HOST, false);
+              if (serverName == null || serverName.contains("%")) {
+                throw new IllegalStateException("Conversion process requires a valid server name or hostname");
+              }
+              for (int k = 0, max = potentialServerNode.getChildNodes().getLength(); k < max; k++) {
+                Node child = potentialServerNode.getChildNodes().item(k);
+                if (TERRACOTTA_CONFIG_NAMESPACE.equals(child.getNamespaceURI()) && PORT_NODE_NAME.equals(child.getLocalName())) {
+                  String port = child.getFirstChild().getNodeValue();
+                  if (port != null && !port.trim().isEmpty()) {
+                    if (port.contains("%")) {
+                      throw new IllegalStateException("Conversion process requires a valid server port");
+                    } else {
+                      serverName += ":" + port.trim();
+                      break;
+                    }
+                  }
+                }
+              }
+            }
             serverNames.add(serverName);
           }
         }
@@ -466,7 +492,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     final Cluster cluster = stripes.stream().reduce((result, stripe) -> result
         .addStripe(stripe.getSingleStripe().get().clone())) // getSingleStripe() because conversion of xml -> model is for 1 stripe only
         .orElseThrow(() -> new RuntimeException("No server specified."))
-        .setName(clusterName);
+        .setName(clusterName == null ? null : DataDirsConfig.cleanStringForPath(clusterName));
 
     // add UIDs
     cluster.setUID(cluster.newUID());
@@ -477,7 +503,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
 
     // assign stripe names based on user input
     for (int i = 0, max = Math.min(cluster.getStripeCount(), stripeNames.size()); i < max; i++) {
-      cluster.getStripes().get(i).setName(stripeNames.get(i));
+      cluster.getStripes().get(i).setName(DataDirsConfig.cleanStringForPath(stripeNames.get(i)));
     }
 
     // for remaining names not assigned, generate them

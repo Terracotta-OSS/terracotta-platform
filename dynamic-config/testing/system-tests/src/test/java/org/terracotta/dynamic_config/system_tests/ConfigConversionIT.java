@@ -31,6 +31,7 @@ import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ConfigConversionException;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
@@ -46,6 +47,7 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -125,6 +127,71 @@ public class ConfigConversionIT {
 
     assertTrue(cluster.getOffheapResources().isConfigured());
     assertThat(cluster.getOffheapResources().get().size(), is(0));
+  }
+
+  @Test
+  public void testWithoutHostPort() {
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-5.xml",
+        "-n", "my:cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
+    assertTrue(Files.exists(config));
+    Cluster cluster = new ClusterFactory().create(config);
+
+    assertEquals("my-cluster", cluster.getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getSingleNode().get().getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getSingleNode().get().getHostname());
+  }
+
+  @Test
+  public void testWithoutServerName() {
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-6.xml",
+        "-n", "my:cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
+    assertTrue(Files.exists(config));
+    Cluster cluster = new ClusterFactory().create(config);
+
+    assertEquals("my-cluster", cluster.getName());
+    assertEquals("foo-9410", cluster.getSingleStripe().get().getSingleNode().get().getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getSingleNode().get().getHostname());
+  }
+
+  @Test
+  public void testWithoutServerNameSameHost() {
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-8.xml",
+        "-n", "my:cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
+    assertTrue(Files.exists(config));
+    Cluster cluster = new ClusterFactory().create(config);
+
+    assertEquals("my-cluster", cluster.getName());
+    assertEquals("foo-1234", cluster.getSingleStripe().get().getNodes().get(0).getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getNodes().get(0).getHostname());
+    assertEquals("foo-1235", cluster.getSingleStripe().get().getNodes().get(1).getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getNodes().get(1).getHostname());
+  }
+
+  @Test
+  public void testWithoutServerNameAndHost() {
+    exceptionRule.expect(ConfigConversionException.class);
+    exceptionRule.expectMessage("Unexpected error while migrating the configuration files: Conversion process requires a valid server name or hostname");
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-7.xml",
+        "-n", "my:cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
   }
 
   @Test
