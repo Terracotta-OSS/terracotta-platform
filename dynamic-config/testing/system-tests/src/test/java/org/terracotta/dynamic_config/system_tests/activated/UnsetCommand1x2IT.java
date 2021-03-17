@@ -40,7 +40,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.public-hostname=127.0.0.1"),
             containsOutput("stripe.1.node.2.public-hostname=127.0.0.1"),
@@ -57,7 +57,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             not(containsOutput("public-hostname=")),
             not(containsOutput("public-port="))
@@ -71,7 +71,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.public-hostname=127.0.0.1"),
             containsOutput("stripe.1.node.2.public-hostname=127.0.0.1"),
@@ -86,7 +86,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             not(containsOutput("public-hostname=")),
             not(containsOutput("public-port="))
@@ -99,7 +99,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties=foo:1,bar:2"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.tc-properties=bar\\:2,foo\\:1"),
             containsOutput("stripe.1.node.2.tc-properties=bar\\:2,foo\\:1")
@@ -112,7 +112,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties=foo:2,baz:3"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.tc-properties=bar\\:2,baz\\:3,foo\\:2"),
             containsOutput("stripe.1.node.2.tc-properties=bar\\:2,baz\\:3,foo\\:2")
@@ -125,7 +125,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
             "-c", "stripe.1.node.2.tc-properties.baz"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.tc-properties=baz\\:3,foo\\:2"),
             containsOutput("stripe.1.node.2.tc-properties=bar\\:2,foo\\:2")
@@ -138,7 +138,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
             "-c", "stripe.1.node.2.tc-properties.baz"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             not(containsOutput("stripe.1.node.1.tc-properties=")), // this entry is in the output because the user has explicitly set the map to "empty" So it is exported in the config.
             containsOutput("stripe.1.node.2.tc-properties=bar\\:2,foo\\:2")
@@ -149,7 +149,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties=bar:2,foo:1"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.tc-properties=bar\\:2,foo\\:1"),
             containsOutput("stripe.1.node.2.tc-properties=bar\\:2,foo\\:2")
@@ -158,7 +158,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             // these entries are in the output because the user has explicitly set the map to "empty" So it is exported in the config.
             not(containsOutput("stripe.1.node.1.tc-properties=")),
@@ -172,7 +172,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=foo:DEBUG,bar:INFO"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.logger-overrides=bar\\:INFO,foo\\:DEBUG"),
             containsOutput("stripe.1.node.2.logger-overrides=bar\\:INFO,foo\\:DEBUG")
@@ -185,7 +185,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=foo:INFO,baz:WARN"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.logger-overrides=bar\\:INFO,baz\\:WARN,foo\\:INFO"),
             containsOutput("stripe.1.node.2.logger-overrides=bar\\:INFO,baz\\:WARN,foo\\:INFO")
@@ -198,7 +198,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
             "-c", "stripe.1.node.2.logger-overrides.baz"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.logger-overrides=baz\\:WARN,foo\\:INFO"),
             containsOutput("stripe.1.node.2.logger-overrides=bar\\:INFO,foo\\:INFO")
@@ -211,7 +211,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
             "-c", "stripe.1.node.2.logger-overrides.baz"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             not(containsOutput("stripe.1.node.1.logger-overrides=")), // this entry is in the output because the user has explicitly set the map to "empty" So it is exported in the config.
             containsOutput("stripe.1.node.2.logger-overrides=bar\\:INFO,foo\\:INFO")
@@ -222,7 +222,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides=bar:INFO,foo:DEBUG"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.logger-overrides=bar\\:INFO,foo\\:DEBUG"),
             containsOutput("stripe.1.node.2.logger-overrides=bar\\:INFO,foo\\:INFO")
@@ -231,7 +231,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             // these entries are in the output because the user has explicitly set the map to "empty" So it is exported in the config.
             not(containsOutput("stripe.1.node.1.logger-overrides=")),
@@ -247,7 +247,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=boo:64MB,bar:128MB"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("offheap-resources=bar\\:128MB,boo\\:64MB,foo\\:1GB,main\\:512MB"));
 
     // ===
@@ -257,7 +257,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources=boo:128MB,baz:200MB"),
         is(successful()));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("offheap-resources=bar\\:128MB,baz\\:200MB,boo\\:128MB,foo\\:1GB,main\\:512MB"));
 
     // removing a specific property
@@ -265,7 +265,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.bar"),
         is(not(successful())));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("offheap-resources=bar\\:128MB,baz\\:200MB,boo\\:128MB,foo\\:1GB,main\\:512MB"));
 
     // global removal of a whole map
@@ -273,7 +273,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
         is(not(successful())));
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("offheap-resources=bar\\:128MB,baz\\:200MB,boo\\:128MB,foo\\:1GB,main\\:512MB"));
   }
 
@@ -286,7 +286,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.log-dir=a/b"),
             containsOutput("stripe.1.node.2.log-dir=c/d")
@@ -299,7 +299,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         not(containsOutput("log-dir=")));
 
     assertThat(
@@ -307,7 +307,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         allOf(
             containsOutput("stripe.1.node.1.log-dir=e/f"),
             containsOutput("stripe.1.node.2.log-dir=e/f")
@@ -318,7 +318,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         not(containsOutput("log-dir=")));
   }
 
@@ -329,7 +329,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("client-reconnect-window=1s"));
 
     assertThat(
@@ -337,7 +337,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         not(containsOutput("client-reconnect-window=")));
 
     assertThat(
@@ -345,7 +345,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("client-reconnect-window=120s"));
 
     assertThat(
@@ -353,7 +353,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         not(containsOutput("client-reconnect-window=")));
   }
 
@@ -364,7 +364,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("client-lease-duration=1s"));
 
     assertThat(
@@ -372,7 +372,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         not(containsOutput("client-lease-duration=")));
 
     assertThat(
@@ -380,7 +380,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("client-lease-duration=150s"));
 
     assertThat(
@@ -388,7 +388,7 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
 
     assertThat(
-        configTool("export", "-s", "localhost:" + getNodePort()),
+        configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         not(containsOutput("client-lease-duration=")));
   }
 

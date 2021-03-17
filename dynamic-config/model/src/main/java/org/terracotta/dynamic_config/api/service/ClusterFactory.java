@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Map.Entry.comparingByKey;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -60,7 +61,21 @@ public class ClusterFactory {
    * @return a {@code Cluster} object
    */
   public Cluster create(Path configFile) {
-    return create(Props.load(configFile));
+    requireNonNull(configFile);
+    Path file = configFile.getFileName();
+    if (file !=  null) {
+      String filename = file.toString();
+      if (filename.endsWith(".properties")) {
+        return create(Props.load(configFile));
+      } else if (filename.endsWith(".cfg")) {
+        ConfigPropertiesTranslator translator = new ConfigPropertiesTranslator();
+        return create(translator.load(configFile));
+      } else {
+        throw new IllegalArgumentException("Expected a .properties or .cfg file, but got " + filename);
+      }
+    } else {
+      throw new IllegalArgumentException("Expected a .properties or .cfg file, but got a blank filename");
+    }
   }
 
   public Cluster create(Properties properties) {

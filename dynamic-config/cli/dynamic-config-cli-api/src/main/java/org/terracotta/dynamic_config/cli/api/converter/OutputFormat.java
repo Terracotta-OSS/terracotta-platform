@@ -17,5 +17,6 @@ package org.terracotta.dynamic_config.cli.api.converter;
 
 public enum OutputFormat {
   JSON,
-  PROPERTIES;
+  PROPERTIES,
+  CONFIG;
 }
