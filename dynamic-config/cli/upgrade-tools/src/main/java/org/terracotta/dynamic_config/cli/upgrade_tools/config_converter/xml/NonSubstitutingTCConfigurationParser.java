@@ -27,6 +27,7 @@ import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.config.TCConfigurationSetupException;
 import org.terracotta.config.TcConfig;
 import org.terracotta.config.TcConfiguration;
+import org.terracotta.config.data_roots.DataDirsConfig;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
 import org.terracotta.entity.ServiceProviderConfiguration;
@@ -249,7 +250,7 @@ public class NonSubstitutingTCConfigurationParser {
   private static void initializeNameAndHost(Server server) {
     if (server.getHost() == null || server.getHost().trim().length() == 0) {
       if (server.getName() == null) {
-        server.setHost("%i");
+        throw new IllegalStateException("Conversion process requires all servers to be named");
       } else {
         server.setHost(server.getName());
       }
@@ -257,7 +258,7 @@ public class NonSubstitutingTCConfigurationParser {
 
     if (server.getName() == null || server.getName().trim().length() == 0) {
       int tsaPort = server.getTsaPort().getValue();
-      server.setName(server.getHost() + (tsaPort > 0 ? ":" + tsaPort : ""));
+      server.setName(DataDirsConfig.cleanStringForPath(server.getHost() + (tsaPort > 0 ? ":" + tsaPort : "")));
     }
   }
 

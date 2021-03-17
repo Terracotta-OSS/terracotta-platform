@@ -405,6 +405,31 @@ public class ClusterValidatorTest {
     assertClusterValidationFailsContainsMessage(auditLogDirDisallowedError, cluster);
   }
 
+  @Test
+  public void testBadNames() {
+    Stream.of("CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9").forEach(word -> {
+      assertClusterValidationFailsContainsMessage("Invalid name for cluster: '" + word + "' is a reserved word", newTestCluster(word, newTestStripe("my-stripe").addNodes(newTestNode("my-node", "localhost1"))));
+      assertClusterValidationFailsContainsMessage("Invalid name for stripe: '" + word + "' is a reserved word", newTestCluster("my-cluster", newTestStripe(word).addNodes(newTestNode("my-node", "localhost1"))));
+      assertClusterValidationFailsContainsMessage("Invalid name for node: '" + word + "' is a reserved word", newTestCluster("my-cluster", newTestStripe("my-stripe").addNodes(newTestNode(word, "localhost1"))));
+    });
+    Stream.of('%', ' ', '\t', ':', '/', '\\', '<', '>', '"', '|', '*', '?', ' ', ',', ':', '=', '\u0000', '\u0001', '\u0002', '\u0003', '\u0004', '\u0005', '\u0006', '\u0007', '\u0008', '\u0009', '\n', '\u000B', '\u000C', '\r', '\u000E', '\u000F', '\u0010', '\u0011', '\u0012', '\u0013', '\u0014', '\u0015', '\u0016', '\u0017', '\u0018', '\u0019', '\u001A', '\u001B', '\u001C', '\u001D', '\u001E', '\u001F').forEach(c -> {
+      assertClusterValidationFailsContainsMessage("Invalid character in cluster name: '" + c + "'", newTestCluster("bad" + c + "char", newTestStripe("my-stripe").addNodes(newTestNode("my-node", "localhost1"))));
+      assertClusterValidationFailsContainsMessage("Invalid character in stripe name: '" + c + "'", newTestCluster("my-cluster", newTestStripe("bad" + c + "char").addNodes(newTestNode("my-node", "localhost1"))));
+      assertClusterValidationFailsContainsMessage("Invalid character in node name: '" + c + "'", newTestCluster("my-cluster", newTestStripe("my-stripe").addNodes(newTestNode("bad" + c + "char", "localhost1"))));
+    });
+    assertClusterValidationFailsContainsMessage("Invalid ending character in cluster name: '.'", newTestCluster("end-by-.", newTestStripe("my-stripe").addNodes(newTestNode("my-node", "localhost1"))));
+    assertClusterValidationFailsContainsMessage("Invalid ending character in stripe name: '.'", newTestCluster("my-cluster", newTestStripe("end-by-.").addNodes(newTestNode("my-node", "localhost1"))));
+    assertClusterValidationFailsContainsMessage("Invalid ending character in node name: '.'", newTestCluster("my-cluster", newTestStripe("my-stripe").addNodes(newTestNode("end-by-.", "localhost1"))));
+
+    new ClusterValidator(newTestCluster("my.company.com", newTestStripe("my-stripe").addNodes(newTestNode("my-node", "localhost1")))).validate();
+    new ClusterValidator(newTestCluster("m-cluster", newTestStripe("my.company.com").addNodes(newTestNode("my-node", "localhost1")))).validate();
+    new ClusterValidator(newTestCluster("m-cluster", newTestStripe("my-stripe").addNodes(newTestNode("my.company.com", "localhost1")))).validate();
+
+    new ClusterValidator(newTestCluster("foo@my.company.com", newTestStripe("my-stripe").addNodes(newTestNode("my-node", "localhost1")))).validate();
+    new ClusterValidator(newTestCluster("m-cluster", newTestStripe("foo@my.company.com").addNodes(newTestNode("my-node", "localhost1")))).validate();
+    new ClusterValidator(newTestCluster("m-cluster", newTestStripe("my-stripe").addNodes(newTestNode("foo@my.company.com", "localhost1")))).validate();
+  }
+
   private String generateAddress() {
     return random.nextInt(256) + "." + random.nextInt(256) + "." + random.nextInt(256) + "." + random.nextInt(256);
   }

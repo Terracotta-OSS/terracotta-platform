@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter;
 
+import org.terracotta.config.data_roots.DataDirsConfig;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.Props;
 
@@ -34,7 +35,7 @@ public class ConfigPropertiesProcessor {
 
   public ConfigPropertiesProcessor(Path outputDir, String fileName) {
     this.outputDir = outputDir;
-    this.fileName = fileName == null ? "cluster" : fileName;
+    this.fileName = fileName == null ? "cluster" : DataDirsConfig.cleanStringForPath(fileName);
   }
 
   public void process(Cluster cluster) {
