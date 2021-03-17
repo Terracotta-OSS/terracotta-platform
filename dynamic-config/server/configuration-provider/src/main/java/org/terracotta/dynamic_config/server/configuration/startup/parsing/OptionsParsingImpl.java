@@ -149,7 +149,7 @@ public class OptionsParsingImpl implements OptionsParsing {
 
   @Parameter(names = {"-" + NODE_HOME_DIR}, hidden = true)
   private String serverHome;
-  
+
   @Parameter(names = {"-" + REPAIR_MODE}, description = "node repair mode (true|false)")
   private boolean wantsRepairMode;
 

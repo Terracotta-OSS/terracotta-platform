@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import static org.hamcrest.Matchers.containsString;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -37,7 +37,7 @@ import static org.junit.Assert.fail;
 
 @ClusterDefinition(autoStart = false)
 public class NodeStartupIT extends DynamicConfigIT {
-  
+
   @Test
   public void testStartingWithNonExistentRepo() {
     startSingleNode("-r", getNodeConfigDir(1, 1).toString());
@@ -62,7 +62,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testStartingWithSingleNodeConfigFileWithNodeName() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    startNode(1, 1, "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", getBaseDir().resolve(Paths.get("config","stripe1","node-1-1")).toString());
+    startNode(1, 1, "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
     waitForDiagnostic(1, 1);
   }
 

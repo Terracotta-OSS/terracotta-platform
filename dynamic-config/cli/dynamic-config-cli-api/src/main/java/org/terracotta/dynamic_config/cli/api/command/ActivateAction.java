@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -34,8 +32,6 @@ import static java.util.Collections.singletonList;
 
 public class ActivateAction extends RemoteAction {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ActivateAction.class);
-  
   private InetSocketAddress node;
   private Path configPropertiesFile;
   private String clusterName;

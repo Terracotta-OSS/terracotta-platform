@@ -38,8 +38,8 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
   @Test
   public void test_prevent_duplicate_name_during_attach() throws Exception {
     // activate a 1x1 cluster
-    getNode(1,1).configRepo("config-1-1").logs("logs-1-1");
-    getNode(2,1).configRepo("config-2-1").logs("logs-2-1");
+    getNode(1, 1).configRepo("config-1-1").logs("logs-1-1");
+    getNode(2, 1).configRepo("config-2-1").logs("logs-2-1");
     startNode(1, 1);
     waitForDiagnostic(1, 1);
     withTopologyService(1, 1, topologyService -> {

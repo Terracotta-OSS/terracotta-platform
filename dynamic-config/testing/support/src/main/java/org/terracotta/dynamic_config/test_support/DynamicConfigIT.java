@@ -205,29 +205,29 @@ public class DynamicConfigIT {
                     }
                   });
                 });
-                angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
-                  try {
-                    RemoteFolder folder = angela.tsa().browse(s, "");
-                    Properties props = new Properties();
-                    props.setProperty("serverWorkingDir", folder.getAbsoluteName());
-                    props.setProperty("serverId", s.getServerSymbolicName().getSymbolicName());
-                    props.setProperty("test.displayName", description.getDisplayName());
-                    props.setProperty("test.className", description.getClassName());
-                    props.setProperty("test.methodName", description.getMethodName());
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    props.store(bos, "logging properties");
-                    bos.close();
-                    folder.upload("logbackVars.properties", new ByteArrayInputStream(bos.toByteArray()));
-                  } catch (IOException exp) {
-                    LOGGER.warn("unable to upload logback configuration", exp);
-                  }
-                });
+            angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
+              try {
+                RemoteFolder folder = angela.tsa().browse(s, "");
+                Properties props = new Properties();
+                props.setProperty("serverWorkingDir", folder.getAbsoluteName());
+                props.setProperty("serverId", s.getServerSymbolicName().getSymbolicName());
+                props.setProperty("test.displayName", description.getDisplayName());
+                props.setProperty("test.className", description.getClassName());
+                props.setProperty("test.methodName", description.getMethodName());
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                props.store(bos, "logging properties");
+                bos.close();
+                folder.upload("logbackVars.properties", new ByteArrayInputStream(bos.toByteArray()));
+              } catch (IOException exp) {
+                LOGGER.warn("unable to upload logback configuration", exp);
+              }
+            });
             // wait for server startup if auto-activated
             if (clusterDef.autoStart()) {
               int stripes = angela.getStripeCount();
-              for (int x=1;x<=stripes;x++) {
+              for (int x = 1; x <= stripes; x++) {
                 int nodes = angela.getStripe(x).size();
-                for (int n=1;n<=nodes;n++) {
+                for (int n = 1; n <= nodes; n++) {
                   startNode(x, n);
                 }
               }
@@ -339,7 +339,7 @@ public class DynamicConfigIT {
 
   protected void attachAll() {
     int stripes = angela.getStripeCount();
-    for (int x=1;x<=stripes;x++) {
+    for (int x = 1; x <= stripes; x++) {
       List<TerracottaServer> stripe = angela.getStripe(x);
       if (stripe.size() > 1) {
         // Attach all servers in a stripe to form individual stripes
@@ -613,7 +613,7 @@ public class DynamicConfigIT {
   }
 
   protected final void waitUntilServerLogs(TerracottaServer server, String matcher) {
-    assertThat(()->serverStdOut(server), within(getAssertTimeout()).matches(hasItem(containsString(matcher))));
+    assertThat(() -> serverStdOut(server), within(getAssertTimeout()).matches(hasItem(containsString(matcher))));
   }
 
   protected final void assertThatServerLogs(TerracottaServer server, String matcher) {
@@ -748,6 +748,7 @@ public class DynamicConfigIT {
       }
     }
   }
+
   public void setClientToServerDisruptionLinks(TerracottaServer terracottaServer) {
     // Disabling client redirection from passive to current active.
     List<String> arguments = new ArrayList<>();
@@ -824,7 +825,7 @@ public class DynamicConfigIT {
         getConnectionTimeout(),
         null,
         objectMapperFactory)) {
-        return diagnosticService.isBlocked();
+      return diagnosticService.isBlocked();
     } catch (Exception e) {
       return false;
     }

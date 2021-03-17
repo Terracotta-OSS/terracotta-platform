@@ -167,7 +167,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
       // do we need to restart to apply the changes ?
       if (changes.getChanges().stream().map(SettingNomadChange::getSetting).anyMatch(setting -> setting.requires(CLUSTER_RESTART))) {
         output.out("Restart required for cluster");
-        if(autoRestart) {
+        if (autoRestart) {
           rollingRestart(updatedCluster, onlineNodes.keySet().stream().collect(toMap(Endpoint::getNodeName, identity())));
         } else {
           LOGGER.warn(lineSeparator() +
@@ -213,7 +213,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
               .map(Endpoint::getAddress)
               .collect(toList());
           output.out("Restart required for nodes: {} ", toString(addresses));
-          if(autoRestart) {
+          if (autoRestart) {
             rollingRestart(updatedCluster, onlineNodes.keySet().stream()
                 .filter(endpoint -> nodesRequiringRestart.contains(endpoint.getNodeName()))
                 .collect(toMap(Endpoint::getNodeName, identity())));

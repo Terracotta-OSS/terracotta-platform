@@ -41,7 +41,7 @@ import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.C
 public class ConvertAction implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConvertAction.class);
-  
+
   private List<Path> tcConfigFiles;
   private List<String> stripeNames;
   private Path licensePath;
@@ -49,7 +49,7 @@ public class ConvertAction implements Runnable {
   private String newClusterName;
   private ConversionFormat conversionFormat = DIRECTORY;
   private boolean force;
-  
+
   @Inject public OutputService output;
 
   public void setTcConfigFiles(List<Path> tcConfigFiles) {

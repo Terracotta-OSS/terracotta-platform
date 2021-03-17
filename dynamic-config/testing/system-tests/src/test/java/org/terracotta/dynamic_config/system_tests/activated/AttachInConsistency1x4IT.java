@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.InlineServers;
 
 import java.time.Duration;
 
@@ -31,7 +32,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
-import org.terracotta.dynamic_config.test_support.InlineServers;
 
 @ClusterDefinition(nodesPerStripe = 4, autoStart = false)
 public class AttachInConsistency1x4IT extends DynamicConfigIT {
@@ -95,7 +95,8 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     withTopologyService(1, 4, topologyService -> assertFalse(topologyService.isActivated()));
   }
 
-  @Test @InlineServers(false)
+  @Test
+  @InlineServers(false)
   public void attachNodeFailingBecauseOfNodeGoingDownInPreparePhase() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId1 = findPassives(1)[0];
@@ -127,7 +128,8 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
-  @Test @InlineServers(false)
+  @Test
+  @InlineServers(false)
   public void testFailoverDuringNomadCommitForPassiveAddition() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId1 = findPassives(1)[0];
