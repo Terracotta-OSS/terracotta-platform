@@ -249,7 +249,7 @@ public class NonSubstitutingTCConfigurationParser {
   private static void initializeNameAndHost(Server server) {
     if (server.getHost() == null || server.getHost().trim().length() == 0) {
       if (server.getName() == null) {
-        server.setHost("%i");
+        throw new IllegalStateException("Conversion process requires at least a server name or host name to be defined");
       } else {
         server.setHost(server.getName());
       }
