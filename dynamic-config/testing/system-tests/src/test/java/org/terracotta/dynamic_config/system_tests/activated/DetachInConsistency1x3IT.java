@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.InlineServers;
 
 import java.time.Duration;
 
@@ -29,7 +30,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import org.terracotta.dynamic_config.test_support.InlineServers;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
@@ -114,7 +114,8 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(2)));
   }
 
-  @Test @InlineServers(false)
+  @Test
+  @InlineServers(false)
   public void detachNodeFailInActiveAtPrepare() throws Exception {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
@@ -142,7 +143,8 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     withTopologyService(1, passiveId2, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
-  @Test @InlineServers(false)
+  @Test
+  @InlineServers(false)
   public void testFailoverDuringNomadCommitForPassiveRemoval() throws Exception {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
@@ -206,7 +208,8 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(3)));
   }
 
-  @Test @InlineServers(false)
+  @Test
+  @InlineServers(false)
   public void test_detach_passive_offline_commit_fail_at_active() throws Exception {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];

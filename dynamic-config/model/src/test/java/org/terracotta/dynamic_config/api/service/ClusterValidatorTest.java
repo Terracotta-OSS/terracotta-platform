@@ -331,8 +331,8 @@ public class ClusterValidatorTest {
   public void testBadSecurity_authcWithoutSslTlsWithSecurityDir() {
     Node node = newTestNode("node1", "localhost1").setSecurityDir(RawPath.valueOf("security-dir"));
     Cluster cluster = newTestCluster(newTestStripe("stripe1").addNodes(node))
-            .setSecuritySslTls(false)
-            .setSecurityAuthc("certificate");
+        .setSecuritySslTls(false)
+        .setSecurityAuthc("certificate");
 
     assertClusterValidationFailsContainsMessage(certificateSslTlsError, cluster);
   }

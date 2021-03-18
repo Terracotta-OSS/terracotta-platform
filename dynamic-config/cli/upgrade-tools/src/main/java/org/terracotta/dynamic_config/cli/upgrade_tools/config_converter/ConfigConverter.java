@@ -40,7 +40,7 @@ import static java.util.Objects.requireNonNull;
 public class ConfigConverter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigConverter.class);
-  
+
   private final Consumer<Cluster> postConversionProcessor;
   private final boolean acceptRelativePaths;
 

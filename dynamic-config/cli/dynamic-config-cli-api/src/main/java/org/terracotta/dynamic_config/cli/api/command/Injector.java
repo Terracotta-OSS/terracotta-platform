@@ -40,9 +40,9 @@ public class Injector {
             Object targetValue = field.get(target);
             if (targetValue == null) {
               Object found = services.stream()
-                      .filter(service -> field.getType().isInstance(service))
-                      .findAny()
-                      .orElseThrow(() -> new IllegalStateException("No service found to inject into " + field));
+                  .filter(service -> field.getType().isInstance(service))
+                  .findAny()
+                  .orElseThrow(() -> new IllegalStateException("No service found to inject into " + field));
               field.set(target, found);
             } else {
               inject(targetValue, services);

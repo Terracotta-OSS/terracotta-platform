@@ -20,6 +20,7 @@ import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.InlineServers;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -35,7 +36,6 @@ import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLinesStartingWith;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
-import org.terracotta.dynamic_config.test_support.InlineServers;
 
 /**
  * @author Mathieu Carbou
@@ -93,7 +93,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
   }
 
-  @Test @InlineServers(false)
+  @Test
+  @InlineServers(false)
   public void test_repair_detach_node_partially_committed() throws Exception {
     startNode(1, 1);
     startNode(1, 2);
@@ -143,7 +144,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
-  @Test @InlineServers(false)
+  @Test
+  @InlineServers(false)
   public void test_repair_stripe_down_during_detach_node() throws Exception {
     startNode(1, 1);
     startNode(1, 2);
@@ -186,7 +188,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
   }
 
-  @Test @InlineServers(false)
+  @Test
+  @InlineServers(false)
   public void test_repair_detached_node_restarting_as_active() throws Exception {
     startNode(1, 1);
     startNode(1, 2);

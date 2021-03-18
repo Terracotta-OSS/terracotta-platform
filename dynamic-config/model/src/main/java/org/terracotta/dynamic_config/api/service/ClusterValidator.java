@@ -265,8 +265,8 @@ public class ClusterValidator {
   private void validateSecurityRequirements(boolean securityDirIsConfigured) {
 
     boolean minimumRequired = cluster.getSecurityAuthc().isConfigured() ||
-            cluster.getSecuritySslTls().orDefault() ||
-            cluster.getSecurityWhitelist().orDefault();
+        cluster.getSecuritySslTls().orDefault() ||
+        cluster.getSecurityWhitelist().orDefault();
     if (securityDirIsConfigured) {
       if (!minimumRequired) {
         throw new MalformedClusterException("When security root directories are configured across the cluster" +
@@ -298,13 +298,12 @@ public class ClusterValidator {
             " currently have (or will have) audit log directories defined, while some nodes in the cluster do not (or will not)." +
             " Within a cluster, all nodes must have an audit log directory defined or no audit log directory defined.");
       }
-    }
-    else {
+    } else {
       if (count > 0) {
         throw new MalformedClusterException("There are no (or will be no) security root directories configured across the cluster." +
             " But nodes: " + nodesWithAuditLogDirs +
             " currently have (or will have) audit log directories defined.  When no security root directories are" +
-            " configured "  + SECURITY_AUDIT_LOG_DIR + " should also be unconfigured (unset) for all nodes in the cluster.");
+            " configured " + SECURITY_AUDIT_LOG_DIR + " should also be unconfigured (unset) for all nodes in the cluster.");
       }
     }
   }

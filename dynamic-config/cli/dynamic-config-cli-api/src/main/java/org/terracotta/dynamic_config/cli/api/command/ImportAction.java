@@ -41,7 +41,7 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONS
 public class ImportAction extends RemoteAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ImportAction.class);
-  
+
   private InetSocketAddress node;
   private Path configPropertiesFile;
 

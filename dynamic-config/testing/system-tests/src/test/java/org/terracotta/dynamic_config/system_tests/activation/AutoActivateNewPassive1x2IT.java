@@ -22,9 +22,9 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static com.tc.util.Assert.fail;
-import java.nio.file.Paths;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
@@ -81,10 +81,10 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   @Test
   public void test_auto_activation_success_for_1x2_cluster_usingNodeName() {
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
-    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", getBaseDir().resolve(Paths.get("config","stripe1","node-1-1")).toString());
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
     waitForActive(1, 1);
 
-    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-2", "--config-dir", getBaseDir().resolve(Paths.get("config","stripe1","node-1-2")).toString());
+    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-2", "--config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-2")).toString());
     waitForPassive(1, 2);
   }
 
