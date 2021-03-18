@@ -19,9 +19,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
+import org.junit.AssumptionViolatedException;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
+import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +124,7 @@ public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final Duration DEFAULT_TEST_TIMEOUT = Duration.ofMinutes(2);
   private static final Duration CONN_TIMEOUT = Duration.ofSeconds(30);
-  private static final Duration ASSERT_TIMEOUT = Duration.ofMinutes(1);
+  private static final Duration ASSERT_TIMEOUT = Duration.ofSeconds(90);
 
   protected final TmpDir tmpDir;
   protected final AngelaRule angela;
@@ -243,7 +245,28 @@ public class DynamicConfigIT {
               }
             }
           }
-        });
+        })
+    .around(new TestWatcher() {
+      @Override
+      protected void succeeded(Description description) {
+        LOGGER.info("[SUCCESS] {}", description);
+      }
+
+      @Override
+      protected void failed(Throwable e, Description description) {
+        LOGGER.info("[FAILED] {}", description);
+      }
+
+      @Override
+      protected void starting(Description description) {
+        LOGGER.info("[STARTING] {}", description);
+      }
+
+      @Override
+      protected void skipped(AssumptionViolatedException e, Description description) {
+        LOGGER.info("[SKIPPED] {}", description);
+      }
+    });
   }
 
   @BeforeClass
