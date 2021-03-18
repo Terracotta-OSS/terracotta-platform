@@ -507,8 +507,13 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (millis < 1_000) {
       throw new IllegalArgumentException("Invalid delay: " + delayInSeconds.getSeconds() + " seconds");
     }
-    LOGGER.info("Node will restart in: {} seconds", delayInSeconds.getSeconds());
     new Thread(getClass().getSimpleName() + "-DelayedRestart") {
+      {
+        {
+          setDaemon(true);
+        }
+      }
+
       @Override
       public void run() {
         try {
