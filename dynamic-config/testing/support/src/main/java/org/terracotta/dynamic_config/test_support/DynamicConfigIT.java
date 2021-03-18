@@ -124,7 +124,6 @@ public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final Duration DEFAULT_TEST_TIMEOUT = Duration.ofMinutes(2);
   private static final Duration CONN_TIMEOUT = Duration.ofSeconds(30);
-  private static final Duration ASSERT_TIMEOUT = Duration.ofSeconds(90);
 
   protected final TmpDir tmpDir;
   protected final AngelaRule angela;
@@ -246,27 +245,27 @@ public class DynamicConfigIT {
             }
           }
         })
-    .around(new TestWatcher() {
-      @Override
-      protected void succeeded(Description description) {
-        LOGGER.info("[SUCCESS] {}", description);
-      }
+        .around(new TestWatcher() {
+          @Override
+          protected void succeeded(Description description) {
+            LOGGER.info("[SUCCESS] {}", description);
+          }
 
-      @Override
-      protected void failed(Throwable e, Description description) {
-        LOGGER.info("[FAILED] {}", description);
-      }
+          @Override
+          protected void failed(Throwable e, Description description) {
+            LOGGER.info("[FAILED] {}", description);
+          }
 
-      @Override
-      protected void starting(Description description) {
-        LOGGER.info("[STARTING] {}", description);
-      }
+          @Override
+          protected void starting(Description description) {
+            LOGGER.info("[STARTING] {}", description);
+          }
 
-      @Override
-      protected void skipped(AssumptionViolatedException e, Description description) {
-        LOGGER.info("[SKIPPED] {}", description);
-      }
-    });
+          @Override
+          protected void skipped(AssumptionViolatedException e, Description description) {
+            LOGGER.info("[SKIPPED] {}", description);
+          }
+        });
   }
 
   @BeforeClass
@@ -632,11 +631,11 @@ public class DynamicConfigIT {
   // =========================================
 
   protected final void waitUntil(ToolExecutionResult result, Matcher<ToolExecutionResult> matcher) {
-    waitUntil(() -> result, matcher, getAssertTimeout());
+    waitUntil(() -> result, matcher);
   }
 
   protected final void waitUntilServerLogs(TerracottaServer server, String matcher) {
-    assertThat(() -> serverStdOut(server), within(getAssertTimeout()).matches(hasItem(containsString(matcher))));
+    assertThat(() -> serverStdOut(server), within(Duration.ofDays(1)).matches(hasItem(containsString(matcher))));
   }
 
   protected final void assertThatServerLogs(TerracottaServer server, String matcher) {
@@ -656,11 +655,7 @@ public class DynamicConfigIT {
   }
 
   protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher) {
-    waitUntil(callable, matcher, getAssertTimeout());
-  }
-
-  protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher, Duration timeout) {
-    assertThat(callable, within(timeout).matches(matcher));
+    assertThat(callable, within(Duration.ofDays(1)).matches(matcher));
   }
 
   protected final void waitForActive(int stripeId) {
@@ -753,12 +748,8 @@ public class DynamicConfigIT {
     return CONN_TIMEOUT;
   }
 
-  protected Duration getAssertTimeout() {
-    return ASSERT_TIMEOUT;
-  }
-
   protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {
-    stripeServer.forEach((k, v) -> setServerToServerDisruptionLinks(k, v));
+    stripeServer.forEach(this::setServerToServerDisruptionLinks);
   }
 
   protected void setClientServerDisruptionLinks(Map<Integer, Integer> stripeServerNumMap) {
