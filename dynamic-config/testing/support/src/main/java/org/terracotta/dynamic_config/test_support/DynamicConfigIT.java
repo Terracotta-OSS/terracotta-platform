@@ -19,9 +19,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
+import org.junit.AssumptionViolatedException;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
+import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -243,7 +245,28 @@ public class DynamicConfigIT {
               }
             }
           }
-        });
+        })
+    .around(new TestWatcher() {
+      @Override
+      protected void succeeded(Description description) {
+        LOGGER.info("[SUCCESS] {}", description);
+      }
+
+      @Override
+      protected void failed(Throwable e, Description description) {
+        LOGGER.info("[FAILED] {}", description);
+      }
+
+      @Override
+      protected void starting(Description description) {
+        LOGGER.info("[STARTING] {}", description);
+      }
+
+      @Override
+      protected void skipped(AssumptionViolatedException e, Description description) {
+        LOGGER.info("[SKIPPED] {}", description);
+      }
+    });
   }
 
   @BeforeClass
