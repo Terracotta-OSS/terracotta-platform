@@ -50,11 +50,6 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
     return FailoverPriority.consistency();
   }
 
-  @Override
-  protected Duration getAssertTimeout() {
-    return Duration.ofMinutes(2);
-  }
-
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
