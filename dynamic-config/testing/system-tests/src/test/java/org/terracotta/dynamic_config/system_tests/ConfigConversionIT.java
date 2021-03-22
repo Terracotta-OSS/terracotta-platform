@@ -29,6 +29,7 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.api.service.MalformedClusterException;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ConfigConversionException;
@@ -133,7 +134,7 @@ public class ConfigConversionIT {
   public void testWithoutHostPort() {
     new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-5.xml",
-        "-n", "my:cluster",
+        "-n", "my-cluster",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
@@ -141,7 +142,7 @@ public class ConfigConversionIT {
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
 
-    assertEquals("my:cluster", cluster.getName());
+    assertEquals("my-cluster", cluster.getName());
     assertEquals("foo", cluster.getSingleStripe().get().getSingleNode().get().getName());
     assertEquals("foo", cluster.getSingleStripe().get().getSingleNode().get().getHostname());
   }
@@ -150,7 +151,7 @@ public class ConfigConversionIT {
   public void testWithoutServerName() {
     new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-6.xml",
-        "-n", "my:cluster",
+        "-n", "my-cluster",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
@@ -158,27 +159,52 @@ public class ConfigConversionIT {
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
 
-    assertEquals("my:cluster", cluster.getName());
-    assertEquals("foo:9410", cluster.getSingleStripe().get().getSingleNode().get().getName());
+    assertEquals("my-cluster", cluster.getName());
+    assertEquals("foo-9410", cluster.getSingleStripe().get().getSingleNode().get().getName());
     assertEquals("foo", cluster.getSingleStripe().get().getSingleNode().get().getHostname());
   }
 
   @Test
-  public void testWithoutServerNameSameHost() {
+  public void testBadClusterName() {
+    exceptionRule.expect(MalformedClusterException.class);
+    exceptionRule.expectMessage("Invalid character in cluster name: ':'");
     new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-8.xml",
         "-n", "my:cluster",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
+  }
+
+  @Test
+  public void testBadStripeName() {
+    exceptionRule.expect(MalformedClusterException.class);
+    exceptionRule.expectMessage("Invalid character in stripe name: ':'");
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-8.xml",
+        "-n", "my-cluster",
+        "-s", "my:stripe",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+  }
+
+  @Test
+  public void testWithoutServerNameSameHost() {
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-8.xml",
+        "-n", "my-cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
 
-    assertEquals("my:cluster", cluster.getName());
-    assertEquals("foo:1234", cluster.getSingleStripe().get().getNodes().get(0).getName());
+    assertEquals("my-cluster", cluster.getName());
+    assertEquals("foo-1234", cluster.getSingleStripe().get().getNodes().get(0).getName());
     assertEquals("foo", cluster.getSingleStripe().get().getNodes().get(0).getHostname());
-    assertEquals("foo:1235", cluster.getSingleStripe().get().getNodes().get(1).getName());
+    assertEquals("foo-1235", cluster.getSingleStripe().get().getNodes().get(1).getName());
     assertEquals("foo", cluster.getSingleStripe().get().getNodes().get(1).getHostname());
   }
 
@@ -188,7 +214,7 @@ public class ConfigConversionIT {
     exceptionRule.expectMessage("Unexpected error while migrating the configuration files: Conversion process requires a valid server name or hostname");
     new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-7.xml",
-        "-n", "my:cluster",
+        "-n", "my-cluster",
         "-t", "properties",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
