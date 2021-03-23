@@ -282,6 +282,43 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     waitForActive(1, 1);
   }
 
+  @Test
+  public void test_repair_config_by_reset() {
+    startNode(1, 1);
+    startNode(1, 2);
+    activate1x2Cluster();
+
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    // export config
+    String exportPath = tmpDir.getRoot().resolve("export.properties").toAbsolutePath().toString();
+    assertThat(
+        configTool("export", "-connect-to", "localhost:" + getNodePort(1, activeId), "-output-file", exportPath),
+        is(successful()));
+
+    // stop node
+    stopNode(1, passiveId);
+
+    // start it in repair mode
+    startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo(), "--repair-mode");
+    waitForDiagnostic(1, passiveId);
+
+    // reset
+    assertThat(configTool("repair", "-force", "reset", "-connect-to", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+    waitForStopped(1, passiveId);
+
+    // start it again
+    startNode(1, passiveId);
+    waitForDiagnostic(1, passiveId);
+
+    // restricted activation
+    assertThat(
+        configTool("activate", "-restrict", "-connect-to", "localhost:" + getNodePort(1, passiveId), "-config-file", exportPath),
+        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+    waitForPassive(1, passiveId);
+  }
+
   private void activate1x2Cluster() {
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));

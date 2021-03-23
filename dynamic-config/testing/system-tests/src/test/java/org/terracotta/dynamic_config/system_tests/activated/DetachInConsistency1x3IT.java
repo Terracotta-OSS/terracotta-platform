@@ -115,7 +115,6 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
   }
 
   @Test
-  @InlineServers(false)
   public void detachNodeFailInActiveAtPrepare() throws Exception {
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];

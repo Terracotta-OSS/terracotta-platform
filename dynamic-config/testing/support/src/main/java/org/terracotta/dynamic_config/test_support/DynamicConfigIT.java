@@ -176,7 +176,7 @@ public class DynamicConfigIT {
         })
         .around(Timeout.builder()
             .withLookingForStuckThread(true)
-            .withThreadDump(Paths.get(System.getProperty("user.dir")).resolve("target").resolve("thread-dumps"))
+            .withThreadDump(Paths.get(System.getProperty("user.dir")).resolve("target").resolve("thread-dumps"), true, Duration.ofSeconds(15))
             .withTimeout(testTimeout.toMillis(), MILLISECONDS)
             .build())
         .around(new ExtendedTestRule() {
