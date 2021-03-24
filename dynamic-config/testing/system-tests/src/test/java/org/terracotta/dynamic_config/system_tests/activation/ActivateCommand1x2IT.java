@@ -122,6 +122,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
         allOf(containsOutput("No license installed"), containsOutput("came back up")));
 
     waitForActive(1, 1);
+    waitForDiagnostic(1, 2);
 
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, 2, topologyService -> assertFalse(topologyService.isActivated()));
