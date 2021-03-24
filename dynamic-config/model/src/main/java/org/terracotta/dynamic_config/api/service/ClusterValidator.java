@@ -110,7 +110,6 @@ public class ClusterValidator {
           // invalid chars
           {
             Character invalid = IntStream.range(0, name.length())
-                .parallel()
                 .mapToObj(name::charAt)
                 .filter(c -> binarySearch(FORBIDDEN_CTRL_CHARS, c) >= 0 || binarySearch(FORBIDDEN_FILE_CHARS, c) >= 0 || binarySearch(FORBIDDEN_DC_CHARS, c) >= 0)
                 .findFirst()

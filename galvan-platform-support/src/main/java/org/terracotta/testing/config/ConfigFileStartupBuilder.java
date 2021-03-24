@@ -108,6 +108,6 @@ public class ConfigFileStartupBuilder extends AbstractStartupCommandBuilder {
   }
 
   protected static void executeCommand(List<String> command) {
-    ConfigConverterTool.main(command.toArray(new String[command.size()]));
+    new ConfigConverterTool().run(command.toArray(new String[command.size()]));
   }
 }

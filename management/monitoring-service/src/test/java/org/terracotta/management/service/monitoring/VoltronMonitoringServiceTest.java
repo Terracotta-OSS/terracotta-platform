@@ -482,6 +482,11 @@ public class VoltronMonitoringServiceTest {
     }
 
     @Override
+    public boolean isValidClient() {
+      return true;
+    }
+
+    @Override
     public int hashCode() {
       return id.hashCode();
     }

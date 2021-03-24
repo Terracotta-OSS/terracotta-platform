@@ -393,6 +393,11 @@ public class EndToEndTest {
     public ClientSourceId getSourceId() {
       return null;
     }
+
+    @Override
+    public boolean isValidClient() {
+      return false;
+    }
   }
 
   public interface ClientIdAware extends ServerMessageAware {
