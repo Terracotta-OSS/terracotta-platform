@@ -731,17 +731,22 @@ public class DynamicConfigIT {
   }
 
   protected final <T> T usingDiagnosticService(String host, int port, Function<DiagnosticService, T> fn) {
-    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        InetSocketAddress.createUnresolved(host, port),
-        getClass().getSimpleName(),
-        getConnectionTimeout(),
-        getConnectionTimeout(),
-        null,
-        objectMapperFactory)) {
-      return fn.apply(diagnosticService);
-    } catch (ConnectionException e) {
-      throw new RuntimeException(e);
+    // not expecting a connection exceptions here so retry a few times
+    int tc = 0;
+    for (tc=0;tc<3;tc++) {
+      try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
+          InetSocketAddress.createUnresolved(host, port),
+          getClass().getSimpleName(),
+          getConnectionTimeout(),
+          getConnectionTimeout(),
+          null,
+          objectMapperFactory)) {
+        return fn.apply(diagnosticService);
+      } catch (ConnectionException e) {
+        LOGGER.info("connection of diagnostics failed, retrying", e);
+      }
     }
+    throw new RuntimeException("connection failed " + tc + " times. Aborting");
   }
 
   protected Duration getConnectionTimeout() {
