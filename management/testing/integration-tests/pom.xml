@@ -182,6 +182,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <forkCount>${test.parallel.forks}</forkCount>
+          <reuseForks>false</reuseForks>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
           </systemPropertyVariables>

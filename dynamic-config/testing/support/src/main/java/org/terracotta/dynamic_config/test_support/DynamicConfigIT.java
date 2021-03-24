@@ -497,7 +497,7 @@ public class DynamicConfigIT {
         .tsa(tsa -> tsa
             .clusterName(CLUSTER_NAME)
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
-            .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms32m -Xmx256m"))
+            .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-XX:+UseG1GC"))
             .topology(new Topology(
                 getDistribution(inlineServers),
                 netDisruptionEnabled,

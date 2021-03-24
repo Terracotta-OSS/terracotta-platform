@@ -133,6 +133,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <forkCount>${test.parallel.forks}</forkCount>
+          <reuseForks>false</reuseForks>
           <systemPropertyVariables>
             <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
             <angela.skipUninstall>true</angela.skipUninstall>
