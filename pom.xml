@@ -41,7 +41,7 @@
     <galvan.version>1.6.0-pre6</galvan.version>
     <angela.version>3.1.19</angela.version>
     <statistics.version>2.1</statistics.version>
-    <jackson.version>2.12.1</jackson.version>
+    <jackson.version>2.12.2</jackson.version>
     <terracotta-utilities.version>0.0.8</terracotta-utilities.version>
     <test.parallel.forks>6</test.parallel.forks>
   </properties>

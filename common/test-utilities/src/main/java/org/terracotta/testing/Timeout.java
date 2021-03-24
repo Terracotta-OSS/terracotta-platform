@@ -40,13 +40,11 @@ public class Timeout extends org.junit.rules.Timeout {
   private static final Logger LOGGER = LoggerFactory.getLogger(Timeout.class);
 
   private final Path threadDump;
-  private boolean parallel;
   private Duration timeout;
 
   public Timeout(Builder builder) {
     super(builder);
     this.threadDump = builder.threadDump;
-    this.parallel = builder.parallel;
     this.timeout = builder.timeout;
   }
 
@@ -88,7 +86,7 @@ public class Timeout extends org.junit.rules.Timeout {
   protected void executeThreadDump(Description description) {
     Path output = threadDump.resolve(description.getTestClass().getSimpleName()).resolve(description.getMethodName() == null ? "class" : description.getMethodName());
     LOGGER.info("Taking thread dumps after timeout of test: {} into: {}", description, output);
-    ThreadDump.dumpAll(output, parallel, timeout);
+    ThreadDump.dumpAll(output, timeout);
   }
 
   @SuppressFBWarnings("NM_SAME_SIMPLE_NAME_AS_SUPERCLASS")
@@ -99,7 +97,6 @@ public class Timeout extends org.junit.rules.Timeout {
   public static class Builder extends org.junit.rules.Timeout.Builder {
 
     private Path threadDump;
-    private boolean parallel = true;
     private Duration timeout;
 
     @Override
@@ -119,9 +116,8 @@ public class Timeout extends org.junit.rules.Timeout {
       return this;
     }
 
-    public Builder withThreadDump(Path outputDir, boolean parallel, Duration timeout) {
+    public Builder withThreadDump(Path outputDir, Duration timeout) {
       this.threadDump = requireNonNull(outputDir);
-      this.parallel = parallel;
       this.timeout = timeout;
       return this;
     }
