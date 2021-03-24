@@ -96,20 +96,16 @@ public class ThreadDump {
   }
 
   public static void dumpAll(Path outputDir) {
-    dumpAll(outputDir, false, DEFAULT_TIMEOUT);
+    dumpAll(outputDir, DEFAULT_TIMEOUT);
   }
 
-  public static void dumpAll(Path outputDir, boolean parallel, Duration timeout) {
+  public static void dumpAll(Path outputDir, Duration timeout) {
     try {
       Files.createDirectories(outputDir);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    Stream<ThreadDump> stream = dumpAll(timeout);
-    if (parallel) {
-      stream = stream.parallel();
-    }
-    stream.forEach(dump -> dump.writeTo(outputDir.resolve("thread-dump-" + dump.getPid() + "-" + dump.getName().replaceAll("\\W", "_") + ".log")));
+    dumpAll(timeout).forEach(dump -> dump.writeTo(outputDir.resolve("thread-dump-" + dump.getPid() + "-" + dump.getName().replaceAll("\\W", "_") + ".log")));
   }
 
   public static Optional<ThreadDump> dump(long pid, String name) {
