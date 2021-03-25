@@ -30,9 +30,10 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
-import static org.terracotta.testing.Binary.JPS;
-import static org.terracotta.testing.Binary.JSTACK;
-import static org.terracotta.testing.Binary.exec;
+import static org.terracotta.testing.JavaBinary.JMAP;
+import static org.terracotta.testing.JavaBinary.JPS;
+import static org.terracotta.testing.JavaBinary.JSTACK;
+import static org.terracotta.testing.JavaBinary.exec;
 
 /**
  * @author Mathieu Carbou
@@ -41,7 +42,7 @@ public class JavaTool {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(JavaTool.class);
 
-  public static Stream<Process> listProcesses() {
+  public static Stream<Process> processes() {
     if (JPS == null) {
       return Stream.empty();
     }
@@ -59,17 +60,17 @@ public class JavaTool {
 
   public static Optional<Dump> threadDump(Process process, Duration timeout) {
     LOGGER.info("Taking thread dump of process: {} (timeout: {})", process, timeout == null ? "none" : timeout.toMillis() + "ms");
-    String output = exec(timeout, JSTACK, "-l", "" + process.pid);
-    if (output.contains("No such process")) {
+    String dump = exec(timeout, JSTACK, "-l", "" + process.pid);
+    if (dump.contains("No such process")) {
       LOGGER.warn("No such process: {}", process);
       return Optional.empty();
     } else {
-      return Optional.of(new Dump(process, output));
+      return Optional.of(new Dump(process, dump));
     }
   }
 
   public static Stream<Dump> threadDumps(Duration timeout) {
-    return listProcesses()
+    return processes()
         .map(p -> threadDump(p, timeout))
         .filter(Optional::isPresent)
         .map(Optional::get);
@@ -82,6 +83,20 @@ public class JavaTool {
       throw new UncheckedIOException(e);
     }
     threadDumps(timeout).forEach(dump -> dump.writeTo(outputDir.resolve("thread-dump-" + dump.process.pid + "-" + dump.process.processName.replaceAll("\\W", "_") + ".txt")));
+  }
+
+  public static void memoryDump(Process process, Path output, Duration timeout) {
+    LOGGER.info("Taking memory dump of process: {} (timeout: {})", process, timeout == null ? "none" : timeout.toMillis() + "ms");
+    exec(timeout, JMAP, "-dump:format=b,file=" + output, "" + process.pid);
+  }
+
+  public static void memoryDumps(Path outputDir, Duration timeout) {
+    try {
+      Files.createDirectories(outputDir);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    processes().forEach(p -> memoryDump(p, outputDir.resolve("memory-dump-" + p.pid + "-" + p.processName.replaceAll("\\W", "_") + ".bin"), timeout));
   }
 
   public static class Dump {
@@ -102,7 +117,7 @@ public class JavaTool {
     }
 
     public void writeTo(Path out) {
-      LOGGER.info("Saving dump of Java process: {} to: {}", process, out);
+      LOGGER.info("Saving dump of process: {} to: {}", process, out);
       try {
         Files.write(out, dump.getBytes(StandardCharsets.UTF_8));
       } catch (IOException e) {

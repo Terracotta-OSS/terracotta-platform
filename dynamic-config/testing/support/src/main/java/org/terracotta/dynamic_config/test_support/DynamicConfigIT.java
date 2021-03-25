@@ -263,6 +263,12 @@ public class DynamicConfigIT {
               LOGGER.info("Taking thread dumps after timeout of test: {} into: {}", description, threadDumpOutput);
               JavaTool.threadDumps(threadDumpOutput, Duration.ofSeconds(15));
             }
+            {
+              // memory dumps on test failures
+              //Path memoryDumpOutput = target.resolve("memory-dumps").resolve(description.toString());
+              //LOGGER.info("Taking memory dumps after timeout of test: {} into: {}", description, memoryDumpOutput);
+              //JavaTool.threadDumps(memoryDumpOutput, Duration.ofSeconds(20));
+            }
           }
 
           @Override

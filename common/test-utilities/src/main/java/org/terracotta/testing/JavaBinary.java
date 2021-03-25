@@ -38,22 +38,25 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * @author Mathieu Carbou
  */
-public class Binary {
+public class JavaBinary {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Binary.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(JavaBinary.class);
   private static final boolean WIN = System.getProperty("os.name", "").toLowerCase().contains("win");
 
   public static final Path JPS;
   public static final Path JSTACK;
+  public static final Path JMAP;
 
   static {
     JPS = find("jps").orElse(null);
     JSTACK = find("jstack").orElse(null);
-    if (JPS == null || JSTACK == null) {
-      LOGGER.warn("Unable to find jps or jstack location using java.home ({}) or JAVA_HOME ({}))", System.getProperty("java.home"), System.getenv("JAVA_HOME"));
+    JMAP = find("jmap").orElse(null);
+    if (JPS == null || JSTACK == null || JMAP == null) {
+      LOGGER.warn("Unable to find jps or jstack or jmap location using java.home ({}) or JAVA_HOME ({}))", System.getProperty("java.home"), System.getenv("JAVA_HOME"));
     } else {
       LOGGER.trace("jps: {}", JPS);
       LOGGER.trace("jstack: {}", JSTACK);
+      LOGGER.trace("jmap: {}", JMAP);
     }
   }
 

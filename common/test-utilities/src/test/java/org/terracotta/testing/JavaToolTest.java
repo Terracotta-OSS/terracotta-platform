@@ -34,16 +34,22 @@ import static org.junit.Assert.assertThat;
 public class JavaToolTest {
 
   @Rule
-  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
+  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), true);
 
   @Test
-  public void dump_to_map() {
+  public void threadDumpToMemory() {
     assertThat(JavaTool.threadDumps(null).count(), is(greaterThanOrEqualTo(1L)));
   }
 
   @Test
-  public void dump_to_folder() throws IOException {
+  public void threadDumpToFolder() throws IOException {
     JavaTool.threadDumps(tmpDir.getRoot(), null);
+    assertThat(Files.list(tmpDir.getRoot()).collect(toList()), hasSize(greaterThanOrEqualTo(1)));
+  }
+
+  @Test
+  public void memoryDump() throws IOException {
+    JavaTool.memoryDumps(tmpDir.getRoot(), null);
     assertThat(Files.list(tmpDir.getRoot()).collect(toList()), hasSize(greaterThanOrEqualTo(1)));
   }
 }
