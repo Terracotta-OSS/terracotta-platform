@@ -34,7 +34,7 @@ import static org.junit.Assert.assertThat;
 public class JavaToolTest {
 
   @Rule
-  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), true);
+  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
 
   @Test
   public void threadDumpToMemory() {
