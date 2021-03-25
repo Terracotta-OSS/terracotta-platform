@@ -24,6 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestWatcher;
+import org.junit.rules.Timeout;
 import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.testing.ExtendedTestRule;
-import org.terracotta.testing.Timeout;
+import org.terracotta.testing.ThreadDump;
 import org.terracotta.testing.TmpDir;
 
 import java.io.ByteArrayInputStream;
@@ -176,7 +177,6 @@ public class DynamicConfigIT {
         })
         .around(Timeout.builder()
             .withLookingForStuckThread(true)
-            .withThreadDump(Paths.get(System.getProperty("user.dir")).resolve("target").resolve("thread-dumps"), Duration.ofSeconds(15))
             .withTimeout(testTimeout.toMillis(), MILLISECONDS)
             .build())
         .around(new ExtendedTestRule() {
@@ -254,6 +254,15 @@ public class DynamicConfigIT {
           @Override
           protected void failed(Throwable e, Description description) {
             LOGGER.info("[FAILED] {}", description);
+            // take some thread dumps and memory dumps if the test has failed
+            // to check if this is a timeout, use: if(throwable instanceof MultipleFailureException || throwable instanceof TestTimedOutException) {...}
+            Path target = Paths.get(System.getProperty("user.dir")).resolve("target");
+            {
+              // thread dumps
+              Path threadDumpOutput = target.resolve("thread-dumps").resolve(description.toString());
+              LOGGER.info("Taking thread dumps after timeout of test: {} into: {}", description, threadDumpOutput);
+              ThreadDump.dumpAll(threadDumpOutput, Duration.ofSeconds(15));
+            }
           }
 
           @Override
@@ -733,7 +742,7 @@ public class DynamicConfigIT {
   protected final <T> T usingDiagnosticService(String host, int port, Function<DiagnosticService, T> fn) {
     // not expecting a connection exceptions here so retry a few times
     int tc = 0;
-    for (tc=0;tc<3;tc++) {
+    for (tc = 0; tc < 3; tc++) {
       try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
           InetSocketAddress.createUnresolved(host, port),
           getClass().getSimpleName(),
