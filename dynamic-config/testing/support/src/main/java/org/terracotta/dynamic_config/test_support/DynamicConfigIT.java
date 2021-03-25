@@ -61,7 +61,7 @@ import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.testing.ExtendedTestRule;
-import org.terracotta.testing.ThreadDump;
+import org.terracotta.testing.JavaTool;
 import org.terracotta.testing.TmpDir;
 
 import java.io.ByteArrayInputStream;
@@ -261,7 +261,7 @@ public class DynamicConfigIT {
               // thread dumps
               Path threadDumpOutput = target.resolve("thread-dumps").resolve(description.toString());
               LOGGER.info("Taking thread dumps after timeout of test: {} into: {}", description, threadDumpOutput);
-              ThreadDump.dumpAll(threadDumpOutput, Duration.ofSeconds(15));
+              JavaTool.threadDumps(threadDumpOutput, Duration.ofSeconds(15));
             }
           }
 
