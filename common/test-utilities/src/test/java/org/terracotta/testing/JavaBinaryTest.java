@@ -27,22 +27,26 @@ import static org.junit.Assume.assumeThat;
 /**
  * @author Mathieu Carbou
  */
-public class BinaryTest {
+public class JavaBinaryTest {
   @Test
   public void find_linux() {
     assumeThat(System.getProperty("os.name").toLowerCase(), not(containsString("win")));
 
-    assertThat(Binary.bin("java"), is(equalTo("java")));
-    assertThat(Binary.find("java").get().getFileName().toString(), is(equalTo("java"))); // in jre
-    assertThat(Binary.find("jps").get().getFileName().toString(), is(equalTo("jps"))); // in jdk
+    assertThat(JavaBinary.bin("java"), is(equalTo("java")));
+    assertThat(JavaBinary.find("java").get().getFileName().toString(), is(equalTo("java"))); // in jre
+    assertThat(JavaBinary.find("jps").get().getFileName().toString(), is(equalTo("jps"))); // in jdk
+    assertThat(JavaBinary.find("jmap").get().getFileName().toString(), is(equalTo("jmap"))); // in jdk
+    assertThat(JavaBinary.find("jstack").get().getFileName().toString(), is(equalTo("jstack"))); // in jdk
   }
 
   @Test
   public void find_win() {
     assumeThat(System.getProperty("os.name").toLowerCase(), containsString("win"));
 
-    assertThat(Binary.bin("java"), is(equalTo("java.exe")));
-    assertThat(Binary.find("java").get().getFileName().toString(), is(equalTo("java.exe"))); // in jre
-    assertThat(Binary.find("jps").get().getFileName().toString(), is(equalTo("jps.exe"))); // in jdk
+    assertThat(JavaBinary.bin("java"), is(equalTo("java.exe")));
+    assertThat(JavaBinary.find("java").get().getFileName().toString(), is(equalTo("java.exe"))); // in jre
+    assertThat(JavaBinary.find("jps").get().getFileName().toString(), is(equalTo("jps.exe"))); // in jdk
+    assertThat(JavaBinary.find("jstack").get().getFileName().toString(), is(equalTo("jstack.exe"))); // in jdk
+    assertThat(JavaBinary.find("jmap").get().getFileName().toString(), is(equalTo("jmap.exe"))); // in jdk
   }
 }
