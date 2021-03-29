@@ -15,7 +15,6 @@
  */
 package org.terracotta.client.message.tracker.demo;
 
-import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 

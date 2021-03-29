@@ -50,7 +50,7 @@ import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 
 
-@PermanentEntity(type = "entity.TestSimulationEntity", names = {"TEST_ENTITY"})
+@PermanentEntity(type = "entity.TestSimulationEntity", name = "TEST_ENTITY")
 public class TestEntityServerService implements EntityServerService<EntityMessage, EntityResponse> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TestEntityServerService.class);
