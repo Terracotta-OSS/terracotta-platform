@@ -35,7 +35,7 @@ import static java.util.regex.Pattern.compile;
 /**
  * @author Mathieu Carbou
  */
-@PermanentEntity(type = "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity", names = {"NmsAgent"}, version = 1)
+@PermanentEntity(type = "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity", name = "NmsAgent", version = 1)
 public class NmsAgentEntityServerService extends ProxyServerEntityService<Void, Void, ReconnectData, Messenger> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NmsAgentEntityServerService.class);

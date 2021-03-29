@@ -45,7 +45,7 @@ import static org.terracotta.lease.LeaseEntityConstants.ENTITY_VERSION;
 /**
  * The object that creates the active and passive entities for the connection leasing.
  */
-@PermanentEntity(type = "org.terracotta.lease.LeaseAcquirer", names = {ENTITY_NAME}, version = ENTITY_VERSION)
+@PermanentEntity(type = "org.terracotta.lease.LeaseAcquirer", name = ENTITY_NAME, version = ENTITY_VERSION)
 public class LeaseAcquirerServerService implements EntityServerService<LeaseMessage, LeaseResponse> {
   private static final Logger LOGGER = LoggerFactory.getLogger(LeaseAcquirerServerService.class);
 
