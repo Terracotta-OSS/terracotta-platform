@@ -95,7 +95,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     String exportPath = tmpDir.getRoot().resolve("export.properties").toAbsolutePath().toString();
-    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportPath), is(successful()));
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportPath, "-t", "properties"), is(successful()));
 
     assertThat(
         configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportPath),

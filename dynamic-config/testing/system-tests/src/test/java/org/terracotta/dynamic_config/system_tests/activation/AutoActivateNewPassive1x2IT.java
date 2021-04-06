@@ -104,7 +104,7 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
     // we will be able to add it through a restrictive activation
     // For a node to be able to join a topology, it needs to have EXACTLY the same topology information of the target cluster
     Path exportedConfigPath = tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath();
-    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportedConfigPath.toString()), is(successful()));
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportedConfigPath.toString(), "-t", "properties"), is(successful()));
     //System.out.println(new String(Files.readAllBytes(exportedConfigPath), StandardCharsets.UTF_8));
     assertThat(Props.toString(Props.load(exportedConfigPath)), Props.load(exportedConfigPath).stringPropertyNames(), hasItem("stripe.1.node.1.logger-overrides"));
 

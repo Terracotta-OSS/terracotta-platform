@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.service.ConfigPropertiesTranslator;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OutputFormat;
@@ -43,7 +44,7 @@ public class ExportAction extends RemoteAction {
   private Path outputFile;
   private boolean includeDefaultValues;
   private boolean wantsRuntimeConfig;
-  private OutputFormat outputFormat = OutputFormat.PROPERTIES;
+  private OutputFormat outputFormat = OutputFormat.CONFIG;
 
   @Inject public ObjectMapperFactory objectMapperFactory;
 
@@ -115,6 +116,7 @@ public class ExportAction extends RemoteAction {
         } catch (JsonProcessingException e) {
           throw new AssertionError(outputFormat);
         }
+      case CONFIG:
       case PROPERTIES:
         // user-defined
         Properties userDefined = cluster.toProperties(false, false, false);
@@ -124,28 +126,36 @@ public class ExportAction extends RemoteAction {
         // defaulted values
         Properties defaults = cluster.toProperties(false, true, false);
         defaults.keySet().removeAll(userDefined.keySet());
-        // write them all
-        try (StringWriter out = new StringWriter()) {
-          // write a timestamp as a comment in the file header
-          out.write("# Timestamp of configuration export: ");
-          out.write(Instant.now().toString());
-          out.write(Props.EOL);
-          out.write("#");
-          out.write(Props.EOL);
 
-          // this one is always non empty since we have at least failover-priority
-          Props.store(out, userDefined, "User-defined configurations");
-          if (!defaults.isEmpty() && includeDefaultValues) {
-            out.write(Props.EOL);
-            Props.store(out, defaults, "Default configurations");
+        // write a timestamp as a comment in the file header
+        String fileHeader = "Timestamp of configuration export: " + Instant.now().toString();
+        String userDefinedHeader = "User-defined configurations";
+        String defaultHeader = "Default configurations";
+        String hiddenHeader = "Hidden internal system configurations (only for informational, import and repair purposes): please do not alter, get, set, unset them.";
+
+        if (outputFormat == OutputFormat.PROPERTIES) {
+          try (StringWriter out = new StringWriter()) {
+            out.write("# " + fileHeader + Props.EOL);
+            // this one is always non empty since we have at least failover-priority
+            Props.store(out, userDefined, userDefinedHeader);
+            if (!defaults.isEmpty() && includeDefaultValues) {
+              out.write(Props.EOL);
+              Props.store(out, defaults, defaultHeader);
+            }
+            if (!hidden.isEmpty()) {
+              out.write(Props.EOL);
+              Props.store(out, hidden, hiddenHeader);
+            }
+            return out.toString().replace("\n", System.lineSeparator()); // to please the user. Props always writes the same way (\n).
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
           }
-          if (!hidden.isEmpty()) {
-            out.write(Props.EOL);
-            Props.store(out, hidden, "Hidden internal system configurations (only for informational, import and repair purposes): please do not alter, get, set, unset them.");
-          }
-          return out.toString().replace("\n", System.lineSeparator()); // to please the user. Props always writes the same way (\n).
-        } catch (IOException e) {
-          throw new UncheckedIOException(e);
+        } else {
+          ConfigPropertiesTranslator translator = new ConfigPropertiesTranslator();
+          return translator.writeConfigOutput(fileHeader,
+              userDefined, userDefinedHeader,
+              includeDefaultValues ? defaults : null, defaultHeader,
+              !hidden.isEmpty() ? hidden : null, hiddenHeader);
         }
       default:
         throw new AssertionError(outputFormat);

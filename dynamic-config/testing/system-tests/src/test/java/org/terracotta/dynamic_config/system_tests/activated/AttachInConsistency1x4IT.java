@@ -175,7 +175,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
 
     // we will be able to add it through a restrictive activation
-    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, activeId), "-f", tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath().toString()), is(successful()));
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, activeId), "-f", tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath().toString(), "-t", "properties"), is(successful()));
     assertThat(
         configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 4), "-f", tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath().toString()),
         allOf(containsOutput("No license installed"), containsOutput("came back up")));

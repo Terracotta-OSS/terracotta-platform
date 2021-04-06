@@ -58,7 +58,6 @@ import org.terracotta.dynamic_config.cli.api.output.InMemoryOutputService;
 import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
-import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.JavaTool;
@@ -67,11 +66,6 @@ import org.terracotta.testing.TmpDir;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.UncheckedIOException;
-import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -80,6 +74,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -582,29 +577,27 @@ public class DynamicConfigIT {
   // =========================================
 
   protected Path copyConfigProperty(String configFile) {
-    Path src;
     try {
-      src = Paths.get(getClass().getResource(configFile).toURI());
-    } catch (URISyntaxException e) {
+      Path src = Paths.get(getClass().getResource(configFile).toURI());
+      Path dest = getBaseDir().resolve(src.getFileName());
+      Files.createDirectories(getBaseDir());
+
+      // construct a stream of key-value mappings for the ports and group ports
+      // then use these mappings to replace placeholders in the read file
+      String updated = rangeClosed(1, angela.getStripeCount()).boxed()
+        .flatMap(stripeId -> rangeClosed(1, angela.getNodeCount(stripeId)).boxed()
+          .flatMap(nodeId -> Stream.of(
+            new AbstractMap.SimpleEntry<>("${PORT-" + stripeId + "-" + nodeId + "}", angela.getNodePort(stripeId, nodeId)),
+            new AbstractMap.SimpleEntry<>("${GROUP-PORT-" + stripeId + "-" + nodeId + "}", angela.getNodeGroupPort(stripeId, nodeId)))))
+      .reduce(
+        new String(Files.readAllBytes(src), StandardCharsets.UTF_8),
+          (text, placeholder) -> text.replace(placeholder.getKey(), String.valueOf(placeholder.getValue())),
+          (s, s2) -> { throw new UnsupportedOperationException(); });
+      Files.write(dest, updated.getBytes(StandardCharsets.UTF_8));
+      return dest;
+    } catch (URISyntaxException | IOException e) {
       throw new RuntimeException(e);
     }
-
-    Path dest = getBaseDir().resolve(src.getFileName());
-    Properties loaded = new Properties();
-    try {
-      try (Reader reader = new InputStreamReader(Files.newInputStream(src), StandardCharsets.UTF_8)) {
-        loaded.load(reader);
-      }
-      Properties variables = generateProperties();
-      Properties resolved = new PropertyResolver(variables).resolveAll(loaded);
-      Files.createDirectories(getBaseDir());
-      try (Writer writer = new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8)) {
-        resolved.store(writer, "");
-      }
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-    return dest;
   }
 
   protected Path generateNodeConfigDir(int stripeId, int nodeId, Consumer<ConfigurationGenerator> fn) throws Exception {
@@ -629,16 +622,6 @@ public class DynamicConfigIT {
     org.terracotta.utilities.io.Files.copy(configDirs.resolve("stripe-" + stripeId).resolve("node-" + stripeId + "-" + nodeId), nodeConfigurationDir, RECURSIVE);
     LOGGER.debug("Created node configuration directory into: {}", nodeConfigurationDir);
     return nodeConfigurationDir;
-  }
-
-  private Properties generateProperties() {
-    Properties props = new Properties();
-    rangeClosed(1, angela.getStripeCount()).forEach(stripeId ->
-        rangeClosed(1, angela.getNodeCount(stripeId)).forEach(nodeId -> {
-          props.setProperty(("PORT-" + stripeId + "-" + nodeId), String.valueOf(angela.getNodePort(stripeId, nodeId)));
-          props.setProperty(("GROUP-PORT-" + stripeId + "-" + nodeId), String.valueOf(angela.getNodeGroupPort(stripeId, nodeId)));
-        }));
-    return props;
   }
 
   // =========================================

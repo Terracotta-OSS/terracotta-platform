@@ -219,6 +219,93 @@ public class NodeStartupIT extends DynamicConfigIT {
     }
   }
 
+  @Test
+  public void testStartingWithSingleNodeNewConfigFileWithHostPort() {
+    String port = String.valueOf(getNodePort());
+    Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
+    startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", port, "--config-dir", "config/stripe1/node-1");
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testStartingWithSingleNodeNewConfigFileWithNodeName() {
+    Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
+    startNode(1, 1, "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", getBaseDir().resolve(Paths.get("config", "stripe1", "node-1-1")).toString());
+    waitForDiagnostic(1, 1);
+  }
+
+  @Test
+  public void testStartingWithNewConfigFile() throws Exception {
+    Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
+    startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
+
+    waitForDiagnostic(1, 1);
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getHostname(), is(equalTo("localhost")));
+  }
+
+  @Test
+  public void testFailedStartupNewConfigFile_invalidPort() {
+    String port = String.valueOf(getNodePort());
+    Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe_invalid1.cfg");
+    try {
+      startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
+      fail();
+    } catch (Exception e) {
+      waitUntilServerLogs(getNode(1, 1), "<port> specified in port=<port> must be an integer between 1 and 65535");
+    }
+  }
+
+  @Test
+  public void testFailedStartupNewConfigFile_invalidSecurity() {
+    String port = String.valueOf(getNodePort());
+    Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe_invalid2.cfg");
+    try {
+      startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
+      fail();
+    } catch (Exception e) {
+      waitUntilServerLogs(getNode(1, 1), "When no security root directories are configured all other security settings should also be unconfigured (unset)");
+    }
+  }
+
+  @Test
+  public void testFailedStartupNewConfigFile_invalidCliParams() {
+    Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
+    try {
+      startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
+      fail();
+    } catch (Exception e) {
+      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
+    }
+  }
+
+  @Test
+  public void testFailedStartupNewConfigFile_invalidCliParams_2() {
+    Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
+    try {
+      startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeConfigDir(1, 1).toString());
+      fail();
+    } catch (Exception e) {
+      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
+    }
+  }
+
+  @Test
+  public void testFailedStartupCliParamsWithNewConfigFileAndConfigDir() {
+    String port = String.valueOf(getNodePort());
+    Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
+    try {
+      startNode(1, 1,
+          "--config-file", configurationFile.toString(),
+          "--hostname", "localhost",
+          "--port", port,
+          "--metadata-dir", "foo"
+      );
+      fail();
+    } catch (Exception e) {
+      waitUntilServerLogs(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
+    }
+  }
+
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(

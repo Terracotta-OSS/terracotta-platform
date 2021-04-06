@@ -46,8 +46,8 @@ public class ExportCommand extends Command {
   @Parameter(names = {"-runtime"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
-  @Parameter(names = {"-outputformat"}, hidden = true, description = "Output type (properties|json). Default: properties", converter = FormatConverter.class)
-  private OutputFormat outputFormat = OutputFormat.PROPERTIES;
+  @Parameter(names = {"-outputformat"}, hidden = true, description = "Output type (cfg|properties|json). Default: cfg", converter = FormatConverter.class)
+  private OutputFormat outputFormat = OutputFormat.CONFIG;
 
   @Inject
   public final ExportAction action;
