@@ -118,15 +118,6 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
   }
 
   @Test
-  public void setMetaDataDirAtNodeLevelAfterActivation() throws IOException, SanskritException {
-    activateCluster();
-    assertThat(
-        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir=newmetadata"),
-        containsOutput("Reason: Setting 'metadata-dir' cannot be set when node is activated"));
-    assertChanges(3);
-  }
-
-  @Test
   public void unsetMetaDataDirAtNodeLevelAfterActivation() throws IOException, SanskritException {
     activateCluster();
     assertThat(

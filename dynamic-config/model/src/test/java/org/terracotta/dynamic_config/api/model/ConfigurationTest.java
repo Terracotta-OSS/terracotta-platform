@@ -584,7 +584,7 @@ public class ConfigurationTest {
     Stream.of(CONFIGURING).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "metadata-dir"))));
     Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "metadata-dir=foo"))));
     Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir="))));
-    Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir=foo"))));
+    Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "metadata-dir=foo"))));
     Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir="))));
     Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
       reject(state, op, "metadata-dir=foo");

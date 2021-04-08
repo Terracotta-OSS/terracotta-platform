@@ -255,20 +255,6 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setNodeMetadataDir() {
-    // TDB-5092
-    assertThat(
-        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "metadata-dir=foo"),
-        containsOutput("Error: Invalid input: 'metadata-dir=foo'. Reason: Setting 'metadata-dir' cannot be set when node is activated"));
-    assertThat(
-        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.metadata-dir=foo"),
-        containsOutput("Error: Invalid input: 'stripe.1.metadata-dir=foo'. Reason: Setting 'metadata-dir' cannot be set when node is activated"));
-    assertThat(
-        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir=foo"),
-        containsOutput("Error: Invalid input: 'stripe.1.node.1.metadata-dir=foo'. Reason: Setting 'metadata-dir' cannot be set when node is activated"));
-  }
-
-  @Test
   public void testPublicHostPort() {
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.public-hostname", "-c", "stripe.1.node.1.public-port"),

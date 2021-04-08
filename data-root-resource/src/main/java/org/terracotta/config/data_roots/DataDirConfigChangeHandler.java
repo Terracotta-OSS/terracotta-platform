@@ -19,14 +19,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
+import org.terracotta.dynamic_config.server.api.MoveOperation;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 import static java.util.stream.Collectors.toMap;
@@ -54,19 +56,31 @@ public class DataDirConfigChangeHandler implements ConfigChangeHandler {
     }
 
     for (Configuration change : changes.expand()) {
-      Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().toPath()));
+      Map<String, RawPath> dataDirs = baseConfig.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue()));
       LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
 
       String dataDirectoryName = change.getKey();
-      Path substitutedDataDirPath = substitute(Paths.get(change.getValue().get()));
+      RawPath changePath = RawPath.valueOf(change.getValue().get());
+      Path substitutedDataDirPath = substitute(changePath.toPath());
 
-      if (dataDirs.containsKey(dataDirectoryName)) {
-        throw new InvalidConfigChangeException("A data directory with name: " + dataDirectoryName + " already exists");
+      if (!dataDirs.containsKey(dataDirectoryName)) {
+        for (Map.Entry<String, RawPath> entry : dataDirs.entrySet()) {
+          if (overLaps(substitute(entry.getValue().toPath()), substitutedDataDirPath)) {
+            throw new InvalidConfigChangeException("Data directory: " + dataDirectoryName +
+                " overlaps with existing data directory: " + entry.getKey() + " " + entry.getValue());
+          }
+        }
       }
 
-      for (Map.Entry<String, Path> entry : dataDirs.entrySet()) {
-        if (overLaps(substitute(entry.getValue()), substitutedDataDirPath)) {
-          throw new InvalidConfigChangeException("Data directory: " + dataDirectoryName + " overlaps with: " + entry.getKey());
+      if (dataDirs.containsKey(dataDirectoryName)) {
+        if (!dataDirs.get(dataDirectoryName).equals(changePath)) {
+          Path substitutedExistingPath = substitute(dataDirs.get(dataDirectoryName).toPath());
+          if (!substitutedExistingPath.equals(substitutedDataDirPath)) {
+            if (overLaps(substitutedExistingPath, substitutedDataDirPath)) {
+              throw new InvalidConfigChangeException("Path for data-dir: " + dataDirectoryName +
+                  " cannot be updated because the new path overlaps with the existing path: " + dataDirs.get(dataDirectoryName));
+            }
+          }
         }
       }
 
@@ -89,6 +103,20 @@ public class DataDirConfigChangeHandler implements ConfigChangeHandler {
         if (!Files.isWritable(substitutedDataDirPath)) {
           throw new InvalidConfigChangeException("Directory: " + substitutedDataDirPath + " doesn't have write permissions" +
               " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
+        }
+      }
+
+      // updating the path for data-dir name.
+      if (dataDirs.containsKey(dataDirectoryName)) {
+        if (!dataDirs.get(dataDirectoryName).equals(changePath)) {
+          Path substitutedExistingPath = substitute(dataDirs.get(dataDirectoryName).toPath());
+          if (!substitutedExistingPath.equals(substitutedDataDirPath)) {
+            try {
+              new MoveOperation(substitutedDataDirPath).prepare(substitutedExistingPath);
+            } catch (IOException e) {
+              throw new InvalidConfigChangeException(e.toString(), e);
+            }
+          }
         }
       }
     }

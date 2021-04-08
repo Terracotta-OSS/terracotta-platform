@@ -41,8 +41,8 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     int passiveId = findPassives(1)[0];
     RawPath metadataDir = usingTopologyService(1, passiveId, topologyService -> topologyService.getUpcomingNodeContext().getNode().getMetadataDir().orDefault());
     assertThat(
-        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir=foo"),
-        containsOutput("Setting 'metadata-dir' cannot be set when node is activated"));
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir"),
+        containsOutput("Setting 'metadata-dir' cannot be unset when node is activated"));
 
     // kill active and wait for passive to become active
     stopNode(1, passiveId == 1 ? 2 : 1);
