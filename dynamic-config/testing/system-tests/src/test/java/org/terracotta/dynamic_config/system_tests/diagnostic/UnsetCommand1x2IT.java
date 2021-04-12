@@ -327,6 +327,9 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("offheap-resources=bar\\:128MB,baz\\:200MB,foo\\:128MB,main\\:512MB"));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
+        containsOutput("offheap-resources=bar:128MB,baz:200MB,foo:128MB,main:512MB"));
 
     // removing a specific property
     assertThat(
@@ -335,6 +338,9 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("offheap-resources=baz\\:200MB,foo\\:128MB,main\\:512MB"));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
+        containsOutput("offheap-resources=baz:200MB,foo:128MB,main:512MB"));
 
     // global removal of a whole map
     assertThat(
@@ -342,6 +348,9 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
     assertThat(
         configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        containsOutput("offheap-resources=")); // this entry is in the output because the user has explicitly set the map to "empty" So it is exported in the config.
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
         containsOutput("offheap-resources=")); // this entry is in the output because the user has explicitly set the map to "empty" So it is exported in the config.
   }
 
@@ -353,7 +362,9 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("data-dirs=bar\\:c/d,foo\\:a/b"));
-
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
+        containsOutput("data-dirs=bar:c/d,foo:a/b"));
     // ===
     // IMPORTANT: we do not support to globally replace a map by another map, to prevent any mistake from the user
     // ===
@@ -363,6 +374,9 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("data-dirs=bar\\:c/d,baz\\:e/f,foo\\:c/d"));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
+        containsOutput("data-dirs=bar:c/d,baz:e/f,foo:c/d"));
 
     // removing a specific property
     assertThat(
@@ -371,6 +385,9 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
     assertThat(
         configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
         containsOutput("data-dirs=baz\\:e/f,foo\\:c/d"));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
+        containsOutput("data-dirs=baz:e/f,foo:c/d"));
 
     // global removal of a whole map
     assertThat(
@@ -378,6 +395,9 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         is(successful()));
     assertThat(
         configTool("export", "-s", "localhost:" + getNodePort(), "-t", "properties"),
+        containsOutput("data-dirs=")); // this entry is in the output because the user has explicitly set the map to "empty" So it is exported in the config.
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
         containsOutput("data-dirs=")); // this entry is in the output because the user has explicitly set the map to "empty" So it is exported in the config.
   }
 
@@ -631,4 +651,147 @@ public class UnsetCommand1x2IT extends DynamicConfigIT {
         not(containsOutput("client-lease-duration=")));
   }
 
+  @Test
+  public void unset_tc_properties_new_cfg() {
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties=foo:1,bar:2"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        allOf(
+            containsOutput("node-1-1:tc-properties=bar:2,foo:1"),
+            containsOutput("node-1-2:tc-properties=bar:2,foo:1")
+        ));
+
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties=foo:2,baz:3"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        allOf(
+            containsOutput("node-1-1:tc-properties=bar:2,baz:3,foo:2"),
+            containsOutput("node-1-2:tc-properties=bar:2,baz:3,foo:2")
+        ));
+
+    // removing a specific property
+    assertThat(
+        configTool("unset", "-s", "localhost:" + getNodePort(),
+            "-c", "node-1-1:tc-properties.bar",
+            "-c", "node-1-2:tc-properties.baz"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        allOf(
+            containsOutput("node-1-1:tc-properties=baz:3,foo:2"),
+            containsOutput("node-1-2:tc-properties=bar:2,foo:2")
+        ));
+
+    // global removal of a whole map
+    assertThat(
+        configTool("unset", "-s", "localhost:" + getNodePort(),
+            "-c", "node-1-1:tc-properties",
+            "-c", "node-1-2:tc-properties.baz"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        allOf(
+            not(containsOutput("node-1-1:tc-properties=")), // this entry is in the output because the user has explicitly set the map to "empty" So it is exported in the config.
+            containsOutput("node-1-2:tc-properties=bar:2,foo:2")
+        ));
+
+    // global removal on cluster
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "node-1-1:tc-properties=bar:2,foo:1"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        allOf(
+            containsOutput("node:node-1-1:tc-properties=bar:2,foo:1"),
+            containsOutput("node:node-1-2:tc-properties=bar:2,foo:2")
+        ));
+
+    assertThat(
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
+        allOf(
+            // these entries are in the output because the user has explicitly set the map to "empty" So it is exported in the config.
+            not(containsOutput("node:node-1-1:tc-properties=")),
+            not(containsOutput("node:node-1-2:tc-properties="))
+        ));
+  }
+
+  @Test
+  public void unset_logger_overrides_new_cfg() {
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=foo:DEBUG,bar:INFO"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
+        allOf(
+            containsOutput("node:node-1-1:logger-overrides=bar:INFO,foo:DEBUG"),
+            containsOutput("node:node-1-2:logger-overrides=bar:INFO,foo:DEBUG")
+        ));
+
+    // ===
+    // IMPORTANT: we do not support to globally replace a map by another map, to prevent any mistake from the user
+    // ===
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=foo:INFO,baz:WARN"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
+        allOf(
+            containsOutput("node:node-1-1:logger-overrides=bar:INFO,baz:WARN,foo:INFO"),
+            containsOutput("node:node-1-2:logger-overrides=bar:INFO,baz:WARN,foo:INFO")
+        ));
+
+    // removing a specific property
+    assertThat(
+        configTool("unset", "-s", "localhost:" + getNodePort(),
+            "-c", "node-1-1:logger-overrides.bar",
+            "-c", "node-1-2:logger-overrides.baz"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
+        allOf(
+            containsOutput("node:node-1-1:logger-overrides=baz:WARN,foo:INFO"),
+            containsOutput("node:node-1-2:logger-overrides=bar:INFO,foo:INFO")
+        ));
+
+    // global removal of a whole map
+    assertThat(
+        configTool("unset", "-s", "localhost:" + getNodePort(),
+            "-c", "node-1-1:logger-overrides",
+            "-c", "node:node-1-2:logger-overrides.baz"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
+        allOf(
+            not(containsOutput("node-1-1:logger-overrides=")), // this entry is in the output because the user has explicitly set the map to "empty" So it is exported in the config.
+            containsOutput("node-1-2:logger-overrides=bar:INFO,foo:INFO")
+        ));
+
+    // global removal on cluster
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "node:node-1-1:logger-overrides=bar:INFO,foo:DEBUG"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
+        allOf(
+            containsOutput("node-1-1:logger-overrides=bar:INFO,foo:DEBUG"),
+            containsOutput("node-1-2:logger-overrides=bar:INFO,foo:INFO")
+        ));
+    assertThat(
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
+        is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides"),
+        allOf(
+            // these entries are in the output because the user has explicitly set the map to "empty" So it is exported in the config.
+            not(containsOutput("node-1-1:logger-overrides=")),
+            not(containsOutput("node-1-2:logger-overrides="))
+        ));
+  }
 }

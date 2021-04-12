@@ -377,6 +377,10 @@ public class Cluster implements Cloneable, PropertyHolder {
     return getStripes().stream().filter(s -> s.getUID().equals(stripeUID)).findAny();
   }
 
+  public Optional<Stripe> getStripeByName(String name) {
+    return getStripes().stream().filter(s -> s.getName().equals(name)).findAny();
+  }
+
   public Optional<Stripe> getStripe(int stripeId) {
     if (stripeId < 1) {
       throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
@@ -385,6 +389,16 @@ public class Cluster implements Cloneable, PropertyHolder {
       return Optional.empty();
     }
     return Optional.of(stripes.get(stripeId - 1));
+  }
+
+  public OptionalInt getNodeId(UID nodeUID) {
+    List<Node> nodes = stripes.stream()
+        .filter(s -> s.containsNode(nodeUID))
+        .findAny().get().getNodes();
+    return IntStream.range(0, nodes.size())
+        .filter(idx -> nodes.get(idx).getUID().equals(nodeUID))
+        .map(idx -> idx + 1)
+        .findAny();
   }
 
   public OptionalInt getStripeId(UID stripeUID) {

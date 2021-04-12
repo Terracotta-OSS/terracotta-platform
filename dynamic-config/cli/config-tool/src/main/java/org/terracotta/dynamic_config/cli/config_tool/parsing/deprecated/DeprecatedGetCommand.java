@@ -18,12 +18,14 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.BooleanConverter;
-import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.cli.api.command.ConfigurationInput;
 import org.terracotta.dynamic_config.cli.api.command.GetAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
+import org.terracotta.dynamic_config.cli.api.converter.OutputFormatGet;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
+import org.terracotta.dynamic_config.cli.converter.ConfigurationInputConverter;
+import org.terracotta.dynamic_config.cli.converter.FormatGetConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 
@@ -37,11 +39,14 @@ public class DeprecatedGetCommand extends Command {
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
-  List<Configuration> configurations;
+  @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationInputConverter.class)
+  List<ConfigurationInput> inputs;
 
   @Parameter(names = {"-r"}, description = "Read the properties from the current runtime configuration instead of reading them from the last configuration saved on disk", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
+
+  @Parameter(names = {"-t"}, description = "Output Format (name|index). Default: name", converter = FormatGetConverter.class)
+  private OutputFormatGet outputFormat = OutputFormatGet.NAME;
 
   @Inject
   public final GetAction action;
@@ -57,8 +62,9 @@ public class DeprecatedGetCommand extends Command {
   @Override
   public void run() {
     action.setNode(node);
-    action.setConfigurations(configurations);
-    action.setRuntimConfig(wantsRuntimeConfig);
+    action.setConfigurationInputs(inputs);
+    action.setRuntimeConfig(wantsRuntimeConfig);
+    action.setOutputFormat(outputFormat);
 
     action.run();
   }

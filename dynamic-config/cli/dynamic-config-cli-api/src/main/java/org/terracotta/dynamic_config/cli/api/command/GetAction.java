@@ -18,6 +18,8 @@ package org.terracotta.dynamic_config.cli.api.command;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.api.model.Scope;
+import org.terracotta.dynamic_config.cli.api.converter.OutputFormatGet;
 
 import java.util.List;
 import java.util.Map;
@@ -27,12 +29,17 @@ import java.util.stream.Collectors;
 public class GetAction extends ConfigurationAction {
 
   private boolean wantsRuntimeConfig;
+  private OutputFormatGet outputFormat = OutputFormatGet.NAME;
 
   public GetAction() {
     super(Operation.GET);
   }
 
-  public void setRuntimConfig(boolean wantsRuntimeConfig) {
+  public void setOutputFormat(OutputFormatGet outputFormat) {
+    this.outputFormat = outputFormat;
+  }
+
+  public void setRuntimeConfig(boolean wantsRuntimeConfig) {
     this.wantsRuntimeConfig = wantsRuntimeConfig;
   }
 
@@ -51,11 +58,32 @@ public class GetAction extends ConfigurationAction {
       List<String> out = properties.entrySet()
           .stream()
           .filter(e -> configuration.matchConfigPropertyKey(e.getKey()))
-          .map(e -> e.getKey() + "=" + e.getValue())
+          .map(e -> formatOutput(e.getKey(), e.getValue(), cluster))
           .collect(Collectors.toList());
       if (!out.isEmpty()) {
         out.forEach(s -> output.out(s));
       }
     }
+  }
+
+  private String formatOutput(String key, String value, Cluster cluster) {
+    StringBuilder sb = new StringBuilder();
+    if (outputFormat == OutputFormatGet.INDEX) {
+      // key is: [stripe.x.[node.y.]]<setting>[.<key>]
+      sb.append(key);
+    } else {
+      // will become: (stripe|node):<node_or_stripe_name>:<setting>[.<key>]
+      Configuration c = Configuration.valueOf(key);
+      if (c.getLevel() == Scope.STRIPE) {
+        sb.append("stripe:").append(cluster.getStripe(c.getStripeId()).get().getName()).append(":");
+      } else if (c.getLevel() == Scope.NODE) {
+        sb.append("node:").append(cluster.getStripe(c.getStripeId()).get().getNodes().get(c.getNodeId() - 1).getName()).append(":");
+      }
+      sb.append(c.getSetting());
+      if (c.getKey() != null) {
+        sb.append(".").append(c.getKey());
+      }
+    }
+    return sb.append("=").append(value).toString();
   }
 }

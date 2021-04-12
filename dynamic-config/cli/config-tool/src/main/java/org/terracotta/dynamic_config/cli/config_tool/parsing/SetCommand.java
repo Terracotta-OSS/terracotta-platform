@@ -19,12 +19,12 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.cli.api.command.ConfigurationInput;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.command.SetAction;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
+import org.terracotta.dynamic_config.cli.converter.ConfigurationInputConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
@@ -39,8 +39,8 @@ public class SetCommand extends Command {
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-setting"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
-  List<Configuration> configurations;
+  @Parameter(names = {"-setting"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationInputConverter.class)
+  List<ConfigurationInput> inputs;
 
   @Parameter(names = {"-auto-restart"}, description = "If a change requires some nodes to be restarted, the command will try to restart them if there are at least 2 nodes online per stripe.")
   boolean autoRestart = false;
@@ -65,7 +65,7 @@ public class SetCommand extends Command {
   @Override
   public void run() {
     action.setNode(node);
-    action.setConfigurations(configurations);
+    action.setConfigurationInputs(inputs);
     action.setAutoRestart(autoRestart);
     action.setRestartDelay(restartDelay);
     action.setRestartWaitTime(restartWaitTime);

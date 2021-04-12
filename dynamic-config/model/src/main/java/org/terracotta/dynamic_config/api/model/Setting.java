@@ -1029,14 +1029,12 @@ public enum Setting {
         }
         break;
       case SET:
-        requireNonNull(value);
-        if (value.isEmpty()) {
+        if (value == null || value.isEmpty()) {
           throw new IllegalArgumentException("Operation " + operation + " requires a value");
         }
         break;
       case IMPORT:
-        requireNonNull(value);
-        if (value.isEmpty() && mustBePresent()) {
+        if ((value == null || value.isEmpty()) && mustBePresent()) {
           throw new IllegalArgumentException("Operation " + operation + " requires a value");
         }
         // ensure that properties requiring an eager resolve are resolved

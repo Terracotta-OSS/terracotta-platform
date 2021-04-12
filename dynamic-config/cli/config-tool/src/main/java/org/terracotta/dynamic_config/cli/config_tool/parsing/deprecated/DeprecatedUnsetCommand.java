@@ -17,12 +17,12 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.cli.api.command.ConfigurationInput;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.command.UnsetAction;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.ConfigurationConverter;
+import org.terracotta.dynamic_config.cli.converter.ConfigurationInputConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 
@@ -36,8 +36,8 @@ public class DeprecatedUnsetCommand extends Command {
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationConverter.class)
-  List<Configuration> configurations;
+  @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationInputConverter.class)
+  List<ConfigurationInput> inputs;
 
   @Inject
   public final UnsetAction action;
@@ -53,7 +53,7 @@ public class DeprecatedUnsetCommand extends Command {
   @Override
   public void run() {
     action.setNode(node);
-    action.setConfigurations(configurations);
+    action.setConfigurationInputs(inputs);
 
     action.run();
   }

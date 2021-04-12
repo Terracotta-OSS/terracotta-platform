@@ -16,14 +16,14 @@
 package org.terracotta.dynamic_config.cli.converter;
 
 import com.beust.jcommander.IStringConverter;
-import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.cli.api.command.ConfigurationInput;
 
 /**
  * @author Mathieu Carbou
  */
-public class ConfigurationConverter implements IStringConverter<Configuration> {
+public class ConfigurationInputConverter implements IStringConverter<ConfigurationInput> {
   @Override
-  public Configuration convert(String value) {
-    return Configuration.valueOf(value);
+  public ConfigurationInput convert(String value) {
+    return new ConfigurationInput(value);
   }
 }

@@ -59,7 +59,7 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void testNode_getAllDataDirs() {
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs", "-t", "index"),
         containsOutput("stripe.1.node.1.data-dirs=main:data-dir"));
   }
 
@@ -73,7 +73,7 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void testNode_getNodePort() {
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.port"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.port", "-t", "index"),
         containsOutput("stripe.1.node.1.port=" + getNodePort()));
   }
 
