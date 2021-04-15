@@ -52,10 +52,10 @@ public class DetachAction extends TopologyAction {
   protected Measure<TimeUnit> stopDelay = Measure.of(2, TimeUnit.SECONDS);
   protected Identifier sourceIdentifier;
 
-  private final Collection<Endpoint> onlineNodesToRemove = new ArrayList<>(1);
+  protected final Collection<Endpoint> onlineNodesToRemove = new ArrayList<>(1);
 
-  private PropertyHolder source;
-  private Stripe stripeToDetach;
+  protected PropertyHolder source;
+  protected Stripe stripeToDetach;
 
   public void setStopWaitTime(Measure<TimeUnit> stopWaitTime) {
     this.stopWaitTime = stopWaitTime;
