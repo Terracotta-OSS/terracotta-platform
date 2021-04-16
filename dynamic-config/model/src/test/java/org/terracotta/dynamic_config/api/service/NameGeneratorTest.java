@@ -53,7 +53,7 @@ public class NameGeneratorTest {
 
     Stripe newStripe = newTestStripe(STRIPE_NAME.getDefaultValue(), UID.newUID());
     cluster.addStripe(newStripe);
-    NameGenerator.assignFriendlyNames(cluster, newStripe.getUID());
+    NameGenerator.assignFriendlyNames(cluster, newStripe);
 
     assertThat(newStripe.getName(), is(equalTo("stripe-3")));
     new ClusterValidator(cluster).validate();
@@ -73,7 +73,7 @@ public class NameGeneratorTest {
 
     Node newNode = newTestNode(NODE_NAME.getDefaultValue(), "hostname-" + UID.newUID(), UID.newUID());
     stripe.addNode(newNode);
-    NameGenerator.assignFriendlyNodeName(cluster, newNode.getUID());
+    NameGenerator.assignFriendlyNodeName(cluster, newNode);
 
     assertThat(newNode.getName(), is(equalTo("Canidae-3")));
     new ClusterValidator(cluster).validate();

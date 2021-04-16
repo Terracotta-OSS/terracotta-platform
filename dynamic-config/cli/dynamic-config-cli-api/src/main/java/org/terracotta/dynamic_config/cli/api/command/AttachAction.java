@@ -54,12 +54,12 @@ public class AttachAction extends TopologyAction {
   protected InetSocketAddress sourceAddress;
 
   // list of new nodes to add with their backup topology
-  private final Map<Endpoint, Cluster> newOnlineNodes = new LinkedHashMap<>();
+  protected final Map<Endpoint, Cluster> newOnlineNodes = new LinkedHashMap<>();
 
   protected Endpoint source;
-  private Cluster sourceCluster;
-  private Stripe addedStripe;
-  private Node addedNode;
+  protected Cluster sourceCluster;
+  protected Stripe addedStripe;
+  protected Node addedNode;
 
   public void setSourceAddress(InetSocketAddress sourceAddress) {
     this.sourceAddress = sourceAddress;
@@ -165,6 +165,28 @@ public class AttachAction extends TopologyAction {
           .getSimilarEndpoints(source)
           .forEach(endpoint -> newOnlineNodes.put(endpoint, getUpcomingCluster(endpoint)));
     }
+
+    switch (operationType) {
+      case NODE: {
+        addedNode = sourceCluster.getNode(source.getNodeUID()).get().clone();
+        addedNode.setUID(destinationCluster.newUID());
+
+        if (destinationClusterActivated) {
+          NameGenerator.assignFriendlyNodeName(destinationCluster, addedNode);
+        }
+        break;
+      }
+      case STRIPE: {
+        addedStripe = sourceCluster.getStripeByNode(source.getNodeUID()).get().clone();
+        addedStripe.setUID(destinationCluster.newUID());
+        addedStripe.getNodes().forEach(n -> n.setUID(destinationCluster.newUID()));
+
+        if (destinationClusterActivated) {
+          NameGenerator.assignFriendlyNames(destinationCluster, addedStripe);
+        }
+        break;
+      }
+    }
   }
 
   @Override
@@ -174,36 +196,14 @@ public class AttachAction extends TopologyAction {
     switch (operationType) {
 
       case NODE: {
-        output.info("Attaching node: {} to stripe: {}", source, cluster.getStripeByNode(destination.getNodeUID()).get().toShapeString());
-        Stripe stripe = cluster.getStripeByNode(destination.getNodeUID()).get();
-        Node node = sourceCluster.getNode(source.getNodeUID()).get();
-
-        addedNode = node.clone();
-        stripe.addNode(addedNode);
-
-        // change the node UID
-        addedNode.setUID(cluster.newUID());
-
-        if (destinationClusterActivated) {
-          NameGenerator.assignFriendlyNodeName(cluster, addedNode.getUID());
-        }
+        output.info("Attaching node: {} to stripe: {}", addedNode.toShapeString(), cluster.getStripeByNode(destination.getNodeUID()).get().toShapeString());
+        cluster.getStripeByNode(destination.getNodeUID()).orElseThrow(AssertionError::new).addNode(addedNode);
         break;
       }
 
       case STRIPE: {
-        Stripe stripe = sourceCluster.getStripeByNode(source.getNodeUID()).get();
-        output.info("Attaching a new stripe: {} to cluster: {}", stripe.toShapeString(), destinationCluster.getName());
-
-        addedStripe = stripe.clone();
+        output.info("Attaching a new stripe: {} to cluster: {}", addedStripe.toShapeString(), destinationCluster.getName());
         cluster.addStripe(addedStripe);
-
-        // change the stripe UID and all its nodes
-        addedStripe.setUID(cluster.newUID());
-        addedStripe.getNodes().forEach(n -> n.setUID(cluster.newUID()));
-
-        if (destinationClusterActivated) {
-          NameGenerator.assignFriendlyNames(cluster, addedStripe.getUID());
-        }
         break;
       }
 

@@ -86,6 +86,10 @@ public abstract class TopologyAction extends RemoteAction {
   @Override
   public void run() {
     validate();
+    execute();
+  }
+
+  protected void execute() {
     // build an updated topology
     Cluster result = updateTopology();
 

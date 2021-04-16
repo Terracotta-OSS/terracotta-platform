@@ -57,25 +57,24 @@ public class NameGenerator {
    * Assign friendly names on all the stripes and nodes on a cluster
    */
   public static void assignFriendlyNames(Cluster cluster) {
-    cluster.getStripes().forEach(stripe -> assignFriendlyNames(cluster, stripe.getUID()));
+    cluster.getStripes().forEach(stripe -> assignFriendlyNames(cluster, stripe));
   }
 
   /**
    * Assign friendly names to a whole stripe in a cluster, plus its nodes
    */
-  public static void assignFriendlyNames(Cluster cluster, UID stripeUID) {
+  public static void assignFriendlyNames(Cluster cluster, Stripe stripe) {
     ThreadLocalRandom random = ThreadLocalRandom.current();
-    Stripe stripe = cluster.getStripe(stripeUID).get();
     assignFriendlyStripeName(cluster, stripe, random);
-    stripe.getNodes().forEach(node -> assignFriendlyNodeName(cluster, node.getUID(), random));
+    stripe.getNodes().forEach(node -> assignFriendlyNodeName(cluster, node, random));
   }
 
   /**
    * Assign a friendly name to a node in this cluster
    */
-  public static void assignFriendlyNodeName(Cluster cluster, UID nodeUID) {
+  public static void assignFriendlyNodeName(Cluster cluster, Node node) {
     ThreadLocalRandom random = ThreadLocalRandom.current();
-    assignFriendlyNodeName(cluster, nodeUID, random);
+    assignFriendlyNodeName(cluster, node, random);
   }
 
   /**
@@ -86,10 +85,9 @@ public class NameGenerator {
     cluster.getStripes().forEach(stripe -> assignFriendlyStripeName(cluster, stripe, random));
   }
 
-  private static void assignFriendlyNodeName(Cluster cluster, UID nodeUID, Random random) {
-    Node node = cluster.getNode(nodeUID).get();
+  private static void assignFriendlyNodeName(Cluster cluster, Node node, Random random) {
     if (nameCanBeSet(node)) {
-      Stripe stripe = cluster.getStripeByNode(node.getUID()).get();
+      Stripe stripe = cluster.getStripeByNode(node.getUID()).orElseThrow(IllegalArgumentException::new);
       List<String> used = stripe.getNodes().stream().map(Node::getName).collect(toList());
       List<String> dict = readLines("dict/greek.txt");
       node.setName(pickRandomNodeName(dict, used, random, stripe.getName() + "-"));
