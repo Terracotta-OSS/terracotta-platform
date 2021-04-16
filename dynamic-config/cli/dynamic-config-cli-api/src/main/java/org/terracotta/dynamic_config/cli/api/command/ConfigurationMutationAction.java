@@ -118,9 +118,11 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
           });
     }
     if (updatedCluster.equals(originalCluster)) {
+      String message = "The requested update will not result in any change to the cluster configuration.";
+      output.out(message);
       LOGGER.warn(lineSeparator() +
           "=======================================================================================" + lineSeparator() +
-          "The requested update will not result in any change to the cluster configuration." + lineSeparator() +
+          message + lineSeparator() +
           "=======================================================================================" + lineSeparator());
       return;
     }

@@ -17,8 +17,8 @@ package org.terracotta.dynamic_config.cli.converter;
 
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.converters.IParameterSplitter;
-import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.cli.api.command.ConfigurationInput;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,9 +32,20 @@ import static java.util.stream.Collectors.toList;
  * The splitter is only applied in case of a map setting " ({@link Setting#isMap() == true}
  * <p>
  * For example, data-dirs=foo:bar,foo2:bar2 becomes {data-dirs.foo=bar, data-dirs.foo2=bar2}
+ * -setting stripe:backup-dir=foo,node1:name=bar
+ * -setting stripe:backup-dir=foo -setting node1:name=bar
+ *
+ * stripe:backup-dir=foo
+ * (with or without translation)
+ * * Configuration object
+ *
+ * -setting data-dirs=foo:bar,foo2:bar2
+ * -setting data-dirs.foo=bar -setting data-dirs.foo2=bar2
+ * -setting data-dirs.foo,data-dirs
  */
 public class MultiConfigCommaSplitter implements IParameterSplitter {
   public List<String> split(String value) {
+
     String[] keyValue = value.split("=", 2);
 
     if (keyValue.length != 2) {
@@ -61,23 +72,25 @@ public class MultiConfigCommaSplitter implements IParameterSplitter {
     // - data-dirs=d
     // - etc
     return Stream.of(keyValue[1].split(","))
-        .filter(s -> !s.trim().isEmpty()) // in case user sends a lot of commas: data-dirs=,foo:bar,,foo2:bar2,,
-        .map(s -> {
-          String[] nameProperty = s.trim().split(":", 2);
-          if (nameProperty.length != 2) {
-            // we always expect a key and value for maps
-            throw new ParameterException("Invalid input: " + value);
-          }
-          return keyValue[0] + "." + nameProperty[0] + "=" + nameProperty[1];
-        })
-        .distinct() // in case user sends: data-dirs=foo:bar,foo:bar
-        .collect(toList());
+      .filter(s -> !s.trim().isEmpty()) // in case user sends a lot of commas: data-dirs=,foo:bar,,foo2:bar2,,
+      .map(s -> {
+        String[] nameProperty = s.trim().split(":", 2);
+        if (nameProperty.length != 2) {
+          // we always expect a key and value for maps
+          throw new ParameterException("Invalid input: " + value);
+        }
+        return keyValue[0] + "." + nameProperty[0] + "=" + nameProperty[1];
+      })
+      .distinct() // in case user sends: data-dirs=foo:bar,foo:bar
+      .collect(toList());
   }
+
+  // remove dependency on Configuration class in this class
 
   private boolean isMap(String key) {
     try {
       // try to get the setting name and see if this is a map
-      return Configuration.valueOf(key).getSetting().isMap();
+      return ConfigurationInput.getSetting(key).isMap();
     } catch (RuntimeException e) {
       // if we fail parsing the setting name, consider this is not a map
       return false;
@@ -88,7 +101,7 @@ public class MultiConfigCommaSplitter implements IParameterSplitter {
     try {
       // check if a key has been defined.
       // Ie: data-dirs.key=bar
-      return Configuration.valueOf(key).getKey() != null;
+      return ConfigurationInput.getKey(key) != null;
     } catch (RuntimeException e) {
       return false;
     }

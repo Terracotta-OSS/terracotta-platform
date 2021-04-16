@@ -39,7 +39,7 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.data-dirs.main=stripe1-node1-data-dir"), is(successful()));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs", "-t", "index"),
         allOf(containsOutput("stripe.1.node.1.data-dirs=main:stripe1-node1-data-dir"), containsOutput("stripe.1.node.2.data-dirs=main:stripe1-node1-data-dir")));
   }
 
@@ -48,7 +48,7 @@ public class SetCommand1x2IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.backup-dir=backup/stripe-1"), is(successful()));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir", "-t", "index"),
         allOf(containsOutput("stripe.1.node.1.backup-dir=backup/stripe-1"), containsOutput("stripe.1.node.2.backup-dir=backup/stripe-1")));
   }
 
@@ -110,6 +110,25 @@ public class SetCommand1x2IT extends DynamicConfigIT {
   public void setDuplicateNodeName() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.name=node-1-2"),
+        containsOutput("Error: Found duplicate node name: node-1-2"));
+  }
+
+  @Test
+  public void test_set_new_config() {
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.stripe-name=stripeA"), is(successful()));
+
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripeA:data-dirs.main=stripe1-node1-data-dir"), is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
+        allOf(containsOutput("node-1-1:data-dirs=main:stripe1-node1-data-dir"), containsOutput("node-1-2:data-dirs=main:stripe1-node1-data-dir")));
+
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe:stripeA:backup-dir=backup/stripe-1"), is(successful()));
+    assertThat(
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
+        allOf(containsOutput("node:node-1-1:backup-dir=backup/stripe-1"), containsOutput("node-1-2:backup-dir=backup/stripe-1")));
+
+    assertThat(
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "node-1-1:name=node-1-2"),
         containsOutput("Error: Found duplicate node name: node-1-2"));
   }
 }

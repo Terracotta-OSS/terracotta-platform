@@ -120,7 +120,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         allOf(containsOutput("Restart required for cluster"), not(containsOutput("Restart required for nodes:"))));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority", "-c", "log-dir"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority", "-c", "log-dir", "-t", "index"),
         allOf(containsOutput("failover-priority=consistency:2"), containsOutput("stripe.1.node.1.log-dir=new-logs")));
   }
 
@@ -142,7 +142,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         allOf(not(containsOutput("Restart required for cluster")), containsOutput("Restart required for nodes: ")));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "cluster-name", "-c", "log-dir"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "cluster-name", "-c", "log-dir", "-t", "index"),
         allOf(containsOutput("cluster-name=new-cluster"), containsOutput("stripe.1.node.1.log-dir=new-logs")));
   }
 
@@ -153,7 +153,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         containsOutput("Restart required for nodes:"));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "log-dir", "-t", "index"),
         containsOutput("stripe.1.node.1.log-dir=logs/stripe1"));
 
     // Restart node and verify that the change has taken effect
@@ -161,7 +161,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     startNode(1, 1);
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-r", "-c", "log-dir"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-r", "-c", "log-dir", "-t", "index"),
         containsOutput("stripe.1.node.1.log-dir=logs/stripe1"));
   }
 
@@ -265,7 +265,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + publicPort, "-c", "stripe.1.node.1.public-hostname=" + publicHostname, "-c", "stripe.1.node.1.public-port=" + publicPort), is(successful()));
 
     assertThat(
-        configTool("get", "-s", publicHostname + ":" + getNodePort(), "-c", "stripe.1.node.1.public-hostname", "-c", "stripe.1.node.1.public-port"),
+        configTool("get", "-s", publicHostname + ":" + getNodePort(), "-c", "stripe.1.node.1.public-hostname", "-c", "stripe.1.node.1.public-port", "-t", "index"),
         allOf(containsOutput("stripe.1.node.1.public-hostname=" + publicHostname), containsOutput("stripe.1.node.1.public-port=" + publicPort)));
   }
 

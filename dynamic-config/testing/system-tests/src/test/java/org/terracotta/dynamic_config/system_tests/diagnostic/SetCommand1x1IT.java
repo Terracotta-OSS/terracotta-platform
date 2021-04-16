@@ -49,7 +49,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.something=value"), is(successful()));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.something"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.tc-properties.something", "-t", "index"),
         containsOutput("stripe.1.node.1.tc-properties.something=value"));
   }
 
@@ -67,7 +67,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port=9630"), is(successful()));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port", "-t", "index"),
         containsOutput("stripe.1.node.1.group-port=9630"));
   }
 
@@ -76,7 +76,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main=user-data/main/stripe1-node1-data-dir"), is(successful()));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main", "-t", "index"),
         containsOutput("stripe.1.node.1.data-dirs.main=user-data/main/stripe1-node1-data-dir"));
   }
 
@@ -85,7 +85,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.backup-dir=backup/stripe1-node1-backup"), is(successful()));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.backup-dir"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.backup-dir", "-t", "index"),
         containsOutput("stripe.1.node.1.backup-dir=backup/stripe1-node1-backup"));
   }
 
@@ -94,7 +94,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB", "-c", "stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir"), is(successful()));
 
     assertThat(
-        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "stripe.1.node.1.data-dirs.main", "-t", "index"),
         allOf(containsOutput("offheap-resources.main=1GB"), containsOutput("stripe.1.node.1.data-dirs.main=stripe1-node1-data-dir")));
   }
 

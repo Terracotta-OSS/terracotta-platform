@@ -227,7 +227,7 @@ public class Configuration {
   private final String key;
   private final String value;
 
-  private Configuration(String rawInput, Setting setting, Scope level, Integer stripeId, Integer nodeId, String key, String value) {
+  public Configuration(String rawInput, Setting setting, Scope level, Integer stripeId, Integer nodeId, String key, String value) {
     this.rawInput = requireNonNull(rawInput);
     this.setting = requireNonNull(setting);
     this.level = requireNonNull(level);

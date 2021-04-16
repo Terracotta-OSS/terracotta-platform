@@ -100,39 +100,39 @@ public class ClusterValidator {
 
   private void validateNames() {
     Stream.concat(Stream.of(cluster), cluster.descendants())
-        .filter(o -> o.getName() != null) // empty names will be validated elsewhere
-        .forEach(o -> {
-          String name = o.getName();
-          // emptiness
-          if (name.isEmpty()) {
-            throw new MalformedClusterException("Empty " + o.getScope().toString().toLowerCase() + " name");
-          }
-          // invalid chars
-          {
-            Character invalid = IntStream.range(0, name.length())
-                .mapToObj(name::charAt)
-                .filter(c -> binarySearch(FORBIDDEN_CTRL_CHARS, c) >= 0 || binarySearch(FORBIDDEN_FILE_CHARS, c) >= 0 || binarySearch(FORBIDDEN_DC_CHARS, c) >= 0)
-                .findFirst()
-                .orElse(null);
-            if (invalid != null) {
-              throw new MalformedClusterException("Invalid character in " + o.getScope().toString().toLowerCase() + " name: '" + invalid + "'");
-            }
-          }
-          // invalid ending characters
-          {
-            char last = name.charAt(name.length() - 1);
-            if (binarySearch(FORBIDDEN_ENDING_CHARS, last) >= 0) {
-              throw new MalformedClusterException("Invalid ending character in " + o.getScope().toString().toLowerCase() + " name: '" + last + "'");
-            }
-          }
-          // invalid filenames
-          {
-            String noExt = name.lastIndexOf(".") == -1 ? name : name.substring(0, name.lastIndexOf("."));
-            if (binarySearch(FORBIDDEN_NAMES_NO_EXT, noExt) >= 0) {
-              throw new MalformedClusterException("Invalid name for " + o.getScope().toString().toLowerCase() + ": '" + noExt + "' is a reserved word");
-            }
-          }
-        });
+      .filter(o -> o.getName() != null) // empty names will be validated elsewhere
+      .forEach(o -> validateName(o.getName(), o.getScope().toString().toLowerCase()));
+  }
+
+  public static void validateName(String name, String scope) {
+    if (name.isEmpty()) {
+      throw new MalformedClusterException("Empty " + scope.toString().toLowerCase() + " name");
+    }
+    // invalid chars
+    {
+      Character invalid = IntStream.range(0, name.length())
+          .mapToObj(name::charAt)
+          .filter(c -> binarySearch(FORBIDDEN_CTRL_CHARS, c) >= 0 || binarySearch(FORBIDDEN_FILE_CHARS, c) >= 0 || binarySearch(FORBIDDEN_DC_CHARS, c) >= 0)
+          .findFirst()
+          .orElse(null);
+      if (invalid != null) {
+        throw new MalformedClusterException("Invalid character in " + scope + " name: '" + invalid + "'");
+      }
+    }
+    // invalid ending characters
+    {
+      char last = name.charAt(name.length() - 1);
+      if (binarySearch(FORBIDDEN_ENDING_CHARS, last) >= 0) {
+        throw new MalformedClusterException("Invalid ending character in " + scope + " name: '" + last + "'");
+      }
+    }
+    // invalid filenames
+    {
+      String noExt = name.lastIndexOf(".") == -1 ? name : name.substring(0, name.lastIndexOf("."));
+      if (binarySearch(FORBIDDEN_NAMES_NO_EXT, noExt) >= 0) {
+        throw new MalformedClusterException("Invalid name for " + scope + ": '" + noExt + "' is a reserved word");
+      }
+    }
   }
 
   private void validateUIDs() {
