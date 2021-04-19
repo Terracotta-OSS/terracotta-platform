@@ -64,6 +64,7 @@ public class MoveOperation {
           List<String> allPaths = Files.readAllLines(mark);
           String line = allPaths.get(0);
           Path sourcePath = Paths.get(line);
+          Path sourceParentPath = sourcePath.getParent();
           allPaths.forEach(path -> {
             if (!Files.isReadable(Paths.get(path))) {
               String errMsg = "Moving data directory from: " + sourcePath + " to: " + destination +
@@ -78,7 +79,7 @@ public class MoveOperation {
                                              BasicFileAttributes attributes) {
 
               try {
-                Path targetFile = destination.resolve(sourcePath.relativize(file));
+                Path targetFile = destination.resolve(sourceParentPath.relativize(file));
                 org.terracotta.utilities.io.Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
               } catch (IOException ex) {
                 String errMsg = "Moving data directory from: " + sourcePath + " to: " + destination +
@@ -93,7 +94,7 @@ public class MoveOperation {
                                                      BasicFileAttributes attributes) {
               Path newDir = null;
               try {
-                newDir = destination.resolve(sourcePath.relativize(dir));
+                newDir = destination.resolve(sourceParentPath.relativize(dir));
                 if (!Files.isReadable(newDir)) {
                   Files.createDirectory(newDir);
                 }

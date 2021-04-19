@@ -82,7 +82,10 @@ public class MetaDataDirConfigChangeHandler implements ConfigChangeHandler {
       Path substitutedExistingPath = parameterSubstitutor.substitute(pathResolver.resolve(metaDirPath.toPath()));
       if (!substitutedExistingPath.equals(substitutedNewMetaDirPath)) {
         try {
-          new MoveOperation(substitutedNewMetaDirPath).prepare(substitutedExistingPath);
+          // For handling cases where multiple nodes are using same parent metadata-dir path but we want to 
+          // change metadata-dir for specific node.
+          String nodeName = baseConfig.getNode().getName();
+          new MoveOperation(substitutedNewMetaDirPath).prepare(substitutedExistingPath.resolve(nodeName));
         } catch (IOException e) {
           throw new InvalidConfigChangeException(e.toString(), e);
         }

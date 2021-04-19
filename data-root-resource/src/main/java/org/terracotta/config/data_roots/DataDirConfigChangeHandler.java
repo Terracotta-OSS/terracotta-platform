@@ -112,7 +112,10 @@ public class DataDirConfigChangeHandler implements ConfigChangeHandler {
           Path substitutedExistingPath = substitute(dataDirs.get(dataDirectoryName).toPath());
           if (!substitutedExistingPath.equals(substitutedDataDirPath)) {
             try {
-              new MoveOperation(substitutedDataDirPath).prepare(substitutedExistingPath);
+              // For handling cases where multiple nodes are using same parent data-dir path but we want to 
+              // change data-dir for specific node.
+              String nodeName = baseConfig.getNode().getName();
+              new MoveOperation(substitutedDataDirPath).prepare(substitutedExistingPath.resolve(nodeName));
             } catch (IOException e) {
               throw new InvalidConfigChangeException(e.toString(), e);
             }
