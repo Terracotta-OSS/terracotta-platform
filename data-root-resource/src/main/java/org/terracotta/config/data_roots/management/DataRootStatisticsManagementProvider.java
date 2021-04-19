@@ -33,22 +33,26 @@ import static org.terracotta.statistics.ValueStatistics.memoize;
 @StatisticProvider
 public class DataRootStatisticsManagementProvider extends AbstractStatisticsManagementProvider<DataRootBinding> {
   private final DataDirsConfigImpl dataRootConfig;
+  private final String serverName;
 
-  public DataRootStatisticsManagementProvider(DataDirsConfigImpl dataRootConfig) {
+  public DataRootStatisticsManagementProvider(DataDirsConfigImpl dataRootConfig, String serverName) {
     super(DataRootBinding.class);
     this.dataRootConfig = dataRootConfig;
+    this.serverName = serverName;
   }
 
   @Override
   protected AbstractExposedStatistics<DataRootBinding> internalWrap(Context context, DataRootBinding managedObject, StatisticRegistry statisticRegistry) {
-    return new DataRootBindingExposedStatistics(context, managedObject, statisticRegistry, dataRootConfig);
+    return new DataRootBindingExposedStatistics(context, managedObject, statisticRegistry, dataRootConfig, serverName);
   }
 
   private static class DataRootBindingExposedStatistics extends AbstractExposedStatistics<DataRootBinding> {
-    DataRootBindingExposedStatistics(Context context, DataRootBinding binding, StatisticRegistry statisticRegistry, final DataDirsConfigImpl dataRootConfig) {
-      super(context.with("type", "DataRoot"), binding, statisticRegistry);
+    DataRootBindingExposedStatistics(Context context, DataRootBinding binding, StatisticRegistry statisticRegistry,
+                                     final DataDirsConfigImpl dataRootConfig, String serverName) {
+      super(context.with("type", "DataRoot").with("server", serverName), binding, statisticRegistry);
 
-      getStatisticRegistry().registerStatistic("DataRoot:TotalDiskUsage", memoize(10, SECONDS, gauge(() -> dataRootConfig.getDiskUsageByRootIdentifier(binding.getAlias()))));
+      getStatisticRegistry().registerStatistic("DataRoot:TotalDiskUsage",
+          memoize(10, SECONDS, gauge(() -> dataRootConfig.getDiskUsageByRootIdentifierForServer(binding.getAlias(), serverName))));
     }
   }
 }

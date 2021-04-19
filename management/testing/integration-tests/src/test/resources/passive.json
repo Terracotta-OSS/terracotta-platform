@@ -111,13 +111,6 @@
       }
     },
     {
-      "id": "SystemLeaseAcquirer:org.terracotta.lease.LeaseAcquirer",
-      "type": "org.terracotta.lease.LeaseAcquirer",
-      "name": "SystemLeaseAcquirer",
-      "consumerId": 1,
-      "managementRegistry": null
-    },
-    {
       "id": "dynamic-config-management-entity:org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
       "type": "org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
       "name": "dynamic-config-management-entity",
@@ -129,20 +122,6 @@
         },
         "capabilities": []
       }
-    },
-    {
-      "id": "dynamic-config-topology-entity:org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity",
-      "type": "org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity",
-      "name": "dynamic-config-topology-entity",
-      "consumerId": 2,
-      "managementRegistry": null
-    },
-    {
-      "id": "nomad-entity:org.terracotta.nomad.entity.client.NomadEntity",
-      "type": "org.terracotta.nomad.entity.client.NomadEntity",
-      "name": "nomad-entity",
-      "consumerId": 5,
-      "managementRegistry": null
     },
     {
       "id": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",

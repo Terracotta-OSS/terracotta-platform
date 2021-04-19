@@ -93,7 +93,8 @@ public class VoltronMonitoringServiceTest {
   MonitoringServiceProvider activeServiceProvider = new MonitoringServiceProvider();
   MonitoringServiceProvider passiveServiceProvider = new MonitoringServiceProvider();
   ClientCommunicator clientCommunicator;
-  long now = 1476304913984L;
+  static final long startTime = 1476304913984L;
+  static final long activateTime = 1615832230246L;
 
   // service that the platform calls when it received calls on active and passive through IMonitoringProducer
   IStripeMonitoring activePlatformListener;
@@ -120,8 +121,8 @@ public class VoltronMonitoringServiceTest {
   public void setUp() throws Exception {
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
-    active = new PlatformServer("server-1", "localhost", "127.0.0.1", "0.0.0.0", 9510, 9610, "v1", "b1", now);
-    passive = new PlatformServer("server-2", "localhost", "127.0.0.1", "0.0.0.0", 9511, 9611, "v1", "b1", now);
+    active = new PlatformServer("server-1", "localhost", "127.0.0.1", "0.0.0.0", 9510, 9610, "v1", "b1", startTime);
+    passive = new PlatformServer("server-2", "localhost", "127.0.0.1", "0.0.0.0", 9511, 9611, "v1", "b1", startTime);
 
     // platform does this call to fire events to us
     activeServiceProvider.initialize(null, new MyPlatformConfiguration(active.getServerName(), active.getHostName(), active.getBindPort()));
@@ -131,7 +132,7 @@ public class VoltronMonitoringServiceTest {
     // simulation of platform calls when active server is up
     activePlatformListener.serverDidBecomeActive(active);
     activePlatformListener.addNode(active, null, PLATFORM_ROOT_NAME, null);
-    activePlatformListener.addNode(active, PLATFORM_PATH, STATE_NODE_NAME, new ServerState("ACTIVE", active.getStartTime(), active.getStartTime()));
+    activePlatformListener.addNode(active, PLATFORM_PATH, STATE_NODE_NAME, new ServerState("ACTIVE", active.getStartTime(), activateTime));
     activePlatformListener.addNode(active, PLATFORM_PATH, ENTITIES_ROOT_NAME, null);
     activePlatformListener.addNode(active, PLATFORM_PATH, FETCHED_ROOT_NAME, null);
     activePlatformListener.addNode(active, PLATFORM_PATH, CLIENTS_ROOT_NAME, null);
@@ -265,7 +266,7 @@ public class VoltronMonitoringServiceTest {
   public void test_add_passive_entity() throws Exception {
     // this reflects the calls received on active through IStripeMonitoring
     activePlatformListener.serverDidJoinStripe(passive);
-    activePlatformListener.addNode(passive, PLATFORM_PATH, "state", new ServerState("PASSIVE", now, 0));
+    activePlatformListener.addNode(passive, PLATFORM_PATH, "state", new ServerState("PASSIVE", startTime, 0));
     activePlatformListener.addNode(passive, ENTITIES_PATH, "entity-1", new PlatformEntity("entityType", "entityName-1", 3, false));
     assertTopologyEquals("cluster-5.json");
 
@@ -432,6 +433,9 @@ public class VoltronMonitoringServiceTest {
     Cluster cluster = managementService.readTopology();
     cluster.serverStream().forEach(server -> {
       server.setUpTimeSec(0);
+      if (server.isActive()) {
+        server.setActivateTime(activateTime);
+      }
     });
     String expected = new String(Files.readAllBytes(new File("src/test/resources/" + file).toPath()), "UTF-8");
     String sampled = mapper.writeValueAsString(cluster.toMap());

@@ -90,12 +90,13 @@ class TopologyService implements PlatformListener {
   private volatile Server currentActive;
 
   TopologyService(FiringService firingService, PlatformConfiguration platformConfiguration) {
-    org.terracotta.dynamic_config.api.service.TopologyService topologyService =
-        platformConfiguration.getExtendedConfiguration(org.terracotta.dynamic_config.api.service.TopologyService.class).iterator().next();
     this.firingService = Objects.requireNonNull(firingService);
     this.platformConfiguration = platformConfiguration;
     this.cluster = Cluster.create();
-    this.cluster.addStripe(stripe = Stripe.create(topologyService.getRuntimeNodeContext().getStripe().getName()));
+    org.terracotta.dynamic_config.api.service.TopologyService dcTopologyService =
+      platformConfiguration.getExtendedConfiguration(org.terracotta.dynamic_config.api.service.TopologyService.class)
+        .iterator().next();
+    this.cluster.addStripe(stripe = Stripe.create(dcTopologyService.getRuntimeNodeContext().getStripe().getName()));
   }
 
   // ================================================
@@ -107,6 +108,7 @@ class TopologyService implements PlatformListener {
   public synchronized void serverDidBecomeActive(PlatformServer self) {
     LOGGER.trace("[0] serverDidBecomeActive({})", self.getServerName());
 
+    long now = System.currentTimeMillis();
     Server server = Server.create(self.getServerName())
         .setBindAddress(self.getBindAddress())
         .setBindPort(self.getBindPort())
@@ -114,8 +116,10 @@ class TopologyService implements PlatformListener {
         .setGroupPort(self.getGroupPort())
         .setHostName(self.getHostName())
         .setStartTime(self.getStartTime())
+        .setActivateTime(now)
         .setHostAddress(self.getHostAddress())
         .setVersion(self.getVersion())
+        .setState(Server.State.ACTIVE)
         .computeUpTime();
 
     if (stripe.addServer(server)) {
@@ -123,10 +127,16 @@ class TopologyService implements PlatformListener {
 
       topologyEventListeners.forEach(listener -> listener.onBecomeActive(platformConfiguration.getServerName()));
 
-      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
+      Map<String, String> attrs = new HashMap<>();
+      attrs.put("startTime", String.valueOf(server.getStartTime()));
+      attrs.put("activateTime", String.valueOf(server.getActivateTime()));
+      attrs.put("version", server.getVersion());
+      attrs.put("buildId", server.getBuildId());
+      attrs.put("state", server.getState().toString());
 
-      // we assume server.getStartTime() == activate time, but this will be fixed after into serverStateChanged() call by platform
-      serverStateChanged(self, new ServerState("ACTIVE", server.getStartTime(), server.getStartTime()));
+      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name(), attrs));
+
+      serverStateChanged(self, new ServerState("ACTIVE", now, now));
     }
   }
 
@@ -143,10 +153,18 @@ class TopologyService implements PlatformListener {
         .setStartTime(platformServer.getStartTime())
         .setHostAddress(platformServer.getHostAddress())
         .setVersion(platformServer.getVersion())
+        .setState(Server.State.STARTING)
         .computeUpTime();
 
     if (stripe.addServer(server)) {
-      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name()));
+      Map<String, String> attrs = new HashMap<>();
+      attrs.put("startTime", String.valueOf(server.getStartTime()));
+      attrs.put("activateTime", String.valueOf(server.getActivateTime()));
+      attrs.put("version", server.getVersion());
+      attrs.put("buildId", server.getBuildId());
+      attrs.put("state", server.getState().toString());
+
+      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_JOINED.name(), attrs));
     }
   }
 
@@ -158,9 +176,17 @@ class TopologyService implements PlatformListener {
       Context context = server.getContext();
       server.remove();
 
+      server.setState(Server.State.UNREACHABLE);
       serverEntities.remove(platformServer.getServerName());
 
-      firingService.fireNotification(new ContextualNotification(context, SERVER_LEFT.name()));
+      Map<String, String> attrs = new HashMap<>();
+      attrs.put("startTime", "0");
+      attrs.put("activateTime", "0");
+      attrs.put("version", null);
+      attrs.put("buildId", null);
+      attrs.put("state", server.getState().toString());
+
+      firingService.fireNotification(new ContextualNotification(context, SERVER_LEFT.name(), attrs));
     });
   }
 
@@ -178,32 +204,35 @@ class TopologyService implements PlatformListener {
       return;
     }
 
-    stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
-      ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
-      ServerEntity entity = ServerEntity.create(identifier)
-          .setConsumerId(platformEntity.consumerID);
+    if (isInterestingEntity(platformEntity)) {
+      stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
+        ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
+        ServerEntity entity = ServerEntity.create(identifier).setConsumerId(platformEntity.consumerID);
 
-      if (server.addServerEntity(entity)) {
-        firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
+        if (server.addServerEntity(entity)) {
+          firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_CREATED.name()));
 
-        whenServerEntity(platformEntity.consumerID, sender.getServerName()).complete(entity);
+          whenServerEntity(platformEntity.consumerID, sender.getServerName()).complete(entity);
 
-        if (sender.getServerName().equals(getServerName())) {
-          topologyEventListeners.forEach(listener -> listener.onEntityCreated(platformEntity.consumerID));
+          if (sender.getServerName().equals(getServerName())) {
+            topologyEventListeners.forEach(listener -> listener.onEntityCreated(platformEntity.consumerID));
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   @Override
   public void serverEntityReconfigured(PlatformServer sender, PlatformEntity platformEntity) {
-    LOGGER.trace("[0] serverEntityReconfigured({}, {})", sender.getServerName(), platformEntity);
+    if (isInterestingEntity(platformEntity)) {
+      LOGGER.trace("[0] serverEntityReconfigured({}, {})", sender.getServerName(), platformEntity);
 
-    stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
-      ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
-      server.getServerEntity(identifier)
+      stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
+        ServerEntityIdentifier identifier = ServerEntityIdentifier.create(platformEntity.name, platformEntity.typeName);
+        server.getServerEntity(identifier)
           .ifPresent(entity -> firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_RECONFIGURED.name())));
-    });
+      });
+    }
   }
 
   @Override
@@ -220,149 +249,154 @@ class TopologyService implements PlatformListener {
       return;
     }
 
-    stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
-      server.getServerEntity(platformEntity.name, platformEntity.typeName).ifPresent(entity -> {
-        Context context = entity.getContext();
-        entity.remove();
+    if (isInterestingEntity(platformEntity)) {
+      stripe.getServerByName(sender.getServerName())
+        .flatMap(server -> server.getServerEntity(platformEntity.name, platformEntity.typeName))
+        .ifPresent(entity -> {
+          Context context = entity.getContext();
+          entity.remove();
 
-        serverEntities.get(sender.getServerName()).remove(platformEntity.consumerID);
+          serverEntities.get(sender.getServerName()).remove(platformEntity.consumerID);
 
-        if (isCurrentServerActive() && sender.getServerName().equals(currentActive.getServerName())) {
-          entityFetches.remove(platformEntity.consumerID);
-        }
+          if (isCurrentServerActive() && sender.getServerName().equals(currentActive.getServerName())) {
+            entityFetches.remove(platformEntity.consumerID);
+          }
 
-        if (sender.getServerName().equals(getServerName())) {
-          topologyEventListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
-        }
+          if (sender.getServerName().equals(getServerName())) {
+            topologyEventListeners.forEach(listener -> listener.onEntityDestroyed(platformEntity.consumerID));
+          }
 
-        firingService.fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
-      });
-    });
+          firingService.fireNotification(new ContextualNotification(context, SERVER_ENTITY_DESTROYED.name()));
+        });
+    }
   }
 
   @Override
   public synchronized void clientConnected(PlatformServer currentActive, PlatformConnectedClient platformConnectedClient) {
     LOGGER.trace("[0] clientConnected({})", platformConnectedClient);
 
-    stripe.getServerByName(currentActive.getServerName())
+    if (isInterestingClient(platformConnectedClient)) {
+      stripe.getServerByName(currentActive.getServerName())
         .ifPresent(server -> {
+            ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
+            Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
+            Client client = Client.create(clientIdentifier).setHostName(platformConnectedClient.remoteAddress.getHostName());
 
-          ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
-          Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
+            cluster.addClient(client);
 
-          Client client = Client.create(clientIdentifier)
-              .setHostName(platformConnectedClient.remoteAddress.getHostName());
-
-          cluster.addClient(client);
-
-          if (client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getActiveServer(), endpoint))) {
-            firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_CONNECTED.name(), client.getContext()));
-          }
+            if (client.addConnection(Connection.create(clientIdentifier.getConnectionUid(), getActiveServer(), endpoint))) {
+                firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_CONNECTED.name(), client.getContext()));
+            }
         });
+    }
   }
 
   @Override
-  public synchronized void clientAddProperty(PlatformConnectedClient platformClient, String key, String value) {
-    LOGGER.trace("[0] client property added ({}, key:{}, value:{})", platformClient, key, value);
+  public synchronized void clientAddProperty(PlatformConnectedClient platformConnectedClient, String key, String value) {
+    LOGGER.trace("[0] client property added ({}, key:{}, value:{})", platformConnectedClient, key, value);
 
-    stripe.getServerByName(currentActive.getServerName())
+    if (isInterestingClient(platformConnectedClient)) {
+      stripe.getServerByName(currentActive.getServerName())
         .ifPresent(server -> {
-
-          ClientIdentifier clientIdentifier = toClientIdentifier(platformClient);
-          cluster.getClient(clientIdentifier)
+            ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
+            cluster.getClient(clientIdentifier)
               .ifPresent(client -> {
                 client.addProperty(key, value);
-                firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_PROPERTY_ADDED.name(), Collections.singletonMap(key, value)));
+                  firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_PROPERTY_ADDED.name(), Collections.singletonMap(key, value)));
               });
         });
+    }
   }
 
   @Override
   public synchronized void clientDisconnected(PlatformServer currentActive, PlatformConnectedClient platformConnectedClient) {
     LOGGER.trace("[0] clientDisconnected({})", platformConnectedClient);
 
-    stripe.getServerByName(currentActive.getServerName())
+    if (isInterestingClient(platformConnectedClient)) {
+      stripe.getServerByName(currentActive.getServerName())
         .ifPresent(server -> {
-
-          ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
-          cluster.getClient(clientIdentifier)
+            ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
+            cluster.getClient(clientIdentifier)
               .ifPresent(client -> {
                 Context clientContext = client.getContext();
-
                 client.remove();
-
-                firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_DISCONNECTED.name(), clientContext));
+                  firingService.fireNotification(new ContextualNotification(server.getContext(), CLIENT_DISCONNECTED.name(), clientContext));
               });
         });
+    }
   }
 
   @Override
   public synchronized void clientFetch(PlatformConnectedClient platformConnectedClient, PlatformEntity platformEntity, ClientDescriptor clientDescriptor) {
     LOGGER.trace("[0] clientFetch({}, {})", platformConnectedClient, platformEntity);
 
-    Server currentActive = getActiveServer();
-    ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
-    Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
+    if (isInterestingClient(platformConnectedClient) && isInterestingEntity(platformEntity)) {
+      Server currentActive = getActiveServer();
+      ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
+      Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
-    cluster.getClient(clientIdentifier).ifPresent(client -> {
-      client.getConnection(currentActive, endpoint).ifPresent(connection -> {
-        currentActive.getServerEntity(platformEntity.name, platformEntity.typeName).ifPresent(entity -> {
-          connection.fetchServerEntity(platformEntity.name, platformEntity.typeName);
-          firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
-          whenFetchClient(platformEntity.consumerID, clientDescriptor).complete(client);
-          topologyEventListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
-        });
-      });
-    });
+      cluster.getClient(clientIdentifier).ifPresent(client -> client.getConnection(currentActive, endpoint)
+        .ifPresent(connection -> currentActive.getServerEntity(platformEntity.name, platformEntity.typeName)
+          .ifPresent(entity -> {
+            connection.fetchServerEntity(platformEntity.name, platformEntity.typeName);
+            firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_FETCHED.name(), client.getContext()));
+            whenFetchClient(platformEntity.consumerID, clientDescriptor).complete(client);
+            topologyEventListeners.forEach(listener -> listener.onFetch(platformEntity.consumerID, clientDescriptor));
+          })));
+    }
   }
 
   @Override
   public synchronized void clientUnfetch(PlatformConnectedClient platformConnectedClient, PlatformEntity platformEntity, ClientDescriptor clientDescriptor) {
     LOGGER.trace("[0] clientUnfetch({}, {})", platformConnectedClient, platformEntity);
 
-    Server currentActive = getActiveServer();
-    ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
-    Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
+    if (isInterestingClient(platformConnectedClient) && isInterestingEntity(platformEntity)) {
+      Server currentActive = getActiveServer();
+      ClientIdentifier clientIdentifier = toClientIdentifier(platformConnectedClient);
+      Endpoint endpoint = Endpoint.create(platformConnectedClient.remoteAddress.getHostAddress(), platformConnectedClient.remotePort);
 
-    currentActive.getServerEntity(platformEntity.name, platformEntity.typeName).ifPresent(entity -> {
-      cluster.getClient(clientIdentifier).ifPresent(client -> {
-        client.getConnection(currentActive, endpoint).ifPresent(connection -> {
-          entityFetches.get(platformEntity.consumerID).remove(clientDescriptor);
-          if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
-            firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
-          }
-          topologyEventListeners.forEach(listener -> listener.onUnfetch(platformEntity.consumerID, clientDescriptor));
-        });
-      });
-    });
+      currentActive.getServerEntity(platformEntity.name, platformEntity.typeName)
+        .ifPresent(entity -> cluster.getClient(clientIdentifier)
+          .ifPresent(client -> client.getConnection(currentActive, endpoint)
+            .ifPresent(connection -> {
+              entityFetches.get(platformEntity.consumerID).remove(clientDescriptor);
+              if (connection.unfetchServerEntity(platformEntity.name, platformEntity.typeName)) {
+                firingService.fireNotification(new ContextualNotification(entity.getContext(), SERVER_ENTITY_UNFETCHED.name(), client.getContext()));
+              }
+              topologyEventListeners.forEach(listener -> listener.onUnfetch(platformEntity.consumerID, clientDescriptor));
+            })));
+    }
   }
 
   @Override
   public synchronized void serverStateChanged(PlatformServer sender, ServerState serverState) {
-    LOGGER.trace("[0] serverStateChanged({}, {})", sender.getServerName(), serverState.getState());
-
     stripe.getServerByName(sender.getServerName()).ifPresent(server -> {
       Server.State oldState = server.getState();
+      Server.State newState = Server.State.parse(serverState.getState());
 
-      if (oldState == Server.State.ACTIVE && isServerActive(server.getServerName())) {
-        // in case of a failover, the server state changed is replayed. So the server is active but will become passive and will become active again
-        // we filter this out
-        return;
-      }
+      LOGGER.trace("[0] serverStateChanged({}, newState={}, oldState={})", sender.getServerName(), newState, server.getState());
 
       server.setState(Server.State.parse(serverState.getState()));
-      server.setActivateTime(serverState.getActivate());
 
-      if (oldState != server.getState()) {
-        // avoid sending another event to report the same state as before, to avoid duplicates
+      boolean available = newState != Server.State.UNREACHABLE && newState != Server.State.UNKNOWN;
+      long startTime = available ? server.getStartTime() : 0;
+      long activateTime = available ? server.getActivateTime() : 0;
 
-        Map<String, String> attrs = new HashMap<>();
-        attrs.put("oldState", oldState.name());
-        attrs.put("state", serverState.getState());
-        attrs.put("activateTime", serverState.getActivate() > 0 ? String.valueOf(serverState.getActivate()) : "0");
+      server.setStartTime(startTime).setActivateTime(activateTime);
 
-        firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
+      Map<String, String> attrs = new HashMap<>();
+      attrs.put("oldState", oldState.name());
+      attrs.put("state", serverState.getState());
+      attrs.put("startTime", String.valueOf(startTime));
+      attrs.put("activateTime", String.valueOf(activateTime));
+      if (available) {
+        attrs.put("version", server.getVersion());
+        attrs.put("buildId", server.getBuildId());
+      } else {
+        server.setBuildId(null).setVersion(null);
       }
+
+      firingService.fireNotification(new ContextualNotification(server.getContext(), SERVER_STATE_CHANGED.name(), attrs));
     });
   }
 
@@ -400,12 +434,12 @@ class TopologyService implements PlatformListener {
    * Records registry that needs to be sent in future (or now) when the client will have arrived
    */
   void willSetClientManagementRegistry(long consumerId, ClientDescriptor clientDescriptor, ManagementRegistry newRegistry) {
+    LOGGER.trace("[{}] willSetClientManagementRegistry({}, {})", consumerId, clientDescriptor, newRegistry);
+
     whenFetchClient(consumerId, clientDescriptor).executeOrDelay("client-registry", client -> {
       boolean hadRegistry = client.getManagementRegistry().isPresent();
-      LOGGER.trace("[{}] willSetClientManagementRegistry({}, {})", consumerId, clientDescriptor, newRegistry);
       client.setManagementRegistry(newRegistry);
       if (!hadRegistry) {
-        LOGGER.info("[{}] New management registry received from client {}", consumerId, clientDescriptor);
         firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_REGISTRY_AVAILABLE.name()));
       }
     });
@@ -415,11 +449,12 @@ class TopologyService implements PlatformListener {
    * Records tags that needs to be sent in future (or now) when the client info will have arrived
    */
   void willSetClientTags(long consumerId, ClientDescriptor clientDescriptor, String[] tags) {
+    LOGGER.trace("[{}] willSetClientTags({}, {})", consumerId, clientDescriptor, Arrays.toString(tags));
+
     whenFetchClient(consumerId, clientDescriptor).executeOrDelay("client-tags", client -> {
       Set<String> currtags = new HashSet<>(client.getTags());
       Set<String> newTags = new HashSet<>(Arrays.asList(tags));
       if (!currtags.equals(newTags)) {
-        LOGGER.trace("[{}] willSetClientTags({}, {})", consumerId, clientDescriptor, Arrays.toString(tags));
         client.setTags(tags);
         firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_TAGS_UPDATED.name()));
       }
@@ -441,7 +476,7 @@ class TopologyService implements PlatformListener {
             statistic.setContext(statistic.getContext().with(context));
           }
           LOGGER.trace("[{}] willPushEntityStatistics({}, {})", cid, serverName, cid_stats.size());
-          firingService.fireStatistics(cid_stats.toArray(new ContextualStatistics[cid_stats.size()]));
+          firingService.fireStatistics(cid_stats.toArray(new ContextualStatistics[0]));
         }));
   }
 
@@ -463,15 +498,12 @@ class TopologyService implements PlatformListener {
    * Records registry that needs to be sent in future (or now) when the entity will have arrived
    */
   void willSetEntityManagementRegistry(long consumerId, String serverName, ManagementRegistry newRegistry) {
-    if (LOGGER.isTraceEnabled()) {
-      List<String> names = newRegistry.getCapabilities().stream().map(Capability::getName).collect(Collectors.toList());
-      LOGGER.trace("[{}] willSetEntityManagementRegistry({}, {})", consumerId, serverName, names);
-    }
+    List<String> names = newRegistry.getCapabilities().stream().map(Capability::getName).collect(Collectors.toList());
+    LOGGER.trace("[{}] willSetEntityManagementRegistry({}, {})", consumerId, serverName, names);
+
     whenServerEntity(consumerId, serverName).executeOrDelay("entity-registry", serverEntity -> {
-      if (LOGGER.isTraceEnabled()) {
-        List<String> names = newRegistry.getCapabilities().stream().map(Capability::getName).collect(Collectors.toList());
-        LOGGER.trace("[{}] setManagementRegistry({}, {})", consumerId, serverName, names);
-      }
+      List<String> names2 = newRegistry.getCapabilities().stream().map(Capability::getName).collect(Collectors.toList());
+
       boolean hadRegistry = serverEntity.getManagementRegistry().isPresent();
       serverEntity.setManagementRegistry(newRegistry);
       if (!hadRegistry) {
@@ -568,4 +600,23 @@ class TopologyService implements PlatformListener {
         connection.uuid);
   }
 
+  private final static Set<String> CLIENT_NAME_BLACKLIST = new HashSet<>(Arrays.asList("", "CONFIG-TOOL", "CLUSTER-TOOL"));
+
+  private static boolean isInterestingClient(PlatformConnectedClient platformConnectedClient) {
+    return !CLIENT_NAME_BLACKLIST.contains(platformConnectedClient.name);
+  }
+
+  private final static Set<String> ENTITY_TYPE_BLACKLIST = new HashSet<>(Arrays.asList("org.terracotta.lease.LeaseAcquirer",
+    "org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity",
+    "com.terracottatech.br.entity.BackupRestoreEntity",
+    "com.terracottatech.scale.ctrl.ScalerEntity",
+    "com.terracottatech.multi_stripe.scaling_entity.client.ScalingEntity",
+    "org.terracotta.catalog.SystemCatalog",
+    "com.terracottatech.shutdown.entity.ShutdownEntity",
+    "com.terracottatech.licensing.client.LicenseEntity",
+    "org.terracotta.nomad.entity.client.NomadEntity"));
+
+  private static boolean isInterestingEntity(PlatformEntity platformEntity) {
+    return !ENTITY_TYPE_BLACKLIST.contains(platformEntity.typeName);
+  }
 }

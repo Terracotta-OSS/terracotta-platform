@@ -56,11 +56,20 @@ public interface MultiDiagnosticServiceProvider<K> {
   }
 
   /**
-   * Concurrently fetch the diagnostic service of all the provides nodes.
+   * Concurrently fetch the diagnostic service of all the provided nodes.
    * The method will not fail, except if some connection timeout is reached.
    * If some nodes are offline, they will be reported in {@link DiagnosticServices#getOfflineEndpoints()}.
    * <p>
    * The returned {@link DiagnosticServices} will have a list of online nodes and a list of offline nodes.
    */
   DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses);
+
+  /**
+   * Concurrently fetch any single online diagnostic service of all the provided nodes.
+   * The method will not fail, except if some connection timeout is reached.
+   * Offline nodes are ignored.
+   * <p>
+   * If successful, the returned {@link DiagnosticServices} will have a single online node.
+   */
+  DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses);
 }
