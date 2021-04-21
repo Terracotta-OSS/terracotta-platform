@@ -50,13 +50,22 @@ public class ConcurrentDiagnosticServiceProvider<K> implements MultiDiagnosticSe
 
   @Override
   public DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses) {
+    return _fetchOnlineDiagnosticService(addresses, false);
+  }
+
+  @Override
+  public DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses) {
+    return _fetchOnlineDiagnosticService(addresses, true);
+  }
+
+  private DiagnosticServices<K> _fetchOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, boolean firstAvailable) {
     if (addresses.isEmpty()) {
       return new DiagnosticServices<>(emptyMap(), emptyMap());
     }
 
     ExecutorService executor = Executors.newFixedThreadPool(
-        concurrencySizing.getThreadCount(addresses.size()),
-        r -> new Thread(r, "diagnostics-connect"));
+      concurrencySizing.getThreadCount(addresses.size()),
+      r -> new Thread(r, "diagnostics-connect"));
 
     try {
       CompletionService<Tuple3<K, DiagnosticService, DiagnosticServiceProviderException>> completionService = new ExecutorCompletionService<>(executor);
@@ -86,7 +95,11 @@ public class ConcurrentDiagnosticServiceProvider<K> implements MultiDiagnosticSe
           Tuple3<K, DiagnosticService, DiagnosticServiceProviderException> tuple = completed.get();
           if (tuple.t3 == null) {
             online.put(tuple.t1, tuple.t2);
-          } else {
+            if (firstAvailable) {
+              executor.shutdownNow();
+              break;
+            }
+          } else if (!firstAvailable) {
             offline.put(tuple.t1, tuple.t3);
           }
         }

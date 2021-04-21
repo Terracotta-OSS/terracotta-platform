@@ -381,6 +381,21 @@ public final class Server extends AbstractNode<Stripe> {
     ACTIVE("ACTIVE", "ACTIVE-COORDINATOR"),
 
     /**
+     * Active server is blocked because of consistency votes
+     */
+    ACTIVE_SUSPENDED("ACTIVE_SUSPENDED"),
+
+    /**
+     * Passive server is blocked because of consistency votes
+     */
+    PASSIVE_SUSPENDED("PASSIVE_SUSPENDED"),
+
+    /**
+     * Server startup is suspended
+     */
+    START_SUSPENDED("START_SUSPENDED"),
+
+    /**
      * DC configuration mode (only diagnostic port is available)
      */
     DIAGNOSTIC("DIAGNOSTIC"),
