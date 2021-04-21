@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.server.api;
+package org.terracotta.config.data_roots;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

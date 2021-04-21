@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.server.service.handler;
+package org.terracotta.config.data_roots;
 
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -21,12 +21,14 @@ import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
-import org.terracotta.dynamic_config.server.api.MoveOperation;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static org.terracotta.config.data_roots.Utils.isEmpty;
+import static org.terracotta.config.data_roots.Utils.overLaps;
 
 public class MetaDataDirConfigChangeHandler implements ConfigChangeHandler {
   private final IParameterSubstitutor parameterSubstitutor;
@@ -45,16 +47,6 @@ public class MetaDataDirConfigChangeHandler implements ConfigChangeHandler {
     RawPath metaDirPath = baseConfig.getNode().getMetadataDir().orDefault();
     RawPath changePath = RawPath.valueOf(change.getValue().get());
     Path substitutedNewMetaDirPath = parameterSubstitutor.substitute(pathResolver.resolve(changePath.toPath()));
-
-    if (!metaDirPath.equals(changePath)) {
-      Path substitutedExistingPath = parameterSubstitutor.substitute(pathResolver.resolve(metaDirPath.toPath()));
-      if (!substitutedExistingPath.equals(substitutedNewMetaDirPath)) {
-        if (overLaps(substitutedExistingPath, substitutedNewMetaDirPath)) {
-          throw new InvalidConfigChangeException("Path for metadata-dir cannot be updated because " +
-              "the new path overlaps with the existing path: " + metaDirPath);
-        }
-      }
-    }
 
     if (!substitutedNewMetaDirPath.toFile().exists()) {
       try {
@@ -76,12 +68,20 @@ public class MetaDataDirConfigChangeHandler implements ConfigChangeHandler {
         throw new InvalidConfigChangeException("Directory: " + substitutedNewMetaDirPath + " doesn't have write permissions" +
             " for the user: " + parameterSubstitutor.substitute("%n") + " running the server process");
       }
+
+      if (!isEmpty(substitutedNewMetaDirPath)) {
+        throw new InvalidConfigChangeException(substitutedNewMetaDirPath + " should be clean. Please clean the directory before attempting any repair");
+      }
     }
 
     if (!metaDirPath.equals(changePath)) {
       Path substitutedExistingPath = parameterSubstitutor.substitute(pathResolver.resolve(metaDirPath.toPath()));
       if (!substitutedExistingPath.equals(substitutedNewMetaDirPath)) {
         try {
+          if (overLaps(substitutedExistingPath, substitutedNewMetaDirPath)) {
+            throw new InvalidConfigChangeException("Path for metadata-dir cannot be updated because " +
+                "the new path overlaps with the existing path: " + metaDirPath);
+          }
           // For handling cases where multiple nodes are using same parent metadata-dir path but we want to 
           // change metadata-dir for specific node.
           String nodeName = baseConfig.getNode().getName();
@@ -91,9 +91,5 @@ public class MetaDataDirConfigChangeHandler implements ConfigChangeHandler {
         }
       }
     }
-  }
-
-  private boolean overLaps(Path existing, Path newMetaDataDirPath) {
-    return existing.startsWith(newMetaDataDirPath) || newMetaDataDirPath.startsWith(existing);
   }
 }
