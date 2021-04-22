@@ -38,6 +38,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.CONFIG_FILE;
 import static org.terracotta.dynamic_config.api.model.SettingName.DATA_DIRS;
 import static org.terracotta.dynamic_config.api.model.SettingName.FAILOVER_PRIORITY;
+import static org.terracotta.dynamic_config.api.model.SettingName.HELP;
 import static org.terracotta.dynamic_config.api.model.SettingName.LICENSE_FILE;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_BACKUP_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_BIND_ADDRESS;
@@ -153,6 +154,9 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + REPAIR_MODE}, description = "node repair mode (true|false)")
   private boolean wantsRepairMode;
 
+  @Parameter(names = {"-" + HELP}, description = "provide usage information")
+  private boolean help;
+
   // hidden option that won't appear in the help file,
   // so that we can start a pre-activated stripe directly in dev / test.
   @Parameter(names = {"-" + AUTO_ACTIVATE}, hidden = true)
@@ -172,6 +176,7 @@ public class OptionsParsingImpl implements OptionsParsing {
     options.setServerHome(serverHome);
     options.setWantsRepairMode(wantsRepairMode);
     options.setAllowsAutoActivation(allowsAutoActivation);
+    options.setHelp(help);
     return options;
   }
 
@@ -198,7 +203,8 @@ public class OptionsParsingImpl implements OptionsParsing {
               && !longestName.equals(addDash(NODE_HOME_DIR))
               && !longestName.equals(addDash(REPAIR_MODE))
               && !longestName.equals(addDash(AUTO_ACTIVATE))
-              && !longestName.equals(addDash(NODE_CONFIG_DIR));
+              && !longestName.equals(addDash(NODE_CONFIG_DIR))
+              && !longestName.equals(addDash(HELP));
         })
         .forEach(pd -> paramValueMap.put(Setting.fromName(ConsoleParamsUtils.stripDash(pd.getLongestName())), pd.getParameterized().get(this).toString()));
   }

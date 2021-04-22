@@ -55,4 +55,5 @@ public class SettingName {
   public static final String REPAIR_MODE = "repair-mode";
   public static final String AUTO_ACTIVATE = "auto-activate";
   public static final String LOCK_CONTEXT = "lock-context";
+  public static final String HELP = "help";
 }
