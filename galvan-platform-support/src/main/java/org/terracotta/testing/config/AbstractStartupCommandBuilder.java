@@ -100,7 +100,7 @@ public abstract class AbstractStartupCommandBuilder implements StartupCommandBui
 
     Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverWorkingDir.resolve("logback-test.xml"), REPLACE_EXISTING);
     Properties props = new Properties();
-    props.setProperty("serverWorkingDir", serverWorkingDir.toString());
+    props.setProperty("serverWorkingDir", serverWorkingDir.toAbsolutePath().toString());
     try (Writer w = new OutputStreamWriter(new FileOutputStream(serverWorkingDir.resolve("logbackVars.properties").toFile()), StandardCharsets.UTF_8)) {
       props.store(w, "logging variables");
     }
