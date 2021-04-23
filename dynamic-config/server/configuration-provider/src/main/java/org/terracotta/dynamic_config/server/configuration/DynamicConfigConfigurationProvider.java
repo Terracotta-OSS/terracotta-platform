@@ -19,6 +19,7 @@ import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationProvider;
+import org.terracotta.configuration.ConfigurationException;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesHolder;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
@@ -61,6 +62,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
@@ -76,7 +78,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   private volatile Server server;
 
   @Override
-  public void initialize(List<String> args) {
+  public void initialize(List<String> args) throws ConfigurationException {
     withMyClassLoader(() -> {
       server = ServerEnv.getServer();
 
@@ -103,6 +105,10 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
       // CLI parsing
       Options options = parseCommandLineOrExit(args);
+      if (options.isHelp()) {
+        ServerEnv.getServer().console(getConfigurationParamsDescription());
+        throw new ConfigurationException("providing usage information");
+      }
 
       // This path resolver is used when converting a model to XML.
       // It makes sure to resolve any relative path to absolute ones based on the working directory.
@@ -171,6 +177,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       LOGGER.info("Startup configuration of the node: {}{}{}", lineSeparator(), lineSeparator(), configuration);
 
       warnIfPreparedChange();
+      return null;
     });
   }
 
@@ -181,7 +188,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   @Override
   public String getConfigurationParamsDescription() {
-    StringBuilder out = new StringBuilder();
+    StringBuilder out = new StringBuilder("\n");
     CustomJCommander jCommander = new CustomJCommander(new OptionsParsingImpl());
     jCommander.getUsageFormatter().usage(out);
     return out.toString();
@@ -233,12 +240,17 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     nomadServerManager.getNomadServer().close();
   }
 
-  private void withMyClassLoader(Runnable runnable) {
+  private <T> T withMyClassLoader(Callable<T> runnable) throws ConfigurationException {
     ClassLoader classLoader = getClass().getClassLoader();
     ClassLoader oldloader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
-      runnable.run();
+      return runnable.call();
+    } catch (ConfigurationException ce) {
+      throw ce;
+    } catch (Exception e) {
+      LOGGER.error("error during configuration", e);
+      throw new ConfigurationException(e.getMessage(), e);
     } finally {
       Thread.currentThread().setContextClassLoader(oldloader);
     }
