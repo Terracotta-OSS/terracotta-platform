@@ -21,7 +21,6 @@ import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
-import org.terracotta.dynamic_config.server.api.MoveOperation;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.PlatformConfiguration;
 
@@ -50,7 +49,7 @@ public class DataRootsDynamicConfigExtension implements DynamicConfigExtension {
         .forEach(path -> new MoveOperation(path).move());
     DataDirsConfigImpl dataDirectoriesConfig = new DataDirsConfigImpl(parameterSubstitutor, pathResolver, nodeMetadataDir, dataDirs);
     configChangeHandlerManager.set(Setting.DATA_DIRS, new DataDirConfigChangeHandler(dataDirectoriesConfig, parameterSubstitutor, pathResolver));
-
+    configChangeHandlerManager.set(Setting.NODE_METADATA_DIR, new MetaDataDirConfigChangeHandler(parameterSubstitutor, pathResolver));
     registrar.registerExtendedConfiguration(dataDirectoriesConfig);
   }
 }
