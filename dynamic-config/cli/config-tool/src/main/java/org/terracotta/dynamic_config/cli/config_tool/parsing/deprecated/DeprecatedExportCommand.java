@@ -46,7 +46,7 @@ public class DeprecatedExportCommand extends Command {
   @Parameter(names = {"-r"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
-  @Parameter(names = {"-t"}, hidden = true, description = "Output type (cfg|properties|json). Default: cfg", converter = FormatConverter.class)
+  @Parameter(names = {"-t"}, hidden = true, description = "Output type (config|properties|json). Default: config", converter = FormatConverter.class)
   private OutputFormat outputFormat = OutputFormat.CONFIG;
 
   @Inject

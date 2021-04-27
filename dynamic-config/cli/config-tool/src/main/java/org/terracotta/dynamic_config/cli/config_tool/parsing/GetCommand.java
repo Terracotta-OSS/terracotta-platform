@@ -33,7 +33,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 @Parameters(commandDescription = "Read configuration properties")
-@Usage("-connect-to <hostname[:port]> [-runtime] -setting <[namespace:]setting> -setting <[namespace:]setting> ...")
+@Usage("-connect-to <hostname[:port]> [-runtime] [-outputformat name|index] -setting <[namespace:]setting> -setting <[namespace:]setting> ...")
 public class GetCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
