@@ -28,7 +28,7 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 @Parameters(commandDescription = "Import a cluster configuration")
-@Usage("-f <config-file> [-s <hostname[:port]>]")
+@Usage("-f <config.cfg|config.properties> [-s <hostname[:port]>]")
 public class DeprecatedImportCommand extends Command {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
@@ -51,7 +51,7 @@ public class DeprecatedImportCommand extends Command {
   @Override
   public void run() {
     action.setNode(node);
-    action.setConfigPropertiesFile(configFile);
+    action.setConfigFile(configFile);
 
     action.run();
   }

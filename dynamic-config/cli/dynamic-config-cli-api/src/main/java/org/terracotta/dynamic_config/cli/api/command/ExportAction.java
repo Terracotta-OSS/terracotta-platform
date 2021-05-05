@@ -20,10 +20,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ConfigFormat;
 import org.terracotta.dynamic_config.api.service.ConfigPropertiesTranslator;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.api.converter.OutputFormat;
 import org.terracotta.dynamic_config.cli.api.output.FileOutputService;
 import org.terracotta.json.ObjectMapperFactory;
 
@@ -44,7 +44,7 @@ public class ExportAction extends RemoteAction {
   private Path outputFile;
   private boolean includeDefaultValues;
   private boolean wantsRuntimeConfig;
-  private OutputFormat outputFormat = OutputFormat.CONFIG;
+  private ConfigFormat outputFormat = ConfigFormat.CONFIG;
 
   @Inject public ObjectMapperFactory objectMapperFactory;
 
@@ -64,7 +64,7 @@ public class ExportAction extends RemoteAction {
     this.wantsRuntimeConfig = wantsRuntimeConfig;
   }
 
-  public void setOutputFormat(OutputFormat outputFormat) {
+  public void setOutputFormat(ConfigFormat outputFormat) {
     this.outputFormat = outputFormat;
   }
 
@@ -74,7 +74,7 @@ public class ExportAction extends RemoteAction {
       throw new IllegalArgumentException(outputFile + " is not a file");
     }
     Cluster cluster = wantsRuntimeConfig ? getRuntimeCluster(node) : getUpcomingCluster(node);
-    String out = buildOutput(cluster, outputFormat);
+    String out = buildOutput(cluster, outputFile);
 
     if (outputFile != null) {
       if (outputFile.toFile().exists()) {
@@ -104,7 +104,8 @@ public class ExportAction extends RemoteAction {
     }
   }
 
-  private String buildOutput(Cluster cluster, OutputFormat outputFormat) {
+  private String buildOutput(Cluster cluster, Path outputFile) {
+    ConfigFormat outputFormat = outputFile == null ? this.outputFormat : ConfigFormat.from(outputFile);
     switch (outputFormat) {
       case JSON:
         try {
@@ -114,7 +115,7 @@ public class ExportAction extends RemoteAction {
               .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
               .writeValueAsString(cluster);
         } catch (JsonProcessingException e) {
-          throw new AssertionError(outputFormat);
+          throw new AssertionError(e);
         }
       case CONFIG:
       case PROPERTIES:
@@ -133,7 +134,7 @@ public class ExportAction extends RemoteAction {
         String defaultHeader = "Default configurations";
         String hiddenHeader = "Hidden internal system configurations (only for informational, import and repair purposes): please do not alter, get, set, unset them.";
 
-        if (outputFormat == OutputFormat.PROPERTIES) {
+        if (outputFormat == ConfigFormat.PROPERTIES) {
           try (StringWriter out = new StringWriter()) {
             out.write("# " + fileHeader + Props.EOL);
             // this one is always non empty since we have at least failover-priority
@@ -158,7 +159,8 @@ public class ExportAction extends RemoteAction {
               !hidden.isEmpty() ? hidden : null, hiddenHeader);
         }
       default:
-        throw new AssertionError(outputFormat);
+        // unknown format
+        throw new IllegalArgumentException("Invalid format: " + outputFormat + ". Supported formats: " + String.join(", ", ConfigFormat.supported()));
     }
   }
 }

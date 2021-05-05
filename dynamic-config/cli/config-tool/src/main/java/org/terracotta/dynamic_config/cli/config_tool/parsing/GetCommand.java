@@ -18,14 +18,14 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.BooleanConverter;
+import org.terracotta.dynamic_config.api.model.ConfigFormat;
 import org.terracotta.dynamic_config.cli.api.command.ConfigurationInput;
 import org.terracotta.dynamic_config.cli.api.command.GetAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.api.converter.OutputFormatGet;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.ConfigurationInputConverter;
-import org.terracotta.dynamic_config.cli.converter.FormatGetConverter;
+import org.terracotta.dynamic_config.cli.converter.ConfigFormatConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 
@@ -33,7 +33,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 
 @Parameters(commandDescription = "Read configuration properties")
-@Usage("-connect-to <hostname[:port]> [-runtime] [-outputformat name|index] -setting <[namespace:]setting> -setting <[namespace:]setting> ...")
+@Usage("-connect-to <hostname[:port]> [-runtime] [-output-format <cfg|properties>] -setting <[namespace:]setting> -setting <[namespace:]setting> ...")
 public class GetCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
@@ -45,8 +45,8 @@ public class GetCommand extends Command {
   @Parameter(names = {"-runtime"}, description = "Read the properties from the current runtime configuration instead of reading them from the last configuration saved on disk", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
-  @Parameter(names = {"-outputformat"}, description = "Output Format (name|index). Default: name", converter = FormatGetConverter.class)
-  private OutputFormatGet outputFormat = OutputFormatGet.NAME;
+  @Parameter(names = {"-output-format", "-outputformat"}, description = "Output format <cfg|properties>. Default: cfg", converter = ConfigFormatConverter.class)
+  private ConfigFormat outputFormat = ConfigFormat.CONFIG;
 
   @Inject
   public final GetAction action;

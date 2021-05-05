@@ -38,7 +38,7 @@ public class ImportActionTest extends BaseTest {
 
     ImportAction command = new ImportAction();
     inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider, outputService));
-    command.setConfigPropertiesFile(Paths.get(getClass().getResource("/my-cluster.cfg").toURI()));
+    command.setConfigFile(Paths.get(getClass().getResource("/my-cluster.cfg").toURI()));
     command.run();
 
     int[] ports = {9411, 9421, 9422};

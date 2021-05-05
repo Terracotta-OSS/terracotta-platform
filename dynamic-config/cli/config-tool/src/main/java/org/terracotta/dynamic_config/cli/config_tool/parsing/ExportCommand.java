@@ -19,19 +19,19 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.PathConverter;
+import org.terracotta.dynamic_config.api.model.ConfigFormat;
 import org.terracotta.dynamic_config.cli.api.command.ExportAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.api.converter.OutputFormat;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.FormatConverter;
+import org.terracotta.dynamic_config.cli.converter.ConfigFormatConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 @Parameters(commandDescription = "Export a cluster configuration")
-@Usage("-connect-to <hostname[:port]> [-output-file <config-file>] [-include-defaults] [-runtime]")
+@Usage("-connect-to <hostname[:port]> [-output-file <config.cfg|config.properties>] [-include-defaults] [-runtime]")
 public class ExportCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
@@ -46,8 +46,9 @@ public class ExportCommand extends Command {
   @Parameter(names = {"-runtime"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
-  @Parameter(names = {"-outputformat"}, hidden = true, description = "Output type (config|properties|json). Default: config", converter = FormatConverter.class)
-  private OutputFormat outputFormat = OutputFormat.CONFIG;
+  // NOTE: this parameter is hidden and only usable when we output to the console
+  @Parameter(names = {"-output-format", "-outputformat"}, hidden = true, description = "Output format <cfg|properties>. Default: cfg", converter = ConfigFormatConverter.class)
+  private ConfigFormat outputFormat = ConfigFormat.CONFIG;
 
   @Inject
   public final ExportAction action;

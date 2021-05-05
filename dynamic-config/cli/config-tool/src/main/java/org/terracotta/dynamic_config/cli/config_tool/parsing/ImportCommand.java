@@ -28,7 +28,7 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 @Parameters(commandDescription = "Import a cluster configuration")
-@Usage("-config-file <config-file> [-connect-to <hostname[:port]>]")
+@Usage("-config-file <config.cfg|config.properties> [-connect-to <hostname[:port]>]")
 public class ImportCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
@@ -51,7 +51,7 @@ public class ImportCommand extends Command {
   @Override
   public void run() {
     action.setNode(node);
-    action.setConfigPropertiesFile(configFile);
+    action.setConfigFile(configFile);
 
     action.run();
   }

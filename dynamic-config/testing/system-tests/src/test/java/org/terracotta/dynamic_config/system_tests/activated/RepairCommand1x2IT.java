@@ -294,7 +294,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     // export config
     String exportPath = tmpDir.getRoot().resolve("export.properties").toAbsolutePath().toString();
     assertThat(
-        configTool("export", "-connect-to", "localhost:" + getNodePort(1, activeId), "-output-file", exportPath, "-outputformat", "properties"),
+        configTool("export", "-connect-to", "localhost:" + getNodePort(1, activeId), "-output-file", exportPath, "-output-format", "properties"),
         is(successful()));
 
     // stop node
