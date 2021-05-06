@@ -362,7 +362,7 @@ public class VoltronMonitoringServiceTest {
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
 
     messages = messages();
-    assertThat(messages.size(), equalTo(0));
+    assertThat(messages.size(), equalTo(1));
   }
 
   @Test

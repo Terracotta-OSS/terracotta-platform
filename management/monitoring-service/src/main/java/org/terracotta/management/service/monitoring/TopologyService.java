@@ -437,9 +437,8 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[{}] willSetClientManagementRegistry({}, {})", consumerId, clientDescriptor, newRegistry);
 
     whenFetchClient(consumerId, clientDescriptor).executeOrDelay("client-registry", client -> {
-      boolean hadRegistry = client.getManagementRegistry().isPresent();
-      client.setManagementRegistry(newRegistry);
-      if (!hadRegistry) {
+      if (!newRegistry.equals(client.getManagementRegistry().orElse(null))) {
+        client.setManagementRegistry(newRegistry);
         firingService.fireNotification(new ContextualNotification(client.getContext(), Notification.CLIENT_REGISTRY_AVAILABLE.name()));
       }
     });
@@ -502,11 +501,8 @@ class TopologyService implements PlatformListener {
     LOGGER.trace("[{}] willSetEntityManagementRegistry({}, {})", consumerId, serverName, names);
 
     whenServerEntity(consumerId, serverName).executeOrDelay("entity-registry", serverEntity -> {
-      List<String> names2 = newRegistry.getCapabilities().stream().map(Capability::getName).collect(Collectors.toList());
-
-      boolean hadRegistry = serverEntity.getManagementRegistry().isPresent();
-      serverEntity.setManagementRegistry(newRegistry);
-      if (!hadRegistry) {
+      if (!newRegistry.equals(serverEntity.getManagementRegistry().orElse(null))) {
+        serverEntity.setManagementRegistry(newRegistry);
         firingService.fireNotification(new ContextualNotification(serverEntity.getContext(), Notification.ENTITY_REGISTRY_AVAILABLE.name()));
       }
     });
