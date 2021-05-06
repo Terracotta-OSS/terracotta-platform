@@ -49,6 +49,7 @@
       <groupId>org.terracotta.common</groupId>
       <artifactId>common-test-utilities</artifactId>
       <version>${project.version}</version>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>

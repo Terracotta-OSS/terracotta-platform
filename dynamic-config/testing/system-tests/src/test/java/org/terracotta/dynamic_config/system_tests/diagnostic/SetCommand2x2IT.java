@@ -59,7 +59,7 @@ public class SetCommand2x2IT extends DynamicConfigIT {
         containsOutput("stripe:stripeA:stripe-name=stripeA"),
         containsOutput("stripe:stripeB:stripe-name=stripeB")));
 
-    assertThat(configTool("get", "-connect-to", connection, "-outputformat", "index",
+    assertThat(configTool("get", "-connect-to", connection, "-output-format", "index",
       "-setting", "name",
       "-setting", "stripe-name"
       ), allOf(containsOutput("stripe.1.node.1.name=node1"),
@@ -84,7 +84,7 @@ public class SetCommand2x2IT extends DynamicConfigIT {
         containsOutput("node:node3:backup-dir=X"),
         containsOutput("node:node4:backup-dir=X")));
 
-    assertThat(configTool("get", "-connect-to", connection, "-outputformat", "index",
+    assertThat(configTool("get", "-connect-to", connection, "-output-format", "index",
       "-setting", "backup-dir"
       ), allOf(containsOutput("stripe.1.node.1.backup-dir=X"),
         containsOutput("stripe.1.node.2.backup-dir=X"),
@@ -107,7 +107,7 @@ public class SetCommand2x2IT extends DynamicConfigIT {
         containsOutput("node:node3:backup-dir=YY"),
         containsOutput("node:node4:backup-dir=ZZZ")));
 
-    assertThat(configTool("get", "-connect-to", connection, "-outputformat", "index",
+    assertThat(configTool("get", "-connect-to", connection, "-output-format", "index",
       "-setting", "backup-dir"
       ), allOf(containsOutput("stripe.1.node.1.backup-dir=XX"),
         containsOutput("stripe.1.node.2.backup-dir=ZZ"),
@@ -148,7 +148,7 @@ public class SetCommand2x2IT extends DynamicConfigIT {
         containsOutput("node:node3:tc-properties=a:A,a.b:AB"),
         containsOutput("node:node4:tc-properties=a:A,a.b:AB,a.b.c:ABC")));
 
-    assertThat(configTool("get", "-connect-to", connection, "-outputformat", "index",
+    assertThat(configTool("get", "-connect-to", connection, "-output-format", "index",
       "-setting", "tc-properties"
       ), allOf(containsOutput("stripe.1.node.1.tc-properties=a.b:AB"),
         containsOutput("stripe.1.node.2.tc-properties=a.b:AABB"),
@@ -177,7 +177,7 @@ public class SetCommand2x2IT extends DynamicConfigIT {
     ), allOf(containsOutput("client-reconnect-window=120s"),
         containsOutput("offheap-resources=foo:1GB,main:512MB")));
 
-    assertThat(configTool("get", "-connect-to", connection, "-outputformat", "index",
+    assertThat(configTool("get", "-connect-to", connection, "-output-format", "index",
         "-setting", "client-reconnect-window",
         "-setting", "offheap-resources"
     ), allOf(containsOutput("client-reconnect-window=120s"),

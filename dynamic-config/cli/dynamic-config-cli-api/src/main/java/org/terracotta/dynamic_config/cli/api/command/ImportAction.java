@@ -43,14 +43,14 @@ public class ImportAction extends RemoteAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImportAction.class);
 
   private InetSocketAddress node;
-  private Path configPropertiesFile;
+  private Path configFile;
 
   public void setNode(InetSocketAddress node) {
     this.node = node;
   }
 
-  public void setConfigPropertiesFile(Path configPropertiesFile) {
-    this.configPropertiesFile = configPropertiesFile;
+  public void setConfigFile(Path configFile) {
+    this.configFile = configFile;
   }
 
   @Override
@@ -90,7 +90,7 @@ public class ImportAction extends RemoteAction {
         runtimePeers = Collections.singletonList(getEndpoint(node));
       }
     }
-    output.info("Importing cluster configuration from config file: {} to nodes: {}", configPropertiesFile, toString(runtimePeers));
+    output.info("Importing cluster configuration from config file: {} to nodes: {}", configFile, toString(runtimePeers));
 
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(runtimePeers))) {
       dynamicConfigServices(diagnosticServices)
@@ -103,7 +103,7 @@ public class ImportAction extends RemoteAction {
 
   private Cluster loadCluster() {
     ClusterFactory clusterCreator = new ClusterFactory();
-    Cluster cluster = clusterCreator.create(configPropertiesFile);
+    Cluster cluster = clusterCreator.create(configFile);
     LOGGER.debug("Config property file parsed and cluster topology validation successful");
     return cluster;
   }

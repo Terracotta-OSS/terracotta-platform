@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.api.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ConfigFormat;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Version;
@@ -62,19 +63,15 @@ public class ClusterFactory {
    */
   public Cluster create(Path configFile) {
     requireNonNull(configFile);
-    Path file = configFile.getFileName();
-    if (file !=  null) {
-      String filename = file.toString();
-      if (filename.endsWith(".properties")) {
+    final ConfigFormat configFormat = ConfigFormat.from(configFile);
+    switch (configFormat) {
+      case PROPERTIES:
         return create(Props.load(configFile));
-      } else if (filename.endsWith(".cfg")) {
-        ConfigPropertiesTranslator translator = new ConfigPropertiesTranslator();
-        return create(translator.load(configFile));
-      } else {
-        throw new IllegalArgumentException("Expected a .properties or .cfg file, but got " + filename);
-      }
-    } else {
-      throw new IllegalArgumentException("Expected a .properties or .cfg file, but got a blank filename");
+      case CONFIG:
+        return create(new ConfigPropertiesTranslator().load(configFile));
+      default:
+        // json or anything else
+        throw new IllegalArgumentException("Invalid format: " + configFormat + ". Supported formats: " + String.join(", ", ConfigFormat.supported()));
     }
   }
 

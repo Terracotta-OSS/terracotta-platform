@@ -16,10 +16,10 @@
 package org.terracotta.dynamic_config.cli.api.command;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ConfigFormat;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.Scope;
-import org.terracotta.dynamic_config.cli.api.converter.OutputFormatGet;
 
 import java.util.List;
 import java.util.Map;
@@ -29,13 +29,13 @@ import java.util.stream.Collectors;
 public class GetAction extends ConfigurationAction {
 
   private boolean wantsRuntimeConfig;
-  private OutputFormatGet outputFormat = OutputFormatGet.NAME;
+  private ConfigFormat outputFormat = ConfigFormat.CONFIG;
 
   public GetAction() {
     super(Operation.GET);
   }
 
-  public void setOutputFormat(OutputFormatGet outputFormat) {
+  public void setOutputFormat(ConfigFormat outputFormat) {
     this.outputFormat = outputFormat;
   }
 
@@ -68,21 +68,34 @@ public class GetAction extends ConfigurationAction {
 
   private String formatOutput(String key, String value, Cluster cluster) {
     StringBuilder sb = new StringBuilder();
-    if (outputFormat == OutputFormatGet.INDEX) {
-      // key is: [stripe.x.[node.y.]]<setting>[.<key>]
-      sb.append(key);
+    switch (outputFormat) {
+
+      case PROPERTIES:
+        // key is: [stripe.x.[node.y.]]<setting>[.<key>]
+        sb.append(key);
+        break;
+
+      case CONFIG:
+        // will become: (stripe|node):<node_or_stripe_name>:<setting>[.<key>]
+        Configuration c = Configuration.valueOf(key);
+        if (c.getLevel() == Scope.STRIPE) {
+          sb.append("stripe:").append(cluster.getStripe(c.getStripeId()).get().getName()).append(":");
+        } else if (c.getLevel() == Scope.NODE) {
+          sb.append("node:").append(cluster.getStripe(c.getStripeId()).get().getNodes().get(c.getNodeId() - 1).getName()).append(":");
+        }
+        sb.append(c.getSetting());
+        if (c.getKey() != null) {
+          sb.append(".").append(c.getKey());
+        }
+        break;
+
+      default:
+        throw new IllegalArgumentException("Invalid format: " + outputFormat + ". Supported formats: " + String.join(", ", ConfigFormat.supported()));
+    }
+    if (outputFormat == ConfigFormat.PROPERTIES) {
+
     } else {
-      // will become: (stripe|node):<node_or_stripe_name>:<setting>[.<key>]
-      Configuration c = Configuration.valueOf(key);
-      if (c.getLevel() == Scope.STRIPE) {
-        sb.append("stripe:").append(cluster.getStripe(c.getStripeId()).get().getName()).append(":");
-      } else if (c.getLevel() == Scope.NODE) {
-        sb.append("node:").append(cluster.getStripe(c.getStripeId()).get().getNodes().get(c.getNodeId() - 1).getName()).append(":");
-      }
-      sb.append(c.getSetting());
-      if (c.getKey() != null) {
-        sb.append(".").append(c.getKey());
-      }
+
     }
     return sb.append("=").append(value).toString();
   }
