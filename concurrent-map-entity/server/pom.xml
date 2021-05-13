@@ -42,6 +42,11 @@
       <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
 
