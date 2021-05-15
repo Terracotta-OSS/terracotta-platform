@@ -117,8 +117,8 @@
         <version>${terracotta-utilities.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.terracotta.internal</groupId>
-        <artifactId>tc-config-parser</artifactId>
+        <groupId>org.terracotta</groupId>
+        <artifactId>tcconfig-schema</artifactId>
         <version>${terracotta-configuration.version}</version>
       </dependency>
       <dependency>

@@ -19,21 +19,21 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.terracotta.config.util.ParameterSubstitutor;
-import org.terracotta.data.config.DataDirectories;
-import org.terracotta.data.config.DataRootMapping;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.passthrough.PassthroughServer;
+import org.terracotta.testing.TmpDir;
 
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 
+import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -50,14 +50,14 @@ public class PassthroughIntegrationTest {
   private PassthroughServer passthroughServer;
 
   @Rule
-  public TemporaryFolder folder = new TemporaryFolder();
+  public TmpDir folder = new TmpDir();
 
   @Before
   public void setUp() throws Exception {
-    DATA_ROOT_PATH = folder.newFolder().getAbsolutePath();
+    DATA_ROOT_PATH = folder.getRoot().toAbsolutePath().toString();
 
     this.passthroughServer = new PassthroughServer();
-    this.passthroughServer.registerExtendedConfiguration(new DataDirsConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(null), getConfiguration()));
+    this.passthroughServer.registerExtendedConfiguration(new DataDirsConfigImpl(IParameterSubstitutor.identity(), new PathResolver(folder.getRoot()), null, singletonMap(DATA_ROOT_ID, Paths.get(DATA_ROOT_PATH))));
     this.passthroughServer.registerServiceProvider(new TestServiceProvider(), null);
     this.passthroughServer.registerAsynchronousServerCrasher(p -> {});
     this.passthroughServer.start(true, false);
@@ -83,16 +83,6 @@ public class PassthroughIntegrationTest {
     if(this.passthroughServer != null) {
       this.passthroughServer.stop();
     }
-  }
-
-  private DataDirectories getConfiguration() throws Exception {
-    DataDirectories dataDirectories = new DataDirectories();
-    DataRootMapping dataRootMapping = new DataRootMapping();
-    dataRootMapping.setName(DATA_ROOT_ID);
-    dataRootMapping.setValue(DATA_ROOT_PATH);
-    dataDirectories.getDirectory().add(dataRootMapping);
-
-    return dataDirectories;
   }
 
   public static class TestServiceProvider implements ServiceProvider {

@@ -19,23 +19,28 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
 import org.terracotta.config.data_roots.management.DataRootBinding;
-import org.terracotta.config.util.ParameterSubstitutor;
-import org.terracotta.data.config.DataDirectories;
-import org.terracotta.data.config.DataRootMapping;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
+import org.terracotta.testing.TmpDir;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.IntStream.range;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -47,10 +52,12 @@ import static org.mockito.Mockito.when;
 public class DataDirsConfigImplTest {
 
   @Rule
-  public TemporaryFolder folder = new TemporaryFolder();
+  public TmpDir folder = new TmpDir(false);
 
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
+
+  IParameterSubstitutor parameterSubstitutor = IParameterSubstitutor.identity();
 
   @Test
   public void getRoot() throws Exception {
@@ -76,7 +83,7 @@ public class DataDirsConfigImplTest {
     }
 
     String postRegistry_Id = "postRegistry";
-    dataRootConfig.addDataDirectory(postRegistry_Id, folder.newFolder().getAbsolutePath());
+    dataRootConfig.addDataDirectory(postRegistry_Id, folder.getRoot().resolve("new-one").toAbsolutePath().toString());
     DataRootBinding newBinding = new DataRootBinding(postRegistry_Id, dataRootConfig.getRoot(postRegistry_Id));
     verify(registry).registerAndRefresh(newBinding);
   }
@@ -114,12 +121,14 @@ public class DataDirsConfigImplTest {
 
   @Test
   public void testDuplicateRootIdentifiers() throws Exception {
-    String[] ids = {"a", "a"};
+    String[] ids = {"a"};
     String[] dataRootPaths = new String[ids.length];
+
+    final DataDirsConfigImpl config = configureDataRoot(ids, dataRootPaths);
 
     expectedException.expect(DataDirsConfigurationException.class);
     expectedException.expectMessage("already exists");
-    configureDataRoot(ids, dataRootPaths);
+    config.addDataDirectory("a", "foo");
   }
 
   @Test
@@ -163,7 +172,7 @@ public class DataDirsConfigImplTest {
   public void testOverlappingPaths_samePaths() throws Exception {
     String[] ids = {"a", "b"};
     String[] dataRootPaths = new String[ids.length];
-    String sameDataPath = folder.newFolder().getAbsolutePath();
+    String sameDataPath = folder.getRoot().toAbsolutePath().toString();
     dataRootPaths[0] = sameDataPath;
     dataRootPaths[1] = sameDataPath;
 
@@ -177,7 +186,7 @@ public class DataDirsConfigImplTest {
     String[] ids = {"a", "b"};
     String[] dataRootPaths = new String[ids.length];
     dataRootPaths[0] = "dir";
-    dataRootPaths[1] = Paths.get("dir").toAbsolutePath().toString();
+    dataRootPaths[1] = folder.getRoot().resolve("dir").toAbsolutePath().toString();
 
     expectedException.expect(DataDirsConfigurationException.class);
     expectedException.expectMessage("overlap");
@@ -186,24 +195,25 @@ public class DataDirsConfigImplTest {
 
   @Test
   public void testSubstitutablePaths() throws Exception {
-    String[] ids = {"id"};
-    String configuredPath = folder.newFolder().getAbsolutePath();
+    String configuredPath = folder.getRoot().toAbsolutePath().toString();
 
-    DataRootMapping[] dataRootMappings = new DataRootMapping[ids.length];
-    dataRootMappings[0] = new DataRootMapping();
-    dataRootMappings[0].setName(ids[0]);
-    dataRootMappings[0].setValue(configuredPath + "-%h");
+    parameterSubstitutor = mock(IParameterSubstitutor.class);
+    when(parameterSubstitutor.substitute(Paths.get(configuredPath + "-%h"))).thenReturn(Paths.get(configuredPath + "-" + InetAddress.getLocalHost().getHostName()));
 
-    DataDirsConfigImpl dataRootConfig = configureDataRoot(dataRootMappings);
-    String hostName = ParameterSubstitutor.getHostName();
-    assertThat(dataRootConfig.getRoot(ids[0]), is(Paths.get(configuredPath + "-" + hostName)));
+    DataDirsConfigImpl dataRootConfig = new DataDirsConfigImpl(
+        parameterSubstitutor,
+        new PathResolver(folder.getRoot()),
+        null,
+        singletonMap("id", Paths.get(configuredPath + "-%h")));
+    String hostName = InetAddress.getLocalHost().getHostName();
+    assertThat(dataRootConfig.getRoot("id"), is(Paths.get(configuredPath + "-" + hostName)));
   }
 
   @Test
   public void testRelativePathWithSourceSpecified() throws Exception {
     String[] ids = {"id"};
-    String[] dataRootPaths = new String[ids.length];
-    String source = folder.newFile("config.xml").getParent();
+    String[] dataRootPaths = {"folder"};
+    String source = folder.getRoot().resolve("foo").toAbsolutePath().toString();
 
     DataDirsConfigImpl dataRootConfig = configureDataRoot(ids, dataRootPaths, source);
     assertThat(dataRootConfig.getRoot(ids[0]).getParent(), is(Paths.get(source)));
@@ -232,26 +242,6 @@ public class DataDirsConfigImplTest {
     assertThat(dataRootConfig.getPlatformRootIdentifier().orElse("busted"), is("data"));
   }
 
-  @Test
-  public void testPlatformRootOverSpecified() throws Exception {
-    DataRootMapping[] dataRootMappings = new DataRootMapping[2];
-    DataRootMapping dataRootMapping = new DataRootMapping();
-    dataRootMapping.setName("data");
-    dataRootMapping.setValue(folder.newFolder().getAbsolutePath());
-    dataRootMapping.setUseForPlatform(true);
-    dataRootMappings[0] = dataRootMapping;
-
-    dataRootMapping = new DataRootMapping();
-    dataRootMapping.setName("other");
-    dataRootMapping.setValue(folder.newFolder().getAbsolutePath());
-    dataRootMapping.setUseForPlatform(true);
-    dataRootMappings[1] = dataRootMapping;
-
-    expectedException.expect(DataDirsConfigurationException.class);
-    expectedException.expectMessage("More than one");
-    configureDataRoot(dataRootMappings);
-  }
-
   private DataDirsConfigImpl configureDataRoot(String[] ids, String[] dataRootPaths) throws IOException {
     return configureDataRoot(ids, dataRootPaths, (String) null);
   }
@@ -261,32 +251,16 @@ public class DataDirsConfigImplTest {
   }
 
   private DataDirsConfigImpl configureDataRoot(String[] ids, String[] dataRootPaths, String source, int platformRootIndex) throws IOException {
-    DataDirectories dataDirectories = new DataDirectories();
-    for (int i = 0; i < ids.length; i++) {
-      DataRootMapping dataRootMapping = new DataRootMapping();
-      if (dataRootPaths[i] == null) {
-        dataRootPaths[i] = folder.newFolder().getAbsolutePath();
-      }
-      dataRootMapping.setName(ids[i]);
-      dataRootMapping.setValue(dataRootPaths[i]);
-      if (i == platformRootIndex) {
-        dataRootMapping.setUseForPlatform(true);
-      }
-      dataDirectories.getDirectory().add(dataRootMapping);
-    }
-
-    return new DataDirsConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(source), dataDirectories);
-  }
-
-  private DataDirsConfigImpl configureDataRoot(DataRootMapping[] dataRootMappings) throws IOException {
-    DataDirectories dataDirectories = new DataDirectories();
-    for (int i = 0; i < dataRootMappings.length; i++) {
-      if (dataRootMappings[i].getValue() == null) {
-        dataRootMappings[i].setValue(folder.newFolder().getAbsolutePath());
-      }
-      dataDirectories.getDirectory().add(dataRootMappings[i]);
-    }
-
-    return new DataDirsConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(null), dataDirectories);
+    final Map<String, Path> dirs = range(0, ids.length).boxed()
+        .collect(toMap(
+            idx -> ids[idx],
+            idx -> {
+              if (dataRootPaths[idx] == null) {
+                dataRootPaths[idx] = folder.getRoot().resolve("dir-" + idx).toAbsolutePath().toString();
+              }
+              return Paths.get(dataRootPaths[idx]);
+            }));
+    Path metadataDir = platformRootIndex >= 0 ? dirs.get(ids[platformRootIndex]) : null;
+    return new DataDirsConfigImpl(parameterSubstitutor, new PathResolver(source == null ? folder.getRoot() : Paths.get(source)), metadataDir, dirs);
   }
 }

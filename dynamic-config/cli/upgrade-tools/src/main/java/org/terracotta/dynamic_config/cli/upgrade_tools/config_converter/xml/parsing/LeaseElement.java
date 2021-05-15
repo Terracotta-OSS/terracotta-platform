@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.lease.service.config;
+package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parsing;
 
-public enum ValidationFailureId {
+public class LeaseElement {
+  private final String leaseValue;
+  private final String timeUnit;
 
-  LEASE_ENTRY_MISMATCH(700001L);
-
-  private final long failureId;
-
-  ValidationFailureId(long failureId) {
-    this.failureId = failureId;
+  public LeaseElement(final String leaseValue, final String timeUnit) {
+    this.leaseValue = leaseValue;
+    this.timeUnit = timeUnit;
   }
 
-  public long getFailureId() {
-    return failureId;
+  public String getLeaseValue() {
+    return leaseValue;
+  }
+
+  public String getTimeUnit() {
+    return timeUnit;
   }
 }

@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.lease.service.config;
+package org.terracotta.dynamic_config.server.api;
 
-public class LeaseElement {
-  private final String leaseValue;
-  private final String timeUnit;
+import org.w3c.dom.Element;
 
-  public LeaseElement(final String leaseValue, final String timeUnit) {
-    this.leaseValue = leaseValue;
-    this.timeUnit = timeUnit;
-  }
+import javax.xml.transform.Source;
+import java.util.function.Function;
 
-  public String getLeaseValue() {
-    return leaseValue;
-  }
+/**
+ * @author Mathieu Carbou
+ */
+public interface XmlParser<T> {
+  String getNamespace();
 
-  public String getTimeUnit() {
-    return timeUnit;
-  }
+  Source getXmlSchema();
+
+  T parse(Element element);
 }

@@ -155,7 +155,6 @@
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-api</include>
         <include>org.terracotta:data-root-resource</include>
-        <include>org.terracotta.internal:tc-config-parser</include>
         <include>org.terracotta:tcconfig-schema</include>
         <include>com.sun.xml.fastinfoset:FastInfoset</include>
         <include>com.sun.istack:istack-commons-runtime</include>

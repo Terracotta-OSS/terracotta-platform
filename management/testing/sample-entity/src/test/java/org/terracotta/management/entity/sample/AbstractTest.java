@@ -23,6 +23,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
+import org.terracotta.common.struct.Measure;
+import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
@@ -49,15 +51,11 @@ import org.terracotta.management.entity.sample.client.CacheFactory;
 import org.terracotta.management.entity.sample.server.CacheEntityServerService;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.offheapresource.OffHeapResourcesProvider;
-import org.terracotta.offheapresource.config.MemoryUnit;
-import org.terracotta.offheapresource.config.OffheapResourcesType;
-import org.terracotta.offheapresource.config.ResourceType;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.terracotta.dynamic_config.api.model.Testing.N_UIDS;
@@ -111,13 +110,7 @@ public abstract class AbstractTest {
       server.registerClientEntityService(new NmsEntityClientService());
       server.registerServerEntityService(new NmsEntityServerService());
 
-      OffheapResourcesType resources = new OffheapResourcesType();
-      ResourceType resource = new ResourceType();
-      resource.setName("primary-server-resource");
-      resource.setUnit(MemoryUnit.MB);
-      resource.setValue(BigInteger.valueOf(32));
-      resources.getResource().add(resource);
-      server.registerExtendedConfiguration(new OffHeapResourcesProvider(resources));
+      server.registerExtendedConfiguration(new OffHeapResourcesProvider(singletonMap("primary-server-resource", Measure.of(32, MemoryUnit.MB))));
 
       server.registerExtendedConfiguration(topologyServiceServiceProvider.getService(0, new BasicServiceConfiguration<>(TopologyService.class)));
       server.registerServiceProvider(topologyServiceServiceProvider, null);

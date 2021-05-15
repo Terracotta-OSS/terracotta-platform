@@ -16,9 +16,6 @@
 package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.command;
 
 import com.beust.jcommander.ParameterException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.terracotta.config.data_roots.DataDirsConfig;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverter;
@@ -40,8 +37,6 @@ import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.C
 import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat.PROPERTIES;
 
 public class ConvertAction implements Runnable {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConvertAction.class);
 
   private List<Path> tcConfigFiles;
   private List<String> stripeNames;
@@ -134,7 +129,7 @@ public class ConvertAction implements Runnable {
       output.info("Configuration directories saved under: {}", destinationDir.toAbsolutePath().normalize());
 
     } else if (conversionFormat == PROPERTIES) {
-      ConfigPropertiesProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, DataDirsConfig.cleanStringForPath(newClusterName));
+      ConfigPropertiesProcessor resultProcessor = new ConfigPropertiesProcessor(destinationDir, newClusterName);
       ConfigConverter converter = new ConfigConverter(resultProcessor::process, force);
       converter.processInput(newClusterName, stripeNames, tcConfigFiles.toArray(new Path[0]));
       output.info("Configuration properties file saved under: {}", destinationDir.toAbsolutePath().normalize());

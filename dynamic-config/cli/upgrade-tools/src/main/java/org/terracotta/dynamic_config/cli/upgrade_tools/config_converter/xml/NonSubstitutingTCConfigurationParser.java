@@ -18,18 +18,12 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.config.BindPort;
-import org.terracotta.config.Config;
+import org.terracotta.config.ObjectFactory;
 import org.terracotta.config.Server;
 import org.terracotta.config.Servers;
-import org.terracotta.config.Service;
 import org.terracotta.config.TCConfigDefaults;
-import org.terracotta.config.TCConfigurationParser;
-import org.terracotta.config.TCConfigurationSetupException;
 import org.terracotta.config.TcConfig;
-import org.terracotta.config.TcConfiguration;
-import org.terracotta.config.service.ExtendedConfigParser;
-import org.terracotta.config.service.ServiceConfigParser;
-import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.dynamic_config.server.api.XmlParser;
 import org.w3c.dom.Element;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -50,15 +44,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
 
 import static java.lang.System.lineSeparator;
@@ -66,59 +57,17 @@ import static java.lang.System.lineSeparator;
 public class NonSubstitutingTCConfigurationParser {
   private static final Logger LOGGER = LoggerFactory.getLogger(NonSubstitutingTCConfigurationParser.class);
   private static final SchemaFactory XSD_SCHEMA_FACTORY = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-  private static final URL TERRACOTTA_XML_SCHEMA = TCConfigurationParser.class.getResource("/terracotta.xsd");
+  private static final URL TERRACOTTA_XML_SCHEMA = NonSubstitutingTCConfigurationParser.class.getResource("/terracotta.xsd");
   private static final String WILDCARD_IP = "0.0.0.0";
   private static final int MIN_PORTNUMBER = 0x0FFF;
   private static final int MAX_PORTNUMBER = 0xFFFF;
   private static final String DEFAULT_LOGS = "logs";
 
-  private static TcConfiguration parseStream(InputStream in, String source, ClassLoader loader) throws IOException, SAXException {
-
-    Collection<Source> schemaSources = new ArrayList<>();
-
-    Map<URI, ServiceConfigParser> serviceParsers = new HashMap<>();
-    Map<URI, ExtendedConfigParser> configParsers = new HashMap<>();
-
-    schemaSources.add(new StreamSource(TERRACOTTA_XML_SCHEMA.openStream()));
-
-    for (ServiceConfigParser parser : loadServiceConfigurationParserClasses(loader)) {
-      schemaSources.add(parser.getXmlSchema());
-      serviceParsers.put(parser.getNamespace(), parser);
-    }
-    for (ExtendedConfigParser parser : loadConfigurationParserClasses(loader)) {
-      schemaSources.add(parser.getXmlSchema());
-      configParsers.put(parser.getNamespace(), parser);
-    }
-
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setNamespaceAware(true);
-    factory.setIgnoringComments(true);
-    factory.setIgnoringElementContentWhitespace(true);
-    factory.setSchema(XSD_SCHEMA_FACTORY.newSchema(schemaSources.toArray(new Source[0])));
-
-    final DocumentBuilder domBuilder;
-    try {
-      domBuilder = factory.newDocumentBuilder();
-    } catch (ParserConfigurationException e) {
-      throw new AssertionError(e);
-    }
-    CollectingErrorHandler errorHandler = new CollectingErrorHandler();
-    domBuilder.setErrorHandler(errorHandler);
-    final Element config = domBuilder.parse(in).getDocumentElement();
-
-    Collection<SAXParseException> parseErrors = errorHandler.getErrors();
-    if (parseErrors.size() != 0) {
-      StringBuilder buf = new StringBuilder("Couldn't parse configuration file, there are " + parseErrors.size() + " error(s)." + lineSeparator());
-      int i = 1;
-      for (SAXParseException parseError : parseErrors) {
-        buf.append(" [").append(i).append("] Line ").append(parseError.getLineNumber()).append(", column ").append(parseError.getColumnNumber()).append(": ").append(parseError.getMessage()).append(lineSeparator());
-        i++;
-      }
-      throw new TCConfigurationSetupException(buf.toString());
-    }
+  private static TcConfig parseStream(InputStream in, ClassLoader loader) throws IOException, SAXException {
+    Element config = doParse(in, loader);
 
     try {
-      JAXBContext jc = JAXBContext.newInstance("org.terracotta.config", TCConfigurationParser.class.getClassLoader());
+      JAXBContext jc = JAXBContext.newInstance(ObjectFactory.class);
       Unmarshaller u = jc.createUnmarshaller();
 
       TcConfig tcConfig = u.unmarshal(config, TcConfig.class).getValue();
@@ -132,48 +81,18 @@ public class NonSubstitutingTCConfigurationParser {
       }
       applyPlatformDefaults(tcConfig);
 
-      List<ServiceProviderConfiguration> serviceConfigurations = new ArrayList<>();
-      List<Object> configObjects = new ArrayList<>();
-      if (tcConfig.getPlugins() != null && tcConfig.getPlugins().getConfigOrService() != null) {
-        //now parse the service configuration.
-        for (Object plugin : tcConfig.getPlugins().getConfigOrService()) {
-          if (plugin instanceof Service) {
-            Element element = ((Service) plugin).getServiceContent();
-            URI namespace = URI.create(element.getNamespaceURI());
-            ServiceConfigParser parser = serviceParsers.get(namespace);
-            if (parser == null) {
-              throw new TCConfigurationSetupException("Can't find parser for service " + namespace);
-            }
-            ServiceProviderConfiguration serviceProviderConfiguration = parser.parse(element, source);
-            serviceConfigurations.add(serviceProviderConfiguration);
-          } else if (plugin instanceof Config) {
-            Element element = ((Config) plugin).getConfigContent();
-            URI namespace = URI.create(element.getNamespaceURI());
-            ExtendedConfigParser parser = configParsers.get(namespace);
-            if (parser == null) {
-              throw new TCConfigurationSetupException("Can't find parser for config " + namespace);
-            }
-            Object co = parser.parse(element, source);
-            configObjects.add(co);
-          }
-        }
-      }
-
-      return new TcConfiguration(tcConfig, source, configObjects, serviceConfigurations);
+      return tcConfig;
     } catch (JAXBException e) {
-      throw new TCConfigurationSetupException(e);
+      throw new IllegalStateException(e);
     }
   }
 
-  public static Element getRootElement(InputStream in, ClassLoader loader) throws IOException, SAXException {
+  private static Element doParse(InputStream in, ClassLoader loader) throws IOException, SAXException {
     Collection<Source> schemaSources = new ArrayList<>();
 
     schemaSources.add(new StreamSource(TERRACOTTA_XML_SCHEMA.openStream()));
 
-    for (ServiceConfigParser parser : loadServiceConfigurationParserClasses(loader)) {
-      schemaSources.add(parser.getXmlSchema());
-    }
-    for (ExtendedConfigParser parser : loadConfigurationParserClasses(loader)) {
+    for (XmlParser<?> parser : parsers(loader)) {
       schemaSources.add(parser.getXmlSchema());
     }
 
@@ -191,7 +110,7 @@ public class NonSubstitutingTCConfigurationParser {
     }
     CollectingErrorHandler errorHandler = new CollectingErrorHandler();
     domBuilder.setErrorHandler(errorHandler);
-    final Element config = domBuilder.parse(in).getDocumentElement();
+    Element config = domBuilder.parse(in).getDocumentElement();
 
     Collection<SAXParseException> parseErrors = errorHandler.getErrors();
     if (parseErrors.size() != 0) {
@@ -201,9 +120,14 @@ public class NonSubstitutingTCConfigurationParser {
         buf.append(" [").append(i).append("] Line ").append(parseError.getLineNumber()).append(", column ").append(parseError.getColumnNumber()).append(": ").append(parseError.getMessage()).append(lineSeparator());
         i++;
       }
-      throw new TCConfigurationSetupException(buf.toString());
+      throw new IllegalArgumentException(buf.toString());
     }
+
     return config;
+  }
+
+  public static Element getRootElement(InputStream in, ClassLoader loader) throws IOException, SAXException {
+    return doParse(in, loader);
   }
 
   public static void applyPlatformDefaults(TcConfig tcConfig) {
@@ -272,35 +196,31 @@ public class NonSubstitutingTCConfigurationParser {
     s.setBind(s.getBind());
   }
 
-  private static TcConfiguration convert(InputStream in, String path, ClassLoader loader) throws IOException, SAXException {
+  private static TcConfig convert(InputStream in, String path, ClassLoader loader) throws IOException, SAXException {
     byte[] data = new byte[in.available()];
     in.read(data);
     in.close();
     ByteArrayInputStream bais = new ByteArrayInputStream(data);
 
-    return parseStream(bais, path, loader);
+    return parseStream(bais, loader);
   }
 
-  public static TcConfiguration parse(File file, ClassLoader loader) throws IOException, SAXException {
+  public static TcConfig parse(File file, ClassLoader loader) throws IOException, SAXException {
     try (FileInputStream in = new FileInputStream(file)) {
       return convert(in, file.getParent(), loader);
     }
   }
 
-  public static TcConfiguration parse(String xmlText, ClassLoader loader) throws IOException, SAXException {
+  public static TcConfig parse(String xmlText, ClassLoader loader) throws IOException, SAXException {
     return convert(new ByteArrayInputStream(xmlText.getBytes(StandardCharsets.UTF_8)), null, loader);
   }
 
-  public static TcConfiguration parse(InputStream stream, ClassLoader loader) throws IOException, SAXException {
+  public static TcConfig parse(InputStream stream, ClassLoader loader) throws IOException, SAXException {
     return convert(stream, null, loader);
   }
 
-  public static TcConfiguration parse(URL url, ClassLoader loader) throws IOException, SAXException {
+  public static TcConfig parse(URL url, ClassLoader loader) throws IOException, SAXException {
     return convert(url.openStream(), url.getPath(), loader);
-  }
-
-  public static TcConfiguration parse(InputStream in, String source, ClassLoader loader) throws IOException, SAXException {
-    return parseStream(in, source, loader);
   }
 
   private static class CollectingErrorHandler implements ErrorHandler {
@@ -327,12 +247,8 @@ public class NonSubstitutingTCConfigurationParser {
     }
   }
 
-  private static ServiceLoader<ServiceConfigParser> loadServiceConfigurationParserClasses(ClassLoader loader) {
-    return ServiceLoader.load(ServiceConfigParser.class, loader);
-  }
-
-
-  private static ServiceLoader<ExtendedConfigParser> loadConfigurationParserClasses(ClassLoader loader) {
-    return ServiceLoader.load(ExtendedConfigParser.class, loader);
+  @SuppressWarnings("unchecked")
+  private static ServiceLoader<XmlParser<?>> parsers(ClassLoader loader) {
+    return ServiceLoader.load((Class<XmlParser<?>>) (Class) XmlParser.class, loader);
   }
 }

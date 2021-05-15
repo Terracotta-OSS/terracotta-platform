@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.config.data_roots.management.DataRootBinding;
 import org.terracotta.config.data_roots.management.DataRootSettingsManagementProvider;
 import org.terracotta.config.data_roots.management.DataRootStatisticsManagementProvider;
-import org.terracotta.data.config.DataRootMapping;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.PlatformConfiguration;
@@ -90,29 +89,6 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
           });
     }
   }
-
-  public DataDirsConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories) {
-    this(parameterSubstitutor, pathResolver, dataDirectories, false);
-  }
-
-  public DataDirsConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories, boolean skipIO) {
-    this.parameterSubstitutor = parameterSubstitutor;
-    this.pathResolver = pathResolver;
-
-    String tempPlatformRootIdentifier = null;
-    for (DataRootMapping mapping : dataDirectories.getDirectory()) {
-      addDataDirectory(mapping.getName(), mapping.getValue(), skipIO);
-      if (mapping.isUseForPlatform()) {
-        if (tempPlatformRootIdentifier == null) {
-          tempPlatformRootIdentifier = mapping.getName();
-        } else {
-          throw new DataDirsConfigurationException("More than one data directory is configured to be used by platform");
-        }
-      }
-    }
-    platformRootIdentifier = tempPlatformRootIdentifier;
-  }
-
 
   @Override
   public DataDirs getDataDirectoriesForServer(PlatformConfiguration platformConfiguration) {

@@ -19,7 +19,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
-import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ConfigConversionException;
@@ -27,7 +26,6 @@ import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exceptio
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ErrorParamKey;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.InvalidInputConfigurationContentException;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.InvalidInputException;
-import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.validators.ValidationWrapper;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.NonSubstitutingTCConfigurationParser;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.TcConfigMapper;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.XmlUtility;
@@ -38,7 +36,6 @@ import javax.xml.transform.TransformerException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Array;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -53,7 +50,6 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
@@ -128,18 +124,10 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     /*
     Validates all files have same number and type of plugin configuration (e.g.. one off-heap, one backup)
      */
-    Set<String> namespaces = validateAllConfigurationFilesHaveSamePluginTypes(configAndServiceNodesPerConfigFile);
-    /*
-    Validates values inside each plugins are same/equivalent (e.g. all the configuration files have same number of
-    off-heap resources and off-heap resource values are same in each configuration)
-     */
-    List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams =
-        prepareValidatorsForPluginConfigurations(namespaces, configAndServiceNodesPerConfigFile);
-
-    validatePluginConfigurations(validatorsWithParams);
+    validateAllConfigurationFilesHaveSamePluginTypes(configAndServiceNodesPerConfigFile);
   }
 
-  protected Set<String> validateAllConfigurationFilesHaveSamePluginTypes(Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile) {
+  protected void validateAllConfigurationFilesHaveSamePluginTypes(Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile) {
     AtomicReference<Set<String>> previousSetReference = new AtomicReference<>();
     AtomicReference<Path> previousPath = new AtomicReference<>();
     configAndServiceNodesPerConfigFile.forEach((path, nodeMap) -> {
@@ -159,27 +147,6 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
       }
       previousSetReference.set(nodeMap.keySet());
     });
-    return previousSetReference.get();
-  }
-
-  protected List<Tuple2<Map<Path, Node>, ValidationWrapper>> prepareValidatorsForPluginConfigurations(Set<String> namespaces
-      , Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile) {
-    List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams = new ArrayList<>();
-    namespaces.forEach(namespace -> {
-      Map<Path, Node> configFilesAndNodesMap = new HashMap<>();
-      configAndServiceNodesPerConfigFile.forEach((path, nodeMap) -> {
-        // For a give namespace, create a map of config-file -> plugin-configuration node present in that config-file
-        Node node = nodeMap.get(namespace);
-        configFilesAndNodesMap.put(path, node);
-      });
-      Supplier<ValidationWrapper> validatorSupplier = getValidatorSupplier(namespace);
-      validatorsWithParams.add(tuple2(configFilesAndNodesMap, validatorSupplier.get()));
-    });
-    return validatorsWithParams;
-  }
-
-  protected void validatePluginConfigurations(List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams) {
-    validatorsWithParams.forEach(pair -> pair.getT2().check(pair.getT1()));
   }
 
   protected Node getRootNode(Path configFilePath) throws Exception {
@@ -295,10 +262,6 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
         }
     );
     return configAndServiceNodesPerConfigFile;
-  }
-
-  protected Supplier<ValidationWrapper> getValidatorSupplier(String namespace) {
-    return () -> new ValidationWrapper(TCConfigurationParser.getValidator(URI.create(namespace)));
   }
 
   protected void createServerConfigMapFunction(Map<Tuple2<Integer, String>, Node> stripeServerConfigMapNode, int stripeId, Path configFilePath) {

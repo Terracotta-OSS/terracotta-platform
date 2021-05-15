@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.lease.service.config;
+package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parser;
 
 import org.junit.Test;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parsing.LeaseConfigurationParser;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parsing.LeaseElement;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.stream.StreamSource;
-import java.io.InputStream;
-import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
 
 public class LeaseConfigurationParserTest {
   private static final String LEASE_NAMESPACE = "http://www.terracotta.org/service/lease";
@@ -35,28 +33,7 @@ public class LeaseConfigurationParserTest {
   @Test
   public void namespace() {
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    URI namespace = parser.getNamespace();
-    assertEquals(LEASE_NAMESPACE, namespace.toString());
-  }
-
-  @Test
-  public void xsd() throws Exception {
-    LeaseConfigurationParser parser = new LeaseConfigurationParser();
-
-    StreamSource xsdSource = (StreamSource) parser.getXmlSchema();
-
-    StringBuilder stringBuilder = new StringBuilder();
-    try (InputStream inputStream = xsdSource.getInputStream()) {
-      int value;
-      while ((value = inputStream.read()) != -1) {
-        stringBuilder.append((char) value);
-      }
-    }
-
-    String xsd = stringBuilder.toString();
-    assertTrue(xsd.contains("<xs:import namespace=\"http://www.terracotta.org/config\"/>"));
-    assertTrue(xsd.contains("<xs:element name=\"connection-leasing\" type=\"lease:connection-leasing-type\" substitutionGroup=\"tc:service-content\">"));
-    assertTrue(xsd.contains("<xs:element name=\"lease-length\" type=\"lease:lease-length-type\" minOccurs=\"1\" maxOccurs=\"1\">"));
+    assertEquals(LEASE_NAMESPACE, parser.getNamespace());
   }
 
   @Test
@@ -64,9 +41,9 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("5000", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
+    LeaseElement configuration = parser.parse(connectionLeasingElement);
 
-    assertEquals(5000L, configuration.getLeaseLength());
+    assertEquals("5000", configuration.getLeaseValue());
   }
 
   @Test(expected = NumberFormatException.class)
@@ -74,7 +51,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("BLAH", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    parser.parse(connectionLeasingElement, "source");
+    parser.parse(connectionLeasingElement);
   }
 
   @Test
@@ -82,9 +59,9 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("1000000000000", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
+    LeaseElement configuration = parser.parse(connectionLeasingElement);
 
-    assertEquals(1000000000000L, configuration.getLeaseLength());
+    assertEquals("1000000000000", configuration.getLeaseValue());
   }
 
   @Test(expected = NumberFormatException.class)
@@ -92,7 +69,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("10000000000000", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    parser.parse(connectionLeasingElement, "source");
+    parser.parse(connectionLeasingElement);
   }
 
   @Test(expected = NumberFormatException.class)
@@ -100,7 +77,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("2562048", "hours");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    parser.parse(connectionLeasingElement, "source");
+    parser.parse(connectionLeasingElement);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -108,7 +85,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("1", "month");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    parser.parse(connectionLeasingElement, "source");
+    parser.parse(connectionLeasingElement);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -116,7 +93,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("1000000000", "nanoseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    parser.parse(connectionLeasingElement, "source");
+    parser.parse(connectionLeasingElement);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -124,7 +101,7 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("1", "days");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    parser.parse(connectionLeasingElement, "source");
+    parser.parse(connectionLeasingElement);
   }
 
   @Test
@@ -132,9 +109,9 @@ public class LeaseConfigurationParserTest {
     Element connectionLeasingElement = getXMLConfigurationElement("MAX", "milliseconds");
 
     LeaseConfigurationParser parser = new LeaseConfigurationParser();
-    LeaseConfiguration configuration = parser.parse(connectionLeasingElement, "source");
+    LeaseElement configuration = parser.parse(connectionLeasingElement);
 
-    assertEquals(MAX_LEASE_LENGTH, configuration.getLeaseLength());
+    assertEquals(String.valueOf(TimeUnit.MILLISECONDS.convert(Long.MAX_VALUE, TimeUnit.NANOSECONDS)), configuration.getLeaseValue());
   }
 
   private Element getXMLConfigurationElement(String leaseLengthText, String timeUnit) throws Exception {

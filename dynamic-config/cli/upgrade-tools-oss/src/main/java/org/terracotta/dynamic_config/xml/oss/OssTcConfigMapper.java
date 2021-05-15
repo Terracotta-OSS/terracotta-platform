@@ -17,7 +17,6 @@ package org.terracotta.dynamic_config.xml.oss;
 
 import org.terracotta.config.Server;
 import org.terracotta.config.TcConfig;
-import org.terracotta.config.TcConfiguration;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
@@ -51,10 +50,9 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
   @Override
   public Cluster getStripe(String xml) {
     try {
-      TcConfiguration tcConfiguration = NonSubstitutingTCConfigurationParser.parse(xml, classLoader);
-      TcConfig tcConfig = tcConfiguration.getPlatformConfiguration();
+      TcConfig tcConfig = NonSubstitutingTCConfigurationParser.parse(xml, classLoader);
       NonSubstitutingTCConfigurationParser.applyPlatformDefaults(tcConfig);
-      Map<Class<?>, List<Object>> xmlPlugins = commonMapper.parsePlugins(xml, tcConfig);
+      Map<Class<?>, List<Object>> xmlPlugins = commonMapper.parsePlugins(tcConfig);
       List<Server> servers = tcConfig.getServers().getServer();
       List<org.terracotta.dynamic_config.api.model.Node> nodes = new ArrayList<>();
       servers.forEach(server -> nodes.add(new org.terracotta.dynamic_config.api.model.Node()

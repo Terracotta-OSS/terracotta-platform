@@ -57,11 +57,6 @@
       <artifactId>standard-cluster-services</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>tc-config-parser</artifactId>
-      <scope>provided</scope>
-    </dependency>
 
     <dependency>
       <groupId>org.slf4j</groupId>

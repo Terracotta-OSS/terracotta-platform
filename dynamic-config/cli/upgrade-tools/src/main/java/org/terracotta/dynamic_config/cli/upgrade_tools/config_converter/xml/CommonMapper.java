@@ -16,22 +16,20 @@
 package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml;
 
 
+import org.terracotta.config.dataroots.DataRootMapping;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.config.Config;
 import org.terracotta.config.Service;
 import org.terracotta.config.TcConfig;
-import org.terracotta.config.data_roots.DataRootConfigParser;
-import org.terracotta.config.service.ExtendedConfigParser;
-import org.terracotta.config.service.ServiceConfigParser;
-import org.terracotta.data.config.DataRootMapping;
+import org.terracotta.config.offheapresources.ResourceType;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.RawPath;
-import org.terracotta.lease.service.config.LeaseConfigurationParser;
-import org.terracotta.lease.service.config.LeaseElement;
-import org.terracotta.offheapresource.OffHeapResourceConfigurationParser;
-import org.terracotta.offheapresource.config.ResourceType;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parsing.DataRootConfigParser;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parsing.LeaseElement;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parsing.OffHeapResourceConfigurationParser;
+import org.terracotta.dynamic_config.server.api.XmlParser;
 import org.w3c.dom.Element;
 
 import java.util.Collections;
@@ -51,15 +49,11 @@ public class CommonMapper {
 
   private static final String WILDCARD_IP = "0.0.0.0";
 
-  private Map<String, ExtendedConfigParser> configParsers = new HashMap<>();
-  private Map<String, ServiceConfigParser> serviceConfigParsers = new HashMap<>();
+  private final Map<String, XmlParser<?>> parsers = new HashMap<>();
 
   public CommonMapper(ClassLoader classLoader) {
-    for (ExtendedConfigParser parser : ServiceLoader.load(ExtendedConfigParser.class, classLoader)) {
-      configParsers.put(parser.getNamespace().toString(), parser);
-    }
-    for (ServiceConfigParser parser : ServiceLoader.load(ServiceConfigParser.class, classLoader)) {
-      serviceConfigParsers.put(parser.getNamespace().toString(), parser);
+    for (XmlParser<?> parser : ServiceLoader.load(XmlParser.class, classLoader)) {
+      parsers.put(parser.getNamespace(), parser);
     }
   }
 
@@ -109,62 +103,53 @@ public class CommonMapper {
             FailoverPriority.availability();
   }
 
-  public Map<Class<?>, List<Object>> parsePlugins(String xml, TcConfig tcConfig) {
-    return parsePlugins(xml, tcConfig, (p, e) -> Optional.empty(), (p, e) -> Optional.empty());
+  public Map<Class<?>, List<Object>> parsePlugins(TcConfig tcConfig) {
+    return parsePlugins(tcConfig, (p, e) -> Optional.empty());
   }
 
-  public Map<Class<?>, List<Object>> parsePlugins(String xml, TcConfig tcConfig,
-                                                  BiFunction<ExtendedConfigParser, Element, Optional<Stream<?>>> configMapper,
-                                                  BiFunction<ServiceConfigParser, Element, Optional<Stream<?>>> serviceMapper) {
+  public Map<Class<?>, List<Object>> parsePlugins(TcConfig tcConfig, BiFunction<XmlParser<?>, Element, Optional<Stream<?>>> delegates) {
     if (tcConfig.getPlugins() != null) {
       return tcConfig
           .getPlugins()
           .getConfigOrService()
           .stream()
-          .flatMap(o -> parsePlugin(xml, o, configMapper, serviceMapper))
+          .flatMap(o -> parsePlugin(o, delegates))
           .collect(groupingBy(Object::getClass));
     } else {
       return Collections.emptyMap();
     }
   }
 
-  protected Stream<?> parsePlugin(String xml, Object o,
-                                  BiFunction<ExtendedConfigParser, Element, Optional<Stream<?>>> configMapper,
-                                  BiFunction<ServiceConfigParser, Element, Optional<Stream<?>>> serviceMapper) {
+  protected Stream<?> parsePlugin(Object o, BiFunction<XmlParser<?>, Element, Optional<Stream<?>>> delegates) {
     if (o instanceof Config) {
       Element element = ((Config) o).getConfigContent();
-      ExtendedConfigParser parser = configParsers.get(element.getNamespaceURI());
+      XmlParser<?> parser = parsers.get(element.getNamespaceURI());
       // xml is expected to be valid
       if (parser == null) {
-        throw new AssertionError("ExtendedConfigParser not found for namespace " + element.getNamespaceURI());
+        throw new AssertionError(XmlParser.class.getSimpleName() + " not found for namespace " + element.getNamespaceURI());
       }
       // special handling for data root to not apply any defaults
       if (parser instanceof DataRootConfigParser) {
-        return ((DataRootConfigParser) parser).parser().apply(element).getDirectory().stream();
+        return ((DataRootConfigParser) parser).parse(element).getDirectory().stream();
       }
       // special handling for offheaps to not apply any defaults
       if (parser instanceof OffHeapResourceConfigurationParser) {
-        return ((OffHeapResourceConfigurationParser) parser).parser().apply(element).getResource().stream();
+        return ((OffHeapResourceConfigurationParser) parser).parse(element).getResource().stream();
       }
       // delegate parsing to caller
-      return configMapper.apply(parser, element)
-          .orElseGet(() -> Stream.of(parser.parse(element, xml))); // default case (includes Cluster tag)
+      return delegates.apply(parser, element)
+          .orElseGet(() -> Stream.of(parser.parse(element))); // default case (includes Cluster tag)
 
     } else if (o instanceof Service) {
       Element element = ((Service) o).getServiceContent();
-      ServiceConfigParser parser = serviceConfigParsers.get(element.getNamespaceURI());
+      XmlParser<?> parser = parsers.get(element.getNamespaceURI());
       // xml is expected to be valid
       if (parser == null) {
         throw new AssertionError("ServiceConfigParser not found for namespace " + element.getNamespaceURI());
       }
-      // lease special handling
-      if (parser instanceof LeaseConfigurationParser) {
-        return Stream.of(((LeaseConfigurationParser) parser).parser().apply(element));
-      }
-
       // delegate parsing to caller
-      return serviceMapper.apply(parser, element)
-          .orElseGet(() -> Stream.of(parser.parse(element, xml))); // default case (includes FRSPersistenceConfigurationParser)
+      return delegates.apply(parser, element)
+          .orElseGet(() -> Stream.of(parser.parse(element))); // default case (includes FRSPersistenceConfigurationParser, Lease)
 
     } else {
       throw new AssertionError("Unsupported type: " + o.getClass());

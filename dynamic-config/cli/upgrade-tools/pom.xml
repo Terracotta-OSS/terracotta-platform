@@ -29,6 +29,67 @@
   <artifactId>dynamic-config-cli-upgrade-tools</artifactId>
   <name>Dynamic Config :: CLI :: UpgradeTools</name>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jvnet.jaxb2.maven2</groupId>
+        <artifactId>maven-jaxb2-plugin</artifactId>
+        <configuration>
+          <strict>false</strict>
+          <schemaDirectory>src/main/resources</schemaDirectory>
+          <forceRegenerate>true</forceRegenerate>
+          <catalogs>
+            <catalog>
+              <dependencyResource>
+                <groupId>org.terracotta</groupId>
+                <artifactId>tcconfig-schema</artifactId>
+                <version>${terracotta-configuration.version}</version>
+                <resource>catalog.cat</resource>
+              </dependencyResource>
+            </catalog>
+          </catalogs>
+          <episodes>
+            <episode>
+              <groupId>org.terracotta</groupId>
+              <artifactId>tcconfig-schema</artifactId>
+              <version>${terracotta-configuration.version}</version>
+            </episode>
+          </episodes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>dataroots</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <schemaIncludes>
+                <include>data-roots-config.xsd</include>
+              </schemaIncludes>
+              <generatePackage>org.terracotta.config.dataroots</generatePackage>
+              <generateDirectory>${project.build.directory}/generated-sources/dataroots</generateDirectory>
+            </configuration>
+          </execution>
+          <execution>
+            <id>offheapresources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <schemaIncludes>
+                <include>offheap-resource.xsd</include>
+              </schemaIncludes>
+              <generatePackage>org.terracotta.config.offheapresources</generatePackage>
+              <generateDirectory>${project.build.directory}/generated-sources/offheapresources</generateDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
@@ -45,40 +106,15 @@
       <artifactId>terracotta-utilities-tools</artifactId>
     </dependency>
 
-    <!-- server apis -->
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>tc-config-parser</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>entity-server-api</artifactId>
+      <artifactId>tcconfig-schema</artifactId>
+      <version>${terracotta-configuration.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>tc-tripwire-plugin</artifactId>
-    </dependency>
-
-    <!-- server plugins -->
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>data-root-resource</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>offheap-resource</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>lease-entity-server</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>2.3.2</version>
     </dependency>
   </dependencies>
 </project>

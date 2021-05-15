@@ -22,16 +22,12 @@ import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 import org.terracotta.management.service.monitoring.ManageableServerComponent;
-import org.terracotta.offheapresource.config.MemoryUnit;
-import org.terracotta.offheapresource.config.OffheapResourcesType;
-import org.terracotta.offheapresource.config.ResourceType;
 import org.terracotta.offheapresource.management.OffHeapResourceBinding;
 import org.terracotta.offheapresource.management.OffHeapResourceSettingsManagementProvider;
 import org.terracotta.offheapresource.management.OffHeapResourceStatisticsManagementProvider;
 import org.terracotta.statistics.StatisticType;
 import org.terracotta.statistics.StatisticsManager;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -52,18 +48,10 @@ import static org.terracotta.offheapresource.OffHeapResourceIdentifier.identifie
  */
 public class OffHeapResourcesProvider implements OffHeapResources, ManageableServerComponent, StateDumpable, AutoCloseable {
   private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapResourcesProvider.class);
-  private static final BigInteger MAX_LONG_PLUS_ONE = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
 
   private final Map<OffHeapResourceIdentifier, OffHeapResourceImpl> resources = new ConcurrentHashMap<>();
   private final Collection<EntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
   private final AtomicLong totalConfiguredOffheap = new AtomicLong(0);
-
-  public OffHeapResourcesProvider(OffheapResourcesType configuration) {
-    for (ResourceType r : configuration.getResource()) {
-      long size = longValueExact(convert(r.getValue(), r.getUnit()));
-      addToResources(identifier(r.getName()), size);
-    }
-  }
 
   public OffHeapResourcesProvider(Map<String, Measure<org.terracotta.common.struct.MemoryUnit>> resources) {
     resources.forEach((name, measure) -> {
@@ -128,32 +116,6 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
       StateDumpCollector offHeapDump = dump.subStateDumpCollector(identifier.getName());
       offHeapDump.addState("capacity", String.valueOf(resource.capacity()));
       offHeapDump.addState("available", String.valueOf(resource.available()));
-    }
-  }
-
-  static BigInteger convert(BigInteger value, MemoryUnit unit) {
-    switch (unit) {
-      case B:
-        return value.shiftLeft(0);
-      case K_B:
-        return value.shiftLeft(10);
-      case MB:
-        return value.shiftLeft(20);
-      case GB:
-        return value.shiftLeft(30);
-      case TB:
-        return value.shiftLeft(40);
-      case PB:
-        return value.shiftLeft(50);
-    }
-    throw new IllegalArgumentException("Unknown unit " + unit);
-  }
-
-  static long longValueExact(BigInteger value) {
-    if (value.compareTo(MAX_LONG_PLUS_ONE) < 0) {
-      return value.longValue();
-    } else {
-      throw new ArithmeticException("BigInteger out of long range");
     }
   }
 

@@ -1,0 +1,3 @@
+org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parsing.DataRootConfigParser
+org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parsing.LeaseConfigurationParser
+org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.xml.parsing.OffHeapResourceConfigurationParser

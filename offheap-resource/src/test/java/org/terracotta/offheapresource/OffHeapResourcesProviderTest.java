@@ -15,13 +15,11 @@
  */
 package org.terracotta.offheapresource;
 
-import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.common.struct.Measure;
+import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 import org.terracotta.management.service.monitoring.EntityMonitoringService;
-import org.terracotta.offheapresource.config.MemoryUnit;
-import org.terracotta.offheapresource.config.OffheapResourcesType;
-import org.terracotta.offheapresource.config.ResourceType;
 import org.terracotta.offheapresource.management.OffHeapResourceBinding;
 import org.terracotta.statistics.StatisticsManager;
 import org.terracotta.statistics.ValueStatistic;
@@ -33,7 +31,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.IntStream;
 
-import static java.util.Collections.singletonList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNull.notNullValue;
@@ -42,29 +41,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.terracotta.offheapresource.OffHeapResourceIdentifier.identifier;
 
 public class OffHeapResourcesProviderTest {
-  private ResourceType resourceConfig;
-  private OffheapResourcesType configuration;
-
-  @Before
-  public void setUp() {
-    resourceConfig = mock(ResourceType.class);
-    configuration = mock(OffheapResourcesType.class);
-  }
 
   @SuppressWarnings("unchecked")
   @Test
   public void testObserverExposed() {
-    when(resourceConfig.getName()).thenReturn("foo");
-    when(resourceConfig.getUnit()).thenReturn(MemoryUnit.MB);
-    when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(2));
-    when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
-
-    OffHeapResourcesProvider provider = new OffHeapResourcesProvider(configuration);
+    OffHeapResourcesProvider provider = new OffHeapResourcesProvider(singletonMap("foo", Measure.of(2, MemoryUnit.MB)));
     OffHeapResource offHeapResource = provider.getOffHeapResource(identifier("foo"));
     assertThat(offHeapResource.available(), equalTo(2L * 1024 * 1024));
 
@@ -75,45 +61,25 @@ public class OffHeapResourcesProviderTest {
 
   @Test
   public void testInitializeWithValidConfig() {
-    when(resourceConfig.getName()).thenReturn("foo");
-    when(resourceConfig.getUnit()).thenReturn(MemoryUnit.MB);
-    when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(2));
-    when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
-
-    OffHeapResourcesProvider provider = new OffHeapResourcesProvider(configuration);
+    OffHeapResourcesProvider provider = new OffHeapResourcesProvider(singletonMap("foo", Measure.of(2, MemoryUnit.MB)));
     assertThat(provider.getOffHeapResource(identifier("foo")), notNullValue());
     assertThat(provider.getOffHeapResource(identifier("foo")).available(), is(2L * 1024 * 1024));
   }
 
   @Test
   public void testNullReturnOnInvalidResource() {
-    when(resourceConfig.getName()).thenReturn("foo");
-    when(resourceConfig.getUnit()).thenReturn(MemoryUnit.MB);
-    when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(2));
-    when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
-
-    OffHeapResourcesProvider provider = new OffHeapResourcesProvider(configuration);
+    OffHeapResourcesProvider provider = new OffHeapResourcesProvider(singletonMap("foo", Measure.of(2, MemoryUnit.MB)));
     assertThat(provider.getOffHeapResource(identifier("bar")), nullValue());
   }
 
   @Test(expected = ArithmeticException.class)
   public void testResourceTooBig() {
-    when(resourceConfig.getName()).thenReturn("foo");
-    when(resourceConfig.getUnit()).thenReturn(MemoryUnit.B);
-    when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE));
-    when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
-
-    new OffHeapResourcesProvider(configuration);
+    new OffHeapResourcesProvider(singletonMap("foo", Measure.of(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), MemoryUnit.B)));
   }
 
   @Test
   public void testResourceMax() {
-    when(resourceConfig.getName()).thenReturn("foo");
-    when(resourceConfig.getUnit()).thenReturn(MemoryUnit.B);
-    when(resourceConfig.getValue()).thenReturn(BigInteger.valueOf(Long.MAX_VALUE));
-    when(configuration.getResource()).thenReturn(singletonList(resourceConfig));
-
-    new OffHeapResourcesProvider(configuration);
+    new OffHeapResourcesProvider(singletonMap("foo", Measure.of(BigInteger.valueOf(Long.MAX_VALUE), MemoryUnit.B)));
   }
 
   @Test
@@ -122,7 +88,7 @@ public class OffHeapResourcesProviderTest {
     EntityMonitoringService entityMonitoringService = mock(EntityMonitoringService.class);
     when(registry.getMonitoringService()).thenReturn(entityMonitoringService);
     when(entityMonitoringService.getConsumerId()).thenReturn(1L);
-    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(configuration);
+    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(emptyMap());
     OffHeapResourceIdentifier newOffheap_preRegistry_Id = identifier("newOffheap_preRegistry");
     assertTrue(offHeapResourcesProvider.addOffHeapResource(newOffheap_preRegistry_Id, 100_000L));
     OffHeapResourceImpl newOffheap_preRegistry = offHeapResourcesProvider.getOffHeapResource(newOffheap_preRegistry_Id);
@@ -141,7 +107,7 @@ public class OffHeapResourcesProviderTest {
 
   @Test
   public void testResourceAddition_failForDuplicateResource() {
-    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(configuration);
+    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(emptyMap());
     assertThat(offHeapResourcesProvider.getTotalConfiguredOffheap(), equalTo(0L));
 
     assertTrue(offHeapResourcesProvider.addOffHeapResource(identifier("newOffheap"), 100_000L));
@@ -157,7 +123,7 @@ public class OffHeapResourcesProviderTest {
     int numThreads = 20;
 
     ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
-    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(configuration);
+    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(emptyMap());
     CyclicBarrier cyclicBarrier = new CyclicBarrier(numThreads + 1);
     for (int i = 0; i < numThreads; i++) {
       executorService.submit(() -> {
@@ -178,7 +144,7 @@ public class OffHeapResourcesProviderTest {
 
   @Test
   public void testConcurrentOffheapAddition_someOverlap() {
-    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(configuration);
+    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(emptyMap());
     final long incrementPerRun = 100L;
     final int numIterations = 50;
 

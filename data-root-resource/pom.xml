@@ -58,12 +58,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- server provided apis-->
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>tc-config-parser</artifactId>
-      <scope>provided</scope>
-    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>packaging-support</artifactId>
@@ -108,46 +102,5 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.jvnet.jaxb2.maven2</groupId>
-        <artifactId>maven-jaxb2-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <strict>false</strict>
-          <schemaDirectory>src/main/resources</schemaDirectory>
-          <schemaIncludes>
-            <include>*.xsd</include>
-          </schemaIncludes>
-          <generatePackage>org.terracotta.data.config</generatePackage>
-          <catalogs>
-            <catalog>
-              <dependencyResource>
-                <groupId>org.terracotta</groupId>
-                <artifactId>tcconfig-schema</artifactId>
-                <version>${terracotta-configuration.version}</version>
-                <resource>catalog.cat</resource>
-              </dependencyResource>
-            </catalog>
-          </catalogs>
-          <episodes>
-            <episode>
-              <groupId>org.terracotta</groupId>
-              <artifactId>tcconfig-schema</artifactId>
-              <version>${terracotta-configuration.version}</version>
-            </episode>
-          </episodes>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 
 </project>
