@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
@@ -26,6 +27,15 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.conta
 
 @ClusterDefinition
 public class GetCommand1x1IT extends DynamicConfigIT {
+
+  @Test
+  @Ignore("activate only manually to test verbose mode because it will otherwise change the whole logging system of the JVM running tests")
+  public void ensureVerboseWorks() {
+    assertThat(
+        configTool("-verbose", "get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.blah"),
+        not(containsOutput("offheap-resources.blah=")));
+  }
+
   @Test
   public void testNode_getOneOffheap_unknownOffheap() {
     assertThat(
