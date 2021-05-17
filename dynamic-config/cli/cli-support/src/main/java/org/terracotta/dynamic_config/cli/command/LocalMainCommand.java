@@ -36,6 +36,9 @@ public class LocalMainCommand extends Command {
       Logger rootLogger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
 
       ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("STDERR");
+      if (appender == null) {
+        throw new IllegalStateException("Logging appender 'STDERR' is missing!");
+      }
       PatternLayoutEncoder ple = new PatternLayoutEncoder();
       ple.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n");
       ple.setContext(appender.getContext());
