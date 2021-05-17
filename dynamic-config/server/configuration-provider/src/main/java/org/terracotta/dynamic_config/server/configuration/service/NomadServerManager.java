@@ -197,20 +197,26 @@ public class NomadServerManager {
     LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(configPath.toString()));
   }
 
-  public void downgradeForRead() {
-    getNomadServer().setChangeApplicator(null);
-    getNomadServer().setChangeApplicator(null);
+  public synchronized void disableNomad() {
+    if (isNomadEnabled()) {
+      LOGGER.debug("disableNomad()");
+      getNomadServer().setChangeApplicator(null);
+    }
+  }
+
+  public synchronized boolean isNomadEnabled() {
+    return nomadServer != null && nomadServer.getChangeApplicator() != null;
   }
 
   /**
    * Makes Nomad server capable of write operations.
    */
-  public void upgradeForWrite() {
-    if (getNomadServer().getChangeApplicator() != null) {
-      throw new IllegalStateException("Nomad is already upgraded");
+  public synchronized boolean enableNomad(UID nodeUID) {
+    if (isNomadEnabled()) {
+      return false;
     }
 
-    UID nodeUID = topologyService.getUpcomingNodeContext().getNodeUID();
+    LOGGER.debug("enableNomad()");
 
     router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(getTopologyService(), configChangeHandlerManager, getEventFiringService()));
     router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(server.getManagement().getMBeanServer(), getTopologyService(), getEventFiringService()));
@@ -233,7 +239,7 @@ public class NomadServerManager {
         )
     );
 
-    LOGGER.debug("Successfully completed upgradeForWrite procedure");
+    return true;
   }
 
   /**

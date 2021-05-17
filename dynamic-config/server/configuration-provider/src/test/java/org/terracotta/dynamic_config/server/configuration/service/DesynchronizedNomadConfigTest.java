@@ -175,7 +175,7 @@ public class DesynchronizedNomadConfigTest {
       try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"), passiveDetails);
            NomadClient<NodeContext> passiveNomadClient = passive.createNomadClient()) {
         passive.manager.getDynamicConfigService().setUpcomingCluster(lastTopology);
-        passive.manager.getDynamicConfigService().activate(lastTopology, null);
+        passive.manager.getDynamicConfigService().enableNomad(lastTopology, null);
 
         NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
         passiveNomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(lastTopology));
@@ -423,7 +423,7 @@ public class DesynchronizedNomadConfigTest {
 
     void reset() throws NomadException {
       nomad.reset();
-      manager.downgradeForRead();
+      manager.disableNomad();
     }
 
     /**
@@ -499,7 +499,7 @@ public class DesynchronizedNomadConfigTest {
 
       // activate the node
       if (nodeName != null) {
-        dynamicConfigService.activate(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
+        dynamicConfigService.enableNomad(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
       }
 
       // create the sync service
