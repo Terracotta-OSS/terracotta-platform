@@ -26,7 +26,7 @@
     </layout>
   </appender>
 
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+  <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
     <target>System.err</target>
     <layout class="ch.qos.logback.classic.PatternLayout">
       <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n</pattern>

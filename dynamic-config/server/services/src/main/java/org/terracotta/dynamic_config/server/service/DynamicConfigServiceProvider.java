@@ -68,11 +68,12 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     this.platformConfiguration = platformConfiguration;
 
-    IParameterSubstitutor parameterSubstitutor = findService(platformConfiguration, IParameterSubstitutor.class);
-    PathResolver pathResolver = findService(platformConfiguration, PathResolver.class);
-    ConfigChangeHandlerManager configChangeHandlerManager = findService(platformConfiguration, ConfigChangeHandlerManager.class);
-    TopologyService topologyService = findService(platformConfiguration, TopologyService.class);
-    Server server = findService(platformConfiguration, Server.class);
+    TopologyService topologyService = findService(TopologyService.class);
+
+    IParameterSubstitutor parameterSubstitutor = findService(IParameterSubstitutor.class);
+    PathResolver pathResolver = findService(PathResolver.class);
+    ConfigChangeHandlerManager configChangeHandlerManager = findService(ConfigChangeHandlerManager.class);
+    Server server = findService(Server.class);
 
     // client-reconnect-window
     ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler();
@@ -107,7 +108,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     // initialize the config handlers that need do to something at startup
     loggerOverrideConfigChangeHandler.init();
 
-    NomadPermissionChangeProcessor permissions = findService(platformConfiguration, NomadPermissionChangeProcessor.class);
+    NomadPermissionChangeProcessor permissions = findService(NomadPermissionChangeProcessor.class);
     permissions.addCheck(new DisallowSettingChanges());
     permissions.addCheck(new ServerStateCheck(server.getManagement()));
 
@@ -116,7 +117,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
-    return findService(platformConfiguration, configuration.getServiceType());
+    return findService(configuration.getServiceType());
   }
 
   @Override
@@ -150,7 +151,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     }
   }
 
-  private <T> T findService(PlatformConfiguration platformConfiguration, Class<T> type) {
+  private <T> T findService(Class<T> type) {
     if (!getProvidedServiceTypes().contains(type)) {
       throw new IllegalArgumentException(String.valueOf(type));
     }
