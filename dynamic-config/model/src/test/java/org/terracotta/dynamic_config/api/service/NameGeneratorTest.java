@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.api.service;
 
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
@@ -56,7 +57,7 @@ public class NameGeneratorTest {
     NameGenerator.assignFriendlyNames(cluster, newStripe);
 
     assertThat(newStripe.getName(), is(equalTo("stripe-3")));
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
   }
 
   @Test
@@ -76,6 +77,6 @@ public class NameGeneratorTest {
     NameGenerator.assignFriendlyNodeName(cluster, newNode);
 
     assertThat(newNode.getName(), is(equalTo("Canidae-3")));
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
   }
 }

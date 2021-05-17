@@ -573,12 +573,12 @@ public enum Setting {
       always(null),
       CLUSTER,
       fromCluster(Cluster::getFailoverPriority),
-      intoCluster((cluster, value) -> cluster.setFailoverPriority(FailoverPriority.valueOf(value))),
+      intoCluster((cluster, value) -> cluster.setFailoverPriority(value == null ? null : FailoverPriority.valueOf(value))),
       asList(
-          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
-          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+          when(CONFIGURING).allowAnyOperations().atLevel(CLUSTER),
+          when(ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE, CONFIG, RESOLVE_EAGERLY),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> DEFAULT_VALIDATOR.andThen((k, v) -> FailoverPriority.valueOf(v.t2)).accept(SettingName.FAILOVER_PRIORITY, tuple2(key, value))

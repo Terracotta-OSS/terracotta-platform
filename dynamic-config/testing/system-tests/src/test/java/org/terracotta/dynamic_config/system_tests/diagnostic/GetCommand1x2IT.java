@@ -26,8 +26,9 @@ import static org.hamcrest.Matchers.is;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition(nodesPerStripe = 2)
+@ClusterDefinition(nodesPerStripe = 2, failoverPriority = "")
 public class GetCommand1x2IT extends DynamicConfigIT {
+
   @Before
   public void before() throws Exception {
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));

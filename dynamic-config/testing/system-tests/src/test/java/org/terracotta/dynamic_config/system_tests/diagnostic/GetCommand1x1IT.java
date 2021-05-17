@@ -25,7 +25,7 @@ import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.not;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
-@ClusterDefinition
+@ClusterDefinition(failoverPriority = "")
 public class GetCommand1x1IT extends DynamicConfigIT {
 
   @Test

@@ -80,6 +80,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -531,13 +533,20 @@ public class DynamicConfigIT {
         .dataDir("main:data-dir")
         .offheap("main:512MB,foo:1GB")
         .metaData("metadata")
-        .failoverPriority(getFailoverPriority().toString())
+        .failoverPriority(Optional.ofNullable(getFailoverPriority()).map(Objects::toString).orElse(null))
         .clientReconnectWindow("10s") // the default client reconnect window of 2min can cause some tests to timeout
         .clusterName(CLUSTER_NAME);
   }
 
   protected FailoverPriority getFailoverPriority() {
-    return FailoverPriority.availability();
+    ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
+    if (clusterDef == null) {
+      return FailoverPriority.availability();
+    }
+    if (clusterDef.failoverPriority().isEmpty()) {
+      return null;
+    }
+    return FailoverPriority.valueOf(clusterDef.failoverPriority());
   }
 
   protected Distribution getDistribution() {
@@ -585,14 +594,16 @@ public class DynamicConfigIT {
       // construct a stream of key-value mappings for the ports and group ports
       // then use these mappings to replace placeholders in the read file
       String updated = rangeClosed(1, angela.getStripeCount()).boxed()
-        .flatMap(stripeId -> rangeClosed(1, angela.getNodeCount(stripeId)).boxed()
-          .flatMap(nodeId -> Stream.of(
-            new AbstractMap.SimpleEntry<>("${PORT-" + stripeId + "-" + nodeId + "}", angela.getNodePort(stripeId, nodeId)),
-            new AbstractMap.SimpleEntry<>("${GROUP-PORT-" + stripeId + "-" + nodeId + "}", angela.getNodeGroupPort(stripeId, nodeId)))))
-      .reduce(
-        new String(Files.readAllBytes(src), StandardCharsets.UTF_8),
-          (text, placeholder) -> text.replace(placeholder.getKey(), String.valueOf(placeholder.getValue())),
-          (s, s2) -> { throw new UnsupportedOperationException(); });
+          .flatMap(stripeId -> rangeClosed(1, angela.getNodeCount(stripeId)).boxed()
+              .flatMap(nodeId -> Stream.of(
+                  new AbstractMap.SimpleEntry<>("${PORT-" + stripeId + "-" + nodeId + "}", angela.getNodePort(stripeId, nodeId)),
+                  new AbstractMap.SimpleEntry<>("${GROUP-PORT-" + stripeId + "-" + nodeId + "}", angela.getNodeGroupPort(stripeId, nodeId)))))
+          .reduce(
+              new String(Files.readAllBytes(src), StandardCharsets.UTF_8),
+              (text, placeholder) -> text.replace(placeholder.getKey(), String.valueOf(placeholder.getValue())),
+              (s, s2) -> {
+                throw new UnsupportedOperationException();
+              });
       Files.write(dest, updated.getBytes(StandardCharsets.UTF_8));
       return dest;
     } catch (URISyntaxException | IOException e) {

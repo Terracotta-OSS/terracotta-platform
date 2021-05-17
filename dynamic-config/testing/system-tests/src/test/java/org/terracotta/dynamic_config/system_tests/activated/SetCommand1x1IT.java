@@ -36,7 +36,7 @@ import static org.hamcrest.Matchers.not;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition(autoActivate = true)
+@ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class SetCommand1x1IT extends DynamicConfigIT {
   @Test
   public void setOffheapResource_decreaseSize() {

@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.server.configuration.startup;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
@@ -27,10 +26,6 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-
-import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
-
-;
 
 public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
   private final Options options;
@@ -64,7 +59,6 @@ public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
       // Build an alternate topology from the CLI in case we cannot load any config from the existing config repo.
       // This can happen in case a node is not properly activated
       Map<Setting, String> cliOptions = new LinkedHashMap<>(options.getTopologyOptions());
-      cliOptions.putIfAbsent(FAILOVER_PRIORITY, FailoverPriority.availability().toString());
       Cluster cluster = clusterCreator.create(cliOptions, parameterSubstitutor);
       NodeContext alternate = new NodeContext(cluster, cluster.getSingleNode().get().getUID());
 

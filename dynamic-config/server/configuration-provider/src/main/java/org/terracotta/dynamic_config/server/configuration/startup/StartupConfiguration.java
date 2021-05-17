@@ -152,7 +152,10 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public FailoverBehavior getFailoverPriority() {
-    final FailoverPriority failoverPriority = nodeContextSupplier.get().getCluster().getFailoverPriority();
+    final FailoverPriority failoverPriority = nodeContextSupplier.get().getCluster().getFailoverPriority().orElse(null);
+    if(failoverPriority == null) {
+      return null;
+    }
     switch (failoverPriority.getType()) {
       case CONSISTENCY:
         return new FailoverBehavior(FailoverBehavior.Type.CONSISTENCY, failoverPriority.getVoters());

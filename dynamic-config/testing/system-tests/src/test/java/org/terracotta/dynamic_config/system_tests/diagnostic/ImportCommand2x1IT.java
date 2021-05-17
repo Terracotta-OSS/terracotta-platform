@@ -29,8 +29,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition(stripes = 2)
+@ClusterDefinition(stripes = 2, failoverPriority = "")
 public class ImportCommand2x1IT extends DynamicConfigIT {
+
   @Test
   public void test_import() throws Exception {
     getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true);

@@ -35,7 +35,7 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
-@ClusterDefinition(autoStart = false)
+@ClusterDefinition(autoStart = false, failoverPriority = "")
 public class NodeStartupIT extends DynamicConfigIT {
 
   @Test
@@ -309,7 +309,6 @@ public class NodeStartupIT extends DynamicConfigIT {
   private void startSingleNode(String... args) {
     // these arguments are required to be added to isolate the node data files into the build/test-data directory to not conflict with other processes
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
-        "--failover-priority", "availability",
         "--hostname", "localhost",
         "--log-dir", "logs",
         "--backup-dir", "backup",

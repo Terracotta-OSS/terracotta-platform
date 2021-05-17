@@ -27,7 +27,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.conta
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(stripes = 2, nodesPerStripe = 1, autoStart = false)
+@ClusterDefinition(stripes = 2, nodesPerStripe = 1, autoStart = false, failoverPriority = "")
 public class AttachCommand2x1IT extends DynamicConfigIT {
 
   @Override

@@ -95,8 +95,8 @@ public class DetachAction extends TopologyAction {
         throw new IllegalStateException("Unable to detach since destination stripe contains only 1 node");
       }
 
-      FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
-      if (failoverPriority.getType() == CONSISTENCY) {
+      FailoverPriority failoverPriority = destinationCluster.getFailoverPriority().orElse(null);
+      if (failoverPriority != null && failoverPriority.getType() == CONSISTENCY) {
         int voterCount = failoverPriority.getVoters();
         int nodeCount = destinationStripe.getNodes().size();
         int sum = voterCount + nodeCount;

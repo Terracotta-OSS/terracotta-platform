@@ -38,7 +38,7 @@ import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition
+@ClusterDefinition(failoverPriority = "")
 public class TopologyServiceIT extends DynamicConfigIT {
 
   Path config;

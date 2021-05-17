@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.service.nomad.process
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
@@ -61,7 +62,7 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
     try {
       checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
-      new ClusterValidator(updated).validate();
+      new ClusterValidator(updated).validate(ClusterState.ACTIVATED);
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

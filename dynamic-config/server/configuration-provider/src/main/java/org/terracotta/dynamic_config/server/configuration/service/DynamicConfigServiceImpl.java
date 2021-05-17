@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -96,8 +97,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     this.objectMapper = objectMapperFactory.create();
     this.server = requireNonNull(server);
 
-    // This check is only present to safeguard against the possibility of a missing cluster validation in the call path
-    new ClusterValidator(nodeContext.getCluster()).validate();
+    // ensure we start with a minimally valid configuration
+    // if the node gets activated, the validator will be called in the activate() method with the appropriate cluster state
+    new ClusterValidator(nodeContext.getCluster()).validate(ClusterState.CONFIGURING);
   }
 
   // do not move this method up in the interface otherwise any client could access the license content through diagnostic port
@@ -303,7 +305,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       throw new IllegalStateException("Use Nomad instead to change the topology of activated node: " + runtimeNodeContext.getNode().getName());
     }
 
-    new ClusterValidator(updatedCluster).validate();
+    new ClusterValidator(updatedCluster).validate(ClusterState.CONFIGURING);
 
     Node newMe = findMe(updatedCluster);
 
@@ -328,7 +330,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.info("Activating configuration system on this node with topology: {}", maybeUpdatedCluster.toShapeString());
 
     // This check is only present to safeguard against the possibility of a missing cluster validation in the call path
-    new ClusterValidator(maybeUpdatedCluster).validate();
+    new ClusterValidator(maybeUpdatedCluster).validate(ClusterState.ACTIVATED);
 
     // validate that we are part of this cluster
     if (findMe(maybeUpdatedCluster) == null) {
@@ -524,21 +526,21 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   private void warnIfProblematicConsistency(NodeContext nodeContext) {
-    FailoverPriority failover = nodeContext.getCluster().getFailoverPriority();
-    if (failover.getType() == CONSISTENCY) {
+    FailoverPriority failover = nodeContext.getCluster().getFailoverPriority().orElse(null);
+    if (failover != null && failover.getType() == CONSISTENCY) {
       int voters = failover.getVoters();
       List<Stripe> evenNodeStripes = nodeContext.getCluster().getStripes()
           .stream().filter(s -> (s.getNodeCount() + voters) % 2 == 0).collect(Collectors.toList());
       if (evenNodeStripes.size() > 0) {
         StringBuilder warn = new StringBuilder(lineSeparator());
-        warn.append("===================================================================================================================" + lineSeparator());
-        warn.append("When a cluster is configured with failover-priority=consistency, stripes with an even number" + lineSeparator());
-        warn.append("of nodes plus voters are more likely to experience split brain situations." + lineSeparator());
-        warn.append("The following stripe(s) have an even number of nodes plus voters:" + lineSeparator());
+        warn.append("===================================================================================================================").append(lineSeparator());
+        warn.append("When a cluster is configured with failover-priority=consistency, stripes with an even number").append(lineSeparator());
+        warn.append("of nodes plus voters are more likely to experience split brain situations.").append(lineSeparator());
+        warn.append("The following stripe(s) have an even number of nodes plus voters:").append(lineSeparator());
         for (Stripe s : evenNodeStripes) {
-          warn.append("   Stripe: '" + s.getName() + "' has " + s.getNodeCount() + " nodes and " + voters + " voters." + lineSeparator());
+          warn.append("   Stripe: '").append(s.getName()).append("' has ").append(s.getNodeCount()).append(" nodes and ").append(voters).append(" voters.").append(lineSeparator());
         }
-        warn.append("===================================================================================================================" + lineSeparator());
+        warn.append("===================================================================================================================").append(lineSeparator());
         LOGGER.warn(warn.toString());
       }
     }

@@ -196,7 +196,7 @@ public class SettingValidatorTest {
 
   @Test
   public void test_FAILOVER_PRIORITY() {
-    validateRequired(FAILOVER_PRIORITY);
+    validateOptional(FAILOVER_PRIORITY);
     Stream.of(
         "foo",
         "availability:8",

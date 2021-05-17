@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.api.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.ConfigFormat;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -128,7 +129,8 @@ public class ClusterFactory {
   }
 
   private Cluster validated(Cluster cluster) {
-    new ClusterValidator(cluster).validate(version);
+    // do a minimal validation after having parsed the CLI or config
+    new ClusterValidator(cluster).validate(ClusterState.CONFIGURING, version);
     return cluster;
   }
 

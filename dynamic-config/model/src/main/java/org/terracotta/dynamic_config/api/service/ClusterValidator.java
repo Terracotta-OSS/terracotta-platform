@@ -16,7 +16,7 @@
 package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -50,6 +50,8 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  * This class expects all the fields to be first validated by {@link Setting#validate(String, String, Scope)}.
  * <p>
  * This class will validate the complete cluster object (inter-field checks and dependency checks).
+ * <p>
+ * It is meant to be used before an activation process (or when nodes are activated).
  */
 public class ClusterValidator {
 
@@ -80,33 +82,38 @@ public class ClusterValidator {
     this.cluster = cluster;
   }
 
-  public void validate() throws MalformedClusterException {
-    validate(Version.CURRENT);
+  public void validate(ClusterState clusterState) throws MalformedClusterException {
+    validate(clusterState, Version.CURRENT);
   }
 
-  public void validate(Version version) throws MalformedClusterException {
+  public void validate(ClusterState clusterState, Version version) throws MalformedClusterException {
     validateNodeNames();
-    validateNames();
+    validateNames(clusterState);
     validateAddresses();
     validateBackupDirs();
     validateDataDirs();
     validateSecurity();
-    validateFailoverSetting();
+    validateFailoverSetting(clusterState);
     if (version.amongst(EnumSet.of(V2))) {
       validateStripeNames();
       validateUIDs();
     }
   }
 
-  private void validateNames() {
+  private void validateNames(ClusterState clusterState) {
     Stream.concat(Stream.of(cluster), cluster.descendants())
-      .filter(o -> o.getName() != null) // empty names will be validated elsewhere
-      .forEach(o -> validateName(o.getName(), o.getScope().toString().toLowerCase()));
+        .peek(o -> {
+          if (clusterState == ClusterState.ACTIVATED && o.getName() == null) {
+            throw new MalformedClusterException("Missing " + o.getScope().toString().toLowerCase() + " name");
+          }
+        })
+        .filter(o -> o.getName() != null) // empty names will be validated elsewhere
+        .forEach(o -> validateName(o.getName(), o.getScope().toString().toLowerCase()));
   }
 
   public static void validateName(String name, String scope) {
     if (name.isEmpty()) {
-      throw new MalformedClusterException("Empty " + scope.toString().toLowerCase() + " name");
+      throw new MalformedClusterException("Empty " + scope.toLowerCase() + " name");
     }
     // invalid chars
     {
@@ -226,10 +233,9 @@ public class ClusterValidator {
         });
   }
 
-  private void validateFailoverSetting() {
-    FailoverPriority failoverPriority = cluster.getFailoverPriority();
-    if (failoverPriority == null) {
-      throw new MalformedClusterException(Setting.FAILOVER_PRIORITY + " setting is missing");
+  private void validateFailoverSetting(ClusterState clusterState) {
+    if (clusterState == ClusterState.ACTIVATED && !cluster.getFailoverPriority().isConfigured() && cluster.getNodeCount() > 1) {
+      throw new MalformedClusterException(Setting.FAILOVER_PRIORITY + " setting is not configured");
     }
   }
 

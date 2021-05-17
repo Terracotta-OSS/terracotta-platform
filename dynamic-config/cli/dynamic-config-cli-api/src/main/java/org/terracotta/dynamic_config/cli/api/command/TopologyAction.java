@@ -36,6 +36,8 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static java.lang.System.lineSeparator;
+import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
+import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 
 /**
  * @author Mathieu Carbou
@@ -94,7 +96,7 @@ public abstract class TopologyAction extends RemoteAction {
     Cluster result = updateTopology();
 
     // triggers validation
-    new ClusterValidator(result).validate();
+    new ClusterValidator(result).validate(destinationClusterActivated ? ACTIVATED : CONFIGURING);
 
     if (LOGGER.isDebugEnabled()) {
       try {

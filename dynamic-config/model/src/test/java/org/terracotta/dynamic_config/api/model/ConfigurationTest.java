@@ -97,12 +97,6 @@ public class ConfigurationTest {
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: Setting 'license-file' requires a value"))))));
 
     Stream.of(
-        FAILOVER_PRIORITY
-    ).forEach(setting -> assertThat(
-        () -> setting(setting),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: Setting 'failover-priority' requires a value"))))));
-
-    Stream.of(
         NODE_HOSTNAME,
         NODE_NAME,
         NODE_PORT
@@ -114,6 +108,7 @@ public class ConfigurationTest {
         CLIENT_LEASE_DURATION,
         CLIENT_RECONNECT_WINDOW,
         CLUSTER_NAME,
+        FAILOVER_PRIORITY,
         DATA_DIRS,
         NODE_BACKUP_DIR,
         NODE_BIND_ADDRESS,
@@ -378,7 +373,6 @@ public class ConfigurationTest {
       // set allowed for scope cluster
       Stream.of(
           tuple2(CLIENT_RECONNECT_WINDOW, "20s"),
-          tuple2(FAILOVER_PRIORITY, "availability"),
           tuple2(CLIENT_LEASE_DURATION, "20s"),
           tuple2(SECURITY_SSL_TLS, "true"),
           tuple2(SECURITY_WHITELIST, "true")
@@ -401,6 +395,7 @@ public class ConfigurationTest {
       // set allowed for scope cluster
       Stream.of(
           tuple2(CLUSTER_NAME, "foo"),
+          tuple2(FAILOVER_PRIORITY, "availability"),
           tuple2(SECURITY_AUTHC, "certificate")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
@@ -712,15 +707,6 @@ public class ConfigurationTest {
       }));
     });
 
-    // failover-priority
-    Stream.of("failover-priority").forEach(setting -> {
-      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
-      Stream.of(CONFIGURING).forEach(state -> state.filter(GET).forEach(op -> {
-        allow(state, op, setting);
-        reject(state, op, "stripe.1." + setting);
-        reject(state, op, "stripe.1.node.1." + setting);
-      }));
-    });
     // client-reconnect-window, client-lease-duration
     Stream.of("client-reconnect-window", "client-lease-duration").forEach(setting -> {
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> {
@@ -740,14 +726,6 @@ public class ConfigurationTest {
         reject(state, op, setting + "=");
         reject(state, op, "stripe.1." + setting + "=1s");
         reject(state, op, "stripe.1.node.1." + setting + "=1s");
-      }));
-    });
-    Stream.of("failover-priority").forEach(setting -> {
-      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET, IMPORT).forEach(op -> {
-        allow(state, op, setting + "=availability");
-        reject(state, op, setting + "=");
-        reject(state, op, "stripe.1." + setting + "=availability");
-        reject(state, op, "stripe.1.node.1." + setting + "=availability");
       }));
     });
 
@@ -778,30 +756,30 @@ public class ConfigurationTest {
       reject(state, op, "stripe.1.node.1.log-dir=");
     }));
 
-    // cluster-name, offheap-resources
-    Stream.of("cluster-name", "offheap-resources").forEach(setting -> {
-      Stream.of(ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+    // cluster-name, offheap-resources, failover-priority
+    Stream.of(tuple2("cluster-name", "foo"), tuple2("offheap-resources", "foo:123GB"), tuple2("failover-priority", "availability")).forEach(setting -> {
+      Stream.of(ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting.t1))));
       Stream.of(ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> {
-        allow(state, op, setting);
-        reject(state, op, "stripe.1." + setting);
-        reject(state, op, "stripe.1.node.1." + setting);
+        allow(state, op, setting.t1);
+        reject(state, op, "stripe.1." + setting.t1);
+        reject(state, op, "stripe.1.node.1." + setting.t1);
       }));
       Stream.of(CONFIGURING).forEach(state -> state.filter(GET, UNSET).forEach(op -> {
-        allow(state, op, setting);
-        reject(state, op, "stripe.1." + setting);
-        reject(state, op, "stripe.1.node.1." + setting);
+        allow(state, op, setting.t1);
+        reject(state, op, "stripe.1." + setting.t1);
+        reject(state, op, "stripe.1.node.1." + setting.t1);
       }));
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
-        allow(state, op, setting + "=foo:123GB");
-        reject(state, op, setting + "=");
-        reject(state, op, "stripe.1." + setting + "=foo:123GB");
-        reject(state, op, "stripe.1.node.1." + setting + "=foo:123GB");
+        allow(state, op, setting.t1 + "=" + setting.t2);
+        reject(state, op, setting.t1 + "=");
+        reject(state, op, "stripe.1." + setting.t1 + "=" + setting.t2);
+        reject(state, op, "stripe.1.node.1." + setting.t1 + "=" + setting.t2);
       }));
       Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
-        allow(state, op, setting + "=foo:123GB");
-        allow(state, op, setting + "=");
-        reject(state, op, "stripe.1." + setting + "=foo:123GB");
-        reject(state, op, "stripe.1.node.1." + setting + "=foo:123GB");
+        allow(state, op, setting.t1 + "=" + setting.t2);
+        allow(state, op, setting.t1 + "=");
+        reject(state, op, "stripe.1." + setting.t1 + "=" + setting.t2);
+        reject(state, op, "stripe.1.node.1." + setting.t1 + "=" + setting.t2);
       }));
     });
   }
