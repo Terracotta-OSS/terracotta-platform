@@ -74,7 +74,7 @@ public class ConfigConversionIT {
     assertThat(cluster.getName(), is("my-cluster"));
     assertThat(cluster.getDataDirNames().size(), is(1));
     assertThat(cluster.getOffheapResources().get().size(), is(1));
-    assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
+    assertThat(cluster.getFailoverPriority().get(), is(FailoverPriority.availability()));
     assertFalse(cluster.getClientLeaseDuration().isConfigured());
     assertThat(cluster.getClientLeaseDuration().orDefault(), is(Measure.of(150, TimeUnit.SECONDS)));
     assertThat(cluster.getClientReconnectWindow().get(), is(Measure.of(120, TimeUnit.SECONDS)));
@@ -282,7 +282,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
+    assertThat(cluster.getFailoverPriority().get(), is(FailoverPriority.availability()));
   }
 
   @Test
@@ -325,7 +325,7 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
+    assertThat(cluster.getFailoverPriority().get(), is(FailoverPriority.availability()));
   }
 
   @Test

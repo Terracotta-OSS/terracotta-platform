@@ -27,7 +27,7 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition(nodesPerStripe = 2, autoStart = false)
+@ClusterDefinition(nodesPerStripe = 2, autoStart = false, failoverPriority = "")
 public class Ipv6ConfigIT extends DynamicConfigIT {
 
   @Test

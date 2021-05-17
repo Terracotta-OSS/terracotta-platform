@@ -54,6 +54,7 @@ import static java.util.stream.Stream.of;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
+import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
@@ -114,8 +115,8 @@ public class Cluster implements Cloneable, PropertyHolder {
     return OptionalConfig.of(SECURITY_WHITELIST, securityWhitelist);
   }
 
-  public FailoverPriority getFailoverPriority() {
-    return failoverPriority;
+  public OptionalConfig<FailoverPriority> getFailoverPriority() {
+    return OptionalConfig.of(FAILOVER_PRIORITY, failoverPriority);
   }
 
   public OptionalConfig<Measure<TimeUnit>> getClientReconnectWindow() {
@@ -146,7 +147,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Cluster setFailoverPriority(FailoverPriority failoverPriority) {
-    this.failoverPriority = requireNonNull(failoverPriority);
+    this.failoverPriority = failoverPriority;
     return this;
   }
 

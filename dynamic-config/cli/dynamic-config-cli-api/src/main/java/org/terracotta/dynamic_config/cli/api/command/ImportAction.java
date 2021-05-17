@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
@@ -56,8 +57,8 @@ public class ImportAction extends RemoteAction {
   @Override
   public final void run() {
     Cluster cluster = loadCluster();
-    FailoverPriority failoverPriority = cluster.getFailoverPriority();
-    if (failoverPriority.getType() == CONSISTENCY) {
+    FailoverPriority failoverPriority = cluster.getFailoverPriority().orElse(null);
+    if (failoverPriority != null && failoverPriority.getType() == CONSISTENCY) {
       int voterCount = failoverPriority.getVoters();
       for (Stripe stripe : cluster.getStripes()) {
         int nodeCount = stripe.getNodes().size();
@@ -76,7 +77,7 @@ public class ImportAction extends RemoteAction {
     Collection<Node.Endpoint> runtimePeers = cluster.getEndpoints(node);
 
     // validate the topology
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster).validate(ClusterState.CONFIGURING);
 
     if (node != null) {
       // verify the activated state of the nodes

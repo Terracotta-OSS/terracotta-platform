@@ -31,7 +31,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition
+@ClusterDefinition(failoverPriority = "")
 public class DiagnosticIT extends DynamicConfigIT {
 
   @Override

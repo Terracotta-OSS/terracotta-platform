@@ -45,7 +45,7 @@ public enum Requirement {
   RESOLVE_EAGERLY,
 
   /**
-   * A setting that must be set by the user or which must have a default because teh presence of a value is required at runtime
+   * A setting that must be set by the user or which must have a default because the presence of a value is required at runtime
    */
   PRESENCE,
 

@@ -72,6 +72,20 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  public void testSingleNodeActivationWithConfigFileNoFailover() throws Exception {
+    assertThat(
+        configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe-no-fo.properties").toString(), "-n", "my-cluster"),
+        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+
+    waitForActive(1, 1);
+
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
+      assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
+    });
+  }
+
+  @Test
   public void testMultiNodeSingleStripeActivationWithConfigFile() {
     assertThat(
         configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
@@ -79,6 +93,13 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
     waitForActive(1);
     waitForPassives(1);
+  }
+
+  @Test
+  public void testMultiNodeSingleStripeActivationWithConfigFileNoFailover() {
+    assertThat(
+        configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node-no-fo.properties").toString()),
+        containsOutput("failover-priority setting is not configured"));
   }
 
   @Test

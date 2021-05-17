@@ -33,7 +33,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition(autoActivate = true)
+@ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class DiagnosticsIT extends DynamicConfigIT {
   @Test
   public void testGetConfigByAddingOffheapResource() throws Exception {

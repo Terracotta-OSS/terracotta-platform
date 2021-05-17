@@ -25,7 +25,7 @@ import java.nio.file.Path;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
-@ClusterDefinition(autoStart = false)
+@ClusterDefinition(autoStart = false, failoverPriority = "")
 public class Ipv6ConfigActivationIT extends DynamicConfigIT {
 
   @Test

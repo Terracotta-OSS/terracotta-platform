@@ -38,7 +38,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(autoActivate = true)
+@ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class RepairCommand1x1IT extends DynamicConfigIT {
 
   public RepairCommand1x1IT() {

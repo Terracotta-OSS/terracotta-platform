@@ -30,7 +30,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(nodesPerStripe = 2)
+@ClusterDefinition(nodesPerStripe = 2, failoverPriority = "")
 public class DetachCommand1x2IT extends DynamicConfigIT {
 
   public DetachCommand1x2IT() {

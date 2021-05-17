@@ -269,28 +269,16 @@ public class ConfigurationParserTest {
     // minimal config is to only have hostname, but to facilitate testing we add name
     assertConfigEquals(
         config(
-            "failover-priority=availability",
             "stripe.1.stripe-name=<GENERATED>",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo"
         ),
-        Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost"))),
+        Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost"))).setFailoverPriority(null),
         "cluster-uid=<GENERATED>",
         "stripe.1.stripe-uid=<GENERATED>",
         "stripe.1.node.1.node-uid=<GENERATED>"
     );
-  }
-
-  @Test
-  public void test_parsing_complete_1x1_no_failover() {
-    // minimal config is to only have hostname, but to facilitate testing we add name
-    assertConfigFail(
-        config(
-            "stripe.1.node.1.name=node1",
-            "stripe.1.node.1.hostname=localhost",
-            "cluster-name=foo"
-        ), "Required setting: 'failover-priority' is missing");
   }
 
   @Test

@@ -26,7 +26,7 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition(nodesPerStripe = 2)
+@ClusterDefinition(nodesPerStripe = 2, failoverPriority = "")
 public class SetCommand1x2IT extends DynamicConfigIT {
 
   @Before

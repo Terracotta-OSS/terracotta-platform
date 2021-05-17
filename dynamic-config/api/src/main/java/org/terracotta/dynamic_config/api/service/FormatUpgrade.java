@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Version;
 
 import java.util.Random;
@@ -60,7 +61,7 @@ public class FormatUpgrade {
       NameGenerator.assignFriendlyStripeNames(upgraded, new Random(clusterName.hashCode()));
     }
 
-    new ClusterValidator(upgraded).validate();
+    new ClusterValidator(upgraded).validate(ClusterState.CONFIGURING);
 
     return upgraded;
   }

@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.cli.api.command;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -86,7 +87,7 @@ public class ActivateAction extends RemoteAction {
       throw new IllegalArgumentException("Cluster name is missing");
     }
 
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
 
     // getting the list of nodes where to push the same topology
 

@@ -32,7 +32,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(stripes = 2, nodesPerStripe = 2)
+@ClusterDefinition(stripes = 2, nodesPerStripe = 2, failoverPriority = "")
 public class AttachDetachCommand2x2IT extends DynamicConfigIT {
   private static final String OUTPUT_JSON_FILE = "attach-detach-output.json";
 

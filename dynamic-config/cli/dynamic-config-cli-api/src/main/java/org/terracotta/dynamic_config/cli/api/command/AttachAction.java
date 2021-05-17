@@ -120,8 +120,8 @@ public class AttachAction extends TopologyAction {
               "Please refer to the Troubleshooting Guide for more help.");
 
       Stripe destinationStripe = destinationCluster.getStripeByNode(destination.getNodeUID()).get();
-      FailoverPriority failoverPriority = destinationCluster.getFailoverPriority();
-      if (failoverPriority.getType() == CONSISTENCY) {
+      FailoverPriority failoverPriority = destinationCluster.getFailoverPriority().orElse(null);
+      if (failoverPriority != null && failoverPriority.getType() == CONSISTENCY) {
         int voterCount = failoverPriority.getVoters();
         int nodeCount = destinationStripe.getNodes().size();
         int sum = voterCount + nodeCount;

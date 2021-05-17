@@ -43,6 +43,13 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  public void test_auto_activation_success_for_1x1_cluster_no_failover() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x1-no-fo.properties");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "--config-dir", "config/stripe1/1-1");
+    waitForActive(1, 1);
+  }
+
+  @Test
   public void test_auto_activation_failure_for_different_1x2_cluster() {
     startNode(1, 1, "--auto-activate", "-f", copyConfigProperty("/config-property-files/1x2.properties").toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/1-1");
     waitForActive(1, 1);
@@ -55,6 +62,17 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
       fail();
     } catch (Throwable e) {
       assertThatServerLogs(getNode(1, 2), "Unable to find any change in the source node matching the topology used to activate this node");
+    }
+  }
+
+  @Test
+  public void test_auto_activation_failure_1x2_cluster_no_failover() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x2-no-fo.properties");
+    try {
+      startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/1-1");
+      fail();
+    } catch (Throwable e) {
+      assertThatServerLogs(getNode(1, 1), "failover-priority setting is not configured");
     }
   }
 

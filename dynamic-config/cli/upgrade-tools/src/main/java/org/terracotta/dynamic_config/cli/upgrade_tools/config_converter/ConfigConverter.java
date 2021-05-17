@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.SettingName;
@@ -62,7 +63,7 @@ public class ConfigConverter {
     Cluster cluster = mapper.parseConfig(clusterName, stripeNames, tcConfigPaths);
     validateAgainstRelativePath(cluster);
 
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
 
     postConversionProcessor.accept(cluster);
   }

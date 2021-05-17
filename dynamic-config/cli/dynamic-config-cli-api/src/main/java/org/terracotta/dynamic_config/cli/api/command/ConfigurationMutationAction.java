@@ -52,6 +52,8 @@ import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
+import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
+import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_ONLINE;
 import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
 import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
@@ -126,7 +128,6 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
           "=======================================================================================" + lineSeparator());
       return;
     }
-    new ClusterValidator(updatedCluster).validate();
 
     // get the current state of the nodes
     // this call can take some time and we can have some timeout
@@ -134,6 +135,9 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
     LOGGER.debug("Online nodes: {}", onlineNodes);
 
     boolean allOnlineNodesActivated = areAllNodesActivated(onlineNodes.keySet());
+
+    new ClusterValidator(updatedCluster).validate(allOnlineNodesActivated ? ACTIVATED : CONFIGURING);
+
     if (allOnlineNodesActivated) {
       licenseValidation(node, updatedCluster);
     }

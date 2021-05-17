@@ -29,7 +29,7 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition
+@ClusterDefinition(failoverPriority = "")
 public class SetCommand1x1IT extends DynamicConfigIT {
 
   @Rule

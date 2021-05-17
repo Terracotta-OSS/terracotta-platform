@@ -25,7 +25,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.conta
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(autoActivate = true)
+@ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class SimulationHandlerIT extends DynamicConfigIT {
   @Test
   public void test_missing_value() {

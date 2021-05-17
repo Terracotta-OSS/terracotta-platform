@@ -295,8 +295,8 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testUnconfiguredWithCliParams() {
+    cluster.setFailoverPriority(null);
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
-    when(options.getFailoverPriority()).thenReturn(availability().toString());
 
     mainCommandLineProcessor.process();
 
@@ -304,12 +304,5 @@ public class CommandLineProcessorChainTest {
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUnconfigured(nodeContext, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
-  }
-
-  @Test
-  public void testWithCliParams_missingFailoverPriority() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("failover-priority is required");
-    mainCommandLineProcessor.process();
   }
 }

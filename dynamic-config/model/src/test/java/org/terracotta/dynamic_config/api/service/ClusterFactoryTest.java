@@ -23,6 +23,7 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -149,14 +150,14 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_create_cli_validated() {
-    assertCliFail(cli("failover-priority=availability", "ssl-tls=false", "authc=certificate"), securityDisallowedError);
-    assertCliFail(cli("failover-priority=availability", "ssl-tls=true", "authc=certificate"), securityDisallowedError);
-    assertCliFail(cli("failover-priority=availability", "ssl-tls=true"), securityDisallowedError);
-    assertCliFail(cli("failover-priority=availability", "authc=file"), securityDisallowedError);
-    assertCliFail(cli("failover-priority=availability", "authc=ldap"), securityDisallowedError);
-    assertCliFail(cli("failover-priority=availability", "audit-log-dir=foo"), auditLogDirDisallowedError);
-    assertCliFail(cli("failover-priority=availability", "whitelist=true"), securityDisallowedError);
-    assertCliFail(cli("failover-priority=availability", "security-dir=foo"), minimumSecurityError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "ssl-tls=false", "authc=certificate"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "ssl-tls=true", "authc=certificate"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "ssl-tls=true"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "authc=file"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "authc=ldap"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "audit-log-dir=foo"), auditLogDirDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "whitelist=true"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "security-dir=foo"), minimumSecurityError);
   }
 
   @Test
@@ -269,42 +270,43 @@ public class ClusterFactoryTest {
   public void test_create_config_validated() {
     // security
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
             "ssl-tls=false", "authc=certificate"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
             "ssl-tls=true", "authc=certificate"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
             "ssl-tls=true"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
             "authc=file"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
             "authc=ldap"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.audit-log-dir=foo"), auditLogDirDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
             "whitelist=true"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.security-dir=foo"), minimumSecurityError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.security-dir=foo", "ssl-tls=false", "authc=certificate"), certificateSslTlsError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost1", "stripe.1.node.2.hostname=localhost2",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost1", "stripe.1.node.2.hostname=localhost2",
             "stripe.1.node.1.security-dir=foo"), securityDirError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost1", "stripe.1.node.2.hostname=localhost2",
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost1", "stripe.1.node.2.hostname=localhost2",
             "stripe.1.node.1.security-dir=foo", "stripe.1.node.2.security-dir=foo", "whitelist=true", "stripe.1.node.1.audit-log-dir=foo"), auditLogDirError);
 
     // duplicate node name
     assertConfigFail(
         config(
+            "cluster-name=foo",
             "failover-priority=availability",
             "stripe.1.node.1.hostname=localhost1", "stripe.1.node.1.name=foo",
             "stripe.1.node.2.hostname=localhost2", "stripe.1.node.2.name=foo"
@@ -312,6 +314,7 @@ public class ClusterFactoryTest {
         "Found duplicate node name: foo");
     assertConfigFail(
         config(
+            "cluster-name=foo",
             "failover-priority=availability",
             "stripe.1.node.1.hostname=localhost1", "stripe.1.node.1.name=foo",
             "stripe.2.node.1.hostname=localhost2", "stripe.2.node.1.name=foo"
@@ -441,7 +444,7 @@ public class ClusterFactoryTest {
 
   private void assertCliFail(Map<Setting, String> params, String err) {
     assertThat(
-        () -> clusterFactory.create(params, substitutor),
+        () -> new ClusterValidator(clusterFactory.create(params, substitutor)).validate(ClusterState.ACTIVATED),
         is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
   }
 
@@ -459,7 +462,7 @@ public class ClusterFactoryTest {
 
   private void assertConfigFail(Properties config, String err) {
     assertThat(
-        () -> clusterFactory.create(config),
+        () -> new ClusterValidator(clusterFactory.create(config)).validate(ClusterState.ACTIVATED),
         is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
   }
 
