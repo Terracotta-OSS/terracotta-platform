@@ -29,20 +29,25 @@
   <artifactId>healthchecker-server</artifactId>
 
   <dependencies>
-  <dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>healthchecker-common</artifactId>
       <version>${project.version}</version>
-  </dependency>
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>packaging-support</artifactId>
-        <scope>provided</scope>
+      <groupId>org.terracotta</groupId>
+      <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>
