@@ -41,7 +41,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
-import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.dynamic_config.cli.api.converter.OperationType.NODE;
@@ -135,22 +134,6 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
   }
 
   @Test
-  public void test_attach_node_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getUID());
-    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
-
-    AttachAction command = newCommand();
-    command.setSourceAddress(createUnresolved("localhost", 9411));
-    command.setOperationType(NODE);
-    command.setDestinationAddress(createUnresolved("localhost", 9410));
-
-    assertThat(
-        command::run,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(
-            "Mismatch found in failover-priority setting")))));
-  }
-
-  @Test
   public void test_attach_node_ok() throws IOException {
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
@@ -240,21 +223,5 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     assertThat(cluster.getStripes().get(0).getNodes(), hasSize(1));
     assertThat(cluster.getStripes().get(1).getNodes(), hasSize(1));
     assertThat(cluster.getNodes(), hasSize(2));
-  }
-
-  @Test
-  public void test_attach_stripe_validation_fail_clusterSettingsMismatch() {
-    NodeContext nodeContext = new NodeContext(newTestCluster("my-cluster", new Stripe().addNode(node1)).setFailoverPriority(consistency()), node1.getUID());
-    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
-
-    AttachAction command = newCommand();
-    command.setSourceAddress(createUnresolved("localhost", 9411));
-    command.setOperationType(STRIPE);
-    command.setDestinationAddress(createUnresolved("localhost", 9410));
-
-    assertThat(
-        command::run,
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(containsString(
-            "Mismatch found in failover-priority setting")))));
   }
 }

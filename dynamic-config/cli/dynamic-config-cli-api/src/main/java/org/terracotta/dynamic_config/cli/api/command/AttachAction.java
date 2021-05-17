@@ -27,8 +27,6 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
-import org.terracotta.dynamic_config.api.service.ClusterConfigMismatchException;
-import org.terracotta.dynamic_config.api.service.MutualClusterValidator;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
 
 import java.net.InetSocketAddress;
@@ -99,13 +97,6 @@ public class AttachAction extends TopologyAction {
 
     if (isActivated(source)) {
       throw new IllegalArgumentException("Source node: " + source + " cannot be attached since it is part of an existing cluster with name: " + getRuntimeCluster(source).getName());
-    }
-
-    MutualClusterValidator mutualClusterValidator = new MutualClusterValidator(destinationCluster, sourceCluster);
-    try {
-      mutualClusterValidator.validate();
-    } catch (ClusterConfigMismatchException e) {
-      validateLogOrFail(() -> false, e.getMessage());
     }
 
     /*
