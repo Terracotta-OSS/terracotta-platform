@@ -85,14 +85,6 @@ public class ConfigurationGeneratorVisitor {
     this.server = server;
   }
 
-  public boolean isUnConfiguredMode() {
-    return unConfiguredMode;
-  }
-
-  public boolean isRepairMode() {
-    return repairMode;
-  }
-
   public StartupConfiguration generateConfiguration() {
     requireNonNull(nomadServerManager);
     requireNonNull(nodeContext);
@@ -151,7 +143,7 @@ public class ConfigurationGeneratorVisitor {
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
-    dynamicConfigService.activate(nodeContext.getCluster(), optionalLicenseFile == null ? null : read(optionalLicenseFile));
+    dynamicConfigService.enableNomad(nodeContext.getCluster(), optionalLicenseFile == null ? null : read(optionalLicenseFile));
     runNomadActivation(nodeContext.getCluster(), nodeContext.getNode(), nomadServerManager, nodeConfigurationDir);
 
     this.nodeContext = nodeContext;
@@ -166,7 +158,11 @@ public class ConfigurationGeneratorVisitor {
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
     TopologyService topologyService = nomadServerManager.getTopologyService();
     if (!repairMode) {
-      dynamicConfigService.activate(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
+      // if not in repair mode, ensure we do not start a node with an empty or prepared activate change that has not been completed
+      if (!nomadServerManager.getConfiguration().isPresent()) {
+        throw new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again. Location: " + nodeConfigurationDir);
+      }
+      dynamicConfigService.enableNomad(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
     } else {
       // If repair mode mode is ON:
       // - the node won't be activated (Nomad 2 phase commit system won't be available)

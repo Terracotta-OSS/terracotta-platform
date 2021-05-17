@@ -86,7 +86,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   private volatile NodeContext upcomingNodeContext;
   private volatile NodeContext runtimeNodeContext;
-  private volatile boolean clusterActivated;
 
   public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, ObjectMapperFactory objectMapperFactory, Server server) {
     this.upcomingNodeContext = requireNonNull(nodeContext);
@@ -280,8 +279,10 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public boolean isActivated() {
-    return clusterActivated;
+  public synchronized boolean isActivated() {
+    // a node is activated when nomad is enabled and a last committed config is available
+    return nomadServerManager.isNomadEnabled()
+        && nomadServerManager.getConfiguration().isPresent();
   }
 
   @Override
@@ -296,11 +297,11 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public synchronized void setUpcomingCluster(Cluster updatedCluster) {
+    requireNonNull(updatedCluster);
+
     if (isActivated()) {
       throw new IllegalStateException("Use Nomad instead to change the topology of activated node: " + runtimeNodeContext.getNode().getName());
     }
-
-    requireNonNull(updatedCluster);
 
     new ClusterValidator(updatedCluster).validate();
 
@@ -323,12 +324,11 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public synchronized void activate(Cluster maybeUpdatedCluster, String licenseContent) {
-    if (isActivated()) {
-      throw new IllegalStateException("Node is already activated");
-    }
+  public synchronized void enableNomad(Cluster maybeUpdatedCluster, String licenseContent) {
+    LOGGER.info("Activating configuration system on this node with topology: {}", maybeUpdatedCluster.toShapeString());
 
-    LOGGER.info("Preparing activation of cluster: {}", maybeUpdatedCluster.toShapeString());
+    // This check is only present to safeguard against the possibility of a missing cluster validation in the call path
+    new ClusterValidator(maybeUpdatedCluster).validate();
 
     // validate that we are part of this cluster
     if (findMe(maybeUpdatedCluster) == null) {
@@ -339,26 +339,26 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       ));
     }
 
+    // install the new topology and license
     this.setUpcomingCluster(maybeUpdatedCluster);
     this.installLicense(licenseContent);
 
-    LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster().toShapeString());
-    nomadServerManager.upgradeForWrite();
-    LOGGER.debug("Setting nomad writable successful");
-
-    clusterActivated = true;
-    LOGGER.info("Node activation successful");
+    // activate nomad system with this node's uid
+    if (!nomadServerManager.enableNomad(upcomingNodeContext.getNodeUID())) {
+      throw new IllegalStateException("Nomad already enabled");
+    }
 
     warnIfProblematicConsistency(upcomingNodeContext);
+
+    LOGGER.info("Configuration system activated");
   }
 
   @Override
-  public void reset() {
+  public synchronized void reset() {
     LOGGER.info("Resetting...");
     try {
       nomadServerManager.getNomadServer().reset();
-      clusterActivated = false;
-      nomadServerManager.downgradeForRead();
+      nomadServerManager.disableNomad();
     } catch (NomadException e) {
       throw new IllegalStateException("Unable to reset Nomad system: " + e.getMessage(), e);
     }
