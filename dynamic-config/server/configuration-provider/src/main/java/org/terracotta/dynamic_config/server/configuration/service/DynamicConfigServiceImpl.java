@@ -96,9 +96,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     this.licensePath = nomadServerManager.getConfigurationManager().getLicensePath().resolve(LICENSE_FILE_NAME);
     this.objectMapper = objectMapperFactory.create();
     this.server = requireNonNull(server);
-    if (hasLicenseFile()) {
-      validateAgainstLicense(upcomingNodeContext.getCluster());
-    }
 
     // This check is only present to safeguard against the possibility of a missing cluster validation in the call path
     new ClusterValidator(nodeContext.getCluster()).validate();
