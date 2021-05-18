@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.system_tests.activated;
 import org.junit.Test;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -48,6 +49,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
 
     startNode(active, "--repair-mode", "--name", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
     waitForDiagnostic(1, activeNodeId);
+    waitUntil(() -> usingTopologyService(1, activeNodeId, TopologyService::isActivated), is(false));
   }
 
   @Test
@@ -59,6 +61,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
 
     startNode(passive, "--repair-mode", "--name", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
     waitForDiagnostic(1, passiveNodeId);
+    waitUntil(() -> usingTopologyService(1, passiveNodeId, TopologyService::isActivated), is(false));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")

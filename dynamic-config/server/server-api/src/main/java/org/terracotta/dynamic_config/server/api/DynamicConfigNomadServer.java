@@ -21,6 +21,8 @@ import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.nomad.server.NomadServerMode;
+import org.terracotta.nomad.server.UncheckedNomadException;
 
 import java.util.Collection;
 import java.util.List;
@@ -41,4 +43,16 @@ public interface DynamicConfigNomadServer extends NomadServer<NodeContext> {
    * the previous configuration, which might be null at the beginning.
    */
   void forceSync(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException;
+
+  static DynamicConfigNomadServer empty() {
+    return new EmptyDynamicConfigNomadServer();
+  }
+
+  default NomadServerMode getNomadServerMode() throws UncheckedNomadException {
+    try {
+      return discover().getMode();
+    } catch (NomadException e) {
+      throw new UncheckedNomadException(e);
+    }
+  }
 }

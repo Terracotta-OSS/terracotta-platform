@@ -283,7 +283,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public synchronized boolean isActivated() {
     // a node is activated when nomad is enabled and a last committed config is available
-    return nomadServerManager.isNomadEnabled()
+    return nomadServerManager.getNomadMode() == NomadMode.RW
         && nomadServerManager.getConfiguration().isPresent();
   }
 
@@ -326,7 +326,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public synchronized void enableNomad(Cluster maybeUpdatedCluster, String licenseContent) {
+  public synchronized void activate(Cluster maybeUpdatedCluster, String licenseContent) {
     LOGGER.info("Activating configuration system on this node with topology: {}", maybeUpdatedCluster.toShapeString());
 
     // This check is only present to safeguard against the possibility of a missing cluster validation in the call path
@@ -345,10 +345,9 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     this.setUpcomingCluster(maybeUpdatedCluster);
     this.installLicense(licenseContent);
 
-    // activate nomad system with this node's uid
-    if (!nomadServerManager.enableNomad(upcomingNodeContext.getNodeUID())) {
-      throw new IllegalStateException("Nomad already enabled");
-    }
+    // activate nomad system if this wasn't done before then just make sure we can send Nomad transactions
+    nomadServerManager.initNomad();
+    nomadServerManager.setNomad(NomadMode.RW);
 
     warnIfProblematicConsistency(upcomingNodeContext);
 
@@ -359,8 +358,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   public synchronized void reset() {
     LOGGER.info("Resetting...");
     try {
-      nomadServerManager.getNomadServer().reset();
-      nomadServerManager.disableNomad();
+      nomadServerManager.reset();
     } catch (NomadException e) {
       throw new IllegalStateException("Unable to reset Nomad system: " + e.getMessage(), e);
     }

@@ -123,7 +123,7 @@ public abstract class RemoteAction implements Runnable {
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(newNodes))) {
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
-          .forEach(service -> service.enableNomad(cluster, licenseContent));
+          .forEach(service -> service.activate(cluster, licenseContent));
       if (licenseContent == null) {
         output.info("No license installed. If you are attaching a node, the license will be synced.");
       } else {

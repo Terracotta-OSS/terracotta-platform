@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.server.api;
+package org.terracotta.nomad.server;
 
-import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+public class UncheckedNomadException extends RuntimeException {
 
-/**
- * @author Mathieu Carbou
- */
-public interface NomadRoutingChangeProcessor {
-  <T extends DynamicConfigNomadChange> void register(Class<? extends T> changeType, NomadChangeProcessor<T> processor);
+  private static final long serialVersionUID = 1L;
 
-  void clear();
+  public UncheckedNomadException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public UncheckedNomadException(Throwable cause) {
+    super(cause);
+  }
 }

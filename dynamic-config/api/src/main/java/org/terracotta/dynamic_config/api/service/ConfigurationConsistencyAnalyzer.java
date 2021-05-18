@@ -41,11 +41,13 @@ import static java.util.stream.Collectors.toMap;
 import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ALL_ACCEPTING;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ALL_PREPARED;
+import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ALL_UNINITIALIZED;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.CHANGE_IN_PROGRESS;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.DISCOVERY_FAILURE;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.INCONSISTENT;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ONLINE_ACCEPTING;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ONLINE_PREPARED;
+import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ONLINE_UNINITIALIZED;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.PARTIALLY_COMMITTED;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.PARTIALLY_PREPARED;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.PARTIALLY_ROLLED_BACK;
@@ -238,6 +240,11 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
       return onlineNodeCount >= totalNodeCount ? ALL_PREPARED : ONLINE_PREPARED;
     }
 
+    boolean areAllUninitialized = responses.values().stream().map(DiscoverResponse::getMode).allMatch(Predicate.isEqual(NomadServerMode.UNINITIALIZED));
+    if (areAllUninitialized) {
+      return onlineNodeCount >= totalNodeCount ? ALL_UNINITIALIZED : ONLINE_UNINITIALIZED;
+    }
+
     // We have a mix of NomadServerMode == PREPARED / ACCEPTING
     // And we know our config is not inconsistent or partitioned
     // So we are in an on-going unfinished change process
@@ -303,6 +310,12 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
             + " No further configuration change can be done until the offline nodes are restarted and the 'repair' command is run again"
             + " to finalize the configuration change. Please refer to the Troubleshooting Guide if needed.";
 
+      case ALL_UNINITIALIZED:
+        return "All the nodes are being configured (or being repaired).";
+
+      case ONLINE_UNINITIALIZED:
+        return "All the online nodes are being configured (or being repaired).";
+
       case PARTIALLY_PREPARED:
         return "A new  cluster configuration has been *partially* prepared (some nodes didn't get the new change)."
             + " No further configuration change can be done until the 'repair' command is run to rollback the prepared nodes.";
@@ -317,7 +330,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
 
       case UNKNOWN:
         return "Unable to determine the global configuration state."
-            + " There might be some configuration inconsistencies."
+            + " There might be some configuration inconsistencies or some nodes being repaired."
             + " Please look at each node details."
             + " A manual intervention might be needed to reset some nodes.";
 
