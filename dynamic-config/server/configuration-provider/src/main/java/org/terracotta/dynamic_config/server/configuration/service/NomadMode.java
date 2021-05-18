@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.server.configuration.nomad;
+package org.terracotta.dynamic_config.server.configuration.service;
 
-public class UncheckedNomadException extends RuntimeException {
-
-  private static final long serialVersionUID = 1L;
-
-  public UncheckedNomadException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public UncheckedNomadException(Throwable cause) {
-    super(cause);
-  }
+/**
+ * @author Mathieu Carbou
+ */
+public enum NomadMode {
+  RO,
+  RW
 }

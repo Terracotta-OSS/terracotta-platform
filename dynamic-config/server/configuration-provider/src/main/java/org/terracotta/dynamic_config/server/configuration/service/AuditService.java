@@ -52,9 +52,9 @@ public class AuditService implements DynamicConfigService {
   }
 
   @Override
-  public synchronized void enableNomad(Cluster maybeUpdatedCluster, String licenseContent) {
+  public synchronized void activate(Cluster maybeUpdatedCluster, String licenseContent) {
     server.audit("Activate invoked", new Properties());
-    dynamicConfigService.enableNomad(maybeUpdatedCluster, licenseContent);
+    dynamicConfigService.activate(maybeUpdatedCluster, licenseContent);
   }
 
   @Override

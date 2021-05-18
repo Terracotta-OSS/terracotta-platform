@@ -47,7 +47,6 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 import org.terracotta.dynamic_config.server.api.LicenseParserDiscovery;
 import org.terracotta.dynamic_config.server.api.LicenseService;
-import org.terracotta.dynamic_config.server.configuration.nomad.UncheckedNomadException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
@@ -61,6 +60,7 @@ import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.client.status.MultiDiscoveryResultReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.nomad.server.UncheckedNomadException;
 import org.terracotta.server.Server;
 import org.terracotta.server.ServerJMX;
 import org.terracotta.testing.Retry;
@@ -175,7 +175,7 @@ public class DesynchronizedNomadConfigTest {
       try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"), passiveDetails);
            NomadClient<NodeContext> passiveNomadClient = passive.createNomadClient()) {
         passive.manager.getDynamicConfigService().setUpcomingCluster(lastTopology);
-        passive.manager.getDynamicConfigService().enableNomad(lastTopology, null);
+        passive.manager.getDynamicConfigService().activate(lastTopology, null);
 
         NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
         passiveNomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(lastTopology));
@@ -423,7 +423,7 @@ public class DesynchronizedNomadConfigTest {
 
     void reset() throws NomadException {
       nomad.reset();
-      manager.disableNomad();
+      manager.setNomad(NomadMode.RO);
     }
 
     /**
@@ -490,7 +490,7 @@ public class DesynchronizedNomadConfigTest {
       String nodeName = NomadConfigurationManager.findNodeName(configDir, parameterSubstitutor).orElse(null);
 
       // initialize nomad
-      nomadServerManager.init(configDir, nodeName == null ? alternateConfig.getNode().getName() : nodeName, alternateConfig);
+      nomadServerManager.reload(configDir, nodeName == null ? alternateConfig.getNode().getName() : nodeName, alternateConfig);
 
       // get the initialized DC services
       DynamicConfigNomadServer nomadServer = nomadServerManager.getNomadServer();
@@ -499,7 +499,7 @@ public class DesynchronizedNomadConfigTest {
 
       // activate the node
       if (nodeName != null) {
-        dynamicConfigService.enableNomad(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
+        dynamicConfigService.activate(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
       }
 
       // create the sync service

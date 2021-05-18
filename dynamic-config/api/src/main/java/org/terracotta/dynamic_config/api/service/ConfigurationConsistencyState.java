@@ -48,6 +48,16 @@ public enum ConfigurationConsistencyState {
   ONLINE_PREPARED,
 
   /**
+   * All nodes are online and they are all in diagnostic mode, being configured or being repaired.
+   */
+  ALL_UNINITIALIZED,
+
+  /**
+   * Some nodes are online (not all) and those online are all in diagnostic mode, being configured or being repaired.
+   */
+  ONLINE_UNINITIALIZED,
+
+  /**
    * A change has been prepared on some nodes, but other nodes didn't get it and are
    * ending with another change. This can happen if a Nomad transaction is ended during
    * its prepare phase when the client asks the nodes to prepare themselves.

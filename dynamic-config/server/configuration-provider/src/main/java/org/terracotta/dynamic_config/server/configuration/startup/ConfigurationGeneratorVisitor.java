@@ -109,7 +109,7 @@ public class ConfigurationGeneratorVisitor {
     server.console("Starting unconfigured node: {}", nodeName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
 
-    nomadServerManager.init(nodeConfigurationDir, nodeContext);
+    nomadServerManager.configure(nodeConfigurationDir, nodeContext);
 
     this.nodeContext = nodeContext;
     this.repairMode = false;
@@ -140,10 +140,10 @@ public class ConfigurationGeneratorVisitor {
     server.console("Starting node: {} in cluster: {}", nodeName, clusterName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirectoryFromCLI);
     server.console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
-    nomadServerManager.init(nodeConfigurationDir, nodeContext);
+    nomadServerManager.configure(nodeConfigurationDir, nodeContext);
 
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
-    dynamicConfigService.enableNomad(nodeContext.getCluster(), optionalLicenseFile == null ? null : read(optionalLicenseFile));
+    dynamicConfigService.activate(nodeContext.getCluster(), optionalLicenseFile == null ? null : read(optionalLicenseFile));
     runNomadActivation(nodeContext.getCluster(), nodeContext.getNode(), nomadServerManager, nodeConfigurationDir);
 
     this.nodeContext = nodeContext;
@@ -153,7 +153,7 @@ public class ConfigurationGeneratorVisitor {
 
   void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode, NodeContext alternate) {
     server.console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
-    nomadServerManager.init(nodeConfigurationDir, nodeName, alternate);
+    nomadServerManager.reload(nodeConfigurationDir, nodeName, alternate);
 
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
     TopologyService topologyService = nomadServerManager.getTopologyService();
@@ -162,7 +162,7 @@ public class ConfigurationGeneratorVisitor {
       if (!nomadServerManager.getConfiguration().isPresent()) {
         throw new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again. Location: " + nodeConfigurationDir);
       }
-      dynamicConfigService.enableNomad(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
+      dynamicConfigService.activate(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
     } else {
       // If repair mode mode is ON:
       // - the node won't be activated (Nomad 2 phase commit system won't be available)

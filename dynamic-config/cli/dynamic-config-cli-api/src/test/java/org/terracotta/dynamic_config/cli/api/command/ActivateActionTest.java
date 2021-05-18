@@ -175,7 +175,7 @@ public class ActivateActionTest extends BaseTest {
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).enableNomad(eq(command.getCluster()), eq(null));
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).activate(eq(command.getCluster()), eq(null));
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -213,7 +213,7 @@ public class ActivateActionTest extends BaseTest {
         ))));
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).enableNomad(eq(command.getCluster()), eq(null));
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).activate(eq(command.getCluster()), eq(null));
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
@@ -266,7 +266,7 @@ public class ActivateActionTest extends BaseTest {
     command.run();
 
     IntStream.of(ports).forEach(rethrow(port -> {
-      verify(dynamicConfigServiceMock("localhost", port), times(1)).enableNomad(eq(command.getCluster()), eq(null));
+      verify(dynamicConfigServiceMock("localhost", port), times(1)).activate(eq(command.getCluster()), eq(null));
       verify(dynamicConfigServiceMock("localhost", port), times(1)).restart(any());
       verify(nomadServerMock("localhost", port), times(2)).discover();
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
