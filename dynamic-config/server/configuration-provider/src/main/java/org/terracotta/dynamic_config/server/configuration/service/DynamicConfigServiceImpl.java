@@ -343,11 +343,13 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
     // install the new topology and license
     this.setUpcomingCluster(maybeUpdatedCluster);
-    this.installLicense(licenseContent);
 
     // activate nomad system if this wasn't done before then just make sure we can send Nomad transactions
     nomadServerManager.initNomad();
     nomadServerManager.setNomad(NomadMode.RW);
+
+    // install the license AFTER the nomad system is initialized (no config directory exist before)
+    this.installLicense(licenseContent);
 
     warnIfProblematicConsistency(upcomingNodeContext);
 
