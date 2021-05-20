@@ -54,10 +54,6 @@
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>tc-tripwire-plugin</artifactId>
-    </dependency>
 
     <!-- server plugins -->
     <dependency>
