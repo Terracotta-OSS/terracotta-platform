@@ -157,9 +157,7 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + HELP}, description = "provide usage information")
   private boolean help;
 
-  // hidden option that won't appear in the help file,
-  // so that we can start a pre-activated stripe directly in dev / test.
-  @Parameter(names = {"-" + AUTO_ACTIVATE}, hidden = true)
+  @Parameter(names = {"-" + AUTO_ACTIVATE}, description = "automatically activate the node so that it becomes active or joins a stripe (true|false)")
   private boolean allowsAutoActivation;
 
   private final Map<Setting, String> paramValueMap = new HashMap<>();
