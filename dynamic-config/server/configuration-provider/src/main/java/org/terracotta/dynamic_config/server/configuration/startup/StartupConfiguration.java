@@ -259,8 +259,10 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   }
 
   public void discoverExtensions() {
-    for (DynamicConfigExtension dynamicConfigExtension : ServiceLoader.load(DynamicConfigExtension.class, classLoader)) {
-      dynamicConfigExtension.configure(this, this);
+    if(!isPartialConfiguration()) {
+      for (DynamicConfigExtension dynamicConfigExtension : ServiceLoader.load(DynamicConfigExtension.class, classLoader)) {
+        dynamicConfigExtension.configure(this, this);
+      }
     }
   }
 
