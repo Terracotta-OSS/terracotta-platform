@@ -29,6 +29,12 @@ import java.util.function.Supplier;
 public interface DynamicConfigExtension {
 
   /**
+   * @return true if this extension can only be loaded when a node is starting from an already created configuration folder.
+   * If the node is starting in diagnostic mode (for repair or initially) then the extension won't be loaded except if this method returns false.
+   */
+  default boolean onlyWhenNodeConfigured() { return true; }
+
+  /**
    * Implement this method to add configurations.
    * <p>
    * It is possible to access eagerly some platform information and exposed services to help creating this configurations.

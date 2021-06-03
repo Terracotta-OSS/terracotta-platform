@@ -153,7 +153,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   @Override
   public FailoverBehavior getFailoverPriority() {
     final FailoverPriority failoverPriority = nodeContextSupplier.get().getCluster().getFailoverPriority().orElse(null);
-    if(failoverPriority == null) {
+    if (failoverPriority == null) {
       return null;
     }
     switch (failoverPriority.getType()) {
@@ -259,8 +259,9 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   }
 
   public void discoverExtensions() {
-    if(!isPartialConfiguration()) {
-      for (DynamicConfigExtension dynamicConfigExtension : ServiceLoader.load(DynamicConfigExtension.class, classLoader)) {
+    boolean configuredNode = !isPartialConfiguration();
+    for (DynamicConfigExtension dynamicConfigExtension : ServiceLoader.load(DynamicConfigExtension.class, classLoader)) {
+      if (configuredNode || !dynamicConfigExtension.onlyWhenNodeConfigured()) {
         dynamicConfigExtension.configure(this, this);
       }
     }
