@@ -85,6 +85,10 @@ public class ConfigurationGeneratorVisitor {
     this.server = server;
   }
 
+  public TopologyService getTopologyService() {
+    return nomadServerManager.getTopologyService();
+  }
+
   public StartupConfiguration generateConfiguration() {
     requireNonNull(nomadServerManager);
     requireNonNull(nodeContext);
