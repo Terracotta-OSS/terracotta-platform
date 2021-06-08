@@ -62,6 +62,23 @@ public class NodeContext implements Cloneable {
     return stripe.getUID();
   }
 
+  public Optional<String> getProperty(Setting setting) {
+    return setting.getProperty(getObject(setting.getScope()));
+  }
+
+  public PropertyHolder getObject(Scope scope) {
+    switch (scope) {
+      case CLUSTER:
+        return getCluster();
+      case STRIPE:
+        return getStripe();
+      case NODE:
+        return getNode();
+      default:
+        throw new AssertionError(scope);
+    }
+  }
+
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")

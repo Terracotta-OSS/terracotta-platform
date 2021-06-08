@@ -25,7 +25,11 @@ import org.terracotta.server.Server;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+
+import static java.lang.System.lineSeparator;
+import static org.terracotta.common.struct.Tuple3.tuple3;
 
 public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
   private final Options options;
@@ -63,6 +67,27 @@ public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
       NodeContext alternate = new NodeContext(cluster, cluster.getSingleNode().get().getUID());
 
       configurationGeneratorVisitor.startUsingConfigRepo(configPath, nodeName.get(), options.wantsRepairMode(), alternate);
+
+      // we are starting from a config repository, but the user might still have some old CLI from a previous run that has been discarded.
+      {
+        NodeContext loadedNodeContext = configurationGeneratorVisitor.getTopologyService().getUpcomingNodeContext();
+
+        // creates a stream of comparisons to do for each setting
+        cliOptions.keySet().stream()
+            .map(setting -> tuple3(setting, alternate.getProperty(setting), loadedNodeContext.getProperty(setting)))
+            .filter(tuple -> !Objects.equals(tuple.t2, tuple.t3))
+            .map(mismatch -> " - Setting: '" + mismatch.t1 + "': CLI=" + mismatch.t2.orElse("<unspecified>") + " vs CONFIG=" + mismatch.t3.orElse("<unspecified>") + lineSeparator())
+            .reduce(String::concat)
+            .ifPresent(mismatches -> server.console(lineSeparator() + lineSeparator()
+                + "=================================================================================================================" + lineSeparator()
+                + "Node is starting from an existing configuration directory.                                                       " + lineSeparator()
+                + "The following command-line (CLI) parameters differ from the loaded configuration.                                " + lineSeparator()
+                + "They have been ignored and can be removed from the CLI.                                                          " + lineSeparator()
+                + mismatches
+                + "=================================================================================================================" + lineSeparator()
+            ));
+      }
+
       return;
     }
 
