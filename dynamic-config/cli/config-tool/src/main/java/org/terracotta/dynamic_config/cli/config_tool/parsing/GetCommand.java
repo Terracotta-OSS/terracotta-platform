@@ -24,8 +24,8 @@ import org.terracotta.dynamic_config.cli.api.command.GetAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.ConfigurationInputConverter;
 import org.terracotta.dynamic_config.cli.converter.ConfigFormatConverter;
+import org.terracotta.dynamic_config.cli.converter.ConfigurationInputConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 
@@ -42,7 +42,7 @@ public class GetCommand extends Command {
   @Parameter(names = {"-setting"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationInputConverter.class)
   List<ConfigurationInput> inputs;
 
-  @Parameter(names = {"-runtime"}, description = "Read the properties from the current runtime configuration instead of reading them from the last configuration saved on disk", converter = BooleanConverter.class)
+  @Parameter(names = {"-runtime"}, description = "Read the properties from the current runtime configuration instead of reading them from the last configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
 
   @Parameter(names = {"-output-format", "-outputformat"}, description = "Output format <cfg|properties>. Default: cfg", converter = ConfigFormatConverter.class)

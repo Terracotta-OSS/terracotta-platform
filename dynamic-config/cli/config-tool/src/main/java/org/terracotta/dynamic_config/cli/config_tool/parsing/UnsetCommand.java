@@ -42,7 +42,7 @@ public class UnsetCommand extends Command {
   @Parameter(names = {"-setting"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationInputConverter.class)
   List<ConfigurationInput> inputs;
 
-  @Parameter(names = {"-auto-restart"}, description = "If a change requires some nodes to be restarted, the command will try to restart them if there are at least 2 nodes online per stripe.")
+  @Parameter(names = {"-auto-restart"}, description = "If a change requires some nodes to be restarted, the command will try to restart them if there are at least 2 nodes online per stripe. Default: false")
   boolean autoRestart = false;
 
   @Parameter(names = {"-restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
