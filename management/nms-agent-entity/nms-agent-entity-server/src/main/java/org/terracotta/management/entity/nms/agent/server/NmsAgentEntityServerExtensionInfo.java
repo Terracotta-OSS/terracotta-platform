@@ -17,51 +17,34 @@ package org.terracotta.management.entity.nms.agent.server;
 
 import com.tc.productinfo.ExtensionInfo;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.Map;
-import java.util.jar.JarFile;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static java.lang.System.lineSeparator;
+import static org.terracotta.management.entity.nms.agent.server.ManifestInfo.BUILD_JDK;
+import static org.terracotta.management.entity.nms.agent.server.ManifestInfo.BUILD_TIMESTAMP;
+import static org.terracotta.management.entity.nms.agent.server.ManifestInfo.VERSION;
+import static org.terracotta.management.entity.nms.agent.server.ManifestInfo.getJarManifestInfo;
 
 public class NmsAgentEntityServerExtensionInfo implements ExtensionInfo {
 
-  private static final String PLUGIN_NAME = "Monitoring Agent";
-  private static final String[] BASE_ATTRIBUTES = {"Bundle-Version", "BuildInfo-Timestamp", "Build-Jdk"};
-  private Map<String, String> getJarManifestInfo() {
-    try {
-      File file = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().toURI());
-      if (file.isDirectory()) {
-        return Collections.emptyMap();
-      }
-      try (JarFile jar = new JarFile(file)) {
-        return jar.getManifest().getMainAttributes().entrySet().stream()
-            .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
-      }
-    } catch (IOException | URISyntaxException e) {
-      throw new IllegalStateException(e);
-    }
-  }
+  private static final String PLUGIN_NAME = "Entity : Monitoring Agent";
 
   @Override
   public String getExtensionInfo() {
-    Map<String, String> attributes = getJarManifestInfo();
-    return PLUGIN_NAME + ":" + lineSeparator() + Stream.of(BASE_ATTRIBUTES)
-        .filter(attributes::containsKey)
-        .map(n -> n + ": " + attributes.get(n))
-        .collect(Collectors.joining(lineSeparator())) + lineSeparator();
+    return getValue(DESCRIPTION);
   }
 
   @Override
   public String getValue(String name) {
-    if (name.equals(DESCRIPTION)) {
-      return getExtensionInfo();
-    } else {
-      return "";
+    switch (name) {
+      case "type":
+        return "ENTITY";
+      case DESCRIPTION:
+        Map<String, String> attributes = getJarManifestInfo(this.getClass());
+        return String.format(" * %-35s %-15s (built on %s with JDK %s)", PLUGIN_NAME, attributes.get(VERSION), attributes.get(BUILD_TIMESTAMP), attributes.get(BUILD_JDK));
+      case NAME:
+        return PLUGIN_NAME;
+      default:
+        return getJarManifestInfo(this.getClass()).getOrDefault(name, "");
     }
   }
 }
