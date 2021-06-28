@@ -67,82 +67,82 @@ import static org.terracotta.dynamic_config.server.configuration.startup.Console
 @Parameters(separators = "=")
 public class OptionsParsingImpl implements OptionsParsing {
 
-  @Parameter(names = {"-" + NODE_HOSTNAME}, description = "node host name")
+  @Parameter(names = {"-" + NODE_HOSTNAME}, description = "Node host name. Default: %h")
   private String hostname;
 
-  @Parameter(names = {"-" + NODE_PUBLIC_HOSTNAME}, description = "public node host name")
+  @Parameter(names = {"-" + NODE_PUBLIC_HOSTNAME}, description = "Public node host name. Default: <unset>")
   private String publicHostname;
 
-  @Parameter(names = {"-" + NODE_PORT}, description = "node port")
+  @Parameter(names = {"-" + NODE_PORT}, description = "Node port. Default: 9410")
   private String port;
 
-  @Parameter(names = {"-" + NODE_PUBLIC_PORT}, description = "public node port")
+  @Parameter(names = {"-" + NODE_PUBLIC_PORT}, description = "Public node port. Default: <unset>")
   private String publicPort;
 
-  @Parameter(names = {"-" + NODE_GROUP_PORT}, description = "node port used for intra-stripe communication")
+  @Parameter(names = {"-" + NODE_GROUP_PORT}, description = "Node port used for intra-stripe communication. Default: 9430")
   private String groupPort;
 
-  @Parameter(names = {"-" + NODE_NAME}, description = "node name")
+  @Parameter(names = {"-" + NODE_NAME}, description = "Node name. Default: <generated>")
   private String nodeName;
 
-  @Parameter(names = {"-" + STRIPE_NAME}, description = "stripe name")
+  @Parameter(names = {"-" + STRIPE_NAME}, description = "Stripe name. Default: <generated>")
   private String stripeName;
 
-  @Parameter(names = {"-" + NODE_BIND_ADDRESS}, description = "node bind address for port")
+  @Parameter(names = {"-" + NODE_BIND_ADDRESS}, description = "Node bind address for node port. Default: 0.0.0.0")
   private String bindAddress;
 
-  @Parameter(names = {"-" + NODE_GROUP_BIND_ADDRESS}, description = "node bind address for group port")
+  @Parameter(names = {"-" + NODE_GROUP_BIND_ADDRESS}, description = "Node bind address for group port. Default: 0.0.0.0")
   private String groupBindAddress;
 
-  @Parameter(names = {"-" + NODE_CONFIG_DIR}, description = "node configuration directory")
+  @Parameter(names = {"-" + NODE_CONFIG_DIR}, description = "Node configuration directory. Default: %H/terracotta/config")
   private String configDir;
 
-  @Parameter(names = {"-" + NODE_METADATA_DIR}, description = "node metadata directory")
+  @Parameter(names = {"-" + NODE_METADATA_DIR}, description = "Node metadata directory. Default: %H/terracotta/metadata")
   private String metadataDir;
 
-  @Parameter(names = {"-" + NODE_LOG_DIR}, description = "node log directory")
+  @Parameter(names = {"-" + NODE_LOG_DIR}, description = "Node log directory. Default: %H/terracotta/logs")
   private String logDir;
 
-  @Parameter(names = {"-" + NODE_BACKUP_DIR}, description = "node backup directory")
+  @Parameter(names = {"-" + NODE_BACKUP_DIR}, description = "Node backup directory. Default: <unset>")
   private String backupDir;
 
-  @Parameter(names = {"-" + SECURITY_DIR}, description = "security root directory")
+  @Parameter(names = {"-" + SECURITY_DIR}, description = "Security root directory. Default: <unset>")
   private String securityDir;
 
-  @Parameter(names = {"-" + SECURITY_AUDIT_LOG_DIR}, description = "security audit log directory")
+  @Parameter(names = {"-" + SECURITY_AUDIT_LOG_DIR}, description = "Security audit log directory. Default: <unset>")
   private String securityAuditLogDir;
 
-  @Parameter(names = {"-" + SECURITY_AUTHC}, description = "security authentication setting (file|ldap|certificate)")
+  @Parameter(names = {"-" + SECURITY_AUTHC}, description = "Security authentication setting (file|ldap|certificate). Default: <unset>")
   private String securityAuthc;
 
-  @Parameter(names = {"-" + SECURITY_SSL_TLS}, description = "ssl-tls setting (true|false)")
+  @Parameter(names = {"-" + SECURITY_SSL_TLS}, description = "SSL/TLS setting (true|false). Default: false")
   private String securitySslTls;
 
-  @Parameter(names = {"-" + SECURITY_WHITELIST}, description = "security whitelist (true|false)")
+  @Parameter(names = {"-" + SECURITY_WHITELIST}, description = "Security whitelist (true|false). Default: false")
   private String securityWhitelist;
 
-  @Parameter(names = {"-" + FAILOVER_PRIORITY}, description = "failover priority setting (availability|consistency)")
+  @Parameter(names = {"-" + FAILOVER_PRIORITY}, description = "Failover priority setting (availability|consistency), required with more than 1 node. Default: <unset>")
   private String failoverPriority;
 
-  @Parameter(names = {"-" + CLIENT_RECONNECT_WINDOW}, description = "client reconnect window")
+  @Parameter(names = {"-" + CLIENT_RECONNECT_WINDOW}, description = "Client reconnect window. Default: 120s")
   private String clientReconnectWindow;
 
-  @Parameter(names = {"-" + CLIENT_LEASE_DURATION}, description = "client lease duration")
+  @Parameter(names = {"-" + CLIENT_LEASE_DURATION}, description = "Client lease duration. Default: 150s")
   private String clientLeaseDuration;
 
-  @Parameter(names = {"-" + OFFHEAP_RESOURCES}, description = "offheap resources")
+  @Parameter(names = {"-" + OFFHEAP_RESOURCES}, description = "Off-heap resources. Default: main:512MB")
   private String offheapResources;
 
-  @Parameter(names = {"-" + DATA_DIRS}, description = "data directory")
+  @Parameter(names = {"-" + DATA_DIRS}, description = "Data directories. Default: main:%H/terracotta/user-data/main")
   private String dataDirs;
 
-  @Parameter(names = {"-" + CONFIG_FILE}, description = "configuration properties file")
+  @Parameter(names = {"-" + CONFIG_FILE}, description = "Configuration file to load")
   private String configFile;
 
-  @Parameter(names = {"-" + TC_PROPERTIES}, description = "tc-properties")
+  @Parameter(names = {"-" + TC_PROPERTIES}, description = "Node properties. Default: <unset>")
   private String tcProperties;
 
-  @Parameter(names = {"-" + CLUSTER_NAME}, description = "cluster name")
+  @Parameter(names = {"-" + CLUSTER_NAME}, description = "Cluster name. Default: <unset>")
   private String clusterName;
 
   @Parameter(names = {"-" + LICENSE_FILE}, hidden = true)
@@ -151,13 +151,13 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + NODE_HOME_DIR}, hidden = true)
   private String serverHome;
 
-  @Parameter(names = {"-" + REPAIR_MODE}, description = "node repair mode (true|false)")
+  @Parameter(names = {"-" + REPAIR_MODE}, description = "Start node in repair mode")
   private boolean wantsRepairMode;
 
-  @Parameter(names = {"-" + HELP}, description = "provide usage information")
+  @Parameter(names = {"-" + HELP}, description = "Command-line help")
   private boolean help;
 
-  @Parameter(names = {"-" + AUTO_ACTIVATE}, description = "automatically activate the node so that it becomes active or joins a stripe (true|false)")
+  @Parameter(names = {"-" + AUTO_ACTIVATE}, description = "Automatically activate the node so that it becomes active or joins a stripe")
   private boolean allowsAutoActivation;
 
   private final Map<Setting, String> paramValueMap = new HashMap<>();
