@@ -315,13 +315,13 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     // restricted activation
     assertThat(
         configTool("activate", "-restrict", "-connect-to", "localhost:" + getNodePort(1, passiveId), "-config-file", exportPath),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForPassive(1, passiveId);
   }
 
   private void activate1x2Cluster() {
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
     waitForPassives(1);
