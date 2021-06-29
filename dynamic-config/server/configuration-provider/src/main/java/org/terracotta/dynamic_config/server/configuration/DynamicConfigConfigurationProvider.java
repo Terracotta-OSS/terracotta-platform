@@ -18,8 +18,8 @@ package org.terracotta.dynamic_config.server.configuration;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.configuration.ConfigurationException;
+import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesHolder;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
@@ -104,10 +104,17 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       synCodec = new DynamicConfigSyncData.Codec(objectMapperFactory);
 
       // CLI parsing
-      Options options = parseCommandLineOrExit(args);
-      if (options.isHelp()) {
-        ServerEnv.getServer().console(getConfigurationParamsDescription());
-        throw new ConfigurationException("providing usage information");
+      Options options = null;
+      try {
+        options = parseCommandLineOrExit(args);
+        if (options.isHelp()) {
+          System.out.println(getConfigurationParamsDescription());
+          throw new ConfigurationException("Exiting and displaying help");
+        }
+      } catch (RuntimeException e) {
+        // CLI parsing error
+        System.err.println(getConfigurationParamsDescription());
+        throw new ConfigurationException(e.getMessage(), e);
       }
 
       // This path resolver is used when converting a model to XML.
