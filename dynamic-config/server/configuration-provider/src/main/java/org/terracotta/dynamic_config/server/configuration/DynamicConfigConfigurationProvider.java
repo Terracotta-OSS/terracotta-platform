@@ -106,8 +106,8 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // CLI parsing
       Options options = parseCommandLineOrExit(args);
       if (options.isHelp()) {
-        ServerEnv.getServer().console(getConfigurationParamsDescription());
-        throw new ConfigurationException("providing usage information");
+        System.out.println(getConfigurationParamsDescription());
+        throw new ConfigurationException("print usage information");
       }
 
       // This path resolver is used when converting a model to XML.

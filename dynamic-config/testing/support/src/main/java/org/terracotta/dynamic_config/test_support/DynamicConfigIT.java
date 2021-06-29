@@ -179,11 +179,7 @@ public class DynamicConfigIT {
         .around(new ExtendedTestRule() {
           @Override
           protected void before(Description description) {
-            InlineServers inline = description.getAnnotation(InlineServers.class);
             String baseLogging = "tc-logback.xml";
-            if (inline != null && !inline.value()) {
-              baseLogging = "tc-logback-console.xml";
-            }
             String extraLogging = "logback-ext-test.xml";
             ExtraLogging extra = description.getAnnotation(ExtraLogging.class);
             if (extra != null) {
@@ -509,7 +505,7 @@ public class DynamicConfigIT {
         .tsa(tsa -> tsa
             .clusterName(CLUSTER_NAME)
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
-            .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-XX:+UseG1GC"))
+            .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-XX:+UseG1GC", "-Dlogback.configurationFile=logback-test.xml", "-Dlogback.debug=true"))
             .topology(new Topology(
                 getDistribution(inlineServers),
                 netDisruptionEnabled,
