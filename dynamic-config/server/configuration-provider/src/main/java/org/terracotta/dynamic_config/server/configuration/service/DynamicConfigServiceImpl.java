@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tc.productinfo.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -29,7 +28,6 @@ import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.model.TerracottaKit;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
@@ -43,7 +41,6 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.InvalidLicenseException;
 import org.terracotta.dynamic_config.server.api.LicenseService;
-import org.terracotta.dynamic_config.server.api.ManifestInfo;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigNomadSynchronizer;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
@@ -65,14 +62,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
@@ -437,38 +430,6 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     licenseService.validate(licensePath, cluster);
     LOGGER.debug("License is valid for cluster: {}", cluster.toShapeString());
     return true;
-  }
-
-  @Override
-  public TerracottaKit getTerracottaKit() {
-    UnaryOperator<String> jmx = method -> {
-      try {
-        // "Server" mBean matches TCServerInfoMBean interface
-        return server.getManagement().call("Server", method, null);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    };
-
-    ClassLoader classLoader = server.getServiceClassLoader(getClass().getClassLoader(), Description.class);
-    List<TerracottaKit.Component> components = new ArrayList<>();
-    for (Description extension : ServiceLoader.load(Description.class, classLoader)) {
-      components.add(new TerracottaKit.Component(
-          TerracottaKit.Component.Type.from(extension.getValue("type")),
-          extension.getValue(Description.NAME),
-          extension.getValue(Description.DESCRIPTION),
-          extension.getValue(ManifestInfo.VERSION),
-          extension.getValue(ManifestInfo.BUILD_TIMESTAMP),
-          extension.getValue(ManifestInfo.BUILD_JDK)
-      ));
-    }
-    components.sort(Comparator.comparing(TerracottaKit.Component::getName));
-
-    return new TerracottaKit(
-        jmx.apply("getVersion"), // TCServerInfoMBean#getVersion() returns something like "Terracotta 5.8.2-pre5", not a real version sadly. This is a core issue and we have no way to access more internal stuff.
-        jmx.apply("getBuildID"), // TCServerInfoMBean#getBuildID() returns something like "2021-06-22 at 19:40:16 UTC (Revision f61e7ba47428e3bc5703c6071169755ed83b1ac2 from UNKNOWN)"
-        components
-    );
   }
 
   private Map<String, ?> toMap(Object o) {

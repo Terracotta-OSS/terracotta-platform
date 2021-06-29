@@ -51,7 +51,6 @@ import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.model.TerracottaKit;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.inet.json.InetJsonModule;
@@ -85,8 +84,6 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
     setMixInAnnotation(OptionalConfig.class, OptionalConfigMixin.class);
     setMixInAnnotation(LockContext.class, LockContextMixin.class);
     setMixInAnnotation(Version.class, VersionMixin.class);
-    setMixInAnnotation(TerracottaKit.class, TerracottaKitMixin.class);
-    setMixInAnnotation(TerracottaKit.Component.class, TerracottaKitComponentMixin.class);
 
     // using serializers / deserializers and not mixins avoid having to ignore all paths delegates
     // "ignore all fields but some" will come in jackson 2.12
@@ -382,26 +379,4 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
     @JsonValue
     public abstract String getValue();
   }
-
-  public static abstract class TerracottaKitMixin extends TerracottaKit {
-    @JsonCreator
-    public TerracottaKitMixin(@JsonProperty(value = "version", required = true) String version,
-                              @JsonProperty(value = "buildID", required = true) String buildID,
-                              @JsonProperty(value = "installedComponents", required = true) Collection<Component> installedComponents) {
-      super(version, buildID, installedComponents);
-    }
-  }
-
-  public static abstract class TerracottaKitComponentMixin extends TerracottaKit.Component {
-    @JsonCreator
-    public TerracottaKitComponentMixin(@JsonProperty(value = "type", required = true) Type type,
-                                       @JsonProperty(value = "name", required = true) String name,
-                                       @JsonProperty(value = "description") String description,
-                                       @JsonProperty(value = "version") String version,
-                                       @JsonProperty(value = "buildTimestamp") String buildTimestamp,
-                                       @JsonProperty(value = "buildJDK") String buildJDK) {
-      super(type, name, description, version, buildTimestamp, buildJDK);
-    }
-  }
-
 }
