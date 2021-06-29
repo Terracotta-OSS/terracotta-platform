@@ -16,33 +16,35 @@
 package org.terracotta.config.data_roots;
 
 import com.tc.productinfo.ExtensionInfo;
-import org.terracotta.dynamic_config.server.api.ManifestInfo;
 
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static java.lang.System.lineSeparator;
+import static org.terracotta.dynamic_config.server.api.ManifestInfo.BUILD_JDK;
+import static org.terracotta.dynamic_config.server.api.ManifestInfo.BUILD_TIMESTAMP;
+import static org.terracotta.dynamic_config.server.api.ManifestInfo.VERSION;
+import static org.terracotta.dynamic_config.server.api.ManifestInfo.getJarManifestInfo;
 
 public class DataRootResourceExtensionInfo implements ExtensionInfo {
 
-  private static final String PLUGIN_NAME = "Data Root Plugin";
+  private static final String PLUGIN_NAME = "Plugin : Data Directories";
 
   @Override
   public String getExtensionInfo() {
-    Map<String, String> attributes = ManifestInfo.getJarManifestInfo(this.getClass());
-    return PLUGIN_NAME + ":" + lineSeparator() + Stream.of(ManifestInfo.BASE_ATTRIBUTES)
-        .filter(attributes::containsKey)
-        .map(n -> n + ": " + attributes.get(n))
-        .collect(Collectors.joining(lineSeparator())) + lineSeparator();
+    return getValue(DESCRIPTION);
   }
 
   @Override
   public String getValue(String name) {
-    if (name.equals(DESCRIPTION)) {
-      return getExtensionInfo();
-    } else {
-      return "";
+    switch (name) {
+      case "type":
+        return "PLUGIN";
+      case DESCRIPTION:
+        Map<String, String> attributes = getJarManifestInfo(this.getClass());
+        return String.format(" * %-35s %-15s (built on %s with JDK %s)", PLUGIN_NAME, attributes.get(VERSION), attributes.get(BUILD_TIMESTAMP), attributes.get(BUILD_JDK));
+      case NAME:
+        return PLUGIN_NAME;
+      default:
+        return getJarManifestInfo(this.getClass()).getOrDefault(name, "");
     }
   }
 }
