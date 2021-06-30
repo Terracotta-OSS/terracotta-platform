@@ -24,6 +24,7 @@ import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
+import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.exception.ConnectionClosedException;
 
@@ -172,6 +173,12 @@ class DiagnosticServiceImpl implements DiagnosticService {
     }
 
     return LogicalServerState.from(state, isReconnectWindow(), blocked);
+  }
+
+  @Override
+  public KitInformation getKitInformation() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
+    String props = invoke(MBEAN_DIAGNOSTIC_EXTENSIONS, "getKitInformation");
+    return KitInformation.fromProperties(props);
   }
 
   // DiagnosticsHandler

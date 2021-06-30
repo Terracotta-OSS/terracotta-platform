@@ -15,6 +15,7 @@
  */
 package org.terracotta.diagnostic.server.extensions;
 
+import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.diagnostic.server.api.extension.DiagnosticExtensions;
 import org.terracotta.server.ServerJMX;
@@ -23,7 +24,11 @@ import org.terracotta.server.ServerMBean;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
 import javax.management.StandardMBean;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_CONSISTENCY_MANAGER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_EXTENSIONS;
@@ -48,6 +53,29 @@ public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.
     boolean isReconnectWindow = isReconnectWindow();
     final String state = getState();
     return LogicalServerState.from(state, isReconnectWindow, isBlocked);
+  }
+
+  @Override
+  public KitInformation getKitInformation() {
+    String v = validate(
+        MBEAN_SERVER, "getVersion",
+        subsystem.call(MBEAN_SERVER, "getVersion", null)); // something like "Terracotta 5.8.2-pre6"
+    String b = validate(
+        MBEAN_SERVER, "getBuildID",
+        subsystem.call(MBEAN_SERVER, "getBuildID", null)); // something like "2021-06-29 at 20:54:46 UTC (Revision 4450fe6fc2c174abd3528b8636b3296a6a79df00 from UNKNOWN)"
+
+    String version = v.replace("Terracotta ", ""); // the moniker is hard-coded in core project
+
+    Matcher sha = Pattern.compile(".*([0-9a-fA-F]{40}).*").matcher(b);
+    String revision = sha.matches() ? sha.group(1) : "UNKNOWN";
+
+    Matcher br = Pattern.compile(".* Revision [0-9a-fA-F]{40} from (.+)\\)").matcher(b);
+    String branch = br.matches() ? br.group(1) : "UNKNOWN";
+
+    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
+    Instant timestamp = dtf.parse(b.substring(0, 26), Instant::from);
+
+    return new KitInformation(version, revision, branch, timestamp);
   }
 
   boolean hasConsistencyManager() {

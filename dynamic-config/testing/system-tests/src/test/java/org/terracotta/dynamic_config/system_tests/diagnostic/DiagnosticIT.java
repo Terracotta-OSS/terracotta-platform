@@ -55,4 +55,31 @@ public class DiagnosticIT extends DynamicConfigIT {
       assertThat(diagnosticService.getLogicalServerState(), is(equalTo(LogicalServerState.DIAGNOSTIC)));
     }
   }
+
+  @Test
+  public void test_get_kit_information() throws Exception {
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
+        getNodeAddress(1, 1),
+        getClass().getSimpleName(),
+        Duration.ofSeconds(5),
+        Duration.ofSeconds(5),
+        null,
+        objectMapperFactory)
+    ) {
+      System.out.println(diagnosticService.getVersion()); // previously existing call, returns something like "Terracotta 5.8.2-pre6"
+      System.out.println(diagnosticService.getBuildID()); // previously existing call, returns something like "2021-06-29 at 20:54:46 UTC (Revision 4450fe6fc2c174abd3528b8636b3296a6a79df00 from UNKNOWN)"
+      System.out.println(diagnosticService.getKitInformation()); // new call, returns structured object that has a properties-like representation
+      /*
+version=5.8.2-pre6
+revision=4450fe6fc2c174abd3528b8636b3296a6a79df00
+branch=UNKNOWN
+timestamp=2021-06-29T20\:54\:46Z
+       */
+      System.out.println(diagnosticService.getKitInformation().getVersion()); // i.e.: 5.8.2-pre6
+      System.out.println(diagnosticService.getKitInformation().getBranch()); // i.e.: master
+      System.out.println(diagnosticService.getKitInformation().getRevision()); // i.e.: 4450fe6fc2c174abd3528b8636b3296a6a79df00
+      System.out.println(diagnosticService.getKitInformation().getTimestamp()); // i.e.: 2021-06-29T20:54:46Z
+    }
+  }
+
 }

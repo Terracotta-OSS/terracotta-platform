@@ -15,8 +15,11 @@
  */
 package org.terracotta.diagnostic.server.api.extension;
 
+import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
 
 public interface DiagnosticExtensions {
   LogicalServerState getLogicalServerState();
+
+  KitInformation getKitInformation();
 }
