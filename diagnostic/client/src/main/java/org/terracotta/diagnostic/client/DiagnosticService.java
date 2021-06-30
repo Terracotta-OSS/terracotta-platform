@@ -15,6 +15,7 @@
  */
 package org.terracotta.diagnostic.client;
 
+import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
 
 import java.io.Closeable;
@@ -51,6 +52,8 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
   // LogicalServerState
 
   LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException;
+
+  KitInformation getKitInformation() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException;
 
   // ConsistencyManager
 
