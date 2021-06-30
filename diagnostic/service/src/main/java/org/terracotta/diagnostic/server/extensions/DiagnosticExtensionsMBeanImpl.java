@@ -17,33 +17,40 @@ package org.terracotta.diagnostic.server.extensions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.diagnostic.server.api.extension.LogicalServerStateProvider;
+import org.terracotta.diagnostic.server.api.extension.DiagnosticExtensions;
 import org.terracotta.server.ServerJMX;
 import org.terracotta.server.ServerMBean;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
 import javax.management.StandardMBean;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.Boolean.parseBoolean;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_CONSISTENCY_MANAGER;
-import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_EXTENSIONS;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 
-public class LogicalServerStateMBeanImpl extends StandardMBean implements org.terracotta.server.ServerMBean, LogicalServerStateProvider {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LogicalServerStateMBeanImpl.class);
+public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.terracotta.server.ServerMBean, DiagnosticExtensions {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticExtensionsMBeanImpl.class);
+
   private final ServerJMX subsystem;
 
-  public LogicalServerStateMBeanImpl(ServerJMX subsystem) {
-    super(LogicalServerStateProvider.class, false);
+  public DiagnosticExtensionsMBeanImpl(ServerJMX subsystem) {
+    super(DiagnosticExtensions.class, false);
     this.subsystem = subsystem;
   }
 
   public void expose() {
-    subsystem.registerMBean(MBEAN_LOGICAL_SERVER_STATE, this);
+    subsystem.registerMBean(MBEAN_DIAGNOSTIC_EXTENSIONS, this);
   }
 
   @Override
@@ -51,6 +58,30 @@ public class LogicalServerStateMBeanImpl extends StandardMBean implements org.te
     boolean isBlocked = hasConsistencyManager() && parseBoolean(isBlocked());
     boolean isReconnectWindow = parseBoolean(isReconnectWindow());
     return enhanceServerState(getState(), isReconnectWindow, isBlocked);
+  }
+
+  @Override
+  public KitInformation getKitInformation() {
+    String v = subsystem.call(MBEAN_SERVER, "getVersion", null); // something like "Terracotta 5.8.2-pre6"
+    String b = subsystem.call(MBEAN_SERVER, "getBuildID", null); // something like "2021-06-29 at 20:54:46 UTC (Revision 4450fe6fc2c174abd3528b8636b3296a6a79df00 from UNKNOWN)"
+
+    String version = v.replace("Terracotta ", ""); // the moniker is hard-coded in core project
+
+    Matcher sha = Pattern.compile(".*([0-9a-fA-F]{40}).*").matcher(b);
+    String revision = sha.matches() ? sha.group(1) : "UNKNOWN";
+
+    Matcher br = Pattern.compile(".* Revision [0-9a-fA-F]{40} from (.+)\\)").matcher(b);
+    String branch = br.matches() ? br.group(1) : "UNKNOWN";
+
+    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
+    Instant timestamp = null;
+    try {
+      timestamp = dtf.parse(b.substring(0, 26), Instant::from);
+    } catch (DateTimeException e) {
+      LOGGER.debug(b, e);
+    }
+
+    return new KitInformation(version, revision, branch, timestamp);
   }
 
   private LogicalServerState enhanceServerState(String state, boolean reconnectWindow, boolean isBlocked) {

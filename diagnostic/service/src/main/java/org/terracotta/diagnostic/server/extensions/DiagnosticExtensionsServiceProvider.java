@@ -16,7 +16,7 @@
 package org.terracotta.diagnostic.server.extensions;
 
 import com.tc.classloader.BuiltinService;
-import org.terracotta.diagnostic.server.api.extension.LogicalServerStateProvider;
+import org.terracotta.diagnostic.server.api.extension.DiagnosticExtensions;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
@@ -28,13 +28,13 @@ import java.util.Collection;
 import java.util.Collections;
 
 @BuiltinService
-public class LogicalServerStateServiceProvider implements ServiceProvider {
-  private volatile LogicalServerStateMBeanImpl logicalServerStateMBean;
+public class DiagnosticExtensionsServiceProvider implements ServiceProvider {
+  private volatile DiagnosticExtensionsMBeanImpl logicalServerStateMBean;
 
   @Override
   public boolean initialize(ServiceProviderConfiguration serviceProviderConfiguration, PlatformConfiguration platformConfiguration) {
     Server server = platformConfiguration.getExtendedConfiguration(Server.class).iterator().next();
-    logicalServerStateMBean = new LogicalServerStateMBeanImpl(server.getManagement());
+    logicalServerStateMBean = new DiagnosticExtensionsMBeanImpl(server.getManagement());
     logicalServerStateMBean.expose();
     return true;
   }
@@ -42,12 +42,12 @@ public class LogicalServerStateServiceProvider implements ServiceProvider {
   @Override
   public <T> T getService(long l, ServiceConfiguration<T> serviceConfiguration) {
     Class<T> serviceType = serviceConfiguration.getServiceType();
-    return serviceType != LogicalServerStateProvider.class ? null : serviceType.cast(logicalServerStateMBean);
+    return serviceType != DiagnosticExtensions.class ? null : serviceType.cast(logicalServerStateMBean);
   }
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Collections.singletonList(LogicalServerStateProvider.class);
+    return Collections.singletonList(DiagnosticExtensions.class);
   }
 
   @Override

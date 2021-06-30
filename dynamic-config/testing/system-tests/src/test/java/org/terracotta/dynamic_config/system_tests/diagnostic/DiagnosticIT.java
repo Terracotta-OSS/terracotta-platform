@@ -66,11 +66,14 @@ public class DiagnosticIT extends DynamicConfigIT {
         null,
         objectMapperFactory)
     ) {
-      System.out.println(diagnosticService);
-      //System.out.println(diagnosticService.);
+      System.out.println(diagnosticService.getKitInformation());
       // output:
-/*
-*/
+      /*
+version=5.8.2-pre6
+revision=4450fe6fc2c174abd3528b8636b3296a6a79df00
+branch=UNKNOWN
+timestamp=2021-06-29T20\:54\:46Z
+       */
     }
   }
 
