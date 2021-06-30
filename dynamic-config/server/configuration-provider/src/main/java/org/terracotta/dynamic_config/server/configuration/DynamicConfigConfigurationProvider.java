@@ -104,10 +104,16 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       synCodec = new DynamicConfigSyncData.Codec(objectMapperFactory);
 
       // CLI parsing
-      Options options = parseCommandLineOrExit(args);
-      if (options.isHelp()) {
-        ServerEnv.getServer().console(getConfigurationParamsDescription());
-        throw new ConfigurationException("providing usage information");
+      Options options = null;
+      try {
+        options = parseCommandLineOrExit(args);
+        if (options.isHelp()) {
+          System.out.println(getConfigurationParamsDescription());
+          throw new ConfigurationException("print usage information");
+        }
+      } catch (RuntimeException e) {
+        System.err.println(getConfigurationParamsDescription());
+        throw new ConfigurationException(e.getMessage(), e);
       }
 
       // This path resolver is used when converting a model to XML.
