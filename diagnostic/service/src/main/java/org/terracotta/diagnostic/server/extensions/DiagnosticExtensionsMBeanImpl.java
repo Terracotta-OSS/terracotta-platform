@@ -18,7 +18,7 @@ package org.terracotta.diagnostic.server.extensions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.diagnostic.server.api.extension.LogicalServerStateProvider;
+import org.terracotta.diagnostic.server.api.extension.DiagnosticExtensions;
 import org.terracotta.server.ServerJMX;
 import org.terracotta.server.ServerMBean;
 
@@ -29,21 +29,22 @@ import java.util.Set;
 
 import static java.lang.Boolean.parseBoolean;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_CONSISTENCY_MANAGER;
-import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_EXTENSIONS;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 
-public class LogicalServerStateMBeanImpl extends StandardMBean implements org.terracotta.server.ServerMBean, LogicalServerStateProvider {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LogicalServerStateMBeanImpl.class);
+public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.terracotta.server.ServerMBean, DiagnosticExtensions {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticExtensionsMBeanImpl.class);
+
   private final ServerJMX subsystem;
 
-  public LogicalServerStateMBeanImpl(ServerJMX subsystem) {
-    super(LogicalServerStateProvider.class, false);
+  public DiagnosticExtensionsMBeanImpl(ServerJMX subsystem) {
+    super(DiagnosticExtensions.class, false);
     this.subsystem = subsystem;
   }
 
   public void expose() {
-    subsystem.registerMBean(MBEAN_LOGICAL_SERVER_STATE, this);
+    subsystem.registerMBean(MBEAN_DIAGNOSTIC_EXTENSIONS, this);
   }
 
   @Override

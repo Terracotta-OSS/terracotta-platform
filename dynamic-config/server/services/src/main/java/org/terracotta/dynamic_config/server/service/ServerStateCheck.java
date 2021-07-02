@@ -67,7 +67,7 @@ class ServerStateCheck implements NomadPermissionChangeProcessor.Check {
 
   private LogicalServerState getLogicalServerState() throws NomadException {
     try {
-      return LogicalServerState.parse(serverJMX.call("LogicalServerState", "getLogicalServerState", null));
+      return LogicalServerState.parse(serverJMX.call("DiagnosticExtensions", "getLogicalServerState", null));
     } catch (Exception e) {
       throw new NomadException(e.getMessage(), e);
     }

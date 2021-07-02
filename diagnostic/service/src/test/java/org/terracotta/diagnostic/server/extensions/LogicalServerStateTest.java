@@ -35,12 +35,12 @@ import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
 
 public class LogicalServerStateTest {
   ServerJMX jmxSubsystem;
-  private LogicalServerStateMBeanImpl logicalServerState;
+  private DiagnosticExtensionsMBeanImpl logicalServerState;
 
   @Before
   public void setUp() throws NotCompliantMBeanException {
     jmxSubsystem = mock(ServerJMX.class);
-    logicalServerState = new LogicalServerStateMBeanImpl(jmxSubsystem) {
+    logicalServerState = new DiagnosticExtensionsMBeanImpl(jmxSubsystem) {
       @Override
       boolean hasConsistencyManager() {
         return true;
