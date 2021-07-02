@@ -15,7 +15,14 @@
  */
 package org.terracotta.diagnostic.model;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.time.Instant;
+import java.util.Properties;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Mathieu Carbou
@@ -28,10 +35,10 @@ public class KitInformation {
   private final Instant timestamp;
 
   public KitInformation(String version, String revision, String branch, Instant timestamp) {
-    this.version = version;
-    this.revision = revision;
-    this.branch = branch;
-    this.timestamp = timestamp;
+    this.version = requireNonNull(version);
+    this.revision = requireNonNull(revision);
+    this.branch = requireNonNull(branch);
+    this.timestamp = requireNonNull(timestamp);
   }
 
   public String getVersion() {
@@ -50,13 +57,41 @@ public class KitInformation {
     return branch;
   }
 
+  public Properties toProperties() {
+    Properties props = new Properties();
+    props.setProperty("version", getVersion());
+    props.setProperty("revision", getRevision());
+    props.setProperty("branch", getBranch());
+    props.setProperty("timestamp", getTimestamp().toString());
+    return props;
+  }
+
   @Override
   public String toString() {
-    return "KitInformation{" +
-        "version='" + version + '\'' +
-        ", revision='" + revision + '\'' +
-        ", branch='" + branch + '\'' +
-        ", timestamp=" + timestamp +
-        '}';
+    try {
+      StringWriter sw = new StringWriter();
+      toProperties().store(sw, null);
+      return sw.toString();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  public static KitInformation fromProperties(String props) {
+    try {
+      Properties p = new Properties();
+      p.load(new StringReader(props));
+      return fromProperties(p);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  public static KitInformation fromProperties(Properties props) {
+    return new KitInformation(
+        props.getProperty("version"),
+        props.getProperty("revision"),
+        props.getProperty("branch"),
+        Instant.parse(props.getProperty("timestamp")));
   }
 }

@@ -15,6 +15,7 @@
  */
 package org.terracotta.diagnostic.server.extensions;
 
+import com.tc.productinfo.BuildInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.server.ServerJMX;
@@ -35,12 +36,12 @@ import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
 
 public class LogicalServerStateTest {
   ServerJMX jmxSubsystem;
-  private LogicalServerStateMBeanImpl logicalServerState;
+  private DiagnosticExtensionsMBeanImpl logicalServerState;
 
   @Before
   public void setUp() throws NotCompliantMBeanException {
     jmxSubsystem = mock(ServerJMX.class);
-    logicalServerState = new LogicalServerStateMBeanImpl(jmxSubsystem) {
+    logicalServerState = new DiagnosticExtensionsMBeanImpl(jmxSubsystem, mock(BuildInfo.class)) {
       @Override
       boolean hasConsistencyManager() {
         return true;
