@@ -15,8 +15,6 @@
  */
 package org.terracotta.diagnostic.server.extensions;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.diagnostic.server.api.extension.DiagnosticExtensions;
 import org.terracotta.server.ServerJMX;
@@ -27,15 +25,12 @@ import javax.management.ObjectInstance;
 import javax.management.StandardMBean;
 import java.util.Set;
 
-import static java.lang.Boolean.parseBoolean;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_CONSISTENCY_MANAGER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_EXTENSIONS;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 
 public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.terracotta.server.ServerMBean, DiagnosticExtensions {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticExtensionsMBeanImpl.class);
-
   private final ServerJMX subsystem;
 
   public DiagnosticExtensionsMBeanImpl(ServerJMX subsystem) {
@@ -49,20 +44,10 @@ public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.
 
   @Override
   public LogicalServerState getLogicalServerState() {
-    boolean isBlocked = hasConsistencyManager() && parseBoolean(isBlocked());
-    boolean isReconnectWindow = parseBoolean(isReconnectWindow());
-    return enhanceServerState(getState(), isReconnectWindow, isBlocked);
-  }
-
-  private LogicalServerState enhanceServerState(String state, boolean reconnectWindow, boolean isBlocked) {
-    // subsystem call failed
-    if (state == null || state.startsWith(MESSAGE_INVALID_JMX)) {
-      LOGGER.error("A server returned the following invalid state: {}", state == null ? "null" : state);
-      return LogicalServerState.UNKNOWN;
-    }
-
-    // enhance default server state
-    return LogicalServerState.from(state, reconnectWindow, isBlocked);
+    boolean isBlocked = hasConsistencyManager() && isBlocked();
+    boolean isReconnectWindow = isReconnectWindow();
+    final String state = getState();
+    return LogicalServerState.from(state, isReconnectWindow, isBlocked);
   }
 
   boolean hasConsistencyManager() {
@@ -71,21 +56,34 @@ public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.
           ServerMBean.createMBeanName(MBEAN_CONSISTENCY_MANAGER), null);
       return matchingBeans.iterator().hasNext();
     } catch (MalformedObjectNameException e) {
-      // really not supposed to happen
-      LOGGER.error("Invalid MBean name: {}", MBEAN_CONSISTENCY_MANAGER, e);
-      return false;
+      throw new IllegalStateException(e);
     }
   }
 
-  private String isBlocked() {
-    return subsystem.call(MBEAN_CONSISTENCY_MANAGER, "isBlocked", null);
+  private boolean isBlocked() {
+    return Boolean.parseBoolean(validate(
+        MBEAN_CONSISTENCY_MANAGER, "isBlocked",
+        subsystem.call(MBEAN_CONSISTENCY_MANAGER, "isBlocked", null)
+    ));
   }
 
-  private String isReconnectWindow() {
-    return subsystem.call(MBEAN_SERVER, "isReconnectWindow", null);
+  private boolean isReconnectWindow() {
+    return Boolean.parseBoolean(validate(
+        MBEAN_SERVER, "isReconnectWindow",
+        subsystem.call(MBEAN_SERVER, "isReconnectWindow", null)
+    ));
   }
 
   private String getState() {
-    return subsystem.call(MBEAN_SERVER, "getState", null);
+    return validate(
+        MBEAN_SERVER, "getState",
+        subsystem.call(MBEAN_SERVER, "getState", null));
+  }
+
+  private static String validate(String mBean, String method, String value) {
+    if (value == null || value.startsWith(MESSAGE_INVALID_JMX)) {
+      throw new IllegalStateException("mBean call '" + mBean + "#" + method + "' error: " + value);
+    }
+    return value;
   }
 }

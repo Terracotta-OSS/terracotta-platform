@@ -29,20 +29,20 @@ import java.util.Collections;
 
 @BuiltinService
 public class DiagnosticExtensionsServiceProvider implements ServiceProvider {
-  private volatile DiagnosticExtensionsMBeanImpl logicalServerStateMBean;
+  private volatile DiagnosticExtensionsMBeanImpl extensionsMBean;
 
   @Override
   public boolean initialize(ServiceProviderConfiguration serviceProviderConfiguration, PlatformConfiguration platformConfiguration) {
     Server server = platformConfiguration.getExtendedConfiguration(Server.class).iterator().next();
-    logicalServerStateMBean = new DiagnosticExtensionsMBeanImpl(server.getManagement());
-    logicalServerStateMBean.expose();
+    extensionsMBean = new DiagnosticExtensionsMBeanImpl(server.getManagement());
+    extensionsMBean.expose();
     return true;
   }
 
   @Override
   public <T> T getService(long l, ServiceConfiguration<T> serviceConfiguration) {
     Class<T> serviceType = serviceConfiguration.getServiceType();
-    return serviceType != DiagnosticExtensions.class ? null : serviceType.cast(logicalServerStateMBean);
+    return serviceType != DiagnosticExtensions.class ? null : serviceType.cast(extensionsMBean);
   }
 
   @Override
@@ -56,6 +56,6 @@ public class DiagnosticExtensionsServiceProvider implements ServiceProvider {
 
   @Override
   public void addStateTo(StateDumpCollector stateDumpCollector) {
-    stateDumpCollector.addState("logicalServerState", logicalServerStateMBean.getLogicalServerState());
+    stateDumpCollector.addState("logicalServerState", extensionsMBean.getLogicalServerState());
   }
 }
