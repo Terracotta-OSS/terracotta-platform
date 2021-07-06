@@ -29,13 +29,18 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.exception.ConnectionClosedException;
 
 import java.lang.reflect.Proxy;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_EXTENSIONS;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_PERMITTED;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NULL_RETURN;
@@ -177,8 +182,30 @@ class DiagnosticServiceImpl implements DiagnosticService {
 
   @Override
   public KitInformation getKitInformation() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
-    String props = invoke(MBEAN_DIAGNOSTIC_EXTENSIONS, "getKitInformation");
-    return KitInformation.fromProperties(props);
+    try {
+      // Implemented after 10.7.0.3
+      String props = invoke(MBEAN_DIAGNOSTIC_EXTENSIONS, "getKitInformation");
+      return KitInformation.fromProperties(props);
+
+    } catch (RuntimeException e) {
+      // Backward compatible with 10.7.0.3 and below
+
+      String v = invoke(MBEAN_SERVER, "getVersion"); // something like "Terracotta 5.8.2-pre6"
+      String b = invoke(MBEAN_SERVER, "getBuildID"); // something like "2021-06-29 at 20:54:46 UTC (Revision 4450fe6fc2c174abd3528b8636b3296a6a79df00 from UNKNOWN)"
+
+      String version = v.replace("Terracotta ", ""); // the moniker is hard-coded in core project
+
+      Matcher sha = Pattern.compile(".*([0-9a-fA-F]{40}).*").matcher(b);
+      String revision = sha.matches() ? sha.group(1) : "UNKNOWN";
+
+      Matcher br = Pattern.compile(".* Revision [0-9a-fA-F]{40} from (.+)\\)").matcher(b);
+      String branch = br.matches() ? br.group(1) : "UNKNOWN";
+
+      DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
+      Instant timestamp = dtf.parse(b.substring(0, 26), Instant::from);
+
+      return new KitInformation(version, revision, branch, timestamp);
+    }
   }
 
   // DiagnosticsHandler
