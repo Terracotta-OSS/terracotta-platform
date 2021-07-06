@@ -67,9 +67,18 @@ class ServerStateCheck implements NomadPermissionChangeProcessor.Check {
 
   private LogicalServerState getLogicalServerState() throws NomadException {
     try {
-      return LogicalServerState.parse(serverJMX.call("LogicalServerState", "getLogicalServerState", null));
-    } catch (Exception e) {
+      return LogicalServerState.valueOf(validate(
+          "DiagnosticExtensions", "getLogicalServerState",
+          serverJMX.call("DiagnosticExtensions", "getLogicalServerState", null)));
+    } catch (RuntimeException e) {
       throw new NomadException(e.getMessage(), e);
     }
+  }
+
+  private static String validate(String mBean, String method, String value) {
+    if (value == null || value.startsWith("Invalid JMX")) {
+      throw new IllegalStateException("mBean call '" + mBean + "#" + method + "' error: " + value);
+    }
+    return value;
   }
 }

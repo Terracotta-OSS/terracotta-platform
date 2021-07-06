@@ -19,8 +19,6 @@ import org.junit.Test;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.model.TerracottaKit;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -68,27 +66,19 @@ public class DiagnosticIT extends DynamicConfigIT {
         null,
         objectMapperFactory)
     ) {
-      TopologyService topologyService = diagnosticService.getProxy(TopologyService.class);
-      TerracottaKit terracottaKit = topologyService.getTerracottaKit();
-      System.out.println(terracottaKit);
-      terracottaKit.getInstalledComponents().forEach(System.out::println);
-      // output:
-/*
-Terracotta 5.8.2-pre5, as of 2021-06-22 at 19:40:16 UTC (Revision f61e7ba47428e3bc5703c6071169755ed83b1ac2 from UNKNOWN)
-Config : Dynamic                    5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Entity : Cluster Topology           5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Entity : Monitoring Agent           5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Entity : Monitoring Platform        5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Entity : Nomad                      5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Plugin : Off-Heap                   5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Service: Client Message Tracker     5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Service: Configuration Monitoring   5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Service: Diagnostic Communication   5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Service: Dynamic Configuration      5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Service: Lease                      5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Service: Monitoring                 5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-Service: Server Information         5.8.0.SNAPSHOT  (built on 2021-06-25T03:55:36Z with JDK 1.8.0_282)
-*/
+      System.out.println(diagnosticService.getVersion()); // previously existing call, returns something like "Terracotta 5.8.2-pre6"
+      System.out.println(diagnosticService.getBuildID()); // previously existing call, returns something like "2021-06-29 at 20:54:46 UTC (Revision 4450fe6fc2c174abd3528b8636b3296a6a79df00 from UNKNOWN)"
+      System.out.println(diagnosticService.getKitInformation()); // new call, returns structured object that has a properties-like representation
+      /*
+version=5.8.2-pre6
+revision=4450fe6fc2c174abd3528b8636b3296a6a79df00
+branch=UNKNOWN
+timestamp=2021-06-29T20\:54\:46Z
+       */
+      System.out.println(diagnosticService.getKitInformation().getVersion()); // i.e.: 5.8.2-pre6
+      System.out.println(diagnosticService.getKitInformation().getBranch()); // i.e.: master
+      System.out.println(diagnosticService.getKitInformation().getRevision()); // i.e.: 4450fe6fc2c174abd3528b8636b3296a6a79df00
+      System.out.println(diagnosticService.getKitInformation().getTimestamp()); // i.e.: 2021-06-29T20:54:46Z
     }
   }
 

@@ -4,4 +4,4 @@
 #
 
 org.terracotta.diagnostic.server.DiagnosticServiceProvider
-org.terracotta.diagnostic.server.extensions.LogicalServerStateServiceProvider
+org.terracotta.diagnostic.server.extensions.DiagnosticExtensionsServiceProvider

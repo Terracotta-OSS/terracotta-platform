@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.api.service;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.TerracottaKit;
 
 import java.util.Optional;
 
@@ -89,9 +88,4 @@ public interface TopologyService {
    * false if no license installed so no validation done
    */
   boolean validateAgainstLicense(Cluster cluster);
-
-  /**
-   * @return Information about the kit for this node
-   */
-  TerracottaKit getTerracottaKit();
 }
