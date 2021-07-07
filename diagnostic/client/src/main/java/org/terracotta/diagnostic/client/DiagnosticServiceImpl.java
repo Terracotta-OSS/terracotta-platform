@@ -17,6 +17,7 @@ package org.terracotta.diagnostic.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.common.struct.Version;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.Diagnostics;
 import org.terracotta.diagnostic.common.Base64DiagnosticCodec;
@@ -204,7 +205,7 @@ class DiagnosticServiceImpl implements DiagnosticService {
       DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
       Instant timestamp = dtf.parse(b.substring(0, 26), Instant::from);
 
-      return new KitInformation(version, revision, branch, timestamp);
+      return new KitInformation(Version.valueOf(version), revision, branch, timestamp);
     }
   }
 

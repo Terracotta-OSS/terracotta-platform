@@ -15,6 +15,8 @@
  */
 package org.terracotta.diagnostic.model;
 
+import org.terracotta.common.struct.Version;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -29,19 +31,19 @@ import static java.util.Objects.requireNonNull;
  */
 public class KitInformation {
 
-  private final String version;
+  private final Version version;
   private final String revision;
   private final String branch;
   private final Instant timestamp;
 
-  public KitInformation(String version, String revision, String branch, Instant timestamp) {
+  public KitInformation(Version version, String revision, String branch, Instant timestamp) {
     this.version = requireNonNull(version);
     this.revision = requireNonNull(revision);
     this.branch = requireNonNull(branch);
     this.timestamp = requireNonNull(timestamp);
   }
 
-  public String getVersion() {
+  public Version getVersion() {
     return version;
   }
 
@@ -59,7 +61,7 @@ public class KitInformation {
 
   public Properties toProperties() {
     Properties props = new Properties();
-    props.setProperty("version", getVersion());
+    props.setProperty("version", getVersion().toString());
     props.setProperty("revision", getRevision());
     props.setProperty("branch", getBranch());
     props.setProperty("timestamp", getTimestamp().toString());
@@ -89,7 +91,7 @@ public class KitInformation {
 
   public static KitInformation fromProperties(Properties props) {
     return new KitInformation(
-        props.getProperty("version"),
+        Version.valueOf(props.getProperty("version")),
         props.getProperty("revision"),
         props.getProperty("branch"),
         Instant.parse(props.getProperty("timestamp")));
