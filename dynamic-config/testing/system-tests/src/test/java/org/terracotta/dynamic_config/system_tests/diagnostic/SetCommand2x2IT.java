@@ -163,7 +163,7 @@ public class SetCommand2x2IT extends DynamicConfigIT {
     assertThat(configTool("get", "-connect-to", connection,
         "-setting", "client-reconnect-window",
         "-setting", "offheap-resources.main"
-    ), allOf(containsOutput("client-reconnect-window=10s"),
+    ), allOf(containsOutput("client-reconnect-window=20s"),
         containsOutput("offheap-resources.main=512MB")));
 
     assertThat(configTool("set", "-connect-to", connection,

@@ -504,7 +504,7 @@ public class DynamicConfigIT {
         .tsa(tsa -> tsa
             .clusterName(CLUSTER_NAME)
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
-            .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-XX:+UseG1GC", "-Dlogback.configurationFile=logback-test.xml", "-Dlogback.debug=true"))
+            .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-XX:+UseG1GC", "-Xmx1g", "-Dlogback.configurationFile=logback-test.xml", "-Dlogback.debug=true"))
             .topology(new Topology(
                 getDistribution(inlineServers),
                 netDisruptionEnabled,
@@ -517,7 +517,7 @@ public class DynamicConfigIT {
         .configTool(context -> context
             .distribution(getDistribution())
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
-            .commandLineEnv(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m -Xmx128m"))
+            .commandLineEnv(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m", "-Xmx128m"))
             .configTool(TerracottaConfigTool.configTool("config-tool", "localhost")));
   }
 
@@ -529,7 +529,7 @@ public class DynamicConfigIT {
         .offheap("main:512MB,foo:1GB")
         .metaData("metadata")
         .failoverPriority(Optional.ofNullable(getFailoverPriority()).map(Objects::toString).orElse(null))
-        .clientReconnectWindow("10s") // the default client reconnect window of 2min can cause some tests to timeout
+        .clientReconnectWindow("20s") // the default client reconnect window of 2min can cause some tests to timeout
         .clusterName(CLUSTER_NAME);
   }
 
