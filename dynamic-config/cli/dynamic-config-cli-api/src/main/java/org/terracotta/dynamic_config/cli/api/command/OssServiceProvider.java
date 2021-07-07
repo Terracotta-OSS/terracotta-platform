@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.cli.api.command;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
+import org.terracotta.diagnostic.client.connection.DefaultDiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -95,7 +96,7 @@ public class OssServiceProvider implements ServiceProvider {
   }
 
   protected DiagnosticServiceProvider createDiagnosticServiceProvider(Configuration config) {
-    return new DiagnosticServiceProvider("CONFIG-TOOL",
+    return new DefaultDiagnosticServiceProvider("CONFIG-TOOL",
         getConnectionTimeout(config),
         getRequestTimeout(config),
         config.getSecurityRootDirectory(),
