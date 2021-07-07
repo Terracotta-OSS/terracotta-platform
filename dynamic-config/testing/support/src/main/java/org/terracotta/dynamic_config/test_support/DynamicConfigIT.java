@@ -249,10 +249,9 @@ public class DynamicConfigIT {
             LOGGER.info("[FAILED] {}", description);
             // take some thread dumps and memory dumps if the test has failed
             // to check if this is a timeout, use: if(throwable instanceof MultipleFailureException || throwable instanceof TestTimedOutException) {...}
-            Path target = Paths.get(System.getProperty("user.dir")).resolve("target");
             {
               // thread dumps
-              Path threadDumpOutput = target.resolve("thread-dumps").resolve(description.toString());
+              Path threadDumpOutput = parentTmpDir.resolve("thread-dumps").resolve(description.toString());
               LOGGER.info("Taking thread dumps after timeout of test: {} into: {}", description, threadDumpOutput);
               JavaTool.threadDumps(threadDumpOutput, Duration.ofSeconds(15));
             }
