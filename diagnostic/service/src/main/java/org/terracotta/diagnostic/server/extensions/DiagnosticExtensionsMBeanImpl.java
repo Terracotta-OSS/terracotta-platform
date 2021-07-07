@@ -65,7 +65,8 @@ public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.
         MBEAN_SERVER, "getBuildID",
         subsystem.call(MBEAN_SERVER, "getBuildID", null)); // something like "2021-06-29 at 20:54:46 UTC (Revision 4450fe6fc2c174abd3528b8636b3296a6a79df00 from UNKNOWN)"
 
-    String version = v.replace("Terracotta ", ""); // the moniker is hard-coded in core project
+    int pos = v.indexOf(' ');
+    String version = pos == -1 ? v : v.substring(pos + 1); // the moniker is hard-coded in core project and can be Terracotta or terracotta-enterprise
 
     Matcher sha = Pattern.compile(".*([0-9a-fA-F]{40}).*").matcher(b);
     String revision = sha.matches() ? sha.group(1) : "UNKNOWN";
