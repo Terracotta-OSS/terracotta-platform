@@ -28,4 +28,12 @@
 
   <artifactId>diagnostic-model</artifactId>
   <name>Diagnostic :: Model</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-structures</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 </project>

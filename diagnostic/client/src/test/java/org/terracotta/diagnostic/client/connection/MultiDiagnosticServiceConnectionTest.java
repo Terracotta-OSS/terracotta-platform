@@ -53,7 +53,7 @@ public class MultiDiagnosticServiceConnectionTest {
   @Before
   public void setUp() {
     Duration timeout = Duration.ofSeconds(1);
-    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("conn-name", timeout, timeout, null, new ObjectMapperFactory()) {
+    DiagnosticServiceProvider diagnosticServiceProvider = new DefaultDiagnosticServiceProvider("conn-name", timeout, timeout, null, new ObjectMapperFactory()) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration timeout) {
         return diagnosticService;

@@ -16,9 +16,13 @@
 package org.terracotta.dynamic_config.cli.api.command;
 
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.common.struct.Version;
+import org.terracotta.diagnostic.client.connection.CompatibleDiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
+import org.terracotta.diagnostic.client.connection.DefaultDiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
+import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
@@ -95,11 +99,17 @@ public class OssServiceProvider implements ServiceProvider {
   }
 
   protected DiagnosticServiceProvider createDiagnosticServiceProvider(Configuration config) {
-    return new DiagnosticServiceProvider("CONFIG-TOOL",
+    final DefaultDiagnosticServiceProvider diagnosticServiceProvider = new DefaultDiagnosticServiceProvider("CONFIG-TOOL",
         getConnectionTimeout(config),
         getRequestTimeout(config),
         config.getSecurityRootDirectory(),
         createObjectMapperFactory(config));
+    return new CompatibleDiagnosticServiceProvider(diagnosticServiceProvider) {
+      @Override
+      protected boolean isCompatible(KitInformation kitInformation) {
+        return kitInformation.getVersion().greaterThan(Version.valueOf("5.7")); // OSS version
+      }
+    };
   }
 
   protected ObjectMapperFactory createObjectMapperFactory(Configuration config) {

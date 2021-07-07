@@ -23,6 +23,7 @@ import org.terracotta.connection.ConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
+import org.terracotta.diagnostic.client.connection.DefaultDiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
@@ -101,7 +102,7 @@ public abstract class BaseTest {
   @Before
   public void setUp() throws Exception {
     Duration timeout = Duration.ofSeconds(2);
-    diagnosticServiceProvider = new DiagnosticServiceProvider(getClass().getSimpleName(), timeout, timeout, null, new ObjectMapperFactory()) {
+    diagnosticServiceProvider = new DefaultDiagnosticServiceProvider(getClass().getSimpleName(), timeout, timeout, null, new ObjectMapperFactory()) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration timeout) {
         return diagnosticServices.get(address);

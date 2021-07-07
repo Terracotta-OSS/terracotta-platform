@@ -15,6 +15,7 @@
  */
 package org.terracotta.diagnostic.server.extensions;
 
+import org.terracotta.common.struct.Version;
 import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.diagnostic.server.api.extension.DiagnosticExtensions;
@@ -75,7 +76,7 @@ public class DiagnosticExtensionsMBeanImpl extends StandardMBean implements org.
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
     Instant timestamp = dtf.parse(b.substring(0, 26), Instant::from);
 
-    return new KitInformation(version, revision, branch, timestamp);
+    return new KitInformation(Version.valueOf(version), revision, branch, timestamp);
   }
 
   boolean hasConsistencyManager() {

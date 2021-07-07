@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.terracotta.common.struct.Measure;
@@ -38,6 +39,7 @@ public class StructJsonModule extends SimpleModule {
   public StructJsonModule() {
     super(StructJsonModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
     setMixInAnnotation(Measure.class, MeasureMixin.class);
+    setMixInAnnotation(org.terracotta.common.struct.Version.class, VersionMixin.class);
   }
 
   @SuppressWarnings("unused")
@@ -67,5 +69,16 @@ public class StructJsonModule extends SimpleModule {
     public BigInteger getExactQuantity() {
       return super.getExactQuantity();
     }
+  }
+
+  public static abstract class VersionMixin {
+    @JsonCreator
+    public static org.terracotta.common.struct.Version valueOf(String version) {
+      return org.terracotta.common.struct.Version.valueOf(version);
+    }
+
+    @Override
+    @JsonValue
+    public abstract String toString();
   }
 }
