@@ -52,4 +52,8 @@
   <logger name="org.terracotta.angela" level="INFO" additivity="false">
     <appender-ref ref="STDOUT"/>
   </logger>
+
+  <logger name="com.tc" level="WARN" additivity="false">
+    <appender-ref ref="STDOUT"/>
+  </logger>
 </configuration>
