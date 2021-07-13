@@ -39,7 +39,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>statistics</artifactId>
-      <version>${statistics.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.management</groupId>

@@ -103,6 +103,11 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
+        <artifactId>statistics</artifactId>
+        <version>${statistics.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
         <artifactId>terracotta-utilities-test-tools</artifactId>
         <version>${terracotta-utilities.version}</version>
       </dependency>
@@ -197,6 +202,11 @@
         <version>${galvan.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>galvan-support</artifactId>
+        <version>${terracotta-core.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>angela</artifactId>
         <version>${angela.version}</version>
@@ -235,7 +245,7 @@
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
-        <version>1.2.3</version>
+        <version>${logback.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

@@ -72,7 +72,6 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <version>${terracotta-core.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -89,13 +88,11 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>galvan-support</artifactId>
-      <version>${terracotta-core.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>${logback.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

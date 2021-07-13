@@ -43,7 +43,6 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <version>${terracotta-core.version}</version>
     </dependency>
 
     <!-- sample entity client -->
@@ -58,7 +57,6 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>${logback.version}</version>
     </dependency>
 
     <!-- just for pretty printing-->
