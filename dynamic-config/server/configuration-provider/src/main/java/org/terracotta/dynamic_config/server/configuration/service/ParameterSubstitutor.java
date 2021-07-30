@@ -127,8 +127,14 @@ public class ParameterSubstitutor implements IParameterSubstitutor {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
-  private static synchronized String getUniqueTempDirectory() {
-    if (uniqueTempDirectory == null) {
+  private static String getUniqueTempDirectory() {
+    if (uniqueTempDirectory != null) {
+      return uniqueTempDirectory;
+    }
+    synchronized (ParameterSubstitutor.class) {
+      if (uniqueTempDirectory != null) {
+        return uniqueTempDirectory;
+      }
       try {
         File theFile = File.createTempFile("terracotta", "data");
         theFile.delete();
@@ -140,14 +146,12 @@ public class ParameterSubstitutor implements IParameterSubstitutor {
       } catch (IOException ioe) {
         uniqueTempDirectory = System.getProperty("java.io.tmpdir");
       }
+      return uniqueTempDirectory;
     }
-
-    return uniqueTempDirectory;
   }
 
-  private static synchronized String getDatestamp() {
-    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-    return format.format(new Date(System.currentTimeMillis()));
+  private static String getDatestamp() {
+    return new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date(System.currentTimeMillis()));
   }
 
   public static String getCanonicalHostName() {

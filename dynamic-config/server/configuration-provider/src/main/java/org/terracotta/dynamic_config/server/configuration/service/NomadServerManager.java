@@ -306,7 +306,7 @@ public class NomadServerManager {
     setNomad(NomadMode.RO);
   }
 
-  public synchronized NomadMode getNomadMode() {
+  public NomadMode getNomadMode() {
     return nomadServer.getChangeApplicator() == null ? NomadMode.RO : NomadMode.RW;
   }
 

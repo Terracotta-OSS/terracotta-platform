@@ -92,6 +92,7 @@ import java.util.stream.Stream;
 import static java.lang.System.lineSeparator;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -892,7 +893,7 @@ public class DynamicConfigIT {
 
     @Override
     public List<String> getOutput() {
-      return delegate.getOutput();
+      return delegate.lines().collect(toList());
     }
 
     @Override

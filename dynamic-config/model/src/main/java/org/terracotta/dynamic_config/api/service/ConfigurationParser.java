@@ -52,6 +52,8 @@ import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
  * Parses CLI or config file into a Cluster object, but does not validate the cluster object
  * <p>
  * This class purpose is to be used internally in {@link ClusterFactory}
+ * <p>
+ * IMPORTANT: this class is not thread-safe. It has to be constructed and used (parse) by the same thread.
  */
 class ConfigurationParser {
 
@@ -73,7 +75,7 @@ class ConfigurationParser {
    * The cluster object is NOT validated and will need to be validated with the
    * {@link ClusterValidator}
    */
-  public synchronized Cluster parse() {
+  public Cluster parse() {
     // Determine the number of stripes and nodes.
     // This map gives a configuration list per node and stripe
     final TreeMap<Integer, TreeSet<Integer>> ids = configurations.stream()

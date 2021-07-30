@@ -33,12 +33,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
 
 public class SingleThreadedNomadServer implements DynamicConfigNomadServer {
   private final DynamicConfigNomadServer underlying;
-  protected final ReentrantLock lock = new ReentrantLock(true);
+  private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
   public SingleThreadedNomadServer(DynamicConfigNomadServer underlying) {
     this.underlying = underlying;
@@ -46,141 +47,141 @@ public class SingleThreadedNomadServer implements DynamicConfigNomadServer {
 
   @Override
   public void reset() throws NomadException {
-    lock.lock();
+    lock.writeLock().lock();
     try {
       underlying.reset();
     } finally {
-      lock.unlock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public void close() {
-    lock.lock();
+    lock.writeLock().lock();
     try {
       underlying.close();
     } finally {
-      lock.unlock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public DiscoverResponse<NodeContext> discover() throws NomadException {
-    lock.lock();
+    lock.readLock().lock();
     try {
       return underlying.discover();
     } finally {
-      lock.unlock();
+      lock.readLock().unlock();
     }
   }
 
   @Override
   public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
-    lock.lock();
+    lock.writeLock().lock();
     try {
       return underlying.prepare(message);
     } finally {
-      lock.unlock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
-    lock.lock();
+    lock.writeLock().lock();
     try {
       return underlying.commit(message);
     } finally {
-      lock.unlock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public AcceptRejectResponse rollback(RollbackMessage message) throws NomadException {
-    lock.lock();
+    lock.writeLock().lock();
     try {
       return underlying.rollback(message);
     } finally {
-      lock.unlock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException {
-    lock.lock();
+    lock.writeLock().lock();
     try {
       return underlying.takeover(message);
     } finally {
-      lock.unlock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public boolean hasIncompleteChange() {
-    lock.lock();
+    lock.readLock().lock();
     try {
       return underlying.hasIncompleteChange();
     } finally {
-      lock.unlock();
+      lock.readLock().unlock();
     }
   }
 
   @Override
   public Optional<ChangeState<NodeContext>> getConfig(UUID changeUUID) throws NomadException {
-    lock.lock();
+    lock.readLock().lock();
     try {
       return underlying.getConfig(changeUUID);
     } finally {
-      lock.unlock();
+      lock.readLock().unlock();
     }
   }
 
   @Override
   public Optional<NodeContext> getCurrentCommittedConfig() throws NomadException {
-    lock.lock();
+    lock.readLock().lock();
     try {
       return underlying.getCurrentCommittedConfig();
     } finally {
-      lock.unlock();
+      lock.readLock().unlock();
     }
   }
 
   @Override
   public void forceSync(Collection<NomadChangeInfo> changes, BiFunction<NodeContext, NomadChange, NodeContext> fn) throws NomadException {
-    lock.lock();
+    lock.writeLock().lock();
     try {
       underlying.forceSync(changes, fn);
     } finally {
-      lock.unlock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public void setChangeApplicator(ChangeApplicator<NodeContext> changeApplicator) {
-    lock.lock();
+    lock.writeLock().lock();
     try {
       underlying.setChangeApplicator(changeApplicator);
     } finally {
-      lock.unlock();
+      lock.writeLock().unlock();
     }
   }
 
   @Override
   public ChangeApplicator<NodeContext> getChangeApplicator() {
-    lock.lock();
+    lock.readLock().lock();
     try {
       return underlying.getChangeApplicator();
     } finally {
-      lock.unlock();
+      lock.readLock().unlock();
     }
   }
 
   @Override
   public List<NomadChangeInfo> getChangeHistory() throws NomadException {
-    lock.lock();
+    lock.readLock().lock();
     try {
       return underlying.getChangeHistory();
     } finally {
-      lock.unlock();
+      lock.readLock().unlock();
     }
   }
 }
