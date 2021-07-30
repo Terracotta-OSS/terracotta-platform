@@ -499,7 +499,8 @@
       "tags": [],
       "properties": {
         "version": "<version>",
-        "clientReportedAddress": "<clientReportedAddress>"
+        "clientReportedAddress": "<clientReportedAddress>",
+        "clientRevision": "<uuid>"
       },
       "connections": [
         {
@@ -533,7 +534,8 @@
       ],
       "properties": {
         "version": "<version>",
-        "clientReportedAddress": "<clientReportedAddress>"
+        "clientReportedAddress": "<clientReportedAddress>",
+        "clientRevision": "<uuid>"
       },
       "connections": [
         {
@@ -732,7 +734,8 @@
       ],
       "properties": {
         "version": "<version>",
-        "clientReportedAddress": "<clientReportedAddress>"
+        "clientReportedAddress": "<clientReportedAddress>",
+        "clientRevision": "<uuid>"
       },
       "connections": [
         {

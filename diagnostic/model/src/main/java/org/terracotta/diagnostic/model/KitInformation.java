@@ -59,6 +59,10 @@ public class KitInformation {
     return branch;
   }
 
+  public String getFormattedVersion() {
+    return version + "/" + (revision.isEmpty() ? "revision not available" : revision);
+  }
+
   public Properties toProperties() {
     Properties props = new Properties();
     props.setProperty("version", getVersion().toString());
