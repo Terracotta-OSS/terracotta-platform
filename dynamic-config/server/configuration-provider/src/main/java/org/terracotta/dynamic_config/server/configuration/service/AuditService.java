@@ -34,7 +34,7 @@ public class AuditService implements DynamicConfigService {
   }
 
   @Override
-  public synchronized Optional<String> getLicenseContent() {
+  public Optional<String> getLicenseContent() {
     server.audit("License retrieval requested", new Properties());
     return dynamicConfigService.getLicenseContent();
   }
@@ -52,7 +52,7 @@ public class AuditService implements DynamicConfigService {
   }
 
   @Override
-  public synchronized void activate(Cluster maybeUpdatedCluster, String licenseContent) {
+  public void activate(Cluster maybeUpdatedCluster, String licenseContent) {
     server.audit("Activate invoked", new Properties());
     dynamicConfigService.activate(maybeUpdatedCluster, licenseContent);
   }
@@ -88,7 +88,7 @@ public class AuditService implements DynamicConfigService {
   }
 
   @Override
-  public synchronized void upgradeLicense(String licenseContent) {
+  public void upgradeLicense(String licenseContent) {
     server.audit("Upgrade license invoked", new Properties());
     dynamicConfigService.upgradeLicense(licenseContent);
   }

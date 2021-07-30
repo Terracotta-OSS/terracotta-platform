@@ -17,42 +17,45 @@ package org.terracotta.dynamic_config.cli.api.output;
 
 import org.slf4j.helpers.MessageFormatter;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Stream;
+
+import static java.util.Collections.emptyList;
 
 public class InMemoryOutputService implements OutputService {
 
-  private final List<String> lines;
+  private final Queue<String> lines = new ConcurrentLinkedQueue<>();
 
   public InMemoryOutputService() {
-    this(new LinkedList<>());
+    this(emptyList());
   }
 
   public InMemoryOutputService(List<String> buffer) {
-    this.lines = buffer;
+    this.lines.addAll(buffer);
   }
 
-  public synchronized void clear() {
+  public void clear() {
     lines.clear();
   }
 
-  public synchronized List<String> getOutput() {
-    return new ArrayList<>(lines);
+  public Stream<String> lines() {
+    return lines.stream();
   }
 
   @Override
-  public synchronized String toString() {
+  public String toString() {
     return "memory";
   }
 
   @Override
-  public synchronized void out(String format, Object... args) {
+  public void out(String format, Object... args) {
     // Split using both Windows and UNIX line separators
     StringTokenizer st = new StringTokenizer(MessageFormatter.arrayFormat(format, args).getMessage(), "\n\r");
     while (st.hasMoreTokens()) {
-      lines.add(st.nextToken());
+      lines.offer(st.nextToken());
     }
   }
 }
