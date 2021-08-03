@@ -613,7 +613,7 @@ public enum Setting {
       o -> Optional.empty(),
       noop(),
       singletonList(
-          when(CONFIGURING, ACTIVATED).allow(SET).atLevel(CLUSTER)
+          when(CONFIGURING, ACTIVATED).allow(SET, UNSET).atLevel(CLUSTER)
       ),
       EnumSet.noneOf(Requirement.class),
       emptyList(),

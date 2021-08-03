@@ -90,11 +90,7 @@ public class ConfigurationTest {
               .andMessage(is(equalTo(err)))));
     });
 
-    Stream.of(
-        LICENSE_FILE
-    ).forEach(setting -> assertThat(
-        () -> setting(setting),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: Setting 'license-file' requires a value"))))));
+    assertThat(setting(LICENSE_FILE).toString(), equalTo("license-file="));
 
     Stream.of(
         NODE_HOSTNAME,
@@ -436,8 +432,8 @@ public class ConfigurationTest {
       Stream.of(
           tuple2(LICENSE_FILE, "/path/to/license.xml")
       ).forEach(tuple -> {
-        rejectInput(tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' cannot be read or cleared");
-        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
+        allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
+        allowInput(tuple.t1 + "=", tuple.t1, CLUSTER, null, null, null, null);
         allowInput(tuple.t1 + "=" + tuple.t2, tuple.t1, CLUSTER, null, null, null, tuple.t2);
 
         rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
@@ -563,12 +559,17 @@ public class ConfigurationTest {
     Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET, IMPORT).forEach(op -> NS.forEach(ns -> reject(state, op, "config-dir=foo"))));
 
     // license-file
-    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET, UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "license-file"))));
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "license-file"))));
     Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
       allow(state, op, "license-file=foo");
       reject(state, op, "license-file=");
       reject(state, op, "stripe.1.license-file=foo");
       reject(state, op, "stripe.1.node.1.license-file=foo");
+    }));
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> {
+      allow(state, op, "license-file");
+      reject(state, op, "stripe.1.license-file");
+      reject(state, op, "stripe.1.node.1.license-file");
     }));
     Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "license-file=foo"))));
     Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "license-file="))));
