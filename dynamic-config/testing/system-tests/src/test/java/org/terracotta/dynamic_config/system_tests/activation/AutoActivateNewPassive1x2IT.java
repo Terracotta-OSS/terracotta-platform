@@ -61,7 +61,7 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
           "--config-dir", "config/stripe1/node-1-2");
       fail();
     } catch (Throwable e) {
-      assertThatServerLogs(getNode(1, 2), "Unable to find any change in the source node matching the topology used to activate this node");
+      assertThatServerStdOut(getNode(1, 2), "Unable to find any change in the source node matching the topology used to activate this node");
     }
   }
 
@@ -72,7 +72,7 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
       startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/1-1");
       fail();
     } catch (Throwable e) {
-      assertThatServerLogs(getNode(1, 1), "failover-priority setting is not configured");
+      assertThatServerStdOut(getNode(1, 1), "failover-priority setting is not configured");
     }
   }
 

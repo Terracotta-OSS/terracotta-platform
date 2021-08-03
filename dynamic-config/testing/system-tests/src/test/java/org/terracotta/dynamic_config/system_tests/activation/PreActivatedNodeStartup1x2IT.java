@@ -77,7 +77,7 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
           "--data-dirs", "main:data-dir");
       fail();
     } catch (Throwable e) {
-      assertThatServerLogs(getNode(1, 2), "Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "changes"));
+      assertThatServerStdOut(getNode(1, 2), "Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "changes"));
     }
   }
 

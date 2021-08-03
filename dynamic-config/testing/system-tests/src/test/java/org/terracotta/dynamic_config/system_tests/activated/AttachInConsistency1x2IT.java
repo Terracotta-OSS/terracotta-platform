@@ -68,7 +68,7 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
     withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
 
     stopNode(1, 1);
-    waitUntilServerLogs(getNode(1, 2), "Not enough registered voters.  Require override intervention or 1 members of the stripe to be connected for action MOVE_TO_ACTIVE");
+    waitUntilServerStdOut(getNode(1, 2), "Not enough registered voters.  Require override intervention or 1 members of the stripe to be connected for action MOVE_TO_ACTIVE");
   }
 
   @Test
