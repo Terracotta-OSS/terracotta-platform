@@ -15,6 +15,7 @@
  */
 package org.terracotta.diagnostic.client;
 
+import org.terracotta.diagnostic.model.ConnectedClientInformation;
 import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
 
@@ -128,6 +129,10 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
 
   default boolean isReconnectWindow() {
     return Boolean.parseBoolean(invoke(MBEAN_SERVER, "isReconnectWindow"));
+  }
+
+  default ConnectedClientInformation getConnectedClientInformation() {
+    return ConnectedClientInformation.fromProperties(invoke(MBEAN_SERVER, "getConnectedClients"));
   }
 
   // DiagnosticsHandler

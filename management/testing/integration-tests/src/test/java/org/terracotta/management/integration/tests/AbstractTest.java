@@ -243,7 +243,8 @@ public abstract class AbstractTest {
         .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
         .replaceAll("-2", "")
         .replaceAll("testServer1", "testServer0")
-        .replaceAll("\"(clientReportedAddress)\":\"[^\"]*\"", "\"$1\":\"<$1>\"");
+        .replaceAll("\"(clientReportedAddress)\":\"[^\"]*\"", "\"$1\":\"<$1>\"")
+        .replaceAll("\"clientRevision\":\"[^\"]*\"", "\"clientRevision\":\"<uuid>\"");
   }
 
   protected void triggerServerStatComputation() throws Exception {
