@@ -64,7 +64,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         containsOutput("Commit failed for node"));
 
-    waitUntilServerLogs(getNode(1, passiveId), "Requesting restart");
+    waitUntilServerStdOut(getNode(1, passiveId), "Requesting restart");
 
     waitForPassive(1, passiveId);
 

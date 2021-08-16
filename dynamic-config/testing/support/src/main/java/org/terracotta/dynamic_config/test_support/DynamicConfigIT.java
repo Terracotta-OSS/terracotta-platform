@@ -639,21 +639,44 @@ public class DynamicConfigIT {
     waitUntil(() -> result, matcher);
   }
 
-  protected final void waitUntilServerLogs(TerracottaServer server, String matcher) {
+  protected final void waitUntilServerStdOut(TerracottaServer server, String matcher) {
     assertThat(() -> serverStdOut(server), within(Duration.ofDays(1)).matches(hasItem(containsString(matcher))));
   }
 
-  protected final void assertThatServerLogs(TerracottaServer server, String matcher) {
+  protected final void assertThatServerStdOut(TerracottaServer server, String matcher) {
     assertThat(serverStdOut(server), hasItem(containsString(matcher)));
   }
 
-  protected final void assertThatServerLogs(TerracottaServer server, Matcher<String> matcher) {
+  protected final void assertThatServerStdOut(TerracottaServer server, Matcher<String> matcher) {
     assertThat(serverStdOut(server), hasItem(matcher));
   }
 
   private List<String> serverStdOut(TerracottaServer server) {
     try {
       return Files.readAllLines(getServerHome(server).resolve("stdout.txt"));
+    } catch (IOException io) {
+      return Collections.emptyList();
+    }
+  }
+
+  protected final void waitUntilServerLogs(TerracottaServer server, String matcher) {
+    assertThat(() -> serverLogs(server), within(Duration.ofDays(1)).matches(hasItem(containsString(matcher))));
+  }
+
+  protected final void assertThatServerLogs(TerracottaServer server, String matcher) {
+    assertThat(serverLogs(server), hasItem(containsString(matcher)));
+  }
+
+  protected final void assertThatServerLogs(TerracottaServer server, Matcher<String> matcher) {
+    assertThat(serverLogs(server), hasItem(matcher));
+  }
+
+  private List<String> serverLogs(TerracottaServer server) {
+    try {
+      return Files.readAllLines(getServerHome(server)
+          .resolve(server.getLogs())
+          .resolve(server.getServerSymbolicName().getSymbolicName())
+          .resolve("terracotta.server.log"));
     } catch (IOException io) {
       return Collections.emptyList();
     }

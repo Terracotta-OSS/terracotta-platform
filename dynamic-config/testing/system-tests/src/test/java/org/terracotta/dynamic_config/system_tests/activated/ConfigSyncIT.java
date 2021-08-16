@@ -168,7 +168,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // passive server will sync and repair itself
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + passiveNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"), is(successful()));
 
-    waitUntilServerLogs(getNode(1, passiveNodeId), "Requesting restart");
+    waitUntilServerStdOut(getNode(1, passiveNodeId), "Requesting restart");
 
     // passive should restart and sync again to repair its non committed change
     waitForPassive(1, passiveNodeId);

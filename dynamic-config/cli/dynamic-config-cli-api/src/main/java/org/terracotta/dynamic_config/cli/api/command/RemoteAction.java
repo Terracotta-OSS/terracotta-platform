@@ -593,9 +593,9 @@ public abstract class RemoteAction implements Runnable {
 
   protected final void upgradeLicense(Collection<Endpoint> expectedOnlineNodes, Path licenseFile) {
     LOGGER.trace("upgradeLicense({}, {})", expectedOnlineNodes, licenseFile);
-    String xml;
+    final String xml;
     try {
-      xml = new String(Files.readAllBytes(licenseFile), StandardCharsets.UTF_8);
+      xml = licenseFile == null ? null : new String(Files.readAllBytes(licenseFile), StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }

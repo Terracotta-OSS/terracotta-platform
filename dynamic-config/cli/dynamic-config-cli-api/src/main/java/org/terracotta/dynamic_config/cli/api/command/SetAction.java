@@ -24,8 +24,9 @@ import org.terracotta.dynamic_config.api.model.Operation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.List;
 
-import static java.util.Optional.empty;
+import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Setting.LICENSE_FILE;
 
 public class SetAction extends ConfigurationMutationAction {
@@ -43,25 +44,29 @@ public class SetAction extends ConfigurationMutationAction {
     // we support a list in case the user inputs: set -c license-file=foo/one.xml -c license-file=foo/two.xml
     // this is not illegal, would work, but a little stupid.
     // But could be useful in case the CLI is scripted and duplications happens (latter command overwrite previous ones)
-    Path licenseFile = configurations.stream()
+    final List<Configuration> configs = configurations.stream()
         .filter(configuration -> configuration.getSetting() == LICENSE_FILE)
-        .map(Configuration::getValue)
-        .findAny()
-        .orElse(empty())
-        .map(Paths::get)
-        .orElse(null);
+        .collect(toList());
 
-    if (licenseFile != null) {
+    // we remove the license parameters from the list of inputted commands
+    // this will allow to update the license plus some configurations at the same time
+    configurations.removeIf(cfg -> cfg.getSetting() == LICENSE_FILE);
+
+    // Do we have some licence actions ?
+    if (!configs.isEmpty()) {
+
+      // take the last one in CLI
+      final Configuration configuration = configs.get(configs.size() - 1);
+      final Path licenseFile = configuration.getValue().map(Paths::get)
+          .orElseThrow(() -> new IllegalArgumentException("Missing value for setting license-file in set command"));
+
+      // validate the path if any
       if (!licenseFile.toFile().exists()) {
         throw new IllegalArgumentException("License file not found: " + licenseFile);
       }
 
-      // we remove the license parameters from the list of inputted commands
-      // this will allow to being able to update the license plus some configurations at the same time
-      configurations.removeIf(configuration -> configuration.getSetting() == LICENSE_FILE);
-
       Collection<Node.Endpoint> peers = findRuntimePeers(node);
-      LOGGER.debug("Importing license: {} on nodes: {}", licenseFile, toString(peers));
+      LOGGER.debug("Installing license: {} on nodes: {}", licenseFile, toString(peers));
       upgradeLicense(peers, licenseFile);
       output.info("License installation successful.");
     }

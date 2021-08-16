@@ -21,7 +21,6 @@ import org.terracotta.common.struct.Measure;
 import java.nio.file.Paths;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -37,7 +36,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
-import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
  * only test the necessary setters having some logic
@@ -86,10 +84,9 @@ public class SetSettingTest {
   public void test_setProperty_LICENSE_FILE() {
     Node node = Testing.newTestNode("node1", "localhost");
 
-    // not throwing - noop
-    assertThat(
-        () -> LICENSE_FILE.setProperty(node, null),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Setting 'license-file' cannot be read or cleared")))));
+    // not throwing - noop (license uninstall)
+    LICENSE_FILE.setProperty(node, null);
+
     LICENSE_FILE.setProperty(node, "a.xml");
   }
 
