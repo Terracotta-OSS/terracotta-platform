@@ -197,16 +197,14 @@ class DiagnosticServiceImpl implements DiagnosticService {
       int pos = v.indexOf(' ');
       String version = pos == -1 ? v : v.substring(pos + 1); // the moniker is hard-coded in core project and can be Terracotta or terracotta-enterprise
 
-      Matcher sha = Pattern.compile(".*([0-9a-fA-F]{40}).*").matcher(b);
-      String revision = sha.matches() ? sha.group(1) : "UNKNOWN";
-
-      Matcher br = Pattern.compile(".* Revision [0-9a-fA-F]{40} from (.+)\\)").matcher(b);
-      String branch = br.matches() ? br.group(1) : "UNKNOWN";
-
-      DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
-      Instant timestamp = dtf.parse(b.substring(0, 26), Instant::from);
-
-      return new KitInformation(Version.valueOf(version), revision, branch, timestamp);
+      Matcher matcher = Pattern.compile("^(?<date>.*) \\(Revision (?<revision>.*) from (?<branch>.*)\\)$").matcher(b);
+      if (matcher.matches()) {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
+        Instant timestamp = dtf.parse(matcher.group("date"), Instant::from);
+        return new KitInformation(Version.valueOf(version), matcher.group("revision"), matcher.group("branch"), timestamp);
+      } else {
+        return new KitInformation(Version.valueOf(version), "UNKNOWN", "UNKNOWN", Instant.ofEpochMilli(0L));
+      }
     }
   }
 
