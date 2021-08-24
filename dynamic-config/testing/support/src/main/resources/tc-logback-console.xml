@@ -1,5 +1,5 @@
 <configuration debug="true">
-  <property file="logbackVars.properties" />
+  <property resource="logbackVars.properties" />
     
   <appender name="SYSFILE" class="ch.qos.logback.core.FileAppender">
     <file>${serverWorkingDir}/stdout.txt</file>
