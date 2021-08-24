@@ -27,11 +27,12 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OffHeapResourceTest {
   @Mock
-  private BiConsumer<OffHeapResourceImpl, OffHeapResourceImpl.ThresholdChange> onThresholdChange;
+  private Consumer<OffHeapUsageEvent> onThresholdChange;
 
   @Mock
   private CapacityChangeHandler onCapacityChange;

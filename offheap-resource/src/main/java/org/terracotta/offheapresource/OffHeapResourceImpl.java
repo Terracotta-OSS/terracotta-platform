@@ -23,10 +23,12 @@ import org.terracotta.tripwire.TripwireFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * An implementation of {@link OffHeapResource}.
@@ -40,6 +42,7 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
   private static final String OFFHEAP_WARN_KEY = "offheap.warn";
   private static final String DEFAULT_MESSAGE = "Offheap allocation for resource \"{}\" reached {}%, you may run out of memory if allocation continues.";
   private static final Properties MESSAGE_PROPERTIES;
+  private final Map<UUID, OffHeapUsageListener> listenerMap = new ConcurrentHashMap<>();
 
   static {
     Properties defaults = new Properties();
@@ -64,10 +67,8 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
 
   private final AtomicReference<OffHeapResourceState> state;
   private final String identifier;
-  private final BiConsumer<OffHeapResourceImpl, ThresholdChange> onReservationThresholdReached;
   private final CapacityChangeHandler onCapacityChanged;
   private final OffHeapResourceBinding managementBinding;
-  private final AtomicInteger threshold = new AtomicInteger();
   private final MemoryMonitor monitor;
 
   /**
@@ -79,8 +80,7 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
    * @param onCapacityChanged event consumer - will receive an event when the capacity changes
    * @throws IllegalArgumentException if the size is negative
    */
-  OffHeapResourceImpl(String identifier, long size, BiConsumer<OffHeapResourceImpl, ThresholdChange> onReservationThresholdReached, CapacityChangeHandler onCapacityChanged) throws IllegalArgumentException {
-    this.onReservationThresholdReached = onReservationThresholdReached;
+  OffHeapResourceImpl(String identifier, long size, Consumer<OffHeapUsageEvent> onReservationThresholdReached, CapacityChangeHandler onCapacityChanged) throws IllegalArgumentException {
     this.onCapacityChanged = onCapacityChanged;
     this.managementBinding = new OffHeapResourceBinding(identifier, this);
     if (size < 0) {
@@ -91,6 +91,8 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
     this.identifier = identifier;
     monitor = TripwireFactory.createMemoryMonitor(identifier);
     monitor.register();
+    addUsageListener(UUID.randomUUID(), 0.9f, onReservationThresholdReached);
+    addUsageListener(UUID.randomUUID(), 0.75f, onReservationThresholdReached);
   }
 
   /**
@@ -101,7 +103,7 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
    * @param onReservationThresholdReached event consumer - will receive events regarding usage thresholds
    * @throws IllegalArgumentException if the size is negative
    */
-  OffHeapResourceImpl(String identifier, long size, BiConsumer<OffHeapResourceImpl, ThresholdChange> onReservationThresholdReached) throws IllegalArgumentException {
+  OffHeapResourceImpl(String identifier, long size, Consumer<OffHeapUsageEvent> onReservationThresholdReached) throws IllegalArgumentException {
     this(identifier, size, onReservationThresholdReached, (r, o, n) -> {});
   }
 
@@ -114,7 +116,7 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
    * @throws IllegalArgumentException if the size is negative
    */
   OffHeapResourceImpl(String identifier, long size) throws IllegalArgumentException {
-    this(identifier, size, (r, p) -> {});
+    this(identifier, size, (p) -> {});
   }
 
   public OffHeapResourceBinding getManagementBinding() {
@@ -145,42 +147,54 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
       }
 
       if (state.compareAndSet(currentState, newState)) {
-        stateUpdated(newState);
+        stateUpdated(currentState, newState);
         return true;
       }
     }
   }
 
-  private void stateUpdated(OffHeapResourceState newState) {
+  private void stateUpdated(OffHeapResourceState prevState, OffHeapResourceState newState) {
     long capacity = newState.getCapacity();
     long used = newState.getUsed();
+    long prevUsed = prevState.getUsed();
+    long prevCapacity = prevState.getCapacity();
 
-    long percentOccupied = (used * 100L) / capacity;
-    int newT, curT = threshold.get();
-    if (percentOccupied >= 90L) {
-      newT = 90;
-    } else if (percentOccupied >= 75L) {
-      newT = 75;
-    } else {
-      newT = 0;
-    }
-    if (threshold.compareAndSet(curT, newT)) {
-      if (newT > curT) {
-        // increase from 0->75 or 75->90
-        if (newT == 90) {
-          LOGGER.warn(MESSAGE_PROPERTIES.getProperty(OFFHEAP_WARN_KEY), identifier, percentOccupied);
-        } else {
-          LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, percentOccupied);
+    if (used > prevUsed || capacity < prevCapacity) {
+      // check for rising event.
+      float occupancy = (used * 1.0f) / capacity;
+      OffHeapUsageEvent offHeapUsageEvent = null;
+      for (OffHeapUsageListener offHeapUsageListener : listenerMap.values()) {
+        if (!offHeapUsageListener.isFired() && (Float.compare(offHeapUsageListener.getThreshold(), occupancy) <= 0)) {
+          if (offHeapUsageEvent == null) {
+            offHeapUsageEvent = new OffHeapUsageEventImpl(used, newState.getRemaining(), capacity, OffHeapUsageEventType.RISING);
+          }
+          if (Float.compare(offHeapUsageListener.getThreshold(), 0.9f) == 0) {
+            LOGGER.warn(MESSAGE_PROPERTIES.getProperty(OFFHEAP_WARN_KEY), identifier, (used * 100L) / capacity);
+          } else if (Float.compare(offHeapUsageListener.getThreshold(), 0.75f) == 0) {
+            LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, (used * 100L) / capacity);
+          }
+          offHeapUsageListener.getConsumer().accept(offHeapUsageEvent);
+          offHeapUsageListener.setFiringStatus(true);
         }
-        onReservationThresholdReached.accept(this, new ThresholdChange(curT, newT));
-      } else if (newT < curT) {
-        // decrease from 90->75 or 75->0
-        if (newT == 75) {
-          LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, percentOccupied);
+      }
+    } else if (used < prevUsed || capacity > prevCapacity) {
+      // check for falling event.
+      float occupancy = (used * 1.0f) / capacity;
+      OffHeapUsageEvent offHeapUsageEvent = null;
+      for (OffHeapUsageListener offHeapUsageListener : listenerMap.values()) {
+        if (offHeapUsageListener.isFired() && (Float.compare(offHeapUsageListener.getThreshold(), occupancy) > 0)) {
+          if (offHeapUsageEvent == null) {
+            offHeapUsageEvent = new OffHeapUsageEventImpl(used, newState.getRemaining(), capacity, OffHeapUsageEventType.FALLING);
+          }
+          if (Float.compare(offHeapUsageListener.getThreshold(), 0.75f) == 0) {
+            LOGGER.info(MESSAGE_PROPERTIES.getProperty(OFFHEAP_INFO_KEY), identifier, (used * 100L) / capacity);
+          }
+          offHeapUsageListener.getConsumer().accept(offHeapUsageEvent);
+          offHeapUsageListener.setFiringStatus(false);
         }
-        onReservationThresholdReached.accept(this, new ThresholdChange(curT, newT));
       }
     }
+
     monitor.sample(capacity - used, used);
   }
 
@@ -199,7 +213,7 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
       OffHeapResourceState newState = currentState.release(size);
 
       if (state.compareAndSet(currentState, newState)) {
-        stateUpdated(newState);
+        stateUpdated(currentState, newState);
         return;
       }
     }
@@ -234,19 +248,32 @@ class OffHeapResourceImpl implements OffHeapResource, AutoCloseable {
 
       if (state.compareAndSet(currentState, newState)) {
         onCapacityChanged.onCapacityChanged(this, currentState.getCapacity(), newState.getCapacity());
-        stateUpdated(newState);
+        stateUpdated(currentState, newState);
         return true;
       }
     }
   }
-  
-  static class ThresholdChange {
-    final int old;
-    final int now;
 
-    ThresholdChange(int old, int now) {
-      this.old = old;
-      this.now = now;
+  @Override
+  public void addUsageListener(UUID listenerUUID, float threshold, Consumer<OffHeapUsageEvent> consumer) {
+    OffHeapUsageListener offHeapUsageListener = new OffHeapUsageListener(threshold, consumer);
+    listenerMap.put(listenerUUID, offHeapUsageListener);
+    // check for rising event if current usage already is above threshold.
+    OffHeapResourceState offHeapResourceState = state.get();
+    long used = offHeapResourceState.used;
+    long capacity = offHeapResourceState.capacity;
+    float occupancy = (used * 1.0f) / capacity;
+    if ((Float.compare(offHeapUsageListener.getThreshold(), occupancy) <= 0)) {
+      OffHeapUsageEvent offHeapUsageEvent = new OffHeapUsageEventImpl(used, offHeapResourceState.getRemaining(), capacity, OffHeapUsageEventType.RISING);
+      offHeapUsageListener.getConsumer().accept(offHeapUsageEvent);
+      offHeapUsageListener.setFiringStatus(true);
+    }
+  }
+
+  @Override
+  public void removeUsageListener(UUID listenerUUID) throws IllegalArgumentException {
+    if (listenerMap.remove(listenerUUID) == null) {
+      throw new IllegalArgumentException("Unknown listener: " + listenerUUID);
     }
   }
 
