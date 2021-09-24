@@ -100,7 +100,7 @@ class Topologies {
 
       if (newMe != null) {
         // we have updated the topology and I am still part of this cluster
-        LOGGER.info("Set upcoming topology to:\n{}", updatedCluster);
+        LOGGER.trace("Set upcoming topology to:\n{}", updatedCluster);
         this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getUID());
 
       } else {
