@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.18</version>
+    <version>5.20</version>
   </parent>
 
   <artifactId>platform-root</artifactId>
@@ -453,7 +453,10 @@
   <repositories>
     <repository>
       <id>terracotta-releases</id>
-      <url>https://www.terracotta.org/download/reflector/releases</url>
+      <url>https://repo.terracotta.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
     </repository>
   </repositories>
 
