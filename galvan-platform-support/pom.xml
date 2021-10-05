@@ -44,6 +44,15 @@
       <groupId>org.terracotta</groupId>
       <artifactId>galvan</artifactId>
     </dependency>
+    <!-- force new versions of JNA coming from Galvan and IPC Eventbus -->
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna-platform</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>
       <artifactId>common-test-utilities</artifactId>

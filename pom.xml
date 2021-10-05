@@ -39,11 +39,12 @@
     <terracotta-core.version>5.8.4-pre3</terracotta-core.version>
     <tripwire.version>1.0.2</tripwire.version>
     <galvan.version>1.6.3</galvan.version>
-    <angela.version>3.1.24</angela.version>
+    <angela.version>3.2.0</angela.version>
     <statistics.version>2.1</statistics.version>
     <jackson.version>2.12.4</jackson.version>
     <terracotta-utilities.version>0.0.9</terracotta-utilities.version>
     <test.parallel.forks>4</test.parallel.forks>
+    <jna.version>5.9.0</jna.version>
   </properties>
 
   <modules>
@@ -205,11 +206,31 @@
         <groupId>org.terracotta</groupId>
         <artifactId>galvan</artifactId>
         <version>${galvan.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>galvan-support</artifactId>
         <version>${terracotta-core.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -252,15 +273,15 @@
         <artifactId>logback-classic</artifactId>
         <version>${logback.version}</version>
       </dependency>
-      <!--
-  Important: force an upgrade of JNA used by the zt-process-killer dependency
-  (angela / ignite)
-  Work around this bug: https://github.com/zeroturnaround/zt-process-killer/issues/22
--->
       <dependency>
         <groupId>net.java.dev.jna</groupId>
         <artifactId>jna</artifactId>
-        <version>5.9.0</version>
+        <version>${jna.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna-platform</artifactId>
+        <version>${jna.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
