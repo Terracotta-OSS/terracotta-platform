@@ -18,9 +18,8 @@ package org.terracotta.dynamic_config.test_support;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matcher;
-import org.junit.AfterClass;
 import org.junit.AssumptionViolatedException;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestWatcher;
@@ -28,9 +27,9 @@ import org.junit.rules.Timeout;
 import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.angela.client.ClusterAgent;
 import org.terracotta.angela.client.config.ConfigurationContext;
 import org.terracotta.angela.client.filesystem.RemoteFolder;
+import org.terracotta.angela.client.support.junit.AngelaOrchestratorRule;
 import org.terracotta.angela.client.support.junit.AngelaRule;
 import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
 import org.terracotta.angela.common.TerracottaConfigTool;
@@ -118,20 +117,31 @@ import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
-  protected static final String CLUSTER_NAME = "tc-cluster";
-
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final Duration DEFAULT_TEST_TIMEOUT = Duration.ofMinutes(2);
   private static final Duration CONN_TIMEOUT = Duration.ofSeconds(30);
 
+  protected static final String CLUSTER_NAME = "tc-cluster";
+  protected static final AngelaOrchestratorRule angelaOrchestratorRule;
+
   protected final TmpDir tmpDir;
   protected final AngelaRule angela;
   protected final long timeout;
-
   protected final ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
-  private static ClusterAgent localAgent;
-  @Rule public RuleChain rules;
+  @ClassRule public static final RuleChain classRules = RuleChain.emptyRuleChain()
+      .around(angelaOrchestratorRule = new AngelaOrchestratorRule().local())
+      .around(new ExtendedTestRule() {
+        @Override
+        protected void before(Description description) {
+          System.setProperty("com.tc.server.entity.processor.threads", "4");
+          System.setProperty("com.tc.l2.tccom.workerthreads", "4");
+          System.setProperty("com.tc.l2.seda.stage.stall.warning", "1000");
+          System.setProperty("IGNITE_UPDATE_NOTIFIER", "false");
+        }
+      });
+
+  @Rule public final RuleChain testRules;
 
   public DynamicConfigIT() {
     this(DEFAULT_TEST_TIMEOUT);
@@ -144,9 +154,9 @@ public class DynamicConfigIT {
   public DynamicConfigIT(Duration testTimeout, Path parentTmpDir) {
     ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.timeout = testTimeout.toMillis();
-    this.rules = RuleChain.emptyRuleChain()
+    this.testRules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(localAgent, createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers())) {
+        .around(angela = new AngelaRule(angelaOrchestratorRule::getAngelaOrchestrator, createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers()), false, false) {
           ConfigurationContext oldConfiguration;
 
           @Override
@@ -274,24 +284,6 @@ public class DynamicConfigIT {
             LOGGER.info("[SKIPPED] {}", description);
           }
         });
-  }
-
-  @BeforeClass
-  public static void setupTestServers() {
-    System.setProperty("com.tc.server.entity.processor.threads", "4");
-    System.setProperty("com.tc.l2.tccom.workerthreads", "4");
-    System.setProperty("com.tc.l2.seda.stage.stall.warning", "1000");
-    System.setProperty("IGNITE_UPDATE_NOTIFIER", "false");
-    localAgent = new ClusterAgent(true);
-  }
-
-  @AfterClass
-  public static void teardownTestServers() {
-    try {
-      localAgent.close();
-    } catch (IOException io) {
-      LOGGER.error("io error", io);
-    }
   }
 
   // =========================================
