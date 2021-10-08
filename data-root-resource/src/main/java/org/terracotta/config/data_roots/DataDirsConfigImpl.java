@@ -30,20 +30,26 @@ import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 import org.terracotta.management.service.monitoring.ManageableServerComponent;
 
 import java.io.IOException;
+import java.nio.file.FileStore;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -53,11 +59,17 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
   private static final Logger LOGGER = LoggerFactory.getLogger(DataDirsConfigImpl.class);
 
   private final ConcurrentMap<String, Path> dataRootMap = new ConcurrentHashMap<>();
+  private final ConcurrentMap<FileStore, List<String>> fileStoreMap = new ConcurrentHashMap<>();
   private final String platformRootIdentifier;
   private final ConcurrentMap<String, DataDirs> serverToDataRoots = new ConcurrentHashMap<>();
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
   private final Collection<EntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
+  private final ScheduledExecutorService loggingExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+    Thread t = new Thread(r, "disk resources usage logger");
+    t.setDaemon(true);
+    return t;
+  });
 
   public DataDirsConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, Path metadataDir, Map<String, Path> dataDirectories) {
     this.parameterSubstitutor = parameterSubstitutor;
@@ -89,6 +101,7 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
             return id;
           });
     }
+    initLogging();
   }
 
   public DataDirsConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories) {
@@ -111,6 +124,7 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
       }
     }
     platformRootIdentifier = tempPlatformRootIdentifier;
+    initLogging();
   }
 
 
@@ -133,7 +147,20 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
     LOGGER.debug("Defined directory with name: {} at location: {}", name, dataDirectory);
 
     dataRootMap.put(name, dataDirectory);
-
+    try {
+      if (!skipIO) {
+        FileStore fileStore = Files.getFileStore(dataDirectory);
+        fileStoreMap.compute(fileStore, (fs, dataDirList) -> {
+          if (dataDirList == null) {
+            dataDirList = new ArrayList<>();
+          }
+          dataDirList.add(name);
+          return dataDirList;
+        });
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     for (EntityManagementRegistry registry : registries) {
       registry.registerAndRefresh(new DataRootBinding(name, dataDirectory));
     }
@@ -210,6 +237,17 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
   public void close() throws IOException {
     for (DataDirs dataDirs : serverToDataRoots.values()) {
       dataDirs.close();
+    }
+    boolean interrupted = false;
+    loggingExecutor.shutdown();
+    try {
+      loggingExecutor.awaitTermination(30, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      interrupted = true;
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
@@ -304,4 +342,17 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
     return size.get();
   }
 
+  private void initLogging() {
+    loggingExecutor.scheduleAtFixedRate(() -> {
+      fileStoreMap.forEach((fs, dataDirList) -> {
+        try {
+          long total = fs.getTotalSpace();
+          long used = total - fs.getUsableSpace();
+          LOGGER.info("Resource usage: DISK RESOURCE - identifiers:{}, used:{}, total:{}", dataDirList, used, total);
+        } catch (IOException e) {
+          LOGGER.info("IOException occurred: {}", e);
+        }
+      });
+    }, 1, 5, TimeUnit.MINUTES);
+  }
 }

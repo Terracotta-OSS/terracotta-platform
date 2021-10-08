@@ -41,6 +41,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -57,12 +60,18 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
   private final Map<OffHeapResourceIdentifier, OffHeapResourceImpl> resources = new ConcurrentHashMap<>();
   private final Collection<EntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
   private final AtomicLong totalConfiguredOffheap = new AtomicLong(0);
+  private final ScheduledExecutorService loggingExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+    Thread t = new Thread(r, "offheap resources usage logger");
+    t.setDaemon(true);
+    return t;
+  });
 
   public OffHeapResourcesProvider(OffheapResourcesType configuration) {
     for (ResourceType r : configuration.getResource()) {
       long size = longValueExact(convert(r.getValue(), r.getUnit()));
       addToResources(identifier(r.getName()), size);
     }
+    initLogging();
   }
 
   public OffHeapResourcesProvider(Map<String, Measure<org.terracotta.common.struct.MemoryUnit>> resources) {
@@ -70,6 +79,7 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
       long size = measure.getQuantity(org.terracotta.common.struct.MemoryUnit.B);
       addToResources(identifier(name), size);
     });
+    initLogging();
   }
 
   @Override
@@ -216,6 +226,17 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
   @Override
   public void close() {
     this.resources.values().forEach(OffHeapResourceImpl::close);
+    boolean interrupted = false;
+    loggingExecutor.shutdown();
+    try {
+      loggingExecutor.awaitTermination(30, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      interrupted = true;
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   private void warnIfOffheapExceedsPhysicalMemory(long totalConfiguredOffheap) {
@@ -223,5 +244,15 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
     if (physicalMemory != null && totalConfiguredOffheap > physicalMemory) {
       LOGGER.warn("Configured offheap: {} is more than physical memory: {}", totalConfiguredOffheap, physicalMemory);
     }
+  }
+
+  private void initLogging() {
+    loggingExecutor.scheduleAtFixedRate(() -> {
+      this.resources.forEach((identifier, resource) -> {
+        long total = resource.capacity();
+        long used = total - resource.available();
+        LOGGER.info("Resource usage: OFFHEAP RESOURCE - identifier:{}, used:{}, total:{}", identifier.getName(), used, total);
+      });
+    }, 1, 5, TimeUnit.MINUTES);
   }
 }
