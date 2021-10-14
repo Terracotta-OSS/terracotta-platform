@@ -183,7 +183,7 @@ public class NomadServerFactory {
 
       NomadEnvironment environment = new NomadEnvironment();
 
-      List<NomadEndpoint<NodeContext>> endpoints = singletonList(new NomadEndpoint<>(node.getInternalAddress(), nomadServer));
+      List<NomadEndpoint<NodeContext>> endpoints = singletonList(new NomadEndpoint<>(node.getInternalSocketAddress(), nomadServer));
       // Note: do NOT close this nomad client - it would close the server and sanskrit!
       NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC());
       NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();

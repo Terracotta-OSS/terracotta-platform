@@ -181,7 +181,7 @@ public class ClusterValidator {
     List<String> nodesWithNoPublicAddresses = cluster.getStripes()
         .stream()
         .flatMap(s -> s.getNodes().stream())
-        .filter(node -> !node.getPublicAddress().isPresent())
+        .filter(node -> !node.getPublicSocketAddress().isPresent())
         .map(Node::getName)
         .collect(toList());
     if (nodesWithNoPublicAddresses.size() != 0 && nodesWithNoPublicAddresses.size() != cluster.getNodeCount()) {
@@ -207,7 +207,7 @@ public class ClusterValidator {
     cluster.getStripes()
         .stream()
         .flatMap(s -> s.getNodes().stream())
-        .collect(groupingBy(Node::getInternalAddress, Collectors.toList()))
+        .collect(groupingBy(Node::getInternalSocketAddress, Collectors.toList()))
         .entrySet()
         .stream()
         .filter(e -> e.getValue().size() > 1)
@@ -222,7 +222,7 @@ public class ClusterValidator {
     cluster.getStripes()
         .stream()
         .flatMap(s -> s.getNodes().stream())
-        .collect(groupingBy(Node::getPublicAddress, Collectors.toList()))
+        .collect(groupingBy(Node::getPublicSocketAddress, Collectors.toList()))
         .entrySet()
         .stream()
         .filter(e -> e.getKey().isPresent() && e.getValue().size() > 1)

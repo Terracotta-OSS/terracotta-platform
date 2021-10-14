@@ -269,14 +269,14 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
 
     @JsonIgnore
     @Override
-    public InetSocketAddress getInternalAddress() {
-      return super.getInternalAddress();
+    public InetSocketAddress getInternalSocketAddress() {
+      return super.getInternalSocketAddress();
     }
 
     @JsonIgnore
     @Override
-    public Optional<InetSocketAddress> getPublicAddress() {
-      return super.getPublicAddress();
+    public Optional<InetSocketAddress> getPublicSocketAddress() {
+      return super.getPublicSocketAddress();
     }
 
     @JsonIgnore

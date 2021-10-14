@@ -136,7 +136,7 @@ public class NodeContext implements Cloneable {
             Optional.of(new NodeContext(updated, updated.getNodeByName(node.getName()).get().getUID())) :
             // find by internal address (which never changes)
             updated.getNodes().stream()
-                .filter(n -> n.getInternalAddress().equals(node.getInternalAddress()))
+                .filter(n -> n.getInternalSocketAddress().equals(node.getInternalSocketAddress()))
                 .map(n -> new NodeContext(updated, n.getUID()))
                 .findAny();
   }

@@ -92,22 +92,22 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
   public void setUp() throws Exception {
     super.setUp();
 
-    when(topologyServiceMock(node1_1.getInternalAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getUID()));
-    when(topologyServiceMock(node1_1.getInternalAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getUID()));
-    when(topologyServiceMock(node1_1.getInternalAddress()).isActivated()).thenReturn(false);
+    when(topologyServiceMock(node1_1.getInternalSocketAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getUID()));
+    when(topologyServiceMock(node1_1.getInternalSocketAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getUID()));
+    when(topologyServiceMock(node1_1.getInternalSocketAddress()).isActivated()).thenReturn(false);
 
-    when(topologyServiceMock(node1_2.getInternalAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_2.getUID()));
-    when(topologyServiceMock(node1_2.getInternalAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_2.getUID()));
-    when(topologyServiceMock(node1_2.getInternalAddress()).isActivated()).thenReturn(false);
+    when(topologyServiceMock(node1_2.getInternalSocketAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_2.getUID()));
+    when(topologyServiceMock(node1_2.getInternalSocketAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_2.getUID()));
+    when(topologyServiceMock(node1_2.getInternalSocketAddress()).isActivated()).thenReturn(false);
 
-    when(topologyServiceMock(node2_1.getInternalAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node2_1.getUID()));
-    when(topologyServiceMock(node2_1.getInternalAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node2_1.getUID()));
-    when(topologyServiceMock(node2_1.getInternalAddress()).isActivated()).thenReturn(false);
+    when(topologyServiceMock(node2_1.getInternalSocketAddress()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node2_1.getUID()));
+    when(topologyServiceMock(node2_1.getInternalSocketAddress()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node2_1.getUID()));
+    when(topologyServiceMock(node2_1.getInternalSocketAddress()).isActivated()).thenReturn(false);
 
-    when(diagnosticServiceMock(node1_1.getInternalAddress()).getLogicalServerState()).thenReturn(DIAGNOSTIC);
-    when(diagnosticServiceMock(node1_2.getInternalAddress()).getLogicalServerState()).thenReturn(DIAGNOSTIC);
-    when(diagnosticServiceMock(node2_1.getInternalAddress()).getLogicalServerState()).thenReturn(DIAGNOSTIC);
-    when(diagnosticServiceMock(node2_2.getInternalAddress()).getLogicalServerState()).thenReturn(UNREACHABLE);
+    when(diagnosticServiceMock(node1_1.getInternalSocketAddress()).getLogicalServerState()).thenReturn(DIAGNOSTIC);
+    when(diagnosticServiceMock(node1_2.getInternalSocketAddress()).getLogicalServerState()).thenReturn(DIAGNOSTIC);
+    when(diagnosticServiceMock(node2_1.getInternalSocketAddress()).getLogicalServerState()).thenReturn(DIAGNOSTIC);
+    when(diagnosticServiceMock(node2_2.getInternalSocketAddress()).getLogicalServerState()).thenReturn(UNREACHABLE);
   }
 
   @Test
@@ -125,9 +125,9 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
   @Test
   public void testDetachNode_success_srcPartOfDestStripe_by_addr() throws IOException {
     DetachAction command = newCommand();
-    command.setSourceIdentifier(Identifier.valueOf(node1_2.getInternalAddress().toString()));
+    command.setSourceIdentifier(Identifier.valueOf(node1_2.getInternalSocketAddress().toString()));
     command.setOperationType(NODE);
-    command.setDestinationAddress(node1_1.getInternalAddress());
+    command.setDestinationAddress(node1_1.getInternalSocketAddress());
 
     assertDetachNodeSucess(command);
   }
@@ -137,7 +137,7 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
     DetachAction command = newCommand();
     command.setSourceIdentifier(Identifier.valueOf(node1_2.getUID().toString()));
     command.setOperationType(NODE);
-    command.setDestinationAddress(node1_1.getInternalAddress());
+    command.setDestinationAddress(node1_1.getInternalSocketAddress());
 
     assertDetachNodeSucess(command);
   }
@@ -147,7 +147,7 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
     DetachAction command = newCommand();
     command.setSourceIdentifier(Identifier.valueOf(node1_2.getName()));
     command.setOperationType(NODE);
-    command.setDestinationAddress(node1_1.getInternalAddress());
+    command.setDestinationAddress(node1_1.getInternalSocketAddress());
 
     assertDetachNodeSucess(command);
   }
@@ -156,7 +156,7 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
     command.run();
 
     // capture the new topology set calls
-    verify(dynamicConfigServiceMock(node1_1.getInternalAddress())).setUpcomingCluster(newCluster.capture());
+    verify(dynamicConfigServiceMock(node1_1.getInternalSocketAddress())).setUpcomingCluster(newCluster.capture());
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
@@ -175,9 +175,9 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
   @Test
   public void testDetachNode_fail_srcNotPartOfDestStripe() {
     DetachAction command = newCommand();
-    command.setSourceIdentifier(Identifier.valueOf(node1_1.getInternalAddress().toString()));
+    command.setSourceIdentifier(Identifier.valueOf(node1_1.getInternalSocketAddress().toString()));
     command.setOperationType(NODE);
-    command.setDestinationAddress(node2_1.getInternalAddress());
+    command.setDestinationAddress(node2_1.getInternalSocketAddress());
     assertThat(
         command::run,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(containsString("not present in the same stripe"))));
@@ -186,9 +186,9 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
   @Test
   public void testDetachNode_fail_randomSource() {
     DetachAction command = newCommand();
-    command.setSourceIdentifier(Identifier.valueOf(strayNode.getInternalAddress().toString()));
+    command.setSourceIdentifier(Identifier.valueOf(strayNode.getInternalSocketAddress().toString()));
     command.setOperationType(NODE);
-    command.setDestinationAddress(cluster.getNode(Testing.N_UIDS[1]).get().getInternalAddress());
+    command.setDestinationAddress(cluster.getNode(Testing.N_UIDS[1]).get().getInternalSocketAddress());
     assertThat(
         command::run,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(containsString("not part of cluster"))));
@@ -197,9 +197,9 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
   @Test
   public void testDetachStripe_success_srcPartOfCluster_with_addr() throws IOException {
     DetachAction command = newCommand();
-    command.setSourceIdentifier(Identifier.valueOf(node2_1.getInternalAddress().toString()));
+    command.setSourceIdentifier(Identifier.valueOf(node2_1.getInternalSocketAddress().toString()));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(node1_1.getInternalAddress());
+    command.setDestinationAddress(node1_1.getInternalSocketAddress());
 
     assertDetachStripeSuccess(command);
   }
@@ -209,7 +209,7 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
     DetachAction command = newCommand();
     command.setSourceIdentifier(Identifier.valueOf(node2_1.getUID().toString()));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(node1_1.getInternalAddress());
+    command.setDestinationAddress(node1_1.getInternalSocketAddress());
 
     assertDetachStripeSuccess(command);
   }
@@ -219,7 +219,7 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
     DetachAction command = newCommand();
     command.setSourceIdentifier(Identifier.valueOf(node2_1.getName()));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(node1_1.getInternalAddress());
+    command.setDestinationAddress(node1_1.getInternalSocketAddress());
 
     assertDetachStripeSuccess(command);
   }
@@ -229,7 +229,7 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
     DetachAction command = newCommand();
     command.setSourceIdentifier(Identifier.valueOf(Testing.S_UIDS[2].toString()));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(node1_1.getInternalAddress());
+    command.setDestinationAddress(node1_1.getInternalSocketAddress());
 
     assertDetachStripeSuccess(command);
   }
@@ -239,7 +239,7 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
     DetachAction command = newCommand();
     command.setSourceIdentifier(Identifier.valueOf("stripe2"));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(node1_1.getInternalAddress());
+    command.setDestinationAddress(node1_1.getInternalSocketAddress());
 
     assertDetachStripeSuccess(command);
   }
@@ -267,9 +267,9 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
   @Test
   public void testDetachStripe_fail_srcNotPartOfCluster() {
     DetachAction command = newCommand();
-    command.setSourceIdentifier(Identifier.valueOf(strayNode.getInternalAddress().toString()));
+    command.setSourceIdentifier(Identifier.valueOf(strayNode.getInternalSocketAddress().toString()));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(node2_1.getInternalAddress());
+    command.setDestinationAddress(node2_1.getInternalSocketAddress());
     assertThat(
         command::run,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(containsString("not part of cluster"))));
@@ -278,9 +278,9 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
   @Test
   public void testDetachStripe_fail_srcAndDestSameStripe() {
     DetachAction command = newCommand();
-    command.setSourceIdentifier(Identifier.valueOf(node1_1.getInternalAddress().toString()));
+    command.setSourceIdentifier(Identifier.valueOf(node1_1.getInternalSocketAddress().toString()));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(node1_2.getInternalAddress());
+    command.setDestinationAddress(node1_2.getInternalSocketAddress());
     assertThat(
         command::run,
         is(throwing(instanceOf(IllegalStateException.class)).andMessage(containsString("are part of the same stripe"))));

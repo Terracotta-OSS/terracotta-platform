@@ -198,7 +198,7 @@ public class ConfigurationGeneratorVisitor {
 
     Collection<Node> allNodes = cluster.getNodes();
     Optional<Node> matchingNode = allNodes.stream()
-        .filter(node1 -> InetSocketAddressUtils.areEqual(node1.getInternalAddress(), specifiedSockAddr))
+        .filter(node1 -> InetSocketAddressUtils.areEqual(node1.getInternalSocketAddress(), specifiedSockAddr))
         .findAny();
 
     HashMap<String, String> logParams = new HashMap<>();
@@ -262,7 +262,7 @@ public class ConfigurationGeneratorVisitor {
     requireNonNull(nodeConfigurationDir);
     NomadEnvironment environment = new NomadEnvironment();
     // Note: do NOT close this nomad client - it would close the server and sanskrit!
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getInternalAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getInternalSocketAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrowErrors();

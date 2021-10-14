@@ -521,10 +521,10 @@ public class Cluster implements Cloneable, PropertyHolder {
   private Function<Node, Endpoint> getEndpointFetcher(InetSocketAddress initiator) {
     boolean publicAddressConfigured = true;
     for (Node node : getNodes()) {
-      if (node.getInternalAddress().equals(initiator)) {
+      if (node.getInternalSocketAddress().equals(initiator)) {
         return Node::getInternalEndpoint;
       }
-      Optional<InetSocketAddress> publicAddress = node.getPublicAddress();
+      Optional<InetSocketAddress> publicAddress = node.getPublicSocketAddress();
       publicAddressConfigured &= publicAddress.isPresent();
       if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
         return n -> n.getPublicEndpoint().get();

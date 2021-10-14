@@ -62,40 +62,40 @@ public class NodeTest {
   @Test
   public void test_getNodeInternalAddress() {
     assertThat(
-        () -> new Node().getInternalAddress(),
+        () -> new Node().getInternalSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(equalTo("Node null is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> new Node().setName("node1").getInternalAddress(),
+        () -> new Node().setName("node1").getInternalSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> new Node().setName("node1").setPort(9410).getInternalAddress(),
+        () -> new Node().setName("node1").setPort(9410).getInternalSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> newTestNode("node1", "%h").getInternalAddress(),
+        () -> newTestNode("node1", "%h").getInternalSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: %h:9410")))));
   }
 
   @Test
   public void test_getNodePublicAddress() {
     assertThat(
-        newTestNode("node1", "localhost").getPublicAddress().isPresent(),
+        newTestNode("node1", "localhost").getPublicSocketAddress().isPresent(),
         is(false));
     assertThat(
-        newTestNode("node1", "localhost").setPublicHostname("foo").getPublicAddress().isPresent(),
+        newTestNode("node1", "localhost").setPublicHostname("foo").getPublicSocketAddress().isPresent(),
         is(false));
     assertThat(
-        newTestNode("node1", "localhost").setPublicPort(1234).getPublicAddress().isPresent(),
+        newTestNode("node1", "localhost").setPublicPort(1234).getPublicSocketAddress().isPresent(),
         is(false));
 
     assertThat(
-        () -> newTestNode("node1", "localhost").setPublicHostname("%h").setPublicPort(1234).getPublicAddress(),
+        () -> newTestNode("node1", "localhost").setPublicHostname("%h").setPublicPort(1234).getPublicSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with public address: %h:1234")))));
 
     assertThat(
-        newTestNode("node1", "localhost").setPublicHostname("foo").setPublicPort(1234).getPublicAddress().get(),
+        newTestNode("node1", "localhost").setPublicHostname("foo").setPublicPort(1234).getPublicSocketAddress().get(),
         is(equalTo(InetSocketAddress.createUnresolved("foo", 1234))));
   }
 
