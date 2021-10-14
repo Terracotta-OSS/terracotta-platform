@@ -269,6 +269,12 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
 
     @JsonIgnore
     @Override
+    public InetSocketAddress getBindSocketAddress() {
+      return super.getBindSocketAddress();
+    }
+
+    @JsonIgnore
+    @Override
     public InetSocketAddress getInternalSocketAddress() {
       return super.getInternalSocketAddress();
     }
@@ -277,6 +283,12 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
     @Override
     public Optional<InetSocketAddress> getPublicSocketAddress() {
       return super.getPublicSocketAddress();
+    }
+
+    @JsonIgnore
+    @Override
+    public Endpoint getBindEndpoint() {
+      return super.getBindEndpoint();
     }
 
     @JsonIgnore

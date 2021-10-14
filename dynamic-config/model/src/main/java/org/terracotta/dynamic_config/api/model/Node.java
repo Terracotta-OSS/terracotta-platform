@@ -333,6 +333,15 @@ public class Node implements Cloneable, PropertyHolder {
         getPublicSocketAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
   }
 
+  public InetSocketAddress getBindSocketAddress() {
+    final String addr = getBindAddress().orDefault();
+    final Integer port = getPort().orDefault();
+    if (addr == null || Substitutor.containsSubstitutionParams(addr)) {
+      throw new AssertionError("Node " + name + " is not correctly defined with bind address: " + addr + ":" + port);
+    }
+    return InetSocketAddress.createUnresolved(addr, port);
+  }
+
   public InetSocketAddress getInternalSocketAddress() {
     final String hostname = getHostname();
     final Integer port = getPort().orDefault();
@@ -378,6 +387,10 @@ public class Node implements Cloneable, PropertyHolder {
     return ADDR_GROUP_INTERNAL.equals(initiator.getGroup()) ?
         getInternalEndpoint() :
         getPublicEndpoint().orElseGet(this::getInternalEndpoint);
+  }
+
+  public Endpoint getBindEndpoint() {
+    return new Endpoint(this, ADDR_GROUP_BIND, getBindSocketAddress());
   }
 
   public Endpoint getInternalEndpoint() {
