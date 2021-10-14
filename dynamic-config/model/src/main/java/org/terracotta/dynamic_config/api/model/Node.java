@@ -328,9 +328,18 @@ public class Node implements Cloneable, PropertyHolder {
   /**
    * @return true if this node has this public or internal address
    */
-  public boolean hasAddress(InetSocketAddress address) {
-    return InetSocketAddressUtils.areEqual(address, getInternalSocketAddress()) ||
-        getPublicSocketAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
+  public boolean isReachableWith(InetSocketAddress address) {
+    if (InetSocketAddressUtils.areEqual(address, getInternalSocketAddress())) {
+      return true;
+    }
+    if (getPublicSocketAddress().isPresent() && InetSocketAddressUtils.areEqual(address, getPublicSocketAddress().get())) {
+      return true;
+    }
+    final InetSocketAddress bindSocketAddress = getBindSocketAddress();
+    if (!bindSocketAddress.getHostString().equals("::") && !bindSocketAddress.getHostString().equals("0.0.0.0")) {
+      return InetSocketAddressUtils.areEqual(address, bindSocketAddress);
+    }
+    return false;
   }
 
   public InetSocketAddress getBindSocketAddress() {

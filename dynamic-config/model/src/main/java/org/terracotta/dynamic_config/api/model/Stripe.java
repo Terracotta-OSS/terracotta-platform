@@ -200,6 +200,10 @@ public class Stripe implements Cloneable, PropertyHolder {
     return Scope.STRIPE;
   }
 
+  public Optional<Node> findReachableNode(InetSocketAddress addr) {
+    return nodes.stream().filter(node -> node.isReachableWith(addr)).findFirst();
+  }
+
   /**
    * Finds an address group based on an address given by the user
    * to connect to a node

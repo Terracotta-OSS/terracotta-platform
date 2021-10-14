@@ -102,17 +102,17 @@ public class NodeTest {
   @Test
   public void test_hasAddress() {
     assertThat(
-        newTestNode("node1", "localhost").hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),
+        newTestNode("node1", "localhost").isReachableWith(InetSocketAddress.createUnresolved("localhost", 9410)),
         is(true));
     assertThat(
         newTestNode("node1", "localhost")
             .setPublicHostname("foo").setPublicPort(1234)
-            .hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),
+            .isReachableWith(InetSocketAddress.createUnresolved("localhost", 9410)),
         is(true));
     assertThat(
         newTestNode("node1", "localhost")
             .setPublicHostname("foo").setPublicPort(1234)
-            .hasAddress(InetSocketAddress.createUnresolved("foo", 1234)),
+            .isReachableWith(InetSocketAddress.createUnresolved("foo", 1234)),
         is(true));
   }
 }

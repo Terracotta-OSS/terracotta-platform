@@ -515,6 +515,13 @@ public class Cluster implements Cloneable, PropertyHolder {
     return uuid;
   }
 
+  public Optional<Node> findReachableNode(InetSocketAddress addr) {
+    return stripes.stream()
+        .map(stripe -> stripe.findReachableNode(addr).orElse(null))
+        .filter(Objects::nonNull)
+        .findFirst();
+  }
+
   /**
    * Finds an address group based on an address given by the user
    * to connect to a node
