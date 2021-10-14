@@ -21,6 +21,7 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
@@ -521,12 +522,12 @@ public class Cluster implements Cloneable, PropertyHolder {
   private Function<Node, Endpoint> getEndpointFetcher(InetSocketAddress initiator) {
     boolean publicAddressConfigured = true;
     for (Node node : getNodes()) {
-      if (node.getInternalSocketAddress().equals(initiator)) {
+      if (InetSocketAddressUtils.areEqual(node.getInternalSocketAddress(), initiator)) {
         return Node::getInternalEndpoint;
       }
       Optional<InetSocketAddress> publicAddress = node.getPublicSocketAddress();
       publicAddressConfigured &= publicAddress.isPresent();
-      if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
+      if (publicAddress.isPresent() && InetSocketAddressUtils.areEqual(publicAddress.get(), initiator)) {
         return n -> n.getPublicEndpoint().get();
       }
     }
