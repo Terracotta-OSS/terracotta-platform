@@ -352,7 +352,11 @@ public class DynamicConfigIT {
   }
 
   protected final InetSocketAddress getNodeAddress(int stripeId, int nodeId) {
-    return InetSocketAddress.createUnresolved("localhost", getNodePort(stripeId, nodeId));
+    return InetSocketAddress.createUnresolved(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId));
+  }
+
+  protected String getDefaultHostname(int stripeId, int nodeId) {
+    return "localhost";
   }
 
   protected ToolExecutionResult activateCluster() {
@@ -515,7 +519,7 @@ public class DynamicConfigIT {
   }
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
-    return server(getNodeName(stripeId, nodeId), "localhost")
+    return server(getNodeName(stripeId, nodeId), getDefaultHostname(stripeId, nodeId))
         .configRepo("config")
         .logs("logs")
         .dataDir("main:data-dir")
@@ -708,7 +712,7 @@ public class DynamicConfigIT {
   }
 
   protected final Cluster getUpcomingCluster(int stripeId, int nodeId) {
-    return getUpcomingCluster("localhost", getNodePort(stripeId, nodeId));
+    return getUpcomingCluster(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId));
   }
 
   // =========================================
@@ -720,7 +724,7 @@ public class DynamicConfigIT {
   }
 
   protected final Cluster getRuntimeCluster(int stripeId, int nodeId) {
-    return getUpcomingCluster("localhost", getNodePort(stripeId, nodeId));
+    return getUpcomingCluster(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId));
   }
 
   protected final Cluster getRuntimeCluster(String host, int port) {
@@ -728,7 +732,7 @@ public class DynamicConfigIT {
   }
 
   protected final void withTopologyService(int stripeId, int nodeId, Consumer<TopologyService> consumer) {
-    withTopologyService("localhost", getNodePort(stripeId, nodeId), consumer);
+    withTopologyService(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId), consumer);
   }
 
   protected final void withTopologyService(String host, int port, Consumer<TopologyService> consumer) {
@@ -739,7 +743,7 @@ public class DynamicConfigIT {
   }
 
   protected final <T> T usingTopologyService(int stripeId, int nodeId, Function<TopologyService, T> fn) {
-    return usingTopologyService("localhost", getNodePort(stripeId, nodeId), fn);
+    return usingTopologyService(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId), fn);
   }
 
   protected final <T> T usingTopologyService(String host, int port, Function<TopologyService, T> fn) {
@@ -747,7 +751,7 @@ public class DynamicConfigIT {
   }
 
   protected final <T> T usingDiagnosticService(int stripeId, int nodeId, Function<DiagnosticService, T> fn) {
-    return usingDiagnosticService("localhost", getNodePort(stripeId, nodeId), fn);
+    return usingDiagnosticService(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId), fn);
   }
 
   protected final <T> T usingDiagnosticService(String host, int port, Function<DiagnosticService, T> fn) {

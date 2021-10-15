@@ -129,6 +129,36 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <version>1.13.0</version>
+        <executions>
+          <execution>
+            <id>fake-hosts</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <scripts>
+            <script><![CDATA[
+new File("${project.build.directory}/fake-hosts.txt").text = "127.0.0.1 testhostname ${InetAddress.getLocalHost().getHostName()}"
+println(new File("${project.build.directory}/fake-hosts.txt").text)
+          ]]></script>
+          </scripts>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>3.0.7</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
@@ -142,7 +172,9 @@
             <angela.distribution>${project.version}</angela.distribution>
             <angela.kitInstallationDir>${project.build.directory}/angela/platform-kit-${project.version}</angela.kitInstallationDir>
             <angela.java.resolver>user</angela.java.resolver>
+            <angela.ssh.strictHostKeyChecking>false</angela.ssh.strictHostKeyChecking>
             <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
+            <jdk.net.hosts.file>${project.build.directory}/fake-hosts.txt</jdk.net.hosts.file>
           </systemPropertyVariables>
           <argLine>-XX:+UseG1GC -Xmx1g -Dorg.terracotta.disablePortReleaseCheck=true</argLine>
         </configuration>
