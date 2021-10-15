@@ -200,6 +200,10 @@ public class Stripe implements Cloneable, PropertyHolder {
     return Scope.STRIPE;
   }
 
+  public Optional<Node> findReachableNode(InetSocketAddress addr) {
+    return nodes.stream().filter(node -> node.isReachableWith(addr)).findFirst();
+  }
+
   /**
    * Finds an address group based on an address given by the user
    * to connect to a node
@@ -207,10 +211,10 @@ public class Stripe implements Cloneable, PropertyHolder {
   private Function<Node, Node.Endpoint> getEndpointFetcher(InetSocketAddress initiator) {
     boolean publicAddressConfigured = true;
     for (Node node : getNodes()) {
-      if (node.getInternalAddress().equals(initiator)) {
+      if (node.getInternalSocketAddress().equals(initiator)) {
         return Node::getInternalEndpoint;
       }
-      Optional<InetSocketAddress> publicAddress = node.getPublicAddress();
+      Optional<InetSocketAddress> publicAddress = node.getPublicSocketAddress();
       publicAddressConfigured &= publicAddress.isPresent();
       if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
         return n -> n.getPublicEndpoint().get();

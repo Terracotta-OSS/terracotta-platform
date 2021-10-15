@@ -82,7 +82,7 @@ public class ActivateActionTest extends BaseTest {
           Testing.newTestNode("node2", "localhost", 9421, Testing.N_UIDS[2]),
           Testing.newTestNode("node3", "localhost", 9422, Testing.N_UIDS[3])
       ));
-  private final int[] ports = cluster.getNodes().stream().map(Node::getInternalAddress).mapToInt(InetSocketAddress::getPort).toArray();
+  private final int[] ports = cluster.getNodes().stream().map(Node::getInternalSocketAddress).mapToInt(InetSocketAddress::getPort).toArray();
 
   @Override
   @Before

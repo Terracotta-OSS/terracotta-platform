@@ -189,9 +189,9 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("stripeName", topologyService.getRuntimeNodeContext().getCluster().getStripe(stripeUID).get().getName());
           data.put("nodeName", removedNode.getName());
           data.put("nodeHostname", removedNode.getHostname());
-          data.put("nodeAddress", removedNode.getInternalAddress().toString());
-          data.put("nodeInternalAddress", removedNode.getInternalAddress().toString());
-          removedNode.getPublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
+          data.put("nodeAddress", removedNode.getInternalSocketAddress().toString());
+          data.put("nodeInternalAddress", removedNode.getInternalSocketAddress().toString());
+          removedNode.getPublicSocketAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_REMOVED", data));
         }
 
@@ -202,9 +202,9 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("stripeName", topologyService.getRuntimeNodeContext().getCluster().getStripe(stripeUID).get().getName());
           data.put("nodeName", addedNode.getName());
           data.put("nodeHostname", addedNode.getHostname());
-          data.put("nodeAddress", addedNode.getInternalAddress().toString());
-          data.put("nodeInternalAddress", addedNode.getInternalAddress().toString());
-          addedNode.getPublicAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
+          data.put("nodeAddress", addedNode.getInternalSocketAddress().toString());
+          data.put("nodeInternalAddress", addedNode.getInternalSocketAddress().toString());
+          addedNode.getPublicSocketAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
         }
 
@@ -215,7 +215,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("stripeName", addedStripe.getName());
           data.put("nodeUIDs", addedStripe.getNodes().stream().map(Node::getUID).map(UID::toString).collect(Collectors.joining(",")));
           data.put("nodeNames", addedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
-          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getInternalAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getInternalSocketAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_ADDED", data));
         }
 
@@ -226,7 +226,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("stripeName", removedStripe.getName());
           data.put("nodeUIDs", removedStripe.getNodes().stream().map(Node::getUID).map(UID::toString).collect(Collectors.joining(",")));
           data.put("nodeNames", removedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
-          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getInternalAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getInternalSocketAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_REMOVED", data));
         }
       });

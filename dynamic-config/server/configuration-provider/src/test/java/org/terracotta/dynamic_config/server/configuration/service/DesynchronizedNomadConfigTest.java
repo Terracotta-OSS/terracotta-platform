@@ -405,7 +405,7 @@ public class DesynchronizedNomadConfigTest {
 
     InetSocketAddress getAddress() {
       try {
-        return nomad.getCurrentCommittedConfig().map(c -> c.getNode().getInternalAddress()).orElse(alternateConfig.getNode().getInternalAddress());
+        return nomad.getCurrentCommittedConfig().map(c -> c.getNode().getInternalSocketAddress()).orElse(alternateConfig.getNode().getInternalSocketAddress());
       } catch (NomadException e) {
         throw new UncheckedNomadException(e);
       }

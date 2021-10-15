@@ -50,6 +50,7 @@ public class Node implements Cloneable, PropertyHolder {
 
   private static final String ADDR_GROUP_PUBLIC = "public";
   private static final String ADDR_GROUP_INTERNAL = "internal";
+  private static final String ADDR_GROUP_BIND = "internal";
 
   private UID uid;
   private String name;
@@ -327,12 +328,30 @@ public class Node implements Cloneable, PropertyHolder {
   /**
    * @return true if this node has this public or internal address
    */
-  public boolean hasAddress(InetSocketAddress address) {
-    return InetSocketAddressUtils.areEqual(address, getInternalAddress()) ||
-        getPublicAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
+  public boolean isReachableWith(InetSocketAddress address) {
+    if (InetSocketAddressUtils.areEqual(address, getInternalSocketAddress())) {
+      return true;
+    }
+    if (getPublicSocketAddress().isPresent() && InetSocketAddressUtils.areEqual(address, getPublicSocketAddress().get())) {
+      return true;
+    }
+    final InetSocketAddress bindSocketAddress = getBindSocketAddress();
+    if (!bindSocketAddress.getHostString().equals("::") && !bindSocketAddress.getHostString().equals("0.0.0.0")) {
+      return InetSocketAddressUtils.areEqual(address, bindSocketAddress);
+    }
+    return false;
   }
 
-  public InetSocketAddress getInternalAddress() {
+  public InetSocketAddress getBindSocketAddress() {
+    final String addr = getBindAddress().orDefault();
+    final Integer port = getPort().orDefault();
+    if (addr == null || Substitutor.containsSubstitutionParams(addr)) {
+      throw new AssertionError("Node " + name + " is not correctly defined with bind address: " + addr + ":" + port);
+    }
+    return InetSocketAddress.createUnresolved(addr, port);
+  }
+
+  public InetSocketAddress getInternalSocketAddress() {
     final String hostname = getHostname();
     final Integer port = getPort().orDefault();
     if (hostname == null || Substitutor.containsSubstitutionParams(hostname)) {
@@ -341,7 +360,7 @@ public class Node implements Cloneable, PropertyHolder {
     return InetSocketAddress.createUnresolved(hostname, port);
   }
 
-  public Optional<InetSocketAddress> getPublicAddress() {
+  public Optional<InetSocketAddress> getPublicSocketAddress() {
     if (publicHostname == null || publicPort == null) {
       return Optional.empty();
     }
@@ -361,8 +380,8 @@ public class Node implements Cloneable, PropertyHolder {
    * Otherwise, use the public address and if not set, the internal one
    */
   public Endpoint getEndpoint(InetSocketAddress initiator) {
-    Optional<InetSocketAddress> publicAddress = getPublicAddress();
-    InetSocketAddress internalAddress = getInternalAddress();
+    Optional<InetSocketAddress> publicAddress = getPublicSocketAddress();
+    InetSocketAddress internalAddress = getInternalSocketAddress();
     if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
       return getPublicEndpoint().get();
     }
@@ -379,12 +398,16 @@ public class Node implements Cloneable, PropertyHolder {
         getPublicEndpoint().orElseGet(this::getInternalEndpoint);
   }
 
+  public Endpoint getBindEndpoint() {
+    return new Endpoint(this, ADDR_GROUP_BIND, getBindSocketAddress());
+  }
+
   public Endpoint getInternalEndpoint() {
-    return new Endpoint(this, ADDR_GROUP_INTERNAL, getInternalAddress());
+    return new Endpoint(this, ADDR_GROUP_INTERNAL, getInternalSocketAddress());
   }
 
   public Optional<Endpoint> getPublicEndpoint() {
-    return getPublicAddress().map(addr -> new Endpoint(this, ADDR_GROUP_PUBLIC, addr));
+    return getPublicSocketAddress().map(addr -> new Endpoint(this, ADDR_GROUP_PUBLIC, addr));
   }
 
   @Override
