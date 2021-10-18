@@ -84,7 +84,7 @@ class DynamicConfigNetworkTranslator implements com.tc.spi.NetworkTranslator {
       return publicEndpoint.get().getAddress().toString();
     } else {
       // we were not able to find the serverHostPort in the topology.
-      LOGGER.warn("Redirecting client: {} to proposed address: {}", initiator, serverHostPort);
+      LOGGER.trace("Redirecting client: {} to proposed address: {}", initiator, serverHostPort);
       return serverHostPort;
     }
   }

@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Properties;
 
 import static java.util.Collections.singletonList;
@@ -38,6 +39,10 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class PassiveRedirection1x2IT extends DynamicConfigIT {
+
+  public PassiveRedirection1x2IT() {
+    super(Duration.ofSeconds(180));
+  }
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -53,12 +58,13 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
   public void passiveRedirectsToInternalAddress() throws ConnectionException, IOException {
     attachAll();
     activateCluster();
-    int passiveId = findPassives(1)[0];
-    int activeId = findActive(1).getAsInt();
 
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=org.terracotta.dynamic_config.server.service.DynamicConfigNetworkTranslator:TRACE"),
         is(successful()));
+
+    int passiveId = findPassives(1)[0];
+    int activeId = findActive(1).getAsInt();
 
     // Redirecting client: /127.0.0.1:58937 to proposed address: C02YJ2F2JGH6.local:46238
     try (Connection connection = ConnectionFactory.connect(singletonList(getNodeAddress(1, passiveId)), new Properties())) {
@@ -72,8 +78,6 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
   public void passiveRedirectsToPublicAddress() throws IOException, ConnectionException {
     attachAll();
     activateCluster();
-    int passiveId = findPassives(1)[0];
-    int activeId = findActive(1).getAsInt();
 
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=org.terracotta.dynamic_config.server.service.DynamicConfigNetworkTranslator:TRACE"),
@@ -88,6 +92,9 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
         ),
         is(successful()));
 
+    int passiveId = findPassives(1)[0];
+    int activeId = findActive(1).getAsInt();
+
     // Redirecting client: /127.0.0.1:59121 to node: node-1-1@localhost:42894 through public endpoint
     try (Connection connection = ConnectionFactory.connect(singletonList(InetSocketAddress.createUnresolved(getDefaultHostname(1, passiveId), getNodePort(1, passiveId))), new Properties())) {
       assertTrue(connection.isValid());
@@ -99,7 +106,13 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
   @Test
   public void passiveRedirectsToBindAddress() throws IOException, ConnectionException {
     assertThat(
-        configTool("set", "-connect-to", "localhost:" + getNodePort(), "-auto-restart",
+        configTool("set", "-connect-to", "localhost:" + getNodePort(1, 1), "-auto-restart",
+            "-setting", "logger-overrides=org.terracotta.dynamic_config.server.service.DynamicConfigNetworkTranslator:TRACE",
+            "-setting", "bind-address=127.0.0.1"
+        ),
+        is(successful()));
+    assertThat(
+        configTool("set", "-connect-to", "localhost:" + getNodePort(1, 2), "-auto-restart",
             "-setting", "logger-overrides=org.terracotta.dynamic_config.server.service.DynamicConfigNetworkTranslator:TRACE",
             "-setting", "bind-address=127.0.0.1"
         ),
@@ -124,7 +137,13 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
   @Test
   public void passiveRedirectsToBindAddressWithPublicEndpoint() throws IOException, ConnectionException {
     assertThat(
-        configTool("set", "-connect-to", "localhost:" + getNodePort(), "-auto-restart",
+        configTool("set", "-connect-to", "localhost:" + getNodePort(1, 1), "-auto-restart",
+            "-setting", "logger-overrides=org.terracotta.dynamic_config.server.service.DynamicConfigNetworkTranslator:TRACE",
+            "-setting", "bind-address=127.0.0.1"
+        ),
+        is(successful()));
+    assertThat(
+        configTool("set", "-connect-to", "localhost:" + getNodePort(1, 2), "-auto-restart",
             "-setting", "logger-overrides=org.terracotta.dynamic_config.server.service.DynamicConfigNetworkTranslator:TRACE",
             "-setting", "bind-address=127.0.0.1"
         ),
@@ -135,9 +154,6 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
     waitForActive(1);
     waitForPassives(1);
 
-    int passiveId = findPassives(1)[0];
-    int activeId = findActive(1).getAsInt();
-
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(),
             "-c", "stripe.1.node.1.public-hostname=localhost",
@@ -146,6 +162,9 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
             "-c", "stripe.1.node.2.public-port=" + getNodePort(1, 2)
         ),
         is(successful()));
+
+    int passiveId = findPassives(1)[0];
+    int activeId = findActive(1).getAsInt();
 
     // Redirecting client: /127.0.0.1:59447 to node: node-1-2@localhost:46384 through public endpoint
     try (Connection connection = ConnectionFactory.connect(singletonList(InetSocketAddress.createUnresolved(getDefaultHostname(1, passiveId), getNodePort(1, passiveId))), new Properties())) {

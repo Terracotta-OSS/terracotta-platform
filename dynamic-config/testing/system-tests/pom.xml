@@ -142,10 +142,11 @@
           </execution>
         </executions>
         <configuration>
+
           <scripts>
             <script><![CDATA[
-new File("${project.build.directory}/fake-hosts.txt").text = "127.0.0.1 testhostname ${InetAddress.getLocalHost().getHostName()}"
-println(new File("${project.build.directory}/fake-hosts.txt").text)
+new File(project.build.directory, "fake-hosts.txt").text = "127.0.0.1 testhostname ${InetAddress.getLocalHost().getHostName()}"
+println(new File(project.build.directory, "fake-hosts.txt").text)
           ]]></script>
           </scripts>
         </configuration>
