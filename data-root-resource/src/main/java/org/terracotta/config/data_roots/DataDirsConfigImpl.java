@@ -122,6 +122,10 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
   @Override
   public void addDataDirectory(String name, String path) {
     addDataDirectory(name, path, false);
+    // For newly added data-dirs as part of dynamic-config.
+    for (DataDirs dataDirs : serverToDataRoots.values()) {
+      ((DataDirsWithServerName)dataDirs).updateDataDir(name);
+    }
   }
 
   public void addDataDirectory(String name, String path, boolean skipIO) {
