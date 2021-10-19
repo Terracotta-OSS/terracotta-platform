@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.server.service;
 
 import com.tc.classloader.BuiltinService;
+import com.tc.spi.NetworkTranslator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
@@ -117,6 +118,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
+    if (configuration.getServiceType() == NetworkTranslator.class) {
+      return configuration.getServiceType().cast(new DynamicConfigNetworkTranslator(findService(TopologyService.class)));
+    }
     return findService(configuration.getServiceType());
   }
 
@@ -135,7 +139,8 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         NomadPermissionChangeProcessor.class,
         LicenseService.class,
         PathResolver.class,
-        Server.class
+        Server.class,
+        NetworkTranslator.class
     );
   }
 
