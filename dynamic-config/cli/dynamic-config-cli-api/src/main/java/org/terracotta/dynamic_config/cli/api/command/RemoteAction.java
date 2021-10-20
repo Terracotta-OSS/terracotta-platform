@@ -344,7 +344,7 @@ public abstract class RemoteAction implements Runnable {
   }
 
   /**
-   * This method will connect to the node using teh provided address from teh user.
+   * This method will connect to the node using the provided address from the user.
    * It will grab the topology on this node and compare the address used to connect to
    * with the node addresses to determine the endpoint and group we have to use to connect
    * to other nodes (group: through bind addresses, hostname:port, or public addresses)

@@ -106,7 +106,7 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
         Files.createFile(path);
         crash();
       } catch (FileAlreadyExistsException e) {
-        // this exception si normal for teh second run
+        // this exception si normal for the second run
         LOGGER.warn(e.getMessage(), e);
         try {
           org.terracotta.utilities.io.Files.deleteIfExists(path);

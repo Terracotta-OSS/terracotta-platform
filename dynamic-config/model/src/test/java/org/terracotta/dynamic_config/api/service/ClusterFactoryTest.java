@@ -131,7 +131,7 @@ public class ClusterFactoryTest {
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
-          .setTcProperties(emptyMap()))) // specifically set the map to empty one by teh user
+          .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
       .setUID(Testing.C_UIDS[0])
       .setSecuritySslTls(false)
       .setSecurityWhitelist(false)

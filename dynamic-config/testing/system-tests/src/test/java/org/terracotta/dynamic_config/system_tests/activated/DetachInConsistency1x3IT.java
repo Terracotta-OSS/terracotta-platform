@@ -168,7 +168,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     // the passive server will restart once after startup: start => partial commit => sync => repair partial commit => restart
     // waitForPassive(1, activeId); will see the first startup but the problem is that the test will continue while the passive is
-    // restarting after teh sync
+    // restarting after the sync
     waitUntil(() -> usingTopologyService(1, passiveId2, TopologyService::hasIncompleteChange), is(false));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(2)));

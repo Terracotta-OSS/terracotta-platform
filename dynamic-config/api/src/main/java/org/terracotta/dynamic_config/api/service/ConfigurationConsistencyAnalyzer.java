@@ -253,7 +253,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     // So if we end up here were a change is in progress it means:
     // - all servers had the same result hash (have the same configuration in force)
     // - all servers either ends with the same change UUID or ends with any rolled back entries,
-    // but their last committed change had teh same UUID or led to the same change result hash (same config)
+    // but their last committed change had the same UUID or led to the same change result hash (same config)
 
     if (recoveryProcessDecider.partiallyPrepared()) {
       return PARTIALLY_PREPARED;

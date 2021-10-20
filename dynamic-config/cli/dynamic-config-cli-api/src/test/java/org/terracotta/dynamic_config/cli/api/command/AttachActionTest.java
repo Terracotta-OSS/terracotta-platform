@@ -193,7 +193,7 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
 
   @Test
   public void test_attach_stripe_ok() throws IOException {
-    // first rename teh stripe
+    // first rename the stripe
     nodeContext1.getStripe().setName("stripe2");
 
     DynamicConfigService mock10 = dynamicConfigServiceMock("localhost", 9410);
