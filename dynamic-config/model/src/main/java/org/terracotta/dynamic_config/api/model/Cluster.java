@@ -21,7 +21,6 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.Props;
-import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
@@ -39,7 +38,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -311,8 +309,13 @@ public class Cluster implements Cloneable, PropertyHolder {
    * @param initiator Address used to load this class, can be null.
    */
   public Collection<Endpoint> getEndpoints(InetSocketAddress initiator) {
-    Function<Node, Endpoint> fetcher = getEndpointFetcher(initiator);
-    return getNodes().stream().map(fetcher).collect(toList());
+    // try to determine which group of address was used to connect amongst a set of nodes
+    String group = initiator == null ? null : getNodes().stream()
+        .map(n -> n.findGroup(initiator).orElse(null))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+    return getNodes().stream().map(node -> node.getEndpoint(group)).collect(toList());
   }
 
   public Collection<Endpoint> getSimilarEndpoints(Endpoint initiator) {
@@ -520,28 +523,5 @@ public class Cluster implements Cloneable, PropertyHolder {
         .map(stripe -> stripe.findReachableNode(addr).orElse(null))
         .filter(Objects::nonNull)
         .findFirst();
-  }
-
-  /**
-   * Finds an address group based on an address given by the user
-   * to connect to a node
-   */
-  private Function<Node, Endpoint> getEndpointFetcher(InetSocketAddress initiator) {
-    boolean publicAddressConfigured = true;
-    for (Node node : getNodes()) {
-      if (InetSocketAddressUtils.areEqual(node.getInternalSocketAddress(), initiator)) {
-        return Node::getInternalEndpoint;
-      }
-      Optional<InetSocketAddress> publicAddress = node.getPublicSocketAddress();
-      publicAddressConfigured &= publicAddress.isPresent();
-      if (publicAddress.isPresent() && InetSocketAddressUtils.areEqual(publicAddress.get(), initiator)) {
-        return n -> n.getPublicEndpoint().get();
-      }
-    }
-    // we didn't find any exact match...
-    // if the nodes have public addresses, then use them
-    return publicAddressConfigured ?
-        n -> n.getPublicEndpoint().get() :
-        Node::getInternalEndpoint;
   }
 }

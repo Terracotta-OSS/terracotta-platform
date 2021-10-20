@@ -23,7 +23,9 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -100,19 +102,67 @@ public class NodeTest {
   }
 
   @Test
-  public void test_hasAddress() {
+  public void test_isReachableWith() {
     assertThat(
         newTestNode("node1", "localhost").isReachableWith(InetSocketAddress.createUnresolved("localhost", 9410)),
         is(true));
     assertThat(
         newTestNode("node1", "localhost")
-            .setPublicHostname("foo").setPublicPort(1234)
+            .setPublicEndpoint("foo", 9410)
             .isReachableWith(InetSocketAddress.createUnresolved("localhost", 9410)),
         is(true));
     assertThat(
         newTestNode("node1", "localhost")
-            .setPublicHostname("foo").setPublicPort(1234)
+            .setPublicEndpoint("foo", 1234)
             .isReachableWith(InetSocketAddress.createUnresolved("foo", 1234)),
         is(true));
+
+    assertTrue(node.isReachableWith("localhost", 9410));
+    assertFalse(node.isReachableWith("127.0.0.1", 9410)); // this is normal, DC never resolves, only matches with configured entries
+
+    node = node.clone().setBindAddress("127.0.0.1");
+    assertTrue(node.isReachableWith("localhost", 9410));
+    assertTrue(node.isReachableWith("127.0.0.1", 9410));
+
+    node = node.clone().setBindAddress("127.0.0.1").setPublicEndpoint("foo", 9610);
+    assertTrue(node.isReachableWith("localhost", 9410));
+    assertTrue(node.isReachableWith("127.0.0.1", 9410));
+    assertTrue(node.isReachableWith("foo", 9610));
+  }
+
+  @Test
+  public void test_getEndpoint() {
+    assertThat(node.getEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
+    assertFalse(node.getEndpoint("127.0.0.1", 9410).isPresent()); // this is normal, DC never resolves, only matches with configured entries
+
+    node = node.clone().setBindAddress("127.0.0.1");
+    assertThat(node.getEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.getEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
+
+    node = node.clone().setBindAddress("127.0.0.1").setPublicEndpoint("foo", 9610);
+    assertThat(node.getEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.getEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.getEndpoint("foo", 9610).get(), is(equalTo(node.getBindEndpoint())));
+  }
+
+  @Test
+  public void test_getSimilarEndpoint() {
+    node = node.clone();
+    assertThat(node.getSimilarEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.getSimilarEndpoint(node.getBindEndpoint()), is(equalTo(node.getInternalEndpoint())));
+
+    node = node.clone().setBindAddress("127.0.0.1");
+    assertThat(node.getSimilarEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.getSimilarEndpoint(node.getBindEndpoint()), is(equalTo(node.getBindEndpoint())));
+
+    node = node.clone().setPublicEndpoint("foo", 9610);
+    assertThat(node.getSimilarEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.getSimilarEndpoint(node.getBindEndpoint()), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.getSimilarEndpoint(node.getPublicEndpoint().get()), is(equalTo(node.getPublicEndpoint().get())));
+
+    node = node.clone().setBindAddress("0.0.0.0").setPublicEndpoint("foo", 9610);
+    assertThat(node.getSimilarEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.getSimilarEndpoint(node.getBindEndpoint()), is(equalTo(node.getPublicEndpoint().get())));
+    assertThat(node.getSimilarEndpoint(node.getPublicEndpoint().get()), is(equalTo(node.getPublicEndpoint().get())));
   }
 }
