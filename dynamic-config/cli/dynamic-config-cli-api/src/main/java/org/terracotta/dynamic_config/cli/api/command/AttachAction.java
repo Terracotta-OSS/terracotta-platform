@@ -152,8 +152,8 @@ public class AttachAction extends TopologyAction {
       newOnlineNodes.put(source, sourceCluster);
     } else {
       // we attach a whole stripe
-      sourceCluster.getStripeByNode(source.getNodeUID()).get()
-          .getSimilarEndpoints(source)
+      sourceCluster.getStripeByNode(source.getNodeUID()).get().getNodes().stream()
+          .map(node -> node.getSimilarEndpoint(source))
           .forEach(endpoint -> newOnlineNodes.put(endpoint, getUpcomingCluster(endpoint)));
     }
 

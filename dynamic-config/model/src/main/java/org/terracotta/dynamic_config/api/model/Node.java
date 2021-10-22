@@ -50,7 +50,7 @@ public class Node implements Cloneable, PropertyHolder {
 
   private static final String ADDR_GROUP_PUBLIC = "public";
   private static final String ADDR_GROUP_INTERNAL = "internal";
-  private static final String ADDR_GROUP_BIND = "internal";
+  private static final String ADDR_GROUP_BIND = "bind";
 
   private UID uid;
   private String name;
@@ -171,6 +171,18 @@ public class Node implements Cloneable, PropertyHolder {
 
   public Node setPublicPort(Integer publicPort) {
     this.publicPort = publicPort;
+    return this;
+  }
+
+  public Node setPublicEndpoint(InetSocketAddress sa) {
+    setPublicHostname(sa.getHostString());
+    setPublicPort(sa.getPort());
+    return this;
+  }
+
+  public Node setPublicEndpoint(String publicHostname, int publicPort) {
+    setPublicHostname(publicHostname);
+    setPublicPort(publicPort);
     return this;
   }
 
@@ -325,6 +337,10 @@ public class Node implements Cloneable, PropertyHolder {
     return this;
   }
 
+  public boolean isReachableWith(String hostname, int port) {
+    return isReachableWith(InetSocketAddress.createUnresolved(hostname, port));
+  }
+
   /**
    * @return true if this node has this public or internal address
    */
@@ -336,7 +352,7 @@ public class Node implements Cloneable, PropertyHolder {
       return true;
     }
     final InetSocketAddress bindSocketAddress = getBindSocketAddress();
-    if (!bindSocketAddress.getHostString().equals("::") && !bindSocketAddress.getHostString().equals("0.0.0.0")) {
+    if (!isWildcard(bindSocketAddress)) {
       return InetSocketAddressUtils.areEqual(address, bindSocketAddress);
     }
     return false;
@@ -370,6 +386,10 @@ public class Node implements Cloneable, PropertyHolder {
     return Optional.of(InetSocketAddress.createUnresolved(publicHostname, publicPort));
   }
 
+  public Optional<Endpoint> getEndpoint(String host, int port) {
+    return getEndpoint(InetSocketAddress.createUnresolved(host, port));
+  }
+
   /**
    * Get an endpoint to connect to this node based on the address used to initiate the connection.
    * <p>
@@ -377,25 +397,63 @@ public class Node implements Cloneable, PropertyHolder {
    * <p>
    * If the address used to initiate the connection is the internal address, then use it.
    * <p>
+   * If the address used to initiate the connection is the bind address (if not wildcard), then use it.
+   * <p>
    * Otherwise, use the public address and if not set, the internal one
    */
-  public Endpoint getEndpoint(InetSocketAddress initiator) {
-    Optional<InetSocketAddress> publicAddress = getPublicSocketAddress();
-    InetSocketAddress internalAddress = getInternalSocketAddress();
-    if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
-      return getPublicEndpoint().get();
-    }
-    if (internalAddress.equals(initiator)) {
-      return getInternalEndpoint();
-    }
-    // fallback: public first, otherwise internal
-    return getPublicEndpoint().orElseGet(this::getInternalEndpoint);
+  public Optional<Endpoint> getEndpoint(InetSocketAddress initiator) {
+    return findGroup(initiator).flatMap(this::findEndpoint);
   }
 
   public Endpoint getSimilarEndpoint(Endpoint initiator) {
-    return ADDR_GROUP_INTERNAL.equals(initiator.getGroup()) ?
-        getInternalEndpoint() :
-        getPublicEndpoint().orElseGet(this::getInternalEndpoint);
+    return getEndpoint(initiator.getGroup());
+  }
+
+  // keep methods related to groups package-local
+  Endpoint getEndpoint(String group) {
+    return findEndpoint(group)
+        // fallback: public first, otherwise internal
+        .orElseGet(() -> getPublicEndpoint().orElseGet(this::getInternalEndpoint));
+  }
+
+  // keep methods related to groups package-local
+  Optional<Endpoint> findEndpoint(String group) {
+    if (group == null) {
+      return Optional.empty();
+    }
+    switch (group) {
+      case ADDR_GROUP_INTERNAL:
+        return Optional.of(getInternalEndpoint());
+      case ADDR_GROUP_PUBLIC:
+        // returns public endpoint first, if not found, internal one
+        return getPublicEndpoint();
+      case ADDR_GROUP_BIND:
+        // if we want to use the bind endpoints, first check if it is set to wildcard
+        Endpoint bind = getBindEndpoint();
+        return isWildcard(bind.getAddress()) ? Optional.empty() : Optional.of(bind);
+      default:
+        throw new AssertionError(group);
+    }
+  }
+
+  // keep methods related to groups package-local
+  Optional<String> findGroup(InetSocketAddress initiator) {
+    if (initiator == null) {
+      return Optional.empty();
+    }
+    Optional<InetSocketAddress> publicAddress = getPublicSocketAddress();
+    InetSocketAddress internalAddress = getInternalSocketAddress();
+    InetSocketAddress bindAddress = getBindSocketAddress();
+    if (InetSocketAddressUtils.areEqual(initiator, internalAddress)) {
+      return Optional.of(ADDR_GROUP_INTERNAL);
+    }
+    if (publicAddress.isPresent() && InetSocketAddressUtils.areEqual(initiator, publicAddress.get())) {
+      return Optional.of(ADDR_GROUP_PUBLIC);
+    }
+    if (!isWildcard(bindAddress) && InetSocketAddressUtils.areEqual(initiator, bindAddress)) {
+      return Optional.of(ADDR_GROUP_BIND);
+    }
+    return Optional.empty();
   }
 
   public Endpoint getBindEndpoint() {
@@ -481,6 +539,10 @@ public class Node implements Cloneable, PropertyHolder {
 
   public String toShapeString() {
     return getInternalEndpoint().toString();
+  }
+
+  private static boolean isWildcard(InetSocketAddress bindSocketAddress) {
+    return bindSocketAddress.getHostString().equals("0.0.0.0") || bindSocketAddress.getHostString().equals("::");
   }
 
   /**
