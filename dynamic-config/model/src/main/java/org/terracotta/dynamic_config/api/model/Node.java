@@ -20,15 +20,18 @@ import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Setting.DATA_DIRS;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
@@ -386,8 +389,12 @@ public class Node implements Cloneable, PropertyHolder {
     return Optional.of(InetSocketAddress.createUnresolved(publicHostname, publicPort));
   }
 
-  public Optional<Endpoint> getEndpoint(String host, int port) {
-    return getEndpoint(InetSocketAddress.createUnresolved(host, port));
+  public Optional<Endpoint> findEndpoint(String host, int port) {
+    return findEndpoint(InetSocketAddress.createUnresolved(host, port));
+  }
+
+  public Endpoint determineEndpoint(String host, int port) {
+    return determineEndpoint(InetSocketAddress.createUnresolved(host, port));
   }
 
   /**
@@ -401,23 +408,28 @@ public class Node implements Cloneable, PropertyHolder {
    * <p>
    * Otherwise, use the public address and if not set, the internal one
    */
-  public Optional<Endpoint> getEndpoint(InetSocketAddress initiator) {
+  public Optional<Endpoint> findEndpoint(InetSocketAddress initiator) {
     return findGroup(initiator).flatMap(this::findEndpoint);
   }
 
-  public Endpoint getSimilarEndpoint(Endpoint initiator) {
-    return getEndpoint(initiator.getGroup());
+  public Endpoint determineEndpoint() {
+    return getPublicEndpoint().orElseGet(this::getInternalEndpoint);
+  }
+
+  public Endpoint determineEndpoint(InetSocketAddress initiator) {
+    return findGroup(initiator).flatMap(this::findEndpoint).orElseGet(this::determineEndpoint);
+  }
+
+  public Optional<Endpoint> findSimilarEndpoint(Endpoint initiator) {
+    return findEndpoint(initiator.getGroup());
+  }
+
+  public Endpoint determineEndpoint(Endpoint initiator) {
+    return findSimilarEndpoint(initiator).orElseGet(this::determineEndpoint);
   }
 
   // keep methods related to groups package-local
-  Endpoint getEndpoint(String group) {
-    return findEndpoint(group)
-        // fallback: public first, otherwise internal
-        .orElseGet(() -> getPublicEndpoint().orElseGet(this::getInternalEndpoint));
-  }
-
-  // keep methods related to groups package-local
-  Optional<Endpoint> findEndpoint(String group) {
+  private Optional<Endpoint> findEndpoint(String group) {
     if (group == null) {
       return Optional.empty();
     }
@@ -437,7 +449,7 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   // keep methods related to groups package-local
-  Optional<String> findGroup(InetSocketAddress initiator) {
+  private Optional<String> findGroup(InetSocketAddress initiator) {
     if (initiator == null) {
       return Optional.empty();
     }
@@ -466,6 +478,16 @@ public class Node implements Cloneable, PropertyHolder {
 
   public Optional<Endpoint> getPublicEndpoint() {
     return getPublicSocketAddress().map(addr -> new Endpoint(this, ADDR_GROUP_PUBLIC, addr));
+  }
+
+  /**
+   * Returns all the possible endpoints usable to reach the node
+   */
+  public Collection<Endpoint> getEndpoints() {
+    return Stream.of(getInternalEndpoint(), getBindEndpoint(), getPublicEndpoint().orElse(null))
+        .filter(Objects::nonNull)
+        .filter(e -> !isWildcard(e.getAddress()))
+        .collect(toList());
   }
 
   @Override
@@ -567,7 +589,8 @@ public class Node implements Cloneable, PropertyHolder {
       this.address = requireNonNull(address);
     }
 
-    public String getGroup() {
+    // keep package local
+    String getGroup() {
       return group;
     }
 

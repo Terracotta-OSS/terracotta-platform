@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -297,31 +298,6 @@ public class Cluster implements Cloneable, PropertyHolder {
     return getNodes().stream().map(Node::getInternalEndpoint).collect(toList());
   }
 
-  /**
-   * Returns the endpoints to use to connect to the nodes of the cluster.
-   * The endpoints are using the same address "group" as the address used to access
-   * this node context.
-   * <p>
-   * In case no initiator is given, or if it is not found, the returned endpoints
-   * will be the public addresses if all nodes have a public address, otherwise it
-   * will be the internal addresses
-   *
-   * @param initiator Address used to load this class, can be null.
-   */
-  public Collection<Endpoint> getEndpoints(InetSocketAddress initiator) {
-    // try to determine which group of address was used to connect amongst a set of nodes
-    String group = initiator == null ? null : getNodes().stream()
-        .map(n -> n.findGroup(initiator).orElse(null))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
-    return getNodes().stream().map(node -> node.getEndpoint(group)).collect(toList());
-  }
-
-  public Collection<Endpoint> getSimilarEndpoints(Endpoint initiator) {
-    return getNodes().stream().map(node -> node.getSimilarEndpoint(initiator)).collect(toList());
-  }
-
   public boolean containsNode(UID nodeUID) {
     return getNode(nodeUID).isPresent();
   }
@@ -523,5 +499,62 @@ public class Cluster implements Cloneable, PropertyHolder {
         .map(stripe -> stripe.findReachableNode(addr).orElse(null))
         .filter(Objects::nonNull)
         .findFirst();
+  }
+
+  public Collection<? extends Endpoint> search(Collection<? extends InetSocketAddress> addresses) {
+    return search(addresses, node -> null);
+  }
+
+  public Collection<? extends Endpoint> search(Collection<? extends InetSocketAddress> addresses, Function<Node, Endpoint> noMatch) {
+    return addresses.stream()
+        .flatMap(addr -> getNodes().stream().map(node -> node.findEndpoint(addr).orElseGet(() -> noMatch.apply(node))))
+        .filter(Objects::nonNull)
+        .collect(toList());
+  }
+
+  /**
+   * Returns the endpoints to use to connect to the nodes of the cluster.
+   * The endpoints are using the same address "group" as the address used to access
+   * this node context.
+   * <p>
+   * In case no initiator is given, or if it is not found, the returned endpoints
+   * will be the public addresses if all nodes have a public address, otherwise it
+   * will be the internal addresses
+   *
+   * @param initiators Addresses used to load this class, can be null.
+   */
+  public Collection<Endpoint> determineEndpoints(InetSocketAddress... initiators) {
+    return determineEndpoints(Arrays.asList(initiators));
+  }
+
+  public Collection<Endpoint> determineEndpoints(Collection<? extends InetSocketAddress> initiators) {
+    final Collection<? extends Endpoint> results = search(initiators);
+    if (results.isEmpty()) {
+      return getNodes().stream().map(Node::determineEndpoint).collect(toList());
+    } else {
+      return determineEndpoints(results.iterator().next());
+    }
+  }
+
+  public Collection<Endpoint> determineEndpoints() {
+    return getNodes().stream().map(Node::determineEndpoint).collect(toList());
+  }
+
+  public Optional<Endpoint> determineEndpoints(UID node, InetSocketAddress... initiators) {
+    return determineEndpoints(node, Arrays.asList(initiators));
+  }
+
+  public Optional<Endpoint> determineEndpoints(UID node, Collection<? extends InetSocketAddress> initiators) {
+    final Collection<? extends Endpoint> results = search(initiators);
+    if (results.isEmpty()) {
+      return getNode(uid).map(Node::determineEndpoint);
+    } else {
+      final Endpoint endpoint = results.iterator().next();
+      return getNode(uid).map(n -> n.determineEndpoint(endpoint));
+    }
+  }
+
+  public Collection<Endpoint> determineEndpoints(Endpoint initiator) {
+    return getNodes().stream().map(node -> node.determineEndpoint(initiator)).collect(toList());
   }
 }

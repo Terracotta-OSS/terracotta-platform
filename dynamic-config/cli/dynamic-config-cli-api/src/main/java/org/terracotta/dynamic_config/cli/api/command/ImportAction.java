@@ -74,7 +74,7 @@ public class ImportAction extends RemoteAction {
       }
     }
 
-    Collection<Node.Endpoint> runtimePeers = cluster.getEndpoints(node);
+    Collection<Node.Endpoint> runtimePeers = cluster.determineEndpoints(node);
 
     // validate the topology
     new ClusterValidator(cluster).validate(ClusterState.CONFIGURING);

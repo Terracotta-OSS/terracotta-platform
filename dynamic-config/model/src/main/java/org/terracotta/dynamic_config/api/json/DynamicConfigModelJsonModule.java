@@ -293,6 +293,12 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
 
     @JsonIgnore
     @Override
+    public Collection<Endpoint> getEndpoints() {
+      return super.getEndpoints();
+    }
+
+    @JsonIgnore
+    @Override
     public Endpoint getInternalEndpoint() {
       return super.getInternalEndpoint();
     }
