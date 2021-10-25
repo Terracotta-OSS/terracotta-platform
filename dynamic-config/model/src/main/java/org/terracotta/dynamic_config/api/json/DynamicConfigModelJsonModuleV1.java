@@ -32,6 +32,7 @@ import org.terracotta.dynamic_config.api.model.UID;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -137,6 +138,12 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
     @Override
     public Endpoint getBindEndpoint() {
       return super.getBindEndpoint();
+    }
+
+    @JsonIgnore
+    @Override
+    public Collection<Endpoint> getEndpoints() {
+      return super.getEndpoints();
     }
 
     @JsonIgnore

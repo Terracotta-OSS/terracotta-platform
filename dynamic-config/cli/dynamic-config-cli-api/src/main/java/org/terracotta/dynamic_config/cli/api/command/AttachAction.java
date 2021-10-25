@@ -90,7 +90,7 @@ public class AttachAction extends TopologyAction {
           "Impossible to do any topology change. Node: " + endpoint + " is waiting to be restarted to apply some pending changes. Please refer to the Troubleshooting Guide for more help.");
     }
 
-    Collection<Endpoint> destinationPeers = destinationCluster.getSimilarEndpoints(destination);
+    Collection<Endpoint> destinationPeers = destinationCluster.determineEndpoints(destination);
     if (destinationPeers.contains(source)) {
       throw new IllegalArgumentException("Source node: " + source + " is already part of cluster: " + destinationCluster.toShapeString());
     }
@@ -153,7 +153,7 @@ public class AttachAction extends TopologyAction {
     } else {
       // we attach a whole stripe
       sourceCluster.getStripeByNode(source.getNodeUID()).get().getNodes().stream()
-          .map(node -> node.getSimilarEndpoint(source))
+          .map(node -> node.determineEndpoint(source))
           .forEach(endpoint -> newOnlineNodes.put(endpoint, getUpcomingCluster(endpoint)));
     }
 

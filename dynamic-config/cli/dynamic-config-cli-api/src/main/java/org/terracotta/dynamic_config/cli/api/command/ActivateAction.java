@@ -93,7 +93,7 @@ public class ActivateAction extends RemoteAction {
 
     Collection<Endpoint> runtimePeers = restrictedActivation ?
         singletonList(getEndpoint(node)) : // if restrictive activation, we only activate the node supplied
-        cluster.getEndpoints(node); // if normal activation the nodes to activate are those found in the config file or in the topology loaded from the node
+        cluster.determineEndpoints(node); // if normal activation the nodes to activate are those found in the config file or in the topology loaded from the node
 
     // verify the activated state of the nodes
     if (areAllNodesActivated(runtimePeers)) {

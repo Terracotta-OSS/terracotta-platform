@@ -132,37 +132,37 @@ public class NodeTest {
 
   @Test
   public void test_getEndpoint() {
-    assertThat(node.getEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
-    assertFalse(node.getEndpoint("127.0.0.1", 9410).isPresent()); // this is normal, DC never resolves, only matches with configured entries
+    assertThat(node.findEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
+    assertFalse(node.findEndpoint("127.0.0.1", 9410).isPresent()); // this is normal, DC never resolves, only matches with configured entries
 
     node = node.clone().setBindAddress("127.0.0.1");
-    assertThat(node.getEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
-    assertThat(node.getEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.findEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.findEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
 
     node = node.clone().setBindAddress("127.0.0.1").setPublicEndpoint("foo", 9610);
-    assertThat(node.getEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
-    assertThat(node.getEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
-    assertThat(node.getEndpoint("foo", 9610).get(), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.findEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.findEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.findEndpoint("foo", 9610).get(), is(equalTo(node.getBindEndpoint())));
   }
 
   @Test
   public void test_getSimilarEndpoint() {
     node = node.clone();
-    assertThat(node.getSimilarEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
-    assertThat(node.getSimilarEndpoint(node.getBindEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.determineEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.determineEndpoint(node.getBindEndpoint()), is(equalTo(node.getInternalEndpoint())));
 
     node = node.clone().setBindAddress("127.0.0.1");
-    assertThat(node.getSimilarEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
-    assertThat(node.getSimilarEndpoint(node.getBindEndpoint()), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.determineEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.determineEndpoint(node.getBindEndpoint()), is(equalTo(node.getBindEndpoint())));
 
     node = node.clone().setPublicEndpoint("foo", 9610);
-    assertThat(node.getSimilarEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
-    assertThat(node.getSimilarEndpoint(node.getBindEndpoint()), is(equalTo(node.getBindEndpoint())));
-    assertThat(node.getSimilarEndpoint(node.getPublicEndpoint().get()), is(equalTo(node.getPublicEndpoint().get())));
+    assertThat(node.determineEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.determineEndpoint(node.getBindEndpoint()), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.determineEndpoint(node.getPublicEndpoint().get()), is(equalTo(node.getPublicEndpoint().get())));
 
     node = node.clone().setBindAddress("0.0.0.0").setPublicEndpoint("foo", 9610);
-    assertThat(node.getSimilarEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
-    assertThat(node.getSimilarEndpoint(node.getBindEndpoint()), is(equalTo(node.getPublicEndpoint().get())));
-    assertThat(node.getSimilarEndpoint(node.getPublicEndpoint().get()), is(equalTo(node.getPublicEndpoint().get())));
+    assertThat(node.determineEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.determineEndpoint(node.getBindEndpoint()), is(equalTo(node.getPublicEndpoint().get())));
+    assertThat(node.determineEndpoint(node.getPublicEndpoint().get()), is(equalTo(node.getPublicEndpoint().get())));
   }
 }

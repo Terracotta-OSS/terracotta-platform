@@ -152,7 +152,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
       for (Node node : stripe.getNodes()) {
         for (Endpoint endpoint : onlineNodes.keySet()) {
           if (endpoint.getNodeUID().equals(node.getUID())) {
-            stripeNodes.add(node.getSimilarEndpoint(endpoint));
+            stripeNodes.add(node.determineEndpoint(endpoint));
           }
         }
       }

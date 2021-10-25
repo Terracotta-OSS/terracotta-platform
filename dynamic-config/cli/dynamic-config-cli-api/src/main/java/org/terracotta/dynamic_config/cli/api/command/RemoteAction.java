@@ -353,7 +353,7 @@ public abstract class RemoteAction implements Runnable {
     LOGGER.trace("getEndpoint({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       Node node = diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getNode();
-      return node.getEndpoint(expectedOnlineNode).orElseGet(() -> node.getPublicEndpoint().orElseGet(node::getInternalEndpoint));
+      return node.determineEndpoint(expectedOnlineNode);
     }
   }
 
@@ -432,7 +432,7 @@ public abstract class RemoteAction implements Runnable {
   protected final Collection<Endpoint> findRuntimePeers(InetSocketAddress expectedOnlineNode) {
     LOGGER.trace("findRuntimePeers({})", expectedOnlineNode);
     Cluster cluster = getRuntimeCluster(expectedOnlineNode);
-    Collection<Endpoint> peers = cluster.getEndpoints(expectedOnlineNode);
+    Collection<Endpoint> peers = cluster.determineEndpoints(expectedOnlineNode);
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("Discovered nodes:{} through: {}", toString(peers), expectedOnlineNode);
     }
@@ -442,7 +442,7 @@ public abstract class RemoteAction implements Runnable {
   protected final Map<Endpoint, LogicalServerState> findRuntimePeersStatus(InetSocketAddress expectedOnlineNode) {
     LOGGER.trace("findRuntimePeersStatus({})", expectedOnlineNode);
     Cluster cluster = getRuntimeCluster(expectedOnlineNode);
-    Collection<Endpoint> endpoints = cluster.getEndpoints(expectedOnlineNode);
+    Collection<Endpoint> endpoints = cluster.determineEndpoints(expectedOnlineNode);
     output.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(endpoints));
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(endpointsToMap(endpoints))) {
       LinkedHashMap<Endpoint, LogicalServerState> status = endpoints.stream()
