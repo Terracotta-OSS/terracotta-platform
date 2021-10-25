@@ -540,11 +540,11 @@ public class Cluster implements Cloneable, PropertyHolder {
     return getNodes().stream().map(Node::determineEndpoint).collect(toList());
   }
 
-  public Optional<Endpoint> determineEndpoints(UID node, InetSocketAddress... initiators) {
-    return determineEndpoints(node, Arrays.asList(initiators));
+  public Optional<Endpoint> determineEndpoint(UID node, InetSocketAddress... initiators) {
+    return determineEndpoint(node, Arrays.asList(initiators));
   }
 
-  public Optional<Endpoint> determineEndpoints(UID node, Collection<? extends InetSocketAddress> initiators) {
+  public Optional<Endpoint> determineEndpoint(UID node, Collection<? extends InetSocketAddress> initiators) {
     final Collection<? extends Endpoint> results = search(initiators);
     if (results.isEmpty()) {
       return getNode(uid).map(Node::determineEndpoint);
