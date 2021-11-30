@@ -182,6 +182,7 @@
           <reuseForks>false</reuseForks>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
+            <serverWorkingDir>${project.build.directory}</serverWorkingDir>
           </systemPropertyVariables>
           <argLine>-XX:+UseG1GC</argLine>
         </configuration>

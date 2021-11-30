@@ -21,6 +21,7 @@ import org.junit.runners.JUnit4;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 
 import java.util.function.Supplier;
@@ -47,14 +48,14 @@ public abstract class AbstractTest {
 
     Supplier<ServerEntity> serverEntitySupplier = () -> {
       ServerEntity s = ServerEntity.create("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity");
-      s.setManagementRegistry(ManagementRegistry.create(serverContextContainer)
+      s.setManagementRegistry(ManagementRegistry.create(Context.empty(), serverContextContainer)
           .addCapabilities(action));
       return s;
     };
 
     Supplier<Client> clientSupplier = () -> {
       Client c = Client.create("12345@127.0.0.1:ehcache:uid");
-      c.setManagementRegistry(ManagementRegistry.create(clientContextContainer)
+      c.setManagementRegistry(ManagementRegistry.create(Context.empty(), clientContextContainer)
           .addCapability(action));
       return c;
     };

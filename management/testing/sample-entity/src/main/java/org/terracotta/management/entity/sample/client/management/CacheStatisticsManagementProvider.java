@@ -35,7 +35,7 @@ import static java.util.EnumSet.of;
  * @author Mathieu Carbou
  */
 @Named("CacheStatistics")
-@RequiredContext({@Named("appName"), @Named("cacheName")})
+@RequiredContext({@Named("instanceId"), @Named("appName"), @Named("cacheName")})
 class CacheStatisticsManagementProvider extends DefaultStatisticsManagementProvider<ClientCache> {
 
   private final Context parentContext;

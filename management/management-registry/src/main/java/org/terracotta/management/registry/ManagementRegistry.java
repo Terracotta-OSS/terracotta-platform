@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.registry;
 
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 
 /**
@@ -61,4 +62,8 @@ public interface ManagementRegistry extends CapabilityManagementSupport {
    */
   ContextContainer getContextContainer();
 
+  /**
+   * Will contain the context container, instance id or consumer id, and eventually other things
+   */
+  Context getContext();
 }

@@ -20,7 +20,7 @@ import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
 import org.terracotta.management.registry.collect.StatisticCollectorProvider;
 
-@RequiredContext({@Named("appName")})
+@RequiredContext({@Named("instanceId"), @Named("appName")})
 class CacheStatisticCollectorManagementProvider extends StatisticCollectorProvider {
   CacheStatisticCollectorManagementProvider(Context context) {
     super(context);

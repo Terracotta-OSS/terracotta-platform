@@ -79,7 +79,12 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
 
   @Test
   public void topology_after_reconfigure() throws Exception {
-    Cluster cluster = nmsService.readTopology();
+    webappNodes.remove(1).close();
+    Cluster cluster;
+    do {
+      cluster = nmsService.readTopology();
+    } while (cluster.getClientCount() != 2);
+
     JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
     JsonNode expected = readJson("topology-before-reconfigure.json");
     assertEquals(actual.toPrettyString(), expected, actual);

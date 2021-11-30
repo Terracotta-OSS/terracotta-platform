@@ -47,7 +47,7 @@ public class PassiveTopologyIT extends AbstractHATest {
     // clear buffer
     nmsService.readMessages();
 
-    CacheFactory cacheFactory = new CacheFactory(cluster.getConnectionURI(), "random-1");
+    CacheFactory cacheFactory = new CacheFactory(nextInstanceId(), cluster.getConnectionURI(), "random-1");
     cacheFactory.init();
     Cache cache = cacheFactory.getCache("my-cache");
     cache.put("key", "val");
