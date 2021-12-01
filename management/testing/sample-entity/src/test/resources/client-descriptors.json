@@ -40,6 +40,10 @@
     "capabilityContext": {
       "attributes": [
         {
+          "name": "instanceId",
+          "required": true
+        },
+        {
           "name": "appName",
           "required": true
         },
@@ -55,17 +59,23 @@
     "descriptors": [
       {
         "appName": "pet-clinic",
+        "instanceId": "instance-0",
         "cacheName": "pets",
         "size": 0
       },
       {
         "appName": "pet-clinic",
+        "instanceId": "instance-0",
         "cacheName": "clients",
         "size": 0
       }
     ],
     "capabilityContext": {
       "attributes": [
+        {
+          "name": "instanceId",
+          "required": true
+        },
         {
           "name": "appName",
           "required": true
@@ -99,6 +109,10 @@
     ],
     "capabilityContext": {
       "attributes": [
+        {
+          "name": "instanceId",
+          "required": true
+        },
         {
           "name": "appName",
           "required": true
@@ -160,6 +174,10 @@
     ],
     "capabilityContext": {
       "attributes": [
+        {
+          "name": "instanceId",
+          "required": true
+        },
         {
           "name": "appName",
           "required": true

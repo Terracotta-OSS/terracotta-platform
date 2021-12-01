@@ -68,10 +68,13 @@ public class ActionProviderTest {
 
     CapabilityContext capabilityContext = managementProvider.getCapabilityContext();
 
-    assertThat(capabilityContext.getAttributes().size(), is(2));
+    assertThat(capabilityContext.getAttributes().size(), is(3));
 
     Iterator<CapabilityContext.Attribute> iterator = capabilityContext.getAttributes().iterator();
     CapabilityContext.Attribute next = iterator.next();
+    assertThat(next.getName(), equalTo("instanceId"));
+    assertThat(next.isRequired(), is(true));
+    next = iterator.next();
     assertThat(next.getName(), equalTo("cacheManagerName"));
     assertThat(next.isRequired(), is(true));
     next = iterator.next();
@@ -94,6 +97,7 @@ public class ActionProviderTest {
     managementProvider.register(new MyObject("cache-manager-0", "cache-0"));
 
     Context context = Context.empty()
+        .with("instanceId", "instance-0")
         .with("cacheManagerName", "cache-manager-0")
         .with("cacheName", "cache-0");
 
@@ -107,6 +111,7 @@ public class ActionProviderTest {
     managementProvider.register(new MyObject("cache-manager-0", "cache-0"));
 
     Context context = Context.empty()
+        .with("instanceId", "instance-0")
         .with("cacheManagerName", "cache-manager-0")
         .with("cacheName", "cache-1");
 

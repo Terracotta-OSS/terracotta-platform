@@ -85,6 +85,10 @@ public final class ClientIdentifier implements Serializable {
     return getVmId() + ":" + name + ":" + connectionUid;
   }
 
+  public String getAppId() {
+    return getVmId() + ":" + name;
+  }
+
   @Override
   public String toString() {
     return getClientId();

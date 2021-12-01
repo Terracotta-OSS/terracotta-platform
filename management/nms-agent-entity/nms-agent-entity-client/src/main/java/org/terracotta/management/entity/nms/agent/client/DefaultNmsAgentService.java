@@ -59,6 +59,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   private static final String CAPABILITY_NAME = NmsAgentService.class.getSimpleName();
 
   private final Supplier<NmsAgentEntity> entitySupplier;
+  private final Context root;
 
   private volatile boolean closed;
   private volatile NmsAgentEntity entity;
@@ -82,15 +83,16 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
     }
   };
 
-  public DefaultNmsAgentService(NmsAgentEntity entity) {
-    this(() -> entity);
+  public DefaultNmsAgentService(Context root, NmsAgentEntity entity) {
+    this(root, () -> entity);
   }
 
-  public DefaultNmsAgentService(Connection connection) {
-    this(new NmsAgentEntityFactory(connection).retrieve());
+  public DefaultNmsAgentService(Context root, Connection connection) {
+    this(root, new NmsAgentEntityFactory(connection).retrieve());
   }
 
-  public DefaultNmsAgentService(Supplier<NmsAgentEntity> entitySupplier) {
+  public DefaultNmsAgentService(Context root, Supplier<NmsAgentEntity> entitySupplier) {
+    this.root = root;
     this.entitySupplier = entitySupplier;
   }
 
@@ -114,7 +116,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
     if (isManagementRegistryBridged()) {
       ManagementRegistry registry = getRegistry();
       Collection<? extends Capability> capabilities = registry == null ? Collections.<Capability>emptyList() : registry.getCapabilities();
-      Context context = registry == null ? Context.empty() : Context.create(registry.getContextContainer().getName(), registry.getContextContainer().getValue());
+      Context context = registry == null ? Context.empty() : root.with(registry.getContextContainer().getName(), registry.getContextContainer().getValue());
       if (registry == null) {
         LOGGER.info("Reconnecting current client with tags: " + Arrays.toString(previouslyExposedTags));
       } else {
@@ -122,6 +124,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
       }
       return new ReconnectData(
           previouslyExposedTags,
+          root,
           registry == null ? null : registry.getContextContainer(),
           registry == null ? null : capabilities.toArray(new Capability[capabilities.size()]),
           new ContextualNotification(context, "CLIENT_RECONNECTED"));
@@ -230,7 +233,7 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   @Override
   public void setCapabilities(ContextContainer contextContainer, Capability... capabilities) {
     LOGGER.trace("exposeManagementMetadata({})", contextContainer.getValue());
-    runOperation(() -> getEntity().exposeManagementMetadata(null, contextContainer, capabilities));
+    runOperation(() -> getEntity().exposeManagementMetadata(null, root, contextContainer, capabilities));
   }
 
   @Override
@@ -248,6 +251,8 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   @Override
   public void pushNotification(ContextualNotification notification) {
     if (notification != null) {
+      // ensure to send the notification with the root context
+      notification.setContext(notification.getContext().with(root));
       LOGGER.trace("pushNotification({})", notification);
       runOperation(() -> getEntity().pushNotification(null, notification));
     }
@@ -261,6 +266,10 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
   @Override
   public void pushStatistics(ContextualStatistics... statistics) {
     if (statistics.length > 0) {
+      // ensure to send the stats with the root context
+      for (ContextualStatistics statistic : statistics) {
+        statistic.setContext(statistic.getContext().with(root));
+      }
       LOGGER.trace("pushStatistics({})", statistics.length);
       runOperation(() -> getEntity().pushStatistics(null, statistics));
     }
@@ -307,6 +316,8 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
 
   protected void answerManagementCall(String managementCallIdentifier, ContextualReturn<?> aReturn) {
     LOGGER.trace("answerManagementCall({}, {})", managementCallIdentifier, aReturn);
+    // ensure to send the answer with the root context
+    aReturn.setContext(aReturn.getContext().with(root));
     runOperation(() -> getEntity().answerManagementCall(null, managementCallIdentifier, aReturn));
   }
 

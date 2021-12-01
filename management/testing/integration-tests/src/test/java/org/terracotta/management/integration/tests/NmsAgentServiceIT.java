@@ -99,7 +99,7 @@ public class NmsAgentServiceIT {
     clientConnection = createConnection();
 
     // note the supplier below, which is used to recycle the entity with a potentially new connection
-    nmsAgentService = new DefaultNmsAgentService(this::createAgentEntity);
+    nmsAgentService = new DefaultNmsAgentService(Context.empty(), this::createAgentEntity);
     nmsAgentService.setOperationTimeout(30, TimeUnit.SECONDS);
     nmsAgentService.setOnOperationError((operation, throwable) -> opErrors.incrementAndGet());
     nmsAgentService.setManagementRegistry(registry);
