@@ -42,9 +42,11 @@ import java.util.stream.Collectors;
 @SuppressFBWarnings("SE_BAD_FIELD")
 public final class ManagementRegistry implements Serializable {
 
-  private static final long serialVersionUID = 3;
+  private static final long serialVersionUID = 2;
 
+  // added later in next version, so could be null if deserializing a previous object
   private final Context rootContext;
+
   private final ContextContainer contextContainer;
   private final Collection<Capability> capabilities = new ArrayList<>();
 
@@ -54,7 +56,7 @@ public final class ManagementRegistry implements Serializable {
   }
 
   public Context getContext() {
-    return rootContext.with(contextContainer.getName(), contextContainer.getValue());
+    return getRootContext().with(contextContainer.getName(), contextContainer.getValue());
   }
 
   public ManagementRegistry setCapabilities(Collection<Capability> capabilities) {
@@ -91,27 +93,23 @@ public final class ManagementRegistry implements Serializable {
     return contextContainer;
   }
 
-  public Context getRootContext() {
-    return rootContext;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ManagementRegistry that = (ManagementRegistry) o;
-    return contextContainer.equals(that.contextContainer) && Objects.equals(capabilities, that.capabilities) && Objects.equals(rootContext, that.rootContext);
+    return contextContainer.equals(that.contextContainer) && Objects.equals(capabilities, that.capabilities) && Objects.equals(getRootContext(), that.getRootContext());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(rootContext, contextContainer, capabilities);
+    return Objects.hash(getRootContext(), contextContainer, capabilities);
   }
 
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("ManagementRegistry{");
-    sb.append("rootContext=").append(rootContext);
+    sb.append("rootContext=").append(getRootContext());
     sb.append(", contextContainer=").append(contextContainer);
     sb.append(", capabilities=").append(capabilities.size());
     sb.append('}');
@@ -120,10 +118,17 @@ public final class ManagementRegistry implements Serializable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new LinkedHashMap<>();
-    map.put("rootContext", rootContext);
+    map.put("rootContext", getRootContext());
     map.put("contextContainer", toMap(contextContainer));
     map.put("capabilities", this.capabilities.stream().map(ManagementRegistry::toMap).collect(Collectors.toList()));
     return map;
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  private Context getRootContext() {
+    // rootContext could be null after an old object is deserialized.
+    // This field was added after.
+    return rootContext == null ? Context.empty() : rootContext;
   }
 
   private static Map<String, Object> toMap(Capability capability) {
