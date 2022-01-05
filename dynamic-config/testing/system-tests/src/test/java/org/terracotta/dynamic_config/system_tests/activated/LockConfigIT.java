@@ -119,7 +119,7 @@ public class LockConfigIT extends DynamicConfigIT {
 
     assertThat(
         configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportedConfigPath.toString()),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
   }
 
   @Test

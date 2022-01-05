@@ -79,8 +79,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, ObjectMapperFactory objectMapperFactory, Server server) {
     this.topologies = new Topologies(nodeContext);
-    this.licensing = new Licensing(licenseService, nomadServerManager.getConfigurationManager().getLicensePath());
     this.nomadServerManager = requireNonNull(nomadServerManager);
+    this.licensing = new Licensing(licenseService, nomadServerManager);
     this.objectMapper = objectMapperFactory.create();
     this.server = requireNonNull(server);
 
@@ -91,7 +91,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public Optional<String> getLicenseContent() {
-    return licensing.read();
+    return licensing.getLicenseContent();
   }
 
   @Override
@@ -350,7 +350,11 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public void upgradeLicense(String licenseContent) {
-    licensing.install(licenseContent, getUpcomingNodeContext().getCluster());
+    if (licenseContent == null) {
+      licensing.uninstall();
+    } else {
+      licensing.install(licenseContent, getUpcomingNodeContext().getCluster());
+    }
   }
 
   @Override

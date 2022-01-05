@@ -125,7 +125,7 @@ public abstract class RemoteAction implements Runnable {
           .map(Tuple2::getT2)
           .forEach(service -> service.activate(cluster, licenseContent));
       if (licenseContent == null) {
-        output.info("No license installed. If you are attaching a node, the license will be synced.");
+        output.info("No license specified for activation. If a license was previously configured, it will take effect. If you are attaching a node, the license will be synced.");
       } else {
         output.info("License installation successful");
       }
