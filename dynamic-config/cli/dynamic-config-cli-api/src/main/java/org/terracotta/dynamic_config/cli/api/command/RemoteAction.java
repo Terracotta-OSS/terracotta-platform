@@ -95,7 +95,7 @@ public abstract class RemoteAction implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RemoteAction.class);
 
-  @Inject public MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider;
+  @Inject public MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
   @Inject public DiagnosticServiceProvider diagnosticServiceProvider;
   @Inject public NomadManager<NodeContext> nomadManager;
   @Inject public RestartService restartService;

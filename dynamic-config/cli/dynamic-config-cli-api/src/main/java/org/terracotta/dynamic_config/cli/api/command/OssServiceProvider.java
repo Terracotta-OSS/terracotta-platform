@@ -25,7 +25,6 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.NomadManager;
@@ -91,8 +90,8 @@ public class OssServiceProvider implements ServiceProvider {
         config.getSecurityRootDirectory());
   }
 
-  protected ConcurrentDiagnosticServiceProvider<UID> createMultiDiagnosticServiceProvider(Configuration config) {
-    return new ConcurrentDiagnosticServiceProvider<>(
+  protected ConcurrentDiagnosticServiceProvider createMultiDiagnosticServiceProvider(Configuration config) {
+    return new ConcurrentDiagnosticServiceProvider(
         createDiagnosticServiceProvider(config),
         getConnectionTimeout(config),
         getConcurrencySizing(config));
