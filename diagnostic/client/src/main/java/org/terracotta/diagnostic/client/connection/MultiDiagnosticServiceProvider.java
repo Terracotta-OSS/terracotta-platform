@@ -21,10 +21,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * @param <K> a node identifier
  * @author Mathieu Carbou
  */
-public interface MultiDiagnosticServiceProvider<K> {
+public interface MultiDiagnosticServiceProvider {
   /**
    * Concurrently fetch the diagnostic service of all the nodes.
    * These nodes are expected to be online.
@@ -32,10 +31,11 @@ public interface MultiDiagnosticServiceProvider<K> {
    * <p>
    * The returned {@link DiagnosticServices} will only have online nodes and no offline nodes.
    *
+   * @param <K> a node identifier
    * @throws DiagnosticServiceProviderException If one of the node is unreachable,
    *                                            or if all the nodes cannot be reached within a specific duration (timeout)
    */
-  default DiagnosticServices<K> fetchOnlineDiagnosticServices(Map<K, InetSocketAddress> expectedOnlineNodes) throws DiagnosticServiceProviderException {
+  default <K> DiagnosticServices<K> fetchOnlineDiagnosticServices(Map<K, InetSocketAddress> expectedOnlineNodes) throws DiagnosticServiceProviderException {
     DiagnosticServices<K> diagnosticServices = fetchDiagnosticServices(expectedOnlineNodes);
     Collection<K> offlineEndpoints = diagnosticServices.getOfflineEndpoints().keySet();
     if (!offlineEndpoints.isEmpty()) {
@@ -61,8 +61,10 @@ public interface MultiDiagnosticServiceProvider<K> {
    * If some nodes are offline, they will be reported in {@link DiagnosticServices#getOfflineEndpoints()}.
    * <p>
    * The returned {@link DiagnosticServices} will have a list of online nodes and a list of offline nodes.
+   *
+   * @param <K> a node identifier
    */
-  DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses);
+  <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses);
 
   /**
    * Concurrently fetch any single online diagnostic service of all the provided nodes.
@@ -70,6 +72,8 @@ public interface MultiDiagnosticServiceProvider<K> {
    * Offline nodes are ignored.
    * <p>
    * If successful, the returned {@link DiagnosticServices} will have a single online node.
+   *
+   * @param <K> a node identifier
    */
-  DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses);
+  <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses);
 }

@@ -28,7 +28,6 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
@@ -64,7 +63,7 @@ import static org.mockito.Mockito.mock;
 public abstract class BaseTest {
 
   protected DiagnosticServiceProvider diagnosticServiceProvider;
-  protected MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider;
+  protected MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
   protected NomadEntityProvider nomadEntityProvider;
   protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
@@ -115,7 +114,7 @@ public abstract class BaseTest {
         return (NomadEntity<T>) nomadEntities.get(addresses);
       }
     };
-    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider<>(diagnosticServiceProvider, timeout, new ConcurrencySizing());
+    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
     nomadManager = new DefaultNomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
     stopService = new StopService(diagnosticServiceProvider, concurrencySizing);

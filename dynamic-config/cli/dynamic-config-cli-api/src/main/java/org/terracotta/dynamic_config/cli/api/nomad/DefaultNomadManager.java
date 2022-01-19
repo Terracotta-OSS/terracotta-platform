@@ -83,10 +83,10 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
   );
 
   private final NomadEnvironment environment;
-  private final MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider;
+  private final MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
   private final NomadEntityProvider nomadEntityProvider;
 
-  public DefaultNomadManager(NomadEnvironment environment, MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider, NomadEntityProvider nomadEntityProvider) {
+  public DefaultNomadManager(NomadEnvironment environment, MultiDiagnosticServiceProvider multiDiagnosticServiceProvider, NomadEntityProvider nomadEntityProvider) {
     this.environment = environment;
     this.multiDiagnosticServiceProvider = multiDiagnosticServiceProvider;
     this.nomadEntityProvider = nomadEntityProvider;
