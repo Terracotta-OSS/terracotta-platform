@@ -515,7 +515,7 @@ public class DynamicConfigIT {
             .distribution(getDistribution())
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
             .commandLineEnv(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m", "-Xmx128m"))
-            .configTool(TerracottaConfigTool.configTool("config-tool", "localhost")));
+            .configTool(TerracottaConfigTool.configTool("config-tool")));
   }
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
