@@ -30,7 +30,7 @@ public class RemoteMainCommand extends LocalMainCommand {
   @Parameter(names = {"-request-timeout", "-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> requestTimeout = Measure.of(10, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-connection-timeout", "-t", "--connection-timeout"}, description = "Connection timeout. Default: 10s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-connect-timeout", "-connection-timeout", "-t", "--connection-timeout"}, description = "Connection timeout. Default: 10s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> connectionTimeout = Measure.of(10, TimeUnit.SECONDS);
 
   @Parameter(names = {"-security-root-directory", "-srd", "--security-root-directory"}, description = "Security root directory")

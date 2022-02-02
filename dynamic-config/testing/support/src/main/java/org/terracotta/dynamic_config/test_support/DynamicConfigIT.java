@@ -433,7 +433,7 @@ public class DynamicConfigIT {
 
     boolean addedOptions = false;
     String timeout = Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString();
-    if (!configToolOptions.contains("-t") && !configToolOptions.contains("-connection-timeout")) {
+    if (!configToolOptions.contains("-t") && !configToolOptions.contains("-connection-timeout") && !configToolOptions.contains("-connect-timeout") ) {
       // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
       enhancedCli.add("-t");
       enhancedCli.add(timeout);
