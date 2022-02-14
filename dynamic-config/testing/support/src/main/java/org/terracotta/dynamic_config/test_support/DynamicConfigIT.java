@@ -130,14 +130,13 @@ public class DynamicConfigIT {
   protected final ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
   @ClassRule public static final RuleChain classRules = RuleChain.emptyRuleChain()
-      .around(angelaOrchestratorRule = new AngelaOrchestratorRule().local())
+      .around(angelaOrchestratorRule = new AngelaOrchestratorRule().igniteFree())
       .around(new ExtendedTestRule() {
         @Override
         protected void before(Description description) {
           System.setProperty("com.tc.server.entity.processor.threads", "4");
           System.setProperty("com.tc.l2.tccom.workerthreads", "4");
           System.setProperty("com.tc.l2.seda.stage.stall.warning", "1000");
-          System.setProperty("IGNITE_UPDATE_NOTIFIER", "false");
         }
       });
 
@@ -433,7 +432,7 @@ public class DynamicConfigIT {
 
     boolean addedOptions = false;
     String timeout = Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString();
-    if (!configToolOptions.contains("-t") && !configToolOptions.contains("-connection-timeout") && !configToolOptions.contains("-connect-timeout") ) {
+    if (!configToolOptions.contains("-t") && !configToolOptions.contains("-connection-timeout") && !configToolOptions.contains("-connect-timeout")) {
       // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
       enhancedCli.add("-t");
       enhancedCli.add(timeout);
