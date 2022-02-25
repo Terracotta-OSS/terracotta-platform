@@ -15,15 +15,14 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import com.tc.util.ManagedServiceLoader;
-
+import com.tc.util.TCServiceLoader;
 import java.util.Collection;
 
 public interface ServiceProvider {
   Collection<Object> createServices(Configuration config);
 
   static ServiceProvider get() {
-    Collection<ServiceProvider> services = ManagedServiceLoader.loadServices(ServiceProvider.class, ServiceProvider.class.getClassLoader());
+    Collection<? extends ServiceProvider> services = TCServiceLoader.loadServices(ServiceProvider.class, ServiceProvider.class.getClassLoader());
     if (services.size() != 1) {
       throw new AssertionError("expected exactly one service provider, but found :" + services.size());
     }
