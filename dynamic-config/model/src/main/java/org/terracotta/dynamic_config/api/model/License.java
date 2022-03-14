@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static java.lang.System.lineSeparator;
+
 public class License {
 
   // Mapping between capability name and corresponding limit value
@@ -67,6 +69,13 @@ public class License {
     return capabilityLimitMap.get(capability);
   }
 
+  /***
+   * Returns first 'true' value of SubscriptionLicense, PerpetualLicense or DatahubLicense
+   */
+  public String getType() {
+    return flagsMap.entrySet().stream().filter(Map.Entry::getValue).findFirst().get().getKey();
+  }
+
   @Override
   public String toString() {
     return "License{" +
@@ -74,6 +83,18 @@ public class License {
         ", expiryDate=" + expiryDate +
         ", flagsMap=" + flagsMap +
         "}";
+  }
+
+  public String toLoggingString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Type: ").append(getType()).append(lineSeparator());
+    sb.append("Expiration: ").append(expiryDate == LocalDate.MAX ? "Never" : expiryDate).append(lineSeparator());
+    sb.append("Capabilities:").append(lineSeparator());
+    Map<String, Long> capabilities = new HashMap<>(capabilityLimitMap);
+    capabilities.remove("OffHeap"); // handle this separately
+    capabilities.forEach((k,v) -> sb.append(k + ": ").append(hasCapability(k)).append(lineSeparator()));
+    sb.append("OffHeap: ").append(getLimit("OffHeap"));
+    return sb.toString();
   }
 
   @Override
