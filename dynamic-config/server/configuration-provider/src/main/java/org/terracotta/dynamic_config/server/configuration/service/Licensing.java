@@ -41,7 +41,7 @@ class Licensing {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Licensing.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
-
+  private static final String DATAHUB_LICENSE_FLAG = "DatahubLicense";
   // guard access to the installed license
   private final ReadWriteLock licenseLock = new ReentrantReadWriteLock();
 
@@ -149,8 +149,14 @@ class Licensing {
             final Path tempFile = Files.createTempFile("terracotta-license-", ".xml");
             try {
               Files.write(tempFile, licenseContent.getBytes(StandardCharsets.UTF_8));
+              License license = licenseService.parse(tempFile);
+              LOGGER.info("Validating license");
+              LOGGER.info(license.toLoggingString());
               licenseService.validate(tempFile, cluster);
               LOGGER.info("License validated");
+              if (license.getType().equals(DATAHUB_LICENSE_FLAG)) {
+                LOGGER.info("This Terracotta cluster is licensed for use only with webMethods DataHub");
+              }
               LOGGER.debug("Moving license file: {} to: {}", tempFile, licenseFile);
               org.terracotta.utilities.io.Files.relocate(tempFile, licenseFile, StandardCopyOption.REPLACE_EXISTING);
               LOGGER.info("License installed");
