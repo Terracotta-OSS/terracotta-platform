@@ -31,8 +31,7 @@
         <!-- connection -->
         <dependency>
             <groupId>org.terracotta.internal</groupId>
-            <artifactId>common</artifactId>
-            <version>${terracotta-core.version}</version>
+            <artifactId>common-spi</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>

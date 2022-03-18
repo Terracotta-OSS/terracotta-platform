@@ -37,7 +37,13 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
+      <artifactId>common-spi</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 </project>

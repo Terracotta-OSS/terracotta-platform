@@ -41,6 +41,10 @@
 
     <!-- voltron cli -->
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>connection-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
     </dependency>

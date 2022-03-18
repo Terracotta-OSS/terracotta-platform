@@ -57,7 +57,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>common</artifactId>
+      <artifactId>common-spi</artifactId>
       <version>${terracotta-core.version}</version>
       <scope>provided</scope>
     </dependency>
