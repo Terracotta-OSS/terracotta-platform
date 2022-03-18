@@ -368,11 +368,29 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
-  public void restart(Duration delayInSeconds) {
-    LOGGER.info("Will restart node in {} seconds", delayInSeconds.getSeconds());
-    runAfterDelay(delayInSeconds, () -> {
+  public void restart(Duration delay) {
+    LOGGER.info("Will restart node in {} seconds", delay.getSeconds());
+    runAfterDelay(delay, () -> {
       LOGGER.info("Restarting node");
       server.stop(RESTART);
+    });
+  }
+
+  @Override
+  public void restartIfPassive(Duration delay) {
+    LOGGER.info("Will restart node in {} seconds (if passive)", delay.getSeconds());
+    runAfterDelay(delay, () -> {
+      LOGGER.info("Restarting node");
+      server.stopIfPassive(RESTART);
+    });
+  }
+
+  @Override
+  public void restartIfActive(Duration delay) {
+    LOGGER.info("Will restart node in {} seconds (if active)", delay.getSeconds());
+    runAfterDelay(delay, () -> {
+      LOGGER.info("Restarting node");
+      server.stopIfActive(RESTART);
     });
   }
 

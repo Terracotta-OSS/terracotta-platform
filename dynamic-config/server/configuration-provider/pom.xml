@@ -68,11 +68,6 @@
       <artifactId>packaging-support</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>management</artifactId>
-      <scope>provided</scope>
-    </dependency>
 
     <!-- Access TcServerMain from TcServer and the exception classes -->
     <dependency>
@@ -89,11 +84,6 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>configuration-provider</artifactId>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.github.stefanbirkner</groupId>
-      <artifactId>system-rules</artifactId>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>

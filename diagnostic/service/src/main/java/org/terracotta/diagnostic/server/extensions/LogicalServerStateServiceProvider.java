@@ -22,7 +22,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
-import org.terracotta.server.ServerEnv;
+import org.terracotta.server.Server;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +33,8 @@ public class LogicalServerStateServiceProvider implements ServiceProvider {
 
   @Override
   public boolean initialize(ServiceProviderConfiguration serviceProviderConfiguration, PlatformConfiguration platformConfiguration) {
-    logicalServerStateMBean = new LogicalServerStateMBeanImpl(ServerEnv.getServer().getManagement());
+    Server server = platformConfiguration.getExtendedConfiguration(Server.class).iterator().next();
+    logicalServerStateMBean = new LogicalServerStateMBeanImpl(server.getManagement());
     logicalServerStateMBean.expose();
     return true;
   }

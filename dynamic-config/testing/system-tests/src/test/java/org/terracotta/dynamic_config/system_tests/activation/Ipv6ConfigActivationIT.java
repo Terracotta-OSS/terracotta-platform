@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
@@ -29,8 +27,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.conta
 
 @ClusterDefinition(autoStart = false)
 public class Ipv6ConfigActivationIT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
   public void testStartupFromMigratedConfigRepoAndGetCommand() throws Exception {

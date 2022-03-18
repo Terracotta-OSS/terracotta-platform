@@ -24,8 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -38,13 +38,17 @@ import static org.terracotta.testing.Binary.exec;
  */
 public class ThreadDump {
 
+  public static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(10);
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ThreadDump.class);
 
   private final long pid;
+  private final String name;
   private final String output;
 
-  private ThreadDump(long pid, String output) {
+  private ThreadDump(long pid, String name, String output) {
     this.pid = pid;
+    this.name = name;
     this.output = requireNonNull(output);
   }
 
@@ -52,12 +56,16 @@ public class ThreadDump {
     return pid;
   }
 
+  public String getName() {
+    return name;
+  }
+
   public String getOutput() {
     return output;
   }
 
   public void writeTo(Path out) {
-    LOGGER.info("Saving thread dump of PID: {} to: {}", pid, out);
+    LOGGER.info("Saving thread dump of PID {} to: {}", pid, out);
     try {
       Files.write(out, output.getBytes(StandardCharsets.UTF_8));
     } catch (IOException e) {
@@ -66,41 +74,60 @@ public class ThreadDump {
   }
 
   public static Stream<ThreadDump> dumpAll() {
+    return dumpAll(DEFAULT_TIMEOUT);
+  }
+
+  public static Stream<ThreadDump> dumpAll(Duration timeout) {
     if (JPS == null) {
       return Stream.empty();
     }
-    return Stream.of(exec(JPS, "-q").split("\\r?\\n"))
-        .map(Long::parseLong)
-        .map(ThreadDump::dump)
+    return Stream.of(exec(JPS).split("\\r?\\n"))
+        .filter(line -> !line.trim().isEmpty())
+        .filter(line -> !line.toLowerCase(Locale.US).contains("jstack")) // filter out currently stalled or running jstack processes
+        .filter(line -> !line.toLowerCase(Locale.US).contains("jps")) // filter out currently running jps
+        .filter(line -> !line.toLowerCase(Locale.US).contains("process information unavailable"))
+        .map(line -> {
+          int sep = line.indexOf(" ");
+          String name = (sep == -1 ? "unknown" : line.substring(sep + 1)).trim();
+          return dump(Long.parseLong(line.substring(0, sep)), name.isEmpty() ? "unknown" : name, timeout);
+        })
         .filter(Optional::isPresent)
         .map(Optional::get);
   }
 
   public static void dumpAll(Path outputDir) {
+    dumpAll(outputDir, false, DEFAULT_TIMEOUT);
+  }
+
+  public static void dumpAll(Path outputDir, boolean parallel, Duration timeout) {
     try {
       Files.createDirectories(outputDir);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    dumpAll().parallel().forEach(dump -> dump.writeTo(outputDir.resolve("thread-dump-" + dump.getPid() + ".log")));
+    Stream<ThreadDump> stream = dumpAll(timeout);
+    if (parallel) {
+      stream = stream.parallel();
+    }
+    stream.forEach(dump -> dump.writeTo(outputDir.resolve("thread-dump-" + dump.getPid() + "-" + dump.getName().replaceAll("\\W", "_") + ".log")));
   }
 
-  public static Optional<ThreadDump> dump(long pid) {
-    LOGGER.info("Taking thread dump of PID: {} (timeout: 10 seconds)", pid);
-    try {
-      String output = exec(Duration.ofSeconds(10), JSTACK, "-l", "" + pid);
-      if (output.contains("No such process")) {
-        LOGGER.warn("No such process: {}", pid);
-        return Optional.empty();
-      } else {
-        return Optional.of(new ThreadDump(pid, output));
-      }
-    } catch (TimeoutException e) {
-      return Optional.of(new ThreadDump(pid, e.getMessage()));
+  public static Optional<ThreadDump> dump(long pid, String name) {
+    return dump(pid, name, DEFAULT_TIMEOUT);
+  }
+
+  public static Optional<ThreadDump> dump(long pid, String name, Duration timeout) {
+    LOGGER.info("Taking thread dump of PID {}: '{}' (timeout: {})", pid, name, timeout == null ? "none" : timeout.toMillis() + "ms");
+    String output = exec(timeout, JSTACK, "-l", "" + pid);
+    if (output.contains("No such process")) {
+      LOGGER.warn("No such process: {}", pid);
+      return Optional.empty();
+    } else {
+      return Optional.of(new ThreadDump(pid, name, output));
     }
   }
 
-  public static void dump(long pid, Path out) {
-    dump(pid).ifPresent(dump -> dump.writeTo(out));
+  public static void dump(long pid, String name, Path out) {
+    dump(pid, name).ifPresent(dump -> dump.writeTo(out));
   }
 }

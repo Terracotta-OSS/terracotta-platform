@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.testing.support;
+package org.terracotta.dynamic_config.test_support;
 
-import org.junit.runner.RunWith;
-import org.terracotta.testing.api.ITestMaster;
-import org.terracotta.testing.api.BasicTestClusterConfiguration;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@RunWith(value = BasicHarnessRunner.class)
-public abstract class BasicHarnessTest extends AbstractHarnessTest<BasicTestClusterConfiguration> {
-  public abstract ITestMaster<BasicTestClusterConfiguration> getTestMaster();
+/**
+ * @author Mathieu Carbou
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD})
+public @interface ExtraLogging {
+  String value() default "logback-ext-test.xml";
 }

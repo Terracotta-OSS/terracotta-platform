@@ -52,7 +52,7 @@ public class ConvertCommand extends Command {
   @Parameter(names = {"-format"}, description = "Conversion type (directory|properties). Default: directory", converter = ConversionFormat.FormatConverter.class)
   private ConversionFormat conversionFormat = DIRECTORY;
 
-  @Parameter(names = {"-force"}, description = "Force a config conversion, ignoring warnings, if any. Default: false")
+  @Parameter(names = {"-force"}, description = "Force a config conversion, ignoring warnings, if any")
   private boolean force;
 
   @Inject public final ConvertAction action;

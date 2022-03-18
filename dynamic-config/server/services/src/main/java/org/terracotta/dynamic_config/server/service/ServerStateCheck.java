@@ -26,8 +26,8 @@ import java.util.EnumSet;
 
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
 
 /**
@@ -40,7 +40,7 @@ class ServerStateCheck implements NomadPermissionChangeProcessor.Check {
       ACTIVE,
       PASSIVE,
       ACTIVE_RECONNECTING,
-      STARTING, // this mode is when a server is forced to start in diagnostic mode for repair,
+      DIAGNOSTIC, // this mode is when a server is forced to start in diagnostic mode for repair,
 
       // we allow also any config change when a passive server is syncing its nomad append log from active server
       // note that this is only allowed here.

@@ -35,10 +35,6 @@
       <artifactId>diagnostic-common</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>net.bytebuddy</groupId>
-      <artifactId>byte-buddy</artifactId>
-    </dependency>
 
     <!-- provided on server -->
     <dependency>

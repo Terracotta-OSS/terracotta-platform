@@ -1,5 +1,5 @@
-<configuration>
-
+<configuration debug="false">
+  <property resource="logbackVars.properties" />
   <appender name="TC_BASE" class="com.tc.l2.logging.BufferingAppender">
     <target>System.out</target>
     <console>false</console>
@@ -7,47 +7,49 @@
       <pattern>%d [%t] %p %c - %m%n</pattern>
     </encoder>
   </appender>
-
-  <appender name="SYSOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <target>System.out</target>
+  
+  <appender name="SYSFILE" class="ch.qos.logback.core.FileAppender">
+    <file>${serverWorkingDir}/stdout.txt</file>
     <encoder>
       <pattern>%d [%t] %p %c - %m%n</pattern>
     </encoder>
   </appender>
-  
-  <appender name="IPC" class="ch.qos.logback.core.ConsoleAppender">
+    
+  <!--appender name="IPC" class="ch.qos.logback.core.ConsoleAppender">
     <target>System.out</target>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>WARN</level>
     </filter>
     <encoder>
-      <pattern>%d [%t] %p %c - %m%n</pattern>
+      <pattern>[${serverId}] - %d [%t] %p %c - %m%n</pattern>
     </encoder>
-  </appender>
+  </appender-->
   
   <appender name="LogToJFR" class="org.terracotta.tripwire.EventAppender">
   </appender>
 
-  <appender name="JFR" class="org.terracotta.tripwire.JFRAppender">
-    <path>artifacts</path>
+  <!--appender name="JFR" class="org.terracotta.tripwire.JFRAppender">
+    <path>${serverWorkingDir}/artifacts</path>
     <dumpOnExit>false</dumpOnExit>
-  </appender>
+  </appender-->
 
   <root level="INFO">
     <appender-ref ref="TC_BASE" />
-    <appender-ref ref="IPC"/>
+    <!--appender-ref ref="IPC"/-->
     <appender-ref ref="LogToJFR"/>
   </root>
   
   <logger name="org.terracotta.console" level="INFO">
-    <appender-ref ref="SYSOUT" />
+    <!--appender-ref ref="SYSOUT" /-->
+    <appender-ref ref="SYSFILE" />
   </logger>
-  <logger name="com.tc.async.api" level="WARN">
+  <!--logger name="com.tc.async.api" level="WARN">
     <appender-ref ref="JFR" />
-  </logger>
+  </logger-->
   <logger name="org.terracotta.dump" level="INFO">
-    <appender-ref ref="SYSOUT" />
-    <appender-ref ref="JFR" />
+    <!--appender-ref ref="SYSOUT" /-->
+    <appender-ref ref="SYSFILE" />
+    <!--appender-ref ref="JFR" /-->
   </logger>
     
   <include optional="true" resource="logback-ext-test.xml"/>

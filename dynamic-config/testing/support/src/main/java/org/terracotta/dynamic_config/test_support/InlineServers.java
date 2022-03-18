@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.testing.rules;
+package org.terracotta.dynamic_config.test_support;
 
-import org.terracotta.connection.Connection;
-import org.terracotta.connection.ConnectionException;
-import org.terracotta.passthrough.IClusterControl;
-import org.terracotta.testing.ExtendedTestRule;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.net.URI;
-
-public abstract class Cluster extends ExtendedTestRule {
-
-  public abstract URI getConnectionURI();
-
-  public abstract String[] getClusterHostPorts();
-
-  public abstract Connection newConnection() throws ConnectionException;
-
-  public abstract IClusterControl getClusterControl();
+/**
+ * @author Mathieu Carbou
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD})
+public @interface InlineServers {
+  boolean value() default true;
 }

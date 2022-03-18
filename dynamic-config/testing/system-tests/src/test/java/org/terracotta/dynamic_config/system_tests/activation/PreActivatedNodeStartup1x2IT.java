@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
@@ -32,12 +30,9 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.fail;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
   public void testStartingWithSingleStripeSingleNodeRepo() throws Exception {
@@ -64,11 +59,10 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
   public void testPreventConcurrentUseOfConfigDir() throws Exception {
     // Angela work dirs are different for each server instance. We'd need to create a repo at a common place for this test
     String sharedRepo = Files.createDirectories(getBaseDir()).toAbsolutePath().toString();
-    startNode(1, 1, "--auto-activate", "--failover-priority", "availability", "--name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort(1, 1)), "-N", "tc-cluster");
+    startNode(1, 1, "--auto-activate", "--failover-priority", "availability", "--name", "node-1-1", "-r", sharedRepo, "-p", String.valueOf(getNodePort()), "-g", String.valueOf(getNodeGroupPort(1, 1)), "-N", "tc-cluster", "--log-dir", "logs");
     waitForActive(1, 1);
 
     try {
-      out.clearLog(1, 2);
       startNode(1, 2,
           "--auto-activate",
           "--failover-priority", "availability",
@@ -77,13 +71,13 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
           "-p", String.valueOf(getNodePort(1, 2)),
           "-g", String.valueOf(getNodeGroupPort(1, 2)),
           "--hostname", "localhost",
-          "--log-dir", getNodePath(1, 2).append("/logs").toString(),
-          "--backup-dir", getNodePath(1, 2).append("/backup").toString(),
-          "--metadata-dir", getNodePath(1, 2).append("/metadata").toString(),
-          "--data-dirs", "main:" + getNodePath(1, 2).append("/data-dir").toString());
+          "--log-dir", "logs",
+          "--backup-dir", "backup",
+          "--metadata-dir", "metadata",
+          "--data-dirs", "main:data-dir");
       fail();
-    } catch (Exception e) {
-      waitUntil(out.getLog(1, 2), containsLog("Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "changes")));
+    } catch (Throwable e) {
+      assertThatServerLogs(getNode(1, 2), "Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "changes"));
     }
   }
 
@@ -94,10 +88,10 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
         "--failover-priority", "availability",
         "--name", getNodeName(1, 1),
         "--hostname", "localhost",
-        "--log-dir", getNodePath(1, 1).append("/logs").toString(),
-        "--backup-dir", getNodePath(1, 1).append("/backup").toString(),
-        "--metadata-dir", getNodePath(1, 1).append("/metadata").toString(),
-        "--data-dirs", "main:" + getNodePath(1, 1).append("/data-dir").toString()
+        "--log-dir", "logs",
+        "--backup-dir", "backup",
+        "--metadata-dir", "metadata",
+        "--data-dirs", "main:data-dir"
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {

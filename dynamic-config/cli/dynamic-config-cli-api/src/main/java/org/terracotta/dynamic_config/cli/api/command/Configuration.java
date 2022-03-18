@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.cli.api.command;
 
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.dynamic_config.cli.api.output.OutputService;
 
 public class Configuration {
 
@@ -25,6 +26,19 @@ public class Configuration {
   private Measure<TimeUnit> connectionTimeout = Measure.of(10, TimeUnit.SECONDS);
   private String securityRootDirectory;
   private String lockToken;
+  private OutputService outputService;
+
+  public Configuration(OutputService outputService) {
+    this.outputService = outputService;
+  }
+
+  public OutputService getOutputService() {
+    return outputService;
+  }
+
+  public void setOutputService(OutputService outputService) {
+    this.outputService = outputService;
+  }
 
   public void setEntityOperationTimeout(Measure<TimeUnit> entityOperationTimeout) {
     this.entityOperationTimeout = entityOperationTimeout;

@@ -15,33 +15,32 @@
  */
 package org.terracotta.testing.config;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.terracotta.ipceventbus.proc.AnyProcess;
-import org.terracotta.ipceventbus.proc.AnyProcessBuilder;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConfigRepoStartupBuilder extends StartupCommandBuilder {
+public class ConfigRepoStartupBuilder extends ConfigFileStartupBuilder {
   private String[] builtCommand;
+
+  public ConfigRepoStartupBuilder() {
+  }
 
   @Override
   public String[] build() {
     if (builtCommand == null) {
       try {
         installServer();
-        Path generatedRepositories = convertConfigFiles();
+        Path generatedRepositories = convertToConfigFile(false);
 
         // moves the generated files onto the server folder, but only for this server we are building
         Path source = generatedRepositories.resolve("stripe-" + getStripeId()).resolve(getServerName()).toAbsolutePath();
         Path destination = getServerWorkingDir().resolve("config").toAbsolutePath();
         org.terracotta.utilities.io.Files.relocate(source, destination);
-        buildStartupCommand();
+        buildStartupCommand(destination);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
@@ -49,7 +48,7 @@ public class ConfigRepoStartupBuilder extends StartupCommandBuilder {
     return builtCommand.clone();
   }
 
-  private void buildStartupCommand() {
+  private void buildStartupCommand(Path destination) {
     List<String> command = new ArrayList<>();
     String scriptPath = getAbsolutePath(Paths.get("server", "bin", "start-tc-server"));
     command.add(scriptPath);
@@ -59,77 +58,7 @@ public class ConfigRepoStartupBuilder extends StartupCommandBuilder {
     }
 
     command.add("-r");
-    command.add("config");
+    command.add(destination.toAbsolutePath().toString());
     builtCommand = command.toArray(new String[0]);
-  }
-
-  @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
-  private Path convertConfigFiles() {
-    Path generatedRepositories = getServerWorkingDir().getParent().getParent().resolve("generated-configs");
-
-    if (Files.exists(generatedRepositories)) {
-      // this builder is called fro each server, but the CLI will generate the config directories for all.
-      return generatedRepositories;
-    }
-
-    List<String> command = new ArrayList<>();
-    String scriptPath = getAbsolutePath(Paths.get("tools", "upgrade", "bin", "config-converter"));
-    command.add(scriptPath);
-
-    command.add("convert");
-
-    for (Path tcConfig : getTcConfigs()) {
-      command.add("-c");
-      command.add(tcConfig.toString());
-    }
-
-    for (int i = 0; i < getTcConfigs().length; i++) {
-      command.add("-s");
-      command.add("stripe[" + i + "]");
-    }
-
-    command.add("-n");
-    command.add(getClusterName());
-
-    command.add("-d");
-    command.add(getServerWorkingDir().relativize(generatedRepositories).toString());
-
-    if (getLicensePath() != null) {
-      command.add("-l");
-      command.add(getLicensePath().toString());
-    }
-
-    command.add("-f"); //Do not fail for relative paths
-    executeCommand(command, getServerWorkingDir());
-    return generatedRepositories;
-  }
-
-  private void executeCommand(List<String> command, Path workingDir) {
-    AnyProcess process;
-    try {
-      AnyProcessBuilder<? extends AnyProcess> builder = AnyProcess.newBuilder()
-          .command(command.toArray(new String[0]))
-          .workingDir(workingDir.toFile())
-          .pipeStdout(System.out)
-          .pipeStderr(System.err);
-
-      if (getDebugPort() > 0) {
-        builder.env("JAVA_OPTS", "-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + getDebugPort());
-      }
-      process = builder.build();
-    } catch (Exception e) {
-      throw new IllegalStateException("Error launching command: " + String.join(" ", command), e);
-    }
-
-    int exitStatus;
-    try {
-      exitStatus = process.waitFor();
-    } catch (InterruptedException e) {
-      throw new IllegalStateException(e);
-    }
-
-    if (exitStatus != 0) {
-      throw new IllegalStateException("Process: '" + String.join(" ", command) + "' executed from '" + workingDir + "' exited with status: " + exitStatus);
-    }
   }
 }

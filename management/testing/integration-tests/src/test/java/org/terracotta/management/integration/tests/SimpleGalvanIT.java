@@ -27,6 +27,8 @@ import org.terracotta.testing.rules.Cluster;
 
 import java.net.URI;
 import java.nio.file.Paths;
+import org.terracotta.testing.config.ConfigConstants;
+import org.terracotta.testing.config.ConfigRepoStartupBuilder;
 
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
@@ -47,6 +49,7 @@ public class SimpleGalvanIT {
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(RESOURCE_CONFIG)
+      .startupBuilder(ConfigRepoStartupBuilder::new)
       .build();
 
   @BeforeClass

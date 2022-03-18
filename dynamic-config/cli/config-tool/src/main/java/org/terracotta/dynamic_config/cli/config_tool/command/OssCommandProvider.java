@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
+import org.terracotta.dynamic_config.cli.api.command.Configuration;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.ActivateCommand;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.AttachCommand;
@@ -52,8 +53,8 @@ import static java.util.Collections.unmodifiableMap;
 public class OssCommandProvider implements CommandProvider {
 
   @Override
-  public RemoteMainCommand getMainCommand() {
-    return new RemoteMainCommand();
+  public RemoteMainCommand getMainCommand(Configuration configuration) {
+    return new RemoteMainCommand(configuration);
   }
 
   @Override

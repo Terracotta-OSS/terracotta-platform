@@ -50,9 +50,9 @@ import static org.terracotta.common.struct.TimeUnit.SECONDS;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
-import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.START_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNINITIALIZED;
@@ -173,7 +173,7 @@ public class RestartServiceTest extends BaseTest {
     when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenReturn(null);
     when(diagnosticServiceMock("localhost", 9412).getLogicalServerState()).thenReturn(UNREACHABLE);
     when(diagnosticServiceMock("localhost", 9413).getLogicalServerState()).thenReturn(UNKNOWN);
-    when(diagnosticServiceMock("localhost", 9421).getLogicalServerState()).thenReturn(STARTING);
+    when(diagnosticServiceMock("localhost", 9421).getLogicalServerState()).thenReturn(DIAGNOSTIC);
     when(diagnosticServiceMock("localhost", 9422).getLogicalServerState()).thenReturn(UNINITIALIZED);
     when(diagnosticServiceMock("localhost", 9423).getLogicalServerState()).thenReturn(START_SUSPENDED);
 

@@ -98,7 +98,7 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
       }
 
       @Override
-      protected RawPath _deserializeFromEmptyString() {
+      protected RawPath _deserializeFromEmptyString(DeserializationContext ctxt) {
         return RawPath.valueOf("");
       }
     });

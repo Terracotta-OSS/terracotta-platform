@@ -32,6 +32,11 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
+      <artifactId>dynamic-config-cli-config-tool</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.cli</groupId>
       <artifactId>dynamic-config-cli-upgrade-tools</artifactId>
       <version>${project.version}</version>
     </dependency>

@@ -213,8 +213,8 @@ public class NomadServerManager {
     UID nodeUID = topologyService.getUpcomingNodeContext().getNodeUID();
 
     router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(getTopologyService(), configChangeHandlerManager, getEventFiringService()));
-    router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
-    router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService()));
+    router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(server.getManagement().getMBeanServer(), getTopologyService(), getEventFiringService()));
+    router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(server.getManagement().getMBeanServer(), getTopologyService(), getEventFiringService()));
     router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(nodeUID));
     router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService));
     router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));

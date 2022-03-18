@@ -17,9 +17,7 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -59,8 +57,6 @@ import static org.terracotta.dynamic_config.server.configuration.nomad.persisten
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
 
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
-
   private int activeNodeId;
   private int passiveNodeId;
 
@@ -92,6 +88,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsAfterRestart(5, 3);
     angela.tsa().start(getNode(1, activeNodeId));
+    waitForActive(1);
     assertThat(angela.tsa().getActives().size(), is(1));
 
     angela.tsa().start(getNode(1, passiveNodeId));
@@ -122,6 +119,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsAfterRestart(4, 3);
     angela.tsa().start(getNode(1, activeNodeId));
+    waitForActive(1);
     assertThat(angela.tsa().getActives().size(), is(1));
 
     angela.tsa().start(getNode(1, passiveNodeId));
@@ -151,9 +149,9 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertContentsAfterRestart(4, 5);
     // Start only the former active for now (the passive startup would be done later, and should fail)
     angela.tsa().start(getNode(1, activeNodeId));
+    waitForActive(1);
     assertThat(angela.tsa().getActives().size(), is(1));
 
-    out.clearLog(1, passiveNodeId);
     angela.tsa().start(getNode(1, passiveNodeId));
     waitForPassive(1, passiveNodeId);
 
@@ -169,6 +167,8 @@ public class ConfigSyncIT extends DynamicConfigIT {
     // passive entity will fail and restart the passive server
     // passive server will sync and repair itself
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + passiveNodeId + ".logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"), is(successful()));
+
+    waitUntilServerLogs(getNode(1, passiveNodeId), "Requesting restart");
 
     // passive should restart and sync again to repair its non committed change
     waitForPassive(1, passiveNodeId);

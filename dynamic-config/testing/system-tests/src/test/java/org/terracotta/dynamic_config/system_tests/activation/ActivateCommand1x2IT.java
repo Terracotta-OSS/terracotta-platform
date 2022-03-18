@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
@@ -33,8 +31,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class ActivateCommand1x2IT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
   public void testSingleNodeActivation() {

@@ -16,14 +16,14 @@
 package org.terracotta.dynamic_config.system_tests.network_disrupted;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.net.ClientToServerDisruptor;
 import org.terracotta.angela.client.net.ServerToServerDisruptor;
 import org.terracotta.angela.client.net.SplitCluster;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
+import org.terracotta.diagnostic.client.DiagnosticService;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -45,8 +44,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(nodesPerStripe = 4, autoStart = false, netDisruptionEnabled = true)
 public class AttachInConsistency1x4IT extends DynamicConfigIT {
-  @Rule
-  public final NodeOutputRule out = new NodeOutputRule();
 
   public AttachInConsistency1x4IT() {
     super(Duration.ofSeconds(300));
@@ -113,8 +110,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
       disruptor.disrupt();
 
       waitForServerBlocked(active);
-      TerracottaServer newActive = isActive(passive1, passive2);
-      assertThat(newActive, is(notNullValue()));
+      waitForNewActive(passive1, passive2);
 
       assertThat(
           configTool("attach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 4)),
@@ -122,7 +118,13 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
 
       //stop partition
       disruptor.undisrupt();
-      waitForPassive(1, activeId);
+
+      // waitForPassive is not working correctly
+      // we can see in the logs that the active has shutdown because its weight is lower than the other active
+      // it restarts and become passive
+      // but the angela assertion still detects it as an active server
+      //waitForPassive(1, activeId);
+      waitUntil(() -> usingDiagnosticService(1, activeId, DiagnosticService::getLogicalServerState), is(LogicalServerState.PASSIVE));
     }
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(3)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(3)));

@@ -40,7 +40,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
@@ -91,7 +91,7 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     when(topologyServiceMock("localhost", 9410).getRuntimeNodeContext()).thenReturn(nodeContext0);
     when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(nodeContext1);
 
-    when(diagnosticServiceMock("localhost", 9410).getLogicalServerState()).thenReturn(STARTING);
+    when(diagnosticServiceMock("localhost", 9410).getLogicalServerState()).thenReturn(DIAGNOSTIC);
   }
 
   @Test

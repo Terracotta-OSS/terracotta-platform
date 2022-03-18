@@ -30,7 +30,7 @@ import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import java.net.InetSocketAddress;
 
 @Parameters(commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
-@Usage("(-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>) [-force] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
+@Usage("(-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>) [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class AttachCommand extends Command {
 
   @Parameter(names = {"-to-cluster"}, description = "Cluster to attach to", converter = InetSocketAddressConverter.class)
@@ -51,7 +51,7 @@ public class AttachCommand extends Command {
   @Parameter(names = {"-restart-delay"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-force"}, description = "Force the operation")
+  @Parameter(names = {"-force"}, description = "Force the operation", hidden = true)
   protected boolean force;
 
   @Inject

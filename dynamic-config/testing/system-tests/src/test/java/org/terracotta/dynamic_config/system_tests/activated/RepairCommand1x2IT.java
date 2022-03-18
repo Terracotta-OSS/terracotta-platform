@@ -35,6 +35,7 @@ import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLinesStartingWith;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+import org.terracotta.dynamic_config.test_support.InlineServers;
 
 /**
  * @author Mathieu Carbou
@@ -63,6 +64,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         containsOutput("Commit failed for node"));
 
+    waitUntilServerLogs(getNode(1, passiveId), "Requesting restart");
+
     waitForPassive(1, passiveId);
 
     // wait until we can really connect to the passive and see it has an incomplete change
@@ -76,7 +79,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     // cannot automatic repair since 1 node is down
     assertThat(
         configTool("repair", "-s", "localhost:" + getNodePort(1, activeId)),
-        containsOutput("Error: Please use the '-force' option to specify whether a commit or rollback is wanted."));
+        containsOutput("Some nodes are offline. Unable to determine what kind of repair to run. Please refer to the Troubleshooting Guide."));
 
     // forces a repair
     assertThat(
@@ -90,7 +93,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     withTopologyService(1, passiveId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
   }
 
-  @Test
+  @Test @InlineServers(false)
   public void test_repair_detach_node_partially_committed() throws Exception {
     startNode(1, 1);
     startNode(1, 2);
@@ -140,7 +143,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
-  @Test
+  @Test @InlineServers(false)
   public void test_repair_stripe_down_during_detach_node() throws Exception {
     startNode(1, 1);
     startNode(1, 2);
@@ -183,7 +186,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
   }
 
-  @Test
+  @Test @InlineServers(false)
   public void test_repair_detached_node_restarting_as_active() throws Exception {
     startNode(1, 1);
     startNode(1, 2);

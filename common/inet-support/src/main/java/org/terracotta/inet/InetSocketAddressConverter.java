@@ -95,10 +95,10 @@ public class InetSocketAddressConverter {
   }
 
   public static String toHostPort(InetSocketAddress address) {
-    if (isValidIPv6(address.getHostName(), false)) {
-      return "[" + address.getHostName() + "]" + ":" + address.getPort();
+    if (isValidIPv6(address.getHostString(), false)) {
+      return "[" + address.getHostString() + "]" + ":" + address.getPort();
     } else {
-      return address.getHostName() + ":" + address.getPort();
+      return address.getHostString() + ":" + address.getPort();
     }
   }
 }

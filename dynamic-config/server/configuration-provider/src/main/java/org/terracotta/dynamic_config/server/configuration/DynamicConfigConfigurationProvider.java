@@ -73,11 +73,12 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   private volatile NomadServerManager nomadServerManager;
   private volatile DynamicConfigSyncData.Codec synCodec;
   private volatile StartupConfiguration configuration;
+  private volatile Server server;
 
   @Override
   public void initialize(List<String> args) {
     withMyClassLoader(() -> {
-      Server server = ServerEnv.getServer();
+      server = ServerEnv.getServer();
 
       ClassLoader serviceClassLoader = getServiceClassLoader(server);
 
@@ -90,16 +91,6 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // service used to create a topology from input CLI or config file
       ClusterFactory clusterFactory = new ClusterFactory();
 
-      // This path resolver is used when converting a model to XML.
-      // It makes sure to resolve any relative path to absolute ones based on the working directory.
-      // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
-      // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
-      // the config directory: config/cluster.
-      // So this has the effect of putting all defined directories inside such as config/config/logs, config/config/user-data, config/metadata, etc
-      // That is why we need to force the resolving within the XML relatively to the user directory.
-      Path baseDir = parameterSubstitutor.substitute(Paths.get("%(user.dir)"));
-      PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
-
       // optional service enabling license parsing
       LicenseService licenseService = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseService::unsupported);
 
@@ -110,12 +101,26 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, server);
       synCodec = new DynamicConfigSyncData.Codec(objectMapperFactory);
 
+      // CLI parsing
+      Options options = parseCommandLineOrExit(args);
+
+      // This path resolver is used when converting a model to XML.
+      // It makes sure to resolve any relative path to absolute ones based on the working directory.
+      // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
+      // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
+      // the config directory: config/cluster.
+      // So this has the effect of putting all defined directories inside such as config/config/logs, config/config/user-data, config/metadata, etc
+      // That is why we need to force the resolving within the XML relatively to the user directory.
+      String serverHome = options.getServerHome();
+      if (serverHome == null) {
+        serverHome = System.getProperty("user.dir");
+      }
+      Path baseDir = Paths.get(parameterSubstitutor.substitute(serverHome));
+      PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
+
       // Configuration generator class
       // Initialized when processing the CLI depending oin the user input, and called to generate a configuration
       ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver, objectMapperFactory, server);
-
-      // CLI parsing
-      Options options = parseCommandLineOrExit(args);
 
       // processors for the CLI
       CommandLineProcessor commandLineProcessor = new MainCommandLineProcessor(options, clusterFactory, configurationGeneratorVisitor, parameterSubstitutor, server);
@@ -140,6 +145,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration = configurationGeneratorVisitor.generateConfiguration();
 
       //  exposes services through org.terracotta.entity.PlatformConfiguration
+      configuration.registerExtendedConfiguration(Server.class, server);
       configuration.registerExtendedConfiguration(ObjectMapperFactory.class, objectMapperFactory);
       configuration.registerExtendedConfiguration(IParameterSubstitutor.class, parameterSubstitutor);
       configuration.registerExtendedConfiguration(ConfigChangeHandlerManager.class, configChangeHandlerManager);
@@ -194,13 +200,22 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       try {
         DynamicConfigSyncData data = synCodec.decode(bytes);
         requires = dynamicConfigurationPassiveSync.sync(data);
-      } catch (NomadException n) {
-        // rely on the server to stop based on uncaught exception
-        throw new RuntimeException(n);
+      } catch (RuntimeException | NomadException e) {
+        // only log the full trace if in trace/debug mode
+        LOGGER.debug("Error: {}", e.getMessage(), e);
+        server.warn(lineSeparator() + lineSeparator()
+                + "==============================================================================================================================================" + lineSeparator()
+                + "SERVER WILL STOP: PASSIVE SYNC FAILED WITH ERROR: {}" + lineSeparator()
+                + "(please change the logging config to see more details)" + lineSeparator()
+                + "==============================================================================================================================================" + lineSeparator(),
+            e.getMessage());
+        // ask for the server to stop and not restart
+        server.stop();
+        // do not continue anymore
+        return;
       }
 
       if (requires.contains(RESTART_REQUIRED)) {
-        Server server = ServerEnv.getServer();
         if (requires.contains(ZAP_REQUIRED)) {
           server.warn("Zapping server");
           server.stop(StopAction.ZAP, StopAction.RESTART);
@@ -215,7 +230,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   @Override
   public void close() {
-    // Do nothing
+    nomadServerManager.getNomadServer().close();
   }
 
   private void withMyClassLoader(Runnable runnable) {

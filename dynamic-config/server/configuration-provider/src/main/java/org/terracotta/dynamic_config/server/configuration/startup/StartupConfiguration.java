@@ -20,7 +20,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.text.PrettyPrintable;
-import com.tc.util.ManagedServiceLoader;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
@@ -38,6 +37,7 @@ import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.server.Server;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -69,7 +69,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   private final ObjectMapper objectMapper;
   private final GroupPortMapper groupPortMapper;
 
-  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory) {
+  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory, Server server) {
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
     this.unConfigured = unConfigured;
     this.repairMode = repairMode;
@@ -77,7 +77,15 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
     this.objectMapper = objectMapperFactory.create();
-    this.groupPortMapper = ManagedServiceLoader.loadServices(GroupPortMapper.class, this.classLoader).stream().findFirst().get();
+    Collection<Class<? extends GroupPortMapper>> mappers = server.getImplementations(GroupPortMapper.class);
+    Class<? extends GroupPortMapper> gi = mappers.iterator().next();
+    GroupPortMapper mapper = null;
+    try {
+      mapper = gi.newInstance();
+    } catch (IllegalAccessException | InstantiationException i) {
+      mapper = new DefaultGroupPortMapperImpl();
+    }
+    this.groupPortMapper = mapper;
   }
 
   @Override

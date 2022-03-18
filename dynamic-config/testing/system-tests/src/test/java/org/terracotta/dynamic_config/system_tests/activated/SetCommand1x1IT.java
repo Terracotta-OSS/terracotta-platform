@@ -106,7 +106,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void setFailoverPriority_Consistency() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2"),
-        containsOutput("restart of the cluster is required"));
+        containsOutput("Restart required for cluster"));
 
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority"),
@@ -117,7 +117,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void setClusterAndNodeRestartRequiringChangesInOneCommand() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2", "-c", "log-dir=new-logs"),
-        allOf(containsOutput("restart of the cluster is required"), not(containsOutput("restart of nodes"))));
+        allOf(containsOutput("Restart required for cluster"), not(containsOutput("Restart required for nodes:"))));
 
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority", "-c", "log-dir"),
@@ -128,7 +128,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void setClusterAndNoRestartRequiringChangesInOneCommand() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2", "-c", "cluster-name=new-cluster"),
-        allOf(containsOutput("restart of the cluster is required"), not(containsOutput("restart of nodes"))));
+        allOf(containsOutput("Restart required for cluster"), not(containsOutput("Restart required for nodes:"))));
 
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority", "-c", "cluster-name"),
@@ -139,7 +139,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void setNodeAndNoRestartRequiringChangesInOneCommand() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=new-logs", "-c", "cluster-name=new-cluster"),
-        allOf(not(containsOutput("restart of the cluster is required")), containsOutput("restart of nodes")));
+        allOf(not(containsOutput("Restart required for cluster")), containsOutput("Restart required for nodes: ")));
 
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "cluster-name", "-c", "log-dir"),
@@ -150,7 +150,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void setNodeLogDir() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "log-dir=logs/stripe1"),
-        containsOutput("IMPORTANT: A restart of nodes: node-1-1 is required to apply the changes"));
+        containsOutput("Restart required for nodes:"));
 
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-c", "log-dir"),
@@ -206,7 +206,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   public void testTcProperty() {
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
+        containsOutput("Restart required for nodes:"));
 
     assertThat(
         configTool("get", "-r", "-s", "localhost:" + getNodePort(), "-c", "tc-properties"),
@@ -244,12 +244,12 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     String clusterName = usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getCluster().getName());
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=new-name"),
-        not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
+        not(containsOutput("Restart required for cluster")));
     assertThat(configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         allOf(containsOutput("Node restart required: NO"), containsOutput("Node last configuration change details: set cluster-name=new-name")));
 
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=" + clusterName),
-        not(containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes")));
+        not(containsOutput("Restart required for cluster")));
     assertThat(configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         allOf(containsOutput("Node restart required: NO"), containsOutput("Node last configuration change details: set cluster-name=" + clusterName)));
   }

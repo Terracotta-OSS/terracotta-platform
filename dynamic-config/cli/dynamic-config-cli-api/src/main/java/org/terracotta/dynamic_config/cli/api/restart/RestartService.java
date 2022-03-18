@@ -64,6 +64,18 @@ public class RestartService {
    * To detect that a node has been restarted, we will wait until the node reaches one of the status given.
    */
   public RestartProgress restartNodes(Collection<Node.Endpoint> endpoints, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
+    return restartNodes(endpoints, restartDelay, acceptedStates, DynamicConfigService::restart);
+  }
+
+  public RestartProgress restartNodesIfActives(Collection<Node.Endpoint> endpoints, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
+    return restartNodes(endpoints, restartDelay, acceptedStates, DynamicConfigService::restartIfActive);
+  }
+
+  public RestartProgress restartNodesIfPassives(Collection<Node.Endpoint> endpoints, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
+    return restartNodes(endpoints, restartDelay, acceptedStates, DynamicConfigService::restartIfPassive);
+  }
+
+  private RestartProgress restartNodes(Collection<Node.Endpoint> endpoints, Duration restartDelay, Collection<LogicalServerState> acceptedStates, BiConsumer<DynamicConfigService, Duration> restart) {
     if (restartDelay.getSeconds() < 1) {
       throw new IllegalArgumentException("Restart delay must be at least 1 second");
     }
@@ -80,7 +92,7 @@ public class RestartService {
     for (Node.Endpoint endpoint : endpoints) {
       // this call should be pretty fast and should not timeout if restart delay is long enough
       try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress())) {
-        diagnosticService.getProxy(DynamicConfigService.class).restart(restartDelay);
+        restart.accept(diagnosticService.getProxy(DynamicConfigService.class), restartDelay);
         restartRequested.add(endpoint);
       } catch (Exception e) {
         // timeout should not occur with a restart delay. Any error is recorded an we won't wait for this node to restart
@@ -192,7 +204,6 @@ public class RestartService {
     LOGGER.debug("Checking if node: {} has restarted", endpoint);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress())) {
       LogicalServerState state = diagnosticService.getLogicalServerState();
-      // STARTING is the state when server hasn't finished its startup yet
       return state == null || !acceptedStates.contains(state) ? null : state;
     } catch (DiagnosticServiceProviderException | DiagnosticException e) {
       LOGGER.debug("Status query for node: {} failed: {}", endpoint, e.getMessage());

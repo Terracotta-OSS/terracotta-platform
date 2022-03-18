@@ -173,8 +173,6 @@ public class ClusterTest extends AbstractTest {
 
   @Test
   public void test_add_remove_server_entity() {
-    System.out.println(ClientIdentifier.discoverHostName());
-
     Server server = cluster1.stripeStream().findAny().get().getActiveServer().get();
 
     assertEquals(1, server.getServerEntityCount());

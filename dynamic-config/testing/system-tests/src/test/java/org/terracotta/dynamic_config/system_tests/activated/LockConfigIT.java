@@ -97,12 +97,14 @@ public class LockConfigIT extends DynamicConfigIT {
     // The goal is to have an activated cluster with inside its topology some "room" to add a node that is not yet created
     // this situation can happen in case of node failure we need to replace, when auto-activating at startup, etc.
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
-    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "node-1-1");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", getBaseDir().resolve("node-1-1").toString());
     waitForActive(1, 1);
 
     // we lock the configuration
     // but not all nodes are there
-    lock();
+    if (!lock()) {
+      throw new AssertionError("lock failed");
+    }
 
     // we need to repair / or make a node join
     // we will be able to add it through a restrictive activation
@@ -137,8 +139,16 @@ public class LockConfigIT extends DynamicConfigIT {
     );
   }
 
-  private void lock() {
-    invokeWithoutToken("lock-config", "-s", "localhost:" + getNodePort(), "--lock-context", lockContext.toString());
+  private boolean lock() {
+    ToolExecutionResult result = invokeWithoutToken("lock-config", "-s", "localhost:" + getNodePort(), "--lock-context", lockContext.toString());
+    if (result.getExitStatus() != 0) {
+      for (String line : result.getOutput()) {
+        System.out.println("LOCK FAIL:" + line);
+      }
+      return false;
+    } else {
+      return true;
+    }
   }
 
   private void unlock() {

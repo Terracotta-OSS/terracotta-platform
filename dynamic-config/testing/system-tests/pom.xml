@@ -74,11 +74,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.stefanbirkner</groupId>
-      <artifactId>system-rules</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
@@ -148,6 +143,7 @@
             <angela.java.resolver>user</angela.java.resolver>
             <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
           </systemPropertyVariables>
+          <argLine>-XX:+UseG1GC -Dorg.terracotta.disablePortReleaseCheck=true</argLine>
         </configuration>
       </plugin>
     </plugins>

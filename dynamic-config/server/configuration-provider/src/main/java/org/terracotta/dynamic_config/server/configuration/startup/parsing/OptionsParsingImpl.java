@@ -44,6 +44,7 @@ import static org.terracotta.dynamic_config.api.model.SettingName.NODE_BIND_ADDR
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_CONFIG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_GROUP_BIND_ADDRESS;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOME_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.SettingName.NODE_METADATA_DIR;
@@ -146,6 +147,9 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + LICENSE_FILE}, hidden = true)
   private String licenseFile;
 
+  @Parameter(names = {"-" + NODE_HOME_DIR}, hidden = true)
+  private String serverHome;
+  
   @Parameter(names = {"-" + REPAIR_MODE}, description = "node repair mode (true|false)")
   private boolean wantsRepairMode;
 
@@ -165,6 +169,7 @@ public class OptionsParsingImpl implements OptionsParsing {
     options.setConfigDir(configDir);
     options.setConfigFile(configFile);
     options.setLicenseFile(licenseFile);
+    options.setServerHome(serverHome);
     options.setWantsRepairMode(wantsRepairMode);
     options.setAllowsAutoActivation(allowsAutoActivation);
     return options;
@@ -190,6 +195,7 @@ public class OptionsParsingImpl implements OptionsParsing {
           String longestName = pd.getLongestName();
           return !longestName.equals(addDash(LICENSE_FILE))
               && !longestName.equals(addDash(CONFIG_FILE))
+              && !longestName.equals(addDash(NODE_HOME_DIR))
               && !longestName.equals(addDash(REPAIR_MODE))
               && !longestName.equals(addDash(AUTO_ACTIVATE))
               && !longestName.equals(addDash(NODE_CONFIG_DIR));
@@ -208,13 +214,14 @@ public class OptionsParsingImpl implements OptionsParsing {
       filteredOptions.remove(addDash(AUTO_ACTIVATE));
       filteredOptions.remove(addDash(REPAIR_MODE));
       filteredOptions.remove(addDash(CONFIG_FILE));
+      filteredOptions.remove(addDash(NODE_HOME_DIR));
       filteredOptions.remove(addDash(LICENSE_FILE));
       filteredOptions.remove(addDash(NODE_HOSTNAME));
       filteredOptions.remove(addDash(NODE_PORT));
       filteredOptions.remove(addDash(NODE_NAME));
       filteredOptions.remove(addDash(NODE_CONFIG_DIR));
 
-      if (filteredOptions.size() != 0) {
+      if (!filteredOptions.isEmpty()) {
         throw new IllegalArgumentException(
             String.format(
                 "'%s' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",

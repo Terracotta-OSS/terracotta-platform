@@ -35,4 +35,6 @@ public @interface ClusterDefinition {
   boolean autoActivate() default false;
 
   boolean netDisruptionEnabled() default false;
+
+  boolean inlineServers() default true;
 }

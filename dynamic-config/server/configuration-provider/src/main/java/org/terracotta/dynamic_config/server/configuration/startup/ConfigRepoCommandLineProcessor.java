@@ -73,7 +73,7 @@ public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
     }
 
     // Couldn't start node - pass the responsibility to the next starter
-    server.console("Did not find configuration directory at: {}", parameterSubstitutor.substitute(configPath));
+    server.console("Did not find configuration directory at: {}", configPath);
     nextStarter.process();
   }
 }

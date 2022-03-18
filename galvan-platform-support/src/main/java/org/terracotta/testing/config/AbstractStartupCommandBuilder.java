@@ -15,25 +15,30 @@
  */
 package org.terracotta.testing.config;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import java.util.Properties;
 import static org.terracotta.testing.demos.TestHelpers.isWindows;
 
-public abstract class StartupCommandBuilder {
+public abstract class AbstractStartupCommandBuilder implements StartupCommandBuilder {
   private Path kitDir;
   private Path serverWorkingDir;
   private String logConfigExt;
   private String serverName;
   private boolean consistentStartup;
-  private Path[] tcConfigs;
+  private Path tcConfig;
   private final int debugPort = Integer.getInteger("configDebugPort", 0);
   private int port;
   private int stripeId;
-  private String clusterName;
+  private String clusterName = ConfigConstants.DEFAULT_CLUSTER_NAME;
   private Path licensePath;
 
   public StartupCommandBuilder port(int port) {
@@ -66,8 +71,8 @@ public abstract class StartupCommandBuilder {
     return this;
   }
 
-  public StartupCommandBuilder tcConfigs(Path... tcConfigs) {
-    this.tcConfigs = tcConfigs;
+  public StartupCommandBuilder tcConfig(Path tcConfig) {
+    this.tcConfig = tcConfig;
     return this;
   }
 
@@ -92,8 +97,13 @@ public abstract class StartupCommandBuilder {
 
     //TODO: use the new Files utility
     //Copy a custom logback configuration
-    Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverWorkingDir.resolve("logback-test.xml"), REPLACE_EXISTING);
 
+    Files.copy(this.getClass().getResourceAsStream("/tc-logback.xml"), serverWorkingDir.resolve("logback-test.xml"), REPLACE_EXISTING);
+    Properties props = new Properties();
+    props.setProperty("serverWorkingDir", serverWorkingDir.toString());
+    try (Writer w = new OutputStreamWriter(new FileOutputStream(serverWorkingDir.resolve("logbackVars.properties").toFile()), StandardCharsets.UTF_8)) {
+      props.store(w, "logging variables");
+    }
     if (logConfigExt != null) {
       InputStream logExt = this.getClass().getResourceAsStream("/" + logConfigExt);
       if (logExt != null) {
@@ -135,8 +145,8 @@ public abstract class StartupCommandBuilder {
     return consistentStartup;
   }
 
-  public Path[] getTcConfigs() {
-    return tcConfigs.clone();
+  public Path getTcConfig() {
+    return tcConfig;
   }
 
   public int getDebugPort() {

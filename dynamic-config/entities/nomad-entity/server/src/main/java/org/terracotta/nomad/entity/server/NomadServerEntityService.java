@@ -26,11 +26,11 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
-import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.entity.common.NomadEntityConstants;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.entity.common.NomadMessageCodec;
+import org.terracotta.server.Server;
 
 @PermanentEntity(type = NomadEntityConstants.ENTITY_TYPE, name = NomadEntityConstants.ENTITY_NAME)
 public class NomadServerEntityService<T> implements EntityServerService<NomadEntityMessage, NomadEntityResponse> {
@@ -53,8 +53,8 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
     try {
       @SuppressWarnings("unchecked")
       DynamicConfigNomadServer nomadServer = registry.getService(new BasicServiceConfiguration<>(DynamicConfigNomadServer.class));
-      PlatformService platformService = registry.getService(new BasicServiceConfiguration<>(PlatformService.class));
-      return new NomadPassiveServerEntity<>(nomadServer, platformService);
+      Server server = registry.getService(new BasicServiceConfiguration<>(Server.class));
+      return new NomadPassiveServerEntity<>(server, nomadServer);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
     }

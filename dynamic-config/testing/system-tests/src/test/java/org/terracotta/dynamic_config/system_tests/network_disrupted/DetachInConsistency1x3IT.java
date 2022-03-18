@@ -16,12 +16,10 @@
 package org.terracotta.dynamic_config.system_tests.network_disrupted;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.net.ClientToServerDisruptor;
 import org.terracotta.angela.client.net.ServerToServerDisruptor;
 import org.terracotta.angela.client.net.SplitCluster;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
@@ -44,8 +42,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(nodesPerStripe = 3, autoStart = false, netDisruptionEnabled = true)
 public class DetachInConsistency1x3IT extends DynamicConfigIT {
-  @Rule
-  public final NodeOutputRule out = new NodeOutputRule();
 
   public DetachInConsistency1x3IT() {
     super(Duration.ofSeconds(300));
@@ -103,8 +99,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
       //verify active gets blocked
       waitForServerBlocked(active);
 
-      TerracottaServer newActive = isActive(passive1, passive2);
-      assertThat(newActive, is(notNullValue()));
+      TerracottaServer newActive = waitForNewActive(passive1, passive2);
       if (newActive == passive1) {
         newActiveId = passiveId1;
       } else {
@@ -157,7 +152,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
       //verify active gets blocked
       waitForServerBlocked(active);
 
-      TerracottaServer newActive = isActive(passive1, passive2);
+      TerracottaServer newActive = waitForNewActive(passive1, passive2);
       TerracottaServer newPassive;
       assertThat(newActive, is(notNullValue()));
       if (newActive == passive1) {

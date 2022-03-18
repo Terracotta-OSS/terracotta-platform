@@ -26,7 +26,18 @@ public class FileOutputService extends StreamOutputService {
   private final Path path;
 
   public FileOutputService(Path path) throws FileNotFoundException, UnsupportedEncodingException {
-    super(new PrintStream(path.toString(), Charset.defaultCharset().name()), System.err);
+    super(new PrintStream(path.toFile(), Charset.defaultCharset().name()), System.err);
     this.path = path;
+  }
+
+  @Override
+  public void close() {
+    out.close();
+    // do not close err stream
+  }
+
+  @Override
+  public String toString() {
+    return "file:" + path;
   }
 }

@@ -22,15 +22,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Stream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author Mathieu Carbou
@@ -90,33 +93,70 @@ public class Binary {
     }
   }
 
-  public static String exec(Duration timeout, Path bin, String... params) throws TimeoutException {
+  public static String exec(Duration timeout, Path bin, String... params) {
+    final long delayMs = Math.max(timeout == null ? 0 : timeout.toMillis(), 0);
     String[] cmd = new String[params.length + 1];
     cmd[0] = bin.toString();
     System.arraycopy(params, 0, cmd, 1, params.length);
+
+    LOGGER.trace("exec(timeout={}ms, cmd={})", delayMs, String.join(" ", cmd));
+
+    // start the process
+    Process process;
     try {
-      LOGGER.trace("exec({}, {})", timeout, String.join(" ", cmd));
-      Process process = new ProcessBuilder(cmd)
+      process = new ProcessBuilder(cmd)
           .redirectErrorStream(true)
           .start();
-      if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
-        process.destroyForcibly();
-        process.waitFor();
-        throw new TimeoutException("Timeout after " + timeout.getSeconds() + " seconds when trying to execute: " + String.join(" ", cmd));
-      }
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      try (InputStream is = process.getInputStream()) {
-        int b;
-        while ((b = is.read()) != -1) {
-          out.write(b);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+
+    // output
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    // if the process does not end within the specified duration, kills it
+    Timer timer = null;
+    if (delayMs > 0) {
+      timer = new Timer();
+      timer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          if (process.isAlive()) {
+            String message = "Timeout after " + timeout.getSeconds() + " seconds when trying to execute: " + String.join(" ", cmd);
+            try {
+              out.write(message.getBytes(UTF_8));
+            } catch (IOException e) {
+              LOGGER.warn(message, e);
+            }
+            process.destroyForcibly();
+          }
         }
+      }, timeout.toMillis());
+    }
+
+    // reads the stream until the process ends
+    try (InputStream is = process.getInputStream()) {
+      int b;
+      while ((b = is.read()) != -1) {
+        out.write(b);
       }
+    } catch (IOException e) {
+      LOGGER.warn("Unable to read process input stream: {}", e.getMessage(), e);
+    }
+
+    // 2 possibilities: process ended correctly or process was destroyed by the timer (only if we wanted a timeout)
+    try {
+      process.waitFor();
       return out.toString("UTF-8");
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException(e);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
+    } catch (UnsupportedEncodingException e) {
+      throw new IllegalStateException(e);
+    } finally {
+      if (timer != null) {
+        timer.cancel();
+      }
     }
   }
 

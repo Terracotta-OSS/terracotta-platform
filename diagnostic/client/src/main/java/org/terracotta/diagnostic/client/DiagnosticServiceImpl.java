@@ -18,12 +18,14 @@ package org.terracotta.diagnostic.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
+import org.terracotta.connection.Diagnostics;
 import org.terracotta.diagnostic.common.Base64DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
 import org.terracotta.diagnostic.model.LogicalServerState;
+import org.terracotta.exception.ConnectionClosedException;
 
 import java.lang.reflect.Proxy;
 import java.util.Optional;
@@ -31,7 +33,6 @@ import java.util.function.Supplier;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import org.terracotta.connection.Diagnostics;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
@@ -205,10 +206,10 @@ class DiagnosticServiceImpl implements DiagnosticService {
       throw e;
     });
     return returnType.isPrimitive() ?
-      response.getBody() :
-      returnType.cast(returnType == Optional.class ?
-        Optional.ofNullable(response.getBody()) :
-        response.getBody());
+        response.getBody() :
+        returnType.cast(returnType == Optional.class ?
+            Optional.ofNullable(response.getBody()) :
+            response.getBody());
   }
 
   private String execute(Supplier<String> execution) throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
@@ -219,33 +220,37 @@ class DiagnosticServiceImpl implements DiagnosticService {
     // JMXSubsystem transforms all null returns to empty strings.
     // null returns are in the case of EntityException, InterruptedException or MessageCodecException,
     // or in the case of terminateServer or forceTerminateServer
-    String result = execution.get();
-    if (result == null) {
-      if (allowNull) {
-        return null;
-      } else {
-        // a failure happened (EntityException, InterruptedException or MessageCodecException)
-        throw new DiagnosticConnectionException();
+    try {
+      String result = execution.get();
+      if (result == null) {
+        if (allowNull) {
+          return null;
+        } else {
+          // a failure happened (EntityException, InterruptedException or MessageCodecException)
+          throw new DiagnosticConnectionException();
+        }
       }
+      if (MESSAGE_NULL_RETURN.equals(result)) {
+        // convert back to null empty strings
+        return null;
+      }
+      // Handles all the errors from JMXSubsystem and DiagnosticsHandler
+      if (MESSAGE_NOT_PERMITTED.equals(result)) {
+        throw new DiagnosticOperationNotAllowedException(result);
+      }
+      if (MESSAGE_REQUEST_TIMEOUT.equals(result)) {
+        throw new DiagnosticOperationTimeoutException(result);
+      }
+      if (MESSAGE_UNKNOWN_COMMAND.equals(result)) {
+        throw new DiagnosticOperationUnsupportedException(result);
+      }
+      if (result.startsWith(MESSAGE_INVALID_JMX)) {
+        throw new DiagnosticOperationExecutionException(result);
+      }
+      return result;
+    } catch (ConnectionClosedException e) {
+      throw new DiagnosticConnectionException(e);
     }
-    if (MESSAGE_NULL_RETURN.equals(result)) {
-      // convert back to null empty strings
-      return null;
-    }
-    // Handles all the errors from JMXSubsystem and DiagnosticsHandler
-    if (MESSAGE_NOT_PERMITTED.equals(result)) {
-      throw new DiagnosticOperationNotAllowedException(result);
-    }
-    if (MESSAGE_REQUEST_TIMEOUT.equals(result)) {
-      throw new DiagnosticOperationTimeoutException(result);
-    }
-    if (MESSAGE_UNKNOWN_COMMAND.equals(result)) {
-      throw new DiagnosticOperationUnsupportedException(result);
-    }
-    if (result.startsWith(MESSAGE_INVALID_JMX)) {
-      throw new DiagnosticOperationExecutionException(result);
-    }
-    return result;
   }
 
 }

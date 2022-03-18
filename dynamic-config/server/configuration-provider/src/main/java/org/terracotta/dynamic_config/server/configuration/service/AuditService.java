@@ -70,6 +70,18 @@ public class AuditService implements DynamicConfigService {
   }
 
   @Override
+  public void restartIfPassive(Duration delay) {
+    server.audit("RestartIfPassive invoked", new Properties());
+    dynamicConfigService.restartIfPassive(delay);
+  }
+
+  @Override
+  public void restartIfActive(Duration delay) {
+    server.audit("RestartIfActive invoked", new Properties());
+    dynamicConfigService.restartIfActive(delay);
+  }
+
+  @Override
   public void stop(Duration delayInSeconds) {
     server.audit("Stop invoked", new Properties());
     dynamicConfigService.stop(delayInSeconds);

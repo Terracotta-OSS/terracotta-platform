@@ -15,11 +15,56 @@
  */
 package org.terracotta.dynamic_config.cli.api.output;
 
+import java.io.Closeable;
+
 /**
  * Responsible for handling the redirection of the output of config tool commands.
  */
-public interface OutputService {
+public interface OutputService extends Closeable {
   void out(String format, Object... args);
 
-  void info(String format, Object... args);
+  default void info(String format, Object... args) {
+    out(format, args);
+  }
+
+  default void warn(String format, Object... args) {
+    out(format, args);
+  }
+
+  @Override
+  default void close() {}
+
+  default OutputService then(OutputService after) {
+    OutputService first = this;
+    return new OutputService() {
+      @Override
+      public void out(String format, Object... args) {
+        first.out(format, args);
+        after.out(format, args);
+      }
+
+      @Override
+      public void info(String format, Object... args) {
+        first.info(format, args);
+        after.info(format, args);
+      }
+
+      @Override
+      public void warn(String format, Object... args) {
+        first.warn(format, args);
+        after.warn(format, args);
+      }
+
+      @Override
+      public void close() {
+        first.close();
+        after.close();
+      }
+
+      @Override
+      public String toString() {
+        return first + " then " + after;
+      }
+    };
+  }
 }

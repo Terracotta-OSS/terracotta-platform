@@ -392,10 +392,23 @@ public enum Setting {
       o -> Optional.empty(),
       noop(),
       emptyList(),
-      of(PRESENCE, CONFIG),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_CONFIG_DIR, tuple2(key, value))
+  ),
+  NODE_HOME_DIR(SettingName.NODE_HOME_DIR,
+      of(V2),
+      false,
+      always(System.getProperty("user.dir")),
+      NODE,
+      o -> Optional.empty(),
+      noop(),
+      emptyList(),
+      EnumSet.noneOf(Requirement.class),
+      emptyList(),
+      emptyList(),
+      (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_HOME_DIR, tuple2(key, value))
   ),
   NODE_METADATA_DIR(SettingName.NODE_METADATA_DIR,
       of(V1, V2),
@@ -497,7 +510,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(CLUSTER_RESTART),
+      of(NODE_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PROPS_VALIDATOR.accept(SettingName.TC_PROPERTIES, tuple2(key, value))

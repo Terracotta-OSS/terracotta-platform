@@ -32,8 +32,8 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.NomadManager;
+import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
 import org.terracotta.dynamic_config.cli.api.output.OutputService;
-import org.terracotta.dynamic_config.cli.api.output.StreamOutputService;
 import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
 import org.terracotta.json.ObjectMapperFactory;
@@ -118,7 +118,7 @@ public abstract class BaseTest {
     nomadManager = new DefaultNomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
     stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
-    outputService = new StreamOutputService();
+    outputService = new ConsoleOutputService();
   }
 
   protected DiagnosticService diagnosticServiceMock(String host, int port) {
