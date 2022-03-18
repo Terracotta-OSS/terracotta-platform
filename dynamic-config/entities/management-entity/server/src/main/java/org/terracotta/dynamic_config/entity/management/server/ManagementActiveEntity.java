@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.entity.management.server;
 
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
@@ -26,8 +27,8 @@ import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 
 public class ManagementActiveEntity extends ManagementCommonEntity implements ActiveServerEntity<EntityMessage, EntityResponse> {
 
-  ManagementActiveEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService) {
-    super(managementRegistry, dynamicConfigEventService);
+  ManagementActiveEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService, TopologyService topologyService) {
+    super(managementRegistry, dynamicConfigEventService, topologyService);
   }
 
   @Override

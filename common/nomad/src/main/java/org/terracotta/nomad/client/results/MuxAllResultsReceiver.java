@@ -21,6 +21,7 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
@@ -52,7 +53,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.discoverFail(server, reason);
     }
@@ -62,6 +63,13 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
+    }
+  }
+
+  @Override
+  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
+    for (AllResultsReceiver<T> receiver : receivers) {
+      receiver.discoverClusterDesynchronized(lastChangeUuids);
     }
   }
 
@@ -123,7 +131,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
+  public void prepareFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.prepareFail(server, reason);
     }
@@ -172,7 +180,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress server, String reason) {
+  public void takeoverFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.takeoverFail(server, reason);
     }
@@ -200,7 +208,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, String reason) {
+  public void commitFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.commitFail(server, reason);
     }
@@ -235,7 +243,7 @@ public class MuxAllResultsReceiver<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, String reason) {
+  public void rollbackFail(InetSocketAddress server, Throwable reason) {
     for (AllResultsReceiver<T> receiver : receivers) {
       receiver.rollbackFail(server, reason);
     }

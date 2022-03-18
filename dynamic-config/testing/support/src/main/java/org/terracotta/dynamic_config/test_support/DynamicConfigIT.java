@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.test_support;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.hamcrest.Matcher;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
@@ -41,10 +42,12 @@ import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.dynamic_config.test_support.util.PropertyResolver;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.testing.ExceptionMatcher;
 import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.TmpDir;
 
@@ -65,15 +68,18 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Properties;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static java.util.stream.IntStream.rangeClosed;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
@@ -90,11 +96,13 @@ import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
+import static org.terracotta.common.struct.Tuple2.tuple2;
+import static org.terracotta.testing.ExceptionMatcher.throwing;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
-  protected static final boolean WIN = System.getProperty("os.name").toLowerCase().startsWith("windows");
+  protected static final String CLUSTER_NAME = "tc-cluster";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final Duration DEFAULT_TEST_TIMEOUT = Duration.ofMinutes(2);
@@ -122,7 +130,7 @@ public class DynamicConfigIT {
     this.timeout = testTimeout.toMillis();
     this.rules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe()), clusterDef.autoStart(), clusterDef.autoActivate()) {
+        .around(angela = new AngelaRule(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled()), clusterDef.autoStart(), clusterDef.autoActivate()) {
           @Override
           public void startNode(int stripeId, int nodeId) {
             // let the subclasses control the node startup
@@ -132,20 +140,21 @@ public class DynamicConfigIT {
         .around(Timeout.millis(testTimeout.toMillis()))
         .around(new ExtendedTestRule() {
           @Override
-          protected void before(Description description) throws Throwable {
+          protected void before(Description description) {
             // upload tc logging config, but ONLY IF EXISTS !
-            URL tcLoggingConfig = this.getClass().getResource("/tc-logback.xml");
-            if (tcLoggingConfig != null) {
-              List<TerracottaServer> servers = angela.tsa().getTsaConfigurationContext().getTopology().getServers();
-              for (TerracottaServer s : servers) {
-                try {
-                  RemoteFolder folder = angela.tsa().browse(s, "");
-                  folder.upload("logback-test.xml", tcLoggingConfig);
-                } catch (IOException exp) {
-                  LOGGER.warn("unable to upload logback configuration", exp);
-                }
-              }
-            }
+            Stream.of(tuple2("tc-logback.xml", "logback-test.xml"), tuple2("logback-ext-test.xml", "logback-ext-test.xml"))
+                .map(loggingConfig -> tuple2(getClass().getResource("/" + loggingConfig.t1), loggingConfig.t2))
+                .filter(tuple -> tuple.t1 != null)
+                .forEach(loggingConfig -> {
+                  angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
+                    try {
+                      RemoteFolder folder = angela.tsa().browse(s, "");
+                      folder.upload(loggingConfig.t2, loggingConfig.t1);
+                    } catch (IOException exp) {
+                      LOGGER.warn("unable to upload logback configuration", exp);
+                    }
+                  });
+                });
             // wait for server startup if auto-activated
             if (clusterDef.autoStart() && clusterDef.autoActivate()) {
               for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
@@ -214,21 +223,21 @@ public class DynamicConfigIT {
     return InetSocketAddress.createUnresolved("localhost", getNodePort(stripeId, nodeId));
   }
 
-  protected ConfigToolExecutionResult activateCluster() throws TimeoutException {
-    return activateCluster("tc-cluster");
+  protected ConfigToolExecutionResult activateCluster() {
+    return activateCluster(CLUSTER_NAME);
   }
 
-  protected ConfigToolExecutionResult activateCluster(String name) throws TimeoutException {
+  protected ConfigToolExecutionResult activateCluster(String name) {
     Path licensePath = getLicensePath();
     ConfigToolExecutionResult result = licensePath == null ?
-        configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
-        configToolInvocation("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
+        invokeConfigTool("activate", "-s", "localhost:" + getNodePort(), "-n", name) :
+        invokeConfigTool("activate", "-s", "localhost:" + getNodePort(), "-n", name, "-l", licensePath.toString());
     assertThat(result, is(successful()));
     waitForActive(1);
     return result;
   }
 
-  protected ConfigToolExecutionResult configToolInvocation(String... cli) {
+  protected ConfigToolExecutionResult invokeConfigTool(String... cli) {
     List<String> enhancedCli = new ArrayList<>(cli.length);
     List<String> configToolOptions = getConfigToolOptions(cli);
 
@@ -276,9 +285,9 @@ public class DynamicConfigIT {
   // node and topology construction
   // =========================================
 
-  protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe) {
+  protected ConfigurationContext createConfigurationContext(int stripes, int nodesPerStripe, boolean netDisruptionEnabled) {
     return customConfigurationContext().tsa(tsa -> tsa
-        .clusterName("tc-cluster")
+        .clusterName(CLUSTER_NAME)
         .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
         .terracottaCommandLineEnvironment(TerracottaCommandLineEnvironment.DEFAULT
             .withJavaOpts("-Xms32m -Xmx256m")
@@ -289,6 +298,7 @@ public class DynamicConfigIT {
                 .withJavaHome(System.getProperty("java.home")))
         .topology(new Topology(
             getDistribution(),
+            netDisruptionEnabled,
             dynamicCluster(
                 rangeClosed(1, stripes)
                     .mapToObj(stripeId -> stripe(rangeClosed(1, nodesPerStripe)
@@ -298,15 +308,14 @@ public class DynamicConfigIT {
   }
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
-    String symbolicName = "node-" + stripeId + "-" + nodeId;
-    // note: node port and group port will be automatically set
-    return server(symbolicName, "localhost")
-        .configRepo(getNodePath(stripeId, nodeId).resolve("config").toString())
-        .logs(getNodePath(stripeId, nodeId).resolve("logs").toString())
-        .dataDir("main:" + getNodePath(stripeId, nodeId).resolve("data-dir").toString())
+    return server(getNodeName(stripeId, nodeId), "localhost")
+        .configRepo(getNodePath(stripeId, nodeId).append("/config").toString())
+        .logs(getNodePath(stripeId, nodeId).append("/logs").toString())
+        .dataDir("main:" + getNodePath(stripeId, nodeId).append("/data-dir").toString())
         .offheap("main:512MB,foo:1GB")
-        .metaData(getNodePath(stripeId, nodeId).resolve("metadata").toString())
-        .failoverPriority(getFailoverPriority().toString());
+        .metaData(getNodePath(stripeId, nodeId).append("/metadata").toString())
+        .failoverPriority(getFailoverPriority().toString())
+        .clusterName(CLUSTER_NAME);
   }
 
   protected FailoverPriority getFailoverPriority() {
@@ -317,16 +326,16 @@ public class DynamicConfigIT {
     return distribution(version(DISTRIBUTION.getValue()), KIT, TERRACOTTA_OS);
   }
 
-  protected final String getNodeName(int stripeId, int nodeId) {
+  protected String getNodeName(int stripeId, int nodeId) {
     return "node-" + stripeId + "-" + nodeId;
   }
 
-  protected final Path getNodePath(int stripeId, int nodeId) {
-    return Paths.get(getNodeName(stripeId, nodeId));
+  protected RawPath getNodePath(int stripeId, int nodeId) {
+    return RawPath.valueOf(getNodeName(stripeId, nodeId));
   }
 
-  protected final Path getNodeConfigDir(int stripeId, int nodeId) {
-    return getNodePath(stripeId, nodeId).resolve("config");
+  protected final RawPath getNodeConfigDir(int stripeId, int nodeId) {
+    return getNodePath(stripeId, nodeId).append("/config");
   }
 
   protected Path getLicensePath() {
@@ -361,14 +370,6 @@ public class DynamicConfigIT {
       }
       Properties variables = generateProperties();
       Properties resolved = new PropertyResolver(variables).resolveAll(loaded);
-      if (WIN) {
-        // Convert all / to \\ for Windows.
-        // This assumes we only use / and \\ for paths in property values
-        resolved.stringPropertyNames()
-            .stream()
-            .filter(key -> resolved.getProperty(key).contains("/"))
-            .forEach(key -> resolved.setProperty(key, resolved.getProperty(key).replace("/", "\\")));
-      }
       Files.createDirectories(getBaseDir());
       try (Writer writer = new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8)) {
         resolved.store(writer, "");
@@ -380,7 +381,7 @@ public class DynamicConfigIT {
   }
 
   protected Path generateNodeConfigDir(int stripeId, int nodeId, Consumer<ConfigurationGenerator> fn) throws Exception {
-    Path nodeConfigurationDir = getBaseDir().resolve(getNodeConfigDir(stripeId, nodeId));
+    Path nodeConfigurationDir = getBaseDir().resolve(getNodeConfigDir(stripeId, nodeId).toPath());
     Path configDirs = getBaseDir().resolve("generated-configs");
     ConfigurationGenerator clusterGenerator = new ConfigurationGenerator(configDirs, new ConfigurationGenerator.PortSupplier() {
       @Override
@@ -459,6 +460,13 @@ public class DynamicConfigIT {
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
   }
 
+  protected void waitForPassiveReplication() throws Exception {
+    // this is ugly, but I do not know how we could otherwise wait until replication message gets processed by the passive server, which is causing a restart
+    // Angela is not able to observe a server restart
+    // This wait time is to ensure the passive server got the replicated message, processes it and restarted itself
+    Thread.sleep(15_000);
+  }
+
   protected final Cluster getUpcomingCluster(int stripeId, int nodeId) throws Exception {
     return getUpcomingCluster("localhost", getNodePort(stripeId, nodeId));
   }
@@ -512,5 +520,60 @@ public class DynamicConfigIT {
 
   protected Duration getAssertTimeout() {
     return ASSERT_TIMEOUT;
+  }
+
+  protected Matcher<ExceptionMatcher.Closure> exceptionMatcher(String message) {
+    return is(throwing(instanceOf(RuntimeException.class)).andMessage(containsString(message)));
+  }
+
+  protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {
+    stripeServer.forEach((k, v) -> angela.tsa().setServerToServerDisruptionLinks(k, v));
+  }
+
+  protected void setClientServerDisruptionLinks(Map<Integer, Integer> stripeServerNumMap) {
+    for (Map.Entry<Integer, Integer> entry : stripeServerNumMap.entrySet()) {
+      int stripeId = entry.getKey();
+      int serverList = entry.getValue();
+      for (int i = 1; i <= serverList; ++i) {
+        TerracottaServer terracottaServer = getNode(stripeId, i);
+        angela.tsa().setClientToServerDisruptionLinks(terracottaServer);
+      }
+    }
+  }
+
+  private boolean isServerBlocked(TerracottaServer server) {
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
+        InetSocketAddress.createUnresolved(server.getHostName(), server.getTsaPort()),
+        getClass().getSimpleName(),
+        getConnectionTimeout(),
+        getConnectionTimeout(),
+        null,
+        objectMapperFactory)) {
+      return diagnosticService.isBlocked();
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  protected void waitForServerBlocked(TerracottaServer server) {
+    waitUntil(() -> isServerBlocked(server), is(true));
+  }
+
+  protected TerracottaServer isActive(TerracottaServer... servers) {
+    waitUntil(() -> Arrays.stream(servers).anyMatch(server -> angela.tsa().getState(server) == STARTED_AS_ACTIVE), is(true));
+    TerracottaServer active = Arrays.stream(servers)
+        .filter(server -> angela.tsa().getState(server) == STARTED_AS_ACTIVE)
+        .findFirst()
+        .get();
+    TerracottaServer[] passives = ArrayUtils.removeElements(servers, active);
+    if (passives.length == 0 || isPassive(passives)) {
+      return active;
+    }
+    return null;
+  }
+
+  protected boolean isPassive(TerracottaServer... servers) {
+    waitUntil(() -> Arrays.stream(servers).allMatch(server -> angela.tsa().getState(server) == STARTED_AS_PASSIVE), is(true));
+    return true;
   }
 }

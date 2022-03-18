@@ -1,39 +1,24 @@
 {
   "type": "ClusterActivationNomadChange",
   "cluster": {
-    "name": "myClusterName",
     "stripes": [
       {
         "nodes": [
           {
-            "dataDirs": {
-              "main": "%H/terracotta/user-data/main"
-            },
-            "nodeBindAddress": "0.0.0.0",
-            "nodeGroupBindAddress": "0.0.0.0",
-            "nodeGroupPort": 9430,
-            "nodeHostname": "localhost",
-            "nodeLogDir": "%H/terracotta/logs",
-            "nodeLoggerOverrides": {},
-            "nodeMetadataDir": "%H/terracotta/metadata",
-            "nodeName": "foo",
-            "nodePort": 9410,
-            "tcProperties": {}
+            "hostname": "localhost",
+            "name": "foo",
+            "port": 9410
           }
         ]
       }
     ],
-    "clientLeaseDuration": {
-      "quantity": 150,
-      "unit": "SECONDS",
-      "type": "TIME"
-    },
     "clientReconnectWindow": {
       "quantity": 60,
       "unit": "SECONDS",
       "type": "TIME"
     },
     "failoverPriority": "availability",
+    "name": "myClusterName",
     "offheapResources": {
       "foo": {
         "quantity": 1,
@@ -45,12 +30,10 @@
         "unit": "MB",
         "type": "MEMORY"
       }
-    },
-    "securitySslTls": false,
-    "securityWhitelist": false
+    }
   },
   "applicability": {
-    "scope": "CLUSTER"
+    "level": "CLUSTER"
   },
   "summary": "Activating cluster"
 }

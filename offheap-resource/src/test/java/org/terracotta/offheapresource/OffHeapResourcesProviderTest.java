@@ -17,9 +17,12 @@ package org.terracotta.offheapresource;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.management.service.monitoring.EntityManagementRegistry;
+import org.terracotta.management.service.monitoring.EntityMonitoringService;
 import org.terracotta.offheapresource.config.MemoryUnit;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
 import org.terracotta.offheapresource.config.ResourceType;
+import org.terracotta.offheapresource.management.OffHeapResourceBinding;
 import org.terracotta.statistics.StatisticsManager;
 import org.terracotta.statistics.ValueStatistic;
 
@@ -40,6 +43,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.terracotta.offheapresource.OffHeapResourceIdentifier.identifier;
 
 public class OffHeapResourcesProviderTest {
@@ -114,8 +118,25 @@ public class OffHeapResourcesProviderTest {
 
   @Test
   public void testResourceAddition_ok() {
+    EntityManagementRegistry registry = mock(EntityManagementRegistry.class);
+    EntityMonitoringService entityMonitoringService = mock(EntityMonitoringService.class);
+    when(registry.getMonitoringService()).thenReturn(entityMonitoringService);
+    when(entityMonitoringService.getConsumerId()).thenReturn(1L);
     OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(configuration);
-    assertTrue(offHeapResourcesProvider.addOffHeapResource(identifier("newOffheap"), 100_000L));
+    OffHeapResourceIdentifier newOffheap_preRegistry_Id = identifier("newOffheap_preRegistry");
+    assertTrue(offHeapResourcesProvider.addOffHeapResource(newOffheap_preRegistry_Id, 100_000L));
+    OffHeapResourceImpl newOffheap_preRegistry = offHeapResourcesProvider.getOffHeapResource(newOffheap_preRegistry_Id);
+    OffHeapResourceBinding newOffheap_preRegistry_Binding = newOffheap_preRegistry.getManagementBinding();
+    offHeapResourcesProvider.onManagementRegistryCreated(registry);
+    verify(registry).register(newOffheap_preRegistry_Binding);
+
+    OffHeapResourceIdentifier newOffheap_postRegistry_Id = identifier("newOffheap_postRegistry");
+    assertTrue(offHeapResourcesProvider.addOffHeapResource(newOffheap_postRegistry_Id, 100_000L));
+    OffHeapResourceImpl newOffheap_postRegistry = offHeapResourcesProvider.getOffHeapResource(newOffheap_postRegistry_Id);
+    OffHeapResourceBinding newOffheap_postRegistry_Binding = newOffheap_postRegistry.getManagementBinding();
+    verify(registry).registerAndRefresh(newOffheap_postRegistry_Binding);
+    newOffheap_postRegistry.setCapacity(150_000L);
+    assertTrue(newOffheap_postRegistry_Binding.getValue().capacity() == 150_000L);
   }
 
   @Test

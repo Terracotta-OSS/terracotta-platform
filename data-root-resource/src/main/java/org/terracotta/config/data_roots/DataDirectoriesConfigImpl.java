@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -56,6 +57,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   private final ConcurrentMap<String, DataDirectories> serverToDataRoots = new ConcurrentHashMap<>();
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
+  private final Collection<EntityManagementRegistry> registries = new CopyOnWriteArrayList<>();
 
   public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, Path metadataDir, Map<String, Path> dataDirectories) {
     this.parameterSubstitutor = parameterSubstitutor;
@@ -131,6 +133,10 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
     LOGGER.debug("Defined directory with name: {} at location: {}", name, dataDirectory);
 
     dataRootMap.put(name, dataDirectory);
+
+    for (EntityManagementRegistry registry : registries) {
+      registry.registerAndRefresh(new DataRootBinding(name, dataDirectory));
+    }
   }
 
   @Override
@@ -160,7 +166,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
       try {
         ensureDirectory(dataDirectory);
       } catch (IOException e) {
-        throw new RuntimeException("Unable to create data directory: " + dataDirectory, e);
+        throw new RuntimeException(e.toString(), e);
       }
     }
   }
@@ -169,6 +175,8 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   public void onManagementRegistryCreated(EntityManagementRegistry registry) {
     long consumerId = registry.getMonitoringService().getConsumerId();
     LOGGER.trace("[{}] onManagementRegistryCreated()", consumerId);
+
+    registries.add(registry);
 
     registry.addManagementProvider(new DataRootSettingsManagementProvider());
     registry.addManagementProvider(new DataRootStatisticsManagementProvider(this));
@@ -185,7 +193,7 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
 
   @Override
   public void onManagementRegistryClose(EntityManagementRegistry registry) {
-    // we do not need to clean anything
+    registries.remove(registry);
   }
 
   @Override
@@ -229,11 +237,11 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   }
 
   void ensureDirectory(Path directory) throws IOException {
-    if (!Files.exists(directory)) {
+    if (!directory.toFile().exists()) {
       Files.createDirectories(directory);
     } else {
       if (!Files.isDirectory(directory)) {
-        throw new RuntimeException("A file with configured data directory: " + directory + " already exists!");
+        throw new RuntimeException(directory.getFileName() + " exists under " + directory.getParent() + " but is not a directory");
       }
     }
   }

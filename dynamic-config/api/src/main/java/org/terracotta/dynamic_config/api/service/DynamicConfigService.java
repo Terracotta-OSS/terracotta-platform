@@ -16,8 +16,10 @@
 package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
@@ -69,4 +71,14 @@ public interface DynamicConfigService {
    * This method will zap and stop the node.
    */
   void stop(Duration delay);
+
+  /**
+   * Get the content of the installed license if any
+   */
+  Optional<String> getLicenseContent();
+
+  /**
+   * Reset and sync this node's append log with the provided nomad changes and update the its configurations accordingly.
+   */
+  void resetAndSync(NomadChangeInfo[] nomadChanges, Cluster cluster);
 }

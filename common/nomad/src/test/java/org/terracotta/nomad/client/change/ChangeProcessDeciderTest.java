@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.nomad.client.Consistency;
 import org.terracotta.nomad.client.results.AllResultsReceiver;
+import org.terracotta.nomad.server.NomadException;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;
@@ -61,7 +62,7 @@ public class ChangeProcessDeciderTest {
 
     decider.startDiscovery(asList(address1, address2));
     decider.discovered(address1, discovery(COMMITTED));
-    decider.discoverFail(address2, "reason");
+    decider.discoverFail(address2, new NomadException("reason"));
     decider.endDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -128,7 +129,7 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startSecondDiscovery();
     decider.discoverRepeated(address1);
-    decider.discoverFail(address2, "reason");
+    decider.discoverFail(address2, new NomadException("reason"));
     decider.endSecondDiscovery();
 
     assertFalse(decider.isDiscoverSuccessful());
@@ -196,7 +197,7 @@ public class ChangeProcessDeciderTest {
     decider.endPrepare();
     decider.startCommit();
     decider.committed(address1);
-    decider.commitFail(address2, "reason");
+    decider.commitFail(address2, new NomadException("reason"));
     decider.endCommit();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -242,7 +243,7 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startPrepare(uuid);
     decider.prepared(address1);
-    decider.prepareFail(address2, "reason");
+    decider.prepareFail(address2, new NomadException("reason"));
     decider.endPrepare();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -262,7 +263,7 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startPrepare(uuid);
     decider.prepared(address1);
-    decider.prepareFail(address2, "reason");
+    decider.prepareFail(address2, new NomadException("reason"));
     decider.endPrepare();
     decider.startRollback();
     decider.rolledBack(address2);
@@ -286,10 +287,10 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startPrepare(uuid);
     decider.prepared(address1);
-    decider.prepareFail(address2, "reason");
+    decider.prepareFail(address2, new NomadException("reason"));
     decider.endPrepare();
     decider.startRollback();
-    decider.rollbackFail(address2, "reason");
+    decider.rollbackFail(address2, new NomadException("reason"));
     decider.endRollback();
 
     assertTrue(decider.isDiscoverSuccessful());
@@ -310,7 +311,7 @@ public class ChangeProcessDeciderTest {
     decider.endDiscovery();
     decider.startPrepare(uuid);
     decider.prepared(address1);
-    decider.prepareFail(address2, "reason");
+    decider.prepareFail(address2, new NomadException("reason"));
     decider.endPrepare();
     decider.startRollback();
     decider.rollbackOtherClient(address2, "lastMutationHost", "lastMutationUser");

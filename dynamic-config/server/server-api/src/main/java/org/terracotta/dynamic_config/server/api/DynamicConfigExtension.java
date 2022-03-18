@@ -18,6 +18,9 @@ package org.terracotta.dynamic_config.server.api;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
+import java.util.Collection;
+import java.util.function.Supplier;
+
 /**
  * Extension to implement as a META-INF/services to provide extensions on the servers
  *
@@ -43,11 +46,31 @@ public interface DynamicConfigExtension {
    */
   void configure(Registrar registrar, PlatformConfiguration platformConfiguration);
 
+  default <T> T findService(PlatformConfiguration platformConfiguration, Class<T> type) {
+    Collection<T> services = platformConfiguration.getExtendedConfiguration(type);
+    if (services.isEmpty()) {
+      throw new AssertionError("No instance of service " + type + " found");
+    }
+
+    if (services.size() == 1) {
+      T instance = services.iterator().next();
+      if (instance == null) {
+        throw new AssertionError("Instance of service " + type + " found to be null");
+      }
+      return instance;
+    }
+    throw new AssertionError("Multiple instances of service " + type + " found");
+  }
+
   interface Registrar {
     /**
      * Register an extended configuration which will only be available when the user asks for a specific class
      */
-    <T> void registerExtendedConfiguration(Class<T> type, T implementation);
+    default <T> void registerExtendedConfiguration(Class<T> type, T implementation) {
+      registerExtendedConfigurationSupplier(type, () -> implementation);
+    }
+
+    <T> void registerExtendedConfigurationSupplier(Class<T> type, Supplier<T> implementation);
 
     /**
      * Register an extended configuration which will be available when the user asks for any super type

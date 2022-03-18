@@ -27,20 +27,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(stripes = 2)
 public class ImportCommand2x1IT extends DynamicConfigIT {
   @Test
   public void test_import() throws Exception {
-    TreeMap<Object, Object> before = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true));
+    TreeMap<Object, Object> before = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true));
     Path path = copyConfigProperty("/config-property-files/import2x1.properties");
-    assertThat(
-        configToolInvocation("import", "-f", path.toString()),
-        is(successful()));
-    TreeMap<Object, Object> after = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true));
+    invokeConfigTool("import", "-f", path.toString());
+    TreeMap<Object, Object> after = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true));
     TreeMap<Object, Object> expected = new TreeMap<>(Props.load(path));
-    assertThat(after, is(equalTo(expected)));
+    assertThat(after.toString(), after, is(equalTo(expected)));
     assertThat(before, is(not(equalTo(expected))));
   }
 }

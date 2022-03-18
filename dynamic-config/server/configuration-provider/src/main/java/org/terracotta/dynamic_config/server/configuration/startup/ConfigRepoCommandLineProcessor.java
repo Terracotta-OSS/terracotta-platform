@@ -15,39 +15,56 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.server.ServerEnv;
 
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
-public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigRepoCommandLineProcessor.class);
+import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 
+public class ConfigRepoCommandLineProcessor implements CommandLineProcessor {
   private final Options options;
   private final CommandLineProcessor nextStarter;
   private final ConfigurationGeneratorVisitor configurationGeneratorVisitor;
   private final IParameterSubstitutor parameterSubstitutor;
+  private final ClusterFactory clusterCreator;
 
-  ConfigRepoCommandLineProcessor(CommandLineProcessor nextStarter, Options options, ConfigurationGeneratorVisitor configurationGeneratorVisitor, IParameterSubstitutor parameterSubstitutor) {
+  ConfigRepoCommandLineProcessor(CommandLineProcessor nextStarter, Options options, ConfigurationGeneratorVisitor configurationGeneratorVisitor, IParameterSubstitutor parameterSubstitutor, ClusterFactory clusterCreator) {
     this.options = options;
     this.nextStarter = nextStarter;
     this.configurationGeneratorVisitor = configurationGeneratorVisitor;
     this.parameterSubstitutor = parameterSubstitutor;
+    this.clusterCreator = clusterCreator;
   }
 
   @Override
   public void process() {
-    Path configPath = configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(options.getNodeConfigDir());
+    Path configPath = configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(options.getConfigDir());
     Optional<String> nodeName = configurationGeneratorVisitor.findNodeName(configPath, parameterSubstitutor);
     if (nodeName.isPresent()) {
-      configurationGeneratorVisitor.startUsingConfigRepo(configPath, nodeName.get(), options.wantsRepairMode());
+      ServerEnv.getServer().console("Found configuration directory at: {}. Other parameters will be ignored", parameterSubstitutor.substitute(configPath));
+
+      // Build an alternate topology from the CLI in case we cannot load any config from the existing config repo.
+      // This can happen in case a node is not properly activated
+      Map<Setting, String> cliOptions = new LinkedHashMap<>(options.getTopologyOptions());
+      cliOptions.putIfAbsent(FAILOVER_PRIORITY, FailoverPriority.availability().toString());
+      Cluster cluster = clusterCreator.create(cliOptions, parameterSubstitutor);
+      NodeContext alternate = new NodeContext(cluster, cluster.getSingleNode().get().getAddress());
+
+      configurationGeneratorVisitor.startUsingConfigRepo(configPath, nodeName.get(), options.wantsRepairMode(), alternate);
       return;
     }
 
-    LOGGER.info("Did not find configuration directory at: " + parameterSubstitutor.substitute(configPath));
     // Couldn't start node - pass the responsibility to the next starter
+    ServerEnv.getServer().console("Did not find configuration directory at: {}", parameterSubstitutor.substitute(configPath));
     nextStarter.process();
   }
 }

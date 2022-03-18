@@ -20,31 +20,27 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.text.PrettyPrintable;
-import org.terracotta.common.struct.TimeUnit;
+import com.tc.util.ManagedServiceLoader;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
 import org.terracotta.configuration.FailoverBehavior;
 import org.terracotta.configuration.ServerConfiguration;
-import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
+import org.terracotta.dynamic_config.server.api.GroupPortMapper;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.ObjectMapperFactory;
-import org.terracotta.monitoring.PlatformService;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -61,7 +57,7 @@ import static org.terracotta.common.struct.Tuple2.tuple2;
 
 public class StartupConfiguration implements Configuration, PrettyPrintable, StateDumpable, PlatformConfiguration, DynamicConfigExtension.Registrar {
 
-  private final Collection<Tuple2<Class<?>, Object>> extendedConfigurations = new CopyOnWriteArrayList<>();
+  private final Collection<Tuple2<Class<?>, Supplier<?>>> extendedConfigurations = new CopyOnWriteArrayList<>();
   private final Collection<ServiceProviderConfiguration> serviceProviderConfigurations = new CopyOnWriteArrayList<>();
 
   private final Supplier<NodeContext> nodeContextSupplier;
@@ -71,6 +67,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
   private final ObjectMapper objectMapper;
+  private final GroupPortMapper groupPortMapper;
 
   StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory) {
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
@@ -80,18 +77,25 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
     this.objectMapper = objectMapperFactory.create();
+    this.groupPortMapper = ManagedServiceLoader.loadServices(GroupPortMapper.class, this.classLoader).stream().findFirst().get();
   }
 
   @Override
   public <T> List<T> getExtendedConfiguration(Class<T> type) {
     requireNonNull(type);
     List<T> out = new ArrayList<>(1);
-    for (Tuple2<Class<?>, Object> extendedConfiguration : extendedConfigurations) {
+    for (Tuple2<Class<?>, Supplier<?>> extendedConfiguration : extendedConfigurations) {
       if (extendedConfiguration.t1 == type) {
-        out.add(type.cast(extendedConfiguration.t2));
-      } else if (extendedConfiguration.t1 == null && type.isInstance(extendedConfiguration.t2)) {
-        out.add(type.cast(extendedConfiguration.t2));
-      } else if (extendedConfiguration.t1 != null && extendedConfiguration.t1.getName().equals(type.getName())) {
+        Object o = extendedConfiguration.t2.get();
+        if (o != null) {
+          out.add(type.cast(o));
+        }
+      } else if (extendedConfiguration.t1 == null) {
+        Object o = extendedConfiguration.t2.get();
+        if (type.isInstance(o)) {
+          out.add(type.cast(o));
+        }
+      } else if (extendedConfiguration.t1.getName().equals(type.getName())) {
         throw new IllegalArgumentException("Requested service type " + type + " from classloader " + type.getClassLoader() + " but has service " + extendedConfiguration.t1 + " from classlaoder " + extendedConfiguration.t1.getClassLoader());
       }
     }
@@ -118,25 +122,9 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     return nodeContextSupplier.get().getStripe().getNodes().stream().map(this::toServerConfiguration).collect(toList());
   }
 
-  /**
-   * Consumed by {@link PlatformService#getPlatformConfiguration()} to output the configuration.
-   * <p>
-   * MnM is using that and it needs to have a better view that what we had before (props resolved and also user set added in a separated section)
-   * <p>
-   * So this mimics what the export command would do
-   */
   @Override
   public String getRawConfiguration() {
-    NodeContext nodeContext = nodeContextSupplier.get();
-    Cluster cluster = nodeContext.getCluster();
-    Properties nonDefaults = cluster.toProperties(false, false);
-    substitute(nodeContext, nonDefaults);
-    try (StringWriter out = new StringWriter()) {
-      Props.store(out, nonDefaults, "User-defined configurations for node '" + nodeContext.getNodeName() + "' in stripe ID " + nodeContext.getStripeId());
-      return out.toString();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    return Props.toString(nodeContextSupplier.get().getCluster().toProperties(false, false, false));
   }
 
   /**
@@ -150,7 +138,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   @Override
   public Properties getTcProperties() {
     Properties copy = new Properties();
-    copy.putAll(nodeContextSupplier.get().getNode().getTcProperties());
+    copy.putAll(nodeContextSupplier.get().getNode().getTcProperties().orDefault());
     return copy;
   }
 
@@ -223,7 +211,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
     stateDumpCollector.addState("tsaPort", getTsaPort());
     StateDumpCollector extendedConfigurations = stateDumpCollector.subStateDumpCollector("ExtendedConfigs");
     this.extendedConfigurations.stream()
-        .map(Tuple2::getT2)
+        .map(tuple -> tuple.getT2().get())
         .filter(StateDumpable.class::isInstance)
         .map(StateDumpable.class::cast)
         .forEach(sd -> sd.addStateTo(extendedConfigurations.subStateDumpCollector(sd.getClass().getName())));
@@ -236,12 +224,12 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
 
   @Override
   public String getHost() {
-    return nodeContextSupplier.get().getNode().getNodeHostname();
+    return nodeContextSupplier.get().getNode().getHostname();
   }
 
   @Override
   public int getTsaPort() {
-    return nodeContextSupplier.get().getNode().getNodePort();
+    return nodeContextSupplier.get().getNode().getPort().orDefault();
   }
 
   @Override
@@ -250,8 +238,8 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   }
 
   @Override
-  public <T> void registerExtendedConfiguration(Class<T> type, T implementation) {
-    extendedConfigurations.add(tuple2(type, implementation));
+  public <T> void registerExtendedConfigurationSupplier(Class<T> type, Supplier<T> supplier) {
+    extendedConfigurations.add(tuple2(type, supplier));
   }
 
   @Override
@@ -275,50 +263,6 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   }
 
   private ServerConfiguration toServerConfiguration(Node node) {
-    NodeContext nodeContext = nodeContextSupplier.get();
-    return new ServerConfiguration() {
-      @Override
-      public InetSocketAddress getTsaPort() {
-        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getNodeBindAddress()), node.getNodePort());
-      }
-
-      @Override
-      public InetSocketAddress getGroupPort() {
-        return InetSocketAddress.createUnresolved(substitutor.substitute(node.getNodeGroupBindAddress()), node.getNodeGroupPort());
-      }
-
-      @Override
-      public String getHost() {
-        // substitutions not allowed on hostname since hostname-port is a key to identify a node
-        // any substitution is allowed but resolved eagerly when parsing the CLI
-        return node.getNodeHostname();
-      }
-
-      @Override
-      public String getName() {
-        // substitutions not allowed on name since stripe ID / name is a key to identify a node
-        return node.getNodeName();
-      }
-
-      @Override
-      public int getClientReconnectWindow() {
-        return nodeContext.getCluster().getClientReconnectWindow().getExactQuantity(TimeUnit.SECONDS).intValueExact();
-      }
-
-      @Override
-      public void setClientReconnectWindow(int value) {
-        nodeContext.getCluster().setClientReconnectWindow(value, TimeUnit.SECONDS);
-      }
-
-      @Override
-      public File getLogsLocation() {
-        return (unConfigured) ? null : substitutor.substitute(pathResolver.resolve(node.getNodeLogDir())).toFile();
-      }
-
-      @Override
-      public String toString() {
-        return node.getNodeName() + "@" + node.getNodeAddress();
-      }
-    };
+    return new DynamicConfigServerConfiguration(node, nodeContextSupplier, substitutor, groupPortMapper, pathResolver, unConfigured);
   }
 }

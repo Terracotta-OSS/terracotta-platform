@@ -15,10 +15,12 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
-public interface ConfigStorage<T> {
-  T getConfig(long version) throws ConfigStorageException;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 
-  void saveConfig(long version, T config) throws ConfigStorageException;
+public interface ConfigStorage {
+  Config getConfig(long version) throws ConfigStorageException;
+
+  void saveConfig(long version, NodeContext config) throws ConfigStorageException;
 
   /**
    * Clear the saved configs

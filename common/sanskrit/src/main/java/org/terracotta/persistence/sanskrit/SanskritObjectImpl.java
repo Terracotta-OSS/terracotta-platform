@@ -17,7 +17,6 @@ package org.terracotta.persistence.sanskrit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NumericNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -28,14 +27,14 @@ import java.util.Optional;
 
 public class SanskritObjectImpl implements MutableSanskritObject {
   private final ObjectNode mappings;
-  private final ObjectMapper objectMapper;
+  private final ObjectMapperSupplier objectMapperSupplier;
 
-  public SanskritObjectImpl(ObjectMapper objectMapper) {
-    this(objectMapper, objectMapper.createObjectNode());
+  public SanskritObjectImpl(ObjectMapperSupplier objectMapperSupplier) {
+    this(objectMapperSupplier, objectMapperSupplier.getObjectMapper().createObjectNode());
   }
 
-  SanskritObjectImpl(ObjectMapper objectMapper, ObjectNode node) {
-    this.objectMapper = objectMapper;
+  SanskritObjectImpl(ObjectMapperSupplier objectMapperSupplier, ObjectNode node) {
+    this.objectMapperSupplier = objectMapperSupplier;
     this.mappings = node;
   }
 
@@ -51,15 +50,15 @@ public class SanskritObjectImpl implements MutableSanskritObject {
 
   @Override
   public void setObject(String key, SanskritObject object) {
-    mappings.set(key, CopyUtils.makeCopy(objectMapper, object).mappings);
+    mappings.set(key, CopyUtils.makeCopy(objectMapperSupplier, object).mappings);
   }
 
   @Override
-  public <T> void setExternal(String key, T o) {
+  public <T> void setExternal(String key, T o, String version) {
     if (o instanceof SanskritObject) {
       setObject(key, (SanskritObject) o);
     } else {
-      mappings.set(key, o instanceof JsonNode ? (JsonNode) o : objectMapper.valueToTree(o));
+      mappings.set(key, o instanceof JsonNode ? (JsonNode) o : objectMapperSupplier.getObjectMapper(version).valueToTree(o));
     }
   }
 
@@ -75,15 +74,16 @@ public class SanskritObjectImpl implements MutableSanskritObject {
       } else if (value.isLong()) {
         visitor.setLong(key, value.longValue());
       } else if (value.isObject()) {
-        visitor.setObject(key, new SanskritObjectImpl(objectMapper, (ObjectNode) value));
+        visitor.setObject(key, new SanskritObjectImpl(objectMapperSupplier, (ObjectNode) value));
       } else {
-        visitor.setExternal(key, value);
+        // value IS always a JsonNode, so we do not care about the versioning for the mapping
+        visitor.setExternal(key, value, null);
       }
     }
   }
 
   @Override
-  public <T> T getObject(String key, Class<T> type) {
+  public <T> T getObject(String key, Class<T> type, String version) {
     JsonNode jsonNode = mappings.get(key);
     if (jsonNode == null) {
       return null;
@@ -92,7 +92,7 @@ public class SanskritObjectImpl implements MutableSanskritObject {
       return type.cast(jsonNode);
     }
     try {
-      return type.cast(objectMapper.treeToValue(jsonNode, type));
+      return type.cast(objectMapperSupplier.getObjectMapper(version).treeToValue(jsonNode, type));
     } catch (JsonProcessingException e) {
       // should never happen because the json in the append log
       // has already been serialized by sanskrit and cannot be updated by a user
@@ -120,7 +120,7 @@ public class SanskritObjectImpl implements MutableSanskritObject {
   public SanskritObject getObject(String key) {
     return Optional.ofNullable(mappings.get(key))
         .map(ObjectNode.class::cast)
-        .map(node -> new SanskritObjectImpl(objectMapper, node))
+        .map(node -> new SanskritObjectImpl(objectMapperSupplier, node))
         .orElse(null);
   }
 

@@ -81,7 +81,7 @@ public class FailoverIT extends AbstractHATest {
     // removes all random values
     JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
 
-    assertEquals(readJson("topology-after-failover.json"), actual);
+    assertEquals(actual.toPrettyString(), readJson("topology-after-failover.json"), actual);
   }
 
   @Test

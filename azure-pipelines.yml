@@ -24,31 +24,29 @@ resources:
       name: terracotta/terracotta
 
 jobs:
-- template: build-templates/maven-common.yml@templates
-  parameters:
-    jobName: Linux_Java_8
-    timeoutInMinutes: 180
-    options: -B -Djava.test.version=1.8
-    mavenGoals: 'clean verify'
-- template: build-templates/maven-common.yml@templates
-  parameters:
-    jobName: Linux_Java_11
-    timeoutInMinutes: 180
-    options: -B -Djava.test.version=1.11
-    mavenGoals: 'clean verify'
-- template: build-templates/maven-common.yml@templates
-  parameters:
-    jobName: Windows_Java_8
-    timeoutInMinutes: 180
-    vmImage: 'windows-latest'
-    options: -B -Djava.test.version=1.8
-    mavenGoals: 'clean verify'
-- template: build-templates/maven-common.yml@templates
-  parameters:
-    jobName: Windows_Java_11
-    timeoutInMinutes: 180
-    vmImage: 'windows-latest'
-    options: -B -Djava.test.version=1.11
-    mavenGoals: 'clean verify'
-
-
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Linux_Java_8
+      timeoutInMinutes: 180
+      options: -B -Djava.test.version=1.8
+      mavenGoals: 'clean verify'
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Linux_Java_11
+      timeoutInMinutes: 180
+      options: -B -Djava.test.version=1.11
+      mavenGoals: 'clean verify'
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Windows_Java_8
+      timeoutInMinutes: 180
+      vmImage: 'windows-latest'
+      options: -B -Djava.test.version=1.8
+      mavenGoals: 'clean verify'
+  - template: build-templates/maven-common.yml@templates
+    parameters:
+      jobName: Windows_Java_11
+      timeoutInMinutes: 180
+      vmImage: 'windows-latest'
+      options: -B -Djava.test.version=1.11
+      mavenGoals: 'clean verify'

@@ -45,7 +45,7 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // attach
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
     waitForPassive(1, 2);
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
@@ -68,7 +68,9 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
     activateCluster();
 
     // do a change requiring a restart
-    assertThat(configToolInvocation("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"), containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
+    assertThat(
+        invokeConfigTool("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"),
+        containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
 
     // start a second node
     startNode(1, 2);
@@ -76,13 +78,11 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
 
     // try to attach this node to the cluster
     assertThat(
-        configToolInvocation("attach", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)),
-        containsOutput("Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes. " +
-            "You can run the command with -f option to force the comment but at the risk of breaking this cluster configuration consistency. " +
-            "The newly added node will be restarted, but not the existing ones."));
+        () -> invokeConfigTool("attach", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)),
+        exceptionMatcher("Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes"));
 
     // try forcing the attach
-    assertThat(configToolInvocation("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(invokeConfigTool("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     waitForPassive(1, 2);
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));

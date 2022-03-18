@@ -21,8 +21,9 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.change.NomadChange;
 
@@ -46,9 +47,9 @@ public class NomadChangeJsonTest {
 
   ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
 
-  private Cluster cluster = Cluster.newDefaultCluster("myClusterName", new Stripe(Node.newDefaultNode("foo", "localhost", 9410)))
+  private final Cluster cluster = Testing.newTestCluster("myClusterName", new Stripe().addNode(Testing.newTestNode("foo", "localhost", 9410)))
       .setClientReconnectWindow(60, TimeUnit.SECONDS)
-      .setOffheapResource("foo", 1, MemoryUnit.GB);
+      .putOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Test
   public void test_ser_deser() throws IOException, URISyntaxException {
@@ -58,7 +59,8 @@ public class NomadChangeJsonTest {
         new MultiSettingNomadChange(
             SettingNomadChange.set(Applicability.node(1, "node1"), NODE_BACKUP_DIR, "backup"),
             SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "bar", "512MB")
-        )
+        ),
+        new FormatUpgradeNomadChange(Version.V1, Version.V2)
     };
 
     for (int i = 0; i < changes.length; i++) {
@@ -68,16 +70,8 @@ public class NomadChangeJsonTest {
       byte[] bytes = Files.readAllBytes(Paths.get(jsonFile.toURI()));
       String json = new String(bytes, StandardCharsets.UTF_8);
 
-      if (isWindows()) {
-        json = json.replace("/", "\\\\");
-      }
-
       assertThat(jsonFile.getPath(), objectMapper.valueToTree(change).toString(), is(equalTo(objectMapper.readTree(json).toString())));
       assertThat(jsonFile.getPath(), objectMapper.readValue(json, NomadChange.class), is(equalTo(change)));
     }
-  }
-
-  private static boolean isWindows() {
-    return System.getProperty("os.name").toLowerCase().startsWith("windows");
   }
 }

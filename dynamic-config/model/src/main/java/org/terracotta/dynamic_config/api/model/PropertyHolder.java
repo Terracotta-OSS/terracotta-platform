@@ -16,6 +16,9 @@
 package org.terracotta.dynamic_config.api.model;
 
 import java.util.Properties;
+import java.util.stream.Stream;
+
+import static org.terracotta.dynamic_config.api.model.Version.CURRENT;
 
 /**
  * @author Mathieu Carbou
@@ -23,5 +26,13 @@ import java.util.Properties;
 public interface PropertyHolder {
   Scope getScope();
 
-  Properties toProperties(boolean expanded, boolean includeDefaultValues);
+  default Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings) {
+    return toProperties(expanded, includeDefaultValues, includeHiddenSettings, CURRENT);
+  }
+
+  Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings, Version version);
+
+  default Stream<? extends PropertyHolder> descendants() {
+    return Stream.empty();
+  }
 }

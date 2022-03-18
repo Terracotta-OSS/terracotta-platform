@@ -20,17 +20,25 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Operation;
+import org.terracotta.dynamic_config.api.model.PropertyHolder;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.TreeSet;
 
 import static java.lang.System.lineSeparator;
 import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.Requirement.ALL_NODES_ONLINE;
+import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
+import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
+import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 
 public abstract class ConfigurationMutationCommand extends ConfigurationCommand {
 
@@ -46,9 +54,29 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     Cluster originalCluster = getUpcomingCluster(node);
     Cluster updatedCluster = originalCluster.clone();
 
+    // will keep track of the targeted nodes for the changes of a node setting
+    Collection<InetSocketAddress> missingTargetedNodes = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+    Collection<InetSocketAddress> nodesRequiringRestart = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+
     // applying the set/unset operation to the cluster in memory for validation
     for (Configuration c : configurations) {
-      c.apply(updatedCluster);
+      Collection<? extends PropertyHolder> targets = c.apply(updatedCluster);
+
+      // if the setting is a node setting, keep track of the node targeted by this configuration line
+      // remember: a node setting can be set using a cluster or stripe namespace to target several nodes at once
+      // Note: this validation is only for node-specific settings
+      if (c.getSetting().isScope(NODE)) {
+        targets.stream()
+            .map(Node.class::cast)
+            .map(Node::getAddress)
+            .filter(originalCluster::containsNode)
+            .forEach(addr -> {
+              missingTargetedNodes.add(addr);
+              if (c.getSetting().requires(NODE_RESTART)) {
+                nodesRequiringRestart.add(addr);
+              }
+            });
+      }
     }
     new ClusterValidator(updatedCluster).validate();
 
@@ -58,9 +86,15 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     logger.debug("Online nodes: {}", onlineNodes);
 
     boolean allOnlineNodesActivated = areAllNodesActivated(onlineNodes.keySet());
-
     if (allOnlineNodesActivated) {
       licenseValidation(node, updatedCluster);
+    }
+
+    // ensure that the nodes targeted by the set or unset command in the namespaces are all online so that they can validate the change
+    missingTargetedNodes.removeAll(onlineNodes.keySet());
+    if (!missingTargetedNodes.isEmpty()) {
+      throw new IllegalStateException("Some nodes that are targeted by the change are not reachable and thus cannot be validated. " +
+          "Please ensure these nodes are online, or remove them from the request: " + toString(missingTargetedNodes));
     }
 
     logger.debug("New configuration change(s) can be sent");
@@ -79,14 +113,21 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
       ensureActivesAreAllOnline(originalCluster, onlineNodes);
       logger.info("Applying new configuration change(s) to activated cluster: {}", toString(onlineNodes.keySet()));
       MultiSettingNomadChange changes = getNomadChanges(updatedCluster);
-      runConfigurationChange(onlineNodes, changes);
+      if (!changes.getChanges().isEmpty()) {
+        runConfigurationChange(updatedCluster, onlineNodes, changes);
+      }
 
       // do we need to restart to apply the changes ?
-      if (mustBeRestarted(node)) {
+      if (changes.getChanges().stream().map(SettingNomadChange::getSetting).anyMatch(setting -> setting.requires(CLUSTER_RESTART))) {
         logger.warn(lineSeparator() +
             "====================================================================" + lineSeparator() +
             "IMPORTANT: A restart of the cluster is required to apply the changes" + lineSeparator() +
-            "====================================================================" + lineSeparator() + lineSeparator());
+            "====================================================================" + lineSeparator());
+      } else if (!nodesRequiringRestart.isEmpty()) {
+        logger.warn(lineSeparator() +
+            "=======================================================================================" + lineSeparator() +
+            "IMPORTANT: A restart of nodes: " + toString(nodesRequiringRestart) + " is required to apply the changes" + lineSeparator() +
+            "=======================================================================================" + lineSeparator());
       }
 
     } else {
@@ -106,7 +147,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     // MultiSettingNomadChange will apply to whole change set given by the user as an atomic operation
     return new MultiSettingNomadChange(configurations.stream()
         .map(configuration -> {
-          configuration.validate(operation);
+          configuration.validate(clusterState, operation);
           return SettingNomadChange.fromConfiguration(configuration, operation, cluster);
         })
         .collect(toList()));

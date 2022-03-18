@@ -21,7 +21,6 @@ import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.PathConverter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
@@ -38,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.time.Instant;
 
 import static java.lang.System.lineSeparator;
 
@@ -63,7 +63,7 @@ public class ExportCommand extends RemoteCommand {
 
   @Override
   public void validate() {
-    if (outputFile != null && Files.exists(outputFile) && !Files.isRegularFile(outputFile)) {
+    if (outputFile != null && outputFile.toFile().exists() && !Files.isRegularFile(outputFile)) {
       throw new IllegalArgumentException(outputFile + " is not a file");
     }
     validateAddress(node);
@@ -79,12 +79,12 @@ public class ExportCommand extends RemoteCommand {
 
     } else {
       try {
-        if (Files.exists(outputFile)) {
+        if (outputFile.toFile().exists()) {
           logger.warn(outputFile + " already exists. Replacing this file.");
         } else {
           // try to create the parent directories
           Path dir = outputFile.toAbsolutePath().getParent();
-          if (dir != null && !Files.exists(dir)) {
+          if (dir != null && !dir.toFile().exists()) {
             Files.createDirectories(dir);
           }
         }
@@ -101,8 +101,7 @@ public class ExportCommand extends RemoteCommand {
     switch (outputFormat) {
       case JSON:
         try {
-          return objectMapperFactory.create()
-              .configure(SerializationFeature.INDENT_OUTPUT, true)
+          return objectMapperFactory.pretty().create()
               // shows optional values that are unset
               .setSerializationInclusion(JsonInclude.Include.ALWAYS)
               .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
@@ -111,15 +110,34 @@ public class ExportCommand extends RemoteCommand {
           throw new AssertionError(outputFormat);
         }
       case PROPERTIES:
-        Properties nonDefaults = cluster.toProperties(false, false);
+        // user-defined
+        Properties userDefined = cluster.toProperties(false, false, false);
+        // hidden ones
+        Properties hidden = cluster.toProperties(false, false, true);
+        hidden.keySet().removeAll(userDefined.keySet());
+        // defaulted values
+        Properties defaults = cluster.toProperties(false, true, false);
+        defaults.keySet().removeAll(userDefined.keySet());
+        // write them all
         try (StringWriter out = new StringWriter()) {
-          Props.store(out, nonDefaults, "Non-default configurations");
-          if (includeDefaultValues) {
-            Properties defaults = cluster.toProperties(false, true);
-            defaults.keySet().removeAll(nonDefaults.keySet());
+          // write a timestamp as a comment in the file header
+          out.write("# Timestamp of configuration export: ");
+          out.write(Instant.now().toString());
+          out.write(Props.EOL);
+          out.write("#");
+          out.write(Props.EOL);
+          
+          // this one is always non empty since we have at least failover-priority
+          Props.store(out, userDefined, "User-defined configurations");
+          if (!defaults.isEmpty() && includeDefaultValues) {
+            out.write(Props.EOL);
             Props.store(out, defaults, "Default configurations");
           }
-          return out.toString();
+          if (!hidden.isEmpty()) {
+            out.write(Props.EOL);
+            Props.store(out, hidden, "Hidden internal system configurations (only for informational, import and repair purposes): please do not alter, get, set, unset them.");
+          }
+          return out.toString().replace("\n", System.lineSeparator()); // to please the user. Props always writes the same way (\n).
         } catch (IOException e) {
           throw new UncheckedIOException(e);
         }

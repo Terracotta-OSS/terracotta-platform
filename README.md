@@ -22,7 +22,7 @@ This project is big and development and testing times are impacted by Maven buil
 So we need to be able several times per day to build the project *fast*.
 
 ```bash
-./mvnw clean install -DskipTests -Dfast
+./mvnw clean install -DskipTests -Dfast -Djava.build.vendor=openjdk
 ```
 
 The command should only do the minimal required steps:
@@ -54,7 +54,7 @@ Skip Galvan and Angela IT tests but run unit tests (*last ~2-3min*)
 Run everything, like on Azure. *Lasts ~1h20min*
 
 ```bash
-./mvnw clean verify
+./mvnw clean verify -Dtest.parallel.forks=1C -Djava.test.vendor=openjdk -Djava.build.vendor=openjdk
 ``` 
 
 ### Concurrent Maven executions
@@ -80,13 +80,13 @@ We can run the tests with one of the JVM on the toolchain but compilation is don
 Run a test with Java 11 (will look at your toolchains.xml file to fine the JVM):
 
 ```bash
-./mvnw verify -f management/testing/integration-tests/pom.xml -Dit.test=DiagnosticIT -Djava.test.version=1.11
+./mvnw verify -f management/testing/integration-tests/pom.xml -Dit.test=DiagnosticIT -Djava.test.version=1.11 -Dtest.parallel.forks=1C -Djava.test.vendor=openjdk -Djava.build.vendor=openjdk
 ```
 
 Run a test with Java 8 (will look at your toolchains.xml file to fine the JVM):
 
 ```bash
-./mvnw verify -f management/testing/integration-tests/pom.xml -Dit.test=DiagnosticIT -Djava.test.version=1.8
+./mvnw verify -f management/testing/integration-tests/pom.xml -Dit.test=DiagnosticIT -Djava.test.version=1.8 -Dtest.parallel.forks=1C -Djava.test.vendor=openjdk -Djava.build.vendor=openjdk
 ```
 
 Run a test with Java 8 (will look at your toolchains.xml file to fine the JVM):

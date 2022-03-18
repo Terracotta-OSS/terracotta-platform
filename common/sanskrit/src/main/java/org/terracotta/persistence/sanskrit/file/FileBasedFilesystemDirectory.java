@@ -70,7 +70,7 @@ public class FileBasedFilesystemDirectory implements FilesystemDirectory {
   public FileData getFileData(String filename) throws IOException {
     Path path = directory.resolve(filename);
 
-    if (!Files.exists(path)) {
+    if (!path.toFile().exists()) {
       return null;
     }
 
@@ -92,7 +92,7 @@ public class FileBasedFilesystemDirectory implements FilesystemDirectory {
   public void backup(String filename) throws IOException {
     String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
     Path path = directory.resolve(filename);
-    if (Files.exists(path)) {
+    if (path.toFile().exists()) {
       Path dest = path.resolveSibling("backup-" + filename + "-" + time);
       org.terracotta.utilities.io.Files.relocate(path, dest);
     }

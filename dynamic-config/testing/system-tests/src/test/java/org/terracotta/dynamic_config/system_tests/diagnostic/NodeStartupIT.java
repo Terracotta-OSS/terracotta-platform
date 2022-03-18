@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -77,7 +76,7 @@ public class NodeStartupIT extends DynamicConfigIT {
     startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
 
     waitForDiagnostic(1, 1);
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(equalTo("localhost")));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getHostname(), is(equalTo("localhost")));
   }
 
   @Test
@@ -150,7 +149,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidHostname() {
     try {
-      startNode(1, 1, "--hostname=:::", "-r", getNodeConfigDir(1, 1).toString());
+      startNode(1, 1, "-y", "availability", "--hostname=:::", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
       waitUntil(out.getLog(1, 1), containsLog("<address> specified in hostname=<address> must be a valid hostname or IP address"));
@@ -192,7 +191,7 @@ public class NodeStartupIT extends DynamicConfigIT {
         "--hostname", "%c"
     );
     waitForDiagnostic(1, 1);
-    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getNodeHostname(), is(InetAddress.getLocalHost().getCanonicalHostName()));
+    assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getHostname(), is(InetAddress.getLocalHost().getCanonicalHostName()));
   }
 
   @Test
@@ -229,10 +228,10 @@ public class NodeStartupIT extends DynamicConfigIT {
     Collection<String> defaultArgs = new ArrayList<>(Arrays.asList(
         "--failover-priority", "availability",
         "--hostname", "localhost",
-        "--log-dir", getNodePath(1, 1).resolve("logs").toString(),
-        "--backup-dir", getNodePath(1, 1).resolve("backup").toString(),
-        "--metadata-dir", getNodePath(1, 1).resolve("metadata").toString(),
-        "--data-dirs", "main:" + getNodePath(1, 1).resolve("data-dir").toString()
+        "--log-dir", getNodePath(1, 1).append("/logs").toString(),
+        "--backup-dir", getNodePath(1, 1).append("/backup").toString(),
+        "--metadata-dir", getNodePath(1, 1).append("/metadata").toString(),
+        "--data-dirs", "main:" + getNodePath(1, 1).append("/data-dir").toString()
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {

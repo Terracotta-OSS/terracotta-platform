@@ -21,6 +21,7 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -49,7 +50,7 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverFail(server, reason);
     }
@@ -59,6 +60,13 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
+    }
+  }
+
+  @Override
+  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
+    for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
+      changeResultReceiver.discoverClusterDesynchronized(lastChangeUuids);
     }
   }
 
@@ -119,7 +127,7 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
+  public void prepareFail(InetSocketAddress server, Throwable reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.prepareFail(server, reason);
     }
@@ -161,7 +169,7 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, String reason) {
+  public void commitFail(InetSocketAddress server, Throwable reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.commitFail(server, reason);
     }
@@ -196,7 +204,7 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, String reason) {
+  public void rollbackFail(InetSocketAddress server, Throwable reason) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
       changeResultReceiver.rollbackFail(server, reason);
     }

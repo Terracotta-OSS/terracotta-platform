@@ -18,17 +18,13 @@ package org.terracotta.dynamic_config.api.model;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
-import java.nio.file.Paths;
 
-import static java.io.File.separator;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -36,38 +32,25 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class NodeTest {
 
-  Node node = Node.newDefaultNode("node1", "localhost", 9410)
-      .setDataDir("data", Paths.get("data"))
-      .setNodeBackupDir(Paths.get("backup"))
-      .setNodeBindAddress("0.0.0.0")
-      .setNodeGroupBindAddress("0.0.0.0")
-      .setNodeGroupPort(9430)
-      .setNodeLogDir(Paths.get("log"))
-      .setNodeMetadataDir(Paths.get("metadata"))
-      .setTcProperty("key", "val")
-      .setSecurityAuditLogDir(Paths.get("audit"))
-      .setSecurityDir(Paths.get("sec"));
+  Node node = Testing.newTestNode("node1", "localhost", 9410)
+      .putDataDir("data", RawPath.valueOf("data"))
+      .setBackupDir(RawPath.valueOf("backup"))
+      .setBindAddress("0.0.0.0")
+      .setGroupBindAddress("0.0.0.0")
+      .setGroupPort(9430)
+      .setLogDir(RawPath.valueOf("log"))
+      .setMetadataDir(RawPath.valueOf("metadata"))
+      .putTcProperty("key", "val")
+      .setSecurityAuditLogDir(RawPath.valueOf("audit"))
+      .setSecurityDir(RawPath.valueOf("sec"));
 
-  Node node1 = Node.newDefaultNode("node1", "localhost", 9410)
-      .setDataDir("data", Paths.get("data"))
-      .setNodeBackupDir(Paths.get("backup"))
-      .setNodeBindAddress("0.0.0.0")
-      .setNodeGroupBindAddress("0.0.0.0")
-      .setNodeGroupPort(9430)
-      .setNodeLogDir(Paths.get("log"))
-      .setNodeMetadataDir(Paths.get("metadata"))
-      .setSecurityAuditLogDir(Paths.get("audit"));
-
-  Node node2 = Node.newDefaultNode("node2", "localhost", 9411)
-      .setDataDir("data", Paths.get("/data/cache2"));
-
-  Node node3 = Node.newDefaultNode("node3", "localhost", 9410)
-      .setNodeGroupPort(9430)
-      .setNodeBindAddress("0.0.0.0")
-      .setNodeGroupBindAddress("0.0.0.0")
-      .setNodeMetadataDir(Paths.get("%H" + separator + "terracotta" + separator + "metadata"))
-      .setNodeLogDir(Paths.get("%H" + separator + "terracotta" + separator + "logs"))
-      .setDataDir("main", Paths.get("%H" + separator + "terracotta" + separator + "user-data" + separator + "main"));
+  Node node3 = Testing.newTestNode("node3", "localhost", 9410)
+      .setGroupPort(9430)
+      .setBindAddress("0.0.0.0")
+      .setGroupBindAddress("0.0.0.0")
+      .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+      .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+      .putDataDir("main", RawPath.valueOf("%H/terracotta/user-data/main"));
 
   @Test
   public void test_clone() {
@@ -77,111 +60,75 @@ public class NodeTest {
   }
 
   @Test
-  public void test_fillDefaults() {
-    assertThat(new Node().getNodeName(), is(nullValue()));
-    assertThat(newDefaultNode(null).getNodeName(), is(not(nullValue())));
-    assertThat(newDefaultNode("localhost").setNodeName(null), is(equalTo(node3.setNodeName(null))));
-  }
-
-  @Test
   public void test_getNodeInternalAddress() {
     assertThat(
-        () -> new Node().getNodeInternalAddress(),
+        () -> new Node().getInternalAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(equalTo("Node null is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> newDefaultNode(null).getNodeInternalAddress(),
+        () -> new Node().setName("node1").getInternalAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> newDefaultNode("%h").getNodeInternalAddress(),
+        () -> new Node().setName("node1").setPort(9410).getInternalAddress(),
+        is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: null:9410")))));
+
+    assertThat(
+        () -> newTestNode("node1", "%h").getInternalAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: %h:9410")))));
   }
 
   @Test
   public void test_getNodePublicAddress() {
     assertThat(
-        newDefaultNode("localhost").getNodePublicAddress().isPresent(),
+        newTestNode("node1", "localhost").getPublicAddress().isPresent(),
         is(false));
     assertThat(
-        newDefaultNode("localhost").setNodePublicHostname("foo").getNodePublicAddress().isPresent(),
+        newTestNode("node1", "localhost").setPublicHostname("foo").getPublicAddress().isPresent(),
         is(false));
     assertThat(
-        newDefaultNode("localhost").setNodePublicPort(1234).getNodePublicAddress().isPresent(),
+        newTestNode("node1", "localhost").setPublicPort(1234).getPublicAddress().isPresent(),
         is(false));
 
     assertThat(
-        () -> newDefaultNode("localhost").setNodePublicHostname("%h").setNodePublicPort(1234).getNodePublicAddress(),
+        () -> newTestNode("node1", "localhost").setPublicHostname("%h").setPublicPort(1234).getPublicAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with public address: %h:1234")))));
 
     assertThat(
-        newDefaultNode("localhost").setNodePublicHostname("foo").setNodePublicPort(1234).getNodePublicAddress().get(),
+        newTestNode("node1", "localhost").setPublicHostname("foo").setPublicPort(1234).getPublicAddress().get(),
         is(equalTo(InetSocketAddress.createUnresolved("foo", 1234))));
   }
 
   @Test
   public void test_getNodeAddress() {
     assertThat(
-        newDefaultNode("localhost").getNodeAddress(),
+        newTestNode("node1", "localhost").getAddress(),
         is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
     assertThat(
-        newDefaultNode("localhost").setNodePublicHostname("foo").getNodeAddress(),
+        newTestNode("node1", "localhost").setPublicHostname("foo").getAddress(),
         is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
     assertThat(
-        newDefaultNode("localhost").setNodePublicPort(1234).getNodeAddress(),
+        newTestNode("node1", "localhost").setPublicPort(1234).getAddress(),
         is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
     assertThat(
-        newDefaultNode("localhost").setNodePublicHostname("foo").setNodePublicPort(1234).getNodeAddress(),
+        newTestNode("node1", "localhost").setPublicHostname("foo").setPublicPort(1234).getAddress(),
         is(equalTo(InetSocketAddress.createUnresolved("foo", 1234))));
   }
 
   @Test
   public void test_hasAddress() {
     assertThat(
-        newDefaultNode("localhost").hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),
+        newTestNode("node1", "localhost").hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),
         is(true));
     assertThat(
-        newDefaultNode("localhost")
-            .setNodePublicHostname("foo").setNodePublicPort(1234)
+        newTestNode("node1", "localhost")
+            .setPublicHostname("foo").setPublicPort(1234)
             .hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),
         is(true));
     assertThat(
-        newDefaultNode("localhost")
-            .setNodePublicHostname("foo").setNodePublicPort(1234)
+        newTestNode("node1", "localhost")
+            .setPublicHostname("foo").setPublicPort(1234)
             .hasAddress(InetSocketAddress.createUnresolved("foo", 1234)),
         is(true));
-  }
-
-  @Test
-  public void test_cloneForAttachment() {
-    // attaching a non-secured node to secured nodes
-    node1.setSecurityDir(Paths.get("sec"));
-    assertThat(
-        () -> node2.cloneForAttachment(node1),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9411 must be started with a security directory.")))));
-
-    // attaching a secured node to a non-secured nodes
-    node1.setSecurityDir(null);
-    node2.setSecurityDir(Paths.get("sec"));
-    Node clone = node2.cloneForAttachment(node1);
-    assertThat(clone.getSecurityDir(), is(nullValue()));
-
-    node1.setDataDir("other", Paths.get("other"));
-    assertThat(
-        () -> node2.cloneForAttachment(node1),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9411 must declare the following data directories: other.")))));
-    node1.removeDataDir("other");
-
-    node2.setDataDir("other", Paths.get("other"));
-    assertThat(
-        () -> node2.cloneForAttachment(node1),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Node localhost:9411 must not declare the following data directories: other.")))));
-    node2.removeDataDir("other");
-
-    // attaching
-    node1.setSecurityDir(null);
-    node2.setSecurityDir(Paths.get("Sec2"));
-    clone = node2.cloneForAttachment(node1);
-    assertThat(clone.getSecurityDir(), is(equalTo(null)));
   }
 }

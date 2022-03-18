@@ -15,7 +15,6 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.terracotta.persistence.sanskrit.change.AddLongSanskritChange;
 import org.terracotta.persistence.sanskrit.change.AddObjectSanskritChange;
 import org.terracotta.persistence.sanskrit.change.AddStringSanskritChange;
@@ -28,10 +27,10 @@ import static org.terracotta.persistence.sanskrit.Owner.own;
 
 public interface Sanskrit extends AutoCloseable {
 
-  static Sanskrit init(FilesystemDirectory filesystemDirectory, ObjectMapper objectMapper) throws SanskritException {
+  static Sanskrit init(FilesystemDirectory filesystemDirectory, ObjectMapperSupplier objectMapperSupplier) throws SanskritException {
     try (
         Owner<DirectoryLock, IOException> lockOwner = own(filesystemDirectory.lock(), IOException.class);
-        Owner<SanskritImpl, SanskritException> sanskritOwner = own(new SanskritImpl(filesystemDirectory, objectMapper), SanskritException.class)
+        Owner<SanskritImpl, SanskritException> sanskritOwner = own(new SanskritImpl(filesystemDirectory, objectMapperSupplier), SanskritException.class)
     ) {
       return new LockReleasingSanskrit(
           new PersistentFailSanskrit(

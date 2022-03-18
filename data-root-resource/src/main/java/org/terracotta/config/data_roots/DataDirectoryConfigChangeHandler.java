@@ -30,6 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+import static java.util.stream.Collectors.toMap;
+
 /**
  * Handles dynamic data-directory additions
  */
@@ -48,14 +50,15 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
 
   @Override
   public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
-    if (change.getValue() == null) {
-      throw new InvalidConfigChangeException("Invalid change: " + change);
+    if (!change.getValue().isPresent()) {
+      throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
-    Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs();
-    LOGGER.trace("Validating change: {} against node data directories: {}", change, dataDirs);
+
+    Map<String, Path> dataDirs = baseConfig.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().toPath()));
+    LOGGER.debug("Validating change: {} against node data directories: {}", change, dataDirs);
 
     String dataDirectoryName = change.getKey();
-    Path dataDirectoryPath = Paths.get(change.getValue());
+    Path dataDirectoryPath = Paths.get(change.getValue().get());
 
     if (dataDirs.containsKey(dataDirectoryName)) {
       throw new InvalidConfigChangeException("A data directory with name: " + dataDirectoryName + " already exists");
@@ -70,14 +73,14 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
     try {
       ensureDirectory(dataDirectoryPath);
     } catch (IOException e) {
-      throw new InvalidConfigChangeException("Unable to create data directory: " + dataDirectoryName + ": " + e.getMessage(), e);
+      throw new InvalidConfigChangeException(e.toString(), e);
     }
   }
 
   @Override
   public void apply(Configuration change) {
     String dataDirectoryName = change.getKey();
-    String dataDirectoryPath = change.getValue();
+    String dataDirectoryPath = change.getValue().get();
     dataDirectoriesConfig.addDataDirectory(dataDirectoryName, dataDirectoryPath);
   }
 
@@ -93,11 +96,11 @@ public class DataDirectoryConfigChangeHandler implements ConfigChangeHandler {
 
   private void ensureDirectory(Path directory) throws IOException, InvalidConfigChangeException {
     directory = compute(directory);
-    if (!Files.exists(directory)) {
+    if (!directory.toFile().exists()) {
       Files.createDirectories(directory);
     } else {
       if (!Files.isDirectory(directory)) {
-        throw new InvalidConfigChangeException("A file with configured data directory: " + directory + " already exists!");
+        throw new InvalidConfigChangeException(directory.getFileName() + " exists under " + directory.getParent() + " but is not a directory");
       }
     }
   }

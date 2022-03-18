@@ -42,18 +42,18 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
 
   @Override
   public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
-    if (change.getValue() == null) {
-      throw new InvalidConfigChangeException("Invalid change: " + change);
+    if (!change.getValue().isPresent()) {
+      throw new InvalidConfigChangeException("Operation not supported");//unset not supported
     }
 
     try {
-      Measure<MemoryUnit> measure = Measure.parse(change.getValue(), MemoryUnit.class);
+      Measure<MemoryUnit> measure = Measure.parse(change.getValue().get(), MemoryUnit.class);
       String name = change.getKey();
       long newValue = measure.getQuantity(MemoryUnit.B);
-      Measure<MemoryUnit> existing = baseConfig.getCluster().getOffheapResources().get(name);
+      Measure<MemoryUnit> existing = baseConfig.getCluster().getOffheapResources().orDefault().get(name);
       if (existing != null) {
         if (newValue <= existing.getQuantity(MemoryUnit.B)) {
-          throw new InvalidConfigChangeException("New offheap-resource size: " + change.getValue() +
+          throw new InvalidConfigChangeException("New offheap-resource size: " + change.getValue().get() +
               " should be larger than the old size: " + existing);
         }
       }
@@ -64,7 +64,7 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
       LOGGER.debug("Validating the update cluster: {} against the license", updatedCluster);
       topologyService.validateAgainstLicense(updatedCluster);
     } catch (RuntimeException e) {
-      throw new InvalidConfigChangeException(e.getMessage(), e);
+      throw new InvalidConfigChangeException(e.toString(), e);
     }
   }
 
@@ -72,11 +72,11 @@ public class OffheapResourceConfigChangeHandler implements ConfigChangeHandler {
   public void apply(Configuration change) {
     OffHeapResourceIdentifier identifier = OffHeapResourceIdentifier.identifier(change.getKey());
     OffHeapResource offHeapResource = offHeapResources.getOffHeapResource(identifier);
-    Measure<MemoryUnit> measure = Measure.parse(change.getValue(), MemoryUnit.class);
+    Measure<MemoryUnit> measure = Measure.parse(change.getValue().get(), MemoryUnit.class);
 
     if (offHeapResource == null) {
       offHeapResources.addOffHeapResource(identifier, measure.getQuantity(MemoryUnit.B));
-      LOGGER.debug("Added offheap-resource: {} with capacity: {}", change.getKey(), change.getValue());
+      LOGGER.debug("Added offheap-resource: {} with capacity: {}", change.getKey(), change.getValue().get());
     } else {
       offHeapResource.setCapacity(measure.getQuantity(MemoryUnit.B));
       LOGGER.debug("Set the capacity of offheap-resource: {} to: {}", change.getKey(), measure);

@@ -18,15 +18,18 @@ package org.terracotta.dynamic_config.api.model.nomad;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
-import org.terracotta.dynamic_config.api.model.Requirement;
+import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
 
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
+import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
+import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
 
 /**
- * Nomad change that supports any dynamic config change (see Cluster-tool.adoc)
+ * Nomad change that supports any dynamic config change
  *
  * @author Mathieu Carbou
  */
@@ -38,10 +41,10 @@ public class SettingNomadChange extends FilteredNomadChange {
   private final String value;
 
   protected SettingNomadChange(Applicability applicability,
-                             Operation operation,
-                             Setting setting,
-                             String name,
-                             String value) {
+                               Operation operation,
+                               Setting setting,
+                               String name,
+                               String value) {
     super(applicability);
     this.operation = requireNonNull(operation);
     this.setting = requireNonNull(setting);
@@ -55,7 +58,7 @@ public class SettingNomadChange extends FilteredNomadChange {
     String s = operation == Operation.SET ?
         name == null ? (operation + " " + setting + "=" + value) : (operation + " " + setting + "." + name + "=" + value) :
         name == null ? (operation + " " + setting) : (operation + " " + setting + "." + name);
-    switch (getApplicability().getScope()) {
+    switch (getApplicability().getLevel()) {
       case STRIPE:
         return s + " (stripe ID: " + getApplicability().getStripeId().getAsInt() + ")";
       case NODE:
@@ -69,14 +72,26 @@ public class SettingNomadChange extends FilteredNomadChange {
   public Cluster apply(Cluster original) {
     Cluster updated = original.clone();
     Configuration configuration = toConfiguration(updated);
-    configuration.validate(getOperation());
+    configuration.validate(ACTIVATED, getOperation());
     configuration.apply(updated);
     return updated;
   }
 
   @Override
-  public boolean canApplyAtRuntime() {
-    return !getSetting().requires(Requirement.RESTART);
+  public boolean canApplyAtRuntime(int currentStripeId, String currentNodeName) {
+    Setting setting = getSetting();
+    boolean requiresClusterRestart = setting.requires(CLUSTER_RESTART);
+    boolean requiresThisNodeRestart = setting.requires(NODE_RESTART) && getSetting().isScope(Scope.NODE) && applicableTo(currentStripeId, currentNodeName);
+    return !requiresClusterRestart && !requiresThisNodeRestart;
+  }
+
+  private boolean applicableTo(int currentStripeId, String currentNodeName) {
+    switch (getApplicability().getLevel()) {
+      case CLUSTER: return true;
+      case STRIPE: return getApplicability().getStripeId().getAsInt() == currentStripeId;
+      case NODE: return getApplicability().getStripeId().getAsInt() == currentStripeId && Objects.equals(getApplicability().getNodeName(), currentNodeName);
+      default: throw new AssertionError(getApplicability().getLevel());
+    }
   }
 
   public String getName() {
@@ -140,7 +155,7 @@ public class SettingNomadChange extends FilteredNomadChange {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   private String namespace(Cluster cluster) {
-    switch (getApplicability().getScope()) {
+    switch (getApplicability().getLevel()) {
       case CLUSTER:
         return "";
       case STRIPE: {
@@ -161,7 +176,7 @@ public class SettingNomadChange extends FilteredNomadChange {
         return "stripe." + stripeId + ".node." + nodeId + ".";
       }
       default:
-        throw new AssertionError(getApplicability().getScope());
+        throw new AssertionError(getApplicability().getLevel());
     }
   }
 
@@ -185,7 +200,7 @@ public class SettingNomadChange extends FilteredNomadChange {
     Applicability applicability = toApplicability(configuration, cluster);
     switch (operation) {
       case SET:
-        return SettingNomadChange.set(applicability, configuration.getSetting(), configuration.getKey(), configuration.getValue());
+        return SettingNomadChange.set(applicability, configuration.getSetting(), configuration.getKey(), configuration.getValue().get());
       case UNSET:
         return SettingNomadChange.unset(applicability, configuration.getSetting(), configuration.getKey());
       default:
@@ -195,15 +210,15 @@ public class SettingNomadChange extends FilteredNomadChange {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   private static Applicability toApplicability(Configuration configuration, Cluster cluster) {
-    switch (configuration.getScope()) {
+    switch (configuration.getLevel()) {
       case NODE:
-        return Applicability.node(configuration.getStripeId(), cluster.getNode(configuration.getStripeId(), configuration.getNodeId()).get().getNodeName());
+        return Applicability.node(configuration.getStripeId(), cluster.getNode(configuration.getStripeId(), configuration.getNodeId()).get().getName());
       case STRIPE:
         return Applicability.stripe(configuration.getStripeId());
       case CLUSTER:
         return Applicability.cluster();
       default:
-        throw new AssertionError(configuration.getScope());
+        throw new AssertionError(configuration.getLevel());
     }
   }
 }

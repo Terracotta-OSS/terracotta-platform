@@ -134,58 +134,6 @@
         </executions>
       </plugin>
       <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-logging-config</id>
-            <phase>package</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/angela/kits/${project.version}/platform-kit-${project.version}/server/lib</outputDirectory>
-              <overwrite>true</overwrite>
-              <resources>
-                <resource>
-                  <directory>${project.basedir}/src/test/resources</directory>
-                  <includes>
-                    <include>logback-ext.xml</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <!--
-        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section.
-        This section is used when running tests from Maven CLI
-        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
-      -->
-      <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
-        <configuration>
-          <forkCount>${test.parallel.forks}</forkCount>
-          <systemPropertyVariables>
-            <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
-            <angela.skipUninstall>true</angela.skipUninstall>
-            <angela.skipKitInstall>true</angela.skipKitInstall>
-            <angela.tsa.fullLogging>true</angela.tsa.fullLogging>
-            <angela.distribution>${project.version}</angela.distribution>
-            <angela.kitInstallationDir>${project.build.directory}/angela/kits/${project.version}/platform-kit-${project.version}</angela.kitInstallationDir>
-            <angela.java.vendor/> <!--empty to allow any vendor-->
-            <angela.java.version>${java.test.version}</angela.java.version>
-            <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-      <!--
-        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section
-        This section is used when running tests from the IDE
-        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
-      -->
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>

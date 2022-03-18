@@ -30,13 +30,11 @@ import org.terracotta.lease.service.config.LeaseConfiguration;
 public class LeaseDynamicConfigExtension implements DynamicConfigExtension {
   @Override
   public void configure(Registrar registrar, PlatformConfiguration platformConfiguration) {
-    TopologyService topologyService = platformConfiguration.getExtendedConfiguration(TopologyService.class).iterator().next();
-    ConfigChangeHandlerManager configChangeHandlerManager = platformConfiguration.getExtendedConfiguration(ConfigChangeHandlerManager.class).iterator().next();
+    TopologyService topologyService = findService(platformConfiguration, TopologyService.class);
+    ConfigChangeHandlerManager configChangeHandlerManager = findService(platformConfiguration, ConfigChangeHandlerManager.class);
 
     NodeContext nodeContext = topologyService.getRuntimeNodeContext();
-
-    LeaseConfiguration leaseConfiguration = new LeaseConfiguration(nodeContext.getCluster().getClientLeaseDuration().getQuantity(TimeUnit.MILLISECONDS));
-
+    LeaseConfiguration leaseConfiguration = new LeaseConfiguration(nodeContext.getCluster().getClientLeaseDuration().orDefault().getQuantity(TimeUnit.MILLISECONDS));
     configChangeHandlerManager.set(Setting.CLIENT_LEASE_DURATION, new LeaseConfigChangeHandler(leaseConfiguration));
 
     registrar.registerServiceProviderConfiguration(leaseConfiguration);

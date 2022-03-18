@@ -24,10 +24,12 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -54,6 +56,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -100,16 +103,15 @@ public class NomadManager<T> {
   public void runClusterActivation(Collection<InetSocketAddress> nodes, Cluster cluster, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to activate cluster: {}", cluster.toShapeString());
     try (NomadClient<T> client = createDiagnosticNomadClient(new ArrayList<>(nodes))) {
-      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), new ClusterActivationNomadChange(cluster));
+      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), wrapNomadChange(new ClusterActivationNomadChange(cluster)));
     }
   }
 
-  public void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
+  public void runConfigurationChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, onlineNodes);
     checkServerStates(onlineNodes);
-    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(onlineNodes);
-    try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
-      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), changes);
+    try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {
+      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), wrapNomadChange(changes));
     }
   }
 
@@ -122,14 +124,22 @@ public class NomadManager<T> {
     }
   }
 
-  public void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, NodeNomadChange change, ChangeResultReceiver<T> results) {
+  public void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, TopologyNomadChange change, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to apply topology change: {} on cluster {}", change, destinationCluster);
     checkServerStates(onlineNodes);
-    try (NomadClient<T> client = createTopologyChangeNomadClient(destinationCluster, onlineNodes)) {
-      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), change);
+    try (NomadClient<T> client = createBiChannelNomadClient(destinationCluster, onlineNodes)) {
+      client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), wrapNomadChange(change));
     }
   }
 
+
+  protected DynamicConfigNomadChange wrapNomadChange(DynamicConfigNomadChange change) {
+    return change;
+  }
+
+  /**
+   * create a nomad client that is preparing through diagnostic port and committing through diagnostic port
+   */
   private NomadClient<T> createDiagnosticNomadClient(List<InetSocketAddress> expectedOnlineNodes) {
     LOGGER.trace("createDiagnosticNomadClient({})", expectedOnlineNodes);
     // create normal diagnostic endpoints
@@ -141,14 +151,19 @@ public class NomadManager<T> {
     return new NomadClient<>(nomadEndpoints, host, user, clock);
   }
 
-  private NomadClient<T> createTopologyChangeNomadClient(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
-    LOGGER.trace("createPassiveChangeNomadClient({}, {})", destinationCluster, onlineNodes);
+  /**
+   * create a nomad client that is preparing through diagnostic port and committing through entity channel
+   */
+  private NomadClient<T> createBiChannelNomadClient(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+    LOGGER.trace("createBiChannelNomadClient({}, {})", destinationCluster, onlineNodes);
 
     checkServerStates(onlineNodes);
 
     // collect all online addresses by stripe
     List<List<InetSocketAddress>> onlineNodesPerStripe = destinationCluster.getStripes().stream().map(stripe -> {
-      List<InetSocketAddress> stripeNodes = new ArrayList<>(stripe.getNodeAddresses());
+      List<InetSocketAddress> stripeNodes = new ArrayList<>();
+      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getInternalAddress).collect(toList()));
+      stripeNodes.addAll(stripe.getNodes().stream().map(Node::getPublicAddress).filter(Optional::isPresent).map(Optional::get).collect(toList()));
       stripeNodes.retainAll(onlineNodes.keySet());
       return stripeNodes;
     }).collect(toList());

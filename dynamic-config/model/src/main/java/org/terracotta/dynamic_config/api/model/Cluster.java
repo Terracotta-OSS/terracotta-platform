@@ -36,30 +36,42 @@ import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
+import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
+import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
+import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
+import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
+import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST;
 
 public class Cluster implements Cloneable, PropertyHolder {
-  private final List<Stripe> stripes;
+  private List<Stripe> stripes;
 
   private String name;
+  private LockContext lockContext;
   private Measure<TimeUnit> clientReconnectWindow;
   private Measure<TimeUnit> clientLeaseDuration;
   private String securityAuthc;
-  private boolean securitySslTls = Boolean.parseBoolean(Setting.SECURITY_SSL_TLS.getDefaultValue());
-  private boolean securityWhitelist = Boolean.parseBoolean(Setting.SECURITY_WHITELIST.getDefaultValue());
-  private FailoverPriority failoverPriority = FailoverPriority.availability();
-  private final Map<String, Measure<MemoryUnit>> offheapResources = new ConcurrentHashMap<>();
+  private Boolean securitySslTls;
+  private Boolean securityWhitelist;
+  private FailoverPriority failoverPriority;
+  private Map<String, Measure<MemoryUnit>> offheapResources;
 
-  protected Cluster(String name,
-                    List<Stripe> stripes) {
+  public Cluster(List<Stripe> stripes) {
     this.stripes = new CopyOnWriteArrayList<>(requireNonNull(stripes));
-    this.name = name;
+  }
+
+  public Cluster(Stripe... stripes) {
+    this(Arrays.asList(stripes));
   }
 
   @Override
@@ -67,32 +79,36 @@ public class Cluster implements Cloneable, PropertyHolder {
     return CLUSTER;
   }
 
-  public String getSecurityAuthc() {
-    return securityAuthc;
+  public OptionalConfig<String> getName() {
+    return OptionalConfig.of(CLUSTER_NAME, name);
   }
 
-  public boolean isSecuritySslTls() {
-    return securitySslTls;
+  public OptionalConfig<String> getSecurityAuthc() {
+    return OptionalConfig.of(SECURITY_AUTHC, securityAuthc);
   }
 
-  public boolean isSecurityWhitelist() {
-    return securityWhitelist;
+  public OptionalConfig<Boolean> getSecuritySslTls() {
+    return OptionalConfig.of(SECURITY_SSL_TLS, securitySslTls);
+  }
+
+  public OptionalConfig<Boolean> getSecurityWhitelist() {
+    return OptionalConfig.of(SECURITY_WHITELIST, securityWhitelist);
   }
 
   public FailoverPriority getFailoverPriority() {
     return failoverPriority;
   }
 
-  public Measure<TimeUnit> getClientReconnectWindow() {
-    return clientReconnectWindow;
+  public OptionalConfig<Measure<TimeUnit>> getClientReconnectWindow() {
+    return OptionalConfig.of(CLIENT_RECONNECT_WINDOW, clientReconnectWindow);
   }
 
-  public Measure<TimeUnit> getClientLeaseDuration() {
-    return clientLeaseDuration;
+  public OptionalConfig<Measure<TimeUnit>> getClientLeaseDuration() {
+    return OptionalConfig.of(CLIENT_LEASE_DURATION, clientLeaseDuration);
   }
 
-  public Map<String, Measure<MemoryUnit>> getOffheapResources() {
-    return Collections.unmodifiableMap(offheapResources);
+  public OptionalConfig<Map<String, Measure<MemoryUnit>>> getOffheapResources() {
+    return OptionalConfig.of(OFFHEAP_RESOURCES, offheapResources);
   }
 
   public Cluster setSecurityAuthc(String securityAuthc) {
@@ -100,18 +116,18 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public Cluster setSecuritySslTls(boolean securitySslTls) {
+  public Cluster setSecuritySslTls(Boolean securitySslTls) {
     this.securitySslTls = securitySslTls;
     return this;
   }
 
-  public Cluster setSecurityWhitelist(boolean securityWhitelist) {
+  public Cluster setSecurityWhitelist(Boolean securityWhitelist) {
     this.securityWhitelist = securityWhitelist;
     return this;
   }
 
   public Cluster setFailoverPriority(FailoverPriority failoverPriority) {
-    this.failoverPriority = failoverPriority;
+    this.failoverPriority = requireNonNull(failoverPriority);
     return this;
   }
 
@@ -141,27 +157,50 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public Cluster setOffheapResource(String name, long quantity, MemoryUnit memoryUnit) {
-    return setOffheapResource(name, Measure.of(quantity, memoryUnit));
+  public Cluster putOffheapResource(String name, long quantity, MemoryUnit memoryUnit) {
+    return putOffheapResource(name, Measure.of(quantity, memoryUnit));
   }
 
-  public Cluster setOffheapResource(String name, Measure<MemoryUnit> measure) {
-    this.offheapResources.put(name, measure);
-    return this;
+  public Cluster putOffheapResource(String name, Measure<MemoryUnit> measure) {
+    return putOffheapResources(singletonMap(name, measure));
   }
 
-  public Cluster setOffheapResources(Map<String, Measure<MemoryUnit>> offheapResources) {
+  public Cluster putOffheapResources(Map<String, Measure<MemoryUnit>> offheapResources) {
+    if (this.offheapResources == null) {
+      setOffheapResources(Optional.ofNullable(OFFHEAP_RESOURCES.<Map<String, Measure<MemoryUnit>>>getDefaultValue()).orElse(emptyMap()));
+    }
     this.offheapResources.putAll(offheapResources);
     return this;
   }
 
-  public Cluster removeOffheapResource(String key) {
-    this.offheapResources.remove(key);
+  public Cluster setOffheapResources(Map<String, Measure<MemoryUnit>> offheapResources) {
+    this.offheapResources = offheapResources == null ? null : new ConcurrentHashMap<>(offheapResources);
     return this;
   }
 
-  public Cluster clearOffheapResources() {
-    this.offheapResources.clear();
+  public Cluster removeOffheapResource(String key) {
+    if (this.offheapResources == null) {
+      // this code is handling the removal of any default value set
+      Map<String, Measure<MemoryUnit>> def = OFFHEAP_RESOURCES.getDefaultValue();
+      if (def != null && def.containsKey(key)) {
+        setOffheapResources(def);
+      }
+    }
+    if (this.offheapResources != null) {
+      this.offheapResources.remove(key);
+    }
+    return this;
+  }
+
+  public Cluster unsetOffheapResources() {
+    if (this.offheapResources != null) {
+      setOffheapResources(emptyMap());
+    } else {
+      Map<String, Measure<MemoryUnit>> def = OFFHEAP_RESOURCES.getDefaultValue();
+      if (def != null && !def.isEmpty()) {
+        setOffheapResources(emptyMap());
+      }
+    }
     return this;
   }
 
@@ -169,13 +208,14 @@ public class Cluster implements Cloneable, PropertyHolder {
     return Collections.unmodifiableList(stripes);
   }
 
-  public Cluster addStripe(Stripe stripe) {
-    stripes.add(stripe);
+  public Cluster setStripes(List<Stripe> stripes) {
+    this.stripes = new CopyOnWriteArrayList<>(stripes);
     return this;
   }
 
-  public String getName() {
-    return name;
+  public Cluster addStripe(Stripe stripe) {
+    stripes.add(stripe);
+    return this;
   }
 
   public Cluster setName(String name) {
@@ -212,8 +252,9 @@ public class Cluster implements Cloneable, PropertyHolder {
     Cluster that = (Cluster) o;
     return Objects.equals(stripes, that.stripes) &&
         Objects.equals(name, that.name) &&
-        securitySslTls == that.securitySslTls &&
-        securityWhitelist == that.securityWhitelist &&
+        Objects.equals(lockContext, that.lockContext) &&
+        Objects.equals(securitySslTls, that.securitySslTls) &&
+        Objects.equals(securityWhitelist, that.securityWhitelist) &&
         Objects.equals(securityAuthc, that.securityAuthc) &&
         Objects.equals(failoverPriority, that.failoverPriority) &&
         Objects.equals(clientReconnectWindow, that.clientReconnectWindow) &&
@@ -223,14 +264,17 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   @Override
   public int hashCode() {
-    return Objects.hash(stripes, name, securityAuthc, securitySslTls, securityWhitelist,
-        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources);
+    return Objects.hash(
+        stripes, name, securityAuthc, securitySslTls, securityWhitelist,
+        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, lockContext
+    );
   }
 
   @Override
   public String toString() {
     return "Cluster{" +
         "name='" + name + '\'' +
+        ", lockContext='" + lockContext + '\'' +
         ", securityAuthc='" + securityAuthc + '\'' +
         ", securitySslTls=" + securitySslTls +
         ", securityWhitelist=" + securityWhitelist +
@@ -253,7 +297,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Collection<InetSocketAddress> getNodeAddresses() {
-    return stripes.stream().flatMap(stripe -> stripe.getNodes().stream()).map(Node::getNodeAddress).collect(toList());
+    return stripes.stream().flatMap(stripe -> stripe.getNodes().stream()).map(Node::getAddress).collect(toList());
   }
 
   public boolean containsNode(InetSocketAddress address) {
@@ -268,43 +312,25 @@ public class Cluster implements Cloneable, PropertyHolder {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Cluster clone() {
-    return new Cluster(name, stripes.stream().map(Stripe::clone).collect(toList()))
-        .setClientLeaseDuration(clientLeaseDuration)
-        .setClientReconnectWindow(clientReconnectWindow)
-        .setFailoverPriority(failoverPriority)
-        .setOffheapResources(offheapResources)
-        .setSecurityAuthc(securityAuthc)
-        .setSecuritySslTls(securitySslTls)
-        .setSecurityWhitelist(securityWhitelist);
+    final Cluster clone = new Cluster(stripes.stream().map(Stripe::clone).collect(toList()));
+    clone.clientLeaseDuration = this.clientLeaseDuration;
+    clone.clientReconnectWindow = this.clientReconnectWindow;
+    clone.failoverPriority = this.failoverPriority;
+    clone.lockContext = this.lockContext;
+    clone.name = this.name;
+    clone.offheapResources = this.offheapResources == null ? null : new ConcurrentHashMap<>(this.offheapResources);
+    clone.securityAuthc = this.securityAuthc;
+    clone.securitySslTls = this.securitySslTls;
+    clone.securityWhitelist = this.securityWhitelist;
+    return clone;
   }
 
-  public Cluster attachStripe(Stripe stripe) {
-    if (isEmpty()) {
-      throw new IllegalStateException("Empty cluster.");
-    }
-
-    List<String> duplicates = stripe.getNodes().stream()
-        .map(Node::getNodeAddress)
-        .filter(this::containsNode)
-        .map(InetSocketAddress::toString)
-        .collect(toList());
-    if (!duplicates.isEmpty()) {
-      throw new IllegalArgumentException("Nodes are already in the cluster: " + String.join(", ", duplicates) + ".");
-    }
-
-    Node aNode = stripes.iterator().next().getNodes().iterator().next();
-    Stripe newStripe = stripe.cloneForAttachment(aNode);
-    stripes.add(newStripe);
-
-    return this;
-  }
-
-  public boolean detachStripe(Stripe stripe) {
+  public boolean removeStripe(Stripe stripe) {
     return stripes.remove(stripe);
   }
 
-  public boolean detachNode(InetSocketAddress address) {
-    boolean detached = stripes.stream().anyMatch(stripe -> stripe.detachNode(address));
+  public boolean removeNode(InetSocketAddress address) {
+    boolean detached = stripes.stream().anyMatch(stripe -> stripe.removeNode(address));
     if (detached) {
       stripes.removeIf(Stripe::isEmpty);
     }
@@ -336,7 +362,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   public OptionalInt getNodeId(int stripeId, String nodeName) {
     return getStripe(stripeId)
         .map(stripe -> IntStream.range(0, stripe.getNodeCount())
-            .filter(idx -> nodeName.equals(stripe.getNodes().get(idx).getNodeName()))
+            .filter(idx -> nodeName.equals(stripe.getNodes().get(idx).getName()))
             .map(idx -> idx + 1)
             .findAny())
         .orElse(OptionalInt.empty());
@@ -377,7 +403,7 @@ public class Cluster implements Cloneable, PropertyHolder {
         .boxed()
         .flatMap(stripeId -> stripes.get(stripeId - 1).getNodes()
             .stream()
-            .map(Node::getNodeName)
+            .map(Node::getName)
             .map(name -> new NodeContext(this, stripeId, name)));
   }
 
@@ -393,26 +419,23 @@ public class Cluster implements Cloneable, PropertyHolder {
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
   @Override
-  public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
-    Properties properties = Setting.modelToProperties(this, expanded, includeDefaultValues);
+  public Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings, Version version) {
+    Properties properties = Setting.modelToProperties(this, expanded, includeDefaultValues, includeHiddenSettings, version);
     for (int i = 0; i < stripes.size(); i++) {
       String prefix = "stripe." + (i + 1) + ".";
-      Properties props = stripes.get(i).toProperties(expanded, includeDefaultValues);
+      Properties props = stripes.get(i).toProperties(expanded, includeDefaultValues, includeHiddenSettings, version);
       props.stringPropertyNames().forEach(key -> properties.setProperty(prefix + key, props.getProperty(key)));
     }
     return properties;
   }
 
+  @Override
+  public Stream<? extends PropertyHolder> descendants() {
+    return Stream.concat(stripes.stream(), stripes.stream().flatMap(Stripe::descendants));
+  }
+
   public Collection<String> getDataDirNames() {
-    return getNodes().stream().flatMap(node -> node.getDataDirs().keySet().stream()).collect(toSet());
-  }
-
-  public Cluster fillRequiredSettings() {
-    return Setting.fillRequiredSettings(this);
-  }
-
-  private Cluster fillSettings() {
-    return Setting.fillSettings(this);
+    return getNodes().stream().flatMap(node -> node.getDataDirs().orDefault().keySet().stream()).collect(toSet());
   }
 
   public Cluster removeStripes() {
@@ -420,26 +443,12 @@ public class Cluster implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public static Cluster newDefaultCluster() {
-    return newDefaultCluster((String) null);
+  public OptionalConfig<LockContext> getConfigurationLockContext() {
+    return OptionalConfig.of(LOCK_CONTEXT, lockContext);
   }
 
-  public static Cluster newDefaultCluster(String name) {
-    return new Cluster(name, emptyList())
-        .fillSettings();
-  }
-
-  public static Cluster newDefaultCluster(Stripe... stripes) {
-    return newCluster(stripes)
-        .fillSettings();
-  }
-
-  public static Cluster newDefaultCluster(String name, Stripe... stripes) {
-    return new Cluster(name, Arrays.asList(stripes))
-        .fillSettings();
-  }
-
-  public static Cluster newCluster(Stripe... stripes) {
-    return new Cluster(null, Arrays.asList(stripes));
+  public Cluster setConfigurationLockContext(LockContext lockContext) {
+    this.lockContext = lockContext;
+    return this;
   }
 }

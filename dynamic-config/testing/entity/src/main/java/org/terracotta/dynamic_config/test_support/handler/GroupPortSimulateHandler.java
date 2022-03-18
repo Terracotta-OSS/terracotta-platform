@@ -26,12 +26,12 @@ public class GroupPortSimulateHandler implements ConfigChangeHandler {
   @Override
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     Cluster cluster = nodeContext.getCluster();
-    String configVal = change.getValue();
+    String configVal = change.getValue().get();
     String tmpConfig[] = configVal.split("#");
     String serverName = tmpConfig[0];
     String groupPort = tmpConfig[1];
     Node node = cluster.getNode(nodeContext.getStripeId(), serverName).get();
-    node.setNodeGroupPort(Integer.parseInt(groupPort));
+    node.setGroupPort(Integer.parseInt(groupPort));
     //TODO [DYNAMIC-CONFIG]: no return anymore. So find another way to hack the config repo xml file to update the bind port. Idea: directly update the xml file written on disk (server section only)
   }
 }

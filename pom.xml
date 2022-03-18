@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.16</version>
+    <version>5.18</version>
   </parent>
 
   <artifactId>platform-root</artifactId>
@@ -33,16 +33,16 @@
     <maven.version>3.6.3</maven.version>
     <slf4j.version>1.7.25</slf4j.version>
     <logback.version>1.2.3</logback.version>
-    <terracotta-apis.version>1.7.0-pre3</terracotta-apis.version>
+    <terracotta-apis.version>1.7.0-pre6</terracotta-apis.version>
     <terracotta-configuration.version>10.7.0-pre2</terracotta-configuration.version>
-    <passthrough-testing.version>1.7.0-pre13</passthrough-testing.version>
-    <terracotta-core.version>5.7.0-pre30</terracotta-core.version>
+    <passthrough-testing.version>1.7.0-pre17</passthrough-testing.version>
+    <terracotta-core.version>5.7.0-pre36</terracotta-core.version>
     <tripwire.version>1.0.0-pre7</tripwire.version>
-    <galvan.version>1.5.0-pre3</galvan.version>
-    <angela.version>3.0.33</angela.version>
+    <galvan.version>1.5.0-pre4</galvan.version>
+    <angela.version>3.0.46</angela.version>
     <statistics.version>2.1</statistics.version>
-    <jackson.version>2.10.1</jackson.version>
-    <terracotta-utilities.version>0.0.3</terracotta-utilities.version>
+    <jackson.version>2.10.5</jackson.version>
+    <terracotta-utilities.version>0.0.5</terracotta-utilities.version>
     <test.parallel.forks>2</test.parallel.forks>
   </properties>
 
@@ -94,6 +94,11 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
@@ -428,28 +433,8 @@
     <repository>
       <id>terracotta-releases</id>
       <url>https://www.terracotta.org/download/reflector/releases</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
     </repository>
   </repositories>
-
-  <distributionManagement>
-    <repository>
-      <id>terracotta-os-releases</id>
-      <name>Terracotta OS Releases Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
-    </repository>
-    <snapshotRepository>
-      <id>terracotta-os-snapshots</id>
-      <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta OS Snapshots Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
 
   <scm>
     <connection>scm:git:https://github.com/Terracotta-OSS/terracotta-platform.git</connection>

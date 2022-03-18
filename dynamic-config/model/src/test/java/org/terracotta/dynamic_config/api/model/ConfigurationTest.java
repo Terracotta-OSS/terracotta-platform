@@ -20,9 +20,11 @@ import org.hamcrest.Matcher;
 import org.junit.Test;
 
 import java.io.File;
-import java.nio.file.Paths;
+import java.util.List;
 import java.util.stream.Stream;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
@@ -37,8 +39,10 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.common.struct.Tuple3.tuple3;
-import static org.terracotta.dynamic_config.api.model.Operation.CONFIG;
+import static org.terracotta.dynamic_config.api.model.ClusterState.ACTIVATED;
+import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 import static org.terracotta.dynamic_config.api.model.Operation.GET;
+import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Operation.SET;
 import static org.terracotta.dynamic_config.api.model.Operation.UNSET;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
@@ -77,7 +81,7 @@ public class ConfigurationTest {
   @Test
   public void test_valueOf_settings_cluster_level() {
     Stream.of(NODE_CONFIG_DIR).forEach(setting -> {
-      String err = "Invalid input: 'config-dir=%H/terracotta/config'. Reason: config-dir does not allow any operation at cluster level".replace("/", File.separator); // unix/win compat'
+      String err = "Invalid input: 'config-dir=%H/terracotta/config'. Reason: Setting 'config-dir' does not allow any operation at cluster level".replace("/", File.separator); // unix/win compat'
       assertThat(
           () -> Configuration.valueOf(setting),
           is(throwing(instanceOf(IllegalArgumentException.class))
@@ -88,13 +92,13 @@ public class ConfigurationTest {
         LICENSE_FILE
     ).forEach(setting -> assertThat(
         () -> Configuration.valueOf(setting),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: license-file requires a value"))))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: Setting 'license-file' requires a value"))))));
 
     Stream.of(
         FAILOVER_PRIORITY
     ).forEach(setting -> assertThat(
         () -> Configuration.valueOf(setting),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: failover-priority requires a value"))))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: Setting 'failover-priority' requires a value"))))));
 
     Stream.of(
         NODE_HOSTNAME,
@@ -102,7 +106,7 @@ public class ConfigurationTest {
         NODE_PORT
     ).forEach(setting -> assertThat(
         () -> Configuration.valueOf(setting),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(endsWith("Reason: " + setting + " cannot be set at cluster level"))))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(endsWith("Reason: Setting '" + setting + "' cannot be set at cluster level"))))));
 
     Stream.of(
         CLIENT_LEASE_DURATION,
@@ -130,7 +134,7 @@ public class ConfigurationTest {
       assertThat(rawInput, configuration, is(equalTo(Configuration.valueOf(rawInput))));
 
       // verify parsed attributes
-      assertThat(rawInput, configuration.getScope(), is(equalTo(CLUSTER)));
+      assertThat(rawInput, configuration.getLevel(), is(equalTo(CLUSTER)));
       assertThat(rawInput, configuration.getSetting(), is(setting));
       assertThat(rawInput, configuration.getKey(), is(nullValue()));
 
@@ -139,9 +143,10 @@ public class ConfigurationTest {
         // node name always generates a random default value
         assertThat(rawInput, rawInput, startsWith("name=node-"));
       } else {
-        String defaultValue = setting.getDefaultValue();
-        assertThat(rawInput, configuration.getValue(), is(equalTo(defaultValue)));
-        assertThat(rawInput, rawInput, is(equalTo(setting + "=" + (defaultValue == null ? "" : defaultValue))));
+        String defaultValue = setting.getDefaultProperty().orElse("");
+        assertThat(rawInput, configuration.getValue().orElse(null), defaultValue.isEmpty() ? is(nullValue()) : is(equalTo(defaultValue)));
+        assertThat(rawInput, rawInput, is(equalTo(setting + "=" + defaultValue)));
+        assertThat(defaultValue, is(not(nullValue())));
       }
     });
   }
@@ -165,7 +170,7 @@ public class ConfigurationTest {
         is(throwing(instanceOf(IllegalArgumentException.class))
             .andMessage(both(
                 startsWith("Invalid input: 'stripe.1." + setting + "="))
-                .and(endsWith("'. Reason: " + setting + " does not allow any operation at stripe level"))))));
+                .and(endsWith("'. Reason: Setting '" + setting + "' does not allow any operation at stripe level"))))));
 
 
     Stream.of(
@@ -177,7 +182,7 @@ public class ConfigurationTest {
         is(throwing(instanceOf(IllegalArgumentException.class))
             .andMessage(both(
                 startsWith("Invalid input: 'stripe.1." + setting + "="))
-                .and(endsWith("'. Reason: " + setting + " cannot be set at stripe level"))))));
+                .and(endsWith("'. Reason: Setting '" + setting + "' cannot be set at stripe level"))))));
 
     Stream.of(
         DATA_DIRS,
@@ -198,7 +203,7 @@ public class ConfigurationTest {
       assertThat(rawInput, configuration, is(equalTo(Configuration.valueOf(rawInput))));
 
       // verify parsed attributes
-      assertThat(rawInput, configuration.getScope(), is(equalTo(STRIPE)));
+      assertThat(rawInput, configuration.getLevel(), is(equalTo(STRIPE)));
       assertThat(rawInput, configuration.getSetting(), is(setting));
       assertThat(rawInput, configuration.getKey(), is(nullValue()));
 
@@ -207,9 +212,10 @@ public class ConfigurationTest {
         // node name always generates a random default value
         assertThat(rawInput, rawInput, startsWith("stripe.1.name=node-"));
       } else {
-        String defaultValue = setting.getDefaultValue();
-        assertThat(rawInput, configuration.getValue(), is(equalTo(defaultValue)));
-        assertThat(rawInput, rawInput, is(equalTo("stripe.1." + setting + "=" + (defaultValue == null ? "" : defaultValue))));
+        String defaultValue = setting.getDefaultProperty().orElse("");
+        assertThat(defaultValue, is(not(nullValue())));
+        assertThat(rawInput, configuration.getValue().orElse(null), defaultValue.isEmpty() ? is(nullValue()) : is(equalTo(defaultValue)));
+        assertThat(rawInput, rawInput, is(equalTo("stripe.1." + setting + "=" + defaultValue)));
       }
     });
   }
@@ -233,7 +239,7 @@ public class ConfigurationTest {
         is(throwing(instanceOf(IllegalArgumentException.class))
             .andMessage(both(
                 startsWith("Invalid input: 'stripe.1.node.1." + setting + "="))
-                .and(endsWith("'. Reason: " + setting + " does not allow any operation at node level"))))));
+                .and(endsWith("'. Reason: Setting '" + setting + "' does not allow any operation at node level"))))));
 
     Stream.of(
         NODE_NAME,
@@ -257,7 +263,7 @@ public class ConfigurationTest {
       assertThat(rawInput, configuration, is(equalTo(Configuration.valueOf(rawInput))));
 
       // verify parsed attributes
-      assertThat(rawInput, configuration.getScope(), is(equalTo(NODE)));
+      assertThat(rawInput, configuration.getLevel(), is(equalTo(NODE)));
       assertThat(rawInput, configuration.getSetting(), is(setting));
       assertThat(rawInput, configuration.getKey(), is(nullValue()));
 
@@ -266,9 +272,10 @@ public class ConfigurationTest {
         // node name always generates a random default value
         assertThat(rawInput, rawInput, startsWith("stripe.1.node.1.name=node-"));
       } else {
-        String defaultValue = setting.getDefaultValue();
-        assertThat(rawInput, configuration.getValue(), is(equalTo(defaultValue)));
-        assertThat(rawInput, rawInput, is(equalTo("stripe.1.node.1." + setting + "=" + (defaultValue == null ? "" : defaultValue))));
+        String defaultValue = setting.getDefaultProperty().orElse("");
+        assertThat(defaultValue, is(not(nullValue())));
+        assertThat(rawInput, configuration.getValue().orElse(null), defaultValue.isEmpty() ? is(nullValue()) : is(equalTo(defaultValue)));
+        assertThat(rawInput, rawInput, is(equalTo("stripe.1.node.1." + setting + "=" + defaultValue)));
       }
     });
   }
@@ -287,15 +294,15 @@ public class ConfigurationTest {
           tuple2(NODE_PORT, "9410")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
-        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: " + tuple.t1 + " requires a value");
-        rejectInput(tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " cannot be set at cluster level");
+        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
+        rejectInput(tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' cannot be set at cluster level");
 
         allowInput("stripe.1" + ns + tuple.t1, tuple.t1, STRIPE, 1, null, null, null);
-        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " requires a value");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " cannot be set at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' cannot be set at stripe level");
 
         allowInput("stripe.1.node.1" + ns + tuple.t1, tuple.t1, NODE, 1, 1, null, null);
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " requires a value");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
         allowInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, tuple.t1, NODE, 1, 1, null, tuple.t2);
       });
 
@@ -306,18 +313,19 @@ public class ConfigurationTest {
           tuple2(NODE_GROUP_PORT, "9410"),
           tuple2(NODE_BIND_ADDRESS, "0.0.0.0"),
           tuple2(NODE_GROUP_BIND_ADDRESS, "0.0.0.0"),
-          tuple2(NODE_LOG_DIR, "foo/bar")
+          tuple2(NODE_LOG_DIR, "foo/bar"),
+          tuple2(NODE_METADATA_DIR, "foo/bar")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
-        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: " + tuple.t1 + " requires a value");
+        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
         allowInput(tuple.t1 + "=" + tuple.t2, tuple.t1, CLUSTER, null, null, null, tuple.t2);
 
         allowInput("stripe.1" + ns + tuple.t1, tuple.t1, STRIPE, 1, null, null, null);
-        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " requires a value");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
         allowInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, tuple.t1, STRIPE, null, null, null, tuple.t2);
 
         allowInput("stripe.1.node.1" + ns + tuple.t1, tuple.t1, NODE, 1, 1, null, null);
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " requires a value");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
         allowInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, tuple.t1, NODE, 1, 1, null, tuple.t2);
       });
 
@@ -326,7 +334,6 @@ public class ConfigurationTest {
       // set allowed for all scopes
       Stream.of(
           tuple2(NODE_BACKUP_DIR, "foo/bar"),
-          tuple2(NODE_METADATA_DIR, "foo/bar"),
           tuple2(SECURITY_DIR, "foo/bar"),
           tuple2(SECURITY_AUDIT_LOG_DIR, "foo/bar")
       ).forEach(tuple -> {
@@ -354,16 +361,16 @@ public class ConfigurationTest {
           tuple2(SECURITY_WHITELIST, "true")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
-        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: " + tuple.t1 + " requires a value");
+        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
         allowInput(tuple.t1 + "=" + tuple.t2, tuple.t1, CLUSTER, null, null, null, tuple.t2);
 
-        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
 
-        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
       });
 
       // get allowed for scope cluster
@@ -377,13 +384,13 @@ public class ConfigurationTest {
         allowInput(tuple.t1 + "=", tuple.t1, CLUSTER, null, null, null, null);
         allowInput(tuple.t1 + "=" + tuple.t2, tuple.t1, CLUSTER, null, null, null, tuple.t2);
 
-        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
 
-        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
       });
 
       // get not allowed
@@ -392,17 +399,17 @@ public class ConfigurationTest {
       Stream.of(
           tuple2(NODE_CONFIG_DIR, "foo/bar")
       ).forEach(tuple -> {
-        rejectInput(tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
-        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
-        rejectInput(tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
+        rejectInput(tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at cluster level");
+        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at cluster level");
+        rejectInput(tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at cluster level");
 
-        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
 
-        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
       });
 
       // get not allowed
@@ -411,17 +418,17 @@ public class ConfigurationTest {
       Stream.of(
           tuple2(LICENSE_FILE, "/path/to/license.xml")
       ).forEach(tuple -> {
-        rejectInput(tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " cannot be read or cleared");
-        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: " + tuple.t1 + " requires a value");
+        rejectInput(tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' cannot be read or cleared");
+        rejectInput(tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' requires a value");
         allowInput(tuple.t1 + "=" + tuple.t2, tuple.t1, CLUSTER, null, null, null, tuple.t2);
 
-        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
 
-        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
       });
 
       // get allowed for all scopes
@@ -470,21 +477,21 @@ public class ConfigurationTest {
         allowInput(tuple.t1 + "." + tuple.t2 + "=", tuple.t1, CLUSTER, null, null, tuple.t2, null);
         allowInput(tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, tuple.t1, CLUSTER, null, null, tuple.t2, tuple.t3);
 
-        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1, "Invalid input: 'stripe.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: 'stripe.1" + ns + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
 
-        rejectInput("stripe.1" + ns + tuple.t1 + "." + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "='. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-        rejectInput("stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "." + tuple.t2, "Invalid input: 'stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
+        rejectInput("stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at stripe level");
 
-        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
 
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "='. Reason: " + tuple.t1 + " does not allow any operation at node level");
-        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "='. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
+        rejectInput("stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1.node.1" + ns + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: Setting '" + tuple.t1 + "' does not allow any operation at node level");
       });
     });
   }
@@ -524,369 +531,232 @@ public class ConfigurationTest {
       rejectInput("stripe" + ns + "backup-dir", "Invalid input: 'stripe" + ns + "backup-dir'");
 
       // bad settings combinations
-      rejectInput("backup-dir.key", "Invalid input: 'backup-dir.key'. Reason: backup-dir is not a map and must not have a key");
-      rejectInput("stripe.1.node.1.failover-priority", "Invalid input: 'stripe.1.node.1.failover-priority'. Reason: failover-priority does not allow any operation at node level");
+      rejectInput("backup-dir.key", "Invalid input: 'backup-dir.key'. Reason: Setting 'backup-dir' is not a map and must not have a key");
+      rejectInput("stripe.1.node.1.failover-priority", "Invalid input: 'stripe.1.node.1.failover-priority'. Reason: Setting 'failover-priority' does not allow any operation at node level");
     });
   }
 
   @Test
   public void test_validate() {
-    assertThat(
-        () -> Configuration.valueOf("failover-priority=availability").validate(GET),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'failover-priority=availability'. Reason: Operation get must not have a value")))));
-    assertThat(
-        () -> Configuration.valueOf("offheap-resources=main:1GB").validate(UNSET),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'offheap-resources=main:1GB'. Reason: Operation unset must not have a value")))));
-    assertThat(
-        () -> Configuration.valueOf("failover-priority").validate(SET),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'failover-priority'. Reason: Operation set requires a value")))));
-    assertThat(
-        () -> Configuration.valueOf("failover-priority").validate(CONFIG),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: 'failover-priority'. Reason: Operation config requires a value")))));
+    List<String> NS = asList("", "stripe.1.", "stripe.1.node.1.");
 
-    // get allowed for all scopes
-    // unset not allowed for all scopes
-    // set not allowed for all scopes
-    // config allowed for scope node
-    Stream.of(
-        tuple2(NODE_NAME, "foo"),
-        tuple2(NODE_HOSTNAME, "foo"),
-        tuple2(NODE_PORT, "9410")
-    ).forEach(tuple -> {
-      allow(GET, tuple.t1.toString());
-      reject(UNSET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow operation unset at cluster level");
-      reject(SET, tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " cannot be set at cluster level");
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-      reject(CONFIG, tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " cannot be set at cluster level");
-      reject(CONFIG, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
+    // config-dir
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET, UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "config-dir"))));
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET, IMPORT).forEach(op -> NS.forEach(ns -> reject(state, op, "config-dir=foo"))));
 
-      allow(GET, "stripe.1." + tuple.t1);
-      reject(UNSET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow operation unset at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " cannot be set at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " cannot be set at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
+    // license-file
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET, UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "license-file"))));
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
+      allow(state, op, "license-file=foo");
+      reject(state, op, "license-file=");
+      reject(state, op, "stripe.1.license-file=foo");
+      reject(state, op, "stripe.1.node.1.license-file=foo");
+    }));
+    Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "license-file=foo"))));
+    Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "license-file="))));
 
-      allow(GET, "stripe.1.node.1." + tuple.t1);
-      reject(UNSET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow operation unset at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow operation set at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-      allow(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2);
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
+    // metadata-dir
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "metadata-dir"))));
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir"))));
+    Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "metadata-dir=foo"))));
+    Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir="))));
+    Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir=foo"))));
+    Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir="))));
+    Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+      reject(state, op, "metadata-dir=foo");
+      reject(state, op, "stripe.1.metadata-dir=foo");
+      allow(state, op, "stripe.1.node.1.metadata-dir=foo");
+      reject(state, op, "stripe.1.node.1.metadata-dir=");
+    }));
+
+    // hostname, port
+    Stream.of("hostname", "port").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=1234");
+        reject(state, op, "stripe.1." + setting + "=1234");
+        allow(state, op, "stripe.1.node.1." + setting + "=1234");
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "=1234"))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
     });
 
-    // get allowed for all scopes
-    // unset not allowed for all scopes
-    // set allowed for all scopes
-    // config allowed for scope node
-    Stream.of(
-        tuple2(NODE_GROUP_PORT, "9410"),
-        tuple2(NODE_BIND_ADDRESS, "0.0.0.0"),
-        tuple2(NODE_GROUP_BIND_ADDRESS, "0.0.0.0"),
-        tuple2(NODE_LOG_DIR, "foo/bar")
-    ).forEach(tuple -> {
-      allow(GET, tuple.t1.toString());
-      reject(UNSET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow operation unset at cluster level");
-      allow(SET, tuple.t1 + "=" + tuple.t2);
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-      reject(CONFIG, tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow operation config at cluster level");
-      reject(CONFIG, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-
-      allow(GET, "stripe.1." + tuple.t1);
-      reject(UNSET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow operation unset at stripe level");
-      allow(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2);
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow operation config at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-
-      allow(GET, "stripe.1.node.1." + tuple.t1);
-      reject(UNSET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow operation unset at node level");
-      allow(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2);
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-      allow(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2);
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
+    // group-port, bind-address, group-bind-address
+    Stream.of("bind-address", "group-bind-address").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=0.0.0.0");
+        reject(state, op, "stripe.1." + setting + "=0.0.0.0");
+        allow(state, op, "stripe.1.node.1." + setting + "=0.0.0.0");
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting + "=0.0.0.0"))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
+      Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "=0.0.0.0"))));
+      Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
+    });
+    Stream.of("group-port").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=1234");
+        reject(state, op, "stripe.1." + setting + "=1234");
+        allow(state, op, "stripe.1.node.1." + setting + "=1234");
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting + "=1234"))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
+      Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "=1234"))));
+      Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
     });
 
-    // get allowed for all scopes
-    // unset allowed for all scopes
-    // set allowed for all scopes
-    // config allowed for scope node
-    Stream.of(
-        tuple2(NODE_BACKUP_DIR, "foo/bar"),
-        tuple2(SECURITY_DIR, "foo/bar"),
-        tuple2(SECURITY_AUDIT_LOG_DIR, "foo/bar"),
-        tuple2(NODE_METADATA_DIR, "foo/bar")
-    ).forEach(tuple -> {
-      allow(GET, tuple.t1.toString());
-      allow(UNSET, tuple.t1.toString());
-      allow(SET, tuple.t1 + "=" + tuple.t2);
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: Operation set requires a value");
-      reject(CONFIG, tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow operation config at cluster level");
-      reject(CONFIG, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow operation config at cluster level");
-
-      allow(GET, "stripe.1." + tuple.t1);
-      allow(UNSET, "stripe.1." + tuple.t1);
-      allow(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2);
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: Operation set requires a value");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow operation config at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow operation config at stripe level");
-
-      allow(GET, "stripe.1.node.1." + tuple.t1);
-      allow(UNSET, "stripe.1.node.1." + tuple.t1);
-      allow(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2);
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: Operation set requires a value");
-      allow(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2);
-      allow(CONFIG, "stripe.1.node.1." + tuple.t1 + "=");
+    // data-dirs
+    Stream.of("data-dirs").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting + "=foo:foo"))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=foo:foo");
+        reject(state, op, "stripe.1." + setting + "=foo:foo");
+        allow(state, op, "stripe.1.node.1." + setting + "=foo:foo");
+        allow(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
     });
 
-    // get allowed for scope cluster
-    // unset not allowed for all scopes
-    // set allowed for scope cluster
-    // config allowed for scope cluster
-    Stream.of(
-        tuple2(CLIENT_RECONNECT_WINDOW, "20s"),
-        tuple2(FAILOVER_PRIORITY, "availability"),
-        tuple2(CLIENT_LEASE_DURATION, "20s"),
-        tuple2(SECURITY_SSL_TLS, "true"),
-        tuple2(SECURITY_WHITELIST, "true")
-    ).forEach(tuple -> {
-      allow(GET, tuple.t1.toString());
-      reject(UNSET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow operation unset at cluster level");
-      allow(SET, tuple.t1 + "=" + tuple.t2);
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-      allow(CONFIG, tuple.t1 + "=" + tuple.t2);
-      reject(CONFIG, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-
-      reject(GET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(UNSET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-
-      reject(GET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(UNSET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+    // name
+    Stream.of("name").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(SET, IMPORT).forEach(op -> {
+        reject(state, op, setting + "=foo");
+        reject(state, op, "stripe.1." + setting + "=foo");
+        allow(state, op, "stripe.1.node.1." + setting + "=foo");
+        reject(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+      Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
     });
 
-    // get allowed for scope cluster
-    // unset not allowed for all scopes
-    // set allowed for scope cluster
-    // config allowed for scope cluster
-    Stream.of(
-        tuple2(CLUSTER_NAME, "foo")
-    ).forEach(tuple -> {
-      allow(GET, tuple.t1.toString());
-      reject(UNSET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow operation unset at cluster level");
-      allow(SET, tuple.t1 + "=" + tuple.t2);
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: Operation set requires a value");
-      allow(CONFIG, tuple.t1 + "=" + tuple.t2);
-      allow(CONFIG, tuple.t1 + "=");
-
-      reject(GET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(UNSET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-
-      reject(GET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(UNSET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+    // public-hostname, public-port, backup-dir, tc-properties, logger-overrides, security-dir, audit-log-dir
+    Stream.of("public-hostname", "public-port", "backup-dir", "security-dir", "audit-log-dir").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET, UNSET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting + "=1234"))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=1234");
+        reject(state, op, "stripe.1." + setting + "=1234");
+        allow(state, op, "stripe.1.node.1." + setting + "=1234");
+        allow(state, op, "stripe.1.node.1." + setting + "=");
+      }));
+    });
+    Stream.of("tc-properties", "logger-overrides").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET, UNSET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting + "=foo:TRACE"))));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        reject(state, op, setting + "=foo:TRACE");
+        reject(state, op, "stripe.1." + setting + "=foo:TRACE");
+        allow(state, op, "stripe.1.node.1." + setting + "=foo:TRACE");
+        allow(state, op, "stripe.1.node.1." + setting + "=");
+      }));
     });
 
-    // get allowed for scope cluster
-    // unset allowed for all scopes
-    // set allowed for scope cluster
-    // config allowed for scope cluster
-    Stream.of(
-        tuple2(SECURITY_AUTHC, "certificate")
-    ).forEach(tuple -> {
-      allow(GET, tuple.t1.toString());
-      allow(UNSET, tuple.t1.toString());
-      allow(SET, tuple.t1 + "=" + tuple.t2);
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: Operation set requires a value");
-      allow(CONFIG, tuple.t1 + "=" + tuple.t2);
-      allow(CONFIG, tuple.t1 + "=");
-
-      reject(GET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(UNSET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-
-      reject(GET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(UNSET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+    // authc
+    Stream.of("authc").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET, UNSET).forEach(op -> {
+        allow(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        reject(state, op, "stripe.1.node.1." + setting);
+      }));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
+        allow(state, op, setting + "=file");
+        reject(state, op, setting + "=");
+        reject(state, op, "stripe.1." + setting + "=file");
+        reject(state, op, "stripe.1.node.1." + setting + "=file");
+      }));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        allow(state, op, setting + "=file");
+        allow(state, op, setting + "=");
+        reject(state, op, "stripe.1." + setting + "=file");
+        reject(state, op, "stripe.1.node.1." + setting + "=file");
+      }));
     });
 
-    // get not allowed for all scopes
-    // unset not allowed for all scopes
-    // set not allowed for all scopes
-    // config not allowed for all scopes
-    Stream.of(
-        tuple2(NODE_CONFIG_DIR, "foo/bar")
-    ).forEach(tuple -> {
-      reject(GET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
-      reject(UNSET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
-      reject(SET, tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
-      reject(CONFIG, tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
-      reject(CONFIG, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at cluster level");
-
-      reject(GET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(UNSET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-
-      reject(GET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(UNSET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+    // client-reconnect-window, client-lease-duration, failover-priority
+    Stream.of("client-reconnect-window", "client-lease-duration", "failover-priority", "ssl-tls", "whitelist").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(GET).forEach(op -> {
+        allow(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        reject(state, op, "stripe.1.node.1." + setting);
+      }));
+    });
+    Stream.of("client-reconnect-window", "client-lease-duration").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET, IMPORT).forEach(op -> {
+        allow(state, op, setting + "=1s");
+        reject(state, op, setting + "=");
+        reject(state, op, "stripe.1." + setting + "=1s");
+        reject(state, op, "stripe.1.node.1." + setting + "=1s");
+      }));
+    });
+    Stream.of("failover-priority").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET, IMPORT).forEach(op -> {
+        allow(state, op, setting + "=availability");
+        reject(state, op, setting + "=");
+        reject(state, op, "stripe.1." + setting + "=availability");
+        reject(state, op, "stripe.1.node.1." + setting + "=availability");
+      }));
+    });
+    Stream.of("ssl-tls", "whitelist").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET, IMPORT).forEach(op -> {
+        allow(state, op, setting + "=true");
+        reject(state, op, setting + "=");
+        reject(state, op, "stripe.1." + setting + "=true");
+        reject(state, op, "stripe.1.node.1." + setting + "=true");
+      }));
     });
 
-    // get not allowed for all scopes
-    // unset not allowed for all scopes
-    // set allowed for scope cluster
-    // config not allowed for all scopes
-    Stream.of(
-        tuple2(LICENSE_FILE, "/path/to/license.xml")
-    ).forEach(tuple -> {
-      reject(GET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " cannot be read or cleared");
-      reject(UNSET, tuple.t1.toString(), "Invalid input: '" + tuple.t1 + "'. Reason: " + tuple.t1 + " cannot be read or cleared");
-      allow(SET, tuple.t1 + "=" + tuple.t2);
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
-      reject(CONFIG, tuple.t1 + "=" + tuple.t2, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow operation config at cluster level");
-      reject(CONFIG, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " requires a value");
+    // log-dir
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "log-dir"))));
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "log-dir"))));
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "log-dir=foo"))));
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "log-dir="))));
+    Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+      reject(state, op, "log-dir=foo");
+      reject(state, op, "stripe.1.log-dir=foo");
+      allow(state, op, "stripe.1.node.1.log-dir=foo");
+      reject(state, op, "stripe.1.node.1.log-dir=");
+    }));
 
-      reject(GET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(UNSET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-
-      reject(GET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(UNSET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-    });
-
-    // get allowed for all scopes
-    // unset allowed for all scopes
-    // set allowed for all scopes
-    // config allowed for scope node
-    Stream.of(
-        tuple3(TC_PROPERTIES, "a.b.c", "d.e.f"),
-        tuple3(DATA_DIRS, "a.b.c", "foo/bar")
-    ).forEach(tuple -> {
-      allow(GET, tuple.t1.toString());
-      allow(UNSET, tuple.t1.toString());
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: Operation set requires a value");
-      allow(SET, tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3);
-      reject(CONFIG, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow operation config at cluster level");
-      reject(CONFIG, tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: '" + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow operation config at cluster level");
-
-      allow(GET, tuple.t1 + "." + tuple.t2);
-      allow(UNSET, tuple.t1 + "." + tuple.t2);
-      reject(SET, tuple.t1 + "." + tuple.t2 + "=", "Invalid input: '" + tuple.t1 + "." + tuple.t2 + "=" + "'. Reason: Operation set requires a value");
-      allow(SET, tuple.t1 + "." + tuple.t2 + "=" + tuple.t3);
-      reject(CONFIG, tuple.t1 + "." + tuple.t2 + "=", "Invalid input: '" + tuple.t1 + "." + tuple.t2 + "=" + "'. Reason: " + tuple.t1 + " does not allow operation config at cluster level");
-      reject(CONFIG, tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: '" + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow operation config at cluster level");
-
-      allow(GET, "stripe.1." + tuple.t1);
-      allow(UNSET, "stripe.1." + tuple.t1);
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: Operation set requires a value");
-      allow(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3);
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow operation config at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow operation config at stripe level");
-
-      allow(GET, "stripe.1." + tuple.t1 + "." + tuple.t2);
-      allow(UNSET, "stripe.1." + tuple.t1 + "." + tuple.t2);
-      reject(SET, "stripe.1." + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + "'. Reason: Operation set requires a value");
-      allow(SET, "stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3);
-      reject(CONFIG, "stripe.1." + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + "'. Reason: " + tuple.t1 + " does not allow operation config at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow operation config at stripe level");
-
-      allow(GET, "stripe.1.node.1." + tuple.t1);
-      allow(UNSET, "stripe.1.node.1." + tuple.t1);
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: Operation set requires a value");
-      allow(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3);
-      allow(CONFIG, "stripe.1.node.1." + tuple.t1 + "=");
-      allow(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3);
-
-      allow(GET, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2);
-      allow(UNSET, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2);
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=" + "'. Reason: Operation set requires a value");
-      allow(SET, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3);
-      allow(CONFIG, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=");
-      allow(CONFIG, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3);
-    });
-
-    // get allowed for scope cluster
-    // unset allowed for scope cluster
-    // set allowed for scope cluster
-    // config allowed for scope cluster
-    Stream.of(
-        tuple3(OFFHEAP_RESOURCES, "a.b.c", "1GB")
-    ).forEach(tuple -> {
-      allow(GET, tuple.t1.toString());
-      allow(UNSET, tuple.t1.toString());
-      reject(SET, tuple.t1 + "=", "Invalid input: '" + tuple.t1 + "=" + "'. Reason: Operation set requires a value");
-      allow(SET, tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3);
-      allow(CONFIG, tuple.t1 + "=");
-      allow(CONFIG, tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3);
-
-      allow(GET, tuple.t1 + "." + tuple.t2);
-      allow(UNSET, tuple.t1 + "." + tuple.t2);
-      reject(SET, tuple.t1 + "." + tuple.t2 + "=", "Invalid input: '" + tuple.t1 + "." + tuple.t2 + "=" + "'. Reason: Operation set requires a value");
-      allow(SET, tuple.t1 + "." + tuple.t2 + "=" + tuple.t3);
-      allow(CONFIG, tuple.t1 + "." + tuple.t2 + "=");
-      allow(CONFIG, tuple.t1 + "." + tuple.t2 + "=" + tuple.t3);
-
-      reject(GET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(UNSET, "stripe.1." + tuple.t1, "Invalid input: 'stripe.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: 'stripe.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-
-      reject(GET, "stripe.1." + tuple.t1 + "." + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "." + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(UNSET, "stripe.1." + tuple.t1 + "." + tuple.t2, "Invalid input: 'stripe.1." + tuple.t1 + "." + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "." + tuple.t2 + "='. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(SET, "stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-      reject(CONFIG, "stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at stripe level");
-
-      reject(GET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(UNSET, "stripe.1.node.1." + tuple.t1, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "='. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "=" + tuple.t2 + ":" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-
-      reject(GET, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(UNSET, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "='. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(SET, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=", "Invalid input: 'stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=" + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
-      reject(CONFIG, "stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3, "Invalid input: 'stripe.1.node.1." + tuple.t1 + "." + tuple.t2 + "=" + tuple.t3 + "'. Reason: " + tuple.t1 + " does not allow any operation at node level");
+    // cluster-name, offheap-resources
+    Stream.of("cluster-name", "offheap-resources").forEach(setting -> {
+      Stream.of(ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> {
+        allow(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        reject(state, op, "stripe.1.node.1." + setting);
+      }));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(GET, UNSET).forEach(op -> {
+        allow(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        reject(state, op, "stripe.1.node.1." + setting);
+      }));
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> {
+        allow(state, op, setting + "=foo:123GB");
+        reject(state, op, setting + "=");
+        reject(state, op, "stripe.1." + setting + "=foo:123GB");
+        reject(state, op, "stripe.1.node.1." + setting + "=foo:123GB");
+      }));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
+        allow(state, op, setting + "=foo:123GB");
+        allow(state, op, setting + "=");
+        reject(state, op, "stripe.1." + setting + "=foo:123GB");
+        reject(state, op, "stripe.1.node.1." + setting + "=foo:123GB");
+      }));
     });
   }
 
@@ -938,44 +808,48 @@ public class ConfigurationTest {
 
   @Test
   public void test_apply() {
-    Cluster cluster = Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost")));
+    Cluster cluster = Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("node1", "localhost")));
 
     // cluster wide override
-    assertThat(cluster.getOffheapResources().size(), is(equalTo(1)));
-    assertThat(cluster.getOffheapResources(), hasKey("main"));
+    assertFalse(cluster.getOffheapResources().isConfigured());
+    assertThat(cluster.getOffheapResources().orDefault().size(), is(equalTo(1)));
+    assertThat(cluster.getOffheapResources().orDefault(), hasKey("main"));
     Configuration.valueOf("offheap-resources=second:1GB").apply(cluster);
-    assertThat(cluster.getOffheapResources().size(), is(equalTo(1)));
-    assertThat(cluster.getOffheapResources(), hasKey("second"));
+    assertTrue(cluster.getOffheapResources().isConfigured());
+    assertThat(cluster.getOffheapResources().orDefault().size(), is(equalTo(1)));
+    assertThat(cluster.getOffheapResources().orDefault(), hasKey("second"));
 
     // cluster wide addition
     Configuration.valueOf("offheap-resources.main=1GB").apply(cluster);
-    assertThat(cluster.getOffheapResources().size(), is(equalTo(2)));
-    assertThat(cluster.getOffheapResources(), hasKey("main"));
-    assertThat(cluster.getOffheapResources(), hasKey("second"));
+    assertThat(cluster.getOffheapResources().get().size(), is(equalTo(2)));
+    assertThat(cluster.getOffheapResources().get(), hasKey("main"));
+    assertThat(cluster.getOffheapResources().get(), hasKey("second"));
 
     // stripe wide
-    assertThat(cluster.getSingleNode().get().getNodeBackupDir(), is(nullValue()));
+    assertFalse(cluster.getSingleNode().get().getBackupDir().isConfigured());
     Configuration.valueOf("stripe.1:backup-dir=foo/bar").apply(cluster);
-    assertThat(cluster.getSingleNode().get().getNodeBackupDir(), is(equalTo(Paths.get("foo/bar"))));
+    assertTrue(cluster.getSingleNode().get().getBackupDir().isConfigured());
+    assertThat(cluster.getSingleNode().get().getBackupDir().get(), is(equalTo(RawPath.valueOf("foo/bar"))));
 
     // node level
-    assertThat(cluster.getSingleNode().get().getSecurityDir(), is(nullValue()));
+    assertFalse(cluster.getSingleNode().get().getSecurityDir().isConfigured());
     Configuration.valueOf("stripe.1.node.1:security-dir=foo/bar").apply(cluster);
-    assertThat(cluster.getSingleNode().get().getSecurityDir(), is(equalTo(Paths.get("foo/bar"))));
+    assertTrue(cluster.getSingleNode().get().getSecurityDir().isConfigured());
+    assertThat(cluster.getSingleNode().get().getSecurityDir().get(), is(equalTo(RawPath.valueOf("foo/bar"))));
 
     // unset
     Configuration.valueOf("stripe.1.node.1:security-dir=foo/bar").apply(cluster);
     Configuration.valueOf("stripe.1.node.1:security-dir=").apply(cluster);
-    assertThat(cluster.getSingleNode().get().getSecurityDir(), is(nullValue()));
+    assertFalse(cluster.getSingleNode().get().getSecurityDir().isConfigured());
     Configuration.valueOf("stripe.1.node.1:security-dir=foo/bar").apply(cluster);
     Configuration.valueOf("stripe.1.node.1:security-dir").apply(cluster);
-    assertThat(cluster.getSingleNode().get().getSecurityDir(), is(nullValue()));
+    assertFalse(cluster.getSingleNode().get().getSecurityDir().isConfigured());
 
     // special cases
     Configuration.valueOf("license-file=foo/bar").apply(cluster);
-    assertThat(cluster.getName(), is(nullValue()));
+    assertThat(cluster.getName().orDefault(), is(nullValue()));
     Configuration.valueOf("cluster-name=foo").apply(cluster);
-    assertThat(cluster.getName(), is(equalTo("foo")));
+    assertThat(cluster.getName().get(), is(equalTo("foo")));
 
     // bad stripe
     assertThat(
@@ -1023,6 +897,42 @@ public class ConfigurationTest {
     assertThat("offheap-resources.main=1GB", is(not(duplicating("offheap-resources.second=1GB"))));
   }
 
+  @Test
+  public void test_unset_maps_with_defaults() {
+    Node node = Testing.newTestNode("foo", "localhost");
+    assertFalse(node.getDataDirs().isConfigured());
+    Configuration.valueOf("data-dirs").apply(node);
+    assertTrue(node.getDataDirs().isConfigured());
+    assertThat(node.getDataDirs().get(), is(equalTo(emptyMap())));
+
+    node = Testing.newTestNode("foo", "localhost")
+        .unsetDataDirs()
+        .putDataDir("second", RawPath.valueOf("."));
+    assertTrue(node.getDataDirs().isConfigured());
+    Configuration.valueOf("data-dirs").apply(node);
+    assertTrue(node.getDataDirs().isConfigured());
+    assertThat(node.getDataDirs().get(), is(equalTo(emptyMap())));
+  }
+
+  @Test
+  public void test_unset_maps_without_defaults() {
+    Node node = Testing.newTestNode("foo", "localhost");
+    assertFalse(node.getTcProperties().isConfigured());
+    Configuration.valueOf("tc-properties").apply(node);
+    assertTrue(node.getTcProperties().isConfigured());
+
+    node = Testing.newTestNode("foo", "localhost").putTcProperty("second", ".");
+    assertTrue(node.getTcProperties().isConfigured());
+    Configuration.valueOf("tc-properties").apply(node);
+    assertTrue(node.getTcProperties().isConfigured());
+    assertThat(node.getTcProperties().get(), is(equalTo(emptyMap())));
+  }
+
+  @Test
+  public void test_stripe_setting() {
+    Configuration.valueOf("stripe.1.stripe-name=stripe1");
+  }
+
   private Matcher<String> duplicating(String value) {
     return new CustomTypeSafeMatcher<String>(" duplicates " + value) {
       @Override
@@ -1058,24 +968,28 @@ public class ConfigurationTest {
     }
   }
 
-  private void reject(Operation operation, String input, String err) {
-    assertThat(() -> Configuration.valueOf(input).validate(operation), is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(err)))));
+  private void reject(ClusterState clusterState, Operation operation, String input) {
+    assertThat(input, () -> Configuration.valueOf(input).validate(clusterState, operation), is(throwing(instanceOf(IllegalArgumentException.class))));
   }
 
-  private void allow(Operation operation, String input) {
-    Configuration.valueOf(input).validate(operation);
+  private void reject(ClusterState clusterState, Operation operation, String input, String err) {
+    assertThat(input, () -> Configuration.valueOf(input).validate(clusterState, operation), is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + input + "'. Reason: " + err)))));
+  }
+
+  private void allow(ClusterState clusterState, Operation operation, String input) {
+    Configuration.valueOf(input).validate(clusterState, operation);
   }
 
   private void rejectInput(String input, String msg) {
-    assertThat(() -> Configuration.valueOf(input), is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(msg)))));
+    assertThat(input, () -> Configuration.valueOf(input), is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(msg)))));
   }
 
   private void allowInput(String input, Setting setting, Scope scope, Integer stripeId, Integer nodeId, String key, String value) {
     Configuration configuration = Configuration.valueOf(input);
     assertThat(configuration.getSetting(), is(equalTo(setting)));
-    assertThat(configuration.getScope(), is(equalTo(scope)));
+    assertThat(configuration.getLevel(), is(equalTo(scope)));
     assertThat(configuration.getKey(), is(equalTo(key)));
-    assertThat(configuration.getValue(), is(equalTo(value)));
+    assertThat(configuration.getValue().orElse(null), is(equalTo(value)));
     if (stripeId != null) {
       assertThat(configuration.getStripeId(), is(equalTo(stripeId)));
     }

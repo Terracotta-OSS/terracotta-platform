@@ -18,11 +18,12 @@ package org.terracotta.dynamic_config.test_support.processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.server.NomadException;
@@ -30,6 +31,7 @@ import org.terracotta.nomad.server.NomadException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
+import java.net.InetSocketAddress;
 import java.util.stream.Stream;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
@@ -44,23 +46,20 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
   private static final String failoverKey = "failoverAddition";
   private static final String attachStatusKey = "attachStatus";
   private final TopologyService topologyService;
-  private final DynamicConfigListener listener;
+  private final DynamicConfigEventFiring dynamicConfigEventFiring;
   private final PlatformService platformService;
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
-  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigListener listener, PlatformService platformService) {
+  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, PlatformService platformService) {
     this.topologyService = requireNonNull(topologyService);
-    this.listener = requireNonNull(listener);
+    this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
     this.platformService = platformService;
   }
 
   @Override
   public void validate(NodeContext baseConfig, NodeAdditionNomadChange change) throws NomadException {
-    if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(attachStatusKey)) {
-      String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(attachStatusKey);
-      if (failAtPrepare.equals(value)) {
-        throw new NomadException("Invalid addition fail at prepare");
-      }
+    if (failAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(attachStatusKey))) {
+      throw new NomadException("Invalid addition fail at prepare");
     }
 
     LOGGER.info("Validating change: {}", change.getSummary());
@@ -76,11 +75,8 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
     }
 
     // cause failure when in prepare phase
-    if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
-      String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
-      if (killAtPrepare.equals(value)) {
-        platformService.stopPlatform();
-      }
+    if (killAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
+      platformService.stopPlatform();
     }
   }
 
@@ -91,26 +87,22 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
       return;
     }
 
+    // cause failover when in commit phase
+    if (killAtCommit.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
+      platformService.stopPlatform();
+    }
+
     try {
-      LOGGER.info("Adding node: {} to stripe ID: {}", change.getNodeAddress(), change.getStripeId());
-
-      // cause failover when in commit phase
-      if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
-        String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
-        if (killAtCommit.equals(value)) {
-          platformService.stopPlatform();
-        }
-      }
-
+      Node node = change.getNode();
+      LOGGER.info("Adding node: {} to stripe ID: {}", node.getName(), change.getStripeId());
+      LOGGER.debug("Calling mBean {}#{}", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME);
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
           PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{change.getNodeAddress().toString()},
-          new String[]{String.class.getName()}
+          new Object[]{node.getHostname(), node.getPort().orDefault(), node.getGroupPort().orDefault()},
+          new String[]{String.class.getName(), int.class.getName(), int.class.getName()}
       );
-
-      listener.onNodeAddition(change.getStripeId(), change.getNode());
-
+      dynamicConfigEventFiring.onNodeAddition(change.getStripeId(), node);
     } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

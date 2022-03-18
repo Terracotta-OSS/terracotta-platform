@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.api;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
@@ -29,7 +30,7 @@ import org.terracotta.nomad.server.NomadChangeInfo;
 /**
  * @author Mathieu Carbou
  */
-public interface DynamicConfigListener {
+public interface DynamicConfigListener extends DynamicConfigEventFiring {
 
   /**
    * Listener that will be called when a new configuration has been stored on disk, which happens in Nomad PREPARE phase
@@ -39,7 +40,7 @@ public interface DynamicConfigListener {
    * All the nodes are called during PREPARE to save a new configuration, regardless of this applicability level.
    * So this listener will be called on every node.
    */
-  void onNewConfigurationSaved(NodeContext nodeContext, Long version);
+  default void onNewConfigurationSaved(NodeContext nodeContext, Long version) {}
 
   /**
    * Listener that will be called when a new configuration has been applied at runtime on a server, through a {@link ConfigChangeHandler}
@@ -49,7 +50,7 @@ public interface DynamicConfigListener {
    * <p>
    * Only the nodes targeted by the applicability filter will be called through this listener after the {@link ConfigChangeHandler} is called
    */
-  void onSettingChanged(SettingNomadChange change, Cluster updated);
+  default void onSettingChanged(SettingNomadChange change, Cluster updated) {}
 
   /**
    * Listener that will be called when some nodes have been removed from a stripe
@@ -60,7 +61,7 @@ public interface DynamicConfigListener {
    *
    * @param removedNode the details about the removed node
    */
-  void onNodeRemoval(int stripeId, Node removedNode);
+  default void onNodeRemoval(int stripeId, Node removedNode) {}
 
   /**
    * Listener that will be called when some nodes have been added to a stripe
@@ -72,11 +73,15 @@ public interface DynamicConfigListener {
    * @param stripeId  the stripe ID where the nodes have been added
    * @param addedNode the details of the added node
    */
-  void onNodeAddition(int stripeId, Node addedNode);
+  default void onNodeAddition(int stripeId, Node addedNode) {}
 
-  void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response);
+  default void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response) {}
 
-  void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo);
+  default void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {}
 
-  void onNomadRollback(RollbackMessage message, AcceptRejectResponse response);
+  default void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {}
+
+  default void onStripeAddition(Stripe addedStripe) {}
+
+  default void onStripeRemoval(Stripe removedStripe) {}
 }

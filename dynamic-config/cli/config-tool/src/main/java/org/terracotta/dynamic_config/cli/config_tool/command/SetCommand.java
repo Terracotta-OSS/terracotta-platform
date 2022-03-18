@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 
+import static java.util.Optional.empty;
 import static org.terracotta.dynamic_config.api.model.Setting.LICENSE_FILE;
 
 @Parameters(commandNames = "set", commandDescription = "Set configuration properties")
@@ -49,13 +50,13 @@ public class SetCommand extends ConfigurationMutationCommand {
     licenseFile = configurations.stream()
         .filter(configuration -> configuration.getSetting() == LICENSE_FILE)
         .map(Configuration::getValue)
-        .map(Paths::get)
         .findAny()
+        .orElse(empty())
+        .map(Paths::get)
         .orElse(null);
 
-
     if (licenseFile != null) {
-      if (!Files.exists(licenseFile)) {
+      if (!licenseFile.toFile().exists()) {
         throw new ParameterException("License file not found: " + licenseFile);
       }
 
@@ -69,7 +70,7 @@ public class SetCommand extends ConfigurationMutationCommand {
   public void run() {
     if (licenseFile != null) {
       Collection<InetSocketAddress> peers = findRuntimePeers(node);
-      logger.info("Importing license: {} on nodes: {}", licenseFile, toString(peers));
+      logger.debug("Importing license: {} on nodes: {}", licenseFile, toString(peers));
       upgradeLicense(peers, licenseFile);
     }
     // then let the super class run to apply eventual other settings in the CLI

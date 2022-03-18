@@ -18,11 +18,11 @@ package org.terracotta.config.data_roots;
 import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.PathResolver;
@@ -40,7 +40,7 @@ public class DataDirectoryConfigChangeHandlerTest {
 
   @Rule public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
 
-  private NodeContext topology = new NodeContext(Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("bar", "localhost").clearDataDirs())), 1, "bar");
+  private NodeContext topology = new NodeContext(Testing.newTestCluster("foo", new Stripe().addNode(Testing.newTestNode("bar", "localhost").unsetDataDirs())), 1, "bar");
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.DATA_DIRS, "new-root", "path/to/data/root");
 
   @Test
@@ -49,8 +49,8 @@ public class DataDirectoryConfigChangeHandlerTest {
     DataDirectoryConfigChangeHandler dataDirectoryConfigChangeHandler = new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, IParameterSubstitutor.identity(), new PathResolver(tmpDir.getRoot()));
     dataDirectoryConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
 
-    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().entrySet(), Matchers.hasSize(1));
-    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs(), hasEntry("new-root", Paths.get("path/to/data/root")));
+    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().orDefault().entrySet(), Matchers.hasSize(1));
+    assertThat(set.apply(topology.getCluster()).getSingleNode().get().getDataDirs().orDefault(), hasEntry("new-root", RawPath.valueOf("path/to/data/root")));
   }
 
   @Test

@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.entity.MessageCodecException;
 
 import java.time.LocalDate;
@@ -34,6 +35,8 @@ import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_ADDITION;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_HAS_INCOMPLETE_CHANGE;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_LICENSE;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_MUST_BE_RESTARTED;
@@ -46,12 +49,16 @@ import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_UPCO
 public class CodecTest {
   @Test
   public void test_encode_decode() throws MessageCodecException {
-    Node node = Node.newDefaultNode("foo", "localhost", 9410);
-    Cluster cluster = Cluster.newDefaultCluster("bar", new Stripe(node));
+    Node node = Testing.newTestNode("foo", "localhost", 9410);
+    Node node2 = Testing.newTestNode("foo2", "localhost", 9411);
+    Stripe stripe = new Stripe().setName("stripe1").addNodes(node, node2);
+    Cluster cluster = Testing.newTestCluster("bar", stripe);
 
     test(REQ_LICENSE, null);
-    test(REQ_LICENSE, new License(emptyMap(), LocalDate.of(2020, 1, 1)));
-    test(REQ_LICENSE, new License(singletonMap("offheap", 1024L), LocalDate.of(2020, 1, 1)));
+    test(REQ_LICENSE, new License(emptyMap(), emptyMap(), LocalDate.of(2020, 1, 1)));
+    test(REQ_LICENSE, new License(singletonMap("offheap", 1024L), emptyMap(), LocalDate.of(2020, 1, 1)));
+    test(REQ_LICENSE, new License(emptyMap(), singletonMap("SubscriptionBased", false), LocalDate.now()));
+    test(REQ_LICENSE, new License(singletonMap("offheap", 1024L), singletonMap("StorageBased", false), LocalDate.now()));
 
     test(REQ_MUST_BE_RESTARTED, true);
     test(REQ_HAS_INCOMPLETE_CHANGE, true);
@@ -63,6 +70,9 @@ public class CodecTest {
     test(EVENT_NODE_REMOVAL, asList(1, node));
 
     test(EVENT_SETTING_CHANGED, asList(Configuration.valueOf("cluster-name=foo"), cluster));
+
+    test(EVENT_STRIPE_ADDITION, stripe);
+    test(EVENT_STRIPE_REMOVAL, stripe);
   }
 
   private static void test(Type type, Object payload) throws MessageCodecException {

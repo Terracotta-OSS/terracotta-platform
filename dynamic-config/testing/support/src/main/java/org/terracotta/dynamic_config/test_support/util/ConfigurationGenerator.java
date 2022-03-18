@@ -123,7 +123,7 @@ public class ConfigurationGenerator {
 
   private void convert(boolean skipCommit, Path... tcConfigPaths) {
     try {
-      assertFalse("Directory already exists: " + root, Files.exists(root));
+      assertFalse("Directory already exists: " + root, root.toFile().exists());
       createDirectories(root);
       ConfigRepoProcessor resultProcessor = skipCommit ? new CommitSkippingConfigRepoProcessor(root) : new ConfigRepoProcessor(root);
       ConfigConverter converter = new ConfigConverter(resultProcessor::process);

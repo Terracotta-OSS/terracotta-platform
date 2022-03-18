@@ -22,6 +22,7 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -55,13 +56,18 @@ public class DiscoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     receiver.discoverFail(server, reason);
   }
 
   @Override
   public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     receiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
+  }
+
+  @Override
+  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
+    receiver.discoverClusterDesynchronized(lastChangeUuids);
   }
 
   @Override
@@ -105,7 +111,7 @@ public class DiscoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
+  public void prepareFail(InetSocketAddress server, Throwable reason) {
     throw new AssertionError("This should not be called during the recovery process");
   }
 

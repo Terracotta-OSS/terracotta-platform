@@ -1,57 +1,42 @@
 {
   "stripes": [
     {
+      "name": "stripe1",
       "nodes": [
         {
           "dataDirs": {
-            "cache": "/data/cache0",
-            "main": "%H/terracotta/user-data/main"
+            "cache": "/data/cache1_1"
           },
-          "nodeBindAddress": "0.0.0.0",
-          "nodeGroupBindAddress": "0.0.0.0",
-          "nodeGroupPort": 9430,
-          "nodeHostname": "localhost",
-          "nodeLogDir": "%H/terracotta/logs",
-          "nodeLoggerOverrides": {},
-          "nodeMetadataDir": "%H/terracotta/metadata",
-          "nodeName": "node0",
-          "nodePort": 9410,
-          "tcProperties": {}
+          "hostname": "localhost",
+          "name": "node1_1",
+          "port": 9410
         }
       ]
     },
     {
+      "name": "stripe2",
       "nodes": [
         {
           "dataDirs": {
-            "cache": "/data/cache1",
-            "main": "%H/terracotta/user-data/main"
+            "cache": "/data/cache2_1"
           },
-          "nodeBindAddress": "0.0.0.0",
-          "nodeGroupBindAddress": "0.0.0.0",
-          "nodeGroupPort": 9430,
-          "nodeHostname": "localhost",
-          "nodeLogDir": "%H/terracotta/logs",
-          "nodeLoggerOverrides": {},
-          "nodeMetadataDir": "%H/terracotta/metadata",
-          "nodeName": "node1",
-          "nodePort": 9411,
-          "tcProperties": {}
+          "hostname": "localhost",
+          "name": "node2_1",
+          "port": 9412
+        },
+        {
+          "dataDirs": {
+            "cache": "/data/cache2_2"
+          },
+          "hostname": "localhost",
+          "name": "node2_2",
+          "port": 9413
         }
       ]
     }
   ],
-  "clientLeaseDuration": {
-    "quantity": 150,
-    "unit": "SECONDS",
-    "type": "TIME"
-  },
-  "clientReconnectWindow": {
-    "quantity": 120,
-    "unit": "SECONDS",
-    "type": "TIME"
-  },
   "failoverPriority": "availability",
+  "name": "my-cluster",
   "offheapResources": {
     "foo": {
       "quantity": 1,
@@ -63,7 +48,5 @@
       "unit": "MB",
       "type": "MEMORY"
     }
-  },
-  "securitySslTls": false,
-  "securityWhitelist": false
+  }
 }

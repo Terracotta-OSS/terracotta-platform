@@ -17,6 +17,7 @@ package org.terracotta.management.entity.nms.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ConfigurationException;
 import org.terracotta.entity.ServiceException;
@@ -54,10 +55,11 @@ public class NmsEntityServerService extends ProxyServerEntityService<NmsConfig, 
     LOGGER.trace("createActiveEntity()");
     // get services
     try {
+      TopologyService topologyService = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(TopologyService.class)));
       ManagementService managementService = Objects.requireNonNull(registry.getService(new ManagementServiceConfiguration()));
       EntityManagementRegistry entityManagementRegistry = Objects.requireNonNull(registry.getService(new ServerManagementRegistryConfiguration(registry, true)));
       SharedEntityManagementRegistry sharedEntityManagementRegistry = Objects.requireNonNull(registry.getService(new BasicServiceConfiguration<>(SharedEntityManagementRegistry.class)));
-      ActiveNmsServerEntity entity = new ActiveNmsServerEntity(configuration, managementService, entityManagementRegistry, sharedEntityManagementRegistry);
+      ActiveNmsServerEntity entity = new ActiveNmsServerEntity(configuration, managementService, entityManagementRegistry, sharedEntityManagementRegistry, topologyService);
       managementService.setManagementExecutor(entity);
       return entity;
     } catch (ServiceException e) {

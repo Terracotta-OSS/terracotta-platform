@@ -1,0 +1,29 @@
+{
+  "stripes": [
+    {
+      "name": "stripe1",
+      "nodes": [
+        {
+          "name": "testServer0",
+          "hostname": "localhost",
+          "port": 23633,
+          "groupPort": 23634,
+          "logDir": "stripe1/testServer0/logs",
+          "tcProperties": {
+            "terracotta.management.assert": "true"
+          },
+          "dataDirs": {}
+        }
+      ]
+    }
+  ],
+  "name": "tc-cluster",
+  "failoverPriority": "availability",
+  "offheapResources": {
+    "primary-server-resource": {
+      "quantity": 64,
+      "unit": "MB",
+      "type": "MEMORY"
+    }
+  }
+}

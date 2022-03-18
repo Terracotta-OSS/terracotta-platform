@@ -16,18 +16,21 @@
 package org.terracotta.dynamic_config.api.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.MemoryUnit;
+import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.LockContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +46,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyMap;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.either;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -50,8 +56,8 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.Mockito.lenient;
 import static org.terracotta.common.struct.Tuple2.tuple2;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
-import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -64,8 +70,51 @@ public class ClusterFactoryTest {
 
   @Mock public IParameterSubstitutor substitutor;
 
-  ObjectMapper json = new ObjectMapper()
-      .registerModule(new DynamicConfigModelJsonModule());
+  ObjectMapper json = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
+
+  Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
+      Testing.newTestNode("node-1", "localhost1")
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
+      Testing.newTestNode("node-2", "localhost2")
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
+          .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
+      .setFailoverPriority(consistency(2))
+      .putOffheapResource("foo", 1, MemoryUnit.GB)
+      .putOffheapResource("bar", 2, MemoryUnit.GB);
+
+  Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
+      Testing.newTestNode("node-1", "localhost1")
+          .setPort(9410)
+          .setGroupPort(9430)
+          .setBindAddress("0.0.0.0")
+          .setGroupBindAddress("0.0.0.0")
+          .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+          .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
+      Testing.newTestNode("node-2", "localhost2")
+          .setPort(9410)
+          .setGroupPort(9430)
+          .setBindAddress("0.0.0.0")
+          .setGroupBindAddress("0.0.0.0")
+          .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+          .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+          .unsetDataDirs()
+          .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
+          .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
+          .setTcProperties(emptyMap()))) // specifically set the map to empty one by teh user
+      .setSecuritySslTls(false)
+      .setSecurityWhitelist(false)
+      .setClientReconnectWindow(120, TimeUnit.SECONDS)
+      .setClientLeaseDuration(150, TimeUnit.SECONDS)
+      .setFailoverPriority(consistency(2))
+      .putOffheapResource("foo", 1, MemoryUnit.GB)
+      .putOffheapResource("bar", 2, MemoryUnit.GB);
 
   @Before
   public void setUp() {
@@ -74,14 +123,17 @@ public class ClusterFactoryTest {
     lenient().when(substitutor.substitute("%H")).thenReturn("home");
     lenient().when(substitutor.substitute("foo")).thenReturn("foo");
     lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
+    lenient().when(substitutor.substitute(startsWith("stripe-"))).thenReturn("<GENERATED>");
     lenient().when(substitutor.substitute("9410")).thenReturn("9410");
+    lenient().when(substitutor.substitute("")).thenReturn("");
+    lenient().when(substitutor.substitute("availability")).thenReturn("availability");
   }
 
   @Test
   public void test_create_cli() {
-    assertCliEquals(cli("failover-priority=availability"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "localhost.home"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("<GENERATED>", "foo"))));
+    assertCliEquals(cli("failover-priority=availability"), Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost.home"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "foo"))));
   }
 
   @Test
@@ -101,77 +153,76 @@ public class ClusterFactoryTest {
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.name=real",
             "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.hostname=foo"
         ),
-        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("real", "foo"))));
+        Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("real", "foo"))));
 
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=stripe1",
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost",
+            "lock-context=a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale"
+        ),
+        Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost"))).setConfigurationLockContext(LockContext.from("a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale")));
+
+    assertConfigEquals(
+        config(
+            "failover-priority=availability",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost"
         ),
-        Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost"))));
 
     assertConfigEquals(
         config(
             "failover-priority=availability",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost1",
             "stripe.1.node.2.name=node2",
             "stripe.1.node.2.hostname=localhost2",
+            "stripe.2.stripe-name=stripe2",
             "stripe.2.node.1.name=node3",
             "stripe.2.node.1.hostname=localhost3",
             "stripe.2.node.2.name=node4",
             "stripe.2.node.2.hostname=localhost4"
         ),
-        Cluster.newDefaultCluster(
-            new Stripe(
-                Node.newDefaultNode("node1", "localhost1"),
-                Node.newDefaultNode("node2", "localhost2")),
-            new Stripe(
-                Node.newDefaultNode("node3", "localhost3"),
-                Node.newDefaultNode("node4", "localhost4"))
+        Testing.newTestCluster(
+            new Stripe().setName("stripe1").addNodes(
+                Testing.newTestNode("node1", "localhost1"),
+                Testing.newTestNode("node2", "localhost2")),
+            new Stripe().setName("stripe2").addNodes(
+                Testing.newTestNode("node3", "localhost3"),
+                Testing.newTestNode("node4", "localhost4"))
         ));
 
     assertConfigEquals(
         config(
             "stripe.1.node.1.name=node1",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
-            "client-reconnect-window=120s",
             "failover-priority=availability",
-            "client-lease-duration=150s",
-            "authc=",
-            "ssl-tls=false",
-            "whitelist=false",
-            "offheap-resources=main:512MB",
-            "stripe.1.node.1.port=9410",
-            "stripe.1.node.1.group-port=9430",
-            "stripe.1.node.1.bind-address=0.0.0.0",
-            "stripe.1.node.1.group-bind-address=0.0.0.0",
-            "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
-            "stripe.1.node.1.log-dir=%H/terracotta/logs",
-            "stripe.1.node.1.backup-dir=",
-            "stripe.1.node.1.tc-properties=",
-            "stripe.1.node.1.security-dir=",
-            "stripe.1.node.1.audit-log-dir=",
-            "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
+            "stripe.1.node.1.tc-properties="
         ),
-        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost").setTcProperties(emptyMap()))));
 
     assertConfigEquals(
         config(
             "stripe.1.node.1.name=node1",
+            "stripe.1.stripe-name=stripe1",
             "stripe.1.node.1.hostname=localhost",
             "cluster-name=foo",
             "client-reconnect-window=120s",
             "failover-priority=availability",
             "client-lease-duration=150s",
-            "authc=",
             "ssl-tls=false",
             "whitelist=false",
             "offheap-resources=main:512MB",
@@ -181,13 +232,26 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.group-bind-address=0.0.0.0",
             "stripe.1.node.1.metadata-dir=%H/terracotta/metadata",
             "stripe.1.node.1.log-dir=%H/terracotta/logs",
-            "stripe.1.node.1.backup-dir=",
             "stripe.1.node.1.tc-properties=",
-            "stripe.1.node.1.security-dir=",
-            "stripe.1.node.1.audit-log-dir=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("node1", "localhost"))));
+        Testing.newTestCluster("foo", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost")
+            .setPort(9410)
+            .setGroupPort(9430)
+            .setBindAddress("0.0.0.0")
+            .setGroupBindAddress("0.0.0.0")
+            .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+            .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+            .setTcProperties(emptyMap())
+            .putDataDir("main", RawPath.valueOf("%H/terracotta/user-data/main"))
+        ))
+            .setClientReconnectWindow(120, TimeUnit.SECONDS)
+            .setFailoverPriority(availability())
+            .setClientLeaseDuration(150, TimeUnit.SECONDS)
+            .setSecuritySslTls(false)
+            .setSecurityWhitelist(false)
+            .putOffheapResource("main", 512, MemoryUnit.MB)
+    );
   }
 
   @Test
@@ -240,47 +304,54 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_toProperties() {
-    Cluster cluster = Cluster.newDefaultCluster("my-cluster", new Stripe(
-        newDefaultNode("node-1", "localhost")
-            .setDataDir("foo", Paths.get("%H/tc1/foo"))
-            .setDataDir("bar", Paths.get("%H/tc1/bar")),
-        newDefaultNode("node-2", "localhost")
-            .setDataDir("foo", Paths.get("%H/tc2/foo"))
-            .setDataDir("bar", Paths.get("%H/tc2/bar"))
-            .setTcProperty("server.entity.processor.threads", "64")
-            .setTcProperty("topology.validate", "true")))
-        .setFailoverPriority(consistency(2))
-        .setOffheapResource("foo", 1, MemoryUnit.GB)
-        .setOffheapResource("bar", 2, MemoryUnit.GB);
-
     Stream.of(
-        tuple2(cluster.toProperties(false, true), "config_with_defaults.properties"),
-        tuple2(cluster.toProperties(false, false), "config_without_defaults.properties"),
-        tuple2(cluster.toProperties(true, true), "config_expanded_default.properties"),
-        tuple2(cluster.toProperties(true, false), "config_expanded_without_default.properties")
+        tuple2(fixPaths(cluster.toProperties(false, true, true)), "config_with_defaults.properties"),
+        tuple2(cluster.toProperties(false, false, true), "config_without_defaults.properties"),
+        tuple2(fixPaths(cluster.toProperties(true, true, true)), "config_expanded_default.properties"),
+        tuple2(cluster.toProperties(true, false, true), "config_expanded_without_default.properties")
     ).forEach(rethrow(tuple -> {
-      Properties expected = fixPaths(Props.load(Paths.get(getClass().getResource("/config-property-files/" + tuple.t2).toURI())));
-      assertThat("File: " + tuple.t2 + " should perhaps be:\n" + Props.toString(tuple.t1), tuple.t1, is(equalTo(expected)));
+      Properties expectedProps = Props.load(Paths.get(getClass().getResource("/config-property-files/" + tuple.t2).toURI()));
+
+      assertThat(
+          "File: " + tuple.t2 + " should perhaps be:\n" + Props.toString(tuple.t1),
+          tuple.t1,
+          is(equalTo(expectedProps)));
+
+      Cluster expectedCluster = new ClusterFactory().create(expectedProps);
+
+      assertThat(
+          "File: " + tuple.t2,
+          expectedCluster,
+          either(equalTo(cluster)).or(equalTo(clusterWithDefaults)));
     }));
+  }
+
+  @Test
+  public void test_parsing_expanded_values_does_not_add_defaults() throws URISyntaxException, IOException {
+    Properties expectedProps = Props.load(Paths.get(getClass().getResource("/config-property-files/config_expanded_default.properties").toURI()));
+    Cluster expectedCluster = new ClusterFactory().create(expectedProps);
+    assertThat(
+        "\nclusterWithDefaults: " + json.writeValueAsString(clusterWithDefaults) + "\nexpectedCluster:     " + json.writeValueAsString(expectedCluster),
+        expectedCluster, is(equalTo(clusterWithDefaults)));
   }
 
   @Test
   public void test_mapping_props_json_without_defaults() throws URISyntaxException, IOException {
     Properties props = Props.load(read("/config1_without_defaults.properties"));
-    Cluster fromJson = json.readValue(read("/config1.json"), Cluster.class);
+    Cluster fromJson = json.readValue(read("/config2.json"), Cluster.class);
     Cluster fromProps = new ClusterFactory().create(props);
 
     assertThat(fromJson, is(equalTo(fromProps)));
     assertThat(
-        Props.toString(fromJson.toProperties(false, false)),
-        fromJson.toProperties(false, false),
+        Props.toString(fromJson.toProperties(false, false, true)),
+        fromJson.toProperties(false, false, true),
         is(equalTo(props)));
     assertThat(
-        Props.toString(fromJson.toProperties(false, false)),
-        fromJson.toProperties(false, false),
-        is(equalTo(fromProps.toProperties(false, false))));
+        Props.toString(fromJson.toProperties(false, false, true)),
+        fromJson.toProperties(false, false, true),
+        is(equalTo(fromProps.toProperties(false, false, true))));
     assertThat(
-        json.writerWithDefaultPrettyPrinter().writeValueAsString(fromProps),
+        json.writeValueAsString(fromProps),
         fromProps,
         is(equalTo(fromJson)));
   }
@@ -293,15 +364,15 @@ public class ClusterFactoryTest {
 
     assertThat(fromJson, is(equalTo(fromProps)));
     assertThat(
-        Props.toString(fromJson.toProperties(false, true)),
-        fromJson.toProperties(false, true),
+        Props.toString(fromJson.toProperties(false, true, true)),
+        fromJson.toProperties(false, true, true),
         is(equalTo(props)));
     assertThat(
-        Props.toString(fromJson.toProperties(false, true)),
-        fromJson.toProperties(false, true),
-        is(equalTo(fromProps.toProperties(false, true))));
+        Props.toString(fromJson.toProperties(false, true, true)),
+        fromJson.toProperties(false, true, true),
+        is(equalTo(fromProps.toProperties(false, true, true))));
     assertThat(
-        json.writerWithDefaultPrettyPrinter().writeValueAsString(fromProps),
+        json.writeValueAsString(fromProps),
         fromProps,
         is(equalTo(fromJson)));
   }
@@ -326,19 +397,14 @@ public class ClusterFactoryTest {
 
   private String read(String resource) throws URISyntaxException, IOException {
     Path path = Paths.get(getClass().getResource(resource).toURI());
-    String data = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-    return isWindows() ? data.replace("\r\n", "\n").replace("\n", "\r\n").replace("/", "\\\\") : data;
+    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 
   private Properties fixPaths(Properties props) {
     if (File.separatorChar == '\\') {
-      props.entrySet().forEach(e -> e.setValue(e.getValue().toString().replace('/', '\\')));
+      props.entrySet().forEach(e -> e.setValue(e.getValue().toString().replace('\\', '/')));
     }
     return props;
-  }
-
-  private static boolean isWindows() {
-    return System.getProperty("os.name").toLowerCase().startsWith("windows");
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -347,36 +413,38 @@ public class ClusterFactoryTest {
 
     // since node name is generated when not given,
     // this is a hack that will reset to null only the node names that have been generated
-    String nodeName = built.getSingleNode().get().getNodeName();
-    cluster.getSingleNode()
-        .filter(node -> node.getNodeName().equals("<GENERATED>"))
-        .ifPresent(node -> node.setNodeName(nodeName));
+    String nodeName = built.getSingleNode().get().getName();
+    cluster.getStripes()
+        .stream()
+        .filter(stripe -> "<GENERATED>".equals(stripe.getName()))
+        .forEach(stripe -> stripe.setName(nodeName));
+    cluster.getNodes()
+        .stream()
+        .filter(node -> "<GENERATED>".equals(node.getName()))
+        .forEach(node -> node.setName(nodeName));
 
-    assertThat(built, Matchers.is(equalTo(cluster)));
+    assertThat(built, is(equalTo(cluster)));
   }
 
   private void assertCliFail(Map<Setting, String> params, String err) {
-    err = err.replace("/", File.separator); // unix/win compat'
     assertThat(
         () -> clusterFactory.create(params, substitutor),
-        Matchers.is(throwing(instanceOf(MalformedClusterException.class)).andMessage(Matchers.is(equalTo(err)))));
+        is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
   }
 
   private void assertConfigEquals(Properties config, Cluster cluster) {
     Cluster built = clusterFactory.create(config);
-    assertThat(built, Matchers.is(equalTo(cluster)));
+    assertThat(built, is(equalTo(cluster)));
   }
 
   private void assertConfigFail(Properties config, String err) {
-    err = err.replace("/", File.separator); // unix/win compat'
     assertThat(
         () -> clusterFactory.create(config),
-        Matchers.is(throwing(instanceOf(MalformedClusterException.class)).andMessage(Matchers.is(equalTo(err)))));
+        is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
   }
 
   private static Map<Setting, String> cli(String... params) {
     return Stream.of(params)
-        .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(p -> p.split("="))
         .map(kv -> new AbstractMap.SimpleEntry<>(Setting.fromName(kv[0]), kv[1]))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -384,7 +452,6 @@ public class ClusterFactoryTest {
 
   private static Properties config(String... params) {
     return Stream.of(params)
-        .map(string -> string.replace("/", File.separator)) // unix/win compat'
         .map(p -> p.split("="))
         .reduce(new Properties(), (props, kv) -> {
           props.setProperty(kv[0], kv.length == 1 ? "" : kv[1]);

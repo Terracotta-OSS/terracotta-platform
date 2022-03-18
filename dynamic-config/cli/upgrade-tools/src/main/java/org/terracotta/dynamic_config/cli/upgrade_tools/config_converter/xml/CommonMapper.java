@@ -22,21 +22,18 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.config.Config;
 import org.terracotta.config.Service;
 import org.terracotta.config.TcConfig;
-import org.terracotta.config.TcProperties;
 import org.terracotta.config.data_roots.DataRootConfigParser;
 import org.terracotta.config.service.ExtendedConfigParser;
 import org.terracotta.config.service.ServiceConfigParser;
 import org.terracotta.data.config.DataRootMapping;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
-import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.lease.service.config.LeaseConfigurationParser;
 import org.terracotta.lease.service.config.LeaseElement;
 import org.terracotta.offheapresource.OffHeapResourceConfigurationParser;
 import org.terracotta.offheapresource.config.ResourceType;
 import org.w3c.dom.Element;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -74,37 +71,32 @@ public class CommonMapper {
     return specific;
   }
 
-  public Map<String, String> toProperties(TcConfig xmlTcConfig) {
-    Map<String, String> properties = new HashMap<>();
-    TcProperties tcProperties = xmlTcConfig.getTcProperties();
-    if (tcProperties != null) {
+  public Optional<Map<String, String>> toProperties(TcConfig xmlTcConfig) {
+    return Optional.ofNullable(xmlTcConfig.getTcProperties()).map(tcProperties -> {
+      Map<String, String> properties = new HashMap<>();
       tcProperties.getProperty().forEach(p -> properties.put(p.getName(), p.getValue()));
-    }
-    return properties;
+      return properties;
+    });
   }
 
-  public Measure<TimeUnit> toClientLeaseDuration(Map<Class<?>, List<Object>> plugins) {
-    return plugins.getOrDefault(LeaseElement.class, Collections.emptyList())
-        .stream()
+  public Optional<Measure<TimeUnit>> toClientLeaseDuration(Map<Class<?>, List<Object>> plugins) {
+    return Optional.ofNullable(plugins.get(LeaseElement.class)).flatMap(list -> list.stream()
         .map(LeaseElement.class::cast)
         .map(leaseElement -> Measure.of(Long.parseLong(leaseElement.getLeaseValue()), TimeUnit.valueOf(leaseElement.getTimeUnit().toUpperCase())))
-        .findAny()
-        .orElse(null);
+        .findAny());
   }
 
-  public Map<String, Path> toDataDirs(Map<Class<?>, List<Object>> plugins, Predicate<DataRootMapping> filter) {
-    return plugins.getOrDefault(DataRootMapping.class, Collections.emptyList())
-        .stream()
+  public Optional<Map<String, RawPath>> toDataDirs(Map<Class<?>, List<Object>> plugins, Predicate<DataRootMapping> filter) {
+    return Optional.ofNullable(plugins.get(DataRootMapping.class)).map(list -> list.stream()
         .map(DataRootMapping.class::cast)
         .filter(filter)
-        .collect(toMap(DataRootMapping::getName, mapping -> Paths.get(mapping.getValue())));
+        .collect(toMap(DataRootMapping::getName, mapping -> RawPath.valueOf(mapping.getValue()))));
   }
 
-  public Map<String, Measure<MemoryUnit>> toOffheapResources(Map<Class<?>, List<Object>> plugins) {
-    return plugins.getOrDefault(ResourceType.class, Collections.emptyList())
-        .stream()
+  public Optional<Map<String, Measure<MemoryUnit>>> toOffheapResources(Map<Class<?>, List<Object>> plugins) {
+    return Optional.ofNullable(plugins.get(ResourceType.class)).map(list -> list.stream()
         .map(ResourceType.class::cast)
-        .collect(toMap(ResourceType::getName, r -> Measure.of(r.getValue().longValue(), MemoryUnit.parse(r.getUnit().value()))));
+        .collect(toMap(ResourceType::getName, r -> Measure.of(r.getValue().longValue(), MemoryUnit.parse(r.getUnit().value())))));
   }
 
   public FailoverPriority toFailoverPriority(org.terracotta.config.FailoverPriority failoverPriority) {
@@ -179,15 +171,15 @@ public class CommonMapper {
     }
   }
 
-  public Optional<Map.Entry<String, Path>> toNodeMetadataDir(Map<Class<?>, List<Object>> plugins) {
+  public Optional<Map.Entry<String, RawPath>> toMetadataDir(Map<Class<?>, List<Object>> plugins) {
     // First try to find a deprecated service tag "<persistence:platform-persistence data-directory-id="root1"/>"
     // that will give us the ID of the dataroot to use for platform persistence
-    return toDataDirs(plugins, DataRootMapping::isUseForPlatform).entrySet().stream().findAny();
+    return toDataDirs(plugins, DataRootMapping::isUseForPlatform).flatMap(map -> map.entrySet().stream().findAny());
   }
 
-  public Measure<TimeUnit> toClientReconnectWindow(TcConfig tcConfig) {
+  public Optional<Measure<TimeUnit>> toClientReconnectWindow(TcConfig tcConfig) {
     return tcConfig == null || tcConfig.getServers() == null || tcConfig.getServers().getClientReconnectWindow() == null ?
-        Measure.parse(Setting.CLIENT_RECONNECT_WINDOW.getDefaultValue(), TimeUnit.class) :
-        Measure.of(tcConfig.getServers().getClientReconnectWindow(), TimeUnit.SECONDS);
+        Optional.empty() :
+        Optional.of(Measure.of(tcConfig.getServers().getClientReconnectWindow(), TimeUnit.SECONDS));
   }
 }

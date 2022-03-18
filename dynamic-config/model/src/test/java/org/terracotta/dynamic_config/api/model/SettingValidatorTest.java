@@ -59,6 +59,7 @@ public class SettingValidatorTest {
   public void test_defaults() {
     validateDefaults(CLUSTER_NAME);
     CLUSTER_NAME.validate(null); // cluster name can be set to null when loading config file
+    CLUSTER_NAME.validate(""); // cluster name can be set to null when loading config file
     CLUSTER_NAME.validate("foo");
   }
 
@@ -67,7 +68,10 @@ public class SettingValidatorTest {
     validateDefaults(NODE_NAME);
     assertThat(
         () -> NODE_NAME.validate(null),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_NAME + " cannot be null")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_NAME + " cannot be null or empty")))));
+    assertThat(
+        () -> NODE_NAME.validate(""),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_NAME + " cannot be null or empty")))));
     Stream.of("d", "D", "h", "c", "i", "H", "n", "o", "a", "v", "t", "(").forEach(c -> {
       assertThat(
           () -> NODE_NAME.validate("%" + c),
@@ -84,7 +88,10 @@ public class SettingValidatorTest {
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<address> specified in hostname=<address> must be a valid hostname or IP address")))));
     assertThat(
         () -> NODE_HOSTNAME.validate(null),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_HOSTNAME + " cannot be null")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_HOSTNAME + " cannot be null or empty")))));
+    assertThat(
+        () -> NODE_HOSTNAME.validate(""),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(NODE_HOSTNAME + " cannot be null or empty")))));
     NODE_HOSTNAME.validate("foo");
   }
 
@@ -103,7 +110,10 @@ public class SettingValidatorTest {
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535")))));
       assertThat(
           () -> setting.validate(null),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+      assertThat(
+          () -> setting.validate(""),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
       setting.validate("9410");
     });
   }
@@ -117,25 +127,31 @@ public class SettingValidatorTest {
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("<address> specified in " + setting + "=<address> must be a valid IP address")))));
       assertThat(
           () -> setting.validate(null),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+      assertThat(
+          () -> setting.validate(""),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
       setting.validate("0.0.0.0");
     });
   }
 
   @Test
   public void test_paths() {
-    Stream.of(NODE_CONFIG_DIR, NODE_LOG_DIR, LICENSE_FILE).forEach(setting -> {
+    Stream.of(NODE_CONFIG_DIR, NODE_LOG_DIR, NODE_METADATA_DIR).forEach(setting -> {
       validateDefaults(setting);
       assertThat(
           () -> setting.validate("/\u0000/"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid path specified for setting " + setting + ": /\u0000/")))));
       assertThat(
           () -> setting.validate(null),
-          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null")))));
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
+      assertThat(
+          () -> setting.validate(""),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
       setting.validate(".");
     });
 
-    Stream.of(NODE_BACKUP_DIR, NODE_METADATA_DIR, SECURITY_DIR, SECURITY_AUDIT_LOG_DIR).forEach(setting -> {
+    Stream.of(NODE_BACKUP_DIR, SECURITY_DIR, SECURITY_AUDIT_LOG_DIR, LICENSE_FILE).forEach(setting -> {
       validateDefaults(setting);
       assertThat(
           () -> setting.validate("/\u0000/"),
@@ -165,6 +181,9 @@ public class SettingValidatorTest {
       assertThat(
           () -> setting.validate("-1s"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Quantity measure cannot be negative")))));
+      assertThat(
+          () -> setting.validate(""),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
     });
   }
 
@@ -201,6 +220,8 @@ public class SettingValidatorTest {
         () -> SECURITY_AUTHC.validate("foo"),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("authc should be one of: [file, ldap, certificate]"))))
     );
+    SECURITY_AUTHC.validate(null);
+    SECURITY_AUTHC.validate("");
   }
 
   @Test
@@ -218,6 +239,9 @@ public class SettingValidatorTest {
       assertThat(
           () -> setting.validate("TRUE"),
           is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " should be one of: [true, false]")))));
+      assertThat(
+          () -> setting.validate(""),
+          is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
     });
   }
 
@@ -227,8 +251,11 @@ public class SettingValidatorTest {
     OFFHEAP_RESOURCES.validate(null, null);
     OFFHEAP_RESOURCES.validate("main", null);
     OFFHEAP_RESOURCES.validate("main", "1GB");
+    OFFHEAP_RESOURCES.validate("main", "");
     OFFHEAP_RESOURCES.validate(null, "main:1GB");
     OFFHEAP_RESOURCES.validate(null, "main:1GB,second:2GB");
+    OFFHEAP_RESOURCES.validate(null, "");
+    OFFHEAP_RESOURCES.validate("");
 
     assertThat(
         () -> OFFHEAP_RESOURCES.validate(null, "bar"),
@@ -258,6 +285,9 @@ public class SettingValidatorTest {
     DATA_DIRS.validate(null);
     DATA_DIRS.validate(null, null);
     DATA_DIRS.validate("main", null);
+    DATA_DIRS.validate("main", "");
+    DATA_DIRS.validate(null, "");
+    DATA_DIRS.validate("");
 
     // Valid Relative paths
     DATA_DIRS.validate("main", "foo/bar");
@@ -292,9 +322,12 @@ public class SettingValidatorTest {
   @Test
   public void test_TC_PROPERTIES() {
     TC_PROPERTIES.validate(null);
+    TC_PROPERTIES.validate("");
     TC_PROPERTIES.validate(null, null);
+    TC_PROPERTIES.validate(null, "");
     TC_PROPERTIES.validate("key", null);
     TC_PROPERTIES.validate("key", "value");
+    TC_PROPERTIES.validate("key", "");
     TC_PROPERTIES.validate(null, "key:value");
     TC_PROPERTIES.validate(null, "key1:value,key2:value");
 
@@ -315,8 +348,11 @@ public class SettingValidatorTest {
   @Test
   public void test_NODE_LOGGER_OVERRIDES() {
     NODE_LOGGER_OVERRIDES.validate(null);
+    NODE_LOGGER_OVERRIDES.validate("");
     NODE_LOGGER_OVERRIDES.validate(null, null);
+    NODE_LOGGER_OVERRIDES.validate(null, "");
     NODE_LOGGER_OVERRIDES.validate("key", null);
+    NODE_LOGGER_OVERRIDES.validate("key", "");
     NODE_LOGGER_OVERRIDES.validate("key", "INFO");
     NODE_LOGGER_OVERRIDES.validate(null, "key:INFO");
     NODE_LOGGER_OVERRIDES.validate(null, "key1:INFO,key2:WARN");
@@ -343,9 +379,6 @@ public class SettingValidatorTest {
     assertThat(
         () -> NODE_LOGGER_OVERRIDES.validate("com.foo", "FATAL"),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides.com.foo is invalid: Bad level: FATAL")))));
-    assertThat(
-        () -> NODE_LOGGER_OVERRIDES.validate("com.foo", "OFF"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("logger-overrides.com.foo is invalid: Bad level: OFF")))));
   }
 
   private void validateDefaults(Setting setting) {
@@ -353,14 +386,11 @@ public class SettingValidatorTest {
         () -> setting.validate("foo", "bar"),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " is not a map")))));
     assertThat(
-        () -> setting.validate(""),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be empty")))));
-    assertThat(
         () -> setting.validate("\u0000"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be empty")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
     assertThat(
         () -> setting.validate("  "),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be empty")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo(setting + " cannot be null or empty")))));
   }
 
 }

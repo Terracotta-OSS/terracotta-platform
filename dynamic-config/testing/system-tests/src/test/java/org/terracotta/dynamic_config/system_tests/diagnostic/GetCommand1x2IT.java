@@ -20,56 +20,51 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.is;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class GetCommand1x2IT extends DynamicConfigIT {
   @Before
   public void before() throws Exception {
-    assertThat(
-        configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
   }
 
   @Test
   public void testStripe_getOneOffheap() {
     assertThat(
-        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
         containsOutput("offheap-resources.main=512MB"));
   }
 
   @Test
   public void testStripe_getTwoOffheaps() {
     assertThat(
-        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "offheap-resources.foo"),
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "offheap-resources.foo"),
         allOf(containsOutput("offheap-resources.main=512MB"), containsOutput("offheap-resources.foo=1GB")));
   }
 
   @Test
   public void testStripe_getAllOffheaps() {
     assertThat(
-        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
         containsOutput("offheap-resources=foo:1GB,main:512MB"));
   }
 
   @Test
   public void testStripe_getAllDataDirs() {
     assertThat(
-        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
         allOf(
-            containsOutput("stripe.1.node.1.data-dirs=main:node-1-1" + separator + "data-dir"),
-            containsOutput("stripe.1.node.2.data-dirs=main:node-1-2" + separator + "data-dir")));
+            containsOutput("stripe.1.node.1.data-dirs=main:node-1-1/data-dir"),
+            containsOutput("stripe.1.node.2.data-dirs=main:node-1-2/data-dir")));
   }
 
   @Test
   public void testStripe_getAllNodeHostnames() {
     assertThat(
-        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.hostname"),
+        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.hostname"),
         allOf(
             containsOutput("stripe.1.node.1.hostname=localhost"),
             containsOutput("stripe.1.node.2.hostname=localhost")));

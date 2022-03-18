@@ -25,17 +25,18 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
-import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.dynamic_config.server.api.InvalidLicenseException;
 import org.terracotta.dynamic_config.server.api.LicenseService;
+import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigNomadSynchronizer;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.ObjectMapperFactory;
@@ -47,33 +48,33 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.nomad.server.UpgradableNomadServer;
 import org.terracotta.server.ServerEnv;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 
+import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.server.StopAction.RESTART;
 import static org.terracotta.server.StopAction.ZAP;
 
-public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigEventService, DynamicConfigListener, StateDumpable {
+public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigListener, StateDumpable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
 
   private final LicenseService licenseService;
   private final NomadServerManager nomadServerManager;
-  private final List<DynamicConfigListener> listeners = new CopyOnWriteArrayList<>();
   private final Path licensePath;
   private final ObjectMapper objectMapper;
 
@@ -91,28 +92,15 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (hasLicenseFile()) {
       validateAgainstLicense(upcomingNodeContext.getCluster());
     }
+
+    // This check is only present to safeguard against the possibility of a missing cluster validation in the call path
     new ClusterValidator(nodeContext.getCluster()).validate();
-  }
-
-  /**
-   * called from startup manager (in case we want a pre-activated node) (and this class) to make Nomad RW.
-   */
-  public synchronized void activate() {
-    if (isActivated()) {
-      throw new AssertionError("Already activated");
-    }
-    LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster().toShapeString());
-    nomadServerManager.upgradeForWrite(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName());
-    LOGGER.debug("Setting nomad writable successful");
-
-    clusterActivated = true;
-    LOGGER.info("Node activation successful");
   }
 
   // do not move this method up in the interface otherwise any client could access the license content through diagnostic port
   public synchronized Optional<String> getLicenseContent() {
     Path targetLicensePath = nomadServerManager.getConfigurationManager().getLicensePath().resolve(LICENSE_FILE_NAME);
-    if (Files.exists(targetLicensePath)) {
+    if (targetLicensePath.toFile().exists()) {
       try {
         return Optional.of(new String(Files.readAllBytes(targetLicensePath), StandardCharsets.UTF_8));
       } catch (IOException e) {
@@ -120,6 +108,33 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
       }
     }
     return Optional.empty();
+  }
+
+  @Override
+  public void resetAndSync(NomadChangeInfo[] nomadChanges, Cluster cluster) {
+    UpgradableNomadServer<NodeContext> nomadServer = nomadServerManager.getNomadServer();
+    DynamicConfigNomadSynchronizer nomadSynchronizer = new DynamicConfigNomadSynchronizer(
+        nomadServerManager.getConfiguration().orElse(null), nomadServer);
+
+    List<NomadChangeInfo> backup;
+    Cluster thisTopology = upcomingNodeContext.getCluster();
+    try {
+      backup = nomadServer.getAllNomadChanges();
+    } catch (NomadException e) {
+      throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
+    }
+
+    try {
+      nomadSynchronizer.syncNomadChanges(Arrays.asList(nomadChanges), cluster);
+    } catch (NomadException e) {
+      try {
+        nomadServer.reset();
+        nomadSynchronizer.syncNomadChanges(backup, thisTopology);
+      } catch (NomadException nomadException) {
+        e.addSuppressed(nomadException);
+      }
+      throw new IllegalStateException("Unable to reset and sync Nomad system: " + e.getMessage(), e);
+    }
   }
 
   @Override
@@ -157,44 +172,40 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     }
   }
 
-  @Override
-  public EventRegistration register(DynamicConfigListener listener) {
-    listeners.add(listener);
-    return () -> listeners.remove(listener);
-  }
+  // we only listen to log
 
   @Override
   public void onSettingChanged(SettingNomadChange change, Cluster updated) {
-    if (change.canApplyAtRuntime()) {
+    if (change.canApplyAtRuntime(runtimeNodeContext.getStripeId(), runtimeNodeContext.getNodeName())) {
       LOGGER.info("Configuration change: {} applied at runtime", change.getSummary());
     } else {
       LOGGER.info("Configuration change: {} will be applied after restart", change.getSummary());
     }
-    // do not fire events within a synchronized block
-    listeners.forEach(c -> c.onSettingChanged(change, updated));
   }
 
   @Override
   public void onNewConfigurationSaved(NodeContext nodeContext, Long version) {
-    LOGGER.info("New configuration directory version: {} has been saved", version);
-    // do not fire events within a synchronized block
-    NodeContext upcoming = getUpcomingNodeContext();
-    listeners.forEach(c -> c.onNewConfigurationSaved(upcoming, version));
+    LOGGER.info("New configuration version: {} has been saved", version);
   }
 
   @Override
   public void onNodeRemoval(int stripeId, Node removedNode) {
-    InetSocketAddress addr = removedNode.getNodeAddress();
-    LOGGER.info("Removed node: {} from stripe ID: {}", addr, stripeId);
-    // do not fire events within a synchronized block
-    listeners.forEach(c -> c.onNodeRemoval(stripeId, removedNode));
+    LOGGER.info("Removed node: {} from stripe ID: {}", removedNode.getAddress(), stripeId);
   }
 
   @Override
   public void onNodeAddition(int stripeId, Node addedNode) {
-    LOGGER.info("Added node:{} to stripe ID: {}", addedNode.getNodeAddress(), stripeId);
-    // do not fire events within a synchronized block
-    listeners.forEach(c -> c.onNodeAddition(stripeId, addedNode));
+    LOGGER.info("Added node:{} to stripe ID: {}", addedNode.getAddress(), stripeId);
+  }
+
+  @Override
+  public void onStripeAddition(Stripe addedStripe) {
+    LOGGER.info("Added stripe:{} to cluster: {}", addedStripe.toShapeString(), runtimeNodeContext.getCluster().toShapeString());
+  }
+
+  @Override
+  public void onStripeRemoval(Stripe removedStripe) {
+    LOGGER.info("Removed stripe:{} from cluster: {}", removedStripe.toShapeString(), runtimeNodeContext.getCluster().toShapeString());
   }
 
   @Override
@@ -207,13 +218,24 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   @Override
+  public void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {
+    if (response.isAccepted()) {
+      LOGGER.info("Nomad change {} rolled back", message.getChangeUuid());
+    } else {
+      LOGGER.warn("Nomad change {} failed to rollback: {}", message.getChangeUuid(), response);
+    }
+  }
+
+  // this is the only real listener where we act on in this service
+
+  @Override
   public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
     if (response.isAccepted()) {
       DynamicConfigNomadChange dynamicConfigNomadChange = (DynamicConfigNomadChange) changeInfo.getNomadChange();
       LOGGER.info("Nomad change {} committed: {}", message.getChangeUuid(), dynamicConfigNomadChange.getSummary());
 
       // extract the changes since there can be multiple settings change
-      List<? extends DynamicConfigNomadChange> nomadChanges = MultiSettingNomadChange.extractChanges(dynamicConfigNomadChange);
+      List<? extends DynamicConfigNomadChange> nomadChanges = MultiSettingNomadChange.extractChanges(dynamicConfigNomadChange.unwrap());
 
       // the following code will be executed on all the nodes, regardless of the applicability
       // level to update the config
@@ -224,25 +246,20 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
           upcomingNodeContext = upcomingNodeContext.withCluster(upcomingCluster).orElseGet(upcomingNodeContext::alone);
           // if the change can be applied at runtime, it was previously done in the config change handler.
           // so update also the runtime topology there
-          if (nomadChange.canApplyAtRuntime()) {
+          if (nomadChange.canApplyAtRuntime(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName())) {
             Cluster runtimeCluster = nomadChange.apply(runtimeNodeContext.getCluster());
             runtimeNodeContext = runtimeNodeContext.withCluster(runtimeCluster).orElseGet(runtimeNodeContext::alone);
           }
         }
       }
+
+      if (runtimeNodeContext.equals(upcomingNodeContext)) {
+        LOGGER.info("New cluster configuration: {}{}", lineSeparator(), Props.toString(runtimeNodeContext.getCluster().toProperties(false, false, true)));
+      } else {
+        LOGGER.info("Pending cluster configuration: {}{}", lineSeparator(), Props.toString(upcomingNodeContext.getCluster().toProperties(false, false, true)));
+      }
     } else {
       LOGGER.warn("Nomad change {} failed to commit: {}", message.getChangeUuid(), response);
-    }
-
-    listeners.forEach(c -> c.onNomadCommit(message, response, changeInfo));
-  }
-
-  @Override
-  public void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {
-    if (response.isAccepted()) {
-      LOGGER.info("Nomad change {} rolled back", message.getChangeUuid());
-    } else {
-      LOGGER.warn("Nomad change {} failed to rollback: {}", message.getChangeUuid(), response);
     }
   }
 
@@ -274,7 +291,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   @Override
   public synchronized void setUpcomingCluster(Cluster updatedCluster) {
     if (isActivated()) {
-      throw new IllegalStateException("Use Nomad instead to change the topology of activated node: " + runtimeNodeContext.getNode().getNodeAddress());
+      throw new IllegalStateException("Use Nomad instead to change the topology of activated node: " + runtimeNodeContext.getNode().getAddress());
     }
 
     requireNonNull(updatedCluster);
@@ -287,11 +304,11 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     if (newMe != null) {
       // we have updated the topology and I am still part of this cluster
       LOGGER.info("Set upcoming topology to: {}", updatedCluster.toShapeString());
-      this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getNodeAddress());
+      this.upcomingNodeContext = new NodeContext(updatedCluster, newMe.getAddress());
     } else {
       // We have updated the topology and I am not part anymore of the cluster
       // So we just reset the cluster object so that this node is alone
-      LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getNodeName(), oldMe.getNodeAddress(), updatedCluster.toShapeString());
+      LOGGER.info("Node {} ({}) removed from pending topology: {}", oldMe.getName(), oldMe.getAddress(), updatedCluster.toShapeString());
       this.upcomingNodeContext = this.upcomingNodeContext.withOnlyNode(oldMe);
     }
 
@@ -319,7 +336,12 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     this.setUpcomingCluster(maybeUpdatedCluster);
     this.installLicense(licenseContent);
 
-    activate();
+    LOGGER.info("Preparing activation of Node with validated topology: {}", upcomingNodeContext.getCluster().toShapeString());
+    nomadServerManager.upgradeForWrite(upcomingNodeContext.getStripeId(), upcomingNodeContext.getNodeName());
+    LOGGER.debug("Setting nomad writable successful");
+
+    clusterActivated = true;
+    LOGGER.info("Node activation successful");
   }
 
   @Override
@@ -426,7 +448,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   private boolean hasLicenseFile() {
-    return Files.exists(licensePath) && Files.isRegularFile(licensePath) && Files.isReadable(licensePath);
+    return licensePath.toFile().exists() && Files.isRegularFile(licensePath) && Files.isReadable(licensePath);
   }
 
   /**
@@ -439,8 +461,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
    */
   private synchronized Node findMe(Cluster updatedCluster) {
     final Node me = upcomingNodeContext.getNode();
-    return updatedCluster.getNode(me.getNodeInternalAddress()) // important to use the internal address
-        .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getNodeName())
+    return updatedCluster.getNode(me.getInternalAddress()) // important to use the internal address
+        .orElseGet(() -> updatedCluster.getNode(upcomingNodeContext.getStripeId(), me.getName())
             .orElse(null));
   }
 

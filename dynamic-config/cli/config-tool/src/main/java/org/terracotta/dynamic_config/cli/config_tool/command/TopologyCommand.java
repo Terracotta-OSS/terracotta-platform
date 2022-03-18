@@ -19,7 +19,7 @@ import com.beust.jcommander.Parameter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
@@ -30,11 +30,12 @@ import org.terracotta.json.ObjectMapperFactory;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static java.lang.System.lineSeparator;
-import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
 /**
  * @author Mathieu Carbou
@@ -80,7 +81,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     validateLogOrFail(
         () -> !mustBeRestarted(destination),
         "Impossible to do any topology change. Cluster at address: " + destination + " is waiting to be restarted to apply some pending changes. " +
-            "You can run the command with -f option to force the comment but at the risk of breaking this cluster configuration consistency. " +
+            "You can run the command with the force option to force the commit, but at the risk of breaking this cluster configuration consistency. " +
             "The newly added node will be restarted, but not the existing ones.");
 
     destinationCluster = getUpcomingCluster(destination);
@@ -94,9 +95,6 @@ public abstract class TopologyCommand extends RemoteCommand {
     if (destinationClusterActivated) {
       ensureNodesAreEitherActiveOrPassive(destinationOnlineNodes);
       ensureActivesAreAllOnline(destinationCluster, destinationOnlineNodes);
-      if (operationType == STRIPE) {
-        throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
-      }
     }
   }
 
@@ -121,7 +119,7 @@ public abstract class TopologyCommand extends RemoteCommand {
     // This is done in the DynamicConfigService#setUpcomingCluster() method
 
     if (destinationClusterActivated) {
-      NodeNomadChange nomadChange = buildNomadChange(result);
+      TopologyNomadChange nomadChange = buildNomadChange(result);
       licenseValidation(destination, nomadChange.getCluster());
       onNomadChangeReady(nomadChange);
       logger.info("Sending the topology change");
@@ -134,11 +132,9 @@ public abstract class TopologyCommand extends RemoteCommand {
 
     } else {
       logger.info("Sending the topology change");
-      Collection<InetSocketAddress> allOnlineSourceNodes = getAllOnlineSourceNodes();
-      if (!allOnlineSourceNodes.isEmpty()) {
-        setUpcomingCluster(allOnlineSourceNodes, result);
-      }
-      setUpcomingCluster(destinationOnlineNodes.keySet(), result);
+      Set<InetSocketAddress> allOnlineNodes = new HashSet<>(getAllOnlineSourceNodes());
+      allOnlineNodes.addAll(destinationOnlineNodes.keySet());
+      setUpcomingCluster(allOnlineNodes, result);
     }
 
     logger.info("Command successful!" + lineSeparator());
@@ -179,20 +175,20 @@ public abstract class TopologyCommand extends RemoteCommand {
   protected final void validateLogOrFail(Supplier<Boolean> expectedCondition, String error) {
     if (!expectedCondition.get()) {
       if (force) {
-        logger.warn("Following validation has been bypassed with -f:{} - {}", lineSeparator(), error);
+        logger.warn("Following validation has been bypassed with the force option:{} - {}", lineSeparator(), error);
       } else {
         throw new IllegalArgumentException(error);
       }
     }
   }
 
-  protected void onNomadChangeReady(NodeNomadChange nomadChange) {
+  protected void onNomadChangeReady(TopologyNomadChange nomadChange) {
   }
 
-  protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
+  protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
   }
 
-  protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
+  protected void onNomadChangeFailure(TopologyNomadChange nomadChange, RuntimeException error) {
     throw error;
   }
 
@@ -200,5 +196,5 @@ public abstract class TopologyCommand extends RemoteCommand {
 
   protected abstract Cluster updateTopology();
 
-  protected abstract NodeNomadChange buildNomadChange(Cluster result);
+  protected abstract TopologyNomadChange buildNomadChange(Cluster result);
 }

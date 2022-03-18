@@ -38,6 +38,12 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-server-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>statistics</artifactId>
       <version>${statistics.version}</version>

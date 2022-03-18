@@ -21,6 +21,7 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T> {
@@ -41,13 +42,18 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     changeResultReceiver.discoverFail(server, reason);
   }
 
   @Override
   public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     changeResultReceiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
+  }
+
+  @Override
+  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
+    changeResultReceiver.discoverClusterDesynchronized(lastChangeUuids);
   }
 
   @Override
@@ -91,7 +97,7 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
+  public void prepareFail(InetSocketAddress server, Throwable reason) {
     changeResultReceiver.prepareFail(server, reason);
   }
 
@@ -126,7 +132,7 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress server, String reason) {
+  public void takeoverFail(InetSocketAddress server, Throwable reason) {
     throw new AssertionError("This should not be called during the change process");
   }
 
@@ -146,7 +152,7 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, String reason) {
+  public void commitFail(InetSocketAddress server, Throwable reason) {
     changeResultReceiver.commitFail(server, reason);
   }
 
@@ -171,7 +177,7 @@ public class ChangeAllResultsReceiverAdapter<T> implements AllResultsReceiver<T>
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, String reason) {
+  public void rollbackFail(InetSocketAddress server, Throwable reason) {
     changeResultReceiver.rollbackFail(server, reason);
   }
 

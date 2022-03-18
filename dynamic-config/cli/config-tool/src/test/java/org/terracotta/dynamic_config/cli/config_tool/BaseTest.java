@@ -116,7 +116,11 @@ public abstract class BaseTest {
   }
 
   protected DiagnosticService diagnosticServiceMock(String host, int port) {
-    return diagnosticServices.get(InetSocketAddress.createUnresolved(host, port));
+    return diagnosticServiceMock(InetSocketAddress.createUnresolved(host, port));
+  }
+
+  protected DiagnosticService diagnosticServiceMock(InetSocketAddress address) {
+    return diagnosticServices.get(address);
   }
 
   protected TopologyService topologyServiceMock(InetSocketAddress address) {

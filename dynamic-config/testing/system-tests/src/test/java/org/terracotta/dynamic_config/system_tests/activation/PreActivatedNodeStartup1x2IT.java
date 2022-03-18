@@ -77,10 +77,10 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
           "-p", String.valueOf(getNodePort(1, 2)),
           "-g", String.valueOf(getNodeGroupPort(1, 2)),
           "--hostname", "localhost",
-          "--log-dir", getNodePath(1, 2).resolve("logs").toString(),
-          "--backup-dir", getNodePath(1, 2).resolve("backup").toString(),
-          "--metadata-dir", getNodePath(1, 2).resolve("metadata").toString(),
-          "--data-dirs", "main:" + getNodePath(1, 2).resolve("data-dir").toString());
+          "--log-dir", getNodePath(1, 2).append("/logs").toString(),
+          "--backup-dir", getNodePath(1, 2).append("/backup").toString(),
+          "--metadata-dir", getNodePath(1, 2).append("/metadata").toString(),
+          "--data-dirs", "main:" + getNodePath(1, 2).append("/data-dir").toString());
       fail();
     } catch (Exception e) {
       waitUntil(out.getLog(1, 2), containsLog("Exception initializing Nomad Server: java.io.IOException: File lock already held: " + Paths.get(sharedRepo, "changes")));
@@ -94,10 +94,10 @@ public class PreActivatedNodeStartup1x2IT extends DynamicConfigIT {
         "--failover-priority", "availability",
         "--name", getNodeName(1, 1),
         "--hostname", "localhost",
-        "--log-dir", getNodePath(1, 1).resolve("logs").toString(),
-        "--backup-dir", getNodePath(1, 1).resolve("backup").toString(),
-        "--metadata-dir", getNodePath(1, 1).resolve("metadata").toString(),
-        "--data-dirs", "main:" + getNodePath(1, 1).resolve("data-dir").toString()
+        "--log-dir", getNodePath(1, 1).append("/logs").toString(),
+        "--backup-dir", getNodePath(1, 1).append("/backup").toString(),
+        "--metadata-dir", getNodePath(1, 1).append("/metadata").toString(),
+        "--data-dirs", "main:" + getNodePath(1, 1).append("/data-dir").toString()
     ));
     List<String> provided = Arrays.asList(args);
     if (provided.contains("-n")) {

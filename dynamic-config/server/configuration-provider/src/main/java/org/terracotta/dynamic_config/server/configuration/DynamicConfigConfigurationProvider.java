@@ -26,15 +26,15 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.LicenseParserDiscovery;
 import org.terracotta.dynamic_config.server.api.LicenseService;
+import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
+import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
 import org.terracotta.dynamic_config.server.api.PathResolver;
-import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.ConfigChangeHandlerManagerImpl;
-import org.terracotta.dynamic_config.server.configuration.service.DynamicConfigServiceImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.dynamic_config.server.configuration.service.ParameterSubstitutor;
 import org.terracotta.dynamic_config.server.configuration.startup.CommandLineProcessor;
@@ -119,14 +119,16 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
       // retrieve initialized services
       UpgradableNomadServer<NodeContext> nomadServer = nomadServerManager.getNomadServer();
-      DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
+      DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
+      TopologyService topologyService = nomadServerManager.getTopologyService();
+      DynamicConfigEventService eventService = nomadServerManager.getEventRegistrationService();
 
       // initialize the passive sync service
       dynamicConfigurationPassiveSync = new DynamicConfigurationPassiveSync(
           nomadServerManager.getConfiguration().orElse(null),
           nomadServer,
           dynamicConfigService,
-          () -> dynamicConfigService.getLicenseContent().orElse(null));
+          topologyService, () -> dynamicConfigService.getLicenseContent().orElse(null));
 
       // generate the configuration wrapper
       configuration = configurationGeneratorVisitor.generateConfiguration();
@@ -135,22 +137,22 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       configuration.registerExtendedConfiguration(ObjectMapperFactory.class, objectMapperFactory);
       configuration.registerExtendedConfiguration(IParameterSubstitutor.class, parameterSubstitutor);
       configuration.registerExtendedConfiguration(ConfigChangeHandlerManager.class, configChangeHandlerManager);
-      configuration.registerExtendedConfiguration(DynamicConfigEventService.class, dynamicConfigService);
-      configuration.registerExtendedConfiguration(TopologyService.class, dynamicConfigService);
+      configuration.registerExtendedConfiguration(DynamicConfigEventService.class, eventService);
+      configuration.registerExtendedConfiguration(TopologyService.class, topologyService);
       configuration.registerExtendedConfiguration(DynamicConfigService.class, dynamicConfigService);
-      configuration.registerExtendedConfiguration(DynamicConfigListener.class, nomadServerManager.getDynamicConfigListener());
+      configuration.registerExtendedConfiguration(DynamicConfigEventFiring.class, nomadServerManager.getEventFiringService());
       configuration.registerExtendedConfiguration(NomadServer.class, nomadServer);
       configuration.registerExtendedConfiguration(UpgradableNomadServer.class, nomadServer);
       configuration.registerExtendedConfiguration(LicenseService.class, licenseService);
       configuration.registerExtendedConfiguration(PathResolver.class, userDirResolver);
-      nomadServerManager.getRoutingNomadChangeProcessor()
-          .ifPresent(routingNomadChangeProcessor -> configuration.registerExtendedConfiguration(RoutingNomadChangeProcessor.class, routingNomadChangeProcessor));
+      configuration.registerExtendedConfiguration(NomadRoutingChangeProcessor.class, nomadServerManager.getNomadRoutingChangeProcessor());
+      configuration.registerExtendedConfiguration(NomadPermissionChangeProcessor.class, nomadServerManager.getNomadPermissionChangeProcessor());
 
       // discover the dynamic config extensions (offheap, dataroot, lease, etc)
       configuration.discoverExtensions();
 
       // Expose some services through diagnostic port
-      DiagnosticServicesHolder.willRegister(TopologyService.class, dynamicConfigService);
+      DiagnosticServicesHolder.willRegister(TopologyService.class, topologyService);
       DiagnosticServicesHolder.willRegister(DynamicConfigService.class, dynamicConfigService);
       DiagnosticServicesHolder.willRegister(NomadServer.class, nomadServer);
 

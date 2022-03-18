@@ -22,15 +22,11 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.time.Duration;
-import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.hasExitStatus;
 
 /**
  * @author Mathieu Carbou
@@ -44,7 +40,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
-  public void test_restart_active_in_diagnostic_mode() throws TimeoutException {
+  public void test_restart_active_in_diagnostic_mode() {
     int activeNodeId = findActive(1).getAsInt();
     TerracottaServer active = getNode(1, activeNodeId);
     angela.tsa().stop(active);
@@ -55,7 +51,7 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_restart_passive_in_diagnostic_mode() throws TimeoutException {
+  public void test_restart_passive_in_diagnostic_mode() {
     int passiveNodeId = findPassives(1)[0];
     TerracottaServer passive = getNode(1, passiveNodeId);
     angela.tsa().stop(passive);
@@ -82,17 +78,21 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
     assertThat(cluster.getStripeCount(), is(equalTo(1)));
 
     // log command works, both when targeting node to repair and a normal node in the cluster
-    assertThat(configToolInvocation("log", "-s", "localhost:" + getNodePort(1, activeNodeId)), containsOutput("Activating cluster"));
-    assertThat(configToolInvocation("log", "-s", "localhost:" + getNodePort(1, passiveId)), containsOutput("Activating cluster"));
+    assertThat(
+        invokeConfigTool("log", "-s", "localhost:" + getNodePort(1, activeNodeId)),
+        containsOutput("Activating cluster"));
+    assertThat(
+        invokeConfigTool("log", "-s", "localhost:" + getNodePort(1, passiveId)),
+        containsOutput("Activating cluster"));
 
     // unable to trigger a change on the cluster from the node in diagnostic mode
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.something=value"),
-        allOf(not(hasExitStatus(0)), containsOutput("Detected a mix of activated and unconfigured nodes (or being repaired).")));
+        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.something=value"),
+        exceptionMatcher("Detected a mix of activated and unconfigured nodes (or being repaired)."));
 
     // unable to trigger a change on the cluster from any other node
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, passiveId), "-c", "stripe.1.node.1.tc-properties.something=value"),
-        allOf(not(hasExitStatus(0)), containsOutput("Detected a mix of activated and unconfigured nodes (or being repaired).")));
+        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, passiveId), "-c", "stripe.1.node.1.tc-properties.something=value"),
+        exceptionMatcher("Detected a mix of activated and unconfigured nodes (or being repaired)."));
   }
 }

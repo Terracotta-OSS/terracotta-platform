@@ -33,4 +33,6 @@ public @interface ClusterDefinition {
   boolean autoStart() default true;
 
   boolean autoActivate() default false;
+  
+  boolean netDisruptionEnabled() default false;
 }

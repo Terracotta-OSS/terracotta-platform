@@ -23,17 +23,20 @@ import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 import org.terracotta.dynamic_config.cli.config_tool.NomadTestHelper;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
+import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 import java.util.function.IntConsumer;
 import java.util.stream.IntStream;
 
@@ -53,7 +56,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
-import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 import static org.terracotta.dynamic_config.cli.command.Injector.inject;
 import static org.terracotta.nomad.messages.AcceptRejectResponse.accept;
 import static org.terracotta.nomad.messages.AcceptRejectResponse.reject;
@@ -68,14 +70,14 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class ActivateCommandTest extends BaseTest {
 
   private Path config;
-  private final Cluster cluster = Cluster.newDefaultCluster(
+  private final Cluster cluster = Testing.newTestCluster(
       "my-cluster",
-      new Stripe(
-          newDefaultNode("node1", "localhost", 9411)
+      new Stripe().setName("stripe1").addNode(
+          Testing.newTestNode("node1", "localhost", 9411)
       ),
-      new Stripe(
-          newDefaultNode("node2", "localhost", 9421),
-          newDefaultNode("node3", "localhost", 9422)
+      new Stripe().setName("stripe2").addNodes(
+          Testing.newTestNode("node2", "localhost", 9421),
+          Testing.newTestNode("node3", "localhost", 9422)
       ));
   private final int[] ports = cluster.getNodeAddresses().stream().mapToInt(InetSocketAddress::getPort).toArray();
 
@@ -113,7 +115,7 @@ public class ActivateCommandTest extends BaseTest {
     ActivateCommand command = command()
         .setConfigPropertiesFile(config);
     command.validate();
-    assertThat(command.getCluster().getName(), is(equalTo("my-cluster")));
+    assertThat(command.getCluster().getName().get(), is(equalTo("my-cluster")));
   }
 
   @Test
@@ -126,7 +128,7 @@ public class ActivateCommandTest extends BaseTest {
         .setClusterName("foo")
         .setConfigPropertiesFile(config);
     command.validate();
-    assertThat(command.getCluster().getName(), is(equalTo("foo")));
+    assertThat(command.getCluster().getName().get(), is(equalTo("foo")));
 
   }
 
@@ -167,12 +169,15 @@ public class ActivateCommandTest extends BaseTest {
     ActivateCommand command = command()
         .setConfigPropertiesFile(config);
 
+    UUID lastChangeUUID = UUID.randomUUID();
+
     IntStream.of(ports).forEach(rethrow(port -> {
       when(topologyServiceMock("localhost", port).isActivated()).thenReturn(false);
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
-      doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
+      doReturn(NomadTestHelper.discovery(COMMITTED, lastChangeUUID)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(reject(UNACCEPTABLE, "error", "host", "user"));
+      when(mock.rollback(any(RollbackMessage.class))).thenReturn(accept());
     }));
 
     command.validate();
@@ -192,10 +197,11 @@ public class ActivateCommandTest extends BaseTest {
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       verify(mock, times(2)).discover();
       verify(mock, times(1)).prepare(any(PrepareMessage.class));
+      verify(mock, times(1)).rollback(any(RollbackMessage.class));
       verifyNoMoreInteractions(mock);
     }));
 
-    assertThat(command.getCluster().getName(), is(equalTo("my-cluster")));
+    assertThat(command.getCluster().getName().get(), is(equalTo("my-cluster")));
   }
 
   @Test
@@ -203,11 +209,13 @@ public class ActivateCommandTest extends BaseTest {
     ActivateCommand command = command()
         .setConfigPropertiesFile(config);
 
+    UUID lastChangeUUID = UUID.randomUUID();
+
     IntStream.of(ports).forEach(rethrow(port -> {
       when(topologyServiceMock("localhost", port).isActivated()).thenReturn(false);
 
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
-      doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
+      doReturn(NomadTestHelper.discovery(COMMITTED, lastChangeUUID)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenThrow(new NomadException("an error"));
     }));
@@ -233,7 +241,7 @@ public class ActivateCommandTest extends BaseTest {
       verifyNoMoreInteractions(mock);
     }));
 
-    assertThat(command.getCluster().getName(), is(equalTo("my-cluster")));
+    assertThat(command.getCluster().getName().get(), is(equalTo("my-cluster")));
   }
 
   @Test
@@ -260,13 +268,15 @@ public class ActivateCommandTest extends BaseTest {
   }
 
   private void doRunAndVerify(String clusterName, ActivateCommand command) {
+    UUID lastChangeUUID = UUID.randomUUID();
+
     IntStream.of(ports).forEach(rethrow(port -> {
       TopologyService topologyService = topologyServiceMock("localhost", port);
       NomadServer<NodeContext> mock = nomadServerMock("localhost", port);
       DiagnosticService diagnosticService = diagnosticServiceMock("localhost", port);
 
       when(topologyService.isActivated()).thenReturn(false);
-      doReturn(NomadTestHelper.discovery(COMMITTED)).when(mock).discover();
+      doReturn(NomadTestHelper.discovery(COMMITTED, lastChangeUUID)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenReturn(accept());
       when(diagnosticService.getLogicalServerState()).thenReturn(PASSIVE);
@@ -282,7 +292,7 @@ public class ActivateCommandTest extends BaseTest {
       verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     }));
 
-    assertThat(command.getCluster().getName(), is(equalTo(clusterName)));
+    assertThat(command.getCluster().getName().get(), is(equalTo(clusterName)));
   }
 
   private ActivateCommand command() {

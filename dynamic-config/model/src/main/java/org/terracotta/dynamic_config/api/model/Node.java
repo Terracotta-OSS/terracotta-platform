@@ -16,238 +16,317 @@
 package org.terracotta.dynamic_config.api.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.slf4j.event.Level;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
-import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
+import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
+import static org.terracotta.dynamic_config.api.model.Setting.DATA_DIRS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_BACKUP_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUDIT_LOG_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
+import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
+import static org.terracotta.dynamic_config.api.model.Setting.modelToProperties;
 
 public class Node implements Cloneable, PropertyHolder {
 
   // Note: primitive fields need to be initialized with their default value,
   // otherwise we will wrongly detect that they have been initialized (Setting.getPropertyValue will return 0 for a port for example)
 
-  private String nodeName;
-  private String nodeHostname;
-  private String nodePublicHostname;
-  private int nodePort = Integer.parseInt(Setting.NODE_PORT.getDefaultValue());
-  private Integer nodePublicPort;
-  private int nodeGroupPort = Integer.parseInt(Setting.NODE_GROUP_PORT.getDefaultValue());
-  private String nodeBindAddress;
-  private String nodeGroupBindAddress;
-  private Path nodeMetadataDir;
-  private Path nodeLogDir;
-  private Path nodeBackupDir;
-  private Path securityDir;
-  private Path securityAuditLogDir;
-  private final Map<String, String> tcProperties = new ConcurrentHashMap<>();
-  private final Map<String, Level> nodeLoggerOverrides = new ConcurrentHashMap<>();
-  private final Map<String, Path> dataDirs = new ConcurrentHashMap<>();
-
-  protected Node() {
-  }
+  private String name;
+  private String hostname;
+  private String publicHostname;
+  private Integer port;
+  private Integer publicPort;
+  private Integer groupPort;
+  private String bindAddress;
+  private String groupBindAddress;
+  private RawPath metadataDir;
+  private RawPath logDir;
+  private RawPath backupDir;
+  private RawPath securityDir;
+  private RawPath securityAuditLogDir;
+  private Map<String, String> tcProperties;
+  private Map<String, String> loggerOverrides;
+  private Map<String, RawPath> dataDirs;
 
   @Override
   public Scope getScope() {
     return NODE;
   }
 
-  public String getNodeName() {
-    return nodeName;
+  public String getName() {
+    return name;
   }
 
-  public String getNodeHostname() {
-    return nodeHostname;
+  public String getHostname() {
+    return hostname;
   }
 
-  public String getNodePublicHostname() {
-    return nodePublicHostname;
+  public OptionalConfig<String> getPublicHostname() {
+    return OptionalConfig.of(NODE_PUBLIC_HOSTNAME, publicHostname);
   }
 
-  public int getNodePort() {
-    return nodePort;
+  public OptionalConfig<Integer> getPort() {
+    return OptionalConfig.of(NODE_PORT, port);
   }
 
-  public Integer getNodePublicPort() {
-    return nodePublicPort;
+  public OptionalConfig<Integer> getPublicPort() {
+    return OptionalConfig.of(NODE_PUBLIC_PORT, publicPort);
   }
 
-  public int getNodeGroupPort() {
-    return nodeGroupPort;
+  public OptionalConfig<Integer> getGroupPort() {
+    return OptionalConfig.of(NODE_GROUP_PORT, groupPort);
   }
 
-  public String getNodeBindAddress() {
-    return nodeBindAddress;
+  public OptionalConfig<String> getBindAddress() {
+    return OptionalConfig.of(NODE_BIND_ADDRESS, bindAddress);
   }
 
-  public String getNodeGroupBindAddress() {
-    return nodeGroupBindAddress;
+  public OptionalConfig<String> getGroupBindAddress() {
+    return OptionalConfig.of(NODE_GROUP_BIND_ADDRESS, groupBindAddress);
   }
 
-  public Path getNodeMetadataDir() {
-    return nodeMetadataDir;
+  public OptionalConfig<RawPath> getMetadataDir() {
+    return OptionalConfig.of(NODE_METADATA_DIR, metadataDir);
   }
 
-  public Path getNodeLogDir() {
-    return nodeLogDir;
+  public OptionalConfig<RawPath> getLogDir() {
+    return OptionalConfig.of(NODE_LOG_DIR, logDir);
   }
 
-  public Path getNodeBackupDir() {
-    return nodeBackupDir;
+  public OptionalConfig<RawPath> getBackupDir() {
+    return OptionalConfig.of(NODE_BACKUP_DIR, backupDir);
   }
 
-  public Path getSecurityDir() {
-    return securityDir;
+  public OptionalConfig<RawPath> getSecurityDir() {
+    return OptionalConfig.of(SECURITY_DIR, securityDir);
   }
 
-  public Path getSecurityAuditLogDir() {
-    return securityAuditLogDir;
+  public OptionalConfig<RawPath> getSecurityAuditLogDir() {
+    return OptionalConfig.of(SECURITY_AUDIT_LOG_DIR, securityAuditLogDir);
   }
 
-  public Map<String, Path> getDataDirs() {
-    return Collections.unmodifiableMap(dataDirs);
+  public OptionalConfig<Map<String, RawPath>> getDataDirs() {
+    return OptionalConfig.of(DATA_DIRS, dataDirs);
   }
 
-  public Map<String, Level> getNodeLoggerOverrides() {
-    return Collections.unmodifiableMap(nodeLoggerOverrides);
+  public OptionalConfig<Map<String, String>> getLoggerOverrides() {
+    return OptionalConfig.of(NODE_LOGGER_OVERRIDES, loggerOverrides);
   }
 
-  public Node setNodeLoggerOverrides(Map<String, Level> nodeLoggerOverrides) {
-    this.nodeLoggerOverrides.putAll(nodeLoggerOverrides);
+  public OptionalConfig<Map<String, String>> getTcProperties() {
+    return OptionalConfig.of(TC_PROPERTIES, tcProperties);
+  }
+
+  public Node setName(String name) {
+    this.name = requireNonNull(name);
     return this;
   }
 
-  public Node setNodeLoggerOverride(String logger, Level level) {
-    this.nodeLoggerOverrides.put(logger, level);
+  public Node setHostname(String hostname) {
+    this.hostname = requireNonNull(hostname);
     return this;
   }
 
-  public Node removeNodeLoggerOverride(String logger) {
-    this.nodeLoggerOverrides.remove(logger);
+  public Node setPublicHostname(String publicHostname) {
+    this.publicHostname = publicHostname;
     return this;
   }
 
-  public Node clearNodeLoggerOverrides() {
-    nodeLoggerOverrides.clear();
+  public Node setPort(Integer port) {
+    this.port = port;
     return this;
   }
 
-  public Map<String, String> getTcProperties() {
-    return tcProperties;
-  }
-
-  public Node setTcProperties(Map<String, String> tcProperties) {
-    this.tcProperties.putAll(tcProperties);
+  public Node setPublicPort(Integer publicPort) {
+    this.publicPort = publicPort;
     return this;
   }
 
-  public Node setTcProperty(String key, String value) {
-    this.tcProperties.put(key, value);
+  public Node setGroupPort(Integer groupPort) {
+    this.groupPort = groupPort;
     return this;
   }
 
-  public Node removeTcProperty(String key) {
-    this.tcProperties.remove(key);
+  public Node setBindAddress(String bindAddress) {
+    this.bindAddress = bindAddress;
     return this;
   }
 
-  public Node setNodeName(String nodeName) {
-    this.nodeName = nodeName;
+  public Node setGroupBindAddress(String groupBindAddress) {
+    this.groupBindAddress = groupBindAddress;
     return this;
   }
 
-  public Node setNodeHostname(String nodeHostname) {
-    this.nodeHostname = nodeHostname;
+  public Node setMetadataDir(RawPath metadataDir) {
+    this.metadataDir = metadataDir;
     return this;
   }
 
-  public Node setNodePublicHostname(String nodePublicHostname) {
-    this.nodePublicHostname = nodePublicHostname;
+  public Node setLogDir(RawPath logDir) {
+    this.logDir = logDir;
     return this;
   }
 
-  public Node setNodePort(int nodePort) {
-    this.nodePort = nodePort;
+  public Node setBackupDir(RawPath backupDir) {
+    this.backupDir = backupDir;
     return this;
   }
 
-  public Node setNodePublicPort(Integer nodePublicPort) {
-    this.nodePublicPort = nodePublicPort;
-    return this;
-  }
-
-  public Node setNodeGroupPort(int nodeGroupPort) {
-    this.nodeGroupPort = nodeGroupPort;
-    return this;
-  }
-
-  public Node setNodeBindAddress(String nodeBindAddress) {
-    this.nodeBindAddress = nodeBindAddress;
-    return this;
-  }
-
-  public Node setNodeGroupBindAddress(String nodeGroupBindAddress) {
-    this.nodeGroupBindAddress = nodeGroupBindAddress;
-    return this;
-  }
-
-  public Node setNodeMetadataDir(Path nodeMetadataDir) {
-    this.nodeMetadataDir = nodeMetadataDir;
-    return this;
-  }
-
-  public Node setNodeLogDir(Path nodeLogDir) {
-    this.nodeLogDir = nodeLogDir;
-    return this;
-  }
-
-  public Node setNodeBackupDir(Path nodeBackupDir) {
-    this.nodeBackupDir = nodeBackupDir;
-    return this;
-  }
-
-  public Node setSecurityDir(Path securityDir) {
+  public Node setSecurityDir(RawPath securityDir) {
     this.securityDir = securityDir;
     return this;
   }
 
-  public Node setSecurityAuditLogDir(Path securityAuditLogDir) {
+  public Node setSecurityAuditLogDir(RawPath securityAuditLogDir) {
     this.securityAuditLogDir = securityAuditLogDir;
     return this;
   }
 
-  public Node clearTcProperties() {
-    this.tcProperties.clear();
+  public Node putLoggerOverride(String logger, String level) {
+    return putLoggerOverrides(singletonMap(logger, level));
+  }
+
+  public Node putLoggerOverrides(Map<String, String> loggerOverrides) {
+    if (this.loggerOverrides == null) {
+      setLoggerOverrides(Optional.ofNullable(NODE_LOGGER_OVERRIDES.<Map<String, String>>getDefaultValue()).orElse(emptyMap()));
+    }
+    this.loggerOverrides.putAll(loggerOverrides);
     return this;
   }
 
-  public Node clearDataDirs() {
-    this.dataDirs.clear();
+  public Node setLoggerOverrides(Map<String, String> loggerOverrides) {
+    this.loggerOverrides = loggerOverrides == null ? null : new ConcurrentHashMap<>(loggerOverrides);
     return this;
   }
 
-  public Node setDataDir(String name, Path path) {
-    this.dataDirs.put(name, path);
+  public Node removeLoggerOverride(String logger) {
+    if (this.loggerOverrides == null) {
+      // this code is handling the removal of any default value set
+      Map<String, String> def = NODE_LOGGER_OVERRIDES.getDefaultValue();
+      if (def != null && def.containsKey(logger)) {
+        setLoggerOverrides(def);
+      }
+    }
+    if (this.loggerOverrides != null) {
+      this.loggerOverrides.remove(logger);
+    }
     return this;
   }
 
-  public Node setDataDirs(Map<String, Path> dataDirs) {
+  public Node unsetLoggerOverrides() {
+    if (this.loggerOverrides != null) {
+      setLoggerOverrides(emptyMap());
+    } else {
+      Map<String, String> def = NODE_LOGGER_OVERRIDES.getDefaultValue();
+      if (def != null && !def.isEmpty()) {
+        setLoggerOverrides(emptyMap());
+      }
+    }
+    return this;
+  }
+
+  public Node putTcProperty(String key, String value) {
+    return putTcProperties(singletonMap(key, value));
+  }
+
+  public Node putTcProperties(Map<String, String> tcProperties) {
+    if (this.tcProperties == null) {
+      setTcProperties(Optional.ofNullable(TC_PROPERTIES.<Map<String, String>>getDefaultValue()).orElse(emptyMap()));
+    }
+    this.tcProperties.putAll(tcProperties);
+    return this;
+  }
+
+  public Node setTcProperties(Map<String, String> tcProperties) {
+    this.tcProperties = tcProperties == null ? null : new ConcurrentHashMap<>(tcProperties);
+    return this;
+  }
+
+  public Node removeTcProperty(String key) {
+    if (this.tcProperties == null) {
+      // this code is handling the removal of any default value set
+      Map<String, String> def = TC_PROPERTIES.getDefaultValue();
+      if (def != null && def.containsKey(key)) {
+        setTcProperties(def);
+      }
+    }
+    if (this.tcProperties != null) {
+      this.tcProperties.remove(key);
+    }
+    return this;
+  }
+
+  public Node unsetTcProperties() {
+    if (this.tcProperties != null) {
+      setTcProperties(emptyMap());
+    } else {
+      Map<String, String> def = TC_PROPERTIES.getDefaultValue();
+      if (def != null && !def.isEmpty()) {
+        setTcProperties(emptyMap());
+      }
+    }
+    return this;
+  }
+
+  public Node putDataDir(String name, RawPath path) {
+    return putDataDirs(singletonMap(name, path));
+  }
+
+  public Node putDataDirs(Map<String, RawPath> dataDirs) {
+    if (this.dataDirs == null) {
+      setDataDirs(Optional.ofNullable(DATA_DIRS.<Map<String, RawPath>>getDefaultValue()).orElse(emptyMap()));
+    }
     this.dataDirs.putAll(dataDirs);
     return this;
   }
 
+  public Node setDataDirs(Map<String, RawPath> dataDirs) {
+    this.dataDirs = dataDirs == null ? null : new ConcurrentHashMap<>(dataDirs);
+    return this;
+  }
+
   public Node removeDataDir(String key) {
-    dataDirs.remove(key);
+    if (this.dataDirs == null) {
+      // this code is handling the removal of any default value set
+      Map<String, RawPath> def = DATA_DIRS.getDefaultValue();
+      if (def != null && def.containsKey(key)) {
+        setDataDirs(def);
+      }
+    }
+    if (this.dataDirs != null) {
+      this.dataDirs.remove(key);
+    }
+    return this;
+  }
+
+  public Node unsetDataDirs() {
+    if (this.dataDirs != null) {
+      setDataDirs(emptyMap());
+    } else {
+      Map<String, RawPath> def = DATA_DIRS.getDefaultValue();
+      if (def != null && !def.isEmpty()) {
+        setDataDirs(emptyMap());
+      }
+    }
     return this;
   }
 
@@ -255,52 +334,55 @@ public class Node implements Cloneable, PropertyHolder {
    * @return true if this node has this public or internal address
    */
   public boolean hasAddress(InetSocketAddress address) {
-    return InetSocketAddressUtils.areEqual(address, getNodeInternalAddress()) ||
-        getNodePublicAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
+    return InetSocketAddressUtils.areEqual(address, getInternalAddress()) ||
+        getPublicAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
   }
 
-  public InetSocketAddress getNodeAddress() {
-    return getNodePublicAddress().orElseGet(this::getNodeInternalAddress);
+  public InetSocketAddress getAddress() {
+    return getPublicAddress().orElseGet(this::getInternalAddress);
   }
 
-  public InetSocketAddress getNodeInternalAddress() {
-    if (nodeHostname == null || Substitutor.containsSubstitutionParams(nodeHostname)) {
-      throw new AssertionError("Node " + nodeName + " is not correctly defined with internal address: " + nodeHostname + ":" + nodePort);
+  public InetSocketAddress getInternalAddress() {
+    final String hostname = getHostname();
+    final Integer port = getPort().orDefault();
+    if (hostname == null || Substitutor.containsSubstitutionParams(hostname)) {
+      throw new AssertionError("Node " + name + " is not correctly defined with internal address: " + hostname + ":" + port);
     }
-    return InetSocketAddress.createUnresolved(nodeHostname, nodePort);
+    return InetSocketAddress.createUnresolved(hostname, port);
   }
 
-  public Optional<InetSocketAddress> getNodePublicAddress() {
-    if (nodePublicHostname == null || nodePublicPort == null) {
+  public Optional<InetSocketAddress> getPublicAddress() {
+    if (publicHostname == null || publicPort == null) {
       return Optional.empty();
     }
-    if (Substitutor.containsSubstitutionParams(nodePublicHostname)) {
-      throw new AssertionError("Node " + nodeName + " is not correctly defined with public address: " + nodePublicHostname + ":" + nodePublicPort);
+    if (Substitutor.containsSubstitutionParams(publicHostname)) {
+      throw new AssertionError("Node " + name + " is not correctly defined with public address: " + publicHostname + ":" + publicPort);
     }
-    return Optional.of(InetSocketAddress.createUnresolved(nodePublicHostname, nodePublicPort));
+    return Optional.of(InetSocketAddress.createUnresolved(publicHostname, publicPort));
   }
 
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Node clone() {
-    return new Node()
-        .setDataDirs(dataDirs)
-        .setNodeBackupDir(nodeBackupDir)
-        .setNodeBindAddress(nodeBindAddress)
-        .setNodeGroupBindAddress(nodeGroupBindAddress)
-        .setNodeGroupPort(nodeGroupPort)
-        .setNodeHostname(nodeHostname)
-        .setNodePublicHostname(nodePublicHostname)
-        .setNodeLogDir(nodeLogDir)
-        .setNodeMetadataDir(nodeMetadataDir)
-        .setNodeName(nodeName)
-        .setNodePort(nodePort)
-        .setNodePublicPort(nodePublicPort)
-        .setTcProperties(tcProperties)
-        .setNodeLoggerOverrides(nodeLoggerOverrides)
-        .setSecurityAuditLogDir(securityAuditLogDir)
-        .setSecurityDir(securityDir);
+    Node clone = new Node();
+    clone.dataDirs = this.dataDirs == null ? null : new ConcurrentHashMap<>(this.dataDirs);
+    clone.backupDir = this.backupDir;
+    clone.bindAddress = this.bindAddress;
+    clone.groupBindAddress = this.groupBindAddress;
+    clone.groupPort = this.groupPort;
+    clone.hostname = this.hostname;
+    clone.logDir = this.logDir;
+    clone.loggerOverrides = this.loggerOverrides == null ? null : new ConcurrentHashMap<>(this.loggerOverrides);
+    clone.metadataDir = this.metadataDir;
+    clone.name = this.name;
+    clone.port = this.port;
+    clone.publicHostname = this.publicHostname;
+    clone.publicPort = this.publicPort;
+    clone.securityAuditLogDir = this.securityAuditLogDir;
+    clone.securityDir = this.securityDir;
+    clone.tcProperties = this.tcProperties == null ? null : new ConcurrentHashMap<>(this.tcProperties);
+    return clone;
   }
 
   @Override
@@ -308,18 +390,18 @@ public class Node implements Cloneable, PropertyHolder {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Node node = (Node) o;
-    return nodePort == node.nodePort &&
-        nodeGroupPort == node.nodeGroupPort &&
-        Objects.equals(nodeName, node.nodeName) &&
-        Objects.equals(nodeHostname, node.nodeHostname) &&
-        Objects.equals(nodePublicHostname, node.nodePublicHostname) &&
-        Objects.equals(nodePublicPort, node.nodePublicPort) &&
-        Objects.equals(nodeBindAddress, node.nodeBindAddress) &&
-        Objects.equals(nodeGroupBindAddress, node.nodeGroupBindAddress) &&
-        Objects.equals(nodeMetadataDir, node.nodeMetadataDir) &&
-        Objects.equals(nodeLogDir, node.nodeLogDir) &&
-        Objects.equals(nodeBackupDir, node.nodeBackupDir) &&
-        Objects.equals(nodeLoggerOverrides, node.nodeLoggerOverrides) &&
+    return Objects.equals(port, node.port) &&
+        Objects.equals(groupPort, node.groupPort) &&
+        Objects.equals(name, node.name) &&
+        Objects.equals(hostname, node.hostname) &&
+        Objects.equals(publicHostname, node.publicHostname) &&
+        Objects.equals(publicPort, node.publicPort) &&
+        Objects.equals(bindAddress, node.bindAddress) &&
+        Objects.equals(groupBindAddress, node.groupBindAddress) &&
+        Objects.equals(metadataDir, node.metadataDir) &&
+        Objects.equals(logDir, node.logDir) &&
+        Objects.equals(backupDir, node.backupDir) &&
+        Objects.equals(loggerOverrides, node.loggerOverrides) &&
         Objects.equals(tcProperties, node.tcProperties) &&
         Objects.equals(securityDir, node.securityDir) &&
         Objects.equals(securityAuditLogDir, node.securityAuditLogDir) &&
@@ -328,26 +410,26 @@ public class Node implements Cloneable, PropertyHolder {
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeName, nodeHostname, nodePublicHostname, nodePort, nodePublicPort, nodeGroupPort,
-        nodeBindAddress, nodeGroupBindAddress, tcProperties, nodeLoggerOverrides, nodeMetadataDir, nodeLogDir, nodeBackupDir,
+    return Objects.hash(name, hostname, publicHostname, port, publicPort, groupPort,
+        bindAddress, groupBindAddress, tcProperties, loggerOverrides, metadataDir, logDir, backupDir,
         securityDir, securityAuditLogDir, dataDirs);
   }
 
   @Override
   public String toString() {
     return "Node{" +
-        "nodeName='" + nodeName + '\'' +
-        ", nodeHostname='" + nodeHostname + '\'' +
-        ", nodePort=" + nodePort +
-        ", nodePublicHostname='" + nodePublicHostname + '\'' +
-        ", nodePublicPort=" + nodePublicPort +
-        ", nodeGroupPort=" + nodeGroupPort +
-        ", nodeBindAddress='" + nodeBindAddress + '\'' +
-        ", nodeGroupBindAddress='" + nodeGroupBindAddress + '\'' +
-        ", nodeMetadataDir='" + nodeMetadataDir + '\'' +
-        ", nodeLogDir='" + nodeLogDir + '\'' +
-        ", nodeBackupDir='" + nodeBackupDir + '\'' +
-        ", nodeLoggers='" + nodeLoggerOverrides + '\'' +
+        "name='" + name + '\'' +
+        ", hostname='" + hostname + '\'' +
+        ", port=" + port +
+        ", publicHostname='" + publicHostname + '\'' +
+        ", publicPort=" + publicPort +
+        ", groupPort=" + groupPort +
+        ", bindAddress='" + bindAddress + '\'' +
+        ", groupBindAddress='" + groupBindAddress + '\'' +
+        ", metadataDir='" + metadataDir + '\'' +
+        ", logDir='" + logDir + '\'' +
+        ", backupDir='" + backupDir + '\'' +
+        ", loggers='" + loggerOverrides + '\'' +
         ", tcProperties='" + tcProperties + '\'' +
         ", securityDir='" + securityDir + '\'' +
         ", securityAuditLogDir='" + securityAuditLogDir + '\'' +
@@ -355,83 +437,11 @@ public class Node implements Cloneable, PropertyHolder {
         '}';
   }
 
-  public Node cloneForAttachment(Node aNodeFromTargetCluster) {
-    // validate security folder
-    if (aNodeFromTargetCluster.getSecurityDir() != null && securityDir == null) {
-      throw new IllegalArgumentException("Node " + getNodeAddress() + " must be started with a security directory.");
-    }
-
-    // Validate the user data directories.
-    // We validate that the node we want to attach has EXACTLY the same user data directories ID as the destination cluster.
-    Set<String> requiredDataDirs = new TreeSet<>(aNodeFromTargetCluster.getDataDirs().keySet());
-    Set<String> dataDirs = new TreeSet<>(this.dataDirs.keySet());
-    if (!dataDirs.containsAll(requiredDataDirs)) {
-      // case where the attached node would not have all the required IDs
-      requiredDataDirs.removeAll(dataDirs);
-      throw new IllegalArgumentException("Node " + getNodeAddress() + " must declare the following data directories: " + String.join(", ", requiredDataDirs) + ".");
-    }
-    if (dataDirs.size() > requiredDataDirs.size()) {
-      // case where the attached node would have more than the required IDs
-      dataDirs.removeAll(requiredDataDirs);
-      throw new IllegalArgumentException("Node " + getNodeAddress() + " must not declare the following data directories: " + String.join(", ", dataDirs) + ".");
-    }
-
-    // create a copy of the node
-    Node thisCopy = clone();
-
-    if (aNodeFromTargetCluster.getSecurityDir() == null && securityDir != null) {
-      // node was started with a security directory but destination cluster is not secured so we do not need one
-      thisCopy.setSecurityDir(null);
-    }
-
-    return thisCopy;
-  }
-
   /**
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
   @Override
-  public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
-    return Setting.modelToProperties(this, expanded, includeDefaultValues);
-  }
-
-  public Node fillRequiredSettings() {
-    return Setting.fillRequiredSettings(this);
-  }
-
-  private Node fillSettings() {
-    return Setting.fillSettings(this);
-  }
-
-  public static Node newDefaultNode(String hostname) {
-    return new Node()
-        .fillSettings()
-        .setNodeHostname(hostname);
-  }
-
-  public static Node newDefaultNode(String name, String hostname) {
-    return new Node()
-        .fillSettings()
-        .setNodeName(name)
-        .setNodeHostname(hostname);
-  }
-
-  public static Node newDefaultNode(String hostname, int port) {
-    return new Node()
-        .fillSettings()
-        .setNodePort(port)
-        .setNodeHostname(hostname);
-  }
-
-  public static Node newDefaultNode(String name, String hostname, int port) {
-    return new Node()
-        .fillSettings()
-        .setNodeName(name)
-        .setNodePort(port)
-        .setNodeHostname(hostname);
-  }
-
-  public static Node empty() {
-    return new Node();
+  public Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings, Version version) {
+    return modelToProperties(this, expanded, includeDefaultValues, includeHiddenSettings, version);
   }
 }

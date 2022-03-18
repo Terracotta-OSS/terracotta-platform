@@ -39,7 +39,7 @@ public class MainCommandLineProcessor implements CommandLineProcessor {
     // Each NodeStarter either handles the startup itself or hands over to the next NodeStarter, following the chain-of-responsibility pattern
     CommandLineProcessor third = new ConsoleCommandLineProcessor(options, clusterCreator, configurationGeneratorVisitor, parameterSubstitutor);
     CommandLineProcessor second = new ConfigFileCommandLineProcessor(third, options, clusterCreator, configurationGeneratorVisitor, parameterSubstitutor);
-    CommandLineProcessor first = new ConfigRepoCommandLineProcessor(second, options, configurationGeneratorVisitor, parameterSubstitutor);
+    CommandLineProcessor first = new ConfigRepoCommandLineProcessor(second, options, configurationGeneratorVisitor, parameterSubstitutor, clusterCreator);
     first.process();
   }
 }

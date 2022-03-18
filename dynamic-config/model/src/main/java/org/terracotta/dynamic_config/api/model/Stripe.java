@@ -18,8 +18,6 @@ package org.terracotta.dynamic_config.api.model;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -29,29 +27,35 @@ import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 
 
 public class Stripe implements Cloneable, PropertyHolder {
-  private final List<Node> nodes;
 
-  public Stripe(List<Node> nodes) {
-    this.nodes = new CopyOnWriteArrayList<>(requireNonNull(nodes));
-  }
-
-  public Stripe(Node... nodes) {
-    this(Arrays.asList(nodes));
-  }
-
-  public Stripe() {
-    this.nodes = new ArrayList<>();
-  }
+  private List<Node> nodes = new CopyOnWriteArrayList<>();
+  private String name;
 
   public List<Node> getNodes() {
     return Collections.unmodifiableList(nodes);
+  }
+
+  public Stripe setNodes(List<Node> nodes) {
+    this.nodes = new CopyOnWriteArrayList<>(nodes);
+    return this;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public Stripe setName(String name) {
+    this.name = requireNonNull(name);
+    return this;
   }
 
   @Override
@@ -59,27 +63,29 @@ public class Stripe implements Cloneable, PropertyHolder {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Stripe stripe = (Stripe) o;
-    return nodes.equals(stripe.nodes);
+    return nodes.equals(stripe.nodes)
+        && Objects.equals(name, stripe.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodes);
+    return Objects.hash(nodes, name);
   }
 
   @Override
   public String toString() {
     return "Stripe{" +
-        "nodes=" + nodes +
+        "name='" + name + '\'' +
+        ", nodes=" + nodes +
         '}';
   }
 
   public String toShapeString() {
-    return "( " + nodes.stream().map(node -> node.getNodeName() + "@" + node.getNodeAddress()).collect(joining(", ")) + " )";
+    return name + " ( " + nodes.stream().map(node -> node.getName() + "@" + node.getAddress()).collect(joining(", ")) + " )";
   }
 
   public Collection<InetSocketAddress> getNodeAddresses() {
-    return getNodes().stream().map(Node::getNodeAddress).collect(toList());
+    return getNodes().stream().map(Node::getAddress).collect(toList());
   }
 
   public Optional<Node> getSingleNode() throws IllegalStateException {
@@ -104,12 +110,13 @@ public class Stripe implements Cloneable, PropertyHolder {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
   public Stripe clone() {
-    return new Stripe(nodes.stream().map(Node::clone).collect(toList()));
+    Stripe copy = new Stripe();
+    copy.nodes = this.nodes.stream().map(Node::clone).collect(toCollection(CopyOnWriteArrayList::new));
+    copy.name = this.name;
+    return copy;
   }
 
-  // please keep this package-local:
-  // detachment of a node should be handled by cluster object
-  boolean detachNode(InetSocketAddress address) {
+  public boolean removeNode(InetSocketAddress address) {
     return nodes.removeIf(node -> node.hasAddress(address));
   }
 
@@ -117,41 +124,16 @@ public class Stripe implements Cloneable, PropertyHolder {
     return nodes.isEmpty();
   }
 
-  /**
-   * Attach a node to this stripe.
-   * <p>
-   * The node parameters are expected to be validated before.
-   * <p>
-   * Also, we cannot attach a node to an empty stripe: this is impossible since
-   * attachment needs a source and destination node, which belongs to a non-empty stripe
-   */
-  public Stripe attachNode(Node source) {
-    if (containsNode(source.getNodeAddress())) {
-      throw new IllegalArgumentException("Node " + source.getNodeAddress() + " is already in the stripe.");
-    }
-    if (isEmpty()) {
-      throw new IllegalStateException("Empty stripe.");
-    }
-    Node aNode = nodes.iterator().next();
-    Node newNode = source.cloneForAttachment(aNode);
-    addNode(newNode);
-    return this;
-  }
-
   public Stripe addNode(Node source) {
     nodes.add(source);
     return this;
   }
 
-  public Stripe cloneForAttachment(Node aNodeFromTargetCluster) {
-    return nodes.stream()
-        .map(node -> node.cloneForAttachment(aNodeFromTargetCluster))
-        .reduce(
-            new Stripe(),
-            Stripe::addNode,
-            (s1, s2) -> {
-              throw new UnsupportedOperationException();
-            });
+  public Stripe addNodes(Node... sources) {
+    for (Node source : sources) {
+      addNode(source);
+    }
+    return this;
   }
 
   public int getNodeCount() {
@@ -159,7 +141,7 @@ public class Stripe implements Cloneable, PropertyHolder {
   }
 
   public Optional<Node> getNode(String nodeName) {
-    return nodes.stream().filter(node -> node.getNodeName().equals(nodeName)).findAny();
+    return nodes.stream().filter(node -> node.getName().equals(nodeName)).findAny();
   }
 
   public Optional<Node> getNode(int nodeId) {
@@ -174,7 +156,7 @@ public class Stripe implements Cloneable, PropertyHolder {
 
   public OptionalInt getNodeId(String nodeName) {
     return IntStream.range(0, nodes.size())
-        .filter(idx -> nodeName.equals(nodes.get(idx).getNodeName()))
+        .filter(idx -> nodeName.equals(nodes.get(idx).getName()))
         .map(idx -> idx + 1)
         .findAny();
   }
@@ -190,14 +172,19 @@ public class Stripe implements Cloneable, PropertyHolder {
    * Transform this model into a config file where all the "map" like settings can be expanded (one item per line)
    */
   @Override
-  public Properties toProperties(boolean expanded, boolean includeDefaultValues) {
-    Properties properties = new Properties();
+  public Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings, Version version) {
+    Properties properties = Setting.modelToProperties(this, expanded, includeDefaultValues, includeHiddenSettings, version);
     for (int i = 0; i < nodes.size(); i++) {
       String prefix = "node." + (i + 1) + ".";
-      Properties props = nodes.get(i).toProperties(expanded, includeDefaultValues);
+      Properties props = nodes.get(i).toProperties(expanded, includeDefaultValues, includeHiddenSettings, version);
       props.stringPropertyNames().forEach(key -> properties.setProperty(prefix + key, props.getProperty(key)));
     }
     return properties;
+  }
+
+  @Override
+  public Stream<? extends PropertyHolder> descendants() {
+    return nodes.stream();
   }
 
   @Override

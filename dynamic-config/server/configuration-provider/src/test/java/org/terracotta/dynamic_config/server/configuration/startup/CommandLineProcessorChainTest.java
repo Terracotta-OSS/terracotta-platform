@@ -26,14 +26,21 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -41,9 +48,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.dynamic_config.api.service.IParameterSubstitutor.identity;
-import org.terracotta.server.Server;
-import org.terracotta.server.ServerEnv;
 
 public class CommandLineProcessorChainTest {
   private static final String LICENSE_FILE = "/path/to/license-file";
@@ -61,10 +67,10 @@ public class CommandLineProcessorChainTest {
   @Rule
   public ExpectedException expectedException = ExpectedException.none();
 
-  private final Node node1 = Node.newDefaultNode("node-1", "localhost", 19410);
-  private final Node node2 = Node.newDefaultNode("node-2", "localhost", 9411);
-  private Cluster cluster = Cluster.newDefaultCluster((String) null, new Stripe(node1));
-  private NodeContext nodeContext = new NodeContext(cluster, 1, "node-1");
+  private final Node node1 = Testing.newTestNode("node-1", "localhost", 19410);
+  private final Node node2 = Testing.newTestNode("node-2", "localhost", 9411);
+  private final Cluster cluster = Testing.newTestCluster((String) null, new Stripe().addNodes(node1));
+  private final NodeContext nodeContext = new NodeContext(cluster, 1, "node-1");
   private Options options;
   private Map<Setting, String> paramValueMap;
   private ClusterFactory clusterCreator;
@@ -87,26 +93,28 @@ public class CommandLineProcessorChainTest {
   public void testStartupWithConfigRepo_noParamsPassed_repoExists() {
     when(configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(null)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(configurationGeneratorVisitor.findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class))).thenReturn(Optional.of(NODE_NAME));
+    when(clusterCreator.create(any(), eq(parameterSubstitutor))).thenReturn(cluster);
 
     mainCommandLineProcessor.process();
 
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(null);
     verify(configurationGeneratorVisitor).findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class));
-    verify(configurationGeneratorVisitor).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false);
+    verify(configurationGeneratorVisitor).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false, nodeContext);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
   }
 
   @Test
   public void testStartupWithConfigRepo_configRepoPassed_repoExists() {
-    when(options.getNodeConfigDir()).thenReturn(NODE_REPOSITORY_DIR);
+    when(options.getConfigDir()).thenReturn(NODE_REPOSITORY_DIR);
     when(configurationGeneratorVisitor.getOrDefaultConfigurationDirectory(NODE_REPOSITORY_DIR)).thenReturn(Paths.get(NODE_REPOSITORY_DIR));
     when(configurationGeneratorVisitor.findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class))).thenReturn(Optional.of(NODE_NAME));
+    when(clusterCreator.create(any(), eq(parameterSubstitutor))).thenReturn(cluster);
 
     mainCommandLineProcessor.process();
 
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(NODE_REPOSITORY_DIR);
     verify(configurationGeneratorVisitor).findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class));
-    verify(configurationGeneratorVisitor).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false);
+    verify(configurationGeneratorVisitor).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false, nodeContext);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
   }
 
@@ -117,8 +125,8 @@ public class CommandLineProcessorChainTest {
     when(configurationGeneratorVisitor.findNodeName(Paths.get(NODE_REPOSITORY_DIR), identity())).thenReturn(Optional.empty());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
-    when(options.getNodeHostname()).thenReturn(HOST_NAME);
-    when(options.getNodePort()).thenReturn(NODE_PORT);
+    when(options.getHostname()).thenReturn(HOST_NAME);
+    when(options.getPort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
@@ -138,8 +146,8 @@ public class CommandLineProcessorChainTest {
     when(options.allowsAutoActivation()).thenReturn(true);
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
-    when(options.getNodeHostname()).thenReturn(HOST_NAME);
-    when(options.getNodePort()).thenReturn(NODE_PORT);
+    when(options.getHostname()).thenReturn(HOST_NAME);
+    when(options.getPort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
@@ -179,21 +187,24 @@ public class CommandLineProcessorChainTest {
     when(options.allowsAutoActivation()).thenReturn(true);
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
-    when(options.getNodeHostname()).thenReturn(HOST_NAME);
-    when(options.getNodePort()).thenReturn(NODE_PORT);
+    when(options.getHostname()).thenReturn(HOST_NAME);
+    when(options.getPort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
-    cluster.addStripe(new Stripe(node2));
+    cluster.addStripe(new Stripe().addNodes(node2));
     cluster.setName(CLUSTER_NAME);
 
     doThrow(new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster"))
         .when(configurationGeneratorVisitor).startActivated(nodeContext, LICENSE_FILE, null);
 
-    expectedException.expect(UnsupportedOperationException.class);
-    expectedException.expectMessage("Cannot start a pre-activated multi-stripe cluster");
-
-    mainCommandLineProcessor.process();
+    try {
+      mainCommandLineProcessor.process();
+      fail("Expected exception");
+    } catch (Exception e) {
+      assertThat(e, instanceOf(UnsupportedOperationException.class));
+      assertThat(e.getMessage(), containsString("Cannot start a pre-activated multi-stripe cluster"));
+    }
 
     verify(configurationGeneratorVisitor).getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster);
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(any());
@@ -205,12 +216,12 @@ public class CommandLineProcessorChainTest {
   @Test
   public void testUnconfiguredWithConfigFileUsingHostPort() {
     when(options.getConfigFile()).thenReturn(CONFIG_FILE);
-    when(options.getNodeHostname()).thenReturn(HOST_NAME);
-    when(options.getNodePort()).thenReturn(NODE_PORT);
+    when(options.getHostname()).thenReturn(HOST_NAME);
+    when(options.getPort()).thenReturn(NODE_PORT);
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(HOST_NAME, NODE_PORT, CONFIG_FILE, cluster)).thenReturn(node1);
-    cluster.getSingleStripe().get().attachNode(node2);
+    cluster.getSingleStripe().get().addNode(node2);
 
     mainCommandLineProcessor.process();
 
@@ -228,7 +239,7 @@ public class CommandLineProcessorChainTest {
     when(clusterCreator.create(Paths.get(CONFIG_FILE))).thenReturn(cluster);
     when(parameterSubstitutor.substitute(CONFIG_FILE)).thenReturn(CONFIG_FILE);
     when(configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(NODE_NAME, CONFIG_FILE, cluster)).thenReturn(node1);
-    cluster.getSingleStripe().get().attachNode(node2);
+    cluster.getSingleStripe().get().addNode(node2);
 
     mainCommandLineProcessor.process();
 
@@ -246,6 +257,7 @@ public class CommandLineProcessorChainTest {
     when(configurationGeneratorVisitor.findNodeName(Paths.get(NODE_REPOSITORY_DIR), identity())).thenReturn(Optional.empty());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(options.getClusterName()).thenReturn(CLUSTER_NAME);
+    when(options.getFailoverPriority()).thenReturn(availability().toString());
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
     cluster.setName(CLUSTER_NAME);
 
@@ -261,6 +273,7 @@ public class CommandLineProcessorChainTest {
   public void testPreactivatedWithCliParams_ok() {
     when(options.allowsAutoActivation()).thenReturn(true);
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
+    when(options.getFailoverPriority()).thenReturn(availability().toString());
     when(options.getClusterName()).thenReturn(CLUSTER_NAME);
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
     cluster.setName(CLUSTER_NAME);
@@ -276,20 +289,19 @@ public class CommandLineProcessorChainTest {
   @Test
   public void testPreactivatedWithCliParams_absentClusterName() {
     when(options.allowsAutoActivation()).thenReturn(true);
+    when(options.getFailoverPriority()).thenReturn(availability().toString());
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
 
-    expectedException.expect(NullPointerException.class);
+    expectedException.expect(IllegalArgumentException.class);
     expectedException.expectMessage("Cluster name is required with license file");
-
     mainCommandLineProcessor.process();
-
-    verifyNoMoreInteractions(configurationGeneratorVisitor);
   }
 
   @Test
   public void testUnconfiguredWithCliParams() {
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
+    when(options.getFailoverPriority()).thenReturn(availability().toString());
 
     mainCommandLineProcessor.process();
 
@@ -297,5 +309,12 @@ public class CommandLineProcessorChainTest {
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUnconfigured(nodeContext, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
+  }
+
+  @Test
+  public void testWithCliParams_missingFailoverPriority() {
+    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expectMessage("failover-priority is required");
+    mainCommandLineProcessor.process();
   }
 }

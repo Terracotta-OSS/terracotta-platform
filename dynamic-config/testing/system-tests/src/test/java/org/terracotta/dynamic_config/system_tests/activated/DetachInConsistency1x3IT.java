@@ -28,8 +28,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 3)
 public class DetachInConsistency1x3IT extends DynamicConfigIT {
@@ -44,11 +42,11 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
   }
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     // Angela limitation causing to attach explicitly and create cluster
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
-    assertThat(configToolInvocation("activate", "-n", "mycluster", "-s", "localhost:" + getNodePort(1, 1)), is(successful()));
+    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3));
+    invokeConfigTool("activate", "-n", "mycluster", "-s", "localhost:" + getNodePort(1, 1));
     waitForActive(1);
     waitForNPassives(1, 2);
   }
@@ -59,7 +57,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     final int passiveId = findPassives(1)[0];
     final int passiveId2 = findPassives(1)[1];
 
-    assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, activeId)), is(successful()));
+    invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, activeId));
 
     // failover - one of the passive becomes active
     waitForActive(1);
@@ -80,7 +78,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     final int passiveId = findPassives(1)[0];
     final int passiveId2 = findPassives(1)[1];
 
-    assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+    invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));
     waitUntil(() -> angela.tsa().getStopped().size(), is(1));
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
@@ -101,7 +99,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     stopNode(1, passiveId);
 
-    configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));
+    invokeConfigTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId));
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
@@ -121,13 +119,12 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.detachStatus=prepareDeletion-failure";
 
     //create prepare failure on active
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
 
     // detach failure (forcing detach otherwise we have to restart cluster)
     assertThat(
-        configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, passiveId)),
-        containsOutput("Two-Phase commit failed"));
+        () -> invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        exceptionMatcher("Two-Phase commit failed"));
 
     waitUntil(() -> angela.tsa().getStopped().size(), is(1));
 
@@ -150,15 +147,14 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
 
     //setup for failover in commit phase on active
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
 
     // To ensure that passiveId don't become active during failover since that is what we will remove
     stopNode(1, passiveId);
 
     assertThat(
-        configToolInvocation("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, passiveId)),
-        containsOutput("Two-Phase commit failed"));
+        () -> invokeConfigTool("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        exceptionMatcher("Two-Phase commit failed"));
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
 
@@ -184,15 +180,14 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     //create prepare failure on active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.detachStatus=prepareDeletion-failure";
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
 
     stopNode(1, passiveId);
 
     // detach failure (forcing detach otherwise we have to restart cluster)
     assertThat(
-        configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, passiveId)),
-        containsOutput("Two-Phase commit failed"));
+        () -> invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        exceptionMatcher("Two-Phase commit failed"));
 
     // How will update the existing nodes ? 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
@@ -212,15 +207,14 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     //create failover while committing
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
 
     stopNode(1, passiveId);
 
     //Both active and one passive is down.
     assertThat(
-        configToolInvocation("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, passiveId)),
-        containsOutput("Two-Phase commit failed"));
+        () -> invokeConfigTool("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        exceptionMatcher("Two-Phase commit failed"));
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
     waitForActive(1, passiveId2);

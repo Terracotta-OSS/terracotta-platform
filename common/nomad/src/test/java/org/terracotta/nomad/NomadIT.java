@@ -200,7 +200,7 @@ public class NomadIT {
     SimpleNomadChange change = new SimpleNomadChange("change", "summary");
 
     when(changeApplicator1.tryApply(null, change)).thenReturn(allow("changeResult"));
-    when(changeApplicator2.tryApply(null, change)).thenReturn(reject("fail"));
+    when(changeApplicator2.tryApply(null, change)).thenReturn(reject(null,"fail"));
     when(changeApplicator3.tryApply(null, change)).thenReturn(allow("changeResult"));
 
     client.tryApplyChange(changeResults, change);
@@ -225,6 +225,7 @@ public class NomadIT {
     verify(changeResults).endPrepare();
     verify(changeResults).startRollback();
     verify(changeResults).rolledBack(address1);
+    verify(changeResults).rolledBack(address2);
     verify(changeResults).rolledBack(address3);
     verify(changeResults).endRollback();
     verify(changeResults).done(CONSISTENT);

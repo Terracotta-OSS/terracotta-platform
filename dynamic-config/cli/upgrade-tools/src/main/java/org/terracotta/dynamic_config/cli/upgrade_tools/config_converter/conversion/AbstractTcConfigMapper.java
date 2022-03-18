@@ -456,13 +456,16 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
       Node doc = entry.getValue();
       try {
         String xml = XmlUtility.getPrettyPrintableXmlString(doc);
-        stripes.add(getStripe(xml));
+        // set stripe names to match what the user is used to see currently
+        Cluster stripe = getStripe(xml);
+        stripe.getSingleStripe().get().setName("stripe[" + stripes.size() + "]");
+        stripes.add(stripe);
       } catch (TransformerException e) {
         throw new RuntimeException(e);
       }
     }
     return stripes.stream().reduce((result, stripe) -> result
-        .addStripe(stripe.getSingleStripe().get())) // getSingleStripe() because conversion of xml -> model is for 1 stripe only
+        .addStripe(stripe.getSingleStripe().get().clone())) // getSingleStripe() because conversion of xml -> model is for 1 stripe only
         .orElseThrow(() -> new RuntimeException("No server specified."))
         .setName(clusterName);
   }

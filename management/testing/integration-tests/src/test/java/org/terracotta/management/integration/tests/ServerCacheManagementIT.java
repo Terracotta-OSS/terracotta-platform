@@ -69,7 +69,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
         .flatMap(ServerEntity::getManagementRegistry)
         .get();
 
-    assertThat(registry.getCapabilities().size(), equalTo(5));
+    assertThat(registry.getCapabilities().size(), equalTo(3));
     assertThat(registry.getCapability("OffHeapResourceSettings"), is(notNullValue()));
     assertThat(registry.getCapability("OffHeapResourceStatistics"), is(notNullValue()));
     assertThat(registry.getCapability("StatisticCollectorCapability"), is(notNullValue()));
@@ -127,6 +127,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     JsonNode expected = readJson("stats.json");
     queryAllRemoteStatsUntil(stats -> {
       JsonNode actual = removeRandomValues(toJson(stats));
+      System.out.println(actual.toPrettyString());
       return actual.equals(expected);
     });
 

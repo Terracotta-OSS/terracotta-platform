@@ -18,12 +18,15 @@ package org.terracotta.dynamic_config.test_support.processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.server.NomadException;
 
@@ -32,6 +35,7 @@ import javax.management.MBeanServer;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
@@ -46,23 +50,24 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
   private static final String failoverKey = "failoverDeletion";
   private static final String detachStatusKey = "detachStatus";
   private final TopologyService topologyService;
-  private final DynamicConfigListener listener;
+  private final DynamicConfigEventFiring dynamicConfigEventFiring;
   private final PlatformService platformService;
+  private final IParameterSubstitutor parameterSubstitutor;
+  private final PathResolver pathResolver;
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
-  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigListener listener, PlatformService platformService) {
+  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, PlatformService platformService, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
     this.topologyService = requireNonNull(topologyService);
-    this.listener = requireNonNull(listener);
+    this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
     this.platformService = platformService;
+    this.parameterSubstitutor = parameterSubstitutor;
+    this.pathResolver = pathResolver;
   }
 
   @Override
   public void validate(NodeContext baseConfig, NodeRemovalNomadChange change) throws NomadException {
-    if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(detachStatusKey)) {
-      String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(detachStatusKey);
-      if (failAtPrepare.equals(value)) {
-        throw new NomadException("Invalid addition fail at prepare");
-      }
+    if (failAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(detachStatusKey))) {
+      throw new NomadException("Invalid addition fail at prepare");
     }
     LOGGER.info("Validating change: {}", change.getSummary());
     if (baseConfig == null) {
@@ -76,52 +81,60 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
     // cause failure when in prepare phase
-    if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
-      String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
-      if (killAtPrepare.equals(value)) {
-        platformService.stopPlatform();
-      }
+    if (killAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
+      platformService.stopPlatform();
     }
   }
 
   @Override
   public void apply(NodeRemovalNomadChange change) throws NomadException {
     Cluster runtime = topologyService.getRuntimeNodeContext().getCluster();
-    if (!runtime.containsNode(change.getNode().getNodeAddress())) {
+    Node node = change.getNode();
+    if (!runtime.containsNode(node.getAddress())) {
       return;
     }
 
-    try {
-      LOGGER.info("Removing node: {} from stripe ID: {}", change.getNodeAddress(), change.getStripeId());
-
-      // cause failover when in commit phase
-      if (topologyService.getUpcomingNodeContext().getNode().getTcProperties().containsKey(failoverKey)) {
-        String value = topologyService.getUpcomingNodeContext().getNode().getTcProperties().get(failoverKey);
-        if (killAtCommit.equals(value)) {
-          try {
-            // We crate a marker on disk to know that we have triggered the failover once.
-            // When the node will be restarted, and the repair command triggered again to re-execute the commit,
-            // the file will be there, so 'createFile()' will fail and the node won't be killed.
-            // This hack is so only trigger the commit failure once
-            Files.createFile(topologyService.getUpcomingNodeContext().getNode().getDataDirs().get("main").resolve("killed"));
-            platformService.stopPlatform();
-          } catch (IOException ignored) {
-            // ignored
-          }
-        }
+    // cause failover when in commit phase
+    if (killAtCommit.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
+      try {
+        // We create a marker on disk to know that we have triggered the failover once.
+        // When the node will be restarted, and the repair command triggered again to re-execute the commit,
+        // the file will be there, so 'createFile()' will fail and the node won't be killed.
+        // This hack is so only trigger the commit failure once
+        Files.createFile(path().resolve("killed"));
+        platformService.stopPlatform();
+      } catch (IOException e) {
+        // this exception si normal for teh second run
+        LOGGER.warn(e.getMessage(), e);
       }
+    }
 
+    try {
+      LOGGER.info("Removing node: {} from stripe ID: {}", node.getName(), change.getStripeId());
+      LOGGER.debug("Calling mBean {}#{}", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME);
       mbeanServer.invoke(
           TOPOLOGY_MBEAN,
           PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{change.getNodeAddress().toString()},
-          new String[]{String.class.getName()}
+          new Object[]{node.getHostname(), node.getPort().orDefault(), node.getGroupPort().orDefault()},
+          new String[]{String.class.getName(), int.class.getName(), int.class.getName()}
       );
 
-      listener.onNodeRemoval(change.getStripeId(), change.getNode());
+      dynamicConfigEventFiring.onNodeRemoval(change.getStripeId(), node);
     } catch (RuntimeException | JMException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
+  }
+
+  private Path path() throws IOException {
+    final Path directory = parameterSubstitutor.substitute(pathResolver.resolve(topologyService.getUpcomingNodeContext().getNode().getDataDirs().orDefault().get("main").toPath())).normalize();
+    if (!directory.toFile().exists()) {
+      Files.createDirectories(directory);
+    } else {
+      if (!Files.isDirectory(directory)) {
+        throw new IOException(directory.getFileName() + " exists under " + directory.getParent() + " but is not a directory");
+      }
+    }
+    return directory;
   }
 
   private void checkMBeanOperation() {

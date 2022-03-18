@@ -20,8 +20,8 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.NomadEnvironment;
@@ -55,14 +55,14 @@ public class ConfigRepoProcessor {
   private void saveToNomad(Cluster cluster) {
 
     List<NomadEndpoint<NodeContext>> endpoints = cluster.nodeContexts()
-        .map(nodeContext -> new NomadEndpoint<>(nodeContext.getNode().getNodeAddress(), getNomadServer(nodeContext.getStripeId(), nodeContext.getNodeName())))
+        .map(nodeContext -> new NomadEndpoint<>(nodeContext.getNode().getAddress(), getNomadServer(nodeContext.getStripeId(), nodeContext.getNodeName())))
         .collect(Collectors.toList());
 
     NomadEnvironment environment = new NomadEnvironment();
     try (NomadClient<NodeContext> nomadClient = new NomadClient<>(endpoints, environment.getHost(), environment.getUser(), Clock.systemUTC())) {
       NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
       nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
-      failureRecorder.reThrow();
+      failureRecorder.reThrowErrors();
     }
   }
 
@@ -91,8 +91,8 @@ public class ConfigRepoProcessor {
     };
 
     try {
-      return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, nodeName, new DynamicConfigListenerAdapter());
-    } catch (SanskritException | NomadException e) {
+      return nomadServerFactory.createServer(nomadConfigurationManager, changeApplicator, nodeName, null);
+    } catch (SanskritException | NomadException | ConfigStorageException e) {
       throw new RuntimeException(e);
     }
   }

@@ -15,20 +15,16 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-
-import static java.util.Objects.requireNonNull;
 import org.terracotta.server.ServerEnv;
 
-public class ConsoleCommandLineProcessor implements CommandLineProcessor {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleCommandLineProcessor.class);
+import static org.terracotta.dynamic_config.api.model.SettingName.FAILOVER_PRIORITY;
 
+public class ConsoleCommandLineProcessor implements CommandLineProcessor {
   private final Options options;
   private final ClusterFactory clusterCreator;
   private final ConfigurationGeneratorVisitor configurationGeneratorVisitor;
@@ -48,16 +44,20 @@ public class ConsoleCommandLineProcessor implements CommandLineProcessor {
   @Override
   public void process() {
     ServerEnv.getServer().console("Starting node from command-line parameters");
+    if (options.getFailoverPriority() == null) {
+      throw new IllegalArgumentException(FAILOVER_PRIORITY + " is required");
+    }
+
     Cluster cluster = clusterCreator.create(options.getTopologyOptions(), parameterSubstitutor);
     Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
 
     if (options.getLicenseFile() != null) {
-      requireNonNull(cluster.getName(), "Cluster name is required with license file");
+      cluster.getName().orElseThrow(() -> new IllegalArgumentException("Cluster name is required with license file"));
     }
     if (options.allowsAutoActivation()) {
-      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getNodeAddress()), options.getLicenseFile(), options.getNodeConfigDir());
+      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getAddress()), options.getLicenseFile(), options.getConfigDir());
     } else {
-      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getNodeAddress()), options.getNodeConfigDir());
+      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getAddress()), options.getConfigDir());
     }
   }
 }

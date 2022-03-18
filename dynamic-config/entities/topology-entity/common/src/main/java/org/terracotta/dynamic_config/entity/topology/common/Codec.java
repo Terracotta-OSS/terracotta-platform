@@ -35,12 +35,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.IntStream.rangeClosed;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_ADDITION;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_HAS_INCOMPLETE_CHANGE;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_LICENSE;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_MUST_BE_RESTARTED;
@@ -66,12 +70,18 @@ public class Codec implements MessageCodec<Message, Response> {
           .mapping(EVENT_NODE_ADDITION, 6)
           .mapping(EVENT_NODE_REMOVAL, 7)
           .mapping(EVENT_SETTING_CHANGED, 8)
+          .mapping(EVENT_STRIPE_ADDITION, 9)
+          .mapping(EVENT_STRIPE_REMOVAL, 10)
           .build())
       .struct(REQ_LICENSE.name(), 20, newStructBuilder()
           .string("date", 10)
           .structs("limits", 20, newStructBuilder()
               .string("name", 10)
               .int64("value", 20)
+              .build())
+          .structs("flags", 30, newStructBuilder()
+              .string("name", 10)
+              .bool("value", 20)
               .build())
           .build())
       .bool(REQ_HAS_INCOMPLETE_CHANGE.name(), 30)
@@ -90,6 +100,8 @@ public class Codec implements MessageCodec<Message, Response> {
           .string("configuration", 10)
           .string("cluster", 20)
           .build())
+      .string(EVENT_STRIPE_ADDITION.name(), 100)
+      .string(EVENT_STRIPE_REMOVAL.name(), 110)
       .build();
 
   @Override
@@ -127,7 +139,10 @@ public class Codec implements MessageCodec<Message, Response> {
                 .string("date", license.getExpiryDate().format(DT_FORMATTER))
                 .structs("limits", license.getCapabilityLimitMap().entrySet(), (entryEncoder, entry) -> entryEncoder
                     .string("name", entry.getKey())
-                    .int64("value", entry.getValue()));
+                    .int64("value", entry.getValue()))
+                .structs("flags", license.getFlagsMap().entrySet(), (entryEncoder, entry) -> entryEncoder
+                    .string("name", entry.getKey())
+                    .bool("value", entry.getValue()));
           }
           break;
         }
@@ -156,6 +171,11 @@ public class Codec implements MessageCodec<Message, Response> {
               .string("cluster", encodeCluster((Cluster) oo.get(1)));
           break;
         }
+        case EVENT_STRIPE_ADDITION:
+        case EVENT_STRIPE_REMOVAL: {
+          encoder.string(type.name(), encodeStripe(response.getPayload()));
+          break;
+        }
         default:
           throw new UnsupportedOperationException(type.name());
       }
@@ -179,7 +199,9 @@ public class Codec implements MessageCodec<Message, Response> {
             LocalDate expiryDate = LocalDate.parse(payload.string("date"), DT_FORMATTER);
             Map<String, Long> limits = new HashMap<>();
             payload.structs("limits").forEachRemaining(entry -> limits.put(entry.string("name"), entry.int64("value")));
-            return new Response(type, new License(limits, expiryDate));
+            Map<String, Boolean> flags = new HashMap<>();
+            payload.structs("flags").forEachRemaining(entry -> flags.put(entry.string("name"), entry.bool("value")));
+            return new Response(type, new License(limits, flags, expiryDate));
           }
         }
         case REQ_HAS_INCOMPLETE_CHANGE:
@@ -201,6 +223,9 @@ public class Codec implements MessageCodec<Message, Response> {
               decodeConfiguration(event.string("configuration")),
               decodeCluster(event.string("cluster"))));
         }
+        case EVENT_STRIPE_ADDITION:
+        case EVENT_STRIPE_REMOVAL:
+          return new Response(type, decodeStripe(decoder.string(type.name())));
         default:
           throw new UnsupportedOperationException(type.name());
       }
@@ -213,7 +238,7 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeCluster(Cluster cluster) {
     requireNonNull(cluster);
-    return Props.toString(cluster.toProperties(false, true));
+    return Props.toString(cluster.toProperties(false, false, true));
   }
 
   private Cluster decodeCluster(String payload) {
@@ -224,14 +249,34 @@ public class Codec implements MessageCodec<Message, Response> {
 
   private String encodeNode(Node node) {
     requireNonNull(node);
-    Cluster container = Cluster.newDefaultCluster(new Stripe(node));
-    return Props.toString(container.toProperties(false, true));
+    return Props.toString(node.toProperties(false, false, true));
   }
 
   private Node decodeNode(String payload) {
     requireNonNull(payload);
-    return new ClusterFactory().create(Props.load(payload), configuration -> {
-    }).getSingleNode().orElseThrow(() -> new AssertionError("node must be there"));
+    Properties properties = Props.load(payload);
+    Node node = new Node();
+    Cluster cluster = new Cluster(new Stripe().addNode(node));
+    properties.stringPropertyNames().forEach(key -> Configuration.valueOf("stripe.1.node.1." + key, properties.getProperty(key)).apply(cluster));
+    return node;
+  }
+
+  private String encodeStripe(Stripe stripe) {
+    requireNonNull(stripe);
+    final Properties props = stripe.toProperties(false, false, true);
+    props.setProperty("nodes", String.valueOf(stripe.getNodeCount()));
+    return Props.toString(props);
+  }
+
+  private Stripe decodeStripe(String payload) {
+    requireNonNull(payload);
+    final Properties properties = Props.load(payload);
+    final int count = Integer.parseInt(properties.remove("nodes").toString());
+    final Stripe stripe = new Stripe();
+    final Cluster cluster = new Cluster(stripe);
+    rangeClosed(1, count).forEach(idx -> stripe.addNode(new Node()));
+    properties.stringPropertyNames().forEach(key -> Configuration.valueOf("stripe.1." + key, properties.getProperty(key)).apply(cluster));
+    return stripe;
   }
 
   private String encodeConfiguration(Configuration configuration) {

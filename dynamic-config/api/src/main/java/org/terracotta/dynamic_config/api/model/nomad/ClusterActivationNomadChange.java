@@ -17,8 +17,6 @@ package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 
-import static java.util.Objects.requireNonNull;
-
 /**
  * Nomad change that supports the initial setup of the configuration directory
  *
@@ -28,7 +26,7 @@ public class ClusterActivationNomadChange extends TopologyNomadChange {
 
   public ClusterActivationNomadChange(Cluster cluster) {
     super(cluster, Applicability.cluster());
-    requireNonNull(cluster.getName());
+    cluster.getName().orElseThrow(() -> new IllegalArgumentException("Cluster does not have a name: " + cluster));
   }
 
   @Override
@@ -42,7 +40,7 @@ public class ClusterActivationNomadChange extends TopologyNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime() {
+  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
     return false;
   }
 

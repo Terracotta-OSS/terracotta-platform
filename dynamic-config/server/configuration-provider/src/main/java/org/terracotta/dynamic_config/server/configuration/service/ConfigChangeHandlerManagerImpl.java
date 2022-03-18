@@ -58,12 +58,12 @@ public class ConfigChangeHandlerManagerImpl implements ConfigChangeHandlerManage
     StateDumpCollector configChangeHandlers = stateDumpCollector.subStateDumpCollector("configChangeHandlers");
     this.changeHandlers.entrySet()
         .stream()
-        .sorted(Comparator.comparing(e -> e.getKey().getName()))
+        .sorted(Comparator.comparing(e -> e.getKey().toString()))
         .forEach(e -> {
           if (e.getValue() instanceof StateDumpable) {
-            ((StateDumpable) e.getValue()).addStateTo(configChangeHandlers.subStateDumpCollector(e.getKey().getName()));
+            ((StateDumpable) e.getValue()).addStateTo(configChangeHandlers.subStateDumpCollector(e.getKey().toString()));
           } else {
-            configChangeHandlers.addState(e.getKey().getName(), e.getValue().toString());
+            configChangeHandlers.addState(e.getKey().toString(), e.getValue().toString());
           }
         });
   }

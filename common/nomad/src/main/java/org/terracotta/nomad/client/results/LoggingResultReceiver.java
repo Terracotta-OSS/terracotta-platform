@@ -24,6 +24,7 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, RecoveryResultReceiver<T> {
@@ -45,8 +46,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress node, String reason) {
-    error("Takeover has failed: " + node + ": " + reason);
+  public void takeoverFail(InetSocketAddress node, Throwable reason) {
+    error("Takeover has failed: " + node, reason);
   }
 
   @Override
@@ -65,8 +66,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void discoverFail(InetSocketAddress node, String reason) {
-    error("Discover failed on node: " + node + ". Reason: " + reason);
+  public void discoverFail(InetSocketAddress node, Throwable reason) {
+    error("Discover failed on node: " + node, reason);
   }
 
   @Override
@@ -77,6 +78,11 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   @Override
   public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     error("UNRECOVERABLE: Inconsistent cluster for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
+  }
+
+  @Override
+  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
+    error("UNRECOVERABLE: Desynchronized cluster for last changes: " + lastChangeUuids);
   }
 
   @Override
@@ -115,8 +121,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void prepareFail(InetSocketAddress node, String reason) {
-    error("Node: " + node + " failed when asked to prepare to make the change. Reason: " + reason);
+  public void prepareFail(InetSocketAddress node, Throwable reason) {
+    error("Node: " + node + " failed when asked to prepare to make the change", reason);
   }
 
   @Override
@@ -145,8 +151,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void commitFail(InetSocketAddress node, String reason) {
-    error("Commit failed for node " + node + ". Reason: " + reason);
+  public void commitFail(InetSocketAddress node, Throwable reason) {
+    error("Commit failed for node " + node, reason);
   }
 
   @Override
@@ -170,8 +176,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress node, String reason) {
-    error("Rollback failed for node: " + node + ". Reason: " + reason);
+  public void rollbackFail(InetSocketAddress node, Throwable reason) {
+    error("Rollback failed for node: " + node, reason);
   }
 
   @Override
@@ -209,14 +215,26 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
     error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback.");
   }
 
-  protected void error(String line) {
+  private void error(String line) {
+    error(line, null);
+  }
+
+  protected void error(String line, Throwable e) {
     // debug level is normal hereL this class is used to "trace" all Nomad callbacks and print them to the console
     // if we are in verbose mode (trace level)
     // the errors occurring in nomad are handled at another place
-    LOGGER.debug(line);
+    if (e == null) {
+      LOGGER.debug(line);
+    } else {
+      LOGGER.debug(line + ". Reason: " + stringify(e));
+    }
   }
 
   protected void log(String line) {
     LOGGER.debug(line);
+  }
+
+  protected final String stringify(Throwable e) {
+    return e == null ? "" : e.getMessage() == null ? e.getClass().getName() : e.getMessage();
   }
 }

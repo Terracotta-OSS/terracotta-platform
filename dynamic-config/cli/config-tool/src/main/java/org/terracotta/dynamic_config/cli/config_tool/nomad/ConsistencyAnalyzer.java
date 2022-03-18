@@ -42,6 +42,7 @@ import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.ACCEPTING;
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.CONCURRENT_ACCESS;
+import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.DESYNCHRONIZED;
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.DISCOVERY_FAILURE;
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.INCONSISTENT;
 import static org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer.GlobalState.MAYBE_PARTIALLY_COMMITTED;
@@ -66,6 +67,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     PREPARED,
 
     INCONSISTENT,
+    DESYNCHRONIZED,
     CONCURRENT_ACCESS,
     DISCOVERY_FAILURE,
 
@@ -83,13 +85,16 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   private final Map<InetSocketAddress, DiscoverResponse<T>> responses;
   private final Map<InetSocketAddress, LogicalServerState> allNodes;
 
-  private volatile String discoverFailure;
+  private volatile Throwable discoverFailure;
   private volatile boolean discoveredInconsistentCluster;
   private volatile boolean discoveredOtherClient;
 
   private volatile UUID inconsistentChangeUuid;
   private volatile Collection<InetSocketAddress> committedNodes;
   private volatile Collection<InetSocketAddress> rolledBackNodes;
+
+  private volatile boolean discoveredDesynchronizedCluster;
+  private volatile Map<UUID, Collection<InetSocketAddress>> lastChangeUuids;
 
   private volatile InetSocketAddress nodeProcessingOtherClient;
   private volatile String otherClientHost;
@@ -106,7 +111,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     discoverFailure = reason;
   }
 
@@ -116,6 +121,12 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     this.committedNodes = committedNodes;
     this.rolledBackNodes = rolledBackNodes;
     this.discoveredInconsistentCluster = true;
+  }
+
+  @Override
+  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
+    this.discoveredDesynchronizedCluster = true;
+    this.lastChangeUuids = lastChangeUuids;
   }
 
   @Override
@@ -142,7 +153,7 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     return Optional.ofNullable(responses.get(node));
   }
 
-  public String getDiscoverFailure() {
+  public Throwable getDiscoverFailure() {
     return discoverFailure;
   }
 
@@ -158,6 +169,10 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
 
   public Collection<InetSocketAddress> getRolledBackNodes() {
     return rolledBackNodes;
+  }
+
+  public Map<UUID, Collection<InetSocketAddress>> getLastChangeUuids() {
+    return lastChangeUuids;
   }
 
   // discoverOtherClient
@@ -256,6 +271,10 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
       return INCONSISTENT;
     }
 
+    if (discoveredDesynchronizedCluster) {
+      return DESYNCHRONIZED;
+    }
+
     if (discoveredOtherClient) {
       return CONCURRENT_ACCESS;
     }
@@ -300,6 +319,11 @@ public class ConsistencyAnalyzer<T> implements DiscoverResultsReceiver<T> {
     if (uuids > 1 && prepared > 0) {
       // partially prepared change
       return PARTIALLY_PREPARED;
+    }
+
+    if (uuids > 1) {
+      // desynchronized config
+      return DESYNCHRONIZED;
     }
 
     if (uuids == 1 && rolledBack == 0 && committed > 0 && prepared > 0 && (prepared + committed >= nodeCount)) {

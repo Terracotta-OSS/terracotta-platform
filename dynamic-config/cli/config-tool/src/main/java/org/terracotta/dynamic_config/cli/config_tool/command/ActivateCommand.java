@@ -38,7 +38,7 @@ import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
-@Usage("activate -s <hostname[:port]> -f <config-file> [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
+@Usage("activate (-s <hostname[:port]> | -f <config-file>) [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class ActivateCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
@@ -77,7 +77,7 @@ public class ActivateCommand extends RemoteCommand {
       throw new IllegalArgumentException("A node must be supplied for a restricted activation");
     }
 
-    if (licenseFile != null && !Files.exists(licenseFile)) {
+    if (licenseFile != null && !licenseFile.toFile().exists()) {
       throw new ParameterException("License file not found: " + licenseFile);
     }
 
@@ -95,9 +95,7 @@ public class ActivateCommand extends RemoteCommand {
       cluster.setName(clusterName);
     }
 
-    if (cluster.getName() == null) {
-      throw new IllegalArgumentException("Cluster name is missing");
-    }
+    cluster.getName().orElseThrow(() -> new IllegalArgumentException("Cluster name is missing"));
 
     if (node != null && !cluster.containsNode(node)) {
       throw new IllegalArgumentException("Node: " + node + " is not in cluster: " + cluster.toShapeString());
@@ -119,7 +117,7 @@ public class ActivateCommand extends RemoteCommand {
 
   @Override
   public final void run() {
-    activate(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
+    activateNodes(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
     logger.info("Command successful!" + lineSeparator());
   }
 
@@ -154,7 +152,7 @@ public class ActivateCommand extends RemoteCommand {
   private Optional<Cluster> loadTopologyFromNode() {
     return Optional.ofNullable(node).map(node -> {
       Cluster cluster = getUpcomingCluster(node);
-      logger.info("Cluster topology loaded node: " + cluster.toShapeString());
+      logger.debug("Cluster topology loaded from node: " + cluster.toShapeString());
       return cluster;
     });
   }

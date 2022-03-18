@@ -188,8 +188,7 @@ public abstract class AbstractTest {
 
     // create a NMS Entity
     NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
-    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig()
-        .setStripeName("SINGLE"));
+    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig());
     this.nmsService = new DefaultNmsService(nmsEntity);
     this.nmsService.setOperationTimeout(60, TimeUnit.SECONDS);
   }
@@ -240,7 +239,7 @@ public abstract class AbstractTest {
         .replaceAll("\"version\":\"[^\"]*\"", "\"version\":\"<version>\"")
         .replaceAll("\"clientId\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\"", "\"clientId\":\"0@127.0.0.1:$1:<uuid>\"")
         .replaceAll("\"logicalConnectionUid\":\"[^\"]*\"", "\"logicalConnectionUid\":\"<uuid>\"")
-        .replaceAll("\"id\":\"[^\"]+:(\\w+):[^\"]+:[^\"]+:[^\"]+\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
+        .replaceAll("\"id\":\"[^\"]+:([\\w\\[\\]]+):[^\"]+:[^\"]+:[^\"]+\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
         .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
         .replaceAll("-2", "")
         .replaceAll("testServer1", "testServer0")

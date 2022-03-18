@@ -39,6 +39,7 @@ import org.terracotta.dynamic_config.cli.config_tool.command.LogCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.RepairCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.SetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.UnsetCommand;
+import org.terracotta.dynamic_config.cli.config_tool.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
 import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
@@ -50,6 +51,10 @@ import org.terracotta.nomad.entity.client.NomadEntityProvider;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import static java.lang.System.lineSeparator;
 
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
@@ -121,7 +126,12 @@ public class ConfigTool {
         // We cannot timeout shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
         new NomadEntity.Settings().setRequestTimeout(entityOperationTimeout),
         mainCommand.getSecurityRootDirectory());
-    NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
+    NomadManager<NodeContext> nomadManager;
+    if (mainCommand.getLockToken() != null) {
+      nomadManager = new LockAwareNomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider, mainCommand.getLockToken());
+    } else {
+      nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
+    }
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
     StopService stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
 
@@ -147,7 +157,35 @@ public class ConfigTool {
   }
 
   private static CustomJCommander parseArguments(CommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
-    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand);
+    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand) {
+      @Override
+      public void appendDefinitions(StringBuilder out, String indent) {
+        out.append(indent).append(lineSeparator()).append("Definitions:").append(lineSeparator());
+        out.append(indent).append("    ").append("namespace").append(lineSeparator());
+        Map<String, String> nameSpaces = new LinkedHashMap<>();
+        nameSpaces.put("stripe.<stripeId>.node.<nodeId>", "to apply a change only on a specific node");
+        nameSpaces.put("stripe.<stripeId>", "to apply a change only on a specific stripe");
+        nameSpaces.put("'' (empty namespace)", "to apply a change only on all nodes of the cluster");
+
+        int maxNamespaceLength = Integer.MIN_VALUE;
+        for (String nameSpace : nameSpaces.keySet()) {
+          if (nameSpace.length() > maxNamespaceLength) {
+            maxNamespaceLength = nameSpace.length();
+          }
+        }
+
+        for (Map.Entry<String, String> entry : nameSpaces.entrySet()) {
+          String key = entry.getKey();
+          String value = entry.getValue();
+          out.append(indent).append("        ").append(key);
+          for (int i = 0; i < maxNamespaceLength - key.length() + 4; i++) {
+            out.append(" ");
+          }
+          out.append(value).append(lineSeparator());
+        }
+      }
+    };
+
     try {
       jCommander.parse(args);
     } catch (ParameterException e) {

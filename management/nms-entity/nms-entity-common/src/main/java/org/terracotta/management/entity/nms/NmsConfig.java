@@ -16,7 +16,6 @@
 package org.terracotta.management.entity.nms;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * @author Mathieu Carbou
@@ -27,23 +26,4 @@ public final class NmsConfig implements Serializable {
 
   // name must be hardcoded because it reference a class name in client package and is used on server-side
   public static final String ENTITY_TYPE = "org.terracotta.management.entity.nms.client.NmsEntity";
-
-  private String stripeName = "SINGLE";
-
-  public String getStripeName() {
-    return stripeName;
-  }
-
-  public NmsConfig setStripeName(String stripeName) {
-    this.stripeName = Objects.requireNonNull(stripeName);
-    return this;
-  }
-
-  @Override
-  public String toString() {
-    final StringBuilder sb = new StringBuilder("NmsConfig{");
-    sb.append("stripeName='").append(stripeName).append('\'');
-    sb.append('}');
-    return sb.toString();
-  }
 }

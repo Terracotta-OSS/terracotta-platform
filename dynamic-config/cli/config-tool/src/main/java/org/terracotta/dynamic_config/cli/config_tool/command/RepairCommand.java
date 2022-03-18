@@ -100,6 +100,11 @@ public class RepairCommand extends RemoteCommand {
             + " and rolled back on " + toString(consistencyAnalyzer.getRolledBackNodes()));
         break;
 
+      case DESYNCHRONIZED:
+        //TODO [DYNAMIC-CONFIG]: TDB-4822 - enhance repair command to force a rollback to a checkpoint ?
+        logger.error("Cluster configuration is desynchronized and cannot be automatically repaired. Nodes are not ending with the same change UUIDs. Details: " + consistencyAnalyzer.getLastChangeUuids());
+        break;
+
       // normal repair cases
       case PREPARED:
       case MAYBE_PREPARED:

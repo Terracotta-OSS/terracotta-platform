@@ -55,16 +55,22 @@ public class DiagnosticIT extends AbstractSingleTest {
         EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
         Diagnostics diagnostics = ref.fetchEntity(null);
         String dump = diagnostics.getClusterState();
-//      System.out.println(dump);
+        System.out.println(dump);
         try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
-          if (lines.allMatch(line -> containsString(line).matches(dump))) {
+          if (lines.allMatch(line -> {
+            boolean match = containsString(line).matches(dump);
+            if (!match) {
+              System.out.println("==> MISSING: " + line);
+            }
+            return match;
+          })) {
             return;
           }
         }
       }
 
       try {
-        Thread.sleep(1_00);
+        Thread.sleep(1_000);
       } catch (InterruptedException e) {
         fail("interrupted");
       }
