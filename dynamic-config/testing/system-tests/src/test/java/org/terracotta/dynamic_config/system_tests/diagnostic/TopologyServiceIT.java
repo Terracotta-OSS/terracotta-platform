@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.system_tests.diagnostic;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.RawPath;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.Props;
@@ -32,6 +31,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 
 /**
  * @author Mathieu Carbou
@@ -57,18 +59,24 @@ public class TopologyServiceIT extends DynamicConfigIT {
     withTopologyService("localhost", getNodePort(1, 1), topologyService -> {
       Cluster pendingCluster = topologyService.getUpcomingNodeContext().getCluster();
 
-      // keep for debug please
-      //System.out.println(toPrettyJson(pendingTopology));
+      Testing.replaceUIDs(pendingCluster);
+      Testing.replaceUIDs(cluster);
 
       assertThat(pendingCluster, is(equalTo(cluster)));
-      assertThat(pendingCluster, is(equalTo(Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node-1-1", "localhost", getNodePort())
-          .setGroupPort(getNodeGroupPort(1, 1))
-          .setMetadataDir(RawPath.valueOf("metadata/stripe1"))
-          .setLogDir(RawPath.valueOf("logs/stripe1"))
-          .setBackupDir(RawPath.valueOf("backup/stripe1"))
-          .unsetDataDirs()
-          .putDataDir("main", RawPath.valueOf("user-data/main/stripe1"))
-      ))
+      assertThat(pendingCluster, is(equalTo(newTestCluster(
+          newTestStripe("stripe1")
+              .setUID(Testing.S_UIDS[1])
+              .addNodes(
+                  newTestNode("node-1-1", "localhost", getNodePort())
+                      .setUID(Testing.N_UIDS[2])
+                      .setGroupPort(getNodeGroupPort(1, 1))
+                      .setMetadataDir(RawPath.valueOf("metadata/stripe1"))
+                      .setLogDir(RawPath.valueOf("logs/stripe1"))
+                      .setBackupDir(RawPath.valueOf("backup/stripe1"))
+                      .unsetDataDirs()
+                      .putDataDir("main", RawPath.valueOf("user-data/main/stripe1"))
+              ))
+          .setUID(Testing.C_UIDS[0])
           .setClientLeaseDuration(20, SECONDS)
           .setFailoverPriority(availability()))));
     });

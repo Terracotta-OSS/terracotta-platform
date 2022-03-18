@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
@@ -47,9 +48,10 @@ import static org.terracotta.dynamic_config.api.model.Setting.modelToProperties;
 
 public class Node implements Cloneable, PropertyHolder {
 
-  // Note: primitive fields need to be initialized with their default value,
-  // otherwise we will wrongly detect that they have been initialized (Setting.getPropertyValue will return 0 for a port for example)
+  private static final String ADDR_GROUP_PUBLIC = "public";
+  private static final String ADDR_GROUP_INTERNAL = "internal";
 
+  private UID uid;
   private String name;
   private String hostname;
   private String publicHostname;
@@ -70,6 +72,11 @@ public class Node implements Cloneable, PropertyHolder {
   @Override
   public Scope getScope() {
     return NODE;
+  }
+
+  @Override
+  public UID getUID() {
+    return uid;
   }
 
   public String getName() {
@@ -134,6 +141,11 @@ public class Node implements Cloneable, PropertyHolder {
 
   public OptionalConfig<Map<String, String>> getTcProperties() {
     return OptionalConfig.of(TC_PROPERTIES, tcProperties);
+  }
+
+  public Node setUID(UID uid) {
+    this.uid = requireNonNull(uid);
+    return this;
   }
 
   public Node setName(String name) {
@@ -233,14 +245,8 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node unsetLoggerOverrides() {
-    if (this.loggerOverrides != null) {
-      setLoggerOverrides(emptyMap());
-    } else {
-      Map<String, String> def = NODE_LOGGER_OVERRIDES.getDefaultValue();
-      if (def != null && !def.isEmpty()) {
-        setLoggerOverrides(emptyMap());
-      }
-    }
+    Map<String, String> def = NODE_LOGGER_OVERRIDES.getDefaultValue();
+    setLoggerOverrides(def == null || def.isEmpty() ? null : emptyMap());
     return this;
   }
 
@@ -276,14 +282,8 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node unsetTcProperties() {
-    if (this.tcProperties != null) {
-      setTcProperties(emptyMap());
-    } else {
-      Map<String, String> def = TC_PROPERTIES.getDefaultValue();
-      if (def != null && !def.isEmpty()) {
-        setTcProperties(emptyMap());
-      }
-    }
+    Map<String, String> def = TC_PROPERTIES.getDefaultValue();
+    setTcProperties(def == null || def.isEmpty() ? null : emptyMap());
     return this;
   }
 
@@ -319,14 +319,8 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public Node unsetDataDirs() {
-    if (this.dataDirs != null) {
-      setDataDirs(emptyMap());
-    } else {
-      Map<String, RawPath> def = DATA_DIRS.getDefaultValue();
-      if (def != null && !def.isEmpty()) {
-        setDataDirs(emptyMap());
-      }
-    }
+    Map<String, String> def = DATA_DIRS.getDefaultValue();
+    setDataDirs(def == null || def.isEmpty() ? null : emptyMap());
     return this;
   }
 
@@ -336,10 +330,6 @@ public class Node implements Cloneable, PropertyHolder {
   public boolean hasAddress(InetSocketAddress address) {
     return InetSocketAddressUtils.areEqual(address, getInternalAddress()) ||
         getPublicAddress().map(addr -> InetSocketAddressUtils.areEqual(address, addr)).orElse(false);
-  }
-
-  public InetSocketAddress getAddress() {
-    return getPublicAddress().orElseGet(this::getInternalAddress);
   }
 
   public InetSocketAddress getInternalAddress() {
@@ -359,6 +349,42 @@ public class Node implements Cloneable, PropertyHolder {
       throw new AssertionError("Node " + name + " is not correctly defined with public address: " + publicHostname + ":" + publicPort);
     }
     return Optional.of(InetSocketAddress.createUnresolved(publicHostname, publicPort));
+  }
+
+  /**
+   * Get an endpoint to connect to this node based on the address used to initiate the connection.
+   * <p>
+   * If the address used to initiate the connection is the public address, then use it.
+   * <p>
+   * If the address used to initiate the connection is the internal address, then use it.
+   * <p>
+   * Otherwise, use the public address and if not set, the internal one
+   */
+  public Endpoint getEndpoint(InetSocketAddress initiator) {
+    Optional<InetSocketAddress> publicAddress = getPublicAddress();
+    InetSocketAddress internalAddress = getInternalAddress();
+    if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
+      return getPublicEndpoint().get();
+    }
+    if (internalAddress.equals(initiator)) {
+      return getInternalEndpoint();
+    }
+    // fallback: public first, otherwise internal
+    return getPublicEndpoint().orElseGet(this::getInternalEndpoint);
+  }
+
+  public Endpoint getSimilarEndpoint(Endpoint initiator) {
+    return ADDR_GROUP_INTERNAL.equals(initiator.getGroup()) ?
+        getInternalEndpoint() :
+        getPublicEndpoint().orElseGet(this::getInternalEndpoint);
+  }
+
+  public Endpoint getInternalEndpoint() {
+    return new Endpoint(this, ADDR_GROUP_INTERNAL, getInternalAddress());
+  }
+
+  public Optional<Endpoint> getPublicEndpoint() {
+    return getPublicAddress().map(addr -> new Endpoint(this, ADDR_GROUP_PUBLIC, addr));
   }
 
   @Override
@@ -382,6 +408,7 @@ public class Node implements Cloneable, PropertyHolder {
     clone.securityAuditLogDir = this.securityAuditLogDir;
     clone.securityDir = this.securityDir;
     clone.tcProperties = this.tcProperties == null ? null : new ConcurrentHashMap<>(this.tcProperties);
+    clone.uid = this.uid;
     return clone;
   }
 
@@ -393,6 +420,7 @@ public class Node implements Cloneable, PropertyHolder {
     return Objects.equals(port, node.port) &&
         Objects.equals(groupPort, node.groupPort) &&
         Objects.equals(name, node.name) &&
+        Objects.equals(uid, node.uid) &&
         Objects.equals(hostname, node.hostname) &&
         Objects.equals(publicHostname, node.publicHostname) &&
         Objects.equals(publicPort, node.publicPort) &&
@@ -412,29 +440,12 @@ public class Node implements Cloneable, PropertyHolder {
   public int hashCode() {
     return Objects.hash(name, hostname, publicHostname, port, publicPort, groupPort,
         bindAddress, groupBindAddress, tcProperties, loggerOverrides, metadataDir, logDir, backupDir,
-        securityDir, securityAuditLogDir, dataDirs);
+        securityDir, securityAuditLogDir, dataDirs, uid);
   }
 
   @Override
   public String toString() {
-    return "Node{" +
-        "name='" + name + '\'' +
-        ", hostname='" + hostname + '\'' +
-        ", port=" + port +
-        ", publicHostname='" + publicHostname + '\'' +
-        ", publicPort=" + publicPort +
-        ", groupPort=" + groupPort +
-        ", bindAddress='" + bindAddress + '\'' +
-        ", groupBindAddress='" + groupBindAddress + '\'' +
-        ", metadataDir='" + metadataDir + '\'' +
-        ", logDir='" + logDir + '\'' +
-        ", backupDir='" + backupDir + '\'' +
-        ", loggers='" + loggerOverrides + '\'' +
-        ", tcProperties='" + tcProperties + '\'' +
-        ", securityDir='" + securityDir + '\'' +
-        ", securityAuditLogDir='" + securityAuditLogDir + '\'' +
-        ", dataDirs=" + dataDirs +
-        '}';
+    return Props.toString(toProperties(false, false, true));
   }
 
   /**
@@ -443,5 +454,66 @@ public class Node implements Cloneable, PropertyHolder {
   @Override
   public Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings, Version version) {
     return modelToProperties(this, expanded, includeDefaultValues, includeHiddenSettings, version);
+  }
+
+  public String toShapeString() {
+    return getInternalEndpoint().toString();
+  }
+
+  /**
+   * This class represents an endpoint to use when connecting to a node.
+   * <p>
+   * The address will be either the internal address or the public address.
+   * <p>
+   * IMPORTANT FOR USAGE: the equals/hashcode of an endpoint is based on the UID.
+   * Other properties like address, name, group are characteristics.
+   *
+   * @author Mathieu Carbou
+   */
+  public static class Endpoint {
+
+    private final Node node;
+    private final String group;
+    private final InetSocketAddress address;
+
+    private Endpoint(Node node, String group, InetSocketAddress address) {
+      this.node = requireNonNull(node);
+      this.group = requireNonNull(group);
+      this.address = requireNonNull(address);
+    }
+
+    public String getGroup() {
+      return group;
+    }
+
+    public String getNodeName() {
+      return node.getName();
+    }
+
+    public UID getNodeUID() {
+      return node.getUID();
+    }
+
+    public InetSocketAddress getAddress() {
+      return address;
+    }
+
+    @Override
+    public String toString() {
+      return getNodeName() + "@" + getAddress();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Endpoint)) return false;
+      Endpoint endpoint = (Endpoint) o;
+      return getNodeUID().equals(endpoint.getNodeUID());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(getNodeUID());
+    }
   }
 }

@@ -22,4 +22,8 @@ public class UncheckedNomadException extends RuntimeException {
   public UncheckedNomadException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  public UncheckedNomadException(Throwable cause) {
+    super(cause);
+  }
 }

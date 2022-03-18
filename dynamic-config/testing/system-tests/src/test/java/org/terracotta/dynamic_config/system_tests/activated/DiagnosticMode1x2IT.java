@@ -79,20 +79,20 @@ public class DiagnosticMode1x2IT extends DynamicConfigIT {
 
     // log command works, both when targeting node to repair and a normal node in the cluster
     assertThat(
-        invokeConfigTool("log", "-s", "localhost:" + getNodePort(1, activeNodeId)),
+        configTool("log", "-s", "localhost:" + getNodePort(1, activeNodeId)),
         containsOutput("Activating cluster"));
     assertThat(
-        invokeConfigTool("log", "-s", "localhost:" + getNodePort(1, passiveId)),
+        configTool("log", "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Activating cluster"));
 
     // unable to trigger a change on the cluster from the node in diagnostic mode
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.something=value"),
-        exceptionMatcher("Detected a mix of activated and unconfigured nodes (or being repaired)."));
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "stripe.1.node." + activeNodeId + ".tc-properties.something=value"),
+        containsOutput("Detected a mix of activated and unconfigured nodes (or being repaired)."));
 
     // unable to trigger a change on the cluster from any other node
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, passiveId), "-c", "stripe.1.node.1.tc-properties.something=value"),
-        exceptionMatcher("Detected a mix of activated and unconfigured nodes (or being repaired)."));
+        configTool("set", "-s", "localhost:" + getNodePort(1, passiveId), "-c", "stripe.1.node.1.tc-properties.something=value"),
+        containsOutput("Detected a mix of activated and unconfigured nodes (or being repaired)."));
   }
 }

@@ -21,93 +21,95 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class SetCommand1x2IT extends DynamicConfigIT {
 
   @Before
   public void before() {
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
   }
 
   @Test
   public void testStripe_level_setDataDirectory() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.data-dirs.main=stripe1-node1-data-dir");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.data-dirs.main=stripe1-node1-data-dir"), is(successful()));
 
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
         allOf(containsOutput("stripe.1.node.1.data-dirs=main:stripe1-node1-data-dir"), containsOutput("stripe.1.node.2.data-dirs=main:stripe1-node1-data-dir")));
   }
 
   @Test
   public void testStripe_level_setBackupDirectory() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.backup-dir=backup/stripe-1");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.backup-dir=backup/stripe-1"), is(successful()));
 
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
         allOf(containsOutput("stripe.1.node.1.backup-dir=backup/stripe-1"), containsOutput("stripe.1.node.2.backup-dir=backup/stripe-1")));
   }
 
   @Test
   public void testCluster_setOffheap() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB"), is(successful()));
 
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
         containsOutput("offheap-resources.main=1GB"));
   }
 
   @Test
   public void testCluster_setBackupDirectory() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "backup-dir=backup/data");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "backup-dir=backup/data"), is(successful()));
 
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "backup-dir"),
         containsOutput("backup-dir=backup/data"));
   }
 
   @Test
   public void testCluster_setClientLeaseTime() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "client-lease-duration=10s");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "client-lease-duration=10s"), is(successful()));
 
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "client-lease-duration"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "client-lease-duration"),
         containsOutput("client-lease-duration=10s"));
   }
 
   @Test
   public void testCluster_setFailoverPriorityAvailability() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=availability");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=availability"), is(successful()));
 
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority"),
         containsOutput("failover-priority=availability"));
   }
 
   @Test
   public void testCluster_setFailoverPriorityConsistency() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency:2"), is(successful()));
 
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "failover-priority"),
         containsOutput("failover-priority=consistency:2"));
   }
 
   @Test
   public void testCluster_setClientReconnectWindow() {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window=10s"), is(successful()));
 
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
         containsOutput("client-reconnect-window=10s"));
   }
 
   @Test
   public void setDuplicateNodeName() {
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.name=node-1-2"),
-        exceptionMatcher("Error: Found duplicate node name: node-1-2"));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.name=node-1-2"),
+        containsOutput("Error: Found duplicate node name: node-1-2"));
   }
 }

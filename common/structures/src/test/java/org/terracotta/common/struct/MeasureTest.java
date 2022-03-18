@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.common.struct.MemoryUnit.B;
 import static org.terracotta.common.struct.MemoryUnit.GB;
+import static org.terracotta.common.struct.MemoryUnit.MB;
 import static org.terracotta.common.struct.TimeUnit.HOURS;
 import static org.terracotta.common.struct.TimeUnit.MINUTES;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
@@ -84,13 +85,9 @@ public class MeasureTest {
   }
 
   @Test
-  public void test_parse() {
+  public void test_parse_time_unit() {
     assertThat(() -> Measure.parse(null, TimeUnit.class), is(throwing(instanceOf(NullPointerException.class))));
     assertThat(() -> Measure.parse("", null), is(throwing(instanceOf(NullPointerException.class))));
-
-    assertThat(
-        () -> Measure.parse("", TimeUnit.class, SECONDS, EnumSet.of(MINUTES, HOURS)),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Default unit 's' is not in the list of valid units [m, h].")))));
 
     assertThat(
         () -> Measure.parse("", TimeUnit.class),
@@ -98,24 +95,51 @@ public class MeasureTest {
 
     assertThat(
         () -> Measure.parse("s", TimeUnit.class),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: 's'. <quantity> is missing. Measure should be specified in <quantity><unit> format.")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: ''. <quantity> must be a positive integer.")))));
 
     assertThat(
         () -> Measure.parse("1", TimeUnit.class),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1'. <unit> is missing. Measure should be specified in <quantity><unit> format.")))));
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1'. <unit> is missing or not recognized. It must be one of [ms, s, m, h].")))));
 
     assertThat(
-        () -> Measure.parse("1s", TimeUnit.class, null, EnumSet.of(MINUTES, HOURS)),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1s'. <unit> must be one of [m, h].")))));
+        () -> Measure.parse("1s", TimeUnit.class, EnumSet.of(MINUTES, HOURS)),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1s'. <unit> is missing or not recognized. It must be one of [m, h].")))));
 
     assertThat(
-        () -> Measure.parse("-1s", TimeUnit.class, null, EnumSet.of(MINUTES, HOURS)),
+        () -> Measure.parse("-1s", TimeUnit.class, EnumSet.of(MINUTES, HOURS)),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("cannot be negative"))));
 
-    assertThat(Measure.parse("1", TimeUnit.class, SECONDS).toString(), is(equalTo("1s")));
-    assertThat(Measure.parse("1s", TimeUnit.class, null).toString(), is(equalTo("1s")));
     assertThat(Measure.parse("1s", TimeUnit.class).toString(), is(equalTo("1s")));
     assertThat(Measure.parse(Long.MAX_VALUE + "1s", TimeUnit.class).toString(), is(equalTo("92233720368547758071s")));
+  }
+
+  @Test
+  public void test_parse_decimal() {
+    assertThat(
+        () -> Measure.parse("1.5MB", MemoryUnit.class),
+        is(throwing(instanceOf(IllegalArgumentException.class))
+            .andMessage(is(equalTo("Invalid measure: '1.5'. <quantity> must be a positive integer.")))));
+
+    assertThat(
+        () -> Measure.parse("1.5B", MemoryUnit.class),
+        is(throwing(instanceOf(IllegalArgumentException.class))
+            .andMessage(is(equalTo("Invalid measure: '1.5'. <quantity> must be a positive integer.")))));
+
+    assertThat(
+        () -> Measure.parse("1.5", MemoryUnit.class),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1.5'. <unit> is missing or not recognized. It must be one of [B, KB, MB, GB, TB, PB].")))));
+
+    assertThat(
+        () -> Measure.parse("1e5", MemoryUnit.class),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1e5'. <unit> is missing or not recognized. It must be one of [B, KB, MB, GB, TB, PB].")))));
+
+    assertThat(
+        () -> Measure.parse("1E5", MemoryUnit.class),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1E5'. <unit> is missing or not recognized. It must be one of [B, KB, MB, GB, TB, PB].")))));
+
+    assertThat(
+        () -> Measure.parse("1x5", MemoryUnit.class),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid measure: '1x5'. <unit> is missing or not recognized. It must be one of [B, KB, MB, GB, TB, PB].")))));
   }
 
   @Test
@@ -147,6 +171,25 @@ public class MeasureTest {
     String json = this.json.writeValueAsString(config);
     assertThat(json, is(equalTo("{\"leaseTime\":{\"quantity\":3,\"unit\":\"SECONDS\",\"type\":\"TIME\"},\"offheap\":{\"quantity\":1,\"unit\":\"GB\",\"type\":\"MEMORY\"}}")));
     assertThat(this.json.readValue(json, Config.class), is(equalTo(config)));
+  }
+
+  @Test
+  public void test_add() {
+    Measure<MemoryUnit> size = Measure.of(1, GB);
+
+    assertThat(size.add(1).getQuantity(), is(equalTo(2L)));
+    assertThat(size.add(1).getUnit(), is(equalTo(GB)));
+
+    assertThat(size.add(1024, MB).getQuantity(), is(equalTo(2L)));
+    assertThat(size.add(1024, MB).getUnit(), is(equalTo(GB)));
+  }
+
+  @Test
+  public void test_multiply() {
+    Measure<MemoryUnit> size = Measure.of(1, GB);
+
+    assertThat(size.multiply(2).getQuantity(), is(equalTo(2L)));
+    assertThat(size.multiply(2).getUnit(), is(equalTo(GB)));
   }
 
   public static class Config {

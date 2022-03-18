@@ -47,7 +47,7 @@ public class SimulationHandler implements ConfigChangeHandler {
   public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
     LOGGER.info("Received: {}", change);
 
-    if (!change.getValue().isPresent()) {
+    if (!change.hasValue()) {
       throw new InvalidConfigChangeException("Operation not supported: " + change);
     }
 

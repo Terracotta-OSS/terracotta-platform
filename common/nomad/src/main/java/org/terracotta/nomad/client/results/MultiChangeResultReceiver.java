@@ -21,7 +21,6 @@ import org.terracotta.nomad.messages.DiscoverResponse;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -57,16 +56,16 @@ public class MultiChangeResultReceiver<T> implements ChangeResultReceiver<T> {
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
-      changeResultReceiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
+      changeResultReceiver.discoverConfigInconsistent(changeUuid, committedServers, rolledBackServers);
     }
   }
 
   @Override
-  public void discoverClusterDesynchronized(Map<UUID, Collection<InetSocketAddress>> lastChangeUuids) {
+  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
     for (ChangeResultReceiver<T> changeResultReceiver : changeResultReceivers) {
-      changeResultReceiver.discoverClusterDesynchronized(lastChangeUuids);
+      changeResultReceiver.discoverConfigPartitioned(partitions);
     }
   }
 

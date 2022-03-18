@@ -20,8 +20,9 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
-import org.terracotta.server.ServerEnv;
+import org.terracotta.server.Server;
 
+import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.SettingName.FAILOVER_PRIORITY;
 
 public class ConsoleCommandLineProcessor implements CommandLineProcessor {
@@ -29,21 +30,24 @@ public class ConsoleCommandLineProcessor implements CommandLineProcessor {
   private final ClusterFactory clusterCreator;
   private final ConfigurationGeneratorVisitor configurationGeneratorVisitor;
   private final IParameterSubstitutor parameterSubstitutor;
+  private final Server server;
 
   ConsoleCommandLineProcessor(Options options,
                               ClusterFactory clusterCreator,
                               ConfigurationGeneratorVisitor configurationGeneratorVisitor,
-                              IParameterSubstitutor parameterSubstitutor) {
+                              IParameterSubstitutor parameterSubstitutor,
+                              Server server) {
     this.options = options;
     this.clusterCreator = clusterCreator;
     this.configurationGeneratorVisitor = configurationGeneratorVisitor;
     this.parameterSubstitutor = parameterSubstitutor;
+    this.server = server;
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
   public void process() {
-    ServerEnv.getServer().console("Starting node from command-line parameters");
+    server.console("Starting node from command-line parameters");
     if (options.getFailoverPriority() == null) {
       throw new IllegalArgumentException(FAILOVER_PRIORITY + " is required");
     }
@@ -52,12 +56,12 @@ public class ConsoleCommandLineProcessor implements CommandLineProcessor {
     Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
 
     if (options.getLicenseFile() != null) {
-      cluster.getName().orElseThrow(() -> new IllegalArgumentException("Cluster name is required with license file"));
+      requireNonNull(cluster.getName(), "Cluster name is required with license file");
     }
     if (options.allowsAutoActivation()) {
-      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getAddress()), options.getLicenseFile(), options.getConfigDir());
+      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getUID()), options.getLicenseFile(), options.getConfigDir());
     } else {
-      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getAddress()), options.getConfigDir());
+      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getUID()), options.getConfigDir());
     }
   }
 }

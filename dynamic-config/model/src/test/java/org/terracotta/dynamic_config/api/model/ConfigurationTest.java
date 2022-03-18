@@ -29,11 +29,13 @@ import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -83,7 +85,7 @@ public class ConfigurationTest {
     Stream.of(NODE_CONFIG_DIR).forEach(setting -> {
       String err = "Invalid input: 'config-dir=%H/terracotta/config'. Reason: Setting 'config-dir' does not allow any operation at cluster level".replace("/", File.separator); // unix/win compat'
       assertThat(
-          () -> Configuration.valueOf(setting),
+          () -> setting(setting),
           is(throwing(instanceOf(IllegalArgumentException.class))
               .andMessage(is(equalTo(err)))));
     });
@@ -91,13 +93,13 @@ public class ConfigurationTest {
     Stream.of(
         LICENSE_FILE
     ).forEach(setting -> assertThat(
-        () -> Configuration.valueOf(setting),
+        () -> setting(setting),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: Setting 'license-file' requires a value"))))));
 
     Stream.of(
         FAILOVER_PRIORITY
     ).forEach(setting -> assertThat(
-        () -> Configuration.valueOf(setting),
+        () -> setting(setting),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid input: '" + setting + "='. Reason: Setting 'failover-priority' requires a value"))))));
 
     Stream.of(
@@ -105,7 +107,7 @@ public class ConfigurationTest {
         NODE_NAME,
         NODE_PORT
     ).forEach(setting -> assertThat(
-        () -> Configuration.valueOf(setting),
+        () -> setting(setting),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(endsWith("Reason: Setting '" + setting + "' cannot be set at cluster level"))))));
 
     Stream.of(
@@ -127,7 +129,7 @@ public class ConfigurationTest {
         SECURITY_WHITELIST,
         TC_PROPERTIES
     ).forEach(setting -> {
-      Configuration configuration = Configuration.valueOf(setting);
+      Configuration configuration = setting(setting);
       String rawInput = configuration.toString();
 
       // verify that we can parse back the generated string
@@ -152,6 +154,27 @@ public class ConfigurationTest {
   }
 
   @Test
+  public void test_expand() {
+    List<Configuration> list = Configuration.valueOf("offheap-resources=foo:512MB").expand();
+    assertThat(list, hasSize(1));
+    assertThat(list.get(0).toString(), is(equalTo("offheap-resources.foo=512MB")));
+
+    list = Configuration.valueOf("offheap-resources=foo:512MB,bar:1GB").expand();
+    assertThat(list, hasSize(2));
+    assertThat(list.get(0).toString(), is(equalTo("offheap-resources.foo=512MB")));
+    assertThat(list.get(1).toString(), is(equalTo("offheap-resources.bar=1GB")));
+
+    list = Configuration.valueOf("stripe.1.node.1.data-dirs=foo:a/b").expand();
+    assertThat(list, hasSize(1));
+    assertThat(list.get(0).toString(), is(equalTo("stripe.1.node.1.data-dirs.foo=a/b")));
+
+    list = Configuration.valueOf("stripe.1.node.1.data-dirs=foo:a/b,bar:c/d").expand();
+    assertThat(list, hasSize(2));
+    assertThat(list.get(0).toString(), is(equalTo("stripe.1.node.1.data-dirs.foo=a/b")));
+    assertThat(list.get(1).toString(), is(equalTo("stripe.1.node.1.data-dirs.bar=c/d")));
+  }
+
+  @Test
   public void test_valueOf_settings_stripe_level() {
     Stream.of(
         CLIENT_LEASE_DURATION,
@@ -166,7 +189,7 @@ public class ConfigurationTest {
         SECURITY_WHITELIST
     ).forEach(setting -> assertThat(
         setting.toString(),
-        () -> Configuration.valueOf(setting, 1),
+        () -> setting(setting, 1),
         is(throwing(instanceOf(IllegalArgumentException.class))
             .andMessage(both(
                 startsWith("Invalid input: 'stripe.1." + setting + "="))
@@ -178,7 +201,7 @@ public class ConfigurationTest {
         NODE_NAME,
         NODE_PORT
     ).forEach(setting -> assertThat(
-        () -> Configuration.valueOf(setting, 1),
+        () -> setting(setting, 1),
         is(throwing(instanceOf(IllegalArgumentException.class))
             .andMessage(both(
                 startsWith("Invalid input: 'stripe.1." + setting + "="))
@@ -196,7 +219,7 @@ public class ConfigurationTest {
         SECURITY_DIR,
         TC_PROPERTIES
     ).forEach(setting -> {
-      Configuration configuration = Configuration.valueOf(setting, 1);
+      Configuration configuration = setting(setting, 1);
       String rawInput = configuration.toString();
 
       // verify that we can parse back the generated string
@@ -235,7 +258,7 @@ public class ConfigurationTest {
         SECURITY_WHITELIST
     ).forEach(setting -> assertThat(
         setting.toString(),
-        () -> Configuration.valueOf(setting, 1, 1),
+        () -> setting(setting, 1, 1),
         is(throwing(instanceOf(IllegalArgumentException.class))
             .andMessage(both(
                 startsWith("Invalid input: 'stripe.1.node.1." + setting + "="))
@@ -256,7 +279,7 @@ public class ConfigurationTest {
         SECURITY_DIR,
         TC_PROPERTIES
     ).forEach(setting -> {
-      Configuration configuration = Configuration.valueOf(setting, 1, 1);
+      Configuration configuration = setting(setting, 1, 1);
       String rawInput = configuration.toString();
 
       // verify that we can parse back the generated string
@@ -557,7 +580,8 @@ public class ConfigurationTest {
 
     // metadata-dir
     Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "metadata-dir"))));
-    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir"))));
+    Stream.of(ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir"))));
+    Stream.of(CONFIGURING).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "metadata-dir"))));
     Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "metadata-dir=foo"))));
     Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir="))));
     Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "metadata-dir=foo"))));
@@ -592,7 +616,8 @@ public class ConfigurationTest {
         allow(state, op, "stripe.1.node.1." + setting + "=0.0.0.0");
         reject(state, op, "stripe.1.node.1." + setting + "=");
       }));
-      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
       Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting + "=0.0.0.0"))));
       Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
       Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "=0.0.0.0"))));
@@ -606,7 +631,8 @@ public class ConfigurationTest {
         allow(state, op, "stripe.1.node.1." + setting + "=1234");
         reject(state, op, "stripe.1.node.1." + setting + "=");
       }));
-      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting))));
+      Stream.of(ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
       Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + setting + "=1234"))));
       Stream.of(CONFIGURING).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "="))));
       Stream.of(ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting + "=1234"))));
@@ -686,9 +712,22 @@ public class ConfigurationTest {
       }));
     });
 
-    // client-reconnect-window, client-lease-duration, failover-priority
-    Stream.of("client-reconnect-window", "client-lease-duration", "failover-priority", "ssl-tls", "whitelist").forEach(setting -> {
+    // failover-priority
+    Stream.of("failover-priority").forEach(setting -> {
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + setting))));
+      Stream.of(CONFIGURING).forEach(state -> state.filter(GET).forEach(op -> {
+        allow(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        reject(state, op, "stripe.1.node.1." + setting);
+      }));
+    });
+    // client-reconnect-window, client-lease-duration
+    Stream.of("client-reconnect-window", "client-lease-duration").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> {
+        allow(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        reject(state, op, "stripe.1.node.1." + setting);
+      }));
       Stream.of(CONFIGURING).forEach(state -> state.filter(GET).forEach(op -> {
         allow(state, op, setting);
         reject(state, op, "stripe.1." + setting);
@@ -711,7 +750,14 @@ public class ConfigurationTest {
         reject(state, op, "stripe.1.node.1." + setting + "=availability");
       }));
     });
+
+    //ssl-tls, whitelist
     Stream.of("ssl-tls", "whitelist").forEach(setting -> {
+      Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET, UNSET).forEach(op -> {
+        allow(state, op, setting);
+        reject(state, op, "stripe.1." + setting);
+        reject(state, op, "stripe.1.node.1." + setting);
+      }));
       Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET, IMPORT).forEach(op -> {
         allow(state, op, setting + "=true");
         reject(state, op, setting + "=");
@@ -722,7 +768,7 @@ public class ConfigurationTest {
 
     // log-dir
     Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(GET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "log-dir"))));
-    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "log-dir"))));
+    Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(UNSET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "log-dir"))));
     Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> allow(state, op, ns + "log-dir=foo"))));
     Stream.of(CONFIGURING, ACTIVATED).forEach(state -> state.filter(SET).forEach(op -> NS.forEach(ns -> reject(state, op, ns + "log-dir="))));
     Stream.of(CONFIGURING).forEach(state -> state.filter(IMPORT).forEach(op -> {
@@ -847,9 +893,9 @@ public class ConfigurationTest {
 
     // special cases
     Configuration.valueOf("license-file=foo/bar").apply(cluster);
-    assertThat(cluster.getName().orDefault(), is(nullValue()));
+    assertThat(cluster.getName(), is(nullValue()));
     Configuration.valueOf("cluster-name=foo").apply(cluster);
-    assertThat(cluster.getName().get(), is(equalTo("foo")));
+    assertThat(cluster.getName(), is(equalTo("foo")));
 
     // bad stripe
     assertThat(
@@ -901,8 +947,9 @@ public class ConfigurationTest {
   public void test_unset_maps_with_defaults() {
     Node node = Testing.newTestNode("foo", "localhost");
     assertFalse(node.getDataDirs().isConfigured());
-    Configuration.valueOf("data-dirs").apply(node);
-    assertTrue(node.getDataDirs().isConfigured());
+
+    Configuration.valueOf("data-dirs").apply(node); // unset
+    assertTrue(node.getDataDirs().isConfigured()); // since data-dirs has a default, unset will not bring back the default (dangerous behavior), so data-dirs=""
     assertThat(node.getDataDirs().get(), is(equalTo(emptyMap())));
 
     node = Testing.newTestNode("foo", "localhost")
@@ -912,25 +959,82 @@ public class ConfigurationTest {
     Configuration.valueOf("data-dirs").apply(node);
     assertTrue(node.getDataDirs().isConfigured());
     assertThat(node.getDataDirs().get(), is(equalTo(emptyMap())));
+
+    node = Testing.newTestNode("foo", "localhost");
+    assertThat(node.getDataDirs().orDefault().size(), is(equalTo(1))); // we have a default data dir
+    Configuration.valueOf("data-dirs=").apply(node); // set to empty value specifically to empty the map
+    assertTrue(node.getDataDirs().isConfigured()); // since data-dirs has a default, data-dirs="" now
+    assertThat(node.getDataDirs().get(), is(equalTo(emptyMap())));
   }
 
   @Test
   public void test_unset_maps_without_defaults() {
     Node node = Testing.newTestNode("foo", "localhost");
     assertFalse(node.getTcProperties().isConfigured());
-    Configuration.valueOf("tc-properties").apply(node);
+    Configuration.valueOf("tc-properties").apply(node); // unset
+    assertFalse(node.getTcProperties().isConfigured());
+
+    Configuration.valueOf("tc-properties=").apply(node); // set to empty map
     assertTrue(node.getTcProperties().isConfigured());
 
     node = Testing.newTestNode("foo", "localhost").putTcProperty("second", ".");
-    assertTrue(node.getTcProperties().isConfigured());
-    Configuration.valueOf("tc-properties").apply(node);
-    assertTrue(node.getTcProperties().isConfigured());
-    assertThat(node.getTcProperties().get(), is(equalTo(emptyMap())));
+    assertTrue(node.getTcProperties().isConfigured()); // configured
+    Configuration.valueOf("tc-properties").apply(node); // unset
+    assertFalse(node.getTcProperties().isConfigured()); // not configured anymore since matches default value
   }
 
   @Test
   public void test_stripe_setting() {
     Configuration.valueOf("stripe.1.stripe-name=stripe1");
+  }
+
+  @Test
+  public void test_unset_ssltls() {
+    Cluster cluster = Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("node1", "localhost")));
+
+    assertFalse(cluster.getSecuritySslTls().isConfigured());
+    assertEquals(cluster.getSecuritySslTls().toString(), "ssl-tls=<unset>");
+    assertFalse(cluster.getSecuritySslTls().orDefault());
+
+    Configuration.valueOf("ssl-tls=true").apply(cluster);
+    assertTrue(cluster.getSecuritySslTls().isConfigured());
+    assertEquals(cluster.getSecuritySslTls().toString(), "ssl-tls=true");
+    assertTrue(cluster.getSecuritySslTls().orDefault());
+
+    Configuration.valueOf("ssl-tls=false").apply(cluster);
+    assertTrue(cluster.getSecuritySslTls().isConfigured());
+    assertEquals(cluster.getSecuritySslTls().toString(), "ssl-tls=false");
+    assertFalse(cluster.getSecuritySslTls().orDefault());
+
+    Configuration.valueOf("ssl-tls").apply(cluster);
+    assertFalse(cluster.getSecuritySslTls().isConfigured());
+    assertEquals(cluster.getSecuritySslTls().toString(), "ssl-tls=<unset>");
+    assertFalse(cluster.getSecuritySslTls().orDefault());
+  }
+
+  @Test
+  public void test_unset_whitelist() {
+    Cluster cluster = Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("node1", "localhost")));
+
+    assertFalse(cluster.getSecurityWhitelist().isConfigured());
+    assertEquals(cluster.getSecurityWhitelist().toString(), "whitelist=<unset>");
+    assertFalse(cluster.getSecurityWhitelist().orDefault());
+
+    Configuration.valueOf("whitelist=true").apply(cluster);
+    assertTrue(cluster.getSecurityWhitelist().isConfigured());
+    assertEquals(cluster.getSecurityWhitelist().toString(), "whitelist=true");
+    assertTrue(cluster.getSecurityWhitelist().orDefault());
+
+    Configuration.valueOf("whitelist=false").apply(cluster);
+    assertTrue(cluster.getSecurityWhitelist().isConfigured());
+    assertEquals(cluster.getSecurityWhitelist().toString(), "whitelist=false");
+    assertFalse(cluster.getSecurityWhitelist().orDefault());
+
+
+    Configuration.valueOf("whitelist").apply(cluster);
+    assertFalse(cluster.getSecurityWhitelist().isConfigured());
+    assertEquals(cluster.getSecurityWhitelist().toString(), "whitelist=<unset>");
+    assertFalse(cluster.getSecurityWhitelist().orDefault());
   }
 
   private Matcher<String> duplicating(String value) {
@@ -996,5 +1100,20 @@ public class ConfigurationTest {
     if (nodeId != null) {
       assertThat(configuration.getNodeId(), is(equalTo(nodeId)));
     }
+  }
+
+  public static Configuration setting(Setting setting) {
+    String val = setting.getDefaultProperty().orElse("");
+    return Configuration.valueOf(setting + "=" + val);
+  }
+
+  public static Configuration setting(Setting setting, int stripeId) {
+    String val = setting.getDefaultProperty().orElse("");
+    return Configuration.valueOf("stripe." + stripeId + "." + setting + "=" + val);
+  }
+
+  public static Configuration setting(Setting setting, int stripeId, int nodeId) {
+    String val = setting.getDefaultProperty().orElse("");
+    return Configuration.valueOf("stripe." + stripeId + ".node." + nodeId + "." + setting + "=" + val);
   }
 }

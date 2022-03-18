@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.system_tests.activated;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
@@ -26,8 +27,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static java.util.stream.Collectors.toList;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLinesInOrderStartingWith;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -42,7 +45,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     startNode(1, 1);
     waitForDiagnostic(1, 1);
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic1.txt").toURI())).collect(toList())));
   }
 
@@ -52,7 +55,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     waitForDiagnostic(1, 1);
     activateCluster();
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic2.txt").toURI())).collect(toList())));
   }
 
@@ -69,7 +72,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
 
     startNode(1, 1, "--repair-mode", "--name", nodeName, "-r", repo);
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic3.txt").toURI())).collect(toList())));
   }
 
@@ -87,7 +90,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     waitForDiagnostic(1, 2);
 
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic4.txt").toURI())).collect(toList())));
   }
 
@@ -99,14 +102,14 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     waitForActive(1);
     waitForPassives(1);
 
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "cluster-name=new-cluster-name");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "cluster-name=new-cluster-name"), is(successful()));
 
     // Diagnostic result from all nodes must be the same
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic6-1.txt").toURI())).collect(toList())));
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic6-1.txt").toURI())).collect(toList())));
 
     // The restart status should be cleared upon restart
@@ -119,10 +122,10 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
 
     // Diagnostic result from all nodes must be the same
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic6-2.txt").toURI())).collect(toList())));
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic6-2.txt").toURI())).collect(toList())));
   }
 
@@ -134,14 +137,35 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     waitForActive(1);
     waitForPassives(1);
 
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.log-dir=new-logs");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.log-dir=new-logs"), is(successful()));
 
     // Diagnostic result from all nodes must be the same
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic7.txt").toURI())).collect(toList())));
     assertThat(
-        invokeConfigTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 2)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic7.txt").toURI())).collect(toList())));
+  }
+
+  @Test
+  public void testWhenConfigLocked() throws Exception {
+    startNode(1, 1);
+    waitForDiagnostic(1, 1);
+    activateCluster();
+
+    LockContext lockContext = new LockContext("some-uuid", "test", "test");
+
+    assertThat(configTool("lock-config", "-s", "localhost:" + getNodePort(1, 1),
+        "--lock-context", lockContext.toString()), is(successful()));
+
+    assertThat(
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
+        containsLinesInOrderStartingWith(
+            Files.lines(
+                Paths.get(getClass().getResource("/diagnostic-output/diagnostic-when-locked.txt").toURI())
+            ).collect(toList())
+        )
+    );
   }
 }

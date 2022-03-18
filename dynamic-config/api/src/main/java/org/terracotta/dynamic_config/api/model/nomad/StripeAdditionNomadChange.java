@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 
 import static java.util.Objects.requireNonNull;
@@ -44,20 +45,20 @@ public class StripeAdditionNomadChange extends StripeNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
+  public boolean canUpdateRuntimeTopology(NodeContext nodeContext) {
     return true;
   }
 
   @Override
   public String getSummary() {
-    return "Attaching stripe: " + getStripe().toShapeString() + " to cluster: " + getCluster().getName().get();
+    return "Attaching stripe: " + getStripe().toShapeString() + " to cluster: " + getCluster().getName();
   }
 
   @Override
   public String toString() {
     return "StripeAdditionChange{" +
-      "stripe=" + getStripe().toShapeString() +
-      ", cluster=" + getCluster().toShapeString() +
-      '}';
+        "stripe=" + getStripe().toShapeString() +
+        ", cluster=" + getCluster().toShapeString() +
+        '}';
   }
 }

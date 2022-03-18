@@ -103,7 +103,7 @@
               <goal>unpack</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/angela/kits/${project.version}</outputDirectory>
+              <outputDirectory>${project.build.directory}/angela</outputDirectory>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.terracotta</groupId>
@@ -121,7 +121,7 @@
               <goal>copy</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/angela/kits/${project.version}/platform-kit-${project.version}/server/plugins/lib</outputDirectory>
+              <outputDirectory>${project.build.directory}/angela/platform-kit-${project.version}/server/plugins/lib</outputDirectory>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.terracotta.dynamic-config.testing</groupId>
@@ -141,14 +141,12 @@
           <systemPropertyVariables>
             <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
             <angela.skipUninstall>true</angela.skipUninstall>
-            <angela.skipKitInstall>true</angela.skipKitInstall>
+            <angela.kitCopy>false</angela.kitCopy>
             <angela.tsa.fullLogging>true</angela.tsa.fullLogging>
             <angela.distribution>${project.version}</angela.distribution>
-            <angela.kitInstallationDir>${project.build.directory}/angela/kits/${project.version}/platform-kit-${project.version}</angela.kitInstallationDir>
-            <angela.java.vendor/> <!--empty to allow any vendor-->
-            <angela.java.version>${java.test.version}</angela.java.version>
+            <angela.kitInstallationDir>${project.build.directory}/angela/platform-kit-${project.version}</angela.kitInstallationDir>
+            <angela.java.resolver>user</angela.java.resolver>
             <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
-            <!--<angela.java.opts>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</angela.java.opts>-->
           </systemPropertyVariables>
         </configuration>
       </plugin>

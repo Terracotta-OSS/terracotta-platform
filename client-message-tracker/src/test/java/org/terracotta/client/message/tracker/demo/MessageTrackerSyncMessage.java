@@ -15,33 +15,21 @@
  */
 package org.terracotta.client.message.tracker.demo;
 
-import org.terracotta.entity.ClientSourceId;
+import java.util.Collection;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 
-import java.util.Map;
+import org.terracotta.client.message.tracker.RecordedMessage;
 
 public class MessageTrackerSyncMessage implements EntityMessage {
 
-  private final int segmentIndex;
-  private final ClientSourceId clientSourceId;
-  private final Map<Long, EntityResponse> trackedResponses;
+  private final Collection<RecordedMessage<EntityMessage, EntityResponse>> trackedResponses;
 
-  public MessageTrackerSyncMessage(int segmentIndex, ClientSourceId clientSourceId, Map<Long, EntityResponse> trackedResponses) {
-    this.segmentIndex = segmentIndex;
-    this.clientSourceId = clientSourceId;
+  public MessageTrackerSyncMessage(Collection<RecordedMessage<EntityMessage, EntityResponse>> trackedResponses) {
     this.trackedResponses = trackedResponses;
   }
 
-  public int getSegmentIndex() {
-    return segmentIndex;
-  }
-
-  public ClientSourceId getClientSourceId() {
-    return clientSourceId;
-  }
-
-  public Map<Long, EntityResponse> getTrackedResponses() {
+  public Collection<RecordedMessage<EntityMessage, EntityResponse>> getTrackedMessages() {
     return trackedResponses;
   }
 }

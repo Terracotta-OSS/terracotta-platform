@@ -25,10 +25,12 @@ import org.terracotta.json.ObjectMapperFactory;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
-import static java.util.Arrays.asList;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
@@ -40,13 +42,13 @@ public class MultiDiagnosticServiceConnectionTest {
   @Mock
   private DiagnosticService diagnosticService;
 
-  private MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
+  private MultiDiagnosticServiceProvider<InetSocketAddress> multiDiagnosticServiceProvider;
 
-  private List<InetSocketAddress> nodes = asList(
+  private Map<InetSocketAddress, InetSocketAddress> nodes = Stream.of(
       InetSocketAddress.createUnresolved("host1", 1234),
       InetSocketAddress.createUnresolved("host2", 1235),
       InetSocketAddress.createUnresolved("host1", 1235),
-      InetSocketAddress.createUnresolved("host2", 1234));
+      InetSocketAddress.createUnresolved("host2", 1234)).collect(toMap(identity(), identity()));
 
   @Before
   public void setUp() {
@@ -57,26 +59,26 @@ public class MultiDiagnosticServiceConnectionTest {
         return diagnosticService;
       }
     };
-    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
+    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider<>(diagnosticServiceProvider, timeout, new ConcurrencySizing());
   }
 
   @Test
   public void createsConnections() throws DiagnosticServiceProviderException {
-    DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(nodes);
-    for (InetSocketAddress address : nodes) {
+    DiagnosticServices<InetSocketAddress> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(nodes);
+    for (InetSocketAddress address : nodes.keySet()) {
       assertThat(diagnosticServices.getDiagnosticService(address).get(), is(sameInstance(diagnosticService)));
     }
   }
 
   @Test
   public void getEndpoints() throws DiagnosticServiceProviderException {
-    DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(nodes);
-    assertThat(diagnosticServices.getOnlineEndpoints().keySet(), containsInAnyOrder(nodes.toArray()));
+    DiagnosticServices<InetSocketAddress> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(nodes);
+    assertThat(diagnosticServices.getOnlineEndpoints().keySet(), is(equalTo(nodes.keySet())));
   }
 
   @Test
   public void close() throws DiagnosticServiceProviderException {
-    DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(nodes);
+    DiagnosticServices<InetSocketAddress> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(nodes);
     diagnosticServices.close();
     verify(diagnosticService, times(4)).close();
   }

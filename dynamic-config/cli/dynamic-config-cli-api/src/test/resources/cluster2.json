@@ -1,0 +1,37 @@
+{
+  "stripes": [
+    {
+      "name": "stripe1",
+      "nodes": [
+        {
+          "dataDirs": {
+            "cache": "/data/cache1"
+          },
+          "hostname": "localhost",
+          "name": "node0",
+          "port": 9410,
+          "uid": "ZwZtuxl6QlWGZVUJ_30uMQ"
+        }
+      ],
+      "uid": "5Zv3uphiRLavoGZthy7JNg"
+    },
+    {
+      "name": "stripe2",
+      "nodes": [
+        {
+          "dataDirs": {
+            "cache": "/data/cache2"
+          },
+          "hostname": "localhost",
+          "name": "node1",
+          "port": 9411,
+          "uid": "2sxJu9g_TvKG9sAN9bKp_w"
+        }
+      ],
+      "uid": "RUHaurjcQA-57mpGqtovOA"
+    }
+  ],
+  "failoverPriority": "availability",
+  "name": "my-cluster",
+  "uid": "YLQguzhRSdS6y5M9vnA5mw"
+}

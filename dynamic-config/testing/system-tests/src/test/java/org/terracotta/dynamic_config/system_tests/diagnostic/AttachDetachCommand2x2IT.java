@@ -26,7 +26,9 @@ import java.nio.file.Paths;
 import java.time.Duration;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -41,54 +43,54 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
 
   @Test
   public void test_attach_detach_with_unconfigured_nodes() throws Exception {
-    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     ObjectMapper objectMapper = objectMapperFactory.create();
 
     Cluster cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(1));
+    assertThat(cluster.getNodes(), hasSize(1));
 
     // add a node
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
-    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(2));
+    assertThat(cluster.getNodes(), hasSize(2));
 
     // add a stripe
-    invokeConfigTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
-    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(2));
-    assertThat(cluster.getNodeAddresses(), hasSize(3));
+    assertThat(cluster.getNodes(), hasSize(3));
 
     // remove the previously added stripe
-    invokeConfigTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1));
-    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(2));
+    assertThat(cluster.getNodes(), hasSize(2));
 
     // remove the previously added node
-    invokeConfigTool("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
-    invokeConfigTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json");
+    assertThat(configTool("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", OUTPUT_JSON_FILE, "-t", "json"), is(successful()));
     downloadToLocal();
 
     cluster = objectMapper.readValue(Paths.get("target", OUTPUT_JSON_FILE).toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), hasSize(1));
+    assertThat(cluster.getNodes(), hasSize(1));
   }
 
   private void downloadToLocal() throws IOException {
-    angela.tsa().browse(getNode(1, 1), ".").list().stream()
+    angela.configTool().browse(".").list().stream()
         .filter(remoteFile -> remoteFile.getName().equals(OUTPUT_JSON_FILE))
         .findAny()
         .get()

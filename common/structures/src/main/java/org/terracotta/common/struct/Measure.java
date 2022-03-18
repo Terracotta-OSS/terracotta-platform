@@ -16,10 +16,12 @@
 package org.terracotta.common.struct;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Objects;
 
+import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 
 public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<T>> {
@@ -41,21 +43,12 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
   }
 
   public static <U extends Enum<U> & Unit<U>> Measure<U> parse(String quantityUnit, Class<U> unitType) throws IllegalArgumentException {
-    return parse(quantityUnit, unitType, null, EnumSet.allOf(unitType));
+    return parse(quantityUnit, unitType, EnumSet.allOf(unitType));
   }
 
-  public static <U extends Enum<U> & Unit<U>> Measure<U> parse(String quantityUnit, Class<U> unitType, U defaultUnit) throws IllegalArgumentException {
-    return parse(quantityUnit, unitType, defaultUnit, EnumSet.allOf(unitType));
-  }
-
-  public static <U extends Enum<U> & Unit<U>> Measure<U> parse(String quantityUnit, Class<U> unitType, U defaultUnit, Collection<U> validUnits) throws IllegalArgumentException {
+  public static <U extends Enum<U> & Unit<U>> Measure<U> parse(String quantityUnit, Class<U> unitType, Collection<U> validUnits) throws IllegalArgumentException {
     requireNonNull(quantityUnit);
     requireNonNull(unitType);
-
-    // bad default unit
-    if (defaultUnit != null && !validUnits.contains(defaultUnit)) {
-      throw new IllegalArgumentException("Default unit '" + defaultUnit.getShortName() + "' is not in the list of valid units " + validUnits + ".");
-    }
 
     // both quantity and unit are missing
     if (quantityUnit.isEmpty()) {
@@ -67,43 +60,36 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
       throw new IllegalArgumentException("Quantity measure cannot be negative");
     }
 
-    int i;
-    for (i = 0; i < chars.length; i++) {
-      if (!Character.isDigit(chars[i])) {
+    // we are ordering the units because we first need to check
+    // if the string ends with MB before checking if the string
+    // ends with B (i.e. when using memory units).
+    // Also, minus (-) is used to compare to not use .revered() which
+    // is loosing the type information
+    ArrayList<U> list = new ArrayList<>(validUnits);
+    list.sort(comparing(u -> -u.getShortName().length()));
+
+    U foundUnit = null; // XB
+    for (U validUnit : list) {
+      if (quantityUnit.endsWith(validUnit.getShortName())) {
+        foundUnit = validUnit;
         break;
       }
     }
-
-    // quantity is missing
-    if (i == 0) {
-      throw new IllegalArgumentException("Invalid measure: '" + quantityUnit + "'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
+    if (foundUnit == null) {
+      throw new IllegalArgumentException("Invalid measure: '" + quantityUnit + "'. <unit> is missing or not recognized. It must be one of " + validUnits + ".");
     }
+
+    quantityUnit = quantityUnit.substring(0, quantityUnit.length() - foundUnit.getShortName().length());
 
     BigInteger quantity;
     try {
-      quantity = new BigInteger(quantityUnit.substring(0, i));
+      quantity = new BigInteger(quantityUnit);
     } catch (NumberFormatException e) {
       // quantity is not a number
-      throw new IllegalArgumentException("Invalid measure: '" + quantityUnit + "'. <quantity> is not a valid number.");
+      throw new IllegalArgumentException("Invalid measure: '" + quantityUnit + "'. <quantity> must be a positive integer.");
     }
 
-    U unit;
-    if (i == quantityUnit.length()) {
-      if (defaultUnit != null) {
-        unit = defaultUnit;
-      } else {
-        // unit is missing
-        throw new IllegalArgumentException("Invalid measure: '" + quantityUnit + "'. <unit> is missing. Measure should be specified in <quantity><unit> format.");
-      }
-    } else {
-      String q = quantityUnit.substring(i);
-      unit = validUnits.stream()
-          .filter(u -> u.getShortName().equals(q))
-          .findAny()
-          .orElseThrow(() -> new IllegalArgumentException("Invalid measure: '" + quantityUnit + "'. <unit> must be one of " + validUnits + "."));
-    }
-
-    return Measure.of(quantity, unit);
+    return Measure.of(quantity, foundUnit);
   }
 
   protected Measure(BigInteger quantity, T unit) {
@@ -136,6 +122,30 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
 
   public T getUnit() {
     return unit;
+  }
+
+  public Measure<T> add(long quantity, T unit) {
+    return add(BigInteger.valueOf(quantity), unit);
+  }
+
+  public Measure<T> add(BigInteger quantity, T unit) {
+    return add(this.unit.convert(quantity, unit));
+  }
+
+  public Measure<T> add(long amount) {
+    return add(BigInteger.valueOf(amount));
+  }
+
+  public Measure<T> add(BigInteger amount) {
+    return Measure.of(this.quantity.add(amount), this.unit);
+  }
+
+  public Measure<T> multiply(long factor) {
+    return multiply(BigInteger.valueOf(factor));
+  }
+
+  public Measure<T> multiply(BigInteger factor) {
+    return Measure.of(this.quantity.multiply(factor), this.unit);
   }
 
   @Override

@@ -24,6 +24,11 @@ import static org.terracotta.dynamic_config.api.model.Version.CURRENT;
  * @author Mathieu Carbou
  */
 public interface PropertyHolder {
+
+  UID getUID();
+
+  String getName();
+
   Scope getScope();
 
   default Properties toProperties(boolean expanded, boolean includeDefaultValues, boolean includeHiddenSettings) {

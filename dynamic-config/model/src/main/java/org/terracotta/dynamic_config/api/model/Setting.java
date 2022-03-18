@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
+import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
@@ -29,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.BiConsumer;
@@ -57,8 +59,7 @@ import static org.terracotta.dynamic_config.api.model.Operation.IMPORT;
 import static org.terracotta.dynamic_config.api.model.Operation.SET;
 import static org.terracotta.dynamic_config.api.model.Operation.UNSET;
 import static org.terracotta.dynamic_config.api.model.Permission.Builder.when;
-import static org.terracotta.dynamic_config.api.model.Requirement.ACTIVES_ONLINE;
-import static org.terracotta.dynamic_config.api.model.Requirement.ALL_NODES_ONLINE;
+import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_ONLINE;
 import static org.terracotta.dynamic_config.api.model.Requirement.CLUSTER_RESTART;
 import static org.terracotta.dynamic_config.api.model.Requirement.CONFIG;
 import static org.terracotta.dynamic_config.api.model.Requirement.HIDDEN;
@@ -84,59 +85,75 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
 
 /**
  * <pre>
- *  Here is below a summary of all the settings and their permissions, which can be generated with the following code:
+ *  Summary of all settings and their permissions, which can be generated with the following code:
  *
  *  Stream.of(Setting.values()).collect(Collectors.groupingBy(Setting::getPermissions)).entrySet().forEach(System.out::println);
  *
+ *  authc, ssl-tls, whitelist
+ *      Permission: when: [configuring] allow: [import] at levels: [cluster]
+ *      Permission: when: [activated, configuring] allow: [set, unset, get] at levels: [cluster]
+ *
  *  config-dir
- *  No permission
+ *      No Permissions
  *
- *  license-file
- *  Permission: when: [activated, configuring] allow: [set] at levels: [cluster]
- *
- *  metadata-dir
- *    * Permission: when: [configuring] allow: [import] at levels: [node],
- *    * Permission: when: [configuring] allow: [set, get] at levels: [node, stripe, cluster],
- *    * Permission: when: [activated] allow: [get] at levels: [node, stripe, cluster]
- *
- *  hostname, port
- *    * Permission: when: [activated, configuring] allow: [get] at levels: [node, stripe, cluster],
- *    * Permission: when: [configuring] allow: [import] at levels: [node]
- *
- *  group-port, bind-address, group-bind-address
- *    * Permission: when: [activated, configuring] allow: [get] at levels: [node, stripe, cluster],
- *    * Permission: when: [configuring] allow: [set] at levels: [node, stripe, cluster],
- *    * Permission: when: [configuring] allow: [import] at levels: [node]
- *
- *  data-dirs
- *    * Permission: when: [configuring] allow: [import] at levels: [node]
- *    * Permission: when: [configuring] allow: [set, get, unset] at levels: [node, stripe, cluster]
- *    * Permission: when: [activated, configuring] allow: [set, get] at levels: [node, stripe, cluster]
+ *  node-uid, hostname, port
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
  *
  *  name
- *    * Permission: when: [activated, configuring] allow: [get] at levels: [node, stripe, cluster],
- *    * Permission: when: [configuring] allow: [set, import] at levels: [node]
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [import, set] at levels: [node]
+ *
+ *  client-reconnect-window, failover-priority, client-lease-duration
+ *      Permission: when: [configuring] allow: [import] at levels: [cluster]
+ *      Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster]
  *
  *  public-hostname, public-port, backup-dir, tc-properties, logger-overrides, security-dir, audit-log-dir
- *    * Permission: when: [configuring] allow: [import] at levels: [node],
- *    * Permission: when: [activated, configuring] allow: [set, get, unset] at levels: [node, stripe, cluster]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [activated, configuring] allow: [set, unset, get] at levels: [cluster, stripe, node]
  *
- *  authc
- *    * Permission: when: [configuring] allow: [import] at levels: [cluster],
- *    * Permission: when: [activated, configuring] allow: [set, get, unset] at levels: [cluster]
- *
- *  client-reconnect-window, failover-priority, client-lease-duration, ssl-tls, whitelist
- *    * Permission: when: [configuring] allow: [import] at levels: [cluster],
- *    * Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster]
+ *  stripe-uid
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe]
+ *      Permission: when: [configuring] allow: [import] at levels: [stripe]
  *
  *  log-dir
- *    * Permission: when: [configuring] allow: [import] at levels: [node],
- *    * Permission: when: [configuring] allow: [set, get] at levels: [node, stripe, cluster],
- *    * Permission: when: [activated] allow: [set, get] at levels: [node, stripe, cluster]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [configuring] allow: [set, get] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated] allow: [set, get] at levels: [cluster, stripe, node]
+ *
+ *  metadata-dir
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [configuring] allow: [set, get] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated] allow: [get] at levels: [cluster, stripe, node]
+ *
+ *  lock-context
+ *      Permission: when: [configuring] allow: [import] at levels: [cluster]
+ *      Permission: when: [activated] allow: [set, unset] at levels: [cluster]
+ *
+ *  stripe-name
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe]
+ *      Permission: when: [configuring] allow: [import, set] at levels: [stripe]
  *
  *  cluster-name, offheap-resources
- *    * Permission: when: [configuring] allow: [set, get, import, unset] at levels: [cluster],
- *    * Permission: when: [activated] allow: [set, get] at levels: [cluster]
+ *      Permission: when: [configuring] allow: [import, set, unset, get] at levels: [cluster]
+ *      Permission: when: [activated] allow: [set, get] at levels: [cluster]
+ *
+ *  cluster-uid
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster]
+ *      Permission: when: [configuring] allow: [import] at levels: [cluster]
+ *
+ *  group-port, bind-address, group-bind-address
+ *      Permission: when: [activated, configuring] allow: [get] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [set] at levels: [cluster, stripe, node]
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *
+ *  license-file
+ *      Permission: when: [activated, configuring] allow: [set] at levels: [cluster]
+ *
+ *  data-dirs
+ *      Permission: when: [configuring] allow: [import] at levels: [node]
+ *      Permission: when: [configuring] allow: [set, unset, get] at levels: [cluster, stripe, node]
+ *      Permission: when: [activated, configuring] allow: [set, get] at levels: [cluster, stripe, node]
  * </pre>
  *
  * @author Mathieu Carbou
@@ -145,10 +162,49 @@ public enum Setting {
 
   // ==== Settings applied to a specific node only
 
+  NODE_UID(SettingName.NODE_UID,
+      of(V2),
+      false,
+      UID::newUID,
+      NODE,
+      fromNode(Node::getUID),
+      intoNode((o, value) -> o.setUID(UID.valueOf(value))),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
+          when(CONFIGURING).allow(IMPORT).atLevel(NODE)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE, HIDDEN)
+  ),
+  STRIPE_UID(SettingName.STRIPE_UID,
+      of(V2),
+      false,
+      UID::newUID,
+      STRIPE,
+      fromStripe(Stripe::getUID),
+      intoStripe((o, value) -> o.setUID(UID.valueOf(value))),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atLevels(CLUSTER, STRIPE),
+          when(CONFIGURING).allow(IMPORT).atLevel(STRIPE)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE, HIDDEN)
+  ),
+  CLUSTER_UID(SettingName.CLUSTER_UID,
+      of(V2),
+      false,
+      UID::newUID,
+      CLUSTER,
+      fromCluster(Cluster::getUID),
+      intoCluster((o, value) -> o.setUID(UID.valueOf(value))),
+      asList(
+          when(CONFIGURING, ACTIVATED).allow(GET).atLevel(CLUSTER),
+          when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER)
+      ),
+      of(RESOLVE_EAGERLY, PRESENCE, HIDDEN)
+  ),
   NODE_NAME(SettingName.NODE_NAME,
       of(V1, V2),
       false,
-      () -> "node-" + Uuid.generateShortUuid(),
+      () -> "node-" + UID.newUID(),
       NODE,
       fromNode(Node::getName),
       intoNode(Node::setName),
@@ -164,7 +220,7 @@ public enum Setting {
   STRIPE_NAME(SettingName.STRIPE_NAME,
       of(V2),
       false,
-      () -> "stripe-" + Uuid.generateShortUuid(),
+      () -> "stripe-" + UID.newUID(),
       STRIPE,
       fromStripe(Stripe::getName),
       intoStripe(Stripe::setName),
@@ -220,7 +276,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ACTIVES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> HOST_VALIDATOR.accept(SettingName.NODE_PUBLIC_HOSTNAME, tuple2(key, value))
@@ -236,7 +292,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ACTIVES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PORT_VALIDATOR.accept(SettingName.NODE_PUBLIC_PORT, tuple2(key, value))
@@ -247,10 +303,10 @@ public enum Setting {
       always(9430),
       NODE,
       fromNode(Node::getGroupPort),
-      intoNode((node, value) -> node.setGroupPort(Integer.parseInt(value))),
+      intoNode((node, value) -> node.setGroupPort(value == null ? null : Integer.parseInt(value))),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-          when(CONFIGURING).allow(SET).atAnyLevels(),
+          when(CONFIGURING).allow(SET, UNSET).atAnyLevels(),
           when(CONFIGURING).allow(IMPORT).atLevel(NODE)
       ),
       of(PRESENCE),
@@ -267,7 +323,7 @@ public enum Setting {
       intoNode(Node::setBindAddress),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-          when(CONFIGURING).allow(SET).atAnyLevels(),
+          when(CONFIGURING).allow(SET, UNSET).atAnyLevels(),
           when(CONFIGURING).allow(IMPORT).atLevel(NODE)
       ),
       of(PRESENCE),
@@ -284,7 +340,7 @@ public enum Setting {
       intoNode(Node::setGroupBindAddress),
       asList(
           when(CONFIGURING, ACTIVATED).allow(GET).atAnyLevels(),
-          when(CONFIGURING).allow(SET).atAnyLevels(),
+          when(CONFIGURING).allow(SET, UNSET).atAnyLevels(),
           when(CONFIGURING).allow(IMPORT).atLevel(NODE)
       ),
       of(PRESENCE),
@@ -306,7 +362,7 @@ public enum Setting {
           when(CONFIGURING).allowAnyOperations().atLevel(CLUSTER),
           when(ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> NAME_VALIDATOR.accept(SettingName.CLUSTER_NAME, tuple2(key, value))
@@ -325,7 +381,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(ACTIVATED).allow(SET, UNSET).atLevel(CLUSTER)
       ),
-      of(ACTIVES_ONLINE, HIDDEN)
+      of(HIDDEN)
   ),
 
   NODE_CONFIG_DIR(SettingName.NODE_CONFIG_DIR,
@@ -347,10 +403,10 @@ public enum Setting {
       always(RawPath.valueOf(Paths.get("%H", "terracotta", "metadata").toString())),
       NODE,
       fromNode(Node::getMetadataDir),
-      intoNode((node, value) -> node.setMetadataDir(RawPath.valueOf(value))),
+      intoNode((node, value) -> node.setMetadataDir(value == null ? null : RawPath.valueOf(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
-          when(CONFIGURING).allow(GET, SET).atAnyLevels(),
+          when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
           when(ACTIVATED).allow(GET).atAnyLevels()
       ),
       of(PRESENCE),
@@ -364,13 +420,13 @@ public enum Setting {
       always(RawPath.valueOf(Paths.get("%H", "terracotta", "logs").toString())),
       NODE,
       fromNode(Node::getLogDir),
-      intoNode((node, value) -> node.setLogDir(RawPath.valueOf(value))),
+      intoNode((node, value) -> node.setLogDir(value == null ? null : RawPath.valueOf(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
-          when(CONFIGURING).allow(GET, SET).atAnyLevels(),
-          when(ACTIVATED).allow(GET, SET).atAnyLevels()
+          when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
+          when(ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ACTIVES_ONLINE, NODE_RESTART, PRESENCE),
+      of(NODE_RESTART, PRESENCE),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_LOG_DIR, tuple2(key, value))
@@ -386,11 +442,30 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ACTIVES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_BACKUP_DIR, tuple2(key, value))
-  ),
+  ) {
+    @Override
+    public boolean vetoRuntimeChange(NodeContext currentNode, Configuration configuration) {
+      final boolean vetoed;
+      if (this == configuration.getSetting()) {
+        // - node backup directory is a setting which does not require a restart (so can be applied at runtime)
+        // only in the case where the directory was not configured and the user configures it (so when
+        // the user wants to activate the backup feature).
+        // - if the user wants to unset the directory or change it, we require the node to be restarted because
+        // it could happen that a backup is already in progress
+        final String current = currentNode.getNode().getBackupDir().map(RawPath::getValue).orElse(null);
+        vetoed = !configuration.getValue().isPresent() // unset
+            || current != null && !Objects.equals(configuration.getValue().get(), current); // update
+      } else {
+        vetoed = super.vetoRuntimeChange(currentNode, configuration);
+      }
+      LoggerFactory.getLogger(Setting.class).trace("vetoRuntimeChange({}, {}): {}", configuration, currentNode.getNode(), vetoed);
+      return vetoed;
+    }
+  },
   TC_PROPERTIES(SettingName.TC_PROPERTIES,
       of(V1, V2),
       true,
@@ -422,7 +497,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ACTIVES_ONLINE, CLUSTER_RESTART),
+      of(CLUSTER_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PROPS_VALIDATOR.accept(SettingName.TC_PROPERTIES, tuple2(key, value))
@@ -458,7 +533,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ACTIVES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> LOGGER_LEVEL_VALIDATOR.accept(SettingName.NODE_LOGGER_OVERRIDES, tuple2(key, value))
@@ -469,12 +544,12 @@ public enum Setting {
       always(Measure.of(120, SECONDS)),
       CLUSTER,
       fromCluster(Cluster::getClientReconnectWindow),
-      intoCluster((cluster, value) -> cluster.setClientReconnectWindow(Measure.parse(value, TimeUnit.class))),
+      intoCluster((cluster, value) -> cluster.setClientReconnectWindow(value == null ? null : Measure.parse(value, TimeUnit.class))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
-          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
-      of(ACTIVES_ONLINE, PRESENCE),
+      of(PRESENCE),
       emptyList(),
       asList(SECONDS, MINUTES, HOURS),
       (key, value) -> TIME_VALIDATOR.accept(SettingName.CLIENT_RECONNECT_WINDOW, tuple2(key, value))
@@ -490,7 +565,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE, CONFIG, RESOLVE_EAGERLY),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE, CONFIG, RESOLVE_EAGERLY),
       emptyList(),
       emptyList(),
       (key, value) -> DEFAULT_VALIDATOR.andThen((k, v) -> FailoverPriority.valueOf(v.t2)).accept(SettingName.FAILOVER_PRIORITY, tuple2(key, value))
@@ -504,12 +579,12 @@ public enum Setting {
       always(Measure.of(150, SECONDS)),
       CLUSTER,
       fromCluster(Cluster::getClientLeaseDuration),
-      intoCluster((cluster, value) -> cluster.setClientLeaseDuration(Measure.parse(value, TimeUnit.class))),
+      intoCluster((cluster, value) -> cluster.setClientLeaseDuration(value == null ? null : Measure.parse(value, TimeUnit.class))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
-          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
-      of(ACTIVES_ONLINE, PRESENCE),
+      of(PRESENCE),
       emptyList(),
       asList(MILLISECONDS, SECONDS, MINUTES, HOURS),
       (key, value) -> TIME_VALIDATOR.accept(SettingName.CLIENT_LEASE_DURATION, tuple2(key, value))
@@ -527,7 +602,7 @@ public enum Setting {
       singletonList(
           when(CONFIGURING, ACTIVATED).allow(SET).atLevel(CLUSTER)
       ),
-      of(ACTIVES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.LICENSE_FILE, tuple2(key, value))
@@ -546,7 +621,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART),
+      of(NODE_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_DIR, tuple2(key, value))
@@ -562,7 +637,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(NODE),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART),
+      of(NODE_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.SECURITY_AUDIT_LOG_DIR, tuple2(key, value))
@@ -578,7 +653,7 @@ public enum Setting {
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
           when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART),
       asList("file", "ldap", "certificate")
   ),
   SECURITY_SSL_TLS(SettingName.SECURITY_SSL_TLS,
@@ -587,12 +662,12 @@ public enum Setting {
       always(false),
       CLUSTER,
       fromCluster(Cluster::getSecuritySslTls),
-      intoCluster((cluster, value) -> cluster.setSecuritySslTls(Boolean.parseBoolean(value))),
+      intoCluster((cluster, value) -> cluster.setSecuritySslTls(value == null ? null : Boolean.parseBoolean(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
-          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("true", "false")
   ),
   SECURITY_WHITELIST(SettingName.SECURITY_WHITELIST,
@@ -601,12 +676,12 @@ public enum Setting {
       always(false),
       CLUSTER,
       fromCluster(Cluster::getSecurityWhitelist),
-      intoCluster((cluster, value) -> cluster.setSecurityWhitelist(Boolean.parseBoolean(value))),
+      intoCluster((cluster, value) -> cluster.setSecurityWhitelist(value == null ? null : Boolean.parseBoolean(value))),
       asList(
           when(CONFIGURING).allow(IMPORT).atLevel(CLUSTER),
-          when(CONFIGURING, ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
+          when(CONFIGURING, ACTIVATED).allow(GET, SET, UNSET).atLevel(CLUSTER)
       ),
-      of(ALL_NODES_ONLINE, CLUSTER_RESTART, PRESENCE),
+      of(CLUSTER_ONLINE, CLUSTER_RESTART, PRESENCE),
       asList("true", "false")
   ),
 
@@ -643,7 +718,7 @@ public enum Setting {
           when(CONFIGURING).allowAnyOperations().atLevel(CLUSTER),
           when(ACTIVATED).allow(GET, SET).atLevel(CLUSTER)
       ),
-      of(ACTIVES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       asList(MemoryUnit.values()),
       (key, value) -> OFFHEAP_VALIDATOR.accept(SettingName.OFFHEAP_RESOURCES, tuple2(key, value))
@@ -657,7 +732,7 @@ public enum Setting {
       intoNodeMap((node, tuple) -> {
         if (tuple.t1 == null && empty(tuple.t2)) {
           if (tuple.t2 == null) {
-            // null assignment will reset the map or do nothing if map si null
+            // null assignment will reset the map or do nothing if map is null
             node.unsetDataDirs();
           } else {
             // if user sets "" in a config file, he specifically asks for an empty map to be set
@@ -683,7 +758,7 @@ public enum Setting {
           when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
           when(ACTIVATED, CONFIGURING).allow(GET, SET).atAnyLevels()
       ),
-      of(ACTIVES_ONLINE),
+      EnumSet.noneOf(Requirement.class),
       emptyList(),
       emptyList(),
       (key, value) -> DATA_DIRS_VALIDATOR.accept(SettingName.DATA_DIRS, tuple2(key, value))
@@ -854,10 +929,6 @@ public enum Setting {
     return requires(CONFIG);
   }
 
-  public boolean canBeCleared(Scope scope) {
-    return allows(ACTIVATED, UNSET, scope) || allows(CONFIGURING, UNSET, scope) || getDefaultValue() != null;
-  }
-
   public boolean isWritable() {
     return isWritableWhen(CONFIGURING) || isWritableWhen(ACTIVATED);
   }
@@ -874,16 +945,86 @@ public enum Setting {
     return scope;
   }
 
-  public void validate(String key, String value) {
-    // do not validate if value is null and setting optional
-    if (key == null && value == null && !mustBePresent()) {
-      return;
+  public void validate(String key, String value, Scope level) {
+    value = value == null ? null : value.trim();
+
+    if (value == null) {
+      // equivalent to a get or unset command - we do not know yet, so we cannot pre-validate
+      // but if the setting is not supporting both get and unset, then fail
+      if (!allows(GET) && !allows(UNSET)) {
+        throw new IllegalArgumentException("Setting '" + this + "' cannot be read or cleared");
+      }
+
+    } else if (value.isEmpty()) {
+      // equivalent to a config with no value after equal sign
+      // - cluster-name= (in config file)
+      if (mustBePresent() || mustBeProvided() || !allows(UNSET)) {
+        // cannot set to blank a required value
+        throw new IllegalArgumentException("Setting '" + this + "' requires a value");
+      }
+
+    } else {
+      // equivalent to a set because we have a value
+      if (!allows(SET) && !allows(IMPORT)) {
+        throw new IllegalArgumentException("Setting '" + this + "' cannot be set");
+      } else if (level != null) {
+        // validate in more details with the level of applicability
+        if (!allows(SET, level) && !allows(IMPORT, level)) {
+          throw new IllegalArgumentException("Setting '" + this + "' cannot be set at " + level + " level");
+        }
+      }
+      // check the value if we have one
+      validator.accept(key, value);
     }
-    validator.accept(key, value);
   }
 
-  public void validate(String value) {
-    validate(null, value);
+  public void validate(String key, String value, Scope level, ClusterState clusterState, Operation operation) {
+    validate(key, value, level);
+
+    value = value == null ? null : value.trim();
+
+    if (!clusterState.supports(operation)) {
+      throw new AssertionError("Programmatic mistake: tried to validate operation " + operation + " when " + clusterState);
+    }
+    if (!allows(operation)) {
+      throw new IllegalArgumentException("Setting '" + this + "' cannot be " + operation);
+    }
+    if (!allows(clusterState, operation)) {
+      throw new IllegalArgumentException("Setting '" + this + "' cannot be " + operation + " when " + clusterState);
+    }
+    if (!allows(clusterState, operation, level)) {
+      throw new IllegalArgumentException("Setting '" + this + "' cannot be " + operation + " at " + level + " level when " + clusterState);
+    }
+    switch (operation) {
+      case GET:
+      case UNSET:
+        if (value != null) {
+          throw new IllegalArgumentException("Operation " + operation + " must not have a value");
+        }
+        break;
+      case SET:
+        requireNonNull(value);
+        if (value.isEmpty()) {
+          throw new IllegalArgumentException("Operation " + operation + " requires a value");
+        }
+        break;
+      case IMPORT:
+        requireNonNull(value);
+        if (value.isEmpty() && mustBePresent()) {
+          throw new IllegalArgumentException("Operation " + operation + " requires a value");
+        }
+        // ensure that properties requiring an eager resolve are resolved
+        if (requires(RESOLVE_EAGERLY) && Substitutor.containsSubstitutionParams(value)) {
+          throw new IllegalArgumentException("Placeholders are not allowed");
+        }
+        break;
+      default:
+        throw new AssertionError(operation);
+    }
+  }
+
+  public boolean vetoRuntimeChange(NodeContext currentNode, Configuration configuration) {
+    return false;
   }
 
   public Optional<String> getProperty(PropertyHolder o) {
@@ -902,16 +1043,8 @@ public enum Setting {
     if (!isWritable()) {
       throw new IllegalArgumentException("Setting: " + this + " is not writable");
     }
-    // value can be null or "", depending on which system is setting the property:
-    // i.e. configuration parsing will lead to "" which means that the user has specifically decided to "empty" the setting.
-    // for most of the settings, "empty" means nullify.
-    // but for maps, "empty" means specifically set an empty map and do not use the default values
-    if (!isMap() && empty(value)) {
-      // if the setting is not a map, threat any "" like null
-      value = null;
-    }
-    validate(key, value);
-    this.setter.accept(o, tuple2(key, value));
+    validate(key, value, null);
+    this.setter.accept(o, tuple2(key, sanitize(value)));
   }
 
   public Properties toProperties(PropertyHolder o, boolean expanded, boolean includeDefaultValues) {
@@ -958,6 +1091,27 @@ public enum Setting {
 
   public boolean allowsValue(String value) {
     return this.allowedValues.isEmpty() || this.allowedValues.contains(value);
+  }
+
+  // only used by test methods
+  void validate(String value) {
+    validate(null, value, null);
+  }
+
+  // only used by test methods
+  void validate(String key, String value) {
+    validate(key, value, null);
+  }
+
+  private String sanitize(String value) {
+    value = value == null ? null : value.trim();
+    // little sanitization to consider some blank assignment to null for settings in the config file like:
+    // cluster-name=
+    // which is equivalent to not having cluster-name in the config file
+    if (value != null && value.isEmpty() && !isMap() && !mustBePresent() && !mustBeProvided()) {
+      value = null;
+    }
+    return value;
   }
 
   public static Setting fromName(String name) {
@@ -1025,7 +1179,7 @@ public enum Setting {
       if (tuple.t1 != null) {
         throw new IllegalArgumentException("Key must be null: parameter is not a map");
       }
-      setter.accept((Node) node, empty(tuple.t2) ? null : tuple.t2.trim());
+      setter.accept((Node) node, tuple.t2);
     };
   }
 
@@ -1034,7 +1188,7 @@ public enum Setting {
       if (tuple.t1 != null) {
         throw new IllegalArgumentException("Key must be null: parameter is not a map");
       }
-      setter.accept((Stripe) stripe, empty(tuple.t2) ? null : tuple.t2.trim());
+      setter.accept((Stripe) stripe, tuple.t2);
     };
   }
 
@@ -1043,7 +1197,7 @@ public enum Setting {
       if (tuple.t1 != null) {
         throw new IllegalArgumentException("Key must be null: parameter is not a map");
       }
-      setter.accept((Cluster) cluster, empty(tuple.t2) ? null : tuple.t2.trim());
+      setter.accept((Cluster) cluster, tuple.t2);
     };
   }
 
@@ -1065,6 +1219,6 @@ public enum Setting {
   }
 
   private static boolean empty(String s) {
-    return s == null || s.trim().isEmpty();
+    return s == null || s.isEmpty();
   }
 }

@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.service.nomad.process
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.nomad.server.NomadException;
@@ -27,12 +28,10 @@ import static java.util.Objects.requireNonNull;
 public class ClusterActivationNomadChangeProcessor implements NomadChangeProcessor<ClusterActivationNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ClusterActivationNomadChangeProcessor.class);
 
-  private final int stripeId;
-  private final String nodeName;
+  private final UID nodeUID;
 
-  public ClusterActivationNomadChangeProcessor(int stripeId, String nodeName) {
-    this.stripeId = stripeId;
-    this.nodeName = requireNonNull(nodeName);
+  public ClusterActivationNomadChangeProcessor(UID nodeUID) {
+    this.nodeUID = requireNonNull(nodeUID);
   }
 
   @Override
@@ -41,8 +40,8 @@ public class ClusterActivationNomadChangeProcessor implements NomadChangeProcess
     if (baseConfig != null) {
       throw new NomadException("Found an existing configuration: " + baseConfig);
     }
-    if (!change.getCluster().containsNode(stripeId, nodeName)) {
-      throw new NomadException("Node: " + nodeName + " in stripe ID: " + stripeId + " not found in cluster: " + change.getCluster());
+    if (!change.getCluster().containsNode(nodeUID)) {
+      throw new NomadException("Node: " + nodeUID + " not found in cluster: " + change.getCluster());
     }
   }
 

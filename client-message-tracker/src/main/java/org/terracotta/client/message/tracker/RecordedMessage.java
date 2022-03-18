@@ -17,8 +17,10 @@ package org.terracotta.client.message.tracker;
 
 import org.terracotta.entity.ClientSourceId;
 
+import com.tc.classloader.CommonComponent;
+
+@CommonComponent
 public interface RecordedMessage<M, R> {
-  long getSequenceId();
   ClientSourceId getClientSourceId();
   long getTransactionId();
   M getRequest();

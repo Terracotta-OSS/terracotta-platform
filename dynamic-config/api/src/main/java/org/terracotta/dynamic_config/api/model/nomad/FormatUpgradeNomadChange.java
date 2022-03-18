@@ -16,26 +16,23 @@
 package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
-import org.terracotta.dynamic_config.api.service.ClusterValidator;
-
-import java.util.List;
-
-import static java.util.Objects.requireNonNull;
 
 /**
- * Nomad change that supports upgrading from a config format to another one
+ * Nomad change that supports upgrading from a config format to another one.
+ * <p>
+ * It also acts as a starting point of an append.log for the sync process.
  *
  * @author Mathieu Carbou
  */
-public class FormatUpgradeNomadChange extends FilteredNomadChange {
+public class FormatUpgradeNomadChange extends ClusterActivationNomadChange {
 
   private final Version from;
   private final Version to;
 
-  public FormatUpgradeNomadChange(Version from, Version to) {
-    super(Applicability.cluster());
+  public FormatUpgradeNomadChange(Version from, Version to, Cluster cluster) {
+    super(cluster);
     this.from = from;
     this.to = to;
   }
@@ -47,26 +44,12 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
 
   @Override
   public Cluster apply(Cluster original) {
-    requireNonNull(original);
-    Cluster upgraded = original.clone();
-
-    // From V1 to V2, added required settings are: uuids, stripe name
-    // this migration process happens independently for each node and
-    // has to output the exact same result for all the nodes
-
-    // for stripe names, we will migrate the names has M&M was used to see them
-    List<Stripe> stripes = upgraded.getStripes();
-    for (int i = 0; i < stripes.size(); i++) {
-      stripes.get(i).setName("stripe[" + i + "]");
-    }
-
-    new ClusterValidator(upgraded).validate();
-    return upgraded;
+    return getCluster();
   }
 
   @Override
-  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
-    return true;
+  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
+    return false;
   }
 
   public Version getFrom() {
@@ -82,6 +65,7 @@ public class FormatUpgradeNomadChange extends FilteredNomadChange {
     return "FormatUpgradeNomadChange{" +
         "from=" + from +
         ", to=" + to +
+        ", cluster=" + getCluster().toShapeString() +
         '}';
   }
 }

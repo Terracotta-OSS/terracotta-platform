@@ -38,6 +38,7 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 1)
@@ -46,8 +47,8 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
   public void testUnsetOffHeapAtClusterLevelAfterActivate() throws IOException, SanskritException {
     activateCluster();
     assertThat(
-        () -> invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
-        exceptionMatcher("Reason: Setting 'offheap-resources' cannot be unset when node is activated"));
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
+        containsOutput("Reason: Setting 'offheap-resources' cannot be unset when node is activated"));
     assertChanges(3);
   }
 
@@ -55,17 +56,17 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
   public void testUnsetOffHeapAtNodeLevelAfterActivate() throws IOException, SanskritException {
     activateCluster();
     assertThat(
-        () -> invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.offheap-resources.main"),
-        exceptionMatcher("Reason: Setting 'offheap-resources' does not allow any operation at node level"));
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.offheap-resources.main"),
+        containsOutput("Reason: Setting 'offheap-resources' does not allow any operation at node level"));
     assertChanges(3);
   }
 
   @Test
   public void testUnSetOffHeapAtClusterLevelBeforeActivate() throws IOException, SanskritException {
-    invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main");
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"), is(successful()));
     activateCluster();
     assertThat(
-        invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB"),
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main=1GB"),
         is(successful()));
     assertChanges(5);
   }
@@ -74,8 +75,8 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
   public void testUnsetDataDirAtClusterLevelAfterActivate() throws IOException, SanskritException {
     activateCluster();
     assertThat(
-        () -> invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.main"),
-        exceptionMatcher("Reason: Setting 'data-dirs' cannot be unset when node is activated"));
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.main"),
+        containsOutput("Reason: Setting 'data-dirs' cannot be unset when node is activated"));
     assertChanges(3);
   }
 
@@ -83,28 +84,28 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
   public void testUnsetDataDirAtNodeLevelAfterActivate() throws IOException, SanskritException {
     activateCluster();
     assertThat(
-        () -> invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main"),
-        exceptionMatcher("Reason: Setting 'data-dirs' cannot be unset when node is activated"));
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main"),
+        containsOutput("Reason: Setting 'data-dirs' cannot be unset when node is activated"));
     assertChanges(3);
   }
 
   @Test
   public void testUnsetDataDirAtClusterLevelBeforeActivate() throws IOException, SanskritException {
-    invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.main");
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "data-dirs.main"), is(successful()));
     activateCluster();
     assertChanges(3);
   }
 
   @Test
   public void testUnsetDataDirAtNodeLevelBeforeActivate() throws IOException, SanskritException {
-    invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main");
+    assertThat(configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs.main"), is(successful()));
     activateCluster();
     assertChanges(3);
   }
 
   @Test
   public void testSetFailoverPriorityAfterActivate() throws SanskritException, IOException {
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "failover-priority=consistency"), is(successful()));
     activateCluster();
     assertChanges(3);
   }
@@ -112,7 +113,7 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
   @Test
   public void testSetClusterNameAferActivation() throws IOException, SanskritException {
     activateCluster();
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=mycluster");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "cluster-name=mycluster"), is(successful()));
     assertChanges(5);
   }
 
@@ -120,8 +121,8 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
   public void setMetaDataDirAtNodeLevelAfterActivation() throws IOException, SanskritException {
     activateCluster();
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir=newmetadata"),
-        exceptionMatcher("Reason: Setting 'metadata-dir' cannot be set when node is activated"));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir=newmetadata"),
+        containsOutput("Reason: Setting 'metadata-dir' cannot be set when node is activated"));
     assertChanges(3);
   }
 
@@ -129,8 +130,8 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
   public void unsetMetaDataDirAtNodeLevelAfterActivation() throws IOException, SanskritException {
     activateCluster();
     assertThat(
-        () -> invokeConfigTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir"),
-        exceptionMatcher("Reason: Setting 'metadata-dir' cannot be unset"));
+        configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.metadata-dir"),
+        containsOutput("Reason: Setting 'metadata-dir' cannot be unset"));
     assertChanges(3);
   }
 
@@ -138,8 +139,8 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
   public void setGroupPortNodeLevelAfterActivation() throws IOException, SanskritException {
     activateCluster();
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port=1234"),
-        exceptionMatcher("Reason: Setting 'group-port' cannot be set when node is activated"));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.group-port=1234"),
+        containsOutput("Reason: Setting 'group-port' cannot be set when node is activated"));
     assertChanges(3);
   }
 

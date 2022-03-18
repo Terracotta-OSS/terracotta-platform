@@ -15,27 +15,25 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.time.Duration;
-import java.util.Arrays;
 
 import static java.util.Collections.emptyMap;
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.testing.ExceptionMatcher.throwing;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -51,22 +49,27 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
   @Test
   public void test_auto_repair_commit_failure() throws Exception {
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
-        is(throwing(instanceOf(RuntimeException.class)).andMessage(allOf(
-            containsString("Commit failed for node localhost:" + getNodePort() + ". Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (stripe ID: 1, node: node-1-1)': Simulate temporary commit failure"),
-            containsString("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")))));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        allOf(
+            not(successful()),
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (on node UID: "),
+            containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")));
 
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), is(equalTo(emptyMap())));
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), is(equalTo(emptyMap())));
 
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
-        is(throwing(instanceOf(RuntimeException.class)).andMessage(stringContainsInOrder(Arrays.asList("Another change (with UUID ", " is already underway on ", ". It was started by ", " on ")))));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        is(both(CoreMatchers.not(successful())).and(allOf(
+            containsOutput("Another change (with UUID "),
+            containsOutput(" is already underway on "),
+            containsOutput(". It was started by ")
+        ))));
 
     assertThat(
-        invokeConfigTool("repair", "-s", "localhost:" + getNodePort()),
+        configTool("repair", "-s", "localhost:" + getNodePort()),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration"),
+            containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));
 
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getLoggerOverrides().orDefault(), hasEntry("org.terracotta.dynamic-config.simulate", "DEBUG"));
@@ -81,10 +84,10 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort()).getSingleNode().get().getTcProperties().orDefault(), is(equalTo(emptyMap())));
 
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
-        is(throwing(instanceOf(RuntimeException.class)).andMessage(allOf(
-            containsString("Commit failed for node localhost:" + getNodePort() + ". Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (stripe ID: 1, node: node-1-1)': Simulate temporary commit failure"),
-            containsString("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")))));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        is(both(not(successful())).and(allOf(
+            containsOutput("Commit failed for node localhost:" + getNodePort() + ". Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (on node UID: "),
+            containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.")))));
 
     assertThat(getRuntimeCluster("localhost", getNodePort()), is(equalTo(initialCluster)));
     assertThat(getUpcomingCluster("localhost", getNodePort()), is(equalTo(initialCluster)));
@@ -104,18 +107,18 @@ public class RepairCommand1x1IT extends DynamicConfigIT {
 
     // intermediary call just to set a state in the SimulationHandler so that it can recover
     assertThat(
-        () -> invokeConfigTool("repair", "-s", "localhost:" + getNodePort()),
-        is(throwing(instanceOf(RuntimeException.class)).andMessage(allOf(
-            containsString("Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (stripe ID: 1, node: node-1-1)': Simulate temporary commit failure"),
-            containsString("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command."),
-            containsString("Attempting an automatic repair of the configuration"),
-            not(containsString("Configuration is repaired."))))));
+        configTool("repair", "-s", "localhost:" + getNodePort()),
+        is(both(not(successful())).and(allOf(
+            containsOutput("Reason: org.terracotta.nomad.server.NomadException: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (on node UID: "),
+            containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command."),
+            containsOutput("Repairing configuration by running a commit..."),
+            not(containsOutput("Configuration is repaired."))))));
 
     // repair the newly started server
     assertThat(
-        invokeConfigTool("repair", "-s", "localhost:" + getNodePort()),
+        configTool("repair", "-s", "localhost:" + getNodePort()),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration"),
+            containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));
 
     // ensure that the server has started with the last committed config

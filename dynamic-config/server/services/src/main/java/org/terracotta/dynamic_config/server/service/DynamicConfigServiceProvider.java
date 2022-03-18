@@ -27,6 +27,7 @@ import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
 import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
@@ -40,15 +41,15 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.nomad.server.NomadServer;
-import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.server.ServerEnv;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
-import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
+import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
@@ -107,7 +108,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
 
     NomadPermissionChangeProcessor permissions = findService(platformConfiguration, NomadPermissionChangeProcessor.class);
     permissions.addCheck(new DisallowSettingChanges());
-    permissions.addCheck(new ServerStateCheck());
+    permissions.addCheck(new ServerStateCheck(ServerEnv.getDefaultServer().getManagement()));
 
     return true;
   }
@@ -127,7 +128,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         DynamicConfigService.class,
         DynamicConfigEventFiring.class,
         NomadServer.class,
-        UpgradableNomadServer.class,
+        DynamicConfigNomadServer.class,
         NomadRoutingChangeProcessor.class,
         NomadPermissionChangeProcessor.class,
         LicenseService.class,

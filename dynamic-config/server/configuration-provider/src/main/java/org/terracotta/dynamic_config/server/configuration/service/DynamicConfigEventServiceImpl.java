@@ -19,6 +19,7 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
@@ -28,7 +29,7 @@ import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.nomad.server.ChangeState;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -57,13 +58,13 @@ public class DynamicConfigEventServiceImpl implements DynamicConfigEventService,
   }
 
   @Override
-  public void onNodeRemoval(int stripeId, Node removedNode) {
-    listeners.forEach(c -> c.onNodeRemoval(stripeId, removedNode));
+  public void onNodeRemoval(UID stripeUID, Node removedNode) {
+    listeners.forEach(c -> c.onNodeRemoval(stripeUID, removedNode));
   }
 
   @Override
-  public void onNodeAddition(int stripeId, Node addedNode) {
-    listeners.forEach(c -> c.onNodeAddition(stripeId, addedNode));
+  public void onNodeAddition(UID stripeUID, Node addedNode) {
+    listeners.forEach(c -> c.onNodeAddition(stripeUID, addedNode));
   }
 
   @Override
@@ -82,8 +83,8 @@ public class DynamicConfigEventServiceImpl implements DynamicConfigEventService,
   }
 
   @Override
-  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
-    listeners.forEach(c -> c.onNomadCommit(message, response, changeInfo));
+  public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState) {
+    listeners.forEach(c -> c.onNomadCommit(message, response, changeState));
   }
 
   @Override

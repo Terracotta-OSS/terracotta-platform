@@ -47,6 +47,10 @@
       <artifactId>management</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-tools</artifactId>
+    </dependency>
 
     <!-- server provided apis -->
     <dependency>

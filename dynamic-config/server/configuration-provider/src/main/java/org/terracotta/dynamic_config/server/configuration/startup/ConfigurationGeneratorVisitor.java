@@ -18,9 +18,12 @@ package org.terracotta.dynamic_config.server.configuration.startup;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.FormatUpgrade;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.PathResolver;
@@ -32,7 +35,7 @@ import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
-import org.terracotta.server.ServerEnv;
+import org.terracotta.server.Server;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -47,7 +50,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
@@ -63,6 +65,7 @@ public class ConfigurationGeneratorVisitor {
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
   private final ObjectMapperFactory objectMapperFactory;
+  private final Server server;
 
   private NodeContext nodeContext;
   private boolean repairMode;
@@ -72,12 +75,14 @@ public class ConfigurationGeneratorVisitor {
                                        NomadServerManager nomadServerManager,
                                        ClassLoader classLoader,
                                        PathResolver pathResolver,
-                                       ObjectMapperFactory objectMapperFactory) {
+                                       ObjectMapperFactory objectMapperFactory,
+                                       Server server) {
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
     this.objectMapperFactory = requireNonNull(objectMapperFactory);
+    this.server = server;
   }
 
   public boolean isUnConfiguredMode() {
@@ -92,29 +97,26 @@ public class ConfigurationGeneratorVisitor {
     requireNonNull(nomadServerManager);
     requireNonNull(nodeContext);
 
-    if (unConfiguredMode) {
-      // in diagnostic / unconfigured node mode, make sure we make platform think that the node is alone...
-      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
-    }
-
-    Supplier<NodeContext> nodeContextSupplier = () -> nomadServerManager.getConfiguration()
-        .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the configuration directory and try again."));
-
-    if (repairMode) {
-      // If repair mode is ON: , make sure we make platform think that the node is alone...
+    if (unConfiguredMode || repairMode) {
+      // in diagnostic / unconfigured / repair mode, make sure we make platform think that the node is alone...
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the config created will be stripped to make platform think this node is alone;
-      nodeContextSupplier = () -> nodeContext.alone();
+      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
+    } else {
+      // configured mode
+      return new StartupConfiguration(
+          () -> nomadServerManager.getConfiguration()
+              .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again.")),
+          unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
     }
-
-    return new StartupConfiguration(nodeContextSupplier, unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
   }
 
   void startUnconfigured(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {
-    String nodeName = nodeContext.getNodeName();
-    ServerEnv.getServer().console("Starting unconfigured node: {}", nodeName);
+    String nodeName = nodeContext.getNode().getName();
+    server.console("Starting unconfigured node: {}", nodeName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
+
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
     this.nodeContext = nodeContext;
@@ -123,16 +125,29 @@ public class ConfigurationGeneratorVisitor {
   }
 
   void startActivated(NodeContext nodeContext, String optionalLicenseFile, String optionalNodeConfigurationDirectoryFromCLI) {
-    final String clusterName = nodeContext.getCluster().getName().orElseThrow(() -> new IllegalArgumentException("Cluster name is required to pre-activate a node"));
+    String clusterName = nodeContext.getCluster().getName();
+    if (clusterName == null) {
+      throw new IllegalArgumentException("Cluster name is required to pre-activate a node");
+    }
 
     if (nodeContext.getCluster().getStripeCount() > 1) {
       throw new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster");
     }
 
-    String nodeName = nodeContext.getNodeName();
-    ServerEnv.getServer().console("Starting node: {} in cluster: {}", nodeName, clusterName);
+    // IMPORTANT: UID
+    // When we start with --auto-activate, the node can be started with a topology containing a stripe and several nodes.
+    // If it is the case, the node will start, become either active or will try to join an existing active.
+    // To be able to sync with this active, the topology (and consequently the UIDs) need to be generated equally
+    // So this special case of starting a server will require to rewrite the generated UIDs when parsing the CLI or config file,
+    // and this generation will be done with a controlled random.
+    // Note: UIDs cannot be given from the CLI, they are system generated settings.
+
+    nodeContext = nodeContext.withCluster(new FormatUpgrade().upgrade(nodeContext.getCluster(), Version.V1)).get();
+
+    String nodeName = nodeContext.getNode().getName();
+    server.console("Starting node: {} in cluster: {}", nodeName, clusterName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirectoryFromCLI);
-    ServerEnv.getServer().console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
+    server.console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
     nomadServerManager.init(nodeConfigurationDir, nodeContext);
 
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
@@ -145,7 +160,7 @@ public class ConfigurationGeneratorVisitor {
   }
 
   void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode, NodeContext alternate) {
-    ServerEnv.getServer().console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
+    server.console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
     nomadServerManager.init(nodeConfigurationDir, nodeName, alternate);
 
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
@@ -157,7 +172,7 @@ public class ConfigurationGeneratorVisitor {
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the TcConfig created will be stripped to make platform think this node is alone
-      ServerEnv.getServer().console(lineSeparator() + lineSeparator()
+      server.console(lineSeparator() + lineSeparator()
           + "=================================================================================================================" + lineSeparator()
           + "Node is starting in repair mode. This mode is used to manually repair a broken configuration on a node.      " + lineSeparator()
           + "No further configuration change can happen on the cluster while this node is in repair mode and not repaired." + lineSeparator()
@@ -193,10 +208,10 @@ public class ConfigurationGeneratorVisitor {
     Node node;
     // See if we find a match for a node based on the specified logParams. If not, we see if the config file contains just one node
     if (!isHostnameSpecified && !isPortSpecified && allNodes.size() == 1) {
-      ServerEnv.getServer().console("Found only one node information in config file: {}", configFilePath);
+      server.console("Found only one node information in config file: {}", configFilePath);
       node = allNodes.iterator().next();
     } else if (matchingNode.isPresent()) {
-      ServerEnv.getServer().console(log("Found matching node entry", configFilePath, logParams));
+      server.console(log("Found matching node entry", configFilePath, logParams));
       node = matchingNode.get();
     } else {
       throw new IllegalArgumentException(log("Did not find a matching node entry", configFilePath, logParams));
@@ -216,7 +231,7 @@ public class ConfigurationGeneratorVisitor {
     HashMap<String, String> logParams = new HashMap<>();
     logParams.put(NODE_NAME, specifiedNodeName);
     if (matchingNodes.size() == 1) {
-      ServerEnv.getServer().console(log("Found matching node entry", configFilePath, logParams));
+      server.console(log("Found matching node entry", configFilePath, logParams));
       return matchingNodes.get(0);
     } else if (matchingNodes.size() > 1) {
       throw new IllegalArgumentException(log("Found multiple matching node entries", configFilePath, logParams));
@@ -226,7 +241,7 @@ public class ConfigurationGeneratorVisitor {
   }
 
   Path getOrDefaultConfigurationDirectory(String configPath) {
-    return configPath != null ? Paths.get(configPath) : Setting.NODE_CONFIG_DIR.getDefaultValue();
+    return configPath != null ? Paths.get(configPath) : Setting.NODE_CONFIG_DIR.<RawPath>getDefaultValue().toPath();
   }
 
   Optional<String> findNodeName(Path configPath, IParameterSubstitutor parameterSubstitutor) {
@@ -246,7 +261,7 @@ public class ConfigurationGeneratorVisitor {
     requireNonNull(nodeConfigurationDir);
     NomadEnvironment environment = new NomadEnvironment();
     // Note: do NOT close this nomad client - it would close the server and sanskrit!
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getInternalAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrowErrors();

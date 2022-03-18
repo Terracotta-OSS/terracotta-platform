@@ -18,39 +18,14 @@ package org.terracotta.dynamic_config.cli.config_tool;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
-import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
-import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
-import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
-import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.cli.command.CommandRepository;
+import org.terracotta.dynamic_config.cli.api.command.Injector;
+import org.terracotta.dynamic_config.cli.api.command.ServiceProvider;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
-import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.ActivateCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.AttachCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.DetachCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.DiagnosticCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.ExportCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.GetCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.ImportCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.LogCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.RepairCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.SetCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.UnsetCommand;
-import org.terracotta.dynamic_config.cli.config_tool.nomad.LockAwareNomadManager;
-import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
-import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
-import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
-import org.terracotta.json.ObjectMapperFactory;
-import org.terracotta.nomad.NomadEnvironment;
-import org.terracotta.nomad.entity.client.NomadEntity;
-import org.terracotta.nomad.entity.client.NomadEntityProvider;
+import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.config_tool.command.CommandProvider;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainCommand;
 
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -79,76 +54,28 @@ public class ConfigTool {
   }
 
   public static void start(String... args) {
-    final RemoteMainCommand mainCommand = new RemoteMainCommand();
-    LOGGER.debug("Registering commands with CommandRepository");
-    CommandRepository commandRepository = new CommandRepository();
-    commandRepository.addAll(
-        new HashSet<>(
-            Arrays.asList(
-                mainCommand,
-                new ActivateCommand(),
-                new AttachCommand(),
-                new DetachCommand(),
-                new ImportCommand(),
-                new ExportCommand(),
-                new GetCommand(),
-                new SetCommand(),
-                new UnsetCommand(),
-                new DiagnosticCommand(),
-                new RepairCommand(),
-                new LogCommand()
-            )
-        )
-    );
-
     LOGGER.debug("Parsing command-line arguments");
-    CustomJCommander jCommander = parseArguments(commandRepository, mainCommand, args);
+    CustomJCommander<RemoteMainCommand> jCommander = parseArguments(CommandProvider.get(), args);
 
     // Process arguments like '-v'
-    mainCommand.validate();
+    RemoteMainCommand mainCommand = jCommander.getMainCommand();
     mainCommand.run();
 
-    ConcurrencySizing concurrencySizing = new ConcurrencySizing();
-    Duration connectionTimeout = Duration.ofMillis(mainCommand.getConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
-    Duration requestTimeout = Duration.ofMillis(mainCommand.getRequestTimeout().getQuantity(TimeUnit.MILLISECONDS));
-    Duration entityOperationTimeout = Duration.ofMillis(mainCommand.getEntityOperationTimeout().getQuantity(TimeUnit.MILLISECONDS));
-    Duration entityConnectionTimeout = Duration.ofMillis(mainCommand.getEntityConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
-
     // create services
-    ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
-    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, mainCommand.getSecurityRootDirectory(), objectMapperFactory);
-    MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);
-    NomadEntityProvider nomadEntityProvider = new NomadEntityProvider(
-        "CONFIG-TOOL",
-        entityConnectionTimeout,
-        // A long timeout is important here.
-        // We need to block the call and wait for any return.
-        // We cannot timeout shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
-        new NomadEntity.Settings().setRequestTimeout(entityOperationTimeout),
-        mainCommand.getSecurityRootDirectory());
-    NomadManager<NodeContext> nomadManager;
-    if (mainCommand.getLockToken() != null) {
-      nomadManager = new LockAwareNomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider, mainCommand.getLockToken());
-    } else {
-      nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
-    }
-    RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
-    StopService stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
-
-    LOGGER.debug("Injecting services in CommandRepository");
-    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, objectMapperFactory);
+    Collection<Object> services = ServiceProvider.get().createServices(mainCommand.getConfiguration());
 
     jCommander.getAskedCommand().map(command -> {
       // check for help
       if (command.isHelp()) {
         jCommander.printUsage();
         return true;
+      } else {
+        LOGGER.debug("Injecting services in specified command");
+        Injector.inject(command, services);
+        // run the real command
+        command.run();
+        return true;
       }
-      // validate the real command
-      command.validate();
-      // run the real command
-      command.run();
-      return true;
     }).orElseGet(() -> {
       // If no command is provided, process help command
       jCommander.usage();
@@ -156,8 +83,38 @@ public class ConfigTool {
     });
   }
 
-  private static CustomJCommander parseArguments(CommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
-    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand) {
+  private static CustomJCommander<RemoteMainCommand> parseArguments(CommandProvider commandProvider, String[] args) {
+    LOGGER.debug("Attempting parse using regular commands");
+    CustomJCommander<RemoteMainCommand> jCommander = getCustomJCommander(commandProvider.getCommands(), commandProvider.getMainCommand());
+    try {
+      jCommander.parse(args);
+    } catch (ParameterException e) {
+      String command = jCommander.getParsedCommand();
+      if (command != null) {
+        // Fallback to deprecated version
+        try {
+          LOGGER.debug("Attempting parse using deprecated commands");
+          // Create New JCommander object to avoid repeated main command error.
+          CustomJCommander<RemoteMainCommand> deprecatedJCommander = getCustomJCommander(commandProvider.getDeprecatedCommands(), commandProvider.getMainCommand());
+          deprecatedJCommander.parse(args);
+          // success ?
+          return deprecatedJCommander;
+        } catch (ParameterException pe) {
+          // error ?
+          // always display help file for new command
+          jCommander.printAskedCommandUsage(command);
+          throw e;
+        }
+      } else {
+        jCommander.printUsage();
+        throw e;
+      }
+    }
+    return jCommander;
+  }
+
+  private static CustomJCommander<RemoteMainCommand> getCustomJCommander(Map<String, Command> commands, RemoteMainCommand mainCommand) {
+    return new CustomJCommander<RemoteMainCommand>("config-tool", commands, mainCommand) {
       @Override
       public void appendDefinitions(StringBuilder out, String indent) {
         out.append(indent).append(lineSeparator()).append("Definitions:").append(lineSeparator());
@@ -185,13 +142,5 @@ public class ConfigTool {
         }
       }
     };
-
-    try {
-      jCommander.parse(args);
-    } catch (ParameterException e) {
-      jCommander.printUsage();
-      throw e;
-    }
-    return jCommander;
   }
 }

@@ -17,6 +17,7 @@ package org.terracotta.diagnostic.server.extensions;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.server.ServerJMX;
 
 import javax.management.NotCompliantMBeanException;
 
@@ -31,9 +32,6 @@ import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
-import org.terracotta.server.Server;
-import org.terracotta.server.ServerEnv;
-import org.terracotta.server.ServerJMX;
 
 public class LogicalServerStateTest {
   ServerJMX jmxSubsystem;
@@ -41,11 +39,8 @@ public class LogicalServerStateTest {
 
   @Before
   public void setUp() throws NotCompliantMBeanException {
-    Server s = mock(Server.class);
     jmxSubsystem = mock(ServerJMX.class);
-    when(s.getManagement()).thenReturn(jmxSubsystem);
-    ServerEnv.setDefaultServer(s);
-    logicalServerState = new LogicalServerStateMBeanImpl() {
+    logicalServerState = new LogicalServerStateMBeanImpl(jmxSubsystem) {
       @Override
       boolean hasConsistencyManager() {
         return true;

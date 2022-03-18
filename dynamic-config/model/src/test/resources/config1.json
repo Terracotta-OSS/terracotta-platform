@@ -4,42 +4,45 @@
       "name": "stripe1",
       "nodes": [
         {
-          "name": "testServer0",
-          "hostname": "localhost",
-          "port": 23633,
-          "groupPort": 23634,
           "bindAddress": "0.0.0.0",
+          "dataDirs": {},
           "groupBindAddress": "0.0.0.0",
-          "metadataDir": "%H/terracotta/metadata",
+          "groupPort": 23634,
+          "hostname": "localhost",
           "logDir": "stripe1/testServer0/logs",
+          "loggerOverrides": {},
+          "metadataDir": "%H/terracotta/metadata",
+          "name": "testServer0",
+          "port": 23633,
           "tcProperties": {
             "terracotta.management.assert": "true"
           },
-          "loggerOverrides": {},
-          "dataDirs": {}
+          "uid": "jUhhu1kRQd-x6iNgpo9Xyw"
         }
-      ]
+      ],
+      "uid": "5Zv3uphiRLavoGZthy7JNg"
     }
   ],
-  "name": "tc-cluster",
-  "clientReconnectWindow": {
-    "quantity": 120,
-    "unit": "SECONDS",
-    "type": "TIME"
-  },
   "clientLeaseDuration": {
     "quantity": 150,
     "unit": "SECONDS",
     "type": "TIME"
   },
-  "securitySslTls": false,
-  "securityWhitelist": false,
+  "clientReconnectWindow": {
+    "quantity": 120,
+    "unit": "SECONDS",
+    "type": "TIME"
+  },
   "failoverPriority": "availability",
+  "name": "tc-cluster",
   "offheapResources": {
     "primary-server-resource": {
       "quantity": 64,
       "unit": "MB",
       "type": "MEMORY"
     }
-  }
+  },
+  "securitySslTls": false,
+  "securityWhitelist": false,
+  "uid": "YLQguzhRSdS6y5M9vnA5mw"
 }

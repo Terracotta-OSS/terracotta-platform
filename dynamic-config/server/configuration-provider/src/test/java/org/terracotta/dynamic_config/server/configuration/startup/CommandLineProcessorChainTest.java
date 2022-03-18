@@ -30,7 +30,6 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.server.Server;
-import org.terracotta.server.ServerEnv;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -70,7 +69,7 @@ public class CommandLineProcessorChainTest {
   private final Node node1 = Testing.newTestNode("node-1", "localhost", 19410);
   private final Node node2 = Testing.newTestNode("node-2", "localhost", 9411);
   private final Cluster cluster = Testing.newTestCluster((String) null, new Stripe().addNodes(node1));
-  private final NodeContext nodeContext = new NodeContext(cluster, 1, "node-1");
+  private final NodeContext nodeContext = new NodeContext(cluster, node1.getUID());
   private Options options;
   private Map<Setting, String> paramValueMap;
   private ClusterFactory clusterCreator;
@@ -80,13 +79,12 @@ public class CommandLineProcessorChainTest {
 
   @Before
   public void setUp() {
-    ServerEnv.setDefaultServer(mock(Server.class));
     options = mock(Options.class);
     paramValueMap = new HashMap<>();
     clusterCreator = mock(ClusterFactory.class);
     configurationGeneratorVisitor = mock(ConfigurationGeneratorVisitor.class);
     parameterSubstitutor = mock(IParameterSubstitutor.class);
-    mainCommandLineProcessor = new MainCommandLineProcessor(options, clusterCreator, configurationGeneratorVisitor, parameterSubstitutor);
+    mainCommandLineProcessor = new MainCommandLineProcessor(options, clusterCreator, configurationGeneratorVisitor, parameterSubstitutor, mock(Server.class));
   }
 
   @Test
@@ -293,7 +291,7 @@ public class CommandLineProcessorChainTest {
     when(options.getLicenseFile()).thenReturn(LICENSE_FILE);
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
 
-    expectedException.expect(IllegalArgumentException.class);
+    expectedException.expect(NullPointerException.class);
     expectedException.expectMessage("Cluster name is required with license file");
     mainCommandLineProcessor.process();
   }

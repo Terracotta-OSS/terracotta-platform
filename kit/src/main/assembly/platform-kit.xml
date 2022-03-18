@@ -154,6 +154,7 @@
         <include>org.terracotta.dynamic-config.cli:upgrade-tools-oss</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-upgrade-tools</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
+        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-api</include>
         <include>org.terracotta:data-root-resource</include>
         <include>org.terracotta.internal:tc-config-parser</include>
         <include>org.terracotta:tcconfig-schema</include>
@@ -172,6 +173,7 @@
       <includes>
         <include>org.terracotta.internal:client-runtime</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-tool</include>
+        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-api</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
         <include>org.terracotta.dynamic-config:dynamic-config-model</include>
         <include>org.terracotta.dynamic-config:dynamic-config-api</include>

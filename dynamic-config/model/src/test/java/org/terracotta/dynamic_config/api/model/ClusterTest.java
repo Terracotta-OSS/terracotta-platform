@@ -20,22 +20,22 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 
-import java.net.InetSocketAddress;
 import java.util.function.BiConsumer;
 
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.verify;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -60,7 +60,7 @@ public class ClusterTest {
       .setMetadataDir(RawPath.valueOf("metadata"))
       .setSecurityAuditLogDir(RawPath.valueOf("audit"));
 
-  Node node2 = Testing.newTestNode("node2", "localhost", 9411)
+  Node node2 = Testing.newTestNode("node2", "localhost", 9411, Testing.N_UIDS[2])
       .putDataDir("data", RawPath.valueOf("/data/cache2"));
 
   Stripe stripe1 = new Stripe().addNodes(node1);
@@ -80,21 +80,9 @@ public class ClusterTest {
   }
 
   @Test
-  public void test_getStripe() {
-    assertThat(cluster.getStripe(InetSocketAddress.createUnresolved("localhost", 9410)).get(), is(equalTo(stripe1)));
-    assertFalse(cluster.getStripe(InetSocketAddress.createUnresolved("127.0.0.1", 9410)).isPresent());
-  }
-
-  @Test
-  public void test_getNodeAddresses() {
-    assertThat(cluster.getNodeAddresses(), hasSize(1));
-    assertThat(cluster.getNodeAddresses(), contains(InetSocketAddress.createUnresolved("localhost", 9410)));
-  }
-
-  @Test
   public void test_containsNode() {
-    assertTrue(cluster.containsNode(InetSocketAddress.createUnresolved("localhost", 9410)));
-    assertFalse(cluster.containsNode(InetSocketAddress.createUnresolved("127.0.0.1", 9410)));
+    assertTrue(cluster.containsNode(node1.getUID()));
+    assertFalse(cluster.containsNode(node2.getUID()));
   }
 
   @Test
@@ -105,34 +93,17 @@ public class ClusterTest {
 
   @Test
   public void test_getNode() {
-    assertThat(cluster.getNode(InetSocketAddress.createUnresolved("localhost", 9410)).get(), is(equalTo(node1)));
-    assertFalse(cluster.getNode(InetSocketAddress.createUnresolved("127.0.0.1", 9410)).isPresent());
-
-    assertThat(cluster.getNode(1, "node1").get(), is(equalTo(node1)));
-    assertFalse(cluster.getNode(2, "node-1").isPresent());
-    assertThat(
-        () -> cluster.getNode(0, "node1"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid stripe ID: 0")))));
-
-    assertThat(cluster.getNode(1, 1).get(), is(equalTo(node1)));
-    assertFalse(cluster.getNode(2, 1).isPresent());
-    assertFalse(cluster.getNode(1, 2).isPresent());
-    assertFalse(cluster.getNode(2, 2).isPresent());
-    assertThat(
-        () -> cluster.getNode(0, 1),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid stripe ID: 0")))));
-    assertThat(
-        () -> cluster.getNode(1, 0),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid node ID: 0")))));
+    assertThat(cluster.getNode(node1.getUID()).get(), is(equalTo(node1)));
+    assertFalse(cluster.getNode(node2.getUID()).isPresent());
   }
 
   @Test
   public void test_detach_node() {
-    cluster.removeNode(InetSocketAddress.createUnresolved("foo", 9410));
+    cluster.removeNode(node2.getUID());
     assertFalse(cluster.isEmpty());
     assertThat(cluster.getStripes(), hasSize(1));
 
-    cluster.removeNode(InetSocketAddress.createUnresolved("localhost", 9410));
+    cluster.removeNode(node1.getUID());
     assertTrue(cluster.isEmpty());
     assertThat(cluster.getStripes(), hasSize(0));
   }
@@ -152,18 +123,18 @@ public class ClusterTest {
     assertThat(() -> cluster.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
 
     // back to normal
-    stripe1.removeNode(node2.getAddress());
+    stripe1.removeNode(node2.getUID());
     assertThat(cluster.getSingleNode().get(), is(sameInstance(node1)));
 
     cluster.addStripe(new Stripe().addNodes(node2));
     assertThat(() -> cluster.getSingleNode(), is(throwing(instanceOf(IllegalStateException.class))));
 
     // back to normal
-    cluster.removeNode(node2.getAddress());
+    cluster.removeNode(node2.getUID());
     assertThat(cluster.getSingleNode().get(), is(sameInstance(node1)));
 
     // empty
-    stripe1.removeNode(node1.getAddress());
+    stripe1.removeNode(node1.getUID());
     assertThat(cluster.getSingleNode().isPresent(), is(false));
   }
 
@@ -185,43 +156,6 @@ public class ClusterTest {
   }
 
   @Test
-  public void test_getStripeId() {
-    assertThat(cluster.getStripeId(node1.getAddress()).getAsInt(), is(equalTo(1)));
-    assertThat(cluster.getStripeId(node2.getAddress()).isPresent(), is(false));
-
-    cluster.addStripe(new Stripe().addNodes(node2));
-    assertThat(cluster.getStripeId(node2.getAddress()).getAsInt(), is(2));
-  }
-
-  @Test
-  public void test_getNodeId() {
-    assertThat(cluster.getNodeId(node1.getAddress()).getAsInt(), is(equalTo(1)));
-    assertThat(cluster.getNodeId(node2.getAddress()).isPresent(), is(false));
-
-    cluster.addStripe(new Stripe().addNodes(node2));
-    assertThat(cluster.getNodeId(node2.getAddress()).getAsInt(), is(1));
-
-    assertThat(cluster.getNodeId(1, "node1").getAsInt(), is(1));
-    assertThat(cluster.getNodeId(1, "node-foo").isPresent(), is(false));
-    assertThat(cluster.getNodeId(10, "node-foo").isPresent(), is(false));
-    assertThat(
-        () -> cluster.getNodeId(0, "node-foo"),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Invalid stripe ID: 0")))));
-  }
-
-  @Test
-  public void test_forEach() {
-    cluster.addStripe(new Stripe().addNodes(node2));
-    Node node1 = cluster.getNode(1, 1).get();
-    Node node2 = cluster.getNode(2, 1).get();
-
-    cluster.forEach(consumer);
-
-    verify(consumer).accept(1, node1);
-    verify(consumer).accept(2, node2);
-  }
-
-  @Test
   public void test_getStripeCount() {
     assertThat(cluster.getStripeCount(), is(equalTo(1)));
   }
@@ -229,5 +163,53 @@ public class ClusterTest {
   @Test
   public void test_getNodeCount() {
     assertThat(cluster.getNodeCount(), is(equalTo(1)));
+  }
+
+  @Test
+  public void test_clusterEqualityWithDefaultValues() {
+    // New cluster with no values set
+    Cluster cluster = new Cluster();
+    Cluster workingCluster = cluster.clone();
+    assertTrue(cluster.equals(workingCluster));
+
+    // get the value for a setting which possesses a default value and explicitly set that same value in the working cluster
+    int defaultReconnectWindow = cluster.getClientReconnectWindow().orDefault().getExactQuantity(TimeUnit.SECONDS).intValueExact();
+    workingCluster.setClientReconnectWindow(Measure.of(defaultReconnectWindow, TimeUnit.SECONDS));
+    int updatedReconnectWindow = workingCluster.getClientReconnectWindow().get().getExactQuantity(TimeUnit.SECONDS).intValueExact();
+    assertEquals(updatedReconnectWindow, defaultReconnectWindow);
+    assertFalse(cluster.equals(workingCluster));
+
+    // remove the value
+    workingCluster.setClientReconnectWindow(null);
+    assertTrue(cluster.equals(workingCluster));
+
+    // repeat with a boolean default setting
+    boolean defaultWhitelist = cluster.getSecurityWhitelist().orDefault().booleanValue();
+    workingCluster.setSecurityWhitelist(defaultWhitelist);
+    boolean updatedWhitelist = workingCluster.getSecurityWhitelist().get();
+    assertEquals(updatedWhitelist, defaultWhitelist);
+    assertFalse(cluster.equals(workingCluster));
+
+    // remove the value
+    workingCluster.setSecurityWhitelist(null);
+    assertTrue(cluster.equals(workingCluster));
+  }
+
+  @Test
+  public void test_clusterEqualityWithNonDefaultValues() {
+    // New cluster with no values set
+    Cluster cluster = new Cluster();
+    Cluster workingCluster = cluster.clone();
+    assertTrue(cluster.equals(workingCluster));
+
+    // set the value for a setting which does not possess a default value
+    String defaultAuthentication = cluster.getSecurityAuthc().orDefault();
+    assertNull(defaultAuthentication);
+    workingCluster.setSecurityAuthc(null);
+    assertTrue(cluster.equals(workingCluster));
+
+    cluster.setSecurityAuthc("availability");
+    workingCluster.setSecurityAuthc("availability");
+    assertTrue(cluster.equals(workingCluster));
   }
 }

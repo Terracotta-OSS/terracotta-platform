@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.json.ObjectMapperFactory;
@@ -40,7 +39,7 @@ public class DefaultHashComputerTest {
     HashComputer hashComputer = new DefaultHashComputer();
 
     Node node = Testing.newTestNode("foo", "localhost");
-    NodeContext nodeContext = new NodeContext(Testing.newTestCluster(new Stripe().addNodes(node)), 1, "foo");
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster(Testing.newTestStripe("stripe-1").addNodes(node)), Testing.N_UIDS[1]);
 
     String hash = hashComputer.computeHash(new Config(nodeContext, Version.CURRENT));
     String json = om.writeValueAsString(nodeContext);

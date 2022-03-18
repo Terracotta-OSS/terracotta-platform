@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
-import org.hamcrest.MatcherAssert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
@@ -29,9 +28,11 @@ import java.nio.file.Path;
 import static com.tc.util.Assert.fail;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
@@ -73,6 +74,16 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  public void test_auto_activation_success_for_1x2_cluster_with_default_stripe_name() {
+    Path configurationFile = copyConfigProperty("/config-property-files/1x2_default_stripe_name.properties");
+    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/1-1");
+    waitForActive(1, 1);
+
+    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--config-dir", "config/stripe1/1-2");
+    waitForPassive(1, 2);
+  }
+
+  @Test
   public void test_auto_activation_success_for_1x2_cluster_usingNodeName() {
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
     startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-n", "node-1-1", "--config-dir", "config/stripe1/1-1");
@@ -92,21 +103,21 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
     waitForActive(1, 1);
 
     // trigger some changes
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides=org.terracotta:TRACE");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides=org.terracotta:TRACE"), is(successful()));
 
     // let's say we need to repair / or make a node join...
     // we will be able to add it through a restrictive activation
     // For a node to be able to join a topology, it needs to have EXACTLY the same topology information of the target cluster
     Path exportedConfigPath = tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath();
-    invokeConfigTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportedConfigPath.toString());
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportedConfigPath.toString()), is(successful()));
     //System.out.println(new String(Files.readAllBytes(exportedConfigPath), StandardCharsets.UTF_8));
     assertThat(Props.toString(Props.load(exportedConfigPath)), Props.load(exportedConfigPath).stringPropertyNames(), hasItem("stripe.1.node.1.logger-overrides"));
 
     startNode(1, 2);
     waitForDiagnostic(1, 2);
 
-    MatcherAssert.assertThat(
-        invokeConfigTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportedConfigPath.toString()),
+    assertThat(
+        configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportedConfigPath.toString()),
         allOf(containsOutput("No license installed"), containsOutput("came back up")));
   }
 }

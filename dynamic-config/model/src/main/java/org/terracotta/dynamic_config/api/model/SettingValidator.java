@@ -48,9 +48,10 @@ class SettingValidator {
     Setting s = Setting.fromName(setting);
     requireNonNull(kv);
     requireNull(s, kv.t1);
-    // prevent null or empty if property is required
+    // prevent null or empty if property is required and unsetting it is not permitted
     // Note: the 0-length string is allowed: it means that the user has specifically asked for a reset
-    if (s.mustBePresent() && (kv.t2 == null || kv.t2.trim().isEmpty())) {
+
+    if (s.mustBePresent() && !s.allows(Operation.UNSET) && (kv.t2 == null || kv.t2.trim().isEmpty())) {
       throw new IllegalArgumentException(s + " cannot be null or empty");
     }
     if (kv.t2 != null && kv.t2.length() > 0 && kv.t2.trim().isEmpty()) {
@@ -71,35 +72,41 @@ class SettingValidator {
 
   static final BiConsumer<String, Tuple2<String, String>> TIME_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
-    Setting s = Setting.fromName(setting);
-    Measure.parse(kv.t2, TimeUnit.class, null, s.getAllowedUnits());
+    if (kv.t2 != null) {
+      Setting s = Setting.fromName(setting);
+      Measure.parse(kv.t2, TimeUnit.class, s.getAllowedUnits());
+    }
   };
 
   static final BiConsumer<String, Tuple2<String, String>> PORT_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
-    int port;
-    try {
-      port = Integer.parseInt(kv.t2);
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535");
-    }
-    if (port < 1 || port > 65535) {
-      throw new IllegalArgumentException("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535");
+    if (kv.t2 != null && !Substitutor.containsSubstitutionParams(kv.t2)) {
+      int port;
+      try {
+        port = Integer.parseInt(kv.t2);
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535");
+      }
+      if (port < 1 || port > 65535) {
+        throw new IllegalArgumentException("<port> specified in " + setting + "=<port> must be an integer between 1 and 65535");
+      }
     }
   };
 
   static final BiConsumer<String, Tuple2<String, String>> PATH_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
-    try {
-      Paths.get(kv.t2);
-    } catch (RuntimeException e) {
-      throw new IllegalArgumentException("Invalid path specified for setting " + setting + ": " + kv.t2);
+    if (kv.t2 != null && !Substitutor.containsSubstitutionParams(kv.t2)) {
+      try {
+        Paths.get(kv.t2);
+      } catch (RuntimeException e) {
+        throw new IllegalArgumentException("Invalid path specified for setting " + setting + ": " + kv.t2);
+      }
     }
   };
 
   static final BiConsumer<String, Tuple2<String, String>> ADDRESS_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
-    if (!isValidIPv4(kv.t2) && !isValidIPv6(kv.t2)) {
+    if (kv.t2 != null && !Substitutor.containsSubstitutionParams(kv.t2) && !isValidIPv4(kv.t2) && !isValidIPv6(kv.t2)) {
       throw new IllegalArgumentException("<address> specified in " + setting + "=<address> must be a valid IP address");
     }
   };
@@ -107,7 +114,7 @@ class SettingValidator {
   static final BiConsumer<String, Tuple2<String, String>> HOST_VALIDATOR = (setting, kv) -> {
     DEFAULT_VALIDATOR.accept(setting, kv);
     final String hostname = kv.t2;
-    if (!isValidIPv4(hostname) && !isValidIPv6(hostname) && !isValidHost(hostname)) {
+    if (kv.t2 != null && !Substitutor.containsSubstitutionParams(kv.t2) && !isValidIPv4(hostname) && !isValidIPv6(hostname) && !isValidHost(hostname)) {
       throw new IllegalArgumentException("<address> specified in " + setting + "=<address> must be a valid hostname or IP address");
     }
   };
@@ -116,7 +123,7 @@ class SettingValidator {
     if (kv.t2 != null && !kv.t2.isEmpty()) {
       validateMappings(kv, setting + " should be specified in the format <resource-name>:<quantity><unit>,<resource-name>:<quantity><unit>...", (k, v) -> {
         try {
-          Measure.parse(v, MemoryUnit.class, null, Setting.fromName(setting).getAllowedUnits());
+          Measure.parse(v, MemoryUnit.class, Setting.fromName(setting).getAllowedUnits());
         } catch (RuntimeException e) {
           throw new IllegalArgumentException(setting + "." + k + " is invalid: " + e.getMessage());
         }
@@ -130,10 +137,12 @@ class SettingValidator {
       // - set data-dirs=main:foo/bar
       // - set data-dirs.main=foo/bar
       validatePathMappings(kv, setting + " should be specified in the format <resource-name>:<path>,<resource-name>:<path>...", (k, v) -> {
-        try {
-          Paths.get(v);
-        } catch (RuntimeException e) {
-          throw new IllegalArgumentException(setting + "." + k + " is invalid: Bad path: " + v);
+        if (!Substitutor.containsSubstitutionParams(v)) {
+          try {
+            Paths.get(v);
+          } catch (RuntimeException e) {
+            throw new IllegalArgumentException(setting + "." + k + " is invalid: Bad path: " + v);
+          }
         }
       });
     }

@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 
 import java.time.Duration;
 import java.util.concurrent.Future;
@@ -88,15 +89,15 @@ public interface DynamicTopologyEntity extends Entity {
   }
 
   interface Listener {
-    default void onNodeRemoval(int stripeId, Node removedNode) {}
+    default void onNodeRemoval(Cluster cluster, UID stripeUID, Node removedNode) {}
 
-    default void onNodeAddition(int stripeId, Node addedNode) {}
+    default void onNodeAddition(Cluster cluster, UID addedNodeUID) {}
 
-    default void onStripeAddition(Stripe addedStripe) {}
+    default void onStripeAddition(Cluster cluster, UID addedStripeUID) {}
 
-    default void onStripeRemoval(Stripe removedStripe) {}
+    default void onStripeRemoval(Cluster cluster, Stripe removedStripe) {}
 
-    default void onSettingChange(Configuration configuration, Cluster cluster) {}
+    default void onSettingChange(Cluster cluster, Configuration configuration) {}
 
     default void onDisconnected() {}
   }

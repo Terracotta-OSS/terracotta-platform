@@ -19,9 +19,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.FormatUpgrade;
 import org.terracotta.dynamic_config.api.service.Props;
 
 import java.io.IOException;
@@ -49,6 +52,7 @@ public class FileConfigStorage implements ConfigStorage {
   public FileConfigStorage(Path root, String nodeName) {
     this.root = requireNonNull(root);
     this.nodeName = requireNonNull(nodeName);
+    LOGGER.info("Configuration storage location: {}", root);
   }
 
   @SuppressWarnings("unused")
@@ -56,14 +60,22 @@ public class FileConfigStorage implements ConfigStorage {
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   public Config getConfig(long version) throws ConfigStorageException {
     Path file = toPath(version);
-    LOGGER.debug("Loading version: {} from file: {}", version, file);
+    LOGGER.debug("Loading version: {} from file: {}", version, file.getFileName());
     try {
       Properties properties = Props.load(file);
 
-      // removing extra information put
-      int stripeId = Integer.parseInt(properties.remove("this.stripe-id").toString());
-      int nodeId = Integer.parseInt(properties.remove("this.node-id").toString());
-      String nodeName = properties.remove("this.name").toString();
+      // removing extra information put in V1
+      properties.remove("this.node-id");
+      properties.remove("this.stripe-id");
+      String nodeName = Optional.ofNullable(properties.remove("this.name"))
+          .map(Object::toString)
+          .orElse(null);
+
+      // removing extra information put in V2
+      UID nodeUID = Optional.ofNullable(properties.remove("this.node-uid"))
+          .map(Object::toString)
+          .map(UID::valueOf)
+          .orElse(null);
       Version configFormatVersion = Optional.ofNullable(properties.remove("this.version"))
           .map(Object::toString)
           .map(Version::fromValue)
@@ -75,7 +87,20 @@ public class FileConfigStorage implements ConfigStorage {
       // back when re-loading. So the reloaded value cannot be parsed differently.
       Cluster cluster = new ClusterFactory(configFormatVersion).create(properties, configuration -> {
       }); // do not over-log added configs
-      return new Config(new NodeContext(cluster, stripeId, nodeName), configFormatVersion);
+
+      // we are eagerly applying the upgrade in memory.
+      // It will be re-applied after through a nomad change and persisted
+      // this si required because everything is working based on the UIDs now...
+      cluster = new FormatUpgrade().upgrade(cluster, configFormatVersion);
+
+      // V1 => V2: nodeUID is in V2, nodeName in V1
+      if (nodeUID == null) {
+        nodeUID = cluster.getNodeByName(nodeName)
+            .map(Node::getUID)
+            .orElseThrow(() -> new IllegalStateException("Wrong config! Node: " + nodeName + " not found or no UID on this node"));
+      }
+
+      return new Config(new NodeContext(cluster, nodeUID), configFormatVersion);
     } catch (RuntimeException e) {
       throw new ConfigStorageException(e);
     }
@@ -85,7 +110,7 @@ public class FileConfigStorage implements ConfigStorage {
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
   public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
     Path file = toPath(version);
-    LOGGER.debug("Saving topology: {} with version: {} to file: {}", config, version, file);
+    LOGGER.debug("Saving version: {} to file: {}", version, file.getFileName());
     try {
       if (file.getParent() != null) {
         Files.createDirectories(file.getParent());
@@ -93,9 +118,7 @@ public class FileConfigStorage implements ConfigStorage {
       Properties nonDefaults = config.getCluster().toProperties(false, false, true);
 
       // adds extra information about this node
-      nonDefaults.setProperty("this.stripe-id", String.valueOf(config.getStripeId()));
-      nonDefaults.setProperty("this.node-id", String.valueOf(config.getNodeId()));
-      nonDefaults.setProperty("this.name", String.valueOf(config.getNodeName()));
+      nonDefaults.setProperty("this.node-uid", String.valueOf(config.getNodeUID()));
       nonDefaults.setProperty("this.version", CURRENT.getValue());
 
       StringWriter out = new StringWriter();
@@ -109,7 +132,7 @@ public class FileConfigStorage implements ConfigStorage {
 
   @Override
   public void reset() throws ConfigStorageException {
-    String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
+    String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss.SSS"));
     AtomicReference<ConfigStorageException> error = new AtomicReference<>();
     try (Stream<Path> stream = Files.list(root)) {
       stream.filter(Files::isRegularFile).forEach(config -> {

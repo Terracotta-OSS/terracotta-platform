@@ -15,11 +15,14 @@
  */
 package org.terracotta.dynamic_config.cli.command;
 
+import com.beust.jcommander.DefaultUsageFormatter;
+import com.beust.jcommander.IUsageFormatter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.WrappedParameter;
 import com.beust.jcommander.internal.Lists;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Comparator;
 import java.util.List;
@@ -28,61 +31,39 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import static java.lang.System.lineSeparator;
-import static java.util.function.Predicate.isEqual;
 
 /**
  * Class containing overridden usage methods from JCommander.
  */
-public class CustomJCommander extends JCommander {
-  private final CommandRepository commandRepository;
+public class CustomJCommander<M extends Command> extends JCommander {
+  private final M mainCommand;
+  private final Map<String, Command> commands;
   private final String toolName;
 
-  public CustomJCommander(String toolName, CommandRepository commandRepository, Command command) {
-    super(command);
+  public CustomJCommander(String toolName, Map<String, Command> commands, M mainCommand) {
+    super(mainCommand);
     this.toolName = toolName;
-    this.commandRepository = commandRepository;
-    commandRepository.getCommands()
-        .stream()
-        .filter(isEqual(command).negate())
-        .forEach(cmd -> addCommand(Metadata.getName(cmd), cmd));
+    this.mainCommand = mainCommand;
+    this.commands = commands;
+    setUsageFormatter(new UsageFormatter(this));
+    commands.forEach(this::addCommand);
   }
 
   public Optional<Command> getAskedCommand() {
-    return Optional.ofNullable(getParsedCommand()).map(commandRepository::getCommand);
+    return Optional.ofNullable(getParsedCommand()).map(commands::get);
   }
 
   public void printUsage() {
-    if (getParsedCommand() != null) {
-      usage(getParsedCommand());
+    String askedCommand = getParsedCommand();
+    if (askedCommand != null) {
+      printAskedCommandUsage(askedCommand);
     } else {
       usage();
     }
   }
 
-  @Override
-  public void usage(String commandName, StringBuilder out, String indent) {
-    String description = getCommandDescription(commandName);
-    JCommander jc = getCommands().get(commandName);
-    if (description != null) {
-      out.append(indent).append(description).append(lineSeparator());
-    }
-    appendUsage(commandRepository.getCommand(commandName), out, indent);
-    appendOptions(jc, out, indent);
-  }
-
-  @Override
-  public void usage(StringBuilder out, String indent) {
-    Map<String, JCommander> commands = getCommands();
-    boolean hasCommands = !commands.isEmpty();
-    out.append(indent).append("Usage: ").append(toolName).append(" [options]");
-    if (hasCommands) {
-      out.append(indent).append(" [command] [command-options]");
-    }
-
-    out.append(lineSeparator());
-    appendOptions(this, out, indent);
-    appendDefinitions(out, indent);
-    appendCommands(out, indent, commands, hasCommands);
+  public void printAskedCommandUsage(String askedCommand) {
+    getUsageFormatter().usage(askedCommand);
   }
 
   @Override
@@ -95,59 +76,144 @@ public class CustomJCommander extends JCommander {
 
   }
 
-  private void appendUsage(Command command, StringBuilder out, String indent) {
-    out.append(indent).append("Usage:").append(lineSeparator());
-    out.append(indent).append("    ").append(Metadata.getUsage(command).replace(lineSeparator(), lineSeparator() + "    " + indent)).append(lineSeparator());
+  public M getMainCommand() {
+    return mainCommand;
   }
 
-  private void appendOptions(JCommander jCommander, StringBuilder out, String indent) {
-    // Align the descriptions at the "longestName" column
-    int longestName = 0;
-    List<ParameterDescription> sorted = Lists.newArrayList();
-    for (ParameterDescription pd : jCommander.getParameters()) {
-      if (!pd.getParameter().hidden()) {
-        sorted.add(pd);
-        int length = pd.getNames().length() + 2;
-        if (length > longestName) {
-          longestName = length;
+  private class UsageFormatter implements IUsageFormatter {
+    private final JCommander commander;
+
+    public UsageFormatter(JCommander commander) {
+      this.commander = commander;
+    }
+
+    @Override
+    public void usage(String commandName) {
+      StringBuilder sb = new StringBuilder();
+      usage(commandName, sb);
+      commander.getConsole().println(sb.toString());
+    }
+
+    @Override
+    public void usage(String commandName, StringBuilder out) {
+      usage(commandName, out, "");
+    }
+
+    @Override
+    public void usage(StringBuilder out) {
+      usage(out, "");
+    }
+
+    @Override
+    public void usage(String commandName, StringBuilder out, String indent) {
+      String description = getCommandDescription(commandName);
+      JCommander jc = getCommands().get(commandName);
+      if (description != null) {
+        out.append(indent).append(description).append(lineSeparator());
+      }
+      appendUsage(commandName, commands.get(commandName), out, indent);
+      appendOptions(jc, out, indent);
+    }
+
+    @Override
+    public void usage(StringBuilder out, String indent) {
+      Map<String, JCommander> commands = getCommands();
+      boolean hasCommands = !commands.isEmpty();
+      out.append(indent).append("Usage: ").append(toolName).append(" [options]");
+      if (hasCommands) {
+        out.append(indent).append(" [command] [command options]");
+      }
+
+      out.append(lineSeparator()).append(lineSeparator());
+      appendOptions(commander, out, indent);
+      appendDefinitions(out, indent);
+      appendCommands(out, indent, commands, hasCommands);
+    }
+
+    @Override
+    public String getCommandDescription(String commandName) {
+      return new DefaultUsageFormatter(commander).getCommandDescription(commandName);
+    }
+
+    private void appendCommands(StringBuilder out, String indent, Map<String, JCommander> jcommanders, boolean hasCommands) {
+      if (hasCommands) {
+        out.append(lineSeparator()).append("Commands:").append(lineSeparator()).append(lineSeparator());
+        for (Map.Entry<String, JCommander> command : jcommanders.entrySet()) {
+          String name = command.getKey();
+          Object arg = command.getValue().getObjects().get(0);
+          Parameters p = arg.getClass().getAnnotation(Parameters.class);
+          if (p == null || !p.hidden()) {
+            String description = getCommandDescription(name);
+            out.append(lineSeparator());
+            out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator()).append(lineSeparator());
+            appendUsage(name, CustomJCommander.this.commands.get(name), out, indent + "        ");
+            out.append(lineSeparator());
+
+            // Options for this command
+            JCommander jc = command.getValue();
+            appendOptions(jc, out, "        ");
+          }
         }
       }
     }
 
-    // Sort the options
-    sorted.sort(Comparator.comparing(ParameterDescription::getLongestName));
-
-    // Display all the names and descriptions
-    if (sorted.size() > 0) {
-      out.append(indent).append("Options:").append(lineSeparator());
+    private void appendUsage(String name, Command command, StringBuilder out, String indent) {
+      out.append(indent).append("Usage: ");
+      String usage = name + " " + getUsage(command);
+      out.append(usage.replace(lineSeparator(), lineSeparator() + "    " + indent)).append(lineSeparator());
     }
 
-    for (ParameterDescription pd : sorted) {
-      WrappedParameter parameter = pd.getParameter();
-      out.append(indent).append("    ").append(pd.getNames()).append(parameter.required() ? " (required)" : "").append(lineSeparator());
-      out.append(indent).append("        ").append(pd.getDescription());
-      out.append(lineSeparator());
-    }
-  }
+    private void appendOptions(JCommander jCommander, StringBuilder out, String indent) {
+      // Align the descriptions at the "longestName" column
+      List<ParameterDescription> sorted = Lists.newArrayList();
 
-  private void appendCommands(StringBuilder out, String indent, Map<String, JCommander> commands, boolean hasCommands) {
-    if (hasCommands) {
-      out.append(lineSeparator()).append("Commands:").append(lineSeparator());
-      for (Map.Entry<String, JCommander> command : commands.entrySet()) {
-        Object arg = command.getValue().getObjects().get(0);
-        Parameters p = arg.getClass().getAnnotation(Parameters.class);
-        String name = command.getKey();
-        if (p == null || !p.hidden()) {
-          String description = getCommandDescription(name);
-          out.append(indent).append("    ").append(name).append("      ").append(description).append(lineSeparator());
-          appendUsage(commandRepository.getCommand(name), out, indent + "    ");
+      int colSize = "-security-root-directory".length(); // quick hack to get the largest possible option
+      for (ParameterDescription pd : jCommander.getParameters()) {
+        if (!pd.getParameter().hidden()) {
+          sorted.add(pd);
+          int length = pd.getParameterAnnotation().names()[0].length();
+          if (length > colSize) {
+            colSize = length;
+          }
+        }
+      }
 
-          // Options for this command
-          JCommander jc = command.getValue();
-          appendOptions(jc, out, "    ");
-          out.append(lineSeparator());
+      // Display all the names and descriptions
+      if (sorted.size() > 0) {
+
+        // Sort the options by only considering the first displayed option
+        // which will be the one with 1 dash (i.e. -help).
+        sorted.sort(Comparator.comparing(pd -> pd.getParameterAnnotation().names()[0]));
+
+        out.append(indent).append("Options:").append(lineSeparator());
+
+        for (ParameterDescription pd : sorted) {
+          WrappedParameter parameter = pd.getParameter();
+          out.append(indent)
+              .append("    ")
+              .append(pad(pd.getParameterAnnotation().names()[0], colSize))
+              .append(parameter.required() ? " (required)    " : " (optional)    ")
+              .append(pd.getDescription())
+              .append(lineSeparator());
         }
       }
     }
+  }
+
+  @SuppressFBWarnings("SBSC_USE_STRINGBUFFER_CONCATENATION")
+  @SuppressWarnings("StringConcatenationInLoop")
+  private static String pad(String str, int colSize) {
+    while (str.length() < colSize) {
+      str += " ";
+    }
+    return str;
+  }
+
+  public static String getUsage(Command command) {
+    Usage annotation = command.getClass().getAnnotation(Usage.class);
+    if (annotation != null) {
+      return annotation.value();
+    }
+    return "";
   }
 }

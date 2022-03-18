@@ -21,24 +21,21 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.slf4j.LoggerFactory;
 
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
-@Parameters(commandNames = LocalMainCommand.NAME)
 public class LocalMainCommand extends Command {
-  public static final String NAME = "main";
 
-  @Parameter(names = {"-v", "--verbose"}, description = "Verbose mode. Default: false")
-  private boolean verbose = false;
+  @Parameter(names = {"-verbose", "-v", "--verbose"}, description = "Verbose mode. Default: false")
+  public boolean verbose = false;
 
   @Override
   public void run() {
     Logger rootLogger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
 
     if (verbose) {
-      ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("STDOUT");
+      ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("STDERR");
       PatternLayoutEncoder ple = new PatternLayoutEncoder();
       ple.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n");
       ple.setContext(appender.getContext());
@@ -48,9 +45,5 @@ public class LocalMainCommand extends Command {
       rootLogger.setLevel(Level.TRACE);
       rootLogger.getLoggerContext().getLoggerList().forEach(logger -> logger.setLevel(Level.TRACE));
     }
-  }
-
-  public boolean isVerbose() {
-    return verbose;
   }
 }

@@ -19,13 +19,14 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.nomad.server.ChangeState;
 
 /**
  * @author Mathieu Carbou
@@ -61,7 +62,7 @@ public interface DynamicConfigListener extends DynamicConfigEventFiring {
    *
    * @param removedNode the details about the removed node
    */
-  default void onNodeRemoval(int stripeId, Node removedNode) {}
+  default void onNodeRemoval(UID stripeUID, Node removedNode) {}
 
   /**
    * Listener that will be called when some nodes have been added to a stripe
@@ -70,14 +71,14 @@ public interface DynamicConfigListener extends DynamicConfigEventFiring {
    * <p>
    * Only the nodes targeted by the applicability filter will be called through this listener after the {@link ConfigChangeHandler} is called
    *
-   * @param stripeId  the stripe ID where the nodes have been added
+   * @param stripeUID the stripe UID where the nodes have been added
    * @param addedNode the details of the added node
    */
-  default void onNodeAddition(int stripeId, Node addedNode) {}
+  default void onNodeAddition(UID stripeUID, Node addedNode) {}
 
   default void onNomadPrepare(PrepareMessage message, AcceptRejectResponse response) {}
 
-  default void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {}
+  default void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState) {}
 
   default void onNomadRollback(RollbackMessage message, AcceptRejectResponse response) {}
 

@@ -21,5 +21,5 @@ package org.terracotta.dynamic_config.server.configuration.sync;
 public enum Require {
   RESTART_REQUIRED,
   ZAP_REQUIRED,
-  CAN_CONTINUE
+  NOTHING
 }

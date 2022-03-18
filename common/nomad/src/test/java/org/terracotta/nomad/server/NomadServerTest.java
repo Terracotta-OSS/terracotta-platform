@@ -34,14 +34,12 @@ import org.terracotta.nomad.server.state.MemoryNomadServerState;
 import org.terracotta.nomad.server.state.NomadServerState;
 
 import java.time.Clock;
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -65,7 +63,6 @@ public class NomadServerTest {
     state = new MemoryNomadServerState<>();
     assertFalse(state.isInitialized());
     server = new NomadServerImpl<>(state, changeApplicator);
-    assertFalse(server.hasIncompleteChange());
   }
 
   @After
@@ -76,7 +73,6 @@ public class NomadServerTest {
   @Test
   public void initializesState() throws Exception {
     assertState(ACCEPTING, 1L, null, null, null, 0L, 0L, null, null, null, null, null, null, null, null);
-    assertFalse(server.hasIncompleteChange());
   }
 
   @Test
@@ -577,7 +573,7 @@ public class NomadServerTest {
     ));
 
     assertTrue(response.isAccepted());
-    assertState(ACCEPTING, 5L, "testhost2", "testuser2", nextChangeUuid, 2L, 2L, ChangeRequestState.COMMITTED, 2L, firstChangeUuid.toString(), "change1", "change-applied1", "testhost1", "testuser1", "summary1");
+    assertState(ACCEPTING, 5L, "testhost2", "testuser2", nextChangeUuid, 2L, 2L, ChangeRequestState.COMMITTED, 2L, firstChangeUuid, "change1", "change-applied1", "testhost1", "testuser1", "summary1");
     verify(changeApplicator).tryApply("change-applied", new SimpleNomadChange("change1", "summary1"));
     verify(changeApplicator).apply(new SimpleNomadChange("change1", "summary1"));
   }
@@ -694,98 +690,11 @@ public class NomadServerTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void testSetChangeApplicatorAlreadySet() throws Exception {
-    NomadServerState<String> serverState = mock(NomadServerState.class);
-    when(serverState.isInitialized()).thenReturn(true);
-    NomadServerImpl<String> nomadServer = new NomadServerImpl<>(serverState);
-    ChangeApplicator<String> changeApplicator = mock(ChangeApplicator.class);
-    nomadServer.setChangeApplicator(changeApplicator);
-    try {
-      nomadServer.setChangeApplicator(changeApplicator);
-      fail("Should have got IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      //Indirectly tests the base case of setting also
-      //If set correctly sets in first call, then only we get this exception
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  @Test
   public void testSetNullChangeApplicator() throws Exception {
     NomadServerState<String> serverState = mock(NomadServerState.class);
     when(serverState.isInitialized()).thenReturn(true);
     NomadServerImpl<String> nomadServer = new NomadServerImpl<>(serverState);
     nomadServer.setChangeApplicator(null);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Test
-  public void testListOfNomadChanges() throws Exception {
-    ChangeApplicator<String> changeApplicator = mock(ChangeApplicator.class);
-    NomadServerState<String> state = new MemoryNomadServerState<>();
-    UpgradableNomadServer<String> server = new NomadServerImpl<>(state, changeApplicator);
-    when(changeApplicator.tryApply(null, new SimpleNomadChange("change", "summary"))).thenReturn(PotentialApplicationResult.allow("change-applied"));
-
-    DiscoverResponse<String> discoverResponse = server.discover();
-
-    UUID firstChangeUuid = UUID.randomUUID();
-
-    server.prepare(new PrepareMessage(
-        discoverResponse.getMutativeMessageCount(),
-        "testhost1",
-        "testuser1",
-        Clock.systemDefaultZone().instant(),
-        firstChangeUuid,
-        discoverResponse.getHighestVersion() + 1,
-        new SimpleNomadChange("change", "summary")
-    ));
-
-    AcceptRejectResponse response = server.commit(new CommitMessage(
-        discoverResponse.getMutativeMessageCount() + 1,
-        "testhost2",
-        "testuser2",
-        Clock.systemDefaultZone().instant(),
-        firstChangeUuid
-    ));
-
-    assertTrue(response.isAccepted());
-    verify(changeApplicator).tryApply(null, new SimpleNomadChange("change", "summary"));
-    verify(changeApplicator).apply(new SimpleNomadChange("change", "summary"));
-
-    // Apply more changes
-    when(changeApplicator.tryApply("change-applied", new SimpleNomadChange("change1", "summary1"))).thenReturn(PotentialApplicationResult.allow("change-applied1"));
-    discoverResponse = server.discover();
-    UUID nextChangeUuid = UUID.randomUUID();
-
-    server.prepare(new PrepareMessage(
-        discoverResponse.getMutativeMessageCount(),
-        "testhost1",
-        "testuser1",
-        Clock.systemDefaultZone().instant(),
-        nextChangeUuid,
-        discoverResponse.getHighestVersion() + 1,
-        new SimpleNomadChange("change1", "summary1")
-    ));
-
-    response = server.commit(new CommitMessage(
-        discoverResponse.getMutativeMessageCount() + 1,
-        "testhost2",
-        "testuser2",
-        Clock.systemDefaultZone().instant(),
-        nextChangeUuid
-    ));
-
-    assertTrue(response.isAccepted());
-    verify(changeApplicator).tryApply("change-applied", new SimpleNomadChange("change1", "summary1"));
-    verify(changeApplicator).apply(new SimpleNomadChange("change1", "summary1"));
-
-    //Verifying changes are as it happened
-    List<NomadChangeInfo> getAllChanges = server.getAllNomadChanges();
-    assertEquals(getAllChanges.size(), 2);
-    assertEquals(getAllChanges.get(0).getChangeUuid(), firstChangeUuid);
-    assertEquals(getAllChanges.get(0).getNomadChange(), new SimpleNomadChange("change", "summary"));
-    assertEquals(getAllChanges.get(1).getChangeUuid(), nextChangeUuid);
-    assertEquals(getAllChanges.get(1).getNomadChange(), new SimpleNomadChange("change1", "summary1"));
   }
 
   private void assertState(
@@ -796,9 +705,9 @@ public class NomadServerTest {
       UUID latestChangeUuid,
       long currentVersion,
       long highestVersion,
-      ChangeRequestState changeState,
+      ChangeRequestState changeRequestState,
       Long changeVersion,
-      String prevChangeUuid,
+      UUID prevChangeUuid,
       String changeOperation,
       String changeResult,
       String changeCreationHost,
@@ -815,15 +724,15 @@ public class NomadServerTest {
     assertEquals(highestVersion, state.getHighestVersion());
 
     if (latestChangeUuid != null) {
-      ChangeRequest<String> changeRequest = state.getChangeRequest(latestChangeUuid);
-      assertEquals(changeState, changeRequest.getState());
-      assertEquals(changeVersion, (Long) changeRequest.getVersion());
-      assertEquals(prevChangeUuid, changeRequest.getPrevChangeId());
-      assertEquals(changeOperation, ((SimpleNomadChange) changeRequest.getChange()).getChange());
-      assertEquals(changeResult, changeRequest.getChangeResult());
-      assertEquals(changeCreationHost, changeRequest.getCreationHost());
-      assertEquals(changeCreationUser, changeRequest.getCreationUser());
-      assertEquals(changeSummary, changeRequest.getChange().getSummary());
+      ChangeState<String> changeState = state.getChangeState(latestChangeUuid);
+      assertEquals(changeRequestState, changeState.getState());
+      assertEquals(changeVersion, (Long) changeState.getVersion());
+      assertEquals(prevChangeUuid, changeState.getPrevChangeId());
+      assertEquals(changeOperation, ((SimpleNomadChange) changeState.getChange()).getChange());
+      assertEquals(changeResult, changeState.getChangeResult());
+      assertEquals(changeCreationHost, changeState.getCreationHost());
+      assertEquals(changeCreationUser, changeState.getCreationUser());
+      assertEquals(changeSummary, changeState.getChange().getSummary());
     }
 
     DiscoverResponse<String> discoverResponse = server.discover();
@@ -839,7 +748,7 @@ public class NomadServerTest {
       assertNull(latestChange);
     } else {
       assertEquals(latestChangeUuid, latestChange.getChangeUuid());
-      assertEquals(changeState, latestChange.getState());
+      assertEquals(changeRequestState, latestChange.getState());
       assertEquals((long) changeVersion, latestChange.getVersion());
       assertEquals(changeOperation, ((SimpleNomadChange) latestChange.getOperation()).getChange());
       assertEquals(changeResult, latestChange.getResult());

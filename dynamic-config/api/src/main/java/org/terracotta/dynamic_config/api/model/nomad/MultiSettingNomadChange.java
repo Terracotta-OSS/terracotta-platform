@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public class MultiSettingNomadChange implements DynamicConfigNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
+  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
     throw new UnsupportedOperationException();
   }
 

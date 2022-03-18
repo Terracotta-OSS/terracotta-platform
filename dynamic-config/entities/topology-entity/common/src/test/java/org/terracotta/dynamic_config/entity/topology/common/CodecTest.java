@@ -32,6 +32,8 @@ import static java.util.Collections.singletonMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
 import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
@@ -49,9 +51,9 @@ import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_UPCO
 public class CodecTest {
   @Test
   public void test_encode_decode() throws MessageCodecException {
-    Node node = Testing.newTestNode("foo", "localhost", 9410);
-    Node node2 = Testing.newTestNode("foo2", "localhost", 9411);
-    Stripe stripe = new Stripe().setName("stripe1").addNodes(node, node2);
+    Node node = newTestNode("foo", "localhost", 9410);
+    Node node2 = newTestNode("foo2", "localhost", 9411);
+    Stripe stripe = newTestStripe("stripe1").addNodes(node, node2);
     Cluster cluster = Testing.newTestCluster("bar", stripe);
 
     test(REQ_LICENSE, null);
@@ -66,13 +68,13 @@ public class CodecTest {
     test(REQ_RUNTIME_CLUSTER, cluster);
     test(REQ_UPCOMING_CLUSTER, cluster);
 
-    test(EVENT_NODE_ADDITION, asList(1, node));
-    test(EVENT_NODE_REMOVAL, asList(1, node));
+    test(EVENT_NODE_ADDITION, asList(cluster, node.getUID()));
+    test(EVENT_NODE_REMOVAL, asList(cluster, stripe.getUID(), node));
 
-    test(EVENT_SETTING_CHANGED, asList(Configuration.valueOf("cluster-name=foo"), cluster));
+    test(EVENT_SETTING_CHANGED, asList(cluster, Configuration.valueOf("cluster-name=foo")));
 
-    test(EVENT_STRIPE_ADDITION, stripe);
-    test(EVENT_STRIPE_REMOVAL, stripe);
+    test(EVENT_STRIPE_ADDITION, asList(cluster, stripe.getUID()));
+    test(EVENT_STRIPE_REMOVAL, asList(cluster, stripe));
   }
 
   private static void test(Type type, Object payload) throws MessageCodecException {

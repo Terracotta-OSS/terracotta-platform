@@ -23,6 +23,9 @@ public class SettingName {
   public static final String CLUSTER_NAME = "cluster-name";
   public static final String NODE_NAME = "name";
   public static final String STRIPE_NAME = "stripe-name";
+  public static final String NODE_UID = "node-uid";
+  public static final String STRIPE_UID = "stripe-uid";
+  public static final String CLUSTER_UID = "cluster-uid";
   public static final String NODE_HOSTNAME = "hostname";
   public static final String NODE_PUBLIC_HOSTNAME = "public-hostname";
   public static final String NODE_PORT = "port";

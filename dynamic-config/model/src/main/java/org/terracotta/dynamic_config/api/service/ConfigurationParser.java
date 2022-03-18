@@ -219,7 +219,7 @@ class ConfigurationParser {
             defined.forEach(c -> c.apply(o));
             // no need to re-apply after
             configurations.removeAll(defined);
-          } else {
+          } else if (!setting.getProperty(o).isPresent()) {
             Optional<String> def = setting.getDefaultProperty();
             if (def.isPresent()) {
               if (Substitutor.containsSubstitutionParams(def.get())) {
@@ -290,7 +290,7 @@ class ConfigurationParser {
       set = parameterSubstitutor.substitute(set);
     }
     if (set == null) {
-      throw new AssertionError(key + " is null: bad mocking ?");
+      throw new AssertionError(key + " is null: bad mocking ? Default value was: " + setting.getDefaultProperty().orElse(""));
     }
     properties.setProperty(key, set);
   }

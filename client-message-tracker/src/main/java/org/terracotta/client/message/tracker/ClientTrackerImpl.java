@@ -18,33 +18,25 @@ package org.terracotta.client.message.tracker;
 import org.terracotta.entity.StateDumpCollector;
 
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import org.terracotta.entity.ClientSourceId;
 
 class ClientTrackerImpl<M, R> implements ClientTracker<M, R> {
 
-  private final Predicate<?> trackerPolicy;
   private final ConcurrentMap<ClientSourceId, TrackerImpl<M, R>> objectTrackers = new ConcurrentHashMap<>();
 
-  public ClientTrackerImpl(Predicate<?> trackerPolicy) {
-    this.trackerPolicy = trackerPolicy;
+  public ClientTrackerImpl() {
   }
 
-  Stream<RecordedMessage<M, R>> getTrackedValues() {
-    Stream<RecordedMessage<M, R>> base = Stream.empty();
-    for (Entry<ClientSourceId, TrackerImpl<M, R>> t : objectTrackers.entrySet()) {
-      base = Stream.concat(base, t.getValue().getTrackedValues().stream().map(e->convert(t.getKey(), e)));
-    }
-    return base;
+  Stream<SequencedRecordedMessage<M, R>> getTrackedValues() {
+    return objectTrackers.entrySet().stream().flatMap(t->t.getValue().getTrackedValues().stream().map(e->convert(t.getKey(), e)));
   }
 
-  static <M, R> RecordedMessage<M, R> convert(ClientSourceId cid, TrackerImpl.RequestResponse<M, R> rr) {
-    return new RecordedMessage<M, R>() {
+  static <M, R> SequencedRecordedMessage<M, R> convert(ClientSourceId cid, TrackerImpl.RequestResponse<M, R> rr) {
+    return new SequencedRecordedMessage<M, R>() {
       @Override
       public long getSequenceId() {
         return rr.getSequenceId();
@@ -73,7 +65,7 @@ class ClientTrackerImpl<M, R> implements ClientTracker<M, R> {
   }
 
   TrackerImpl<M, R> getTracker(ClientSourceId clientId) {
-    return objectTrackers.computeIfAbsent(clientId, d -> new TrackerImpl<>(trackerPolicy));
+    return objectTrackers.computeIfAbsent(clientId, d -> new TrackerImpl<>());
   }
 
   @Override

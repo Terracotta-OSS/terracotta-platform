@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.testing.TmpDir;
@@ -35,6 +34,9 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 
 public class FileConfigStorageTest {
 
@@ -45,7 +47,12 @@ public class FileConfigStorageTest {
   public void saveAndRetrieve() throws Exception {
     Path root = temporaryFolder.getRoot();
 
-    NodeContext topology = new NodeContext(Testing.newTestCluster("bar", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), 1, "node-1");
+    NodeContext topology = new NodeContext(
+        newTestCluster("bar",
+            newTestStripe("stripe1").addNodes(
+                newTestNode("node-1", "localhost").setUID(Testing.N_UIDS[1]))),
+        Testing.N_UIDS[1]);
+
     Properties properties = Props.load(new StringReader(new String(Files.readAllBytes(Paths.get(getClass().getResource("/config.properties").toURI())), StandardCharsets.UTF_8).replace("\\", "/")));
 
     FileConfigStorage storage = new FileConfigStorage(root, "node-1");

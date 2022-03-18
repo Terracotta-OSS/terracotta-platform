@@ -15,11 +15,9 @@
  */
 package org.terracotta.nomad.messages;
 
-import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadServerMode;
 
 import java.time.Instant;
-import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
@@ -32,7 +30,7 @@ public class DiscoverResponse<T> {
   private final long currentVersion;
   private final long highestVersion;
   private final ChangeDetails<T> latestChange;
-  private final List<NomadChangeInfo> checkpoints;
+  private final ChangeDetails<T> latestCommittedChange;
 
   public DiscoverResponse(NomadServerMode mode,
                           long mutativeMessageCount,
@@ -42,7 +40,7 @@ public class DiscoverResponse<T> {
                           long currentVersion,
                           long highestVersion,
                           ChangeDetails<T> latestChange,
-                          List<NomadChangeInfo> checkpoints) {
+                          ChangeDetails<T> latestCommittedChange) {
     this.mode = requireNonNull(mode);
     this.mutativeMessageCount = mutativeMessageCount;
     this.lastMutationHost = lastMutationHost;
@@ -51,15 +49,11 @@ public class DiscoverResponse<T> {
     this.currentVersion = currentVersion;
     this.highestVersion = highestVersion;
     this.latestChange = latestChange;
-    this.checkpoints = checkpoints;
+    this.latestCommittedChange = latestCommittedChange;
   }
 
   public NomadServerMode getMode() {
     return mode;
-  }
-
-  public List<NomadChangeInfo> getCheckpoints() {
-    return checkpoints;
   }
 
   public long getMutativeMessageCount() {
@@ -86,7 +80,17 @@ public class DiscoverResponse<T> {
     return highestVersion;
   }
 
+  /**
+   * @return The latest entry in Nomad append log or null of none
+   */
   public ChangeDetails<T> getLatestChange() {
     return latestChange;
+  }
+
+  /**
+   * @return The latest entry in Nomad append log that has not been rolled back, or null if none
+   */
+  public ChangeDetails<T> getLatestCommittedChange() {
+    return latestCommittedChange;
   }
 }

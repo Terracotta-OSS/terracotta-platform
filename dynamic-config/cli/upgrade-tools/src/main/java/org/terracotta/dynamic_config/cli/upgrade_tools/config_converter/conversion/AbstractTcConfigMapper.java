@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.config.TCConfigurationParser;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.service.NameGenerator;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ConfigConversionException;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ErrorCode;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ErrorParamKey;
@@ -96,7 +97,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
   }
 
   @Override
-  public Cluster parseConfig(String clusterName, Path... tcConfigPaths) {
+  public Cluster parseConfig(String clusterName, List<String> stripeNames, Path... tcConfigPaths) {
     Map<Integer, Path> configFilePerStripeMap = new HashMap<>();
     Map<Tuple2<Integer, String>, Node> stripeServerConfigNodeMap = new HashMap<>();
     int stripeId = 1;
@@ -112,10 +113,10 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     LOGGER.trace("Validating contents of the configuration files");
     valueValidators();
     LOGGER.trace("Building Cluster");
-    return getCluster(clusterName, stripeServerConfigNodeMap);
+    return getCluster(clusterName, stripeServerConfigNodeMap, stripeNames);
   }
 
-  private void valueValidators() {
+  protected void valueValidators() {
     /*
     Creates a Map of configuration files and Map of namespace, corresponding plugin configuration
      */
@@ -135,7 +136,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     validatePluginConfigurations(validatorsWithParams);
   }
 
-  private Set<String> validateAllConfigurationFilesHaveSamePluginTypes(Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile) {
+  protected Set<String> validateAllConfigurationFilesHaveSamePluginTypes(Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile) {
     AtomicReference<Set<String>> previousSetReference = new AtomicReference<>();
     AtomicReference<Path> previousPath = new AtomicReference<>();
     configAndServiceNodesPerConfigFile.forEach((path, nodeMap) -> {
@@ -158,7 +159,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     return previousSetReference.get();
   }
 
-  private List<Tuple2<Map<Path, Node>, ValidationWrapper>> prepareValidatorsForPluginConfigurations(Set<String> namespaces
+  protected List<Tuple2<Map<Path, Node>, ValidationWrapper>> prepareValidatorsForPluginConfigurations(Set<String> namespaces
       , Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile) {
     List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams = new ArrayList<>();
     namespaces.forEach(namespace -> {
@@ -174,22 +175,22 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     return validatorsWithParams;
   }
 
-  private void validatePluginConfigurations(List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams) {
+  protected void validatePluginConfigurations(List<Tuple2<Map<Path, Node>, ValidationWrapper>> validatorsWithParams) {
     validatorsWithParams.forEach(pair -> pair.getT2().check(pair.getT1()));
   }
 
-  private Node getRootNode(Path configFilePath) throws Exception {
+  protected Node getRootNode(Path configFilePath) throws Exception {
     File configFile = configFilePath.toFile();
     try (FileInputStream in = new FileInputStream(configFile)) {
       return NonSubstitutingTCConfigurationParser.getRootElement(in, classLoader);
     }
   }
 
-  private Node getClonedParentDocNode(Node rootNode) {
+  protected Node getClonedParentDocNode(Node rootNode) {
     return XmlUtility.getClonedParentDocFromRootNode(rootNode);
   }
 
-  private List<String> extractServerNames(Node rootConfigNode) {
+  protected List<String> extractServerNames(Node rootConfigNode) {
     List<String> serverNames = new ArrayList<>();
     for (int i = 0; i < rootConfigNode.getChildNodes().getLength(); i++) {
       Node childNode = rootConfigNode.getChildNodes().item(i);
@@ -207,7 +208,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     return serverNames;
   }
 
-  private String getAttributeValue(Node node, String attributeName, boolean throwException) {
+  protected String getAttributeValue(Node node, String attributeName, boolean throwException) {
     Optional<String> attributeValue = getOptionalAttributeValue(node, attributeName);
     if (attributeValue.isPresent()) {
       return attributeValue.get();
@@ -223,23 +224,23 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     return null;
   }
 
-  private String getAttributeValue(Node node, String attributeName) {
+  protected String getAttributeValue(Node node, String attributeName) {
     return getAttributeValue(node, attributeName, true);
   }
 
-  private void setAttributeValue(Node node, String attributeName, String attributeValue) {
+  protected void setAttributeValue(Node node, String attributeName, String attributeValue) {
     XmlUtility.setAttribute(node, attributeName, attributeValue);
   }
 
-  private void removeNode(Node node, boolean removeEmptyParent) {
+  protected void removeNode(Node node, boolean removeEmptyParent) {
     XmlUtility.removeNode(node, removeEmptyParent);
   }
 
-  private Optional<String> getOptionalAttributeValue(Node node, String attributeName) {
+  protected Optional<String> getOptionalAttributeValue(Node node, String attributeName) {
     return XmlUtility.getAttributeValue(node, attributeName);
   }
 
-  private Map<Path, Map<String, Node>> buildConfigurationFilePluginNodeMap() {
+  protected Map<Path, Map<String, Node>> buildConfigurationFilePluginNodeMap() {
     Map<Path, Map<String, Node>> configAndServiceNodesPerConfigFile = new HashMap<>();
     configFileRootNodeMap.forEach(
         (configFile, rootNode) -> {
@@ -271,11 +272,11 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     return configAndServiceNodesPerConfigFile;
   }
 
-  private Supplier<ValidationWrapper> getValidatorSupplier(String namespace) {
+  protected Supplier<ValidationWrapper> getValidatorSupplier(String namespace) {
     return () -> new ValidationWrapper(TCConfigurationParser.getValidator(URI.create(namespace)));
   }
 
-  private void createServerConfigMapFunction(Map<Tuple2<Integer, String>, Node> stripeServerConfigMapNode, int stripeId, Path configFilePath) {
+  protected void createServerConfigMapFunction(Map<Tuple2<Integer, String>, Node> stripeServerConfigMapNode, int stripeId, Path configFilePath) {
     try {
       if (regularFile(configFilePath)) {
         Node element = getRootNode(configFilePath);
@@ -300,11 +301,11 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     }
   }
 
-  private void handlePlatformPersistence(Map<Path, Node> configurationFileFileRootNodeMap) {
+  protected void handlePlatformPersistence(Map<Path, Node> configurationFileFileRootNodeMap) {
     configurationFileFileRootNodeMap.forEach(handlePlatformPersistencePerConfigurationFile());
   }
 
-  private BiConsumer<Path, Node> handlePlatformPersistencePerConfigurationFile() {
+  protected BiConsumer<Path, Node> handlePlatformPersistencePerConfigurationFile() {
     return (Path configFilePath, Node rootNode) -> {
       Node dataRootNode = null;
       Node platformPersistenceNode = null;
@@ -330,7 +331,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     };
   }
 
-  private void remapPlatformPersistence(Node dataRootNode, Node platformPersistenceNode, Path configFilePath) {
+  protected void remapPlatformPersistence(Node dataRootNode, Node platformPersistenceNode, Path configFilePath) {
     if (platformPersistenceNode != null) {
       if (dataRootNode == null || dataRootNode.getChildNodes().getLength() == 0) {
         throw new InvalidInputConfigurationContentException(
@@ -364,7 +365,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     }
   }
 
-  private void checkUniqueServerNamesInStripe(List<String> serverNames, int stripeId, Path configFilePath) {
+  protected void checkUniqueServerNamesInStripe(List<String> serverNames, int stripeId, Path configFilePath) {
     Collection<String> duplicates = serverNames.stream()
         .collect(groupingBy(identity(), counting()))
         .entrySet().stream()
@@ -388,7 +389,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
   /*
    * Validates if the configuration files provided are indeed part of existing valid cluster
    */
-  private void validateProvidedConfiguration(Map<Tuple2<Integer, String>, Node> hostConfigMapNode, List<String> allServers) {
+  protected void validateProvidedConfiguration(Map<Tuple2<Integer, String>, Node> hostConfigMapNode, List<String> allServers) {
     List<String> serversInAllStripesAsInput = hostConfigMapNode.keySet()
         .stream()
         .map(Tuple2::getT2)
@@ -425,7 +426,7 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
     }
   }
 
-  private Collection<String> mismatchedServers(Map<Tuple2<Integer, String>, Node> hostConfigMapNode, List<String> allServers) {
+  protected Collection<String> mismatchedServers(Map<Tuple2<Integer, String>, Node> hostConfigMapNode, List<String> allServers) {
     return hostConfigMapNode.keySet().stream()
         .map(pair -> {
           String serverName = pair.getT2();
@@ -435,11 +436,11 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
         .collect(toList());
   }
 
-  private boolean regularFile(Path path) {
+  protected boolean regularFile(Path path) {
     return Files.isRegularFile(path);
   }
 
-  private Cluster getCluster(String clusterName, Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap) {
+  protected Cluster getCluster(String clusterName, Map<Tuple2<Integer, String>, Node> nodeNameNodeConfigMap, List<String> stripeNames) {
     validateProvidedConfiguration(nodeNameNodeConfigMap, allServers);
     /* We want to eventually create cluster object so we can remove repeated parsing since all servers
      in same stripe will have same stripe level configuration. */
@@ -456,17 +457,32 @@ public abstract class AbstractTcConfigMapper implements TcConfigMapper {
       Node doc = entry.getValue();
       try {
         String xml = XmlUtility.getPrettyPrintableXmlString(doc);
-        // set stripe names to match what the user is used to see currently
         Cluster stripe = getStripe(xml);
-        stripe.getSingleStripe().get().setName("stripe[" + stripes.size() + "]");
         stripes.add(stripe);
       } catch (TransformerException e) {
         throw new RuntimeException(e);
       }
     }
-    return stripes.stream().reduce((result, stripe) -> result
+    final Cluster cluster = stripes.stream().reduce((result, stripe) -> result
         .addStripe(stripe.getSingleStripe().get().clone())) // getSingleStripe() because conversion of xml -> model is for 1 stripe only
         .orElseThrow(() -> new RuntimeException("No server specified."))
         .setName(clusterName);
+
+    // add UIDs
+    cluster.setUID(cluster.newUID());
+    cluster.getStripes().forEach(stripe -> {
+      stripe.setUID(cluster.newUID());
+      stripe.getNodes().forEach(node -> node.setUID(cluster.newUID()));
+    });
+
+    // assign stripe names based on user input
+    for (int i = 0, max = Math.min(cluster.getStripeCount(), stripeNames.size()); i < max; i++) {
+      cluster.getStripes().get(i).setName(stripeNames.get(i));
+    }
+
+    // for remaining names not assigned, generate them
+    NameGenerator.assignFriendlyNames(cluster);
+
+    return cluster;
   }
 }

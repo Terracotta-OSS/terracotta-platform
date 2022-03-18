@@ -16,10 +16,8 @@
 package org.terracotta.dynamic_config.api.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
@@ -53,11 +51,10 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.startsWith;
-import static org.mockito.Mockito.lenient;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 /**
@@ -66,28 +63,53 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterFactoryTest {
 
+  private static final String securityDirError = "Within a cluster, all nodes must have a security root directory defined or no security root directory defined";
+  private static final String minimumSecurityError = "When security root directories are configured across the cluster at least one of authc, ssl-tls or whitelist must also be configured";
+  private static final String certificateSslTlsError = "When authc=certificate ssl-tls must be configured";
+  private static final String securityDisallowedError = "When no security root directories are configured all other security settings should also be unconfigured (unset)";
+  private static final String auditLogDirError = "Within a cluster, all nodes must have an audit log directory defined or no audit log directory defined";
+  private static final String auditLogDirDisallowedError = "When no security root directories are configured audit-log-dir should also be unconfigured (unset) for all nodes in the cluster";
+
   private final ClusterFactory clusterFactory = new ClusterFactory();
 
-  @Mock public IParameterSubstitutor substitutor;
+  public IParameterSubstitutor substitutor = source -> {
+    if (source == null) {
+      return null;
+    }
+    switch (source) {
+      case "%h":
+        return "localhost";
+      case "%c":
+        return "localhost.home";
+      case "%H":
+        return "home";
+      default:
+        return source;
+    }
+  };
 
   ObjectMapper json = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
-  Cluster cluster = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
+  Cluster cluster = Testing.newTestCluster("my-cluster", newTestStripe("stripe1").setUID(Testing.S_UIDS[1]).addNodes(
       Testing.newTestNode("node-1", "localhost1")
+          .setUID(Testing.N_UIDS[1])
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
       Testing.newTestNode("node-2", "localhost2")
+          .setUID(Testing.N_UIDS[2])
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
           .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
+      .setUID(Testing.C_UIDS[0])
       .setFailoverPriority(consistency(2))
       .putOffheapResource("foo", 1, MemoryUnit.GB)
       .putOffheapResource("bar", 2, MemoryUnit.GB);
 
-  Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", new Stripe().setName("stripe1").addNodes(
+  Cluster clusterWithDefaults = Testing.newTestCluster("my-cluster", newTestStripe("stripe1").setUID(Testing.S_UIDS[1]).addNodes(
       Testing.newTestNode("node-1", "localhost1")
+          .setUID(Testing.N_UIDS[1])
           .setPort(9410)
           .setGroupPort(9430)
           .setBindAddress("0.0.0.0")
@@ -98,6 +120,7 @@ public class ClusterFactoryTest {
           .putDataDir("foo", RawPath.valueOf("%H/tc1/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc1/bar")),
       Testing.newTestNode("node-2", "localhost2")
+          .setUID(Testing.N_UIDS[2])
           .setPort(9410)
           .setGroupPort(9430)
           .setBindAddress("0.0.0.0")
@@ -108,6 +131,7 @@ public class ClusterFactoryTest {
           .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
           .setTcProperties(emptyMap()))) // specifically set the map to empty one by teh user
+      .setUID(Testing.C_UIDS[0])
       .setSecuritySslTls(false)
       .setSecurityWhitelist(false)
       .setClientReconnectWindow(120, TimeUnit.SECONDS)
@@ -116,36 +140,23 @@ public class ClusterFactoryTest {
       .putOffheapResource("foo", 1, MemoryUnit.GB)
       .putOffheapResource("bar", 2, MemoryUnit.GB);
 
-  @Before
-  public void setUp() {
-    lenient().when(substitutor.substitute("%h")).thenReturn("localhost");
-    lenient().when(substitutor.substitute("%c")).thenReturn("localhost.home");
-    lenient().when(substitutor.substitute("%H")).thenReturn("home");
-    lenient().when(substitutor.substitute("foo")).thenReturn("foo");
-    lenient().when(substitutor.substitute(startsWith("node-"))).thenReturn("<GENERATED>");
-    lenient().when(substitutor.substitute(startsWith("stripe-"))).thenReturn("<GENERATED>");
-    lenient().when(substitutor.substitute("9410")).thenReturn("9410");
-    lenient().when(substitutor.substitute("")).thenReturn("");
-    lenient().when(substitutor.substitute("availability")).thenReturn("availability");
-  }
-
   @Test
   public void test_create_cli() {
-    assertCliEquals(cli("failover-priority=availability"), Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "localhost.home"))));
-    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Testing.newTestCluster(new Stripe().setName("<GENERATED>").addNodes(Testing.newTestNode("<GENERATED>", "foo"))));
+    assertCliEquals(cli("failover-priority=availability"), Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "localhost"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "localhost.home"))));
+    assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "foo"))));
   }
 
   @Test
   public void test_create_cli_validated() {
-    assertCliFail(cli("failover-priority=availability", "ssl-tls=false", "authc=certificate"), "ssl-tls is required for authc=certificate");
-    assertCliFail(cli("failover-priority=availability", "ssl-tls=true", "authc=certificate"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "ssl-tls=true"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "authc=file"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "authc=ldap"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "audit-log-dir=foo"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "whitelist=true"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "security-dir=foo"), "One of ssl-tls, authc, or whitelist is required for security configuration");
+    assertCliFail(cli("failover-priority=availability", "ssl-tls=false", "authc=certificate"), securityDisallowedError);
+    assertCliFail(cli("failover-priority=availability", "ssl-tls=true", "authc=certificate"), securityDisallowedError);
+    assertCliFail(cli("failover-priority=availability", "ssl-tls=true"), securityDisallowedError);
+    assertCliFail(cli("failover-priority=availability", "authc=file"), securityDisallowedError);
+    assertCliFail(cli("failover-priority=availability", "authc=ldap"), securityDisallowedError);
+    assertCliFail(cli("failover-priority=availability", "audit-log-dir=foo"), auditLogDirDisallowedError);
+    assertCliFail(cli("failover-priority=availability", "whitelist=true"), securityDisallowedError);
+    assertCliFail(cli("failover-priority=availability", "security-dir=foo"), minimumSecurityError);
   }
 
   @Test
@@ -159,7 +170,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.hostname=localhost",
             "stripe.1.node.1.hostname=foo"
         ),
-        Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("real", "foo"))));
+        Testing.newTestCluster(newTestStripe("stripe1").addNodes(Testing.newTestNode("real", "foo"))));
 
     assertConfigEquals(
         config(
@@ -169,7 +180,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.hostname=localhost",
             "lock-context=a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale"
         ),
-        Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost"))).setConfigurationLockContext(LockContext.from("a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale")));
+        Testing.newTestCluster(newTestStripe("stripe1").addNodes(Testing.newTestNode("node1", "localhost"))).setConfigurationLockContext(LockContext.from("a4684c73-a96c-46c1-834d-3843014f50af;platform;dynamic-scale")));
 
     assertConfigEquals(
         config(
@@ -178,7 +189,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.name=node1",
             "stripe.1.node.1.hostname=localhost"
         ),
-        Testing.newTestCluster(new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost"))));
+        Testing.newTestCluster(newTestStripe("stripe1").addNodes(Testing.newTestNode("node1", "localhost"))));
 
     assertConfigEquals(
         config(
@@ -195,10 +206,10 @@ public class ClusterFactoryTest {
             "stripe.2.node.2.hostname=localhost4"
         ),
         Testing.newTestCluster(
-            new Stripe().setName("stripe1").addNodes(
+            newTestStripe("stripe1").addNodes(
                 Testing.newTestNode("node1", "localhost1"),
                 Testing.newTestNode("node2", "localhost2")),
-            new Stripe().setName("stripe2").addNodes(
+            newTestStripe("stripe2", Testing.S_UIDS[2]).addNodes(
                 Testing.newTestNode("node3", "localhost3"),
                 Testing.newTestNode("node4", "localhost4"))
         ));
@@ -212,7 +223,7 @@ public class ClusterFactoryTest {
             "failover-priority=availability",
             "stripe.1.node.1.tc-properties="
         ),
-        Testing.newTestCluster("foo", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost").setTcProperties(emptyMap()))));
+        Testing.newTestCluster("foo", newTestStripe("stripe1").addNodes(Testing.newTestNode("node1", "localhost").setTcProperties(emptyMap()))));
 
     assertConfigEquals(
         config(
@@ -235,7 +246,7 @@ public class ClusterFactoryTest {
             "stripe.1.node.1.tc-properties=",
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
-        Testing.newTestCluster("foo", new Stripe().setName("stripe1").addNodes(Testing.newTestNode("node1", "localhost")
+        Testing.newTestCluster("foo", newTestStripe("stripe1").addNodes(Testing.newTestNode("node1", "localhost")
             .setPort(9410)
             .setGroupPort(9430)
             .setBindAddress("0.0.0.0")
@@ -258,29 +269,38 @@ public class ClusterFactoryTest {
   public void test_create_config_validated() {
     // security
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "ssl-tls=false", "authc=certificate"),
-        "ssl-tls is required for authc=certificate");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+                "ssl-tls=false", "authc=certificate"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "ssl-tls=true", "authc=certificate"),
-        "security-dir is mandatory for any of the security configuration");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+                "ssl-tls=true", "authc=certificate"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "ssl-tls=true"),
-        "security-dir is mandatory for any of the security configuration");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+                "ssl-tls=true"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "authc=file"),
-        "security-dir is mandatory for any of the security configuration");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+                "authc=file"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "authc=ldap"),
-        "security-dir is mandatory for any of the security configuration");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+                "authc=ldap"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "stripe.1.node.1.audit-log-dir=foo"),
-        "security-dir is mandatory for any of the security configuration");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+                "stripe.1.node.1.audit-log-dir=foo"), auditLogDirDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "whitelist=true"),
-        "security-dir is mandatory for any of the security configuration");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+                "whitelist=true"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "stripe.1.node.1.security-dir=foo"),
-        "One of ssl-tls, authc, or whitelist is required for security configuration");
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+                "stripe.1.node.1.security-dir=foo"),  minimumSecurityError);
+    assertConfigFail(
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+                "stripe.1.node.1.security-dir=foo", "ssl-tls=false", "authc=certificate"), certificateSslTlsError);
+    assertConfigFail(
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost1", "stripe.1.node.2.hostname=localhost2",
+                "stripe.1.node.1.security-dir=foo"), securityDirError);
+    assertConfigFail(
+        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost1", "stripe.1.node.2.hostname=localhost2",
+                "stripe.1.node.1.security-dir=foo", "stripe.1.node.2.security-dir=foo", "whitelist=true", "stripe.1.node.1.audit-log-dir=foo"), auditLogDirError);
 
     // duplicate node name
     assertConfigFail(
@@ -341,7 +361,7 @@ public class ClusterFactoryTest {
     Cluster fromJson = json.readValue(read("/config2.json"), Cluster.class);
     Cluster fromProps = new ClusterFactory().create(props);
 
-    assertThat(fromJson, is(equalTo(fromProps)));
+    assertThat(json.writeValueAsString(fromProps), fromProps, is(equalTo(fromJson)));
     assertThat(
         Props.toString(fromJson.toProperties(false, false, true)),
         fromJson.toProperties(false, false, true),
@@ -359,10 +379,10 @@ public class ClusterFactoryTest {
   @Test
   public void test_mapping_props_json_with_defaults() throws URISyntaxException, IOException {
     Properties props = Props.load(read("/config1_with_defaults.properties"));
-    Cluster fromJson = json.readValue(read("/config1.json"), Cluster.class);
     Cluster fromProps = new ClusterFactory().create(props);
+    Cluster fromJson = json.readValue(read("/config1.json"), Cluster.class);
 
-    assertThat(fromJson, is(equalTo(fromProps)));
+    assertThat(json.writeValueAsString(fromProps), fromProps, is(equalTo(fromJson)));
     assertThat(
         Props.toString(fromJson.toProperties(false, true, true)),
         fromJson.toProperties(false, true, true),
@@ -407,23 +427,16 @@ public class ClusterFactoryTest {
     return props;
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
-  private void assertCliEquals(Map<Setting, String> params, Cluster cluster) {
+  private void assertCliEquals(Map<Setting, String> params, Cluster expectedCluster) {
+    Testing.resetRequiredUIDs(expectedCluster, Testing.A_UID);
+    Testing.resetRequiredNames(expectedCluster, "<GENERATED>");
+
     Cluster built = clusterFactory.create(params, substitutor);
 
-    // since node name is generated when not given,
-    // this is a hack that will reset to null only the node names that have been generated
-    String nodeName = built.getSingleNode().get().getName();
-    cluster.getStripes()
-        .stream()
-        .filter(stripe -> "<GENERATED>".equals(stripe.getName()))
-        .forEach(stripe -> stripe.setName(nodeName));
-    cluster.getNodes()
-        .stream()
-        .filter(node -> "<GENERATED>".equals(node.getName()))
-        .forEach(node -> node.setName(nodeName));
+    Testing.replaceRequiredUIDs(built, Testing.A_UID);
+    Testing.replaceRequiredNames(built, "<GENERATED>");
 
-    assertThat(built, is(equalTo(cluster)));
+    assertThat(built, is(equalTo(expectedCluster)));
   }
 
   private void assertCliFail(Map<Setting, String> params, String err) {
@@ -432,9 +445,16 @@ public class ClusterFactoryTest {
         is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
   }
 
-  private void assertConfigEquals(Properties config, Cluster cluster) {
+  private void assertConfigEquals(Properties config, Cluster expectedCluster) {
+    Testing.resetRequiredUIDs(expectedCluster, Testing.A_UID);
+    Testing.resetRequiredNames(expectedCluster, "<GENERATED>");
+
     Cluster built = clusterFactory.create(config);
-    assertThat(built, is(equalTo(cluster)));
+
+    Testing.replaceRequiredUIDs(built, Testing.A_UID);
+    Testing.replaceRequiredNames(built, "<GENERATED>");
+
+    assertThat(built, is(equalTo(expectedCluster)));
   }
 
   private void assertConfigFail(Properties config, String err) {

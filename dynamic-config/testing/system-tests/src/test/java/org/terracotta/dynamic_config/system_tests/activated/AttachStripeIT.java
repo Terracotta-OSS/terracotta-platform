@@ -15,12 +15,20 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
+import com.terracotta.connection.api.TerracottaConnectionService;
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.UID;
+import org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity;
+import org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntityFactory;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -46,7 +54,7 @@ public class AttachStripeIT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     //Activate cluster
     activateCluster();
@@ -65,10 +73,10 @@ public class AttachStripeIT extends DynamicConfigIT {
     startNode(2, 2);
     waitForDiagnostic(2, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 2)).getNodeCount(), is(equalTo(1)));
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
 
     // attach the new stripe to the activated 1x2 cluster to form a 2x2 cluster
-    assertThat(invokeConfigTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+    assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
     waitForNPassives(2, 1);
 
     // verify the #nodes in the new topology of the cluster
@@ -88,5 +96,38 @@ public class AttachStripeIT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getStripe(2).get().getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getStripe(1).get().getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(2, 2)).getStripe(1).get().getNodeCount(), is(equalTo(2)));
+  }
+
+  @Test
+  public void test_topology_entity_callback_onStripeAddition() throws Exception {
+    startNode(2, 1);
+    waitForDiagnostic(2, 1);
+    startNode(2, 2);
+    waitForDiagnostic(2, 2);
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
+
+    final int activeId = findActive(1).getAsInt();
+
+    try (DynamicTopologyEntity dynamicTopologyEntity = DynamicTopologyEntityFactory.fetch(
+        new TerracottaConnectionService(),
+        Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort(1, activeId))),
+        "dynamic-config-topology-entity",
+        getConnectionTimeout(),
+        new DynamicTopologyEntity.Settings(),
+        null)) {
+
+      CountDownLatch called = new CountDownLatch(1);
+
+      dynamicTopologyEntity.setListener(new DynamicTopologyEntity.Listener() {
+        @Override
+        public void onStripeAddition(Cluster cluster, UID addedStripeUID) {
+          called.countDown();
+        }
+      });
+
+      assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+
+      called.await();
+    }
   }
 }

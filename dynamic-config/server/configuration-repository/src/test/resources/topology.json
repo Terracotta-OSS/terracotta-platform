@@ -2,7 +2,7 @@
   "cluster": {
     "stripes": [
       {
-        "name": "stripe[0]",
+        "name": "Dog",
         "nodes": [
           {
             "dataDirs": {
@@ -11,15 +11,16 @@
             "hostname": "localhost",
             "logDir": "%H/terracotta/default-node1/logs",
             "metadataDir": "%H/terracotta/default-node1/metadata",
-            "name": "default-node1"
+            "name": "default-node1",
+            "uid": "9sxnw7nFQ1u0-mtl7ltwLw"
           }
-        ]
+        ],
+        "uid": "LQ230GdvTjmFewWXxB116A"
       }
     ],
     "failoverPriority": "availability",
-    "name": "tc-cluster"
+    "name": "tc-cluster",
+    "uid": "Mu5eq_w_RrSUBzaEDhYvRA"
   },
-  "nodeName": "default-node1",
-  "stripeId": 1,
-  "nodeId": 1
+  "nodeUID": "9sxnw7nFQ1u0-mtl7ltwLw"
 }

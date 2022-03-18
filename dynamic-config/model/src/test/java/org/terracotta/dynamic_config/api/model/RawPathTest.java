@@ -28,6 +28,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 
 /**
  * @author Mathieu Carbou
@@ -58,14 +60,14 @@ public class RawPathTest {
   @Test
   public void test_props_and_json() throws JsonProcessingException {
     Node node = Testing.newTestNode("foo", "localhost").setLogDir(RawPath.valueOf("a\\b"));
-    Cluster cluster = new Cluster().setName("c").addStripe(new Stripe().setName("s").addNode(node));
+    Cluster cluster = newTestCluster("c", newTestStripe("s").addNode(node));
 
     Properties properties = cluster.toProperties(false, false, true);
     assertTrue(properties.containsKey("stripe.1.node.1.log-dir"));
     assertThat(properties.getProperty("stripe.1.node.1.log-dir"), is(equalTo("a\\b")));
 
-    String expectedJson = "{\"stripes\":[{\"name\":\"s\",\"nodes\":[{\"hostname\":\"localhost\",\"logDir\":\"a\\\\b\",\"name\":\"foo\"}]}],\"name\":\"c\"}";
-    assertThat(om.writeValueAsString(cluster), is(equalTo(expectedJson)));
+    String expectedJson = "{\"stripes\":[{\"name\":\"s\",\"nodes\":[{\"hostname\":\"localhost\",\"logDir\":\"a\\\\b\",\"name\":\"foo\",\"uid\":\"jUhhu1kRQd-x6iNgpo9Xyw\"}],\"uid\":\"5Zv3uphiRLavoGZthy7JNg\"}],\"failoverPriority\":\"availability\",\"name\":\"c\",\"uid\":\"YLQguzhRSdS6y5M9vnA5mw\"}";
+    assertThat(om.writeValueAsString(cluster), om.writeValueAsString(cluster), is(equalTo(expectedJson)));
     assertThat(om.readValue(expectedJson, Cluster.class), is(equalTo(cluster)));
     assertThat(om.readValue(expectedJson, Cluster.class).toProperties(false, false, true), is(equalTo(properties)));
   }

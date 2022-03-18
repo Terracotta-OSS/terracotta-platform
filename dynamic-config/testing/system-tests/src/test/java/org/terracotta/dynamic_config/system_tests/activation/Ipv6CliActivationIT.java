@@ -19,6 +19,10 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+
 @ClusterDefinition(nodesPerStripe = 2)
 public class Ipv6CliActivationIT extends DynamicConfigIT {
 
@@ -44,7 +48,7 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
   public void testSingleNodeStartupFromCliParamsAndActivateCommand() {
     waitForDiagnostic(1, 1);
 
-    invokeConfigTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
+    assertThat(configTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
 
     waitForActive(1);
   }
@@ -54,9 +58,9 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
     waitForDiagnostic(1, 1);
     waitForDiagnostic(1, 2);
 
-    invokeConfigTool("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2)), is(successful()));
 
-    invokeConfigTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
+    assertThat(configTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
 
     waitForActive(1);
     waitForPassives(1);

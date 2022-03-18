@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.api.json;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
@@ -25,30 +24,38 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.terracotta.common.struct.json.StructJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.DefaultApplicability;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.inet.json.InetJsonModule;
 import org.terracotta.json.TerracottaJsonModule;
+import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.json.NomadJsonModule;
+import org.terracotta.nomad.server.ChangeRequestState;
 
-import java.net.InetSocketAddress;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static java.util.Arrays.asList;
 
@@ -71,11 +78,14 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
         new NamedType(StripeAdditionNomadChange.class, "StripeAdditionNomadChange"),
         new NamedType(StripeRemovalNomadChange.class, "StripeRemovalNomadChange"),
         new NamedType(LockAwareDynamicConfigNomadChange.class, "LockAwareDynamicConfigNomadChange"),
-        new NamedType(FormatUpgradeNomadChange.class, "FormatUpgradeNomadChange")
+        new NamedType(FormatUpgradeNomadChange.class, "FormatUpgradeNomadChange"),
+        new NamedType(LockConfigNomadChange.class, "LockConfigNomadChange"),
+        new NamedType(UnlockConfigNomadChange.class, "UnlockConfigNomadChange")
     );
 
-    setMixInAnnotation(NodeNomadChange.class, NodeNomadChangeMixin.class);
-    setMixInAnnotation(Applicability.class, ApplicabilityMixin.class);
+    addAbstractTypeMapping(Applicability.class, DefaultApplicability.class);
+
+    setMixInAnnotation(DefaultApplicability.class, DefaultApplicabilityMixin.class);
     setMixInAnnotation(ClusterActivationNomadChange.class, ClusterActivationNomadChangeMixin.class);
     setMixInAnnotation(MultiSettingNomadChange.class, MultiSettingNomadChangeMixin.class);
     setMixInAnnotation(NodeAdditionNomadChange.class, NodeAdditionNomadChangeMixin.class);
@@ -85,6 +95,9 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
     setMixInAnnotation(StripeRemovalNomadChange.class, StripeRemovalNomadChangeMixin.class);
     setMixInAnnotation(LockAwareDynamicConfigNomadChange.class, LockAwareDynamicConfigNomadChangeMixIn.class);
     setMixInAnnotation(FormatUpgradeNomadChange.class, FormatUpgradeNomadChangeMixIn.class);
+    setMixInAnnotation(LockConfigNomadChange.class, LockConfigNomadChangeMixIn.class);
+    setMixInAnnotation(UnlockConfigNomadChange.class, UnlockConfigNomadChangeMixIn.class);
+    setMixInAnnotation(NomadChangeInfo.class, NomadChangeInfoMixin.class);
   }
 
   @Override
@@ -99,24 +112,11 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
         new DynamicConfigModelJsonModule());
   }
 
-  public static abstract class NodeNomadChangeMixin extends NodeNomadChange {
-    public NodeNomadChangeMixin(Cluster updated, int stripeId, Node node) {
-      super(updated, stripeId, node);
-    }
-
-    @JsonIgnore
-    @Override
-    public InetSocketAddress getNodeAddress() {
-      return super.getNodeAddress();
-    }
-  }
-
-  public static class ApplicabilityMixin extends Applicability {
-    @JsonCreator
-    protected ApplicabilityMixin(@JsonProperty(value = "level", required = true) Scope level,
-                                 @JsonProperty("stripeId") Integer stripeId,
-                                 @JsonProperty("nodeName") String nodeName) {
-      super(level, stripeId, nodeName);
+  public static class DefaultApplicabilityMixin extends DefaultApplicability {
+    public DefaultApplicabilityMixin(@JsonProperty(value = "level", required = true) Scope level,
+                                     @JsonProperty("stripeUID") UID stripeUID,
+                                     @JsonProperty("nodeUID") UID nodeUID) {
+      super(level, stripeUID, nodeUID);
     }
   }
 
@@ -137,30 +137,18 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
   public static class NodeAdditionNomadChangeMixin extends NodeAdditionNomadChange {
     @JsonCreator
     public NodeAdditionNomadChangeMixin(@JsonProperty(value = "cluster", required = true) Cluster cluster,
-                                        @JsonProperty(value = "stripeId", required = true) int stripeId,
+                                        @JsonProperty(value = "stripeUID", required = true) UID stripeUID,
                                         @JsonProperty(value = "node", required = true) Node node) {
-      super(cluster, stripeId, node);
-    }
-
-    @JsonIgnore
-    @Override
-    public InetSocketAddress getNodeAddress() {
-      return super.getNodeAddress();
+      super(cluster, stripeUID, node);
     }
   }
 
   public static class NodeRemovalNomadChangeMixin extends NodeRemovalNomadChange {
     @JsonCreator
     public NodeRemovalNomadChangeMixin(@JsonProperty(value = "cluster", required = true) Cluster cluster,
-                                       @JsonProperty(value = "stripeId", required = true) int stripeId,
+                                       @JsonProperty(value = "stripeUID", required = true) UID stripeUID,
                                        @JsonProperty(value = "node", required = true) Node node) {
-      super(cluster, stripeId, node);
-    }
-
-    @JsonIgnore
-    @Override
-    public InetSocketAddress getNodeAddress() {
-      return super.getNodeAddress();
+      super(cluster, stripeUID, node);
     }
   }
 
@@ -202,8 +190,37 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
   public static class FormatUpgradeNomadChangeMixIn extends FormatUpgradeNomadChange {
     @JsonCreator
     public FormatUpgradeNomadChangeMixIn(@JsonProperty(value = "from", required = true) Version from,
-                                         @JsonProperty(value = "to", required = true) Version to) {
-      super(from, to);
+                                         @JsonProperty(value = "to", required = true) Version to,
+                                         @JsonProperty(value = "cluster", required = true) Cluster cluster) {
+      super(from, to, cluster);
+    }
+  }
+
+  public static class LockConfigNomadChangeMixIn extends LockConfigNomadChange {
+    @JsonCreator
+    public LockConfigNomadChangeMixIn(@JsonProperty(value = "lockContext", required = true) LockContext lockContext) {
+      super(lockContext);
+    }
+  }
+
+  public static class UnlockConfigNomadChangeMixIn extends UnlockConfigNomadChange {
+    @JsonCreator
+    public UnlockConfigNomadChangeMixIn(@JsonProperty(value = "forced", required = true) boolean forced) {
+      super(forced);
+    }
+  }
+
+  public static class NomadChangeInfoMixin extends NomadChangeInfo {
+    @JsonCreator
+    public NomadChangeInfoMixin(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
+                                @JsonProperty(value = "nomadChange", required = true) NomadChange nomadChange,
+                                @JsonProperty(value = "changeRequestState", required = true) ChangeRequestState changeRequestState,
+                                @JsonProperty(value = "version", required = true) long version,
+                                @JsonProperty(value = "creationHost", required = true) String creationHost,
+                                @JsonProperty(value = "creationUser", required = true) String creationUser,
+                                @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp,
+                                @JsonProperty(value = "changeResultHash", required = true) String changeResultHash) {
+      super(changeUuid, nomadChange, changeRequestState, version, creationHost, creationUser, creationTimestamp, changeResultHash);
     }
   }
 }

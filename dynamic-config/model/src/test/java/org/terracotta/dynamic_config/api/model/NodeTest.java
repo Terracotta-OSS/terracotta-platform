@@ -54,7 +54,7 @@ public class NodeTest {
 
   @Test
   public void test_clone() {
-    assertThat(new Node(), is(equalTo(new Node().clone())));
+    assertThat(new Node().setUID(Testing.N_UIDS[1]), is(equalTo(new Node().setUID(Testing.N_UIDS[1]).clone())));
     assertThat(node, is(equalTo(node.clone())));
     assertThat(node.hashCode(), is(equalTo(node.clone().hashCode())));
   }
@@ -96,22 +96,6 @@ public class NodeTest {
 
     assertThat(
         newTestNode("node1", "localhost").setPublicHostname("foo").setPublicPort(1234).getPublicAddress().get(),
-        is(equalTo(InetSocketAddress.createUnresolved("foo", 1234))));
-  }
-
-  @Test
-  public void test_getNodeAddress() {
-    assertThat(
-        newTestNode("node1", "localhost").getAddress(),
-        is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
-    assertThat(
-        newTestNode("node1", "localhost").setPublicHostname("foo").getAddress(),
-        is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
-    assertThat(
-        newTestNode("node1", "localhost").setPublicPort(1234).getAddress(),
-        is(equalTo(InetSocketAddress.createUnresolved("localhost", 9410))));
-    assertThat(
-        newTestNode("node1", "localhost").setPublicHostname("foo").setPublicPort(1234).getAddress(),
         is(equalTo(InetSocketAddress.createUnresolved("foo", 1234))));
   }
 

@@ -24,7 +24,6 @@ import org.terracotta.entity.StateDumpable;
 
 import com.tc.classloader.CommonComponent;
 
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
@@ -59,16 +58,18 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
    * @return a stream of tracked client sources
    */
   Stream<ClientSourceId> getTrackedClients();
-
   /**
-   * Get all message id - response mappings for the given {@code clientSourceId} in the given segment.
-   *  Deprecated for future use.  Use getRecordedMessagesForSegment instead
-   * @param index the segment index
-   * @param clientSourceId a client descriptor
-   * @return a map with message id - response mappings
+   * lookup of duplicates has closed and will no longer occur
    */
-  @Deprecated
-  Map<Long, R> getTrackedResponsesForSegment(int index, ClientSourceId clientSourceId);
+  void closeDuplicatesWindow();
+  /**
+   * Lookup a response for a transaction for a client on a particular segment.
+   *
+   * @param src client source of the transaction
+   * @param txn the transaction id of the message
+   * @return response for the tracked message if available
+   */
+  R lookupResponse(ClientSourceId src, long txn);
 
   /**
    * Get a stream of tracked messages ordered by sequence id - Order is important so replay is
@@ -84,20 +85,6 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
    * @param recorded - a stream of recorded messages
    */
   void loadRecordedMessages(Stream<RecordedMessage<M, R>> recorded);
-  /**
-   * Bulk load a set of message ids, response mappings for the given client descriptor  in the given segment.
-   * To be used by a passive entity when the active syncs its message tracker data.
-   *
-   * @param index a segment index
-   * @param clientSourceId a client descriptor
-   * @param trackedResponses a map of message id, response mappings
-   */
-  @Deprecated
-  void loadTrackedResponsesForSegment(int index, ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
-
-  @Deprecated
-  void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
-
   /**
    * Destroys the {@code OOOMessageHandler}
    */

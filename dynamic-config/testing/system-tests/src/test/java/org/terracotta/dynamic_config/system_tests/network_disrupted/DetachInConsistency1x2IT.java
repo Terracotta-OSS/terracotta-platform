@@ -22,6 +22,7 @@ import org.terracotta.angela.client.net.ClientToServerDisruptor;
 import org.terracotta.angela.client.net.ServerToServerDisruptor;
 import org.terracotta.angela.client.net.SplitCluster;
 import org.terracotta.angela.client.support.junit.NodeOutputRule;
+import org.terracotta.angela.common.tcconfig.ServerSymbolicName;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -29,11 +30,13 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false, netDisruptionEnabled = true)
@@ -42,7 +45,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
   public final NodeOutputRule out = new NodeOutputRule();
 
   public DetachInConsistency1x2IT() {
-    super(Duration.ofSeconds(180));
+    super(Duration.ofSeconds(300));
   }
 
   @Override
@@ -64,7 +67,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
     setClientServerDisruptionLinks(Collections.singletonMap(1, 2));
 
     //attach the second node
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     setServerDisruptionLinks(Collections.singletonMap(1, 2));
     activateCluster();
@@ -88,11 +91,12 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
       waitForServerBlocked(passive);
 
       assertThat(
-          () -> invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
-          exceptionMatcher("Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update."));
+          configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+          containsOutput("Please ensure all online nodes are either ACTIVE or PASSIVE before sending any update."));
 
       //stop partition
       disruptor.undisrupt();
+      waitForPassive(1, passiveId);
     }
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
@@ -110,6 +114,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
     TerracottaServer passive = angela.tsa().getPassive();
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passive);
+    Map<ServerSymbolicName, Integer> map = angela.tsa().updateToProxiedPorts();
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
@@ -122,7 +127,8 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
       try (ClientToServerDisruptor clientToServerDisruptor = angela.tsa().disruptionController().newClientToServerDisruptor()) {
         clientToServerDisruptor.disrupt(Collections.singletonList(passive.getServerSymbolicName()));
-        assertThat(invokeConfigTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        int publicPortForActive = map.get(active.getServerSymbolicName());
+        assertThat(configTool("detach", "-f", "-d", "localhost:" + publicPortForActive, "-s", "localhost:" + getNodePort(1, passiveId)),
             is(successful()));
         clientToServerDisruptor.undisrupt(Collections.singletonList(passive.getServerSymbolicName()));
       }

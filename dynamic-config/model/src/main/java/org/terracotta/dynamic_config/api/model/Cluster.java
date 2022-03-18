@@ -19,34 +19,41 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.dynamic_config.api.model.Node.Endpoint;
+import org.terracotta.dynamic_config.api.service.Props;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Properties;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.Objects.requireNonNull;
+import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static java.util.stream.IntStream.rangeClosed;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.of;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
-import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
@@ -56,6 +63,7 @@ import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_WHITELIST
 public class Cluster implements Cloneable, PropertyHolder {
   private List<Stripe> stripes;
 
+  private UID uid;
   private String name;
   private LockContext lockContext;
   private Measure<TimeUnit> clientReconnectWindow;
@@ -79,8 +87,19 @@ public class Cluster implements Cloneable, PropertyHolder {
     return CLUSTER;
   }
 
-  public OptionalConfig<String> getName() {
-    return OptionalConfig.of(CLUSTER_NAME, name);
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public UID getUID() {
+    return uid;
+  }
+
+  public Cluster setUID(UID uid) {
+    this.uid = requireNonNull(uid);
+    return this;
   }
 
   public OptionalConfig<String> getSecurityAuthc() {
@@ -193,14 +212,8 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Cluster unsetOffheapResources() {
-    if (this.offheapResources != null) {
-      setOffheapResources(emptyMap());
-    } else {
-      Map<String, Measure<MemoryUnit>> def = OFFHEAP_RESOURCES.getDefaultValue();
-      if (def != null && !def.isEmpty()) {
-        setOffheapResources(emptyMap());
-      }
-    }
+    Map<String, String> def = OFFHEAP_RESOURCES.getDefaultValue();
+    setOffheapResources(def == null || def.isEmpty() ? null : emptyMap());
     return this;
   }
 
@@ -224,7 +237,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public boolean isEmpty() {
-    return stripes.isEmpty() || getNodeAddresses().isEmpty();
+    return stripes.isEmpty() || getNodes().isEmpty();
   }
 
   /**
@@ -252,6 +265,7 @@ public class Cluster implements Cloneable, PropertyHolder {
     Cluster that = (Cluster) o;
     return Objects.equals(stripes, that.stripes) &&
         Objects.equals(name, that.name) &&
+        Objects.equals(uid, that.uid) &&
         Objects.equals(lockContext, that.lockContext) &&
         Objects.equals(securitySslTls, that.securitySslTls) &&
         Objects.equals(securityWhitelist, that.securityWhitelist) &&
@@ -265,47 +279,50 @@ public class Cluster implements Cloneable, PropertyHolder {
   @Override
   public int hashCode() {
     return Objects.hash(
-        stripes, name, securityAuthc, securitySslTls, securityWhitelist,
+        stripes, name, securityAuthc, securitySslTls, securityWhitelist, uid,
         failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, lockContext
     );
   }
 
   @Override
   public String toString() {
-    return "Cluster{" +
-        "name='" + name + '\'' +
-        ", lockContext='" + lockContext + '\'' +
-        ", securityAuthc='" + securityAuthc + '\'' +
-        ", securitySslTls=" + securitySslTls +
-        ", securityWhitelist=" + securityWhitelist +
-        ", failoverPriority='" + failoverPriority + '\'' +
-        ", clientReconnectWindow=" + clientReconnectWindow +
-        ", clientLeaseDuration=" + clientLeaseDuration +
-        ", offheapResources=" + offheapResources +
-        ", stripes='" + stripes +
-        '}';
+    return Props.toString(toProperties(false, false, true));
   }
 
   public String toShapeString() {
-    return "Cluster '" + name + "' ( " + stripes.stream().map(Stripe::toShapeString).collect(joining(", ")) + " )";
+    return (name == null ? "<no name>" : name) + " ( " + stripes.stream().map(Stripe::toShapeString).collect(joining(", ")) + " )";
   }
 
-  public Optional<Stripe> getStripe(InetSocketAddress address) {
-    return stripes.stream()
-        .filter(stripe -> stripe.containsNode(address))
-        .findAny();
+  public Collection<Endpoint> getInternalEndpoints() {
+    return getNodes().stream().map(Node::getInternalEndpoint).collect(toList());
   }
 
-  public Collection<InetSocketAddress> getNodeAddresses() {
-    return stripes.stream().flatMap(stripe -> stripe.getNodes().stream()).map(Node::getAddress).collect(toList());
+  /**
+   * Returns the endpoints to use to connect to the nodes of the cluster.
+   * The endpoints are using the same address "group" as the address used to access
+   * this node context.
+   * <p>
+   * In case no initiator is given, or if it is not found, the returned endpoints
+   * will be the public addresses if all nodes have a public address, otherwise it
+   * will be the internal addresses
+   *
+   * @param initiator Address used to load this class, can be null.
+   */
+  public Collection<Endpoint> getEndpoints(InetSocketAddress initiator) {
+    Function<Node, Endpoint> fetcher = getEndpointFetcher(initiator);
+    return getNodes().stream().map(fetcher).collect(toList());
   }
 
-  public boolean containsNode(InetSocketAddress address) {
-    return getStripe(address).isPresent();
+  public Collection<Endpoint> getSimilarEndpoints(Endpoint initiator) {
+    return getNodes().stream().map(node -> node.getSimilarEndpoint(initiator)).collect(toList());
   }
 
-  public boolean containsNode(int stripeId, String nodeName) {
-    return getStripe(stripeId).flatMap(stripe -> stripe.getNode(nodeName)).isPresent();
+  public boolean containsNode(UID nodeUID) {
+    return getNode(nodeUID).isPresent();
+  }
+
+  public boolean containsNode(String nodeName) {
+    return getNodes().stream().map(Node::getName).anyMatch(isEqual(nodeName));
   }
 
   @Override
@@ -318,6 +335,7 @@ public class Cluster implements Cloneable, PropertyHolder {
     clone.failoverPriority = this.failoverPriority;
     clone.lockContext = this.lockContext;
     clone.name = this.name;
+    clone.uid = this.uid;
     clone.offheapResources = this.offheapResources == null ? null : new ConcurrentHashMap<>(this.offheapResources);
     clone.securityAuthc = this.securityAuthc;
     clone.securitySslTls = this.securitySslTls;
@@ -329,43 +347,34 @@ public class Cluster implements Cloneable, PropertyHolder {
     return stripes.remove(stripe);
   }
 
-  public boolean removeNode(InetSocketAddress address) {
-    boolean detached = stripes.stream().anyMatch(stripe -> stripe.removeNode(address));
+  public boolean removeStripe(UID stripeUID) {
+    return stripes.removeIf(stripe -> stripe.getUID().equals(stripeUID));
+  }
+
+  public boolean removeNode(UID uid) {
+    boolean detached = stripes.stream().anyMatch(stripe -> stripe.removeNode(uid));
     if (detached) {
       stripes.removeIf(Stripe::isEmpty);
     }
     return detached;
   }
 
-  public Optional<Node> getNode(InetSocketAddress nodeAddress) {
+  public Optional<Node> getNode(UID nodeUID) {
     return stripes.stream()
         .flatMap(stripe -> stripe.getNodes().stream())
-        .filter(node -> node.hasAddress(nodeAddress))
+        .filter(node -> node.getUID().equals(nodeUID))
         .findAny();
   }
 
-  public OptionalInt getStripeId(InetSocketAddress address) {
-    return IntStream.range(0, stripes.size())
-        .filter(idx -> stripes.get(idx).containsNode(address))
-        .map(idx -> idx + 1)
-        .findAny();
-  }
-
-  public OptionalInt getNodeId(InetSocketAddress address) {
+  public Optional<Node> getNodeByName(String name) {
     return stripes.stream()
-        .map(stripe -> stripe.getNodeId(address))
-        .filter(OptionalInt::isPresent)
-        .findAny()
-        .orElse(OptionalInt.empty());
+        .flatMap(stripe -> stripe.getNodes().stream())
+        .filter(node -> node.getName().equals(name))
+        .findAny();
   }
 
-  public OptionalInt getNodeId(int stripeId, String nodeName) {
-    return getStripe(stripeId)
-        .map(stripe -> IntStream.range(0, stripe.getNodeCount())
-            .filter(idx -> nodeName.equals(stripe.getNodes().get(idx).getName()))
-            .map(idx -> idx + 1)
-            .findAny())
-        .orElse(OptionalInt.empty());
+  public Optional<Stripe> getStripe(UID stripeUID) {
+    return getStripes().stream().filter(s -> s.getUID().equals(stripeUID)).findAny();
   }
 
   public Optional<Stripe> getStripe(int stripeId) {
@@ -378,6 +387,28 @@ public class Cluster implements Cloneable, PropertyHolder {
     return Optional.of(stripes.get(stripeId - 1));
   }
 
+  public OptionalInt getStripeId(UID stripeUID) {
+    return IntStream.range(0, stripes.size())
+        .filter(idx -> stripes.get(idx).getUID().equals(stripeUID))
+        .map(idx -> idx + 1)
+        .findAny();
+  }
+
+  public OptionalInt getStripeIdByNode(UID nodeUID) {
+    return IntStream.range(0, stripes.size())
+        .filter(idx -> stripes.get(idx).containsNode(nodeUID))
+        .map(idx -> idx + 1)
+        .findAny();
+  }
+
+  public Optional<Stripe> getStripeByNode(UID nodeUID) {
+    return getStripes().stream().filter(s -> s.containsNode(nodeUID)).findAny();
+  }
+
+  public Optional<Stripe> getStripeByNodeName(String nodeName) {
+    return getStripes().stream().filter(s -> s.containsNode(nodeName)).findAny();
+  }
+
   public int getNodeCount() {
     return stripes.stream().mapToInt(Stripe::getNodeCount).sum();
   }
@@ -388,23 +419,6 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   public Collection<Node> getNodes() {
     return stripes.stream().flatMap(s -> s.getNodes().stream()).collect(toList());
-  }
-
-  public Optional<Node> getNode(int stripeId, String nodeName) {
-    return getStripe(stripeId).flatMap(stripe -> stripe.getNode(nodeName));
-  }
-
-  public Optional<Node> getNode(int stripeId, int nodeId) {
-    return getStripe(stripeId).flatMap(stripe -> stripe.getNode(nodeId));
-  }
-
-  public Stream<NodeContext> nodeContexts() {
-    return rangeClosed(1, stripes.size())
-        .boxed()
-        .flatMap(stripeId -> stripes.get(stripeId - 1).getNodes()
-            .stream()
-            .map(Node::getName)
-            .map(name -> new NodeContext(this, stripeId, name)));
   }
 
   public void forEach(BiConsumer<Integer, Node> consumer) {
@@ -431,7 +445,7 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   @Override
   public Stream<? extends PropertyHolder> descendants() {
-    return Stream.concat(stripes.stream(), stripes.stream().flatMap(Stripe::descendants));
+    return concat(stripes.stream(), stripes.stream().flatMap(Stripe::descendants));
   }
 
   public Collection<String> getDataDirNames() {
@@ -450,5 +464,61 @@ public class Cluster implements Cloneable, PropertyHolder {
   public Cluster setConfigurationLockContext(LockContext lockContext) {
     this.lockContext = lockContext;
     return this;
+  }
+
+  public Optional<Stripe> inSameStripe(UID... nodeUIDs) {
+    Set<UID> uids = new HashSet<>();
+    for (UID nodeUID : nodeUIDs) {
+      Optional<Stripe> stripe = getStripeByNode(nodeUID);
+      if (!stripe.isPresent()) {
+        return Optional.empty();
+      } else {
+        uids.add(stripe.get().getUID());
+      }
+    }
+    return uids.size() == 1 ? Optional.of(uids.iterator().next()).flatMap(this::getStripe) : Optional.empty();
+  }
+
+  /**
+   * Generate a new UID that is not yet used within this cluster
+   */
+  public UID newUID() {
+    Set<UID> uuids = concat(of(this), descendants()).map(PropertyHolder::getUID).filter(Objects::nonNull).collect(toSet());
+    UID uuid;
+    while (uuids.contains(uuid = UID.newUID())) ;
+    return uuid;
+  }
+
+  /**
+   * Generate a new UID that is not yet used within this cluster and which randomness is controlled
+   */
+  public UID newUID(Random random) {
+    Set<UID> uuids = concat(of(this), descendants()).map(PropertyHolder::getUID).filter(Objects::nonNull).collect(toSet());
+    UID uuid;
+    while (uuids.contains(uuid = UID.newUID(random))) ;
+    return uuid;
+  }
+
+  /**
+   * Finds an address group based on an address given by the user
+   * to connect to a node
+   */
+  private Function<Node, Endpoint> getEndpointFetcher(InetSocketAddress initiator) {
+    boolean publicAddressConfigured = true;
+    for (Node node : getNodes()) {
+      if (node.getInternalAddress().equals(initiator)) {
+        return Node::getInternalEndpoint;
+      }
+      Optional<InetSocketAddress> publicAddress = node.getPublicAddress();
+      publicAddressConfigured &= publicAddress.isPresent();
+      if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
+        return n -> n.getPublicEndpoint().get();
+      }
+    }
+    // we didn't find any exact match...
+    // if the nodes have public addresses, then use them
+    return publicAddressConfigured ?
+        n -> n.getPublicEndpoint().get() :
+        Node::getInternalEndpoint;
   }
 }

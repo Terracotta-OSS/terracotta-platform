@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.json.ObjectMapperFactory;
-import org.terracotta.nomad.server.NomadChangeInfo;
 
 import java.io.UncheckedIOException;
 import java.util.List;

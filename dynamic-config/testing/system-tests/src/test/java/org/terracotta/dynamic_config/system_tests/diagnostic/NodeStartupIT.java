@@ -110,7 +110,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("security-dir is mandatory for any of the security configuration"));
+      waitUntil(out.getLog(1, 1), containsLog("When no security root directories are configured all other security settings should also be unconfigured (unset)"));
     }
   }
 
@@ -172,7 +172,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--audit-log-dir", "audit-dir", "-r", getNodeConfigDir(1, 1).toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("security-dir is mandatory for any of the security configuration"));
+      waitUntil(out.getLog(1, 1), containsLog("When no security root directories are configured audit-log-dir should also be unconfigured (unset)"));
     }
   }
 
@@ -218,7 +218,7 @@ public class NodeStartupIT extends DynamicConfigIT {
       startSingleNode("--config-dir", configurationRepo.toString());
       fail();
     } catch (Exception e) {
-      waitUntil(out.getLog(1, 1), containsLog("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the configuration directory and try again."));
+      waitUntil(out.getLog(1, 1), containsLog("Node has not been activated or migrated properly"));
       waitUntil(out.getLog(1, 1), not(containsLog("Moved to State[ ACTIVE-COORDINATOR ]")));
     }
   }

@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 
 import static java.util.Objects.requireNonNull;
@@ -35,25 +36,25 @@ public class StripeRemovalNomadChange extends StripeNomadChange {
     }
 
     Cluster updated = original.clone();
-    updated.removeStripe(getStripe());
+    updated.removeStripe(getStripe().getUID());
     return updated;
   }
 
   @Override
-  public boolean canApplyAtRuntime(int stripeId, String nodeName) {
+  public boolean canUpdateRuntimeTopology(NodeContext nodeContext) {
     return true;
   }
 
   @Override
   public String getSummary() {
-    return "Detaching stripe: " + getStripe().toShapeString() + " from cluster: " + getCluster().getName().get();
+    return "Detaching stripe: " + getStripe().getName() + " from cluster: " + getCluster().getName();
   }
 
   @Override
   public String toString() {
     return "StripeRemovalChange{" +
-      "stripe=" + getStripe().toShapeString() +
-      ", cluster=" + getCluster().toShapeString() +
-      '}';
+        "stripe=" + getStripe().toShapeString() +
+        ", cluster=" + getCluster().toShapeString() +
+        '}';
   }
 }

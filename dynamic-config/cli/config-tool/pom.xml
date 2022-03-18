@@ -36,32 +36,8 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.diagnostic</groupId>
-      <artifactId>diagnostic-client</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.entities</groupId>
-      <artifactId>dynamic-config-nomad-entity-client</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!-- connection runtime -->
-    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-test-utilities</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>
