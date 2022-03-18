@@ -15,7 +15,6 @@
  */
 package org.terracotta.nomad.server;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.time.Instant;
@@ -25,7 +24,6 @@ public class ChangeRequest<T> {
   private final long version;
   private final String prevChangeId;
   private final NomadChange change;
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
   private final T changeResult;
   private final String creationHost;
   private final String creationUser;

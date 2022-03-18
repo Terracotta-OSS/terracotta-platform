@@ -16,17 +16,13 @@
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Test;
-import org.terracotta.diagnostic.client.DiagnosticService;
-import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Paths;
-import java.time.Duration;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.equalTo;
@@ -51,16 +47,8 @@ public class TopologyServiceIT extends DynamicConfigIT {
 
   @Test
   public void test_getPendingTopology() throws Exception {
-    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        getNodeAddress(1, 1),
-        getClass().getSimpleName(),
-        Duration.ofSeconds(5),
-        Duration.ofSeconds(5),
-        null)
-    ) {
-
-      TopologyService proxy = diagnosticService.getProxy(TopologyService.class);
-      Cluster pendingCluster = proxy.getUpcomingNodeContext().getCluster();
+    withTopologyService("localhost", getNodePort(1,1), topologyService -> {
+      Cluster pendingCluster = topologyService.getUpcomingNodeContext().getCluster();
 
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
@@ -78,7 +66,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
           .setClientLeaseDuration(20, SECONDS)
           .setFailoverPriority(availability())
           .setOffheapResource("main", 512, MB))));
-    }
+    });
   }
 
 }

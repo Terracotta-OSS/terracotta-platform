@@ -21,12 +21,14 @@ import com.beust.jcommander.converters.BooleanConverter;
 import com.beust.jcommander.converters.PathConverter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.dynamic_config.cli.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OutputFormat;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -57,6 +59,8 @@ public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-t"}, hidden = true, description = "Output type (properties|json). Default: properties", converter = OutputFormat.FormatConverter.class)
   private OutputFormat outputFormat = OutputFormat.PROPERTIES;
 
+  @Inject public ObjectMapperFactory objectMapperFactory;
+
   @Override
   public void validate() {
     if (outputFile != null && Files.exists(outputFile) && !Files.isRegularFile(outputFile)) {
@@ -80,7 +84,7 @@ public class ExportCommand extends RemoteCommand {
         } else {
           // try to create the parent directories
           Path dir = outputFile.toAbsolutePath().getParent();
-          if (dir != null) {
+          if (dir != null && !Files.exists(dir)) {
             Files.createDirectories(dir);
           }
         }
@@ -97,8 +101,9 @@ public class ExportCommand extends RemoteCommand {
     switch (outputFormat) {
       case JSON:
         try {
-          // shows optional values that are unset
-          return Json.copyObjectMapper(true)
+          return objectMapperFactory.create()
+              .configure(SerializationFeature.INDENT_OUTPUT, true)
+              // shows optional values that are unset
               .setSerializationInclusion(JsonInclude.Include.ALWAYS)
               .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
               .writeValueAsString(cluster);

@@ -15,8 +15,6 @@
  */
 package org.terracotta.nomad.server;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
@@ -35,14 +33,13 @@ public class NomadChangeInfo {
   private final String creationUser;
   private final Instant creationTimestamp;
 
-  @JsonCreator
-  public NomadChangeInfo(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
-                         @JsonProperty(value = "nomadChange", required = true) NomadChange nomadChange,
-                         @JsonProperty(value = "changeRequestState", required = true) ChangeRequestState changeRequestState,
-                         @JsonProperty(value = "version", required = true) long version,
-                         @JsonProperty(value = "creationHost", required = true) String creationHost,
-                         @JsonProperty(value = "creationUser", required = true) String creationUser,
-                         @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
+  public NomadChangeInfo(UUID changeUuid,
+                         NomadChange nomadChange,
+                         ChangeRequestState changeRequestState,
+                         long version,
+                         String creationHost,
+                         String creationUser,
+                         Instant creationTimestamp) {
     this.changeUuid = changeUuid;
     this.nomadChange = nomadChange;
     this.changeRequestState = changeRequestState;

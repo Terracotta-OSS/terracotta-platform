@@ -15,8 +15,6 @@
  */
 package org.terracotta.nomad.messages;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.nomad.server.NomadChangeInfo;
 import org.terracotta.nomad.server.NomadServerMode;
 
@@ -36,16 +34,15 @@ public class DiscoverResponse<T> {
   private final ChangeDetails<T> latestChange;
   private final List<NomadChangeInfo> checkpoints;
 
-  @JsonCreator
-  public DiscoverResponse(@JsonProperty(value = "mode", required = true) NomadServerMode mode,
-                          @JsonProperty(value = "mutativeMessageCount", required = true) long mutativeMessageCount,
-                          @JsonProperty(value = "lastMutationHost") String lastMutationHost,
-                          @JsonProperty(value = "lastMutationUser") String lastMutationUser,
-                          @JsonProperty(value = "lastMutationTimestamp") Instant lastMutationTimestamp,
-                          @JsonProperty(value = "currentVersion", required = true) long currentVersion,
-                          @JsonProperty(value = "highestVersion", required = true) long highestVersion,
-                          @JsonProperty(value = "latestChange") ChangeDetails<T> latestChange,
-                          @JsonProperty(value = "checkpoints") List<NomadChangeInfo> checkpoints) {
+  public DiscoverResponse(NomadServerMode mode,
+                          long mutativeMessageCount,
+                          String lastMutationHost,
+                          String lastMutationUser,
+                          Instant lastMutationTimestamp,
+                          long currentVersion,
+                          long highestVersion,
+                          ChangeDetails<T> latestChange,
+                          List<NomadChangeInfo> checkpoints) {
     this.mode = requireNonNull(mode);
     this.mutativeMessageCount = mutativeMessageCount;
     this.lastMutationHost = lastMutationHost;

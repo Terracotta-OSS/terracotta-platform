@@ -15,9 +15,6 @@
  */
 package org.terracotta.nomad.messages;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeRequestState;
 
@@ -31,21 +28,19 @@ public class ChangeDetails<T> {
   private final ChangeRequestState state;
   private final long version;
   private final NomadChange operation;
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
   private final T result;
   private final String creationHost;
   private final String creationUser;
   private final Instant creationTimestamp;
 
-  @JsonCreator
-  public ChangeDetails(@JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
-                       @JsonProperty(value = "state", required = true) ChangeRequestState state,
-                       @JsonProperty(value = "version", required = true) long version,
-                       @JsonProperty(value = "operation", required = true) NomadChange operation,
-                       @JsonProperty(value = "result") T result,
-                       @JsonProperty(value = "creationHost", required = true) String creationHost,
-                       @JsonProperty(value = "creationUser", required = true) String creationUser,
-                       @JsonProperty(value = "creationTimestamp", required = true) Instant creationTimestamp) {
+  public ChangeDetails(UUID changeUuid,
+                       ChangeRequestState state,
+                       long version,
+                       NomadChange operation,
+                       T result,
+                       String creationHost,
+                       String creationUser,
+                       Instant creationTimestamp) {
     this.changeUuid = requireNonNull(changeUuid);
     this.state = requireNonNull(state);
     this.version = version;

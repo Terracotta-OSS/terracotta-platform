@@ -15,11 +15,11 @@
  */
 package org.terracotta.persistence.sanskrit.change;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.terracotta.json.Json;
 import org.terracotta.persistence.sanskrit.SanskritObject;
 import org.terracotta.persistence.sanskrit.SanskritObjectImpl;
 
@@ -33,7 +33,7 @@ public class AddObjectSanskritChangeTest {
 
   @Test
   public void callsSetObject() {
-    SanskritObject object = new SanskritObjectImpl(Json.copyObjectMapper());
+    SanskritObject object = new SanskritObjectImpl(new ObjectMapper());
     AddObjectSanskritChange change = new AddObjectSanskritChange("key", object);
     change.accept(visitor);
 

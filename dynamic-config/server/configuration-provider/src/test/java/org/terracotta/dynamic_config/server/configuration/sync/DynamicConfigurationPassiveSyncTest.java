@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.sync;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -26,6 +27,7 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
@@ -59,6 +61,7 @@ public class DynamicConfigurationPassiveSyncTest {
   private Instant now = Instant.now();
   private NodeContext startupTopology = new NodeContext(Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("bar", "localhost"))), 1, "bar");
   private NomadChangeInfo activation = new NomadChangeInfo(UUID.randomUUID(), new ClusterActivationNomadChange(startupTopology.getCluster()), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now);
+  private DynamicConfigSyncData.Codec codec = new DynamicConfigSyncData.Codec(new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()));
 
   @Test
   public void testCodec() {
@@ -66,7 +69,7 @@ public class DynamicConfigurationPassiveSyncTest {
     nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("a", "100"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
     nomadChanges.add(new NomadChangeInfo(UUID.randomUUID(), createOffheapChange("b", "200"), ChangeRequestState.COMMITTED, 1L, "SYSTEM", "SYSTEM", now));
 
-    List<NomadChangeInfo> decodedChanges = DynamicConfigSyncData.decode(new DynamicConfigSyncData(nomadChanges, null).encode()).getNomadChanges();
+    List<NomadChangeInfo> decodedChanges = codec.decode(codec.encode(new DynamicConfigSyncData(nomadChanges, null))).getNomadChanges();
     assertThat(decodedChanges, is(nomadChanges));
   }
 
@@ -81,7 +84,7 @@ public class DynamicConfigurationPassiveSyncTest {
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
-    byte[] active = activeSyncManager.getSyncData().encode();
+    byte[] active = codec.encode(activeSyncManager.getSyncData());
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
@@ -94,7 +97,7 @@ public class DynamicConfigurationPassiveSyncTest {
     DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(startupTopology, nomadServer, mock(DynamicConfigService.class), () -> null);
     exceptionRule.expect(IllegalStateException.class);
     exceptionRule.expectMessage("Passive has more configuration changes");
-    syncManager.sync(DynamicConfigSyncData.decode(active));
+    syncManager.sync(codec.decode(active));
   }
 
   @SuppressWarnings("unchecked")
@@ -107,7 +110,7 @@ public class DynamicConfigurationPassiveSyncTest {
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), () -> "license content");
     when(activeNomadServer.getAllNomadChanges()).thenReturn(sameChanges);
-    byte[] active = activeSyncManager.getSyncData().encode();
+    byte[] active = codec.encode(activeSyncManager.getSyncData());
 
     UpgradableNomadServer<NodeContext> nomadServer = mock(UpgradableNomadServer.class);
     when(nomadServer.getAllNomadChanges()).thenReturn(sameChanges);
@@ -115,7 +118,7 @@ public class DynamicConfigurationPassiveSyncTest {
     DynamicConfigService dynamicConfigService = mock(DynamicConfigService.class);
     DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(startupTopology, nomadServer, dynamicConfigService, () -> null);
 
-    Set<Require> sync = syncManager.sync(DynamicConfigSyncData.decode(active));
+    Set<Require> sync = syncManager.sync(codec.decode(active));
     assertThat(sync.size(), is(equalTo(0)));
 
     verify(dynamicConfigService).upgradeLicense("license content");
@@ -132,7 +135,7 @@ public class DynamicConfigurationPassiveSyncTest {
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
-    byte[] active = activeSyncManager.getSyncData().encode();
+    byte[] active = codec.encode(activeSyncManager.getSyncData());
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
@@ -144,7 +147,7 @@ public class DynamicConfigurationPassiveSyncTest {
     DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(startupTopology, nomadServer, mock(DynamicConfigService.class), () -> null);
     exceptionRule.expect(IllegalStateException.class);
     exceptionRule.expectMessage("Passive cannot sync because the configuration change history does not match");
-    syncManager.sync(DynamicConfigSyncData.decode(active));
+    syncManager.sync(codec.decode(active));
   }
 
   @SuppressWarnings("unchecked")
@@ -159,7 +162,7 @@ public class DynamicConfigurationPassiveSyncTest {
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
-    byte[] active = activeSyncManager.getSyncData().encode();
+    byte[] active = codec.encode(activeSyncManager.getSyncData());
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
@@ -174,7 +177,7 @@ public class DynamicConfigurationPassiveSyncTest {
     when(acceptRejectResponse.isAccepted()).thenReturn(true);
 
     DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(startupTopology, nomadServer, mock(DynamicConfigService.class), () -> null);
-    Set<Require> requires = syncManager.sync(DynamicConfigSyncData.decode(active));
+    Set<Require> requires = syncManager.sync(codec.decode(active));
     assertThat(requires.size(), is(equalTo(1)));
     assertThat(requires, hasItem(CAN_CONTINUE));
   }
@@ -191,7 +194,7 @@ public class DynamicConfigurationPassiveSyncTest {
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
-    byte[] active = activeSyncManager.getSyncData().encode();
+    byte[] active = codec.encode(activeSyncManager.getSyncData());
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
@@ -207,7 +210,7 @@ public class DynamicConfigurationPassiveSyncTest {
     when(acceptRejectResponse.isAccepted()).thenReturn(true);
 
     DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(startupTopology, nomadServer, mock(DynamicConfigService.class), () -> null);
-    Set<Require> requires = syncManager.sync(DynamicConfigSyncData.decode(active));
+    Set<Require> requires = syncManager.sync(codec.decode(active));
     assertThat(requires.size(), is(equalTo(1)));
     assertThat(requires, hasItem(RESTART_REQUIRED));
   }
@@ -225,7 +228,7 @@ public class DynamicConfigurationPassiveSyncTest {
     UpgradableNomadServer<NodeContext> activeNomadServer = mock(UpgradableNomadServer.class);
     DynamicConfigurationPassiveSync activeSyncManager = new DynamicConfigurationPassiveSync(startupTopology, activeNomadServer, mock(DynamicConfigService.class), () -> null);
     when(activeNomadServer.getAllNomadChanges()).thenReturn(activeNomadChanges);
-    byte[] active = activeSyncManager.getSyncData().encode();
+    byte[] active = codec.encode(activeSyncManager.getSyncData());
 
     List<NomadChangeInfo> passiveNomadChanges = new ArrayList<>();
     passiveNomadChanges.add(activation);
@@ -241,7 +244,7 @@ public class DynamicConfigurationPassiveSyncTest {
     when(acceptRejectResponse.isAccepted()).thenReturn(true);
 
     DynamicConfigurationPassiveSync syncManager = new DynamicConfigurationPassiveSync(startupTopology, nomadServer, mock(DynamicConfigService.class), () -> null);
-    Set<Require> requires = syncManager.sync(DynamicConfigSyncData.decode(active));
+    Set<Require> requires = syncManager.sync(codec.decode(active));
     assertThat(requires.size(), is(equalTo(0)));
   }
 

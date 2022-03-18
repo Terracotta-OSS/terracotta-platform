@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.diagnostic.client.DiagnosticService;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -50,7 +51,7 @@ public class MultiDiagnosticServiceConnectionTest {
   @Before
   public void setUp() {
     Duration timeout = Duration.ofSeconds(1);
-    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("conn-name", timeout, timeout, null) {
+    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("conn-name", timeout, timeout, null, new ObjectMapperFactory()) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration timeout) {
         return diagnosticService;

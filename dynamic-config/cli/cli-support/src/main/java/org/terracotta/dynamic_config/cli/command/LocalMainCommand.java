@@ -17,9 +17,14 @@ package org.terracotta.dynamic_config.cli.command;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
 import org.slf4j.LoggerFactory;
+
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
 @Parameters(commandNames = LocalMainCommand.NAME)
 public class LocalMainCommand extends Command {
@@ -30,18 +35,18 @@ public class LocalMainCommand extends Command {
 
   @Override
   public void run() {
-    Logger rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+    Logger rootLogger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
 
     if (verbose) {
-      rootLogger.setLevel(Level.INFO);
-      rootLogger.getLoggerContext().getLoggerList().forEach(logger -> logger.detachAppender("STDOUT"));
-      rootLogger.getLoggerContext().getLoggerList()
-          .stream()
-          .filter(logger -> logger.getName().startsWith("org.terracotta") || logger.getName().startsWith("com.terracottatech") || logger.getName().startsWith("com.tc"))
-          .forEach(logger -> logger.setLevel(Level.TRACE));
+      ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("STDOUT");
+      PatternLayoutEncoder ple = new PatternLayoutEncoder();
+      ple.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n");
+      ple.setContext(appender.getContext());
+      ple.start();
 
-    } else {
-      rootLogger.getLoggerContext().getLoggerList().forEach(logger -> logger.detachAppender("STDOUT-DETAIL"));
+      appender.setEncoder(ple);
+      rootLogger.setLevel(Level.TRACE);
+      rootLogger.getLoggerContext().getLoggerList().forEach(logger -> logger.setLevel(Level.TRACE));
     }
   }
 

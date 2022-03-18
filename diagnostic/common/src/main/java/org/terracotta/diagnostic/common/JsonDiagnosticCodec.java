@@ -18,7 +18,10 @@ package org.terracotta.diagnostic.common;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.terracotta.json.Json;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.TerracottaJsonModule;
 
 import java.io.IOException;
 
@@ -31,17 +34,11 @@ public class JsonDiagnosticCodec extends DiagnosticCodecSkeleton<String> {
 
   private final ObjectMapper objectMapper;
 
-  public JsonDiagnosticCodec() {
-    this(false);
-  }
-
-  public JsonDiagnosticCodec(boolean pretty) {
-    this(Json.copyObjectMapper(pretty));
-  }
-
-  public JsonDiagnosticCodec(ObjectMapper objectMapper) {
+  public JsonDiagnosticCodec(ObjectMapperFactory objectMapperFactory) {
     super(String.class);
-    this.objectMapper = requireNonNull(objectMapper);
+    this.objectMapper = objectMapperFactory
+        .withModules(new Jdk8Module(), new JavaTimeModule(), new TerracottaJsonModule())
+        .create();
   }
 
   @Override

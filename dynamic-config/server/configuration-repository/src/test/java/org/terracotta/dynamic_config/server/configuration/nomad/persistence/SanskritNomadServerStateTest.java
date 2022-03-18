@@ -15,6 +15,7 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,9 +23,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.persistence.sanskrit.HashUtils;
@@ -67,7 +69,8 @@ public class SanskritNomadServerStateTest {
 
   @Before
   public void before() {
-    when(sanskrit.newMutableSanskritObject()).thenReturn(new SanskritObjectImpl(Json.copyObjectMapper(true)));
+    ObjectMapper objectMapper = new ObjectMapperFactory().pretty().withModule(new DynamicConfigApiJsonModule()).create();
+    when(sanskrit.newMutableSanskritObject()).thenReturn(new SanskritObjectImpl(objectMapper));
     state = new SanskritNomadServerState<>(sanskrit, configStorage, HashUtils::generateHash);
 
   }

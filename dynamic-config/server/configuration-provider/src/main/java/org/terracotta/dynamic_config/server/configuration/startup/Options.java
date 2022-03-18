@@ -61,85 +61,85 @@ import static org.terracotta.dynamic_config.server.configuration.startup.Console
 
 @Parameters(separators = "=")
 public class Options {
-  @Parameter(names = {"-s", "--" + NODE_HOSTNAME})
+  @Parameter(names = {"-s", "--" + NODE_HOSTNAME}, description = "node host name")
   private String nodeHostname;
 
-  @Parameter(names = {"-S", "--" + NODE_PUBLIC_HOSTNAME})
+  @Parameter(names = {"-S", "--" + NODE_PUBLIC_HOSTNAME}, description = "public node host name")
   private String nodePublicHostname;
 
-  @Parameter(names = {"-p", "--" + NODE_PORT})
+  @Parameter(names = {"-p", "--" + NODE_PORT}, description = "node port")
   private String nodePort;
 
-  @Parameter(names = {"-P", "--" + NODE_PUBLIC_PORT})
+  @Parameter(names = {"-P", "--" + NODE_PUBLIC_PORT}, description = "public node port")
   private String nodePublicPort;
 
-  @Parameter(names = {"-g", "--" + NODE_GROUP_PORT})
+  @Parameter(names = {"-g", "--" + NODE_GROUP_PORT}, description = "node port used for intra-stripe communication")
   private String nodeGroupPort;
 
-  @Parameter(names = {"-n", "--" + NODE_NAME})
+  @Parameter(names = {"-n", "--" + NODE_NAME}, description = "node name")
   private String nodeName;
 
-  @Parameter(names = {"-a", "--" + NODE_BIND_ADDRESS})
+  @Parameter(names = {"-a", "--" + NODE_BIND_ADDRESS}, description = "node bind address for port")
   private String nodeBindAddress;
 
-  @Parameter(names = {"-A", "--" + NODE_GROUP_BIND_ADDRESS})
+  @Parameter(names = {"-A", "--" + NODE_GROUP_BIND_ADDRESS}, description = "node bind address for group port")
   private String nodeGroupBindAddress;
 
-  @Parameter(names = {"-r", "--" + NODE_CONFIG_DIR})
+  @Parameter(names = {"-r", "--" + NODE_CONFIG_DIR}, description = "node configuration directory")
   private String nodeConfigDir;
 
-  @Parameter(names = {"-m", "--" + NODE_METADATA_DIR})
+  @Parameter(names = {"-m", "--" + NODE_METADATA_DIR}, description = "node metadata directory")
   private String nodeMetadataDir;
 
-  @Parameter(names = {"-L", "--" + NODE_LOG_DIR})
+  @Parameter(names = {"-L", "--" + NODE_LOG_DIR}, description = "node log directory")
   private String nodeLogDir;
 
-  @Parameter(names = {"-b", "--" + NODE_BACKUP_DIR})
+  @Parameter(names = {"-b", "--" + NODE_BACKUP_DIR}, description = "node backup directory")
   private String nodeBackupDir;
 
-  @Parameter(names = {"-x", "--" + SECURITY_DIR})
+  @Parameter(names = {"-x", "--" + SECURITY_DIR}, description = "security root directory")
   private String securityDir;
 
-  @Parameter(names = {"-u", "--" + SECURITY_AUDIT_LOG_DIR})
+  @Parameter(names = {"-u", "--" + SECURITY_AUDIT_LOG_DIR}, description = "security audit log directory")
   private String securityAuditLogDir;
 
-  @Parameter(names = {"-z", "--" + SECURITY_AUTHC})
+  @Parameter(names = {"-z", "--" + SECURITY_AUTHC}, description = "security authentication setting (file|ldap|certificate)")
   private String securityAuthc;
 
-  @Parameter(names = {"-t", "--" + SECURITY_SSL_TLS})
+  @Parameter(names = {"-t", "--" + SECURITY_SSL_TLS}, description = "ssl-tls setting (true|false)")
   private String securitySslTls;
 
-  @Parameter(names = {"-w", "--" + SECURITY_WHITELIST})
+  @Parameter(names = {"-w", "--" + SECURITY_WHITELIST}, description = "security whitelist (true|false)")
   private String securityWhitelist;
 
-  @Parameter(names = {"-y", "--" + FAILOVER_PRIORITY})
+  @Parameter(names = {"-y", "--" + FAILOVER_PRIORITY}, description = "failover priority setting (availability|consistency)")
   private String failoverPriority;
 
-  @Parameter(names = {"-R", "--" + CLIENT_RECONNECT_WINDOW})
+  @Parameter(names = {"-R", "--" + CLIENT_RECONNECT_WINDOW}, description = "client reconnect window")
   private String clientReconnectWindow;
 
-  @Parameter(names = {"-i", "--" + CLIENT_LEASE_DURATION})
+  @Parameter(names = {"-i", "--" + CLIENT_LEASE_DURATION}, description = "client lease duration")
   private String clientLeaseDuration;
 
-  @Parameter(names = {"-o", "--" + OFFHEAP_RESOURCES})
+  @Parameter(names = {"-o", "--" + OFFHEAP_RESOURCES}, description = "offheap resources")
   private String offheapResources;
 
-  @Parameter(names = {"-d", "--" + DATA_DIRS})
+  @Parameter(names = {"-d", "--" + DATA_DIRS}, description = "data directory")
   private String dataDirs;
 
-  @Parameter(names = {"-f", "--" + CONFIG_FILE})
+  @Parameter(names = {"-f", "--" + CONFIG_FILE}, description = "configuration properties file")
   private String configFile;
 
-  @Parameter(names = {"-T", "--" + TC_PROPERTIES})
+  @Parameter(names = {"-T", "--" + TC_PROPERTIES}, description = "tc-properties")
   private String tcProperties;
 
-  @Parameter(names = {"-N", "--" + CLUSTER_NAME})
+  @Parameter(names = {"-N", "--" + CLUSTER_NAME}, description = "cluster name")
   private String clusterName;
 
-  @Parameter(names = {"-l", "--" + LICENSE_FILE})
+  @Parameter(names = {"-l", "--" + LICENSE_FILE}, hidden = true)
   private String licenseFile;
 
-  @Parameter(names = {"-D", "--" + REPAIR_MODE})
+  @Parameter(names = {"-D", "--" + REPAIR_MODE}, description = "node repair mode (true|false)")
   private boolean wantsRepairMode;
 
   // hidden option that won't appear in the help file,
@@ -164,7 +164,6 @@ public class Options {
    * as the key and user-specified-value as the value.
    *
    * @param jCommander jCommander instance
-   * @return the constructed map
    */
   private void extractTopologyOptions(CustomJCommander jCommander) {
     Collection<String> userSpecifiedOptions = jCommander.getUserSpecifiedOptions();
@@ -188,30 +187,34 @@ public class Options {
   }
 
   private void validateOptions(CustomJCommander jCommander) {
-    if (configFile == null) {
-      // when using CLI parameters
-
-      if (licenseFile != null && clusterName == null) {
-        throw new ParameterException("'" + addDashDash(LICENSE_FILE) + "' parameter must be used with '" + addDashDash(CLUSTER_NAME) + "' parameter");
+    if (configFile != null) {
+      if (nodeName != null && (nodePort != null || nodeHostname != null)) {
+        throw new ParameterException("'" + addDashDash(NODE_NAME) + "' parameter cannot be used with '"
+            + addDashDash(NODE_HOSTNAME) + "' or '" + addDashDash(NODE_PORT) + "' parameter");
       }
 
-    } else {
-      // when using config file
-
       Set<String> filteredOptions = new HashSet<>(jCommander.getUserSpecifiedOptions());
-      filteredOptions.remove("-f");
-      filteredOptions.remove("-l");
-      filteredOptions.remove("-s");
-      filteredOptions.remove("-p");
-      filteredOptions.remove("-r");
-
       filteredOptions.remove(addDashDash(AUTO_ACTIVATE));
       filteredOptions.remove(addDashDash(REPAIR_MODE));
+      filteredOptions.remove("-D");
+
       filteredOptions.remove(addDashDash(CONFIG_FILE));
+      filteredOptions.remove("-f");
+
       filteredOptions.remove(addDashDash(LICENSE_FILE));
+      filteredOptions.remove("-l");
+
       filteredOptions.remove(addDashDash(NODE_HOSTNAME));
+      filteredOptions.remove("-s");
+
       filteredOptions.remove(addDashDash(NODE_PORT));
+      filteredOptions.remove("-p");
+
+      filteredOptions.remove(addDashDash(NODE_NAME));
+      filteredOptions.remove("-n");
+
       filteredOptions.remove(addDashDash(NODE_CONFIG_DIR));
+      filteredOptions.remove("-r");
 
       if (filteredOptions.size() != 0) {
         throw new ParameterException(
@@ -219,12 +222,23 @@ public class Options {
                 "'%s' parameter can only be used with '%s', '%s', '%s', '%s' and '%s' parameters",
                 addDashDash(CONFIG_FILE),
                 addDashDash(REPAIR_MODE),
-                addDashDash(LICENSE_FILE),
+                addDashDash(NODE_NAME),
                 addDashDash(NODE_HOSTNAME),
                 addDashDash(NODE_PORT),
                 addDashDash(NODE_CONFIG_DIR)
             )
         );
+      }
+    } else {
+      // when using CLI parameters
+      if (licenseFile != null) {
+        if (clusterName == null) {
+          throw new ParameterException("'" + addDashDash(LICENSE_FILE) + "' parameter must be used with '" + addDashDash(CLUSTER_NAME) + "' parameter");
+        }
+
+        if (!allowsAutoActivation) {
+          throw new ParameterException("'" + addDashDash(LICENSE_FILE) + "' parameter must be used with '" + addDashDash(AUTO_ACTIVATE) + "' parameter");
+        }
       }
     }
   }
@@ -235,6 +249,10 @@ public class Options {
 
   public String getNodePort() {
     return nodePort;
+  }
+
+  public String getNodeName() {
+    return nodeName;
   }
 
   public String getNodeConfigDir() {

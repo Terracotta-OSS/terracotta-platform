@@ -25,6 +25,7 @@ import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.configuration.service.ConfigChangeHandlerManagerImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.dynamic_config.server.configuration.service.ParameterSubstitutor;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.nio.file.Paths;
 
@@ -41,9 +42,10 @@ public class ConfigurationGeneratorVisitorTest {
   private static final ParameterSubstitutor PARAMETER_SUBSTITUTOR = new ParameterSubstitutor();
   private static final ConfigurationGeneratorVisitor STARTUP_MANAGER = new ConfigurationGeneratorVisitor(
       PARAMETER_SUBSTITUTOR,
-      new NomadServerManager(PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl(), mock(LicenseService.class)),
+      new NomadServerManager(PARAMETER_SUBSTITUTOR, new ConfigChangeHandlerManagerImpl(), mock(LicenseService.class), new ObjectMapperFactory()),
       ConfigurationGeneratorVisitorTest.class.getClassLoader(),
-      new PathResolver(Paths.get("%(user.dir)")));
+      new PathResolver(Paths.get("%(user.dir)")),
+      new ObjectMapperFactory());
 
   private static final String CONFIG_FILE = "/path/to/config-file";
 
@@ -51,7 +53,7 @@ public class ConfigurationGeneratorVisitorTest {
   public void testConfigFileContainsOneNode_noNodeHostPortSpecified() {
     Node node = Node.newDefaultNode("localhost");
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(node));
-    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(null, null, CONFIG_FILE, cluster);
+    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(null, null, CONFIG_FILE, cluster);
 
     assertThat(matchingNode, equalTo(node));
   }
@@ -60,7 +62,7 @@ public class ConfigurationGeneratorVisitorTest {
   public void testConfigFileContainsOneNode_matchingNodeHostPortSpecified() {
     Node node = Node.newDefaultNode(PARAMETER_SUBSTITUTOR.substitute(Setting.NODE_HOSTNAME.getDefaultValue()));
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(node));
-    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(node.getNodeHostname(), String.valueOf(node.getNodePort()), CONFIG_FILE, cluster);
+    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(node.getNodeHostname(), String.valueOf(node.getNodePort()), CONFIG_FILE, cluster);
 
     assertThat(matchingNode, equalTo(node));
   }
@@ -71,7 +73,7 @@ public class ConfigurationGeneratorVisitorTest {
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(node));
 
     assertThat(
-        () -> STARTUP_MANAGER.getMatchingNodeFromConfigFile("blah", "12345", CONFIG_FILE, cluster),
+        () -> STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort("blah", "12345", CONFIG_FILE, cluster),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Did not find a matching node entry in config file")))
     );
   }
@@ -82,7 +84,7 @@ public class ConfigurationGeneratorVisitorTest {
     Node node2 = Node.newDefaultNode("localhost", 1234);
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(node1, node2));
 
-    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(null, null, CONFIG_FILE, cluster);
+    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(null, null, CONFIG_FILE, cluster);
     assertThat(matchingNode, equalTo(node1));
   }
 
@@ -93,7 +95,7 @@ public class ConfigurationGeneratorVisitorTest {
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(node1, node2));
 
     assertThat(
-        () -> STARTUP_MANAGER.getMatchingNodeFromConfigFile(null, null, CONFIG_FILE, cluster),
+        () -> STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(null, null, CONFIG_FILE, cluster),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Did not find a matching node entry in config file")))
     );
   }
@@ -103,7 +105,7 @@ public class ConfigurationGeneratorVisitorTest {
     Node node1 = Node.newDefaultNode("localhost");
     Node node2 = Node.newDefaultNode("localhost", 1234);
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(node1, node2));
-    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFile(node2.getNodeHostname(), String.valueOf(node2.getNodePort()), CONFIG_FILE, cluster);
+    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort(node2.getNodeHostname(), String.valueOf(node2.getNodePort()), CONFIG_FILE, cluster);
 
     assertThat(matchingNode, equalTo(node2));
   }
@@ -115,8 +117,62 @@ public class ConfigurationGeneratorVisitorTest {
     Cluster cluster = Cluster.newDefaultCluster(new Stripe(node1, node2));
 
     assertThat(
-        () -> STARTUP_MANAGER.getMatchingNodeFromConfigFile("blah", null, CONFIG_FILE, cluster),
+        () -> STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingHostPort("blah", null, CONFIG_FILE, cluster),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Did not find a matching node entry in config file")))
     );
+  }
+
+  @Test
+  public void testConfigFileContainsSingleNode_noMatchesForSpecifiedNodeName() {
+    Node node1 = Node.newDefaultNode("localhost");
+    Cluster cluster = Cluster.newDefaultCluster(new Stripe(node1));
+
+    assertThat(
+        () -> STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingNodeName("blah", CONFIG_FILE, cluster),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Did not find a matching node entry in config file")))
+    );
+  }
+
+  @Test
+  public void testConfigFileContainsMultipleNodes_noMatchesForSpecifiedNodeName() {
+    Node node1 = Node.newDefaultNode("localhost");
+    Node node2 = Node.newDefaultNode("localhost", 1234);
+    Cluster cluster = Cluster.newDefaultCluster(new Stripe(node1, node2));
+
+    assertThat(
+        () -> STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingNodeName("blah", CONFIG_FILE, cluster),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Did not find a matching node entry in config file")))
+    );
+  }
+
+  @Test
+  public void testConfigFileContainsMultipleNodes_multipleMatchesForSpecifiedNodeName() {
+    Node node1 = Node.newDefaultNode("node-1", "localhost");
+    Node node2 = Node.newDefaultNode("node-1", "localhost", 1234);
+    Cluster cluster = Cluster.newDefaultCluster(new Stripe(node1, node2));
+
+    assertThat(
+        () -> STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingNodeName("node-1", CONFIG_FILE, cluster),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(containsString("Found multiple matching node entries")))
+    );
+  }
+
+  @Test
+  public void testConfigFileContainsSingleNode_matchingNodeNameSpecified() {
+    Node node1 = Node.newDefaultNode("localhost");
+    Cluster cluster = Cluster.newDefaultCluster(new Stripe(node1));
+    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingNodeName(node1.getNodeName(), CONFIG_FILE, cluster);
+
+    assertThat(matchingNode, equalTo(node1));
+  }
+
+  @Test
+  public void testConfigFileContainsMultipleNodes_matchingNodeNameSpecified() {
+    Node node1 = Node.newDefaultNode("localhost");
+    Node node2 = Node.newDefaultNode("localhost", 1234);
+    Cluster cluster = Cluster.newDefaultCluster(new Stripe(node1, node2));
+    Node matchingNode = STARTUP_MANAGER.getMatchingNodeFromConfigFileUsingNodeName(node2.getNodeName(), CONFIG_FILE, cluster);
+
+    assertThat(matchingNode, equalTo(node2));
   }
 }

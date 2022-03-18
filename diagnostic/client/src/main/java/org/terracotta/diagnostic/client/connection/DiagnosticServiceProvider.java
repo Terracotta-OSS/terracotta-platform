@@ -18,6 +18,7 @@ package org.terracotta.diagnostic.client.connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -33,12 +34,14 @@ public class DiagnosticServiceProvider {
   private final Duration diagnosticInvokeTimeout;
   private final Duration connectTimeout;
   private final String securityRootDirectory;
+  private final ObjectMapperFactory objectMapperFactory;
 
-  public DiagnosticServiceProvider(String connectionName, Duration connectTimeout, Duration diagnosticInvokeTimeout, String securityRootDirectory) {
+  public DiagnosticServiceProvider(String connectionName, Duration connectTimeout, Duration diagnosticInvokeTimeout, String securityRootDirectory, ObjectMapperFactory objectMapperFactory) {
     this.connectionName = requireNonNull(connectionName);
     this.diagnosticInvokeTimeout = requireNonNull(diagnosticInvokeTimeout);
     this.connectTimeout = requireNonNull(connectTimeout);
     this.securityRootDirectory = securityRootDirectory;
+    this.objectMapperFactory = objectMapperFactory;
   }
 
   public DiagnosticService fetchDiagnosticService(InetSocketAddress address) throws DiagnosticServiceProviderException {
@@ -47,7 +50,7 @@ public class DiagnosticServiceProvider {
 
   public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration connectTimeout) throws DiagnosticServiceProviderException {
     try {
-      return DiagnosticServiceFactory.fetch(address, connectionName, connectTimeout, diagnosticInvokeTimeout, securityRootDirectory);
+      return DiagnosticServiceFactory.fetch(address, connectionName, connectTimeout, diagnosticInvokeTimeout, securityRootDirectory, objectMapperFactory);
     } catch (ConnectionException e) {
       throw new DiagnosticServiceProviderException(e);
     }

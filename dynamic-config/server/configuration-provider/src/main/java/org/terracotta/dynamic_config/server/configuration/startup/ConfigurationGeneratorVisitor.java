@@ -28,6 +28,7 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Noma
 import org.terracotta.dynamic_config.server.configuration.service.DynamicConfigServiceImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.inet.InetSocketAddressUtils;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -42,11 +43,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Clock;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.api.model.SettingName.NODE_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.NODE_NAME;
+import static org.terracotta.dynamic_config.api.model.SettingName.NODE_PORT;
+import org.terracotta.server.ServerEnv;
 
 public class ConfigurationGeneratorVisitor {
   private static final Logger logger = LoggerFactory.getLogger(ConfigurationGeneratorVisitor.class);
@@ -55,6 +65,7 @@ public class ConfigurationGeneratorVisitor {
   private final NomadServerManager nomadServerManager;
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
+  private final ObjectMapperFactory objectMapperFactory;
 
   private NodeContext nodeContext;
   private boolean repairMode;
@@ -63,11 +74,13 @@ public class ConfigurationGeneratorVisitor {
   public ConfigurationGeneratorVisitor(IParameterSubstitutor parameterSubstitutor,
                                        NomadServerManager nomadServerManager,
                                        ClassLoader classLoader,
-                                       PathResolver pathResolver) {
+                                       PathResolver pathResolver,
+                                       ObjectMapperFactory objectMapperFactory) {
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
+    this.objectMapperFactory = requireNonNull(objectMapperFactory);
   }
 
   public boolean isUnConfiguredMode() {
@@ -84,10 +97,10 @@ public class ConfigurationGeneratorVisitor {
 
     if (unConfiguredMode) {
       // in diagnostic / unconfigured node mode, make sure we make platform think that the node is alone...
-      return new StartupConfiguration(nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor);
+      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
     }
 
-    NodeContext nodeContext = nomadServerManager.getConfiguration()
+    Supplier<NodeContext> nodeContextSupplier = () -> nomadServerManager.getConfiguration()
         .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find the latest committed configuration to use at startup. Please delete the configuration directory and try again."));
 
     if (repairMode) {
@@ -95,10 +108,10 @@ public class ConfigurationGeneratorVisitor {
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the config created will be stripped to make platform think this node is alone;
-      nodeContext = nodeContext.alone();
+      nodeContextSupplier = () -> nodeContext.alone();
     }
 
-    return new StartupConfiguration(nodeContext, unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor);
+    return new StartupConfiguration(nodeContextSupplier, unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
   }
 
   void startUnconfigured(NodeContext nodeContext, String optionalNodeConfigurationDirFromCLI) {
@@ -136,7 +149,7 @@ public class ConfigurationGeneratorVisitor {
   }
 
   void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode) {
-    logger.info("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
+    ServerEnv.getServer().console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
     nomadServerManager.init(nodeConfigurationDir, nodeName);
 
     DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
@@ -161,7 +174,7 @@ public class ConfigurationGeneratorVisitor {
 
   }
 
-  Node getMatchingNodeFromConfigFile(String specifiedHostName, String specifiedPort, String configFilePath, Cluster cluster) {
+  Node getMatchingNodeFromConfigFileUsingHostPort(String specifiedHostName, String specifiedPort, String configFilePath, Cluster cluster) {
     requireNonNull(configFilePath);
 
     boolean isHostnameSpecified = specifiedHostName != null;
@@ -176,30 +189,43 @@ public class ConfigurationGeneratorVisitor {
         .filter(node1 -> InetSocketAddressUtils.areEqual(node1.getNodeInternalAddress(), specifiedSockAddr))
         .findAny();
 
+    HashMap<String, String> logParams = new HashMap<>();
+    logParams.put(NODE_HOSTNAME, substitutedHost);
+    logParams.put(NODE_PORT, String.valueOf(port));
+
     Node node;
-    // See if we find a match for a node based on the specified params. If not, we see if the config file contains just one node
+    // See if we find a match for a node based on the specified logParams. If not, we see if the config file contains just one node
     if (!isHostnameSpecified && !isPortSpecified && allNodes.size() == 1) {
       logger.info("Found only one node information in config file: {}", configFilePath);
       node = allNodes.iterator().next();
     } else if (matchingNode.isPresent()) {
-      logger.info(errMsg(substitutedHost, configFilePath, port, "Found matching node entry"));
+      logger.info(log("Found matching node entry", configFilePath, logParams));
       node = matchingNode.get();
     } else {
-      throw new IllegalArgumentException(errMsg(substitutedHost, configFilePath, port, "Did not find a matching node entry"));
+      throw new IllegalArgumentException(log("Did not find a matching node entry", configFilePath, logParams));
     }
     return node;
   }
 
-  private String errMsg(String hostname, String configFilePath, int port, String msgFragment) {
-    return String.format(
-        "%s in config file: %s based on %s=%s and %s=%d",
-        msgFragment,
-        parameterSubstitutor.substitute(configFilePath),
-        Setting.NODE_HOSTNAME,
-        hostname,
-        Setting.NODE_PORT,
-        port
-    );
+  Node getMatchingNodeFromConfigFileUsingNodeName(String specifiedNodeName, String configFilePath, Cluster cluster) {
+    requireNonNull(configFilePath);
+    requireNonNull(specifiedNodeName);
+
+    Collection<Node> allNodes = cluster.getNodes();
+    List<Node> matchingNodes = allNodes.stream()
+        .filter(node -> node.getNodeName().equals(specifiedNodeName))
+        .collect(Collectors.toList());
+
+    HashMap<String, String> logParams = new HashMap<>();
+    logParams.put(NODE_NAME, specifiedNodeName);
+    if (matchingNodes.size() == 1) {
+      logger.info(log("Found matching node entry", configFilePath, logParams));
+      return matchingNodes.get(0);
+    } else if (matchingNodes.size() > 1) {
+      throw new IllegalArgumentException(log("Found multiple matching node entries", configFilePath, logParams));
+    } else {
+      throw new IllegalArgumentException(log("Did not find a matching node entry", configFilePath, logParams));
+    }
   }
 
   Path getOrDefaultConfigurationDirectory(String configPath) {
@@ -208,6 +234,15 @@ public class ConfigurationGeneratorVisitor {
 
   Optional<String> findNodeName(Path configPath, IParameterSubstitutor parameterSubstitutor) {
     return NomadConfigurationManager.findNodeName(configPath, parameterSubstitutor);
+  }
+
+  private String log(String msgFragment, String configFilePath, Map<String, String> params) {
+    return String.format(
+        "%s in config file: %s based on %s",
+        msgFragment,
+        parameterSubstitutor.substitute(configFilePath),
+        params
+    );
   }
 
   private void runNomadActivation(Cluster cluster, Node node, NomadServerManager nomadServerManager, Path nodeConfigurationDir) {

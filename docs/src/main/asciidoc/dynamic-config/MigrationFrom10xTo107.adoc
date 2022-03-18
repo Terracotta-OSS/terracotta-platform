@@ -58,7 +58,7 @@ Maintains a record of the configuration changes done on the node as well as the 
 [[config-converter-tool]]
 == Using config converter tool
 Config converter tool can be used to convert from tc-config XML files used with Terracotta versions upto 10.5 to the new configuration format.
-The tool can be located under `tools/config-converter/bin` in the product installation directory, and has the following usage:
+The tool can be located under `tools/upgrade-tools/bin` in the product installation directory, and has the following usage:
 
 [source,bash]
 ----
@@ -133,7 +133,7 @@ been created using <<config-tool-attach, config tool `attach`>> command.
 [[config-tool]]
 == Using config tool
 Config tool provides a suite of commands used for managing the cluster topology and configuration, among other things.
-The tool can be located under `tools/config-tool/bin` in the product installation directory.
+The tool can be located under `tools/bin` in the product installation directory.
 The following is an overview of important config tool commands:
 
 [[config-tool-attach]]

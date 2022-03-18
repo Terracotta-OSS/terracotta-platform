@@ -73,7 +73,7 @@ public class ConfigRepoStartupBuilder extends StartupCommandBuilder {
     }
 
     List<String> command = new ArrayList<>();
-    String scriptPath = getAbsolutePath(Paths.get("tools", "config-converter", "bin", "config-converter"));
+    String scriptPath = getAbsolutePath(Paths.get("tools", "upgrade", "bin", "config-converter"));
     command.add(scriptPath);
 
     command.add("convert");

@@ -19,10 +19,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.io.IOException;
@@ -43,6 +44,8 @@ import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
  */
 public class NomadChangeJsonTest {
 
+  ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
+
   private Cluster cluster = Cluster.newDefaultCluster("myClusterName", new Stripe(Node.newDefaultNode("foo", "localhost", 9410)))
       .setClientReconnectWindow(60, TimeUnit.SECONDS)
       .setOffheapResource("foo", 1, MemoryUnit.GB);
@@ -57,8 +60,6 @@ public class NomadChangeJsonTest {
             SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "bar", "512MB")
         )
     };
-
-    ObjectMapper objectMapper = Json.copyObjectMapper(true);
 
     for (int i = 0; i < changes.length; i++) {
       NomadChange change = changes[i];

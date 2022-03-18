@@ -35,7 +35,7 @@ public class ConfigFileStartupBuilder extends StartupCommandBuilder {
     if (builtCommand == null) {
       try {
         installServer();
-        Path configFile = convertToConfigFile().resolve("null.properties");
+        Path configFile = convertToConfigFile().resolve("cluster.properties");
         configFileStartupCommand(configFile);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
@@ -84,7 +84,7 @@ public class ConfigFileStartupBuilder extends StartupCommandBuilder {
     }
 
     List<String> command = new ArrayList<>();
-    String scriptPath = getAbsolutePath(Paths.get("tools", "config-converter", "bin", "config-converter"));
+    String scriptPath = getAbsolutePath(Paths.get("tools", "upgrade", "bin", "config-converter"));
     command.add(scriptPath);
     command.add("convert");
 

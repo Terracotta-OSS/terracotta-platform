@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 
@@ -39,7 +38,6 @@ public abstract class NodeNomadChange extends TopologyNomadChange {
     return stripeId;
   }
 
-  @JsonIgnore
   public InetSocketAddress getNodeAddress() {
     return getNode().getNodeAddress();
   }

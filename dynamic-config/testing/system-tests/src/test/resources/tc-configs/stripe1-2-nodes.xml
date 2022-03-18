@@ -34,12 +34,12 @@
   </plugins>
   <tc-properties/>
   <servers>
-    <server host="localhost" name="node-1">
+    <server host="localhost" name="node-1-1">
       <logs>%(user.dir)/logs/stripe1/node-1</logs>
       <tsa-port>${PORT-1}</tsa-port>
       <tsa-group-port>${GROUP-PORT-1}</tsa-group-port>
     </server>
-    <server host="localhost" name="node-2">
+    <server host="localhost" name="node-1-2">
       <logs>%(user.dir)/logs/stripe1/node-2</logs>
       <tsa-port>${PORT-2}</tsa-port>
       <tsa-group-port>${GROUP-PORT-2}</tsa-group-port>

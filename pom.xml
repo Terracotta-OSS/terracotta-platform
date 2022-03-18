@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.15</version>
+    <version>5.16</version>
   </parent>
 
   <artifactId>platform-root</artifactId>
@@ -33,13 +33,13 @@
     <maven.version>3.6.3</maven.version>
     <slf4j.version>1.7.25</slf4j.version>
     <logback.version>1.2.3</logback.version>
-    <terracotta-apis.version>1.7.0-pre2</terracotta-apis.version>
+    <terracotta-apis.version>1.7.0-pre3</terracotta-apis.version>
     <terracotta-configuration.version>10.7.0-pre2</terracotta-configuration.version>
     <passthrough-testing.version>1.7.0-pre13</passthrough-testing.version>
-    <terracotta-core.version>5.7.0-pre29</terracotta-core.version>
+    <terracotta-core.version>5.7.0-pre30</terracotta-core.version>
     <tripwire.version>1.0.0-pre7</tripwire.version>
     <galvan.version>1.5.0-pre3</galvan.version>
-    <angela.version>3.0.27</angela.version>
+    <angela.version>3.0.33</angela.version>
     <statistics.version>2.1</statistics.version>
     <jackson.version>2.10.1</jackson.version>
     <terracotta-utilities.version>0.0.3</terracotta-utilities.version>
@@ -197,11 +197,6 @@
         <version>${jackson.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-jdk8</artifactId>
         <version>${jackson.version}</version>
@@ -245,11 +240,6 @@
         <groupId>net.bytebuddy</groupId>
         <artifactId>byte-buddy</artifactId>
         <version>1.10.2</version>
-      </dependency>
-      <dependency>
-        <groupId>io.github.classgraph</groupId>
-        <artifactId>classgraph</artifactId>
-        <version>4.8.54</version>
       </dependency>
       <dependency>
         <groupId>com.github.stefanbirkner</groupId>
@@ -353,11 +343,14 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
+          <source>${java.build.version}</source>
+          <target>${java.build.version}</target>
           <showWarnings>true</showWarnings>
           <showDeprecation>true</showDeprecation>
           <failOnWarning>true</failOnWarning>
           <compilerArgs>
             <arg>-Xlint:all</arg>
+            <!-- -path is required because of the class-path manifest entries generated (jars won't be found) -->
             <arg>-Xlint:-path</arg>
             <arg>-Werror</arg>
           </compilerArgs>
@@ -426,8 +419,6 @@
               </execution>
             </executions>
           </plugin>
-
-
         </plugins>
       </build>
     </profile>
