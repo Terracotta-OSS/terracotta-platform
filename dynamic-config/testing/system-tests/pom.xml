@@ -29,6 +29,10 @@
   <artifactId>dynamic-config-system-tests</artifactId>
   <name>Dynamic Config :: Testing :: System Tests</name>
 
+  <properties>
+    <test.jvm.args>-XX:+UseG1GC -Dangela.agent.debug=false -DIGNITE_UPDATE_NOTIFIER=false -Djdk.net.hosts.file=${project.build.directory}/fake-hosts.txt -Dcom.tc.server.entity.processor.threads=4 -Dcom.tc.l2.tccom.workerthreads=4 -Dcom.tc.l2.seda.stage.stall.warning=1000 -Dcom.tc.tc.messages.packup.enabled=false -Dorg.terracotta.voter.topology.fetch.interval=9000 -Dorg.terracotta.disablePortReleaseCheck=true</test.jvm.args>
+  </properties>
+
   <dependencies>
     <!-- declare the kit so that maven knows it has to build it before -->
     <dependency>
@@ -145,7 +149,7 @@
 
           <scripts>
             <script><![CDATA[
-new File(project.build.directory, "fake-hosts.txt").text = "127.0.0.1 ${InetAddress.getLocalHost().getHostName()} testhostname"
+new File(project.build.directory, "fake-hosts.txt").text = "127.0.0.1 ${"hostname".execute().text.trim()} testhostname"
 println(new File(project.build.directory, "fake-hosts.txt").text)
           ]]></script>
           </scripts>
@@ -173,14 +177,11 @@ println(new File(project.build.directory, "fake-hosts.txt").text)
             <angela.distribution>${project.version}</angela.distribution>
             <angela.kitInstallationDir>${project.build.directory}/angela/platform-kit-${project.version}</angela.kitInstallationDir>
             <angela.java.resolver>user</angela.java.resolver>
-            <angela.java.opts>-Djdk.net.hosts.file=${project.build.directory}/fake-hosts.txt -DIGNITE_UPDATE_NOTIFIER=false</angela.java.opts>
             <angela.ssh.strictHostKeyChecking>false</angela.ssh.strictHostKeyChecking>
             <angela.additionalLocalHostnames>testhostname</angela.additionalLocalHostnames>
-            <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
-            <jdk.net.hosts.file>${project.build.directory}/fake-hosts.txt</jdk.net.hosts.file>
-            <IGNITE_UPDATE_NOTIFIER>false</IGNITE_UPDATE_NOTIFIER>
+            <angela.java.opts>${test.jvm.args}</angela.java.opts>
           </systemPropertyVariables>
-          <argLine>-XX:+UseG1GC -Xmx1g -Dorg.terracotta.disablePortReleaseCheck=true</argLine>
+          <argLine>${test.jvm.args}</argLine>
         </configuration>
       </plugin>
     </plugins>
