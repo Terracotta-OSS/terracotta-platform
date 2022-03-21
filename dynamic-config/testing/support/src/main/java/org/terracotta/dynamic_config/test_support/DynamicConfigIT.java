@@ -137,6 +137,7 @@ public class DynamicConfigIT {
           System.setProperty("com.tc.server.entity.processor.threads", "4");
           System.setProperty("com.tc.l2.tccom.workerthreads", "4");
           System.setProperty("com.tc.l2.seda.stage.stall.warning", "1000");
+          System.setProperty("com.tc.tc.messages.packup.enabled", "false");
         }
       });
 
