@@ -110,8 +110,10 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     // The restart status should be cleared upon restart
     stopNode(1, 1);
     stopNode(1, 2);
-    startNode(1, 1, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/node-1-1");
-    startNode(1, 2, "--auto-activate", "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--config-dir", "config/stripe1/node-1-2");
+    waitForStopped(1, 1);
+    waitForStopped(1, 2);
+    startNode(1, 1, "--config-dir", "config/stripe1/node-1-1");
+    startNode(1, 2, "--config-dir", "config/stripe1/node-1-2");
     waitForActive(1);
     waitForPassives(1);
 
