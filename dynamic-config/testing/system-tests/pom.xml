@@ -156,7 +156,6 @@ com.tc.tc.messages.packup.enabled=false
 com.tc.l2.seda.stage.stall.warning=1000
 net.core.tcpnodelay=true
 net.core.keepalive=true
-l2.election.timeout=10
 """
 println(new File(project.build.directory, "angela/platform-kit-${project.version}/server/lib/tc.properties").text)
           ]]></script>
