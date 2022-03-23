@@ -176,7 +176,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
         nomadEntities.put(entry.getKey(), nomadEntityProvider.fetchNomadEntity(addresses.stream().map(Endpoint::getAddress).collect(toList())));
       } catch (ConnectionException e) {
         cleanup.run();
-        throw new IllegalStateException("Unable to connect to stripe UID " + entry.getKey() + ": " + e.getMessage(), e);
+        throw new IllegalStateException("Unable to connect to stripe UID: " + entry.getKey() + " using endpoints: " + entry.getValue() + ". Server states: " + onlineNodes + ". Error:: " + e.getMessage(), e);
       }
     }
 

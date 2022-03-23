@@ -130,16 +130,7 @@ public class DynamicConfigIT {
   protected final ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
   @ClassRule public static final RuleChain classRules = RuleChain.emptyRuleChain()
-      .around(angelaOrchestratorRule = new AngelaOrchestratorRule().igniteFree())
-      .around(new ExtendedTestRule() {
-        @Override
-        protected void before(Description description) {
-          System.setProperty("com.tc.server.entity.processor.threads", "4");
-          System.setProperty("com.tc.l2.tccom.workerthreads", "4");
-          System.setProperty("com.tc.l2.seda.stage.stall.warning", "1000");
-          System.setProperty("com.tc.tc.messages.packup.enabled", "false");
-        }
-      });
+      .around(angelaOrchestratorRule = new AngelaOrchestratorRule().igniteFree());
 
   @Rule public final RuleChain testRules;
 

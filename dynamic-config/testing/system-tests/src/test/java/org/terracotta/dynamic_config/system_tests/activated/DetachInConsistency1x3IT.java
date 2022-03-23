@@ -37,7 +37,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
   public DetachInConsistency1x3IT() {
-    super(Duration.ofSeconds(180));
+    super(Duration.ofSeconds(240));
   }
 
   @Override
@@ -156,10 +156,12 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
     // To ensure that passiveId don't become active during failover since that is what we will remove
     stopNode(1, passiveId);
+    waitForStopped(1, passiveId);
 
     assertThat(
         configTool("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
+    waitForStopped(1, activeId);
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
 

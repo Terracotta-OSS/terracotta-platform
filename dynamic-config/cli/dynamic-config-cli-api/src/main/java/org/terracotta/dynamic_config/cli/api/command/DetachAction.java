@@ -214,6 +214,12 @@ public class DetachAction extends TopologyAction {
     // But if the operation type is stripe, the stripes being detached are stopped automatically after they're removed
     if (operationType == NODE) {
       resetAndStopNodesToRemove();
+      // we need to update the list of runtime peers:
+      // - to remove the node that is gone from this list
+      // - to check the server states again because:
+      //    * a failover could happen after removal
+      //    * a passive blocked could not become active in consistency mode
+      destinationOnlineNodes = findOnlineRuntimePeers(destination);
     }
   }
 
