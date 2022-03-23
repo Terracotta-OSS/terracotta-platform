@@ -145,11 +145,11 @@
 
           <scripts>
             <script><![CDATA[
-new File(project.build.directory, "fake-hosts.txt").text = "127.0.0.1 ${InetAddress.getLocalHost().getHostName()} ${InetAddress.getLocalHost().getHostName().split('[.]')[0]} testhostname"
+new File(project.build.directory, "fake-hosts.txt").text = "127.0.0.1 localhost ${"hostname".execute().text.trim()} ${"hostname".execute().text.trim().split('[.]')[0]} testhostname"
 println(new File(project.build.directory, "fake-hosts.txt").text)
           ]]></script>
             <script><![CDATA[
-new File("${project.build.directory}/angela/platform-kit-${project.version}/server/lib", "tc.properties").text = """
+new File(project.build.directory, "angela/platform-kit-${project.version}/server/lib/tc.properties").text = """
 com.tc.server.entity.processor.threads=4
 com.tc.l2.tccom.workerthreads=4
 com.tc.tc.messages.packup.enabled=false
@@ -158,7 +158,7 @@ net.core.tcpnodelay=true
 net.core.keepalive=true
 l2.election.timeout=10
 """
-println(new File("${project.build.directory}/angela/platform-kit-${project.version}/server/lib", "tc.properties").text)
+println(new File(project.build.directory, "angela/platform-kit-${project.version}/server/lib/tc.properties").text)
           ]]></script>
           </scripts>
         </configuration>
@@ -181,7 +181,7 @@ println(new File("${project.build.directory}/angela/platform-kit-${project.versi
             <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
             <angela.skipUninstall>true</angela.skipUninstall>
             <angela.kitCopy>false</angela.kitCopy>
-            <angela.tsa.fullLogging>true</angela.tsa.fullLogging>
+            <angela.tsa.fullLogging>false</angela.tsa.fullLogging>
             <angela.distribution>${project.version}</angela.distribution>
             <angela.kitInstallationDir>${project.build.directory}/angela/platform-kit-${project.version}</angela.kitInstallationDir>
             <angela.java.resolver>user</angela.java.resolver>
