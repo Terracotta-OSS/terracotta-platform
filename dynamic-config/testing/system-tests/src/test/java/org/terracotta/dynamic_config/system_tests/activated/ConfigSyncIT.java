@@ -66,6 +66,9 @@ public class ConfigSyncIT extends DynamicConfigIT {
 
   @Before
   public void before() {
+    waitForActive(1);
+    waitForPassives(1);
+
     if (angela.tsa().getActive() == getNode(1, 1)) {
       activeNodeId = 1;
       passiveNodeId = 2;

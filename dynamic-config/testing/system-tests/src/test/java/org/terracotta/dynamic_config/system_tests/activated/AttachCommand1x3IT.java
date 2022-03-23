@@ -41,6 +41,16 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     super(Duration.ofSeconds(180));
   }
 
+  @Override
+  protected Duration getConnectionTimeout() {
+    return Duration.ofSeconds(30);
+  }
+
+  @Override
+  protected Duration getRequestTimeout() {
+    return Duration.ofSeconds(30);
+  }
+
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
@@ -161,7 +171,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     //setup for failover in commit phase on active
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", propertySettingString), is(successful()));
     assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
     waitForPassive(1, 3);

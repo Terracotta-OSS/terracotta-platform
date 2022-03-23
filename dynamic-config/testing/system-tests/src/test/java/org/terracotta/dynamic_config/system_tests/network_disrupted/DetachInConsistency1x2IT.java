@@ -71,7 +71,7 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_detach_when_active_passive_disrupted() throws Exception {
+  public void test_detach_when_active_passive_disrupted() {
     TerracottaServer active = angela.tsa().getActive();
     TerracottaServer passive = angela.tsa().getPassive();
     SplitCluster split1 = new SplitCluster(active);
@@ -92,16 +92,19 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
       //stop partition
       disruptor.undisrupt();
+
       waitForPassive(1, passiveId);
+      waitForActive(1);
+
+      waitUntil(() -> getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+      waitUntil(() -> getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
+
+      waitUntil(() -> getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+      waitUntil(() -> getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
+
+      withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
+      withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
     }
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
-
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
-
-    withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
-    withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
   @Test

@@ -77,6 +77,7 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
 
     // activate a 1x1 cluster
     startNode(1, 1);
+    waitForDiagnostic(1, 1);
     activateCluster();
 
     // do a change requiring a restart

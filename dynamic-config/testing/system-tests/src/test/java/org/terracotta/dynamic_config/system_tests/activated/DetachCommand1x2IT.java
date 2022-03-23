@@ -86,7 +86,7 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
         Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort(1, activeId))),
         "dynamic-config-topology-entity",
         getConnectionTimeout(),
-        new DynamicTopologyEntity.Settings().setRequestTimeout(getConnectionTimeout()),
+        new DynamicTopologyEntity.Settings().setRequestTimeout(getRequestTimeout()),
         null)) {
 
       CountDownLatch called = new CountDownLatch(1);
