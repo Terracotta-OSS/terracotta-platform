@@ -119,7 +119,6 @@ import static org.terracotta.utilities.test.matchers.Eventually.within;
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
   private static final Duration DEFAULT_TEST_TIMEOUT = Duration.ofMinutes(2);
-  private static final Duration CONN_TIMEOUT = Duration.ofSeconds(30);
 
   protected static final String CLUSTER_NAME = "tc-cluster";
   protected static final AngelaOrchestratorRule angelaOrchestratorRule;
@@ -235,7 +234,9 @@ public class DynamicConfigIT {
             if (clusterDef.autoStart() && clusterDef.autoActivate()) {
               for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
                 waitForActive(stripeId);
-                waitForPassives(stripeId);
+                LOGGER.info("1 ACTIVE server started for stripe: {}", stripeId);
+                int n = waitForPassives(stripeId);
+                LOGGER.info("{} PASSIVE servers started for stripe: {}", n, stripeId);
               }
             }
           }
@@ -316,6 +317,11 @@ public class DynamicConfigIT {
 
   protected final void stopNode(int stripeId, int nodeId) {
     angela.tsa().stop(getNode(stripeId, nodeId));
+    // waitForStopped is required because Ignite has a little cache
+    // and when the server is stopped, the angela server state read from the test jvm
+    // can still be an old state for some milliseconds.
+    // So this ensures the server has completed and also that this completion is seen on the test jvm
+    waitForStopped(stripeId, nodeId);
   }
 
   protected final TerracottaServer getNode(int stripeId, int nodeId) {
@@ -343,7 +349,7 @@ public class DynamicConfigIT {
   }
 
   protected final InetSocketAddress getNodeAddress(int stripeId, int nodeId) {
-    return InetSocketAddress.createUnresolved(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId));
+    return InetSocketAddress.createUnresolved(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId));
   }
 
   protected String getDefaultHostname(int stripeId, int nodeId) {
@@ -356,19 +362,22 @@ public class DynamicConfigIT {
 
   protected void attachAll() {
     int stripes = angela.getStripeCount();
-    for (int x = 1; x <= stripes; x++) {
-      List<TerracottaServer> stripe = angela.getStripe(x);
+    for (int stripeId = 1; stripeId <= stripes; stripeId++) {
+      List<TerracottaServer> stripe = angela.getStripe(stripeId);
       if (stripe.size() > 1) {
+        waitForDiagnostic(stripeId, 1);
         // Attach all servers in a stripe to form individual stripes
-        for (int i = 1; i < stripe.size(); i++) {
+        for (int nodeId = 2; nodeId <= stripe.size(); nodeId++) {
+          waitForDiagnostic(stripeId, nodeId);
+
           List<String> command = new ArrayList<>();
           command.add("attach");
           command.add("-t");
           command.add("node");
           command.add("-d");
-          command.add(stripe.get(0).getHostPort());
+          command.add(getNodeAddress(stripeId, 1).toString());
           command.add("-s");
-          command.add(stripe.get(i).getHostPort());
+          command.add(getNodeAddress(stripeId, nodeId).toString());
 
           ToolExecutionResult result = configTool(command.toArray(new String[0]));
           if (result.getExitStatus() != 0) {
@@ -406,6 +415,7 @@ public class DynamicConfigIT {
 
   protected ToolExecutionResult activateStripe(String name, int stripe) {
     Path licensePath = getLicensePath();
+    waitForDiagnostic(stripe, 1);
     ToolExecutionResult result = licensePath == null ?
         configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name) :
         configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name, "-l", licensePath.toString());
@@ -423,18 +433,18 @@ public class DynamicConfigIT {
     List<String> configToolOptions = getConfigToolOptions(cli);
 
     boolean addedOptions = false;
-    String timeout = Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString();
+
     if (!configToolOptions.contains("-t") && !configToolOptions.contains("-connection-timeout") && !configToolOptions.contains("-connect-timeout")) {
       // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
       enhancedCli.add("-t");
-      enhancedCli.add(timeout);
+      enhancedCli.add(Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString());
       addedOptions = true;
     }
 
     if (!configToolOptions.contains("-r") && !configToolOptions.contains("-request-timeout")) {
       // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
       enhancedCli.add("-r");
-      enhancedCli.add(timeout);
+      enhancedCli.add(Measure.of(getRequestTimeout().getSeconds(), TimeUnit.SECONDS).toString());
       addedOptions = true;
     }
 
@@ -517,7 +527,7 @@ public class DynamicConfigIT {
         .offheap("main:512MB,foo:1GB")
         .metaData("metadata")
         .failoverPriority(Optional.ofNullable(getFailoverPriority()).map(Objects::toString).orElse(null))
-        .clientReconnectWindow("20s") // the default client reconnect window of 2min can cause some tests to timeout
+        .clientReconnectWindow("10s") // the default client reconnect window of 2min can cause some tests to timeout
         .clusterName(CLUSTER_NAME);
   }
 
@@ -693,9 +703,10 @@ public class DynamicConfigIT {
     waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STOPPED)));
   }
 
-  protected final void waitForPassives(int stripeId) {
+  protected final int waitForPassives(int stripeId) {
     int expectedPassiveCount = angela.getNodeCount(stripeId) - 1;
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(expectedPassiveCount)));
+    return expectedPassiveCount;
   }
 
   protected final void waitForNPassives(int stripeId, int count) {
@@ -703,7 +714,7 @@ public class DynamicConfigIT {
   }
 
   protected final Cluster getUpcomingCluster(int stripeId, int nodeId) {
-    return getUpcomingCluster(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId));
+    return getUpcomingCluster(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId));
   }
 
   // =========================================
@@ -715,7 +726,7 @@ public class DynamicConfigIT {
   }
 
   protected final Cluster getRuntimeCluster(int stripeId, int nodeId) {
-    return getUpcomingCluster(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId));
+    return getUpcomingCluster(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId));
   }
 
   protected final Cluster getRuntimeCluster(String host, int port) {
@@ -723,7 +734,7 @@ public class DynamicConfigIT {
   }
 
   protected final void withTopologyService(int stripeId, int nodeId, Consumer<TopologyService> consumer) {
-    withTopologyService(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId), consumer);
+    withTopologyService(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId), consumer);
   }
 
   protected final void withTopologyService(String host, int port, Consumer<TopologyService> consumer) {
@@ -734,7 +745,7 @@ public class DynamicConfigIT {
   }
 
   protected final <T> T usingTopologyService(int stripeId, int nodeId, Function<TopologyService, T> fn) {
-    return usingTopologyService(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId), fn);
+    return usingTopologyService(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId), fn);
   }
 
   protected final <T> T usingTopologyService(String host, int port, Function<TopologyService, T> fn) {
@@ -742,7 +753,7 @@ public class DynamicConfigIT {
   }
 
   protected final <T> T usingDiagnosticService(int stripeId, int nodeId, Function<DiagnosticService, T> fn) {
-    return usingDiagnosticService(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId), fn);
+    return usingDiagnosticService(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId), fn);
   }
 
   protected final <T> T usingDiagnosticService(String host, int port, Function<DiagnosticService, T> fn) {
@@ -753,7 +764,7 @@ public class DynamicConfigIT {
           InetSocketAddress.createUnresolved(host, port),
           getClass().getSimpleName(),
           getConnectionTimeout(),
-          getConnectionTimeout(),
+          getRequestTimeout(),
           null,
           objectMapperFactory)) {
         return fn.apply(diagnosticService);
@@ -765,7 +776,11 @@ public class DynamicConfigIT {
   }
 
   protected Duration getConnectionTimeout() {
-    return CONN_TIMEOUT;
+    return Duration.ofSeconds(5);
+  }
+
+  protected Duration getRequestTimeout() {
+    return Duration.ofSeconds(10);
   }
 
   protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {
@@ -856,7 +871,7 @@ public class DynamicConfigIT {
         InetSocketAddress.createUnresolved(server.getHostName(), server.getTsaPort()),
         getClass().getSimpleName(),
         getConnectionTimeout(),
-        getConnectionTimeout(),
+        getRequestTimeout(),
         null,
         objectMapperFactory)) {
       return diagnosticService.isBlocked();

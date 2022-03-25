@@ -82,7 +82,7 @@ public class JavaTool {
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    threadDumps(timeout).forEach(dump -> dump.writeTo(outputDir.resolve("thread-dump-" + dump.process.pid + "-" + dump.process.processName.replaceAll("\\W", "_") + ".txt")));
+    threadDumps(timeout).forEach(dump -> dump.writeTo(outputDir.resolve("thread-dump-" + dump.process.pid + "-" + dump.process.processName.replaceAll("\\W", "_") + ".log")));
   }
 
   public static void memoryDump(Process process, Path output, Duration timeout) {

@@ -35,7 +35,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
   public DetachInConsistency1x2IT() {
-    super(Duration.ofSeconds(180));
+    super(Duration.ofSeconds(240));
   }
 
   @Override

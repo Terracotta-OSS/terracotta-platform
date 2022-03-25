@@ -52,6 +52,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
   public void test_repair_partial_commit_when_passive_down() throws Exception {
     startNode(1, 1);
     startNode(1, 2);
+    waitForDiagnostic(1, 1);
+    waitForDiagnostic(1, 2);
     activate1x2Cluster();
 
     final int activeId = findActive(1).getAsInt();

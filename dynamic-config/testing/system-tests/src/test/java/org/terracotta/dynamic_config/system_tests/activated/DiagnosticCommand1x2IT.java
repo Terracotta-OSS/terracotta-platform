@@ -66,6 +66,7 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     stopNode(1, 1);
 
     startNode(1, 1, "--repair-mode", "--name", nodeName, "-r", repo);
+    waitForDiagnostic(1, 1);
     assertThat(
         configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic3.txt").toURI())).collect(toList())));
@@ -110,8 +111,6 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     // The restart status should be cleared upon restart
     stopNode(1, 1);
     stopNode(1, 2);
-    waitForStopped(1, 1);
-    waitForStopped(1, 2);
     startNode(1, 1, "--config-dir", "config/stripe1/node-1-1");
     startNode(1, 2, "--config-dir", "config/stripe1/node-1-2");
     waitForActive(1);

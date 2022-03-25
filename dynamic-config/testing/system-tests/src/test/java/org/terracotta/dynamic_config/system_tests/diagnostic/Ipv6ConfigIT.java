@@ -21,6 +21,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 
 import java.nio.file.Path;
+import java.time.Duration;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -29,6 +30,16 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false, failoverPriority = "")
 public class Ipv6ConfigIT extends DynamicConfigIT {
+
+  @Override
+  protected Duration getConnectionTimeout() {
+    return Duration.ofSeconds(30);
+  }
+
+  @Override
+  protected Duration getRequestTimeout() {
+    return Duration.ofSeconds(30);
+  }
 
   @Test
   public void testStartupFromConfigFileAndExportCommand() {

@@ -26,6 +26,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
@@ -38,6 +39,17 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class SetCommand1x1IT extends DynamicConfigIT {
+
+  @Override
+  protected Duration getConnectionTimeout() {
+    return Duration.ofSeconds(30);
+  }
+
+  @Override
+  protected Duration getRequestTimeout() {
+    return Duration.ofSeconds(30);
+  }
+
   @Test
   public void setOffheapResource_decreaseSize() {
     assertThat(
@@ -159,6 +171,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     // Restart node and verify that the change has taken effect
     stopNode(1, 1);
     startNode(1, 1);
+    waitForActive(1);
 
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-r", "-c", "log-dir", "-t", "index"),
@@ -276,7 +289,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort())),
         "dynamic-config-topology-entity",
         getConnectionTimeout(),
-        new DynamicTopologyEntity.Settings().setRequestTimeout(getConnectionTimeout()),
+        new DynamicTopologyEntity.Settings().setRequestTimeout(getRequestTimeout()),
         null)) {
 
       CountDownLatch called = new CountDownLatch(1);

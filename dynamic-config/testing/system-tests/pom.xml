@@ -139,28 +139,38 @@
             <goals>
               <goal>execute</goal>
             </goals>
-          </execution>
-        </executions>
-        <configuration>
-
-          <scripts>
-            <script><![CDATA[
+            <configuration>
+              <scripts>
+                <script><![CDATA[
 new File(project.build.directory, "fake-hosts.txt").text = "127.0.0.1 localhost ${"hostname".execute().text.trim()} ${"hostname".execute().text.trim().split('[.]')[0]} testhostname"
 println(new File(project.build.directory, "fake-hosts.txt").text)
-          ]]></script>
-            <script><![CDATA[
+]]>
+                </script>
+              </scripts>
+            </configuration>
+          </execution>
+          <execution>
+            <id>tc.properties</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <scripts>
+                <script><![CDATA[
 new File(project.build.directory, "angela/platform-kit-${project.version}/server/lib/tc.properties").text = """
 com.tc.server.entity.processor.threads=4
 com.tc.l2.tccom.workerthreads=4
 com.tc.tc.messages.packup.enabled=false
 com.tc.l2.seda.stage.stall.warning=1000
-net.core.tcpnodelay=true
-net.core.keepalive=true
 """
 println(new File(project.build.directory, "angela/platform-kit-${project.version}/server/lib/tc.properties").text)
-          ]]></script>
-          </scripts>
-        </configuration>
+]]>
+                </script>
+              </scripts>
+            </configuration>
+          </execution>
+        </executions>
         <dependencies>
           <dependency>
             <groupId>org.codehaus.groovy</groupId>
@@ -176,6 +186,7 @@ println(new File(project.build.directory, "angela/platform-kit-${project.version
         <configuration>
           <forkCount>${test.parallel.forks}</forkCount>
           <reuseForks>false</reuseForks>
+          <rerunFailingTestsCount>2</rerunFailingTestsCount>
           <systemPropertyVariables>
             <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
             <angela.skipUninstall>true</angela.skipUninstall>
