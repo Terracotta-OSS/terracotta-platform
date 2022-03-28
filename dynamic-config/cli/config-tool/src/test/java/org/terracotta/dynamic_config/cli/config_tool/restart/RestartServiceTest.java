@@ -25,7 +25,7 @@ import org.terracotta.diagnostic.client.DiagnosticOperationTimeoutException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProviderException;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
@@ -33,6 +33,7 @@ import org.terracotta.dynamic_config.cli.config_tool.BaseTest;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.stream.IntStream;
 
@@ -46,14 +47,17 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE_SUSPENDED;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.STARTING;
-import static org.terracotta.diagnostic.common.LogicalServerState.SYNCHRONIZING;
-import static org.terracotta.diagnostic.common.LogicalServerState.UNINITIALIZED;
-import static org.terracotta.diagnostic.common.LogicalServerState.UNKNOWN;
-import static org.terracotta.diagnostic.common.LogicalServerState.UNREACHABLE;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.START_SUSPENDED;
+import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
+import static org.terracotta.diagnostic.model.LogicalServerState.UNINITIALIZED;
+import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
+import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 
 /**
@@ -63,6 +67,7 @@ import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 public class RestartServiceTest extends BaseTest {
 
   private static final int[] PORTS = {9411, 9412, 9413, 9421, 9422, 9423};
+  private static final EnumSet<LogicalServerState> STATES = EnumSet.of(ACTIVE, ACTIVE_RECONNECTING, ACTIVE_SUSPENDED, PASSIVE, PASSIVE_SUSPENDED, SYNCHRONIZING);
 
   private RestartService restartService;
   private Cluster cluster;
@@ -72,7 +77,7 @@ public class RestartServiceTest extends BaseTest {
   public void setUp() throws Exception {
     super.setUp();
     restartService = new RestartService(diagnosticServiceProvider, new ConcurrencySizing());
-    cluster = new Cluster(
+    cluster = Cluster.newDefaultCluster(
         "my-cluster",
         new Stripe(
             newDefaultNode("node1", "localhost", PORTS[0]),
@@ -90,7 +95,7 @@ public class RestartServiceTest extends BaseTest {
   public void test_restart() throws InterruptedException {
     mockSuccessfulServerRestart();
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
     Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
@@ -112,7 +117,7 @@ public class RestartServiceTest extends BaseTest {
       doThrow(new DiagnosticOperationTimeoutException("")).when(dynamicConfigService).restart(any());
     });
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(6)));
 
     Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
@@ -131,7 +136,7 @@ public class RestartServiceTest extends BaseTest {
       doThrow(new DiagnosticServiceProviderException("error")).when(dynamicConfigService).restart(any());
     });
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(6)));
 
     Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
@@ -149,10 +154,10 @@ public class RestartServiceTest extends BaseTest {
 
     when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenAnswer(sleep(SYNCHRONIZING, 60, SECONDS));
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(2));
+    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(8));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(5)));
 
     IntStream.of(PORTS).forEach(port -> {
@@ -171,12 +176,12 @@ public class RestartServiceTest extends BaseTest {
     when(diagnosticServiceMock("localhost", 9413).getLogicalServerState()).thenReturn(UNKNOWN);
     when(diagnosticServiceMock("localhost", 9421).getLogicalServerState()).thenReturn(STARTING);
     when(diagnosticServiceMock("localhost", 9422).getLogicalServerState()).thenReturn(UNINITIALIZED);
-    when(diagnosticServiceMock("localhost", 9423).getLogicalServerState()).thenReturn(ACTIVE_SUSPENDED);
+    when(diagnosticServiceMock("localhost", 9423).getLogicalServerState()).thenReturn(START_SUSPENDED);
 
-    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2));
+    RestartProgress restartProgress = restartService.restartNodes(cluster.getNodeAddresses(), Duration.ofSeconds(2), STATES);
     assertThat(restartProgress.getErrors().size(), is(equalTo(0)));
 
-    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(2));
+    Map<InetSocketAddress, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(8));
     assertThat(restarted.toString(), restarted.size(), is(equalTo(0)));
 
     IntStream.of(PORTS).forEach(port -> {

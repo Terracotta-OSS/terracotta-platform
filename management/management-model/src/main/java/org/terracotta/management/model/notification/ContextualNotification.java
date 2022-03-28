@@ -15,13 +15,13 @@
  */
 package org.terracotta.management.model.notification;
 
-import java.util.Objects;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou

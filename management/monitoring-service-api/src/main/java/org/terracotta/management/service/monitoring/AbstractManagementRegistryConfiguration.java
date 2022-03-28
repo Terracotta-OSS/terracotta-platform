@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceException;
@@ -27,7 +26,6 @@ import java.util.Objects;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public abstract class AbstractManagementRegistryConfiguration implements ServiceConfiguration<EntityManagementRegistry> {
 
   protected final ServiceRegistry registry;

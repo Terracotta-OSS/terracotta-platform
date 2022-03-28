@@ -15,30 +15,60 @@
  */
 package org.terracotta.lease.service.config;
 
-import com.tc.classloader.CommonComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.entity.StateDumpable;
 import org.terracotta.lease.service.LeaseServiceProvider;
+
+import static org.terracotta.lease.service.LeaseConstants.DEFAULT_LEASE_LENGTH;
+import static org.terracotta.lease.service.LeaseConstants.MAX_LEASE_LENGTH;
 
 /**
  * Represents the connection leasing configuration from the server's XML config
  */
-public class LeaseConfiguration implements ServiceProviderConfiguration {
-  private final long leaseLength;
+public class LeaseConfiguration implements ServiceProviderConfiguration, StateDumpable {
+  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseConfiguration.class);
 
-  public LeaseConfiguration(long leaseLength) {
-    if (leaseLength <= 0) {
+  private volatile long leaseLength;
+
+  public LeaseConfiguration(long initialLength) {
+    if (initialLength <= 0) {
       throw new IllegalArgumentException("Only positive lease lengths are acceptable");
     }
-    this.leaseLength = leaseLength;
+    setLeaseLength(initialLength);
   }
 
   public long getLeaseLength() {
     return leaseLength;
   }
 
+  public void setLeaseLength(long leaseLength) {
+    if (leaseLength <= 0) {
+      LOGGER.warn("Non-positive lease length: " + leaseLength + ", ignoring it");
+      this.leaseLength = use(DEFAULT_LEASE_LENGTH);
+    }
+    if (leaseLength > MAX_LEASE_LENGTH) {
+      LOGGER.warn("Excessive lease length: " + leaseLength + ", using smaller value: " + MAX_LEASE_LENGTH);
+      this.leaseLength = use(MAX_LEASE_LENGTH);
+    }
+    this.leaseLength = leaseLength;
+  }
+
   @Override
   public Class<? extends ServiceProvider> getServiceProviderType() {
     return LeaseServiceProvider.class;
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("leaseLength", leaseLength);
+  }
+
+  private static long use(long leaseLength) {
+    LOGGER.info("Using lease length of " + leaseLength + " ms");
+    return leaseLength;
   }
 }

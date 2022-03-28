@@ -21,8 +21,6 @@ import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.common.struct.Tuple2;
-import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -30,19 +28,17 @@ import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Collection;
+import java.util.Optional;
 
 import static java.lang.System.lineSeparator;
+import static java.util.Collections.singletonList;
 
 @Parameters(commandNames = "activate", commandDescription = "Activate a cluster")
-@Usage("activate ( -s <hostname[:port]> -n <cluster-name> | -f <config-file> [-n <cluster-name>] ) [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
+@Usage("activate -s <hostname[:port]> -f <config-file> [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class ActivateCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
@@ -60,38 +56,41 @@ public class ActivateCommand extends RemoteCommand {
   @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
+  @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
+
+  @Parameter(names = {"-R"}, description = "Restrict the activation process to the node only")
+  protected boolean restrictedActivation = false;
 
   private Cluster cluster;
   private Collection<InetSocketAddress> runtimePeers;
 
   @Override
   public void validate() {
-    if (node == null && configPropertiesFile == null) {
-      throw new IllegalArgumentException("One of node or config properties file must be specified");
-    }
+    // basic validations first
 
-    if (node != null && configPropertiesFile != null) {
+    if (!restrictedActivation && node != null && configPropertiesFile != null) {
       throw new IllegalArgumentException("Either node or config properties file should be specified, not both");
     }
 
-    if (node != null && clusterName == null) {
-      throw new IllegalArgumentException("Cluster name should be provided when node is specified");
-    }
-
-    if (node != null) {
-      validateAddress(node);
+    if (restrictedActivation && node == null) {
+      throw new IllegalArgumentException("A node must be supplied for a restricted activation");
     }
 
     if (licenseFile != null && !Files.exists(licenseFile)) {
       throw new ParameterException("License file not found: " + licenseFile);
     }
 
-    cluster = loadCluster();
-    runtimePeers = node == null ? cluster.getNodeAddresses() : findRuntimePeers(node);
+    if (node != null) {
+      validateAddress(node);
+    }
 
-    // check if we want to override the cluster name
+    // loading cluster from available sources, then validating
+
+    cluster = loadTopologyFromConfig()
+        .orElseGet(() -> loadTopologyFromNode()
+            .orElseThrow(() -> new IllegalArgumentException("One of node or config properties file must be specified")));
+
     if (clusterName != null) {
       cluster.setName(clusterName);
     }
@@ -100,44 +99,30 @@ public class ActivateCommand extends RemoteCommand {
       throw new IllegalArgumentException("Cluster name is missing");
     }
 
-    // validate the topology
+    if (node != null && !cluster.containsNode(node)) {
+      throw new IllegalArgumentException("Node: " + node + " is not in cluster: " + cluster.toShapeString());
+    }
+
     new ClusterValidator(cluster).validate();
+
+    // getting the list of nodes where to push the same topology
+
+    runtimePeers = restrictedActivation ?
+        singletonList(node) : // if restrictive activation, we only activate the node supplied
+        cluster.getNodeAddresses(); // if normal activation the nodes to activate are those found in the config file or in the topology loaded from the node
 
     // verify the activated state of the nodes
     if (areAllNodesActivated(runtimePeers)) {
-      throw new IllegalStateException("Cluster is already activated");
+      throw new IllegalStateException("Nodes are already activated: " + toString(runtimePeers));
     }
   }
 
   @Override
   public final void run() {
-    logger.info("Activating cluster: {} formed with nodes: {}", cluster.getName(), toString(runtimePeers));
-
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(runtimePeers)) {
-      dynamicConfigServices(diagnosticServices)
-          .map(Tuple2::getT2)
-          .forEach(service -> service.activate(cluster, read(licenseFile)));
-      if (licenseFile == null) {
-        logger.info("No license installed");
-      } else {
-        logger.info("License installation successful");
-      }
-    }
-
-    runClusterActivation(runtimePeers, cluster);
-    logger.debug("Configuration repositories have been created for all nodes");
-
-    logger.info("Restarting nodes: {}", toString(runtimePeers));
-    restartNodes(
-        runtimePeers,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
-    logger.info("All nodes came back up");
-
+    activate(runtimePeers, cluster, licenseFile, restartDelay, restartWaitTime);
     logger.info("Command successful!" + lineSeparator());
   }
 
-  /*<-- Test methods --> */
   Cluster getCluster() {
     return cluster;
   }
@@ -157,32 +142,20 @@ public class ActivateCommand extends RemoteCommand {
     return this;
   }
 
-  ActivateCommand setLicenseFile(Path licenseFile) {
-    this.licenseFile = licenseFile;
-    return this;
-  }
-
-  private Cluster loadCluster() {
-    Cluster cluster;
-    if (node != null) {
-      cluster = getUpcomingCluster(node);
-      logger.debug("Cluster topology validation successful");
-    } else {
+  private Optional<Cluster> loadTopologyFromConfig() {
+    return Optional.ofNullable(configPropertiesFile).map(path -> {
       ClusterFactory clusterCreator = new ClusterFactory();
-      cluster = clusterCreator.create(configPropertiesFile);
-      logger.debug("Config property file parsed and cluster topology validation successful");
-    }
-    return cluster;
+      Cluster cluster = clusterCreator.create(configPropertiesFile);
+      logger.info("Cluster topology loaded and validated from configuration file: " + cluster.toShapeString());
+      return cluster;
+    });
   }
 
-  private static String read(Path path) {
-    if (path == null) {
-      return null;
-    }
-    try {
-      return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+  private Optional<Cluster> loadTopologyFromNode() {
+    return Optional.ofNullable(node).map(node -> {
+      Cluster cluster = getUpcomingCluster(node);
+      logger.info("Cluster topology loaded node: " + cluster.toShapeString());
+      return cluster;
+    });
   }
 }

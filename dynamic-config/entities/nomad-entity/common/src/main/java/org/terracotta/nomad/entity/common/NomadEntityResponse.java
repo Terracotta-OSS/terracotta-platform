@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * @author Mathieu Carbou
  */
@@ -29,10 +31,15 @@ public class NomadEntityResponse implements EntityResponse {
 
   @JsonCreator
   public NomadEntityResponse(@JsonProperty(value = "response", required = true) AcceptRejectResponse response) {
-    this.response = response;
+    this.response = requireNonNull(response);
   }
 
   public AcceptRejectResponse getResponse() {
     return response;
+  }
+
+  @Override
+  public String toString() {
+    return response.toString();
   }
 }

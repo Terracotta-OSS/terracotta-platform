@@ -16,18 +16,21 @@
 package org.terracotta.common.struct;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
 public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<T>> {
 
-  private final long quantity;
+  private final BigInteger quantity;
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
   @JsonSubTypes({
@@ -37,11 +40,15 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
   private final T unit;
 
   public static <U extends Enum<U> & Unit<U>> Measure<U> of(long quantity, U type) {
+    return new Measure<>(BigInteger.valueOf(quantity), type);
+  }
+
+  public static <U extends Enum<U> & Unit<U>> Measure<U> of(BigInteger quantity, U type) {
     return new Measure<>(quantity, type);
   }
 
   public static <U extends Enum<U> & Unit<U>> Measure<U> zero(Class<U> unitType) {
-    return of(0, unitType.getEnumConstants()[0].getBaseUnit());
+    return of(BigInteger.ZERO, unitType.getEnumConstants()[0].getBaseUnit());
   }
 
   public static <U extends Enum<U> & Unit<U>> Measure<U> parse(String quantityUnit, Class<U> unitType) throws IllegalArgumentException {
@@ -83,9 +90,9 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
       throw new IllegalArgumentException("Invalid measure: '" + quantityUnit + "'. <quantity> is missing. Measure should be specified in <quantity><unit> format.");
     }
 
-    long quantity;
+    BigInteger quantity;
     try {
-      quantity = Long.parseLong(quantityUnit.substring(0, i));
+      quantity = new BigInteger(quantityUnit.substring(0, i));
     } catch (NumberFormatException e) {
       // quantity is not a number
       throw new IllegalArgumentException("Invalid measure: '" + quantityUnit + "'. <quantity> is not a valid number.");
@@ -111,20 +118,30 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
   }
 
   @JsonCreator
-  private Measure(@JsonProperty(value = "quantity", required = true) long quantity,
+  private Measure(@JsonProperty(value = "quantity", required = true) BigInteger quantity,
                   @JsonProperty(value = "unit", required = true) T unit) {
     this.quantity = quantity;
     this.unit = requireNonNull(unit);
-    if (quantity < 0) {
+    if (quantity.signum() == -1) {
       throw new IllegalArgumentException("Quantity measure cannot be negative");
     }
   }
 
+  @JsonIgnore
   public long getQuantity() {
-    return quantity;
+    return quantity.longValueExact();
   }
 
   public long getQuantity(T unit) {
+    return unit.convert(this.quantity, this.unit).longValueExact();
+  }
+
+  @JsonProperty("quantity")
+  public BigInteger getExactQuantity() {
+    return quantity;
+  }
+
+  public BigInteger getExactQuantity(T unit) {
     return unit.convert(this.quantity, this.unit);
   }
 
@@ -139,19 +156,15 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
+    if (!(o instanceof Measure)) return false;
     Measure<?> measure = (Measure<?>) o;
-
-    if (quantity != measure.quantity) return false;
-    return unit.equals(measure.unit);
+    return Objects.equals(getExactQuantity(), measure.getExactQuantity())
+        && Objects.equals(getUnit(), measure.getUnit());
   }
 
   @Override
   public int hashCode() {
-    int result = (int) (quantity ^ (quantity >>> 32));
-    result = 31 * result + unit.hashCode();
-    return result;
+    return Objects.hash(quantity, unit);
   }
 
   @Override
@@ -161,6 +174,6 @@ public class Measure<T extends Enum<T> & Unit<T>> implements Comparable<Measure<
 
   @Override
   public int compareTo(Measure<T> o) {
-    return Long.compare(getQuantity(unit.getBaseUnit()), o.getQuantity(o.getUnit().getBaseUnit()));
+    return getExactQuantity(unit.getBaseUnit()).compareTo(o.getExactQuantity(o.getUnit().getBaseUnit()));
   }
 }

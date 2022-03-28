@@ -19,7 +19,7 @@ import org.terracotta.connection.ConnectionException;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
 
 import static java.util.Objects.requireNonNull;
 
@@ -41,7 +41,7 @@ public class DynamicTopologyEntityProvider {
     this.securityRootDirectory = securityRootDirectory;
   }
 
-  public DynamicTopologyEntity fetchDynamicTopologyEntity(List<InetSocketAddress> addresses) throws ConnectionException {
+  public DynamicTopologyEntity fetchDynamicTopologyEntity(Collection<InetSocketAddress> addresses) throws ConnectionException {
     return DynamicTopologyEntityFactory.fetch(addresses, connectionName, connectTimeout, settings, securityRootDirectory);
   }
 }

@@ -20,14 +20,15 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Props;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
-import org.terracotta.dynamic_config.api.service.DynamicConfigEventService;
-import org.terracotta.dynamic_config.api.service.DynamicConfigListenerAdapter;
-import org.terracotta.dynamic_config.api.service.EventRegistration;
+import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
+import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
+import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
@@ -81,6 +82,11 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
       }
       managementRegistry.close();
     }
+  }
+
+  @Override
+  public void addStateTo(StateDumpCollector stateDumpCollector) {
+    stateDumpCollector.addState("active", active);
   }
 
   final void listen() {

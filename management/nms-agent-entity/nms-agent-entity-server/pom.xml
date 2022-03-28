@@ -29,16 +29,25 @@
   <artifactId>nms-agent-entity-server</artifactId>
   <name>Terracotta Management :: NMS Agent Entity :: Server</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
   <dependencies>
     <!-- in common server classpath -->
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>monitoring-service-api</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>statistics</artifactId>
+      <version>${statistics.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- inside jar -->
@@ -65,35 +74,4 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4.3</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <shadedClassifierName>plugin</shadedClassifierName>
-              <!-- we have to make sure no voltron api comes in the shaded jar -->
-              <artifactSet>
-                <includes>
-                  <include>org.terracotta.management:nms-agent-entity-common</include>
-                  <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
-                  <include>org.terracotta.voltron.proxy:voltron-proxy-server</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-
 </project>

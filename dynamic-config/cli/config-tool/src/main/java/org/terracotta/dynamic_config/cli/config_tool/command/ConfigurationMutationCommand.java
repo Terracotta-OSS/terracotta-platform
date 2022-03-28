@@ -16,16 +16,14 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import org.terracotta.common.struct.Tuple2;
-import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -62,14 +60,7 @@ public abstract class ConfigurationMutationCommand extends ConfigurationCommand 
     boolean allOnlineNodesActivated = areAllNodesActivated(onlineNodes.keySet());
 
     if (allOnlineNodesActivated) {
-      logger.debug("Validating the new configuration change(s) against the license");
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
-        if (diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(updatedCluster)) {
-          logger.info("License validation passed: configuration change(s) can be applied");
-        } else {
-          logger.warn("License validation skipped: no license installed");
-        }
-      }
+      licenseValidation(node, updatedCluster);
     }
 
     logger.debug("New configuration change(s) can be sent");

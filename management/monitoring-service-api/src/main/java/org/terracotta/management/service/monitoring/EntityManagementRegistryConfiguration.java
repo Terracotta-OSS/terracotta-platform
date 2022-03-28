@@ -15,13 +15,11 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ServiceRegistry;
 
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public class EntityManagementRegistryConfiguration extends AbstractManagementRegistryConfiguration {
   public EntityManagementRegistryConfiguration(ServiceRegistry registry, boolean activeEntity) {
     super(registry, activeEntity);

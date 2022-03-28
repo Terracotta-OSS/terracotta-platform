@@ -49,7 +49,7 @@ public class AllResultsReceiverAdapterTest<U, V> {
         args[i] = Integer.toString(i);
       } else if (parameterType.equals(UUID.class)) {
         args[i] = UUID.randomUUID();
-      } else if (parameterType.equals(Consistency.class)){
+      } else if (parameterType.equals(Consistency.class)) {
         args[i] = Consistency.CONSISTENT;
       } else {
         args[i] = mock(parameterType);

@@ -15,8 +15,6 @@
  */
 package org.terracotta.management.model.cluster;
 
-import java.util.Objects;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -25,6 +23,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

@@ -20,8 +20,9 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.config.data_roots.management.DataRootBinding;
 import org.terracotta.config.data_roots.management.DataRootSettingsManagementProvider;
 import org.terracotta.config.data_roots.management.DataRootStatisticsManagementProvider;
-import org.terracotta.config.util.ParameterSubstitutor;
 import org.terracotta.data.config.DataRootMapping;
+import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
@@ -31,7 +32,6 @@ import org.terracotta.management.service.monitoring.ManageableServerComponent;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
@@ -54,27 +54,52 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
   private final ConcurrentMap<String, Path> dataRootMap = new ConcurrentHashMap<>();
   private final String platformRootIdentifier;
   private final ConcurrentMap<String, DataDirectories> serverToDataRoots = new ConcurrentHashMap<>();
-  private final Path rootPath;
+  private final IParameterSubstitutor parameterSubstitutor;
+  private final PathResolver pathResolver;
 
-  public DataDirectoriesConfigImpl(String source, org.terracotta.data.config.DataDirectories dataDirectories) {
-    Path tempRootPath = Paths.get(".").toAbsolutePath();
-    if (source != null) {
-      try {
-        Path sourcePath = Paths.get(source);
-        if (sourcePath.isAbsolute()) {
-          tempRootPath = sourcePath;
-        }
-      } catch (InvalidPathException e) {
-        // Ignore, we keep the root as . then
-      }
+  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, Path metadataDir, Map<String, Path> dataDirectories) {
+    this.parameterSubstitutor = parameterSubstitutor;
+    this.pathResolver = pathResolver;
+
+    //add data dirs
+    dataDirectories.forEach((name, path) -> addDataDirectory(name, path.toString()));
+
+    // add platform metadata dir first
+    if (metadataDir == null) {
+      this.platformRootIdentifier = null;
+
+    } else {
+      // backward compat': it was possible to define the same data root id for both platform persistence and user entities...
+      // so we need to search if we have a data dir that contains the metadataDir
+      // otherwise, we are using dynamic config and we would generate an ID.
+      this.platformRootIdentifier = dataDirectories.entrySet()
+          .stream()
+          .filter(e -> e.getValue().equals(metadataDir))
+          .map(Map.Entry::getKey)
+          .findFirst()
+          .orElseGet(() -> {
+            // we are using dynamic config
+            String id = "platform";
+            if (dataDirectories.containsKey(id)) {
+              id += "-" + System.currentTimeMillis();
+            }
+            addDataDirectory(id, metadataDir.toString());
+            return id;
+          });
     }
-    rootPath = tempRootPath;
+  }
+
+  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories) {
+    this(parameterSubstitutor, pathResolver, dataDirectories, false);
+  }
+
+  public DataDirectoriesConfigImpl(IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, org.terracotta.data.config.DataDirectories dataDirectories, boolean skipIO) {
+    this.parameterSubstitutor = parameterSubstitutor;
+    this.pathResolver = pathResolver;
 
     String tempPlatformRootIdentifier = null;
     for (DataRootMapping mapping : dataDirectories.getDirectory()) {
-
-      addDataDirectory(mapping.getName(), mapping.getValue());
-
+      addDataDirectory(mapping.getName(), mapping.getValue(), skipIO);
       if (mapping.isUseForPlatform()) {
         if (tempPlatformRootIdentifier == null) {
           tempPlatformRootIdentifier = mapping.getName();
@@ -94,9 +119,13 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
 
   @Override
   public void addDataDirectory(String name, String path) {
-    validateDataDirectory(name, path);
+    addDataDirectory(name, path, false);
+  }
 
-    Path dataDirectory = rootPath.resolve(ParameterSubstitutor.substitute(path)).normalize();
+  public void addDataDirectory(String name, String path, boolean skipIO) {
+    validateDataDirectory(name, path, skipIO);
+
+    Path dataDirectory = compute(Paths.get(path));
 
     // with dynamic config, XML is parsed multiple times during the lifecycle of the server and these logs are triggered at each parsing
     LOGGER.debug("Defined directory with name: {} at location: {}", name, dataDirectory);
@@ -106,7 +135,11 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
 
   @Override
   public void validateDataDirectory(String name, String path) {
-    Path dataDirectory = rootPath.resolve(ParameterSubstitutor.substitute(path)).normalize();
+    validateDataDirectory(name, path, false);
+  }
+
+  public void validateDataDirectory(String name, String path, boolean skipIO) {
+    Path dataDirectory = compute(Paths.get(path));
 
     if (dataRootMap.containsKey(name)) {
       throw new DataDirectoriesConfigurationException("A data directory with name: " + name + " already exists");
@@ -123,16 +156,13 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
       );
     }
 
-    try {
-      ensureDirectory(dataDirectory);
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to create data directory: " + dataDirectory, e);
+    if (!skipIO) {
+      try {
+        ensureDirectory(dataDirectory);
+      } catch (IOException e) {
+        throw new RuntimeException("Unable to create data directory: " + dataDirectory, e);
+      }
     }
-  }
-
-  private DataDirectories getDataRootsForServer(String serverName) {
-    return serverToDataRoots.computeIfAbsent(serverName,
-        name -> new DataDirectoriesWithServerName(this, DataDirectoriesConfig.cleanStringForPath(name)));
   }
 
   @Override
@@ -206,6 +236,15 @@ public class DataDirectoriesConfigImpl implements DataDirectoriesConfig, Managea
         throw new RuntimeException("A file with configured data directory: " + directory + " already exists!");
       }
     }
+  }
+
+  private DataDirectories getDataRootsForServer(String serverName) {
+    return serverToDataRoots.computeIfAbsent(serverName,
+        name -> new DataDirectoriesWithServerName(this, DataDirectoriesConfig.cleanStringForPath(name)));
+  }
+
+  private Path compute(Path path) {
+    return parameterSubstitutor.substitute(pathResolver.resolve(path)).normalize();
   }
 
   private Path overLapsWith(Path newDataDirectoryPath) {

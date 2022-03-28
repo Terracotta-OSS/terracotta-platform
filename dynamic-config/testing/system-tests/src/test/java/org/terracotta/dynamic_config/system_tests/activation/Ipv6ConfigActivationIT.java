@@ -17,18 +17,17 @@ package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
-import org.terracotta.dynamic_config.system_tests.util.ConfigRepositoryGenerator;
-import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
+import org.terracotta.angela.client.support.junit.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.util.ConfigRepositoryGenerator;
 
 import java.nio.file.Path;
 
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
-@ClusterDefinition(nodesPerStripe = 2, autoStart = false)
+@ClusterDefinition(autoStart = false)
 public class Ipv6ConfigActivationIT extends DynamicConfigIT {
 
   @Rule public final NodeOutputRule out = new NodeOutputRule();
@@ -37,7 +36,7 @@ public class Ipv6ConfigActivationIT extends DynamicConfigIT {
   public void testStartupFromMigratedConfigRepoAndGetCommand() throws Exception {
     Path configurationRepo = generateNodeRepositoryDir(1, 1, ConfigRepositoryGenerator::generate1Stripe1NodeIpv6);
     startNode(1, 1, "--node-repository-dir", configurationRepo.toString());
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
 
     assertThat(configToolInvocation("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"), containsOutput("offheap-resources.main=512MB"));
   }

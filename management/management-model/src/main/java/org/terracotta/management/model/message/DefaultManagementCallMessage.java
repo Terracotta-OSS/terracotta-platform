@@ -15,11 +15,11 @@
  */
 package org.terracotta.management.model.message;
 
-import java.util.Objects;
 import org.terracotta.management.model.context.Contextual;
 import org.terracotta.management.sequence.Sequence;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Mathieu Carbou

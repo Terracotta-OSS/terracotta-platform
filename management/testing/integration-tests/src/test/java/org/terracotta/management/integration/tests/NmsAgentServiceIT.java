@@ -23,16 +23,13 @@ import org.junit.rules.Timeout;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
-import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.agent.client.DefaultNmsAgentService;
+import org.terracotta.management.entity.nms.agent.client.NmsAgentEntity;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityFactory;
-import org.terracotta.management.entity.nms.agent.client.NmsAgentService;
 import org.terracotta.management.entity.nms.client.DefaultNmsService;
-import org.terracotta.management.entity.nms.client.NmsEntity;
 import org.terracotta.management.entity.nms.client.NmsEntityFactory;
 import org.terracotta.management.entity.nms.client.NmsService;
-import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.message.Message;
@@ -41,13 +38,14 @@ import org.terracotta.management.registry.DefaultManagementRegistry;
 import org.terracotta.management.registry.ManagementRegistry;
 import org.terracotta.testing.rules.Cluster;
 
-import java.io.File;
+import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
@@ -66,33 +64,49 @@ public class NmsAgentServiceIT {
           "</config>\n";
 
   @Rule
-  public Timeout timeout = Timeout.seconds(60);
+  public Timeout timeout = Timeout.seconds(120);
 
   @Rule
   public Cluster voltron = newCluster()
-      .in(new File("target/galvan"))
+      .in(Paths.get("target", "galvan"))
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(resourceConfig)
       .build();
 
   Connection managementConnection;
-  Connection clientConnection;
   NmsService nmsService;
-  NmsAgentService nmsAgentService;
+  DefaultNmsAgentService nmsAgentService;
   AtomicInteger opErrors = new AtomicInteger();
   ManagementRegistry registry = new DefaultManagementRegistry(new ContextContainer("foo", "bar"));
+
+  volatile Connection clientConnection;
 
   @Before
   public void setUp() throws Exception {
     voltron.getClusterControl().waitForActive();
-    connectNmsService();
-    connectNmsAgentService();
+
+    managementConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
+
+    NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
+    nmsService = new DefaultNmsService(nmsEntityFactory.retrieveOrCreate(new NmsConfig()));
+    nmsService.setOperationTimeout(30, TimeUnit.SECONDS);
+
+    clientConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
+
+    // note the supplier below, which is used to recycle the entity with a potentially new connection
+    nmsAgentService = new DefaultNmsAgentService(this::createAgentEntity);
+    nmsAgentService.setOperationTimeout(30, TimeUnit.SECONDS);
+    nmsAgentService.setOnOperationError((operation, throwable) -> opErrors.incrementAndGet());
+    nmsAgentService.setManagementRegistry(registry);
   }
 
   @After
-  public void tearDown() throws Exception {
-    managementConnection.close();
+  public void tearDown() {
+    try {
+      managementConnection.close();
+    } catch (Exception ignored) {
+    }
     try {
       clientConnection.close();
     } catch (Exception ignored) {
@@ -107,7 +121,7 @@ public class NmsAgentServiceIT {
     clientConnection.close();
     assertThat(opErrors.get(), equalTo(0));
     while (!Thread.currentThread().isInterrupted()) {
-      if (!nmsService.readTopology().clientStream().anyMatch(client -> client.getTags().contains("tag"))) {
+      if (nmsService.readTopology().clientStream().noneMatch(client -> client.getTags().contains("tag"))) {
         return;
       }
     }
@@ -155,7 +169,7 @@ public class NmsAgentServiceIT {
 
   @Test
   public void nmsAgentService_can_retry_operation() throws Exception {
-    ((DefaultNmsAgentService) nmsAgentService).setOnOperationError((operation, throwable) -> {
+    nmsAgentService.setOnOperationError((operation, throwable) -> {
       opErrors.incrementAndGet();
 
       // recycle the connection
@@ -189,19 +203,10 @@ public class NmsAgentServiceIT {
     fail();
   }
 
-  private void connectNmsService() throws ConnectionException, EntityConfigurationException {
-    managementConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
-    NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
-    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig());
-    nmsService = new DefaultNmsService(nmsEntity);
+  private NmsAgentEntity createAgentEntity() {
+    // uses the global client connection object to create an entity
+    // this connection ref will always be there, but might be "broken"
+    assertNotNull(clientConnection);
+    return new NmsAgentEntityFactory(clientConnection).retrieve();
   }
-
-  private void connectNmsAgentService() throws ConnectionException {
-    clientConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
-    DefaultNmsAgentService nmsAgentService = new DefaultNmsAgentService(() -> new NmsAgentEntityFactory(clientConnection).retrieve());
-    nmsAgentService.setOnOperationError((operation, throwable) -> opErrors.incrementAndGet());
-    nmsAgentService.setManagementRegistry(registry);
-    this.nmsAgentService = nmsAgentService;
-  }
-
 }

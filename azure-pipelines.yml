@@ -20,8 +20,29 @@
 resources:
   repositories:
     - repository: templates
-      type: git   
+      type: git
       name: terracotta/terracotta
 
 jobs:
-- template: build-templates/maven-common.yml@templates  
+- template: build-templates/maven-common.yml@templates
+  parameters:
+    jobName: 'Linux_Java_8'
+    timeoutInMinutes: 180
+- template: build-templates/maven-common.yml@templates
+  parameters:
+    jobName: 'Linux_Java_11'
+    timeoutInMinutes: 180
+    options: '-B -Djava.test.version=1.11'
+- template: build-templates/maven-common.yml@templates
+  parameters:
+    jobName: 'Windows_Java_8'
+    timeoutInMinutes: 180
+    vmImage: 'windows-latest'
+- template: build-templates/maven-common.yml@templates
+  parameters:
+    jobName: 'Windows_Java_11'
+    timeoutInMinutes: 180
+    vmImage: 'windows-latest'
+    options: '-B -Djava.test.version=1.11'
+
+

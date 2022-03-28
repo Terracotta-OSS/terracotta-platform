@@ -29,17 +29,6 @@
   <artifactId>monitoring-service</artifactId>
   <name>Terracotta Management :: Monitoring Service</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
-  <licenses>
-    <license>
-      <name>The Apache License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-
   <dependencies>
     <!-- will be inside service jar -->
     <dependency>
@@ -53,11 +42,13 @@
       <groupId>org.terracotta.management</groupId>
       <artifactId>monitoring-service-api</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided by voltron (server) -->
@@ -105,33 +96,4 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.4.3</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <shadedArtifactAttached>true</shadedArtifactAttached>
-              <shadedClassifierName>plugin</shadedClassifierName>
-              <!-- we have to make sure no voltron api comes in the shaded jar -->
-              <artifactSet>
-                <includes>
-                  <include>org.terracotta.voltron.proxy:voltron-proxy-common</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-
 </project>

@@ -31,15 +31,11 @@
   <artifactId>doc</artifactId>
   <name>Terracotta Management :: Testing :: Doc Use Case</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
   <dependencies>
     <!-- management client to read the monitoring service-->
     <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-nms</artifactId>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>nms-entity-client</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -55,6 +51,7 @@
       <groupId>org.terracotta.management.testing</groupId>
       <artifactId>sample-entity</artifactId>
       <version>${project.version}</version>
+      <classifier>plugin</classifier>
     </dependency>
 
     <!-- logging -->

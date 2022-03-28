@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.registry;
 
-import java.util.Objects;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.context.Context;
@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -40,6 +41,7 @@ public class DefaultCallQuery<T> implements CallQuery<T> {
   private final Collection<Context> contexts;
   private final Class<T> returnType;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public DefaultCallQuery(CapabilityManagementSupport capabilityManagement, String capabilityName, String methodName, Class<T> returnType, Parameter[] parameters, Collection<Context> contexts) {
     this.capabilityManagement = Objects.requireNonNull(capabilityManagement);
     this.capabilityName = Objects.requireNonNull(capabilityName);

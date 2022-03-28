@@ -15,13 +15,12 @@
  */
 package org.terracotta.management.model.capabilities.context;
 
-import java.util.Objects;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 
 /**
  * @author Ludovic Orban

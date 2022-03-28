@@ -39,7 +39,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.terracotta.diagnostic.common.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
@@ -50,18 +50,24 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   Node node0 = Node.newDefaultNode("node0", "localhost", 9410)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache1"));
 
   Node node1 = Node.newDefaultNode("node1", "localhost", 9411)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
-      .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache2"));
 
   Node node2 = Node.newDefaultNode("node2", "localhost", 9412)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
-      .setOffheapResource("bar", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache3"));
+
+  NodeContext nodeContext0 = new NodeContext(
+      Cluster.newDefaultCluster(new Stripe(node0))
+          .setOffheapResource("foo", 1, MemoryUnit.GB),
+      node0.getNodeAddress());
+
+  NodeContext nodeContext1 = new NodeContext(
+      Cluster.newDefaultCluster(new Stripe(node1))
+          .setOffheapResource("foo", 1, MemoryUnit.GB)
+          .setOffheapResource("bar", 1, MemoryUnit.GB),
+      node1.getNodeAddress());
 
   @Captor ArgumentCaptor<Cluster> newCluster;
 
@@ -74,8 +80,6 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    NodeContext nodeContext0 = new NodeContext(new Cluster(new Stripe(node0)), node0.getNodeAddress());
-    NodeContext nodeContext1 = new NodeContext(new Cluster(new Stripe(node1)), node1.getNodeAddress());
 
     when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(nodeContext0);
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext1);
@@ -102,7 +106,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_node_validation_fail_src_multiNodeStripe() {
-    NodeContext nodeContext = new NodeContext(new Cluster(new Stripe(node1, node2)), node1.getNodeAddress());
+    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node1, node2)), node1.getNodeAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()
@@ -134,7 +138,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(2));
     assertThat(allValues.get(0), is(equalTo(allValues.get(1))));
-    assertThat(allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster1.json"), Cluster.class))));
+    assertThat(Json.toPrettyJson(allValues.get(0)), allValues.get(0), is(equalTo(Json.parse(getClass().getResource("/cluster1.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));
@@ -157,7 +161,7 @@ public class AttachCommandTest extends TopologyCommandTest<AttachCommand> {
 
   @Test
   public void test_attach_stripe_validation_fail_src_multiStripeCluster() {
-    NodeContext nodeContext = new NodeContext(new Cluster(new Stripe(node1), new Stripe(node2)), node1.getNodeAddress());
+    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node1), new Stripe(node2)), node1.getNodeAddress());
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     TopologyCommand command = newCommand()

@@ -24,7 +24,6 @@ import org.w3c.dom.NodeList;
 
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;

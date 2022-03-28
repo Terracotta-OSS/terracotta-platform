@@ -71,8 +71,16 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
       this.changeApplicator = ChangeApplicator.allow(fn);
       for (NomadChangeInfo change : changes) {
         switch (change.getChangeRequestState()) {
-          case PREPARED:
-            throw new NomadException("Unable to force-sync a PREPARED change: " + change.getNomadChange().getSummary());
+          case PREPARED: {
+            long mutativeMessageCount = state.getMutativeMessageCount();
+            AcceptRejectResponse response = prepare(change.toPrepareMessage(mutativeMessageCount));
+            if (!response.isAccepted()) {
+              throw new NomadException("Prepare failure. " +
+                  "Reason: " + response + ". " +
+                  "Change:" + change.getNomadChange().getSummary());
+            }
+            break;
+          }
           case COMMITTED: {
             long mutativeMessageCount = state.getMutativeMessageCount();
             AcceptRejectResponse response = prepare(change.toPrepareMessage(mutativeMessageCount));
@@ -119,14 +127,30 @@ public class NomadServerImpl<T> implements UpgradableNomadServer<T> {
   }
 
   @Override
+  public ChangeApplicator<T> getChangeApplicator() {
+    return changeApplicator;
+  }
+
+  @Override
   public void setChangeApplicator(ChangeApplicator<T> changeApplicator) {
-    if (changeApplicator == null) {
-      throw new NullPointerException("Can not set NULL changeApplicator");
-    }
-    if (this.changeApplicator != null) {
+    if (this.changeApplicator != null && changeApplicator != null) {
       throw new IllegalArgumentException("Variable changeApplicator is already set");
     }
     this.changeApplicator = changeApplicator;
+  }
+
+  @Override
+  public Optional<NomadChangeInfo> getNomadChangeInfo(UUID uuid) throws NomadException {
+    return Optional.ofNullable(state.getChangeRequest(uuid))
+        .map(changeRequest -> new NomadChangeInfo(
+            uuid,
+            changeRequest.getChange(),
+            changeRequest.getState(),
+            changeRequest.getVersion(),
+            changeRequest.getCreationHost(),
+            changeRequest.getCreationUser(),
+            changeRequest.getCreationTimestamp()
+        ));
   }
 
   @Override

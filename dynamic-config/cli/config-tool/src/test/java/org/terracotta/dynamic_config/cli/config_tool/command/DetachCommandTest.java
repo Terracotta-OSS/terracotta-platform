@@ -37,7 +37,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.terracotta.diagnostic.common.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
@@ -47,14 +48,13 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
 public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
 
   Node node0 = Node.newDefaultNode("node0", "localhost", 9410)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache0"));
 
   Node node1 = Node.newDefaultNode("node1", "localhost", 9411)
-      .setOffheapResource("foo", 1, MemoryUnit.GB)
       .setDataDir("cache", Paths.get("/data/cache1"));
 
-  Cluster cluster = new Cluster(new Stripe(node0), new Stripe(node1));
+  Cluster cluster = Cluster.newDefaultCluster(new Stripe(node0), new Stripe(node1))
+      .setOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Captor
   ArgumentCaptor<Cluster> newCluster;
@@ -70,16 +70,13 @@ public class DetachCommandTest extends TopologyCommandTest<DetachCommand> {
     super.setUp();
 
     when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
-    when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(new NodeContext(node1));
 
     when(topologyServiceMock("localhost", 9410).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node0.getNodeAddress()));
-    when(topologyServiceMock("localhost", 9411).getRuntimeNodeContext()).thenReturn(new NodeContext(node1));
 
     when(topologyServiceMock("localhost", 9410).isActivated()).thenReturn(false);
-    when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(false);
 
     when(diagnosticServiceMock("localhost", 9410).getLogicalServerState()).thenReturn(STARTING);
-    when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenReturn(STARTING);
+    when(diagnosticServiceMock("localhost", 9411).getLogicalServerState()).thenReturn(UNREACHABLE);
   }
 
   @Test

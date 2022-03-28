@@ -15,15 +15,14 @@
  */
 package org.terracotta.management.service.monitoring.registry.provider;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
+import org.terracotta.management.model.stats.Statistic;
+import org.terracotta.management.model.stats.StatisticRegistry;
 import org.terracotta.management.registry.ExposedObject;
 import org.terracotta.management.registry.Named;
 import org.terracotta.management.registry.RequiredContext;
-import org.terracotta.management.model.stats.Statistic;
-import org.terracotta.management.model.stats.StatisticRegistry;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 @RequiredContext({@Named("consumerId")})
-@CommonComponent
 public abstract class AbstractStatisticsManagementProvider<T extends AliasBinding> extends AliasBindingManagementProvider<T> {
 
   public AbstractStatisticsManagementProvider(Class<? extends T> type) {

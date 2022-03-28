@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -23,14 +22,12 @@ import org.terracotta.dynamic_config.api.model.Setting;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toCollection;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_DIR;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_SSL_TLS;
@@ -50,8 +47,6 @@ public class ClusterValidator {
 
   public void validate() throws MalformedClusterException {
     validateNodeName();
-    validateSecurity();
-    validateClientSettings();
     validateServerSettings();
     validateSecurityDir();
   }
@@ -76,42 +71,23 @@ public class ClusterValidator {
     }
   }
 
-  private void validateSecurity() {
-    validate(Node::getSecurityAuthc, "Authentication setting of all nodes should match");
-    validate(Node::isSecuritySslTls, "SSL/TLS setting of all nodes should match");
-    validate(Node::isSecurityWhitelist, "Whitelist setting of all nodes should match");
-  }
-
-  private void validateClientSettings() {
-    validate(Node::getClientLeaseDuration, "Client lease duration of all nodes should match");
-    validate(Node::getClientReconnectWindow, "Client reconnect window of all nodes should match");
-  }
-
   private void validateServerSettings() {
-    validate(
-        node -> node.getOffheapResources()
-            .entrySet()
-            .stream()
-            .map(e -> e.getKey() + ":" + e.getValue().to(MemoryUnit.B))
-            .collect(toCollection(TreeSet::new)),
-        "Offheap resources of all nodes should match");
     validate(node -> node.getDataDirs().keySet(), "Data directory names of all nodes should match");
-    validate(Node::getFailoverPriority, "Failover setting of all nodes should match");
   }
 
   private void validateSecurityDir() {
+    if ("certificate".equals(cluster.getSecurityAuthc()) && !cluster.isSecuritySslTls()) {
+      throw new MalformedClusterException(SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
+    }
     cluster.nodeContexts().forEach(nodeContext -> {
       Node node = nodeContext.getNode();
-      if ("certificate".equals(node.getSecurityAuthc()) && !node.isSecuritySslTls()) {
-        throw new MalformedClusterException(SECURITY_SSL_TLS + " is required for " + SECURITY_AUTHC + "=certificate");
-      }
-      if ((node.getSecurityAuthc() != null && node.getSecurityDir() == null)
+      if ((cluster.getSecurityAuthc() != null && node.getSecurityDir() == null)
           || (node.getSecurityAuditLogDir() != null && node.getSecurityDir() == null)
-          || (node.isSecuritySslTls() && node.getSecurityDir() == null)
-          || (node.isSecurityWhitelist() && node.getSecurityDir() == null)) {
+          || (cluster.isSecuritySslTls() && node.getSecurityDir() == null)
+          || (cluster.isSecurityWhitelist() && node.getSecurityDir() == null)) {
         throw new MalformedClusterException(SECURITY_DIR + " is mandatory for any of the security configuration");
       }
-      if (node.getSecurityDir() != null && !node.isSecuritySslTls() && node.getSecurityAuthc() == null && !node.isSecurityWhitelist()) {
+      if (node.getSecurityDir() != null && !cluster.isSecuritySslTls() && cluster.getSecurityAuthc() == null && !cluster.isSecurityWhitelist()) {
         throw new MalformedClusterException("One of " + SECURITY_SSL_TLS + ", " + SECURITY_AUTHC + ", or " + SECURITY_WHITELIST + " is required for security configuration");
       }
     });

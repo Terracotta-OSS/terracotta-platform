@@ -18,7 +18,7 @@ package org.terracotta.nomad.entity.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.InvocationBuilder;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
@@ -55,13 +55,17 @@ class NomadEntityImpl<T> implements NomadEntity<T> {
     LOGGER.trace("send({})", mutativeMessage);
     Duration requestTimeout = settings.getRequestTimeout();
     try {
-      InvokeFuture<NomadEntityResponse> invoke = endpoint.beginInvoke()
+      InvocationBuilder<NomadEntityMessage, NomadEntityResponse> builder = endpoint.beginInvoke()
           .message(new NomadEntityMessage(mutativeMessage))
           .replicate(true)
           .ackRetired()
-          .blockGetOnRetire(true)
-          .invoke();
-      AcceptRejectResponse response = (requestTimeout == null ? invoke.get() : invoke.getWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS)).getResponse();
+          .blockGetOnRetire(true);
+      AcceptRejectResponse response;
+      if (requestTimeout == null) {
+        response = builder.invoke().get().getResponse();
+      } else {
+        response = builder.invokeWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS).getWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS).getResponse();
+      }
       LOGGER.trace("response({})", response);
       return response;
     } catch (InterruptedException e) {

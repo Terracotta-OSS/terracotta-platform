@@ -31,22 +31,40 @@
   <artifactId>integration-tests</artifactId>
   <name>Terracotta Management :: Testing :: Integration Tests</name>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
   <dependencies>
+    <!-- declare the kit so that maven knows it has to build it before -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>platform-kit</artifactId>
+      <version>${project.version}</version>
+      <type>tar.gz</type>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>nms-agent-entity-client</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <!-- entity under test -->
     <dependency>
       <groupId>org.terracotta.management.testing</groupId>
       <artifactId>sample-entity</artifactId>
       <version>${project.version}</version>
+      <classifier>plugin</classifier>
       <scope>test</scope>
     </dependency>
     <!-- management client to read the monitoring service-->
     <dependency>
-      <groupId>org.terracotta.management.dist</groupId>
-      <artifactId>mnm-nms</artifactId>
+      <groupId>org.terracotta.management</groupId>
+      <artifactId>nms-entity-client</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -63,9 +81,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>galvan-support</artifactId>
-      <version>${terracotta-core.version}</version>
+      <groupId>org.terracotta</groupId>
+      <artifactId>galvan-platform-support</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -79,11 +97,6 @@
       <artifactId>jackson-databind</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.skyscreamer</groupId>
-      <artifactId>jsonassert</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <build>
@@ -93,30 +106,31 @@
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
           <execution>
-            <id>voltron-kit</id>
+            <id>unpack-kit</id>
             <phase>prepare-package</phase>
             <goals>
               <goal>unpack</goal>
             </goals>
             <configuration>
+              <outputDirectory>${project.build.directory}</outputDirectory>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.terracotta.internal</groupId>
-                  <artifactId>terracotta-kit</artifactId>
-                  <version>${terracotta-core.version}</version>
+                  <groupId>org.terracotta</groupId>
+                  <artifactId>platform-kit</artifactId>
+                  <version>${project.version}</version>
                   <type>tar.gz</type>
                 </artifactItem>
               </artifactItems>
-              <outputDirectory>${project.build.directory}/voltronKit</outputDirectory>
             </configuration>
           </execution>
           <execution>
-            <id>unpack-sample-entity</id>
+            <id>copy-test-entity</id>
             <phase>prepare-package</phase>
             <goals>
               <goal>copy</goal>
             </goals>
             <configuration>
+              <outputDirectory>${project.build.directory}/platform-kit-${project.version}/server/plugins/lib</outputDirectory>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.terracotta.management.testing</groupId>
@@ -124,49 +138,64 @@
                   <version>${project.version}</version>
                   <classifier>plugin</classifier>
                 </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-common</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta.management.dist</groupId>
-                  <artifactId>mnm-server</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta</groupId>
-                  <artifactId>statistics</artifactId>
-                  <version>${statistics.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.terracotta</groupId>
-                  <artifactId>offheap-resource</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
               </artifactItems>
-              <outputDirectory>${project.build.directory}/voltronKit/terracotta-${terracotta-core.version}/server/plugins/lib</outputDirectory>
             </configuration>
           </execution>
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.19.1</version>
-        <configuration>
-          <systemPropertyVariables>
-            <kitInstallationPath>${project.build.directory}/voltronKit/terracotta-${terracotta-core.version}/</kitInstallationPath>
-          </systemPropertyVariables>
-        </configuration>
+        <artifactId>maven-resources-plugin</artifactId>
         <executions>
           <execution>
+            <id>copy-logging-config</id>
+            <phase>package</phase>
             <goals>
-              <goal>integration-test</goal>
-              <goal>verify</goal>
+              <goal>copy-resources</goal>
             </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/platform-kit-${project.version}/server/lib</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}/src/test/resources</directory>
+                  <includes>
+                    <include>logback-ext.xml</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
           </execution>
         </executions>
+      </plugin>
+      <!--
+        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section.
+        This section is used when running tests from Maven CLI
+        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
+      -->
+      <plugin>
+        <groupId>org.terracotta</groupId>
+        <artifactId>maven-forge-plugin</artifactId>
+        <configuration>
+          <forkCount>2</forkCount>
+          <systemPropertyVariables>
+            <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <!--
+        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section
+        This section is used when running tests from the IDE
+        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <forkCount>2</forkCount>
+          <systemPropertyVariables>
+            <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
+            <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
+          </systemPropertyVariables>
+        </configuration>
       </plugin>
     </plugins>
   </build>

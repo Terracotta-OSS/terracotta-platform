@@ -26,13 +26,17 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>sanskrit</artifactId>
+  <artifactId>common-sanskrit</artifactId>
   <name>Common :: Sanskrit</name>
 
   <dependencies>
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-tools</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>json-support</artifactId>
+      <artifactId>common-json-support</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

@@ -15,6 +15,8 @@
  */
 package org.terracotta.common.struct;
 
+import java.math.BigInteger;
+
 /**
  * @author Mathieu Carbou
  */
@@ -22,7 +24,11 @@ public interface Unit<U extends Enum<U>> {
 
   String getShortName();
 
-  long convert(long quantity, U unit);
+  BigInteger convert(BigInteger quantity, U unit);
+
+  default long convert(long quantity, U unit) {
+    return convert(BigInteger.valueOf(quantity), unit).longValueExact();
+  }
 
   U getBaseUnit();
 }

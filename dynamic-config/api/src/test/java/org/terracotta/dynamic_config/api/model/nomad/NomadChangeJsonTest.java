@@ -43,8 +43,9 @@ import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
  */
 public class NomadChangeJsonTest {
 
-  private Cluster cluster = new Cluster("myClusterName", new Stripe(Node.newDefaultNode("foo", "localhost", 9410)
-      .setClientReconnectWindow(60, TimeUnit.SECONDS).setOffheapResource("foo", 1, MemoryUnit.GB)));
+  private Cluster cluster = Cluster.newDefaultCluster("myClusterName", new Stripe(Node.newDefaultNode("foo", "localhost", 9410)))
+      .setClientReconnectWindow(60, TimeUnit.SECONDS)
+      .setOffheapResource("foo", 1, MemoryUnit.GB);
 
   @Test
   public void test_ser_deser() throws IOException, URISyntaxException {

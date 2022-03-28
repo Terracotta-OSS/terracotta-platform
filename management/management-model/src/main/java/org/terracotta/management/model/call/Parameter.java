@@ -15,9 +15,8 @@
  */
 package org.terracotta.management.model.call;
 
-import java.util.Objects;
-
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Represents a method parameter

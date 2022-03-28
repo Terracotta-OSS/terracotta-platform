@@ -32,17 +32,22 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.diagnostic</groupId>
+      <artifactId>diagnostic-model</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.diagnostic</groupId>
       <artifactId>diagnostic-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>inet-support</artifactId>
+      <artifactId>common-inet-support</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>structures</artifactId>
+      <artifactId>common-structures</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -61,24 +66,8 @@
 
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>test-utilities</artifactId>
+      <artifactId>common-test-utilities</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

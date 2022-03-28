@@ -68,6 +68,8 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
         try {
           DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, Duration.ofMillis(timeBudget.remaining()));
           return tuple3(address, diagnosticService, null);
+        } catch (DiagnosticServiceProviderException e) {
+          return tuple3(address, null, e);
         } catch (Exception e) {
           return tuple3(address, null, new DiagnosticServiceProviderException("Failed to create diagnostic connection to " + address, e));
         }

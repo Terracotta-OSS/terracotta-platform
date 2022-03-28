@@ -42,6 +42,8 @@ import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
+import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.values;
 
 /**
@@ -219,14 +221,24 @@ class ConfigurationParser {
     }
 
     // build the cluster
-    Cluster cluster = new Cluster();
+    Cluster cluster = Cluster.newCluster();
     configurationMap.forEach((stripeId, nodeCounts) -> {
       Stripe stripe = new Stripe();
       nodeCounts.keySet().forEach(nodeId -> {
-        stripe.addNode(Node.newDefaultNode(null));
+        // create the node and eagerly initialize the basic fields
+        Node node = Node.empty();
+        stripe.addNode(node);
         if (stripe.getNodeCount() != nodeId) {
           throw new AssertionError("Expected node count to be: " + nodeId + " but was: " + stripe.getNodeCount());
         }
+        Stream.of(NODE_NAME, NODE_HOSTNAME, NODE_PORT).map(setting -> configurations.stream()
+            .filter(configuration -> configuration.getSetting() == setting
+                && configuration.getScope() == NODE
+                && configuration.getStripeId() == stripeId
+                && configuration.getNodeId() == nodeId)
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Required setting missing: '" + setting + "' for node ID: " + nodeId + " in stripe ID: " + stripeId)))
+            .forEach(o -> o.apply(node));
       });
       cluster.addStripe(stripe);
       if (cluster.getStripeCount() != stripeId) {

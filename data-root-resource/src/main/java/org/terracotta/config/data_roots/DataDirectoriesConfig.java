@@ -23,9 +23,8 @@ import java.io.Closeable;
 import static java.util.Optional.ofNullable;
 
 /**
- *
  * API for looking up configured data directories using unique names.
- *
+ * <p>
  * Usually user configures one or more data directories with absolute path in the server's configuration along
  * with a unique name and this service is used for retrieving these mappings.
  *
@@ -57,7 +56,7 @@ public interface DataDirectoriesConfig extends Closeable {
 
   /**
    * Returns a {@link DataDirectories} that will append the server name to all paths.
-   * <p/>
+   * <p>
    * Since the server name cannot be injected during configuration parsing
    * as we do not yet know which server is being started, we have to resort to this trick and make sure it gets used.
    *

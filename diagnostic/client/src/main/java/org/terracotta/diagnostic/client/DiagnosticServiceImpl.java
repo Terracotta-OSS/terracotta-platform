@@ -24,7 +24,7 @@ import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 
 import java.lang.reflect.Proxy;
 import java.util.function.Supplier;
@@ -32,6 +32,7 @@ import java.util.function.Supplier;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_PERMITTED;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NULL_RETURN;
@@ -137,15 +138,15 @@ class DiagnosticServiceImpl implements DiagnosticService {
     return execute(() -> delegate.invokeWithArg(name, cmd, arg));
   }
 
-  // DetailedServerState
+  // LogicalServerState
 
   @Override
   public LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
     try {
-      return LogicalServerState.parse(invoke("DetailedServerState", "getDetailedServerState"));
+      return LogicalServerState.parse(invoke(MBEAN_LOGICAL_SERVER_STATE, "getLogicalServerState"));
     } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException ignored) {
-      // maybe we connect to an old version, 10.2 for example, that does not have this MBean
-      // in this case, let's try the original Server state Mbean
+      // maybe we connect to an old version, 10.2 for example, that does not have this MBean. In this case, let's try the original Server state Mbean.
+      // Other possibility: the MBean has been unregistered...
     }
 
     String state = LogicalServerState.UNKNOWN.name();

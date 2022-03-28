@@ -24,12 +24,11 @@ public interface DiagnosticConstants {
   String MESSAGE_REQUEST_TIMEOUT = "Request Timeout";
   String MESSAGE_NOT_PERMITTED = "NOT PERMITTED";
   String MESSAGE_NULL_RETURN = "";
+
   String MBEAN_DIAGNOSTIC_REQUEST_HANDLER = "DiagnosticRequestHandler";
+  String MBEAN_LOGICAL_SERVER_STATE = "LogicalServerState";
   String MBEAN_CONSISTENCY_MANAGER = "ConsistencyManager";
   String MBEAN_SHUTDOWN = "Shutdown";
   String MBEAN_L2_DUMPER = "L2Dumper";
-  String MBEAN_IP_WHITELIST = "IPWhitelist";
-  String MBEAN_BACKUP = "Backup";
   String MBEAN_SERVER = "Server";
-  String MBEAN_NOMAD = "Nomad";
 }

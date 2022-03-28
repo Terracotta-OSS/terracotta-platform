@@ -40,6 +40,7 @@ import org.terracotta.dynamic_config.cli.config_tool.command.SetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.command.UnsetCommand;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
+import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.entity.client.NomadEntity;
 import org.terracotta.nomad.entity.client.NomadEntityProvider;
@@ -60,11 +61,10 @@ public class ConfigTool {
     } catch (Exception e) {
       String message = e.getMessage();
       if (message != null && !message.isEmpty()) {
-        String errorMessage = String.format("%sError:%s%s%s", lineSeparator(), lineSeparator(), message, lineSeparator());
         if (LOGGER.isDebugEnabled()) {
           LOGGER.error("{}Error:", lineSeparator(), e); // do not output e.getMassage() because it duplicates the output
         } else {
-          LOGGER.error(errorMessage);
+          LOGGER.error("{}Error:{}{}{}", lineSeparator(), lineSeparator(), message, lineSeparator());
         }
       } else {
         LOGGER.error("{}Internal error:", lineSeparator(), e);
@@ -99,21 +99,32 @@ public class ConfigTool {
     CustomJCommander jCommander = parseArguments(commandRepository, args);
 
     // Process arguments like '-v'
+    MAIN.validate();
     MAIN.run();
 
     ConcurrencySizing concurrencySizing = new ConcurrencySizing();
     Duration connectionTimeout = Duration.ofMillis(MAIN.getConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
     Duration requestTimeout = Duration.ofMillis(MAIN.getRequestTimeout().getQuantity(TimeUnit.MILLISECONDS));
-
+    Duration entityOperationTimeout = Duration.ofMillis(MAIN.getEntityOperationTimeout().getQuantity(TimeUnit.MILLISECONDS));
+    Duration entityConnectionTimeout = Duration.ofMillis(MAIN.getEntityConnectionTimeout().getQuantity(TimeUnit.MILLISECONDS));
+    
     // create services
     DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("CONFIG-TOOL", connectionTimeout, requestTimeout, MAIN.getSecurityRootDirectory());
     MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, connectionTimeout, concurrencySizing);
-    NomadEntityProvider nomadEntityProvider = new NomadEntityProvider("CONFIG-TOOL", connectionTimeout, new NomadEntity.Settings().setRequestTimeout(requestTimeout), MAIN.getSecurityRootDirectory());
+    NomadEntityProvider nomadEntityProvider = new NomadEntityProvider(
+        "CONFIG-TOOL",
+        entityConnectionTimeout,
+        // A long timeout is important here.
+        // We need to block the call and wait for any return.
+        // We cannot timeout shortly otherwise we won't know the outcome of the 2PC Nomad transaction in case of a failover.
+        new NomadEntity.Settings().setRequestTimeout(entityOperationTimeout),
+        MAIN.getSecurityRootDirectory());
     NomadManager<NodeContext> nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     RestartService restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
+    StopService stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
 
     LOGGER.debug("Injecting services in CommandRepository");
-    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService);
+    commandRepository.inject(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService);
 
     jCommander.getAskedCommand().map(command -> {
       // check for help

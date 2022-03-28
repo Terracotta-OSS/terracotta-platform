@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring.registry.provider;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.registry.AbstractManagementProvider;
 import org.terracotta.management.registry.ExposedObject;
@@ -30,7 +29,6 @@ import java.util.concurrent.ExecutionException;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public abstract class AbstractEntityManagementProvider<T> extends AbstractManagementProvider<T> implements ManagementProvider<T>, MonitoringServiceAware {
 
   private EntityMonitoringService monitoringService;

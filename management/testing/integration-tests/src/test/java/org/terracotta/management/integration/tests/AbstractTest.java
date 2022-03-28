@@ -85,7 +85,7 @@ public abstract class AbstractTest {
   protected NmsService nmsService;
 
   @Rule
-  public Timeout timeout = Timeout.seconds(60);
+  public Timeout timeout = Timeout.seconds(120);
 
   protected final void commonSetUp(Cluster cluster) throws Exception {
     this.cluster = cluster;
@@ -184,7 +184,7 @@ public abstract class AbstractTest {
     // connects to server
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, getClass().getSimpleName());
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "5000");
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "20000");
     this.managementConnection = ConnectionFactory.connect(uri, properties);
 
     // create a NMS Entity
@@ -214,6 +214,10 @@ public abstract class AbstractTest {
     } while (!Thread.currentThread().isInterrupted() && (statistics.isEmpty() || !test.test(statistics)));
     assertFalse(Thread.currentThread().isInterrupted());
     assertTrue(test.test(statistics));
+  }
+
+  protected JsonNode removeRandomValues(JsonNode currentTopo) {
+    return readJsonStr(removeRandomValues(currentTopo.toString()));
   }
 
   protected String removeRandomValues(String currentTopo) {

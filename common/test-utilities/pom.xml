@@ -26,10 +26,20 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>test-utilities</artifactId>
+  <artifactId>common-test-utilities</artifactId>
   <name>Common :: Test Utilities</name>
 
   <dependencies>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-test-tools</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-port-locking</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

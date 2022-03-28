@@ -31,9 +31,10 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-api</artifactId>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-server-api</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided by server -->
@@ -54,5 +55,4 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-
 </project>

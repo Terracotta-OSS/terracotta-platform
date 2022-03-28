@@ -23,7 +23,7 @@ import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProviderException;
 import org.terracotta.diagnostic.common.DiagnosticException;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 
 import java.net.InetSocketAddress;
@@ -59,7 +59,11 @@ public class RestartService {
     this.concurrencySizing = requireNonNull(concurrencySizing);
   }
 
-  public RestartProgress restartNodes(Collection<InetSocketAddress> addresses, Duration restartDelay) {
+  /**
+   * Restart a list of nodes. They will be restarted after the specified delay.
+   * To detect that a node has been restarted, we will wait until the node reaches one of the status given.
+   */
+  public RestartProgress restartNodes(Collection<InetSocketAddress> addresses, Duration restartDelay, Collection<LogicalServerState> acceptedStates) {
     if (restartDelay.getSeconds() < 1) {
       throw new IllegalArgumentException("Restart delay must be at least 1 second");
     }
@@ -99,10 +103,19 @@ public class RestartService {
 
     ExecutorService executorService = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(addresses.size()), r -> new Thread(r, getClass().getName()));
     restartRequested.forEach(address -> executorService.submit(() -> {
+
+      // wait for the restart delay to end so that servers gets restarted
+      try {
+        Thread.sleep(restartDelay.toMillis() + 5_000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return;
+      }
+
       LogicalServerState state = null;
       while (state == null && continuePolling.get() && !Thread.currentThread().isInterrupted()) {
         try {
-          state = isRestarted(address);
+          state = isRestarted(address, acceptedStates);
           if (state != null) {
             LOGGER.debug("Node: {} has restarted", address);
             restartedNodes.put(address, state);
@@ -175,12 +188,12 @@ public class RestartService {
    * Also, the connect timeout must not be to low, otherwise the poll will return false in case of a slow network.
    * Using the default connect timeout provided by user should be enough. If not, the user can increase it and it will apply to all connections.
    */
-  private LogicalServerState isRestarted(InetSocketAddress addr) {
+  private LogicalServerState isRestarted(InetSocketAddress addr, Collection<LogicalServerState> acceptedStates) {
     LOGGER.debug("Checking if node: {} has restarted", addr);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
       LogicalServerState state = diagnosticService.getLogicalServerState();
       // STARTING is the state when server hasn't finished its startup yet
-      return state != null && (state.isPassive() || state.isActive()) ? state : null;
+      return state == null || !acceptedStates.contains(state) ? null : state;
     } catch (DiagnosticServiceProviderException | DiagnosticException e) {
       LOGGER.debug("Status query for node: {} failed: {}", addr, e.getMessage());
       return null;

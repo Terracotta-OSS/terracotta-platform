@@ -23,7 +23,10 @@ import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.entity.EntityRef;
 
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertThat;
@@ -39,45 +42,45 @@ public class DiagnosticIT extends AbstractSingleTest {
 
   @Test
   public void cluster_state_dump() throws Exception {
-    put(0, "pets", "pet1", "Cubitus");
-
     Properties properties = new Properties();
-    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, String.valueOf("5000"));
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "10000");
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, "diagnostic");
-    properties.setProperty(PROP_REQUEST_TIMEOUT, "5000");
-    properties.setProperty(PROP_REQUEST_TIMEOUTMESSAGE, "5000");
+    properties.setProperty(PROP_REQUEST_TIMEOUT, "10000");
+    properties.setProperty(PROP_REQUEST_TIMEOUTMESSAGE, "10000");
     URI uri = URI.create("diagnostic://" + voltron.getConnectionURI().getAuthority());
+
+    while (!Thread.currentThread().isInterrupted()) {
+
+      try (Connection connection = ConnectionFactory.connect(uri, properties)) {
+        EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
+        Diagnostics diagnostics = ref.fetchEntity(null);
+        String dump = diagnostics.getClusterState();
+//      System.out.println(dump);
+        try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
+          if (lines.allMatch(line -> containsString(line).matches(dump))) {
+            return;
+          }
+        }
+      }
+
+      try {
+        Thread.sleep(1_00);
+      } catch (InterruptedException e) {
+        fail("interrupted");
+      }
+    }
+
     try (Connection connection = ConnectionFactory.connect(uri, properties)) {
       EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
       Diagnostics diagnostics = ref.fetchEntity(null);
-
-      //TODO: improve these assertions
-      // once https://github.com/Terracotta-OSS/terracotta-core/issues/613 and https://github.com/Terracotta-OSS/terracotta-core/pull/601 will be fixed 
-      // and once the state dump format will be improved.
       String dump = diagnostics.getClusterState();
-      
-      // monitoring service provider
-      assertThat(dump, containsString("cluster="));
-
-      // ActiveNmsServerEntity / PassiveNmsServerEntity
-      assertThat(dump, containsString("consumerId="));
-      assertThat(dump, containsString("stripeName="));
-      
-      // OffHeapResourcesProvider
-      assertThat(dump, containsString("capacity="));
-      assertThat(dump, containsString("available="));
-      
-      // ActiveCacheServerEntity / ActiveCacheServerEntity
-      assertThat(dump, containsString("cacheName="));
-      assertThat(dump, containsString("cacheSize="));
-      
-      // MapProvider
-      assertThat(dump, containsString("caches="));
-      
-      // Common on all active entities
-      assertThat(dump, containsString("instance="));
-      assertThat(dump, containsString("clientCount="));
-      assertThat(dump, containsString("clients="));
+//      System.out.println(dump);
+      try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
+        lines.forEach(line -> {
+          //System.out.println(line);
+          assertThat("Did not find line '" + line + "' in the dump", dump, containsString(line));
+        });
+      }
     }
   }
 

@@ -15,22 +15,29 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemErrRule;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
-import org.terracotta.dynamic_config.system_tests.util.AppendLogCapturer;
-import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.json.Json;
+import org.terracotta.persistence.sanskrit.JsonUtils;
+import org.terracotta.persistence.sanskrit.MutableSanskritObject;
 import org.terracotta.persistence.sanskrit.SanskritException;
+import org.terracotta.persistence.sanskrit.SanskritImpl;
 import org.terracotta.persistence.sanskrit.SanskritObject;
+import org.terracotta.persistence.sanskrit.SanskritObjectImpl;
+import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -40,21 +47,18 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
-import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.CHANGE_STATE;
-import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.CHANGE_VERSION;
-import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.LATEST_CHANGE_UUID;
-import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MODE;
-import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
-import static org.terracotta.dynamic_config.server.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.hasExitStatus;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_OPERATION;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_STATE;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.CHANGE_VERSION;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.LATEST_CHANGE_UUID;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MODE;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.MUTATIVE_MESSAGE_COUNT;
+import static org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadSanskritKeys.PREV_CHANGE_UUID;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class ConfigSyncIT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   //TODO [DYNAMIC-CONFIG]: TDB-4863 - fix Angela to properly redirect process error streams
   @Rule public final SystemErrRule err = new SystemErrRule().enableLog();
@@ -62,11 +66,13 @@ public class ConfigSyncIT extends DynamicConfigIT {
   private int activeNodeId;
   private int passiveNodeId;
 
+  public ConfigSyncIT() {
+    super(Duration.ofSeconds(180));
+  }
+
   @Before
-  @Override
-  public void before() {
-    super.before();
-    if (tsa.getActive() == getNode(1, 1)) {
+  public void before() throws Exception {
+    if (angela.tsa().getActive() == getNode(1, 1)) {
       activeNodeId = 1;
       passiveNodeId = 2;
     } else {
@@ -78,33 +84,32 @@ public class ConfigSyncIT extends DynamicConfigIT {
   @Test
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
     stopNode(1, passiveNodeId);
-    assertThat(tsa.getStopped().size(), is(1));
+    assertThat(angela.tsa().getStopped().size(), is(1));
 
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB"), is(successful()));
 
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
     stopNode(1, activeNodeId);
-    assertThat(tsa.getStopped().size(), is(2));
+    assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(5, 3);
-    tsa.start(getNode(1, activeNodeId));
-    assertThat(tsa.getActives().size(), is(1));
+    angela.tsa().start(getNode(1, activeNodeId));
+    assertThat(angela.tsa().getActives().size(), is(1));
 
-    out.clearLog(1, passiveNodeId);
-    tsa.start(getNode(1, passiveNodeId));
-    waitUntil(out.getLog(1, passiveNodeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    angela.tsa().start(getNode(1, passiveNodeId));
+    waitForPassive(1, passiveNodeId);
 
     verifyTopologies();
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
-    tsa.stopAll();
+    angela.tsa().stopAll();
     assertContentsBeforeOrAfterSync(5, 5);
   }
 
   @Test
-  public void testPassiveZapsWhenActiveHasSomeUnCommittedChanges() throws Exception {
+  public void testPassiveSyncWhenActiveHasSomeUnCommittedChanges() throws Exception {
     stopNode(1, passiveNodeId);
-    assertThat(tsa.getStopped().size(), is(1));
+    assertThat(angela.tsa().getStopped().size(), is(1));
 
     // trigger commit failure on active
     // the passive should zap when restarting
@@ -115,22 +120,17 @@ public class ConfigSyncIT extends DynamicConfigIT {
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     // Passive is already stopped, so only shutdown and restart the active
     stopNode(1, activeNodeId);
-    assertThat(tsa.getStopped().size(), is(2));
+    assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(4, 3);
-    tsa.start(getNode(1, activeNodeId));
-    assertThat(tsa.getActives().size(), is(1));
+    angela.tsa().start(getNode(1, activeNodeId));
+    assertThat(angela.tsa().getActives().size(), is(1));
 
-    err.clearLog();
-    try {
-      tsa.start(getNode(1, passiveNodeId));
-      fail();
-    } catch (Exception e) {
-      waitUntil(err::getLog, containsString("Active has some PREPARED configuration changes that are not yet committed."));
-    }
+    angela.tsa().start(getNode(1, passiveNodeId));
+    waitForPassive(1, passiveNodeId);
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
-    tsa.stopAll();
-    assertContentsBeforeOrAfterSync(4, 3);
+    angela.tsa().stopAll();
+    assertContentsBeforeOrAfterSync(4, 4);
   }
 
   @Test
@@ -145,22 +145,22 @@ public class ConfigSyncIT extends DynamicConfigIT {
     //TODO TDB-4842: The stop and corresponding start is needed to prevent IOException on Windows
     stopNode(1, passiveNodeId);
     stopNode(1, activeNodeId);
-    assertThat(tsa.getStopped().size(), is(2));
+    assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(4, 5);
     // Start only the former active for now (the passive startup would be done later, and should fail)
-    tsa.start(getNode(1, activeNodeId));
-    assertThat(tsa.getActives().size(), is(1));
+    angela.tsa().start(getNode(1, activeNodeId));
+    assertThat(angela.tsa().getActives().size(), is(1));
 
     err.clearLog();
     try {
-      tsa.start(getNode(1, passiveNodeId));
+      angela.tsa().start(getNode(1, passiveNodeId));
       fail();
     } catch (Exception e) {
       waitUntil(err::getLog, containsString("Passive cannot sync because the configuration change history does not match"));
     }
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
-    tsa.stopAll();
+    angela.tsa().stopAll();
     assertContentsBeforeOrAfterSync(4, 5);
   }
 
@@ -176,18 +176,17 @@ public class ConfigSyncIT extends DynamicConfigIT {
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     stopNode(1, passiveNodeId);
     stopNode(1, activeNodeId);
-    assertThat(tsa.getStopped().size(), is(2));
+    assertThat(angela.tsa().getStopped().size(), is(2));
     assertContentsBeforeOrAfterSync(5, 4);
-    tsa.start(getNode(1, activeNodeId));
+    angela.tsa().start(getNode(1, activeNodeId));
 
-    out.clearLog(1, passiveNodeId);
-    tsa.start(getNode(1, passiveNodeId));
-    waitUntil(out.getLog(1, passiveNodeId), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    angela.tsa().start(getNode(1, passiveNodeId));
+    waitForPassive(1, passiveNodeId);
 
     verifyTopologies();
 
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
-    tsa.stopAll();
+    angela.tsa().stopAll();
     assertContentsBeforeOrAfterSync(5, 5);
   }
 
@@ -200,11 +199,11 @@ public class ConfigSyncIT extends DynamicConfigIT {
     Files.createDirectories(activePath);
     Files.createDirectories(passivePath);
 
-    tsa.browse(active, Paths.get(active.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(activePath.toFile());
-    tsa.browse(passive, Paths.get(passive.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(passivePath.toFile());
+    angela.tsa().browse(active, Paths.get(active.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(activePath.toFile());
+    angela.tsa().browse(passive, Paths.get(passive.getConfigRepo()).resolve("sanskrit").toString()).downloadTo(passivePath.toFile());
 
-    List<SanskritObject> activeChanges = AppendLogCapturer.getChanges(activePath);
-    List<SanskritObject> passiveChanges = AppendLogCapturer.getChanges(passivePath);
+    List<SanskritObject> activeChanges = getChanges(activePath);
+    List<SanskritObject> passiveChanges = getChanges(passivePath);
 
     assertThat(activeChanges.size(), is(activeChangesSize));
     assertThat(passiveChanges.size(), is(passiveChangesSize));
@@ -236,6 +235,20 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(equalTo(getRuntimeCluster("localhost", getNodePort(1, 2)))));
     // runtime topology should be the same as upcoming one
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
+  }
+
+  private static List<SanskritObject> getChanges(Path pathToAppendLog) throws SanskritException {
+    List<SanskritObject> res = new ArrayList<>();
+    ObjectMapper objectMapper = Json.copyObjectMapper();
+    new SanskritImpl(new FileBasedFilesystemDirectory(pathToAppendLog), objectMapper) {
+      @Override
+      public void onNewRecord(String timeStamp, String json) throws SanskritException {
+        MutableSanskritObject mutableSanskritObject = new SanskritObjectImpl(objectMapper);
+        JsonUtils.parse(objectMapper, json, mutableSanskritObject);
+        res.add(mutableSanskritObject);
+      }
+    };
+    return res;
   }
 }
 

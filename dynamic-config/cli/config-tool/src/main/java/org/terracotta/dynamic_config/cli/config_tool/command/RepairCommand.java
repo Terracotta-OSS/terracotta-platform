@@ -17,16 +17,19 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.config_tool.converter.ChangeState;
+import org.terracotta.dynamic_config.cli.config_tool.converter.RepairAction;
+import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.nomad.client.results.ConsistencyAnalyzer;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
+import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -35,33 +38,54 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = "repair", commandDescription = "Repair a cluster configuration")
-@Usage("repair -s <hostname[:port]> [-f commit|rollback]")
+@Usage("repair -s <hostname[:port]> [-f commit|rollback|reset]")
 public class RepairCommand extends RemoteCommand {
 
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  @Parameter(names = {"-f"}, description = "State to force for the last prepared configuration: commit or rollback", converter = ChangeState.StateConverter.class)
-  ChangeState forcedChangeState;
-
-  private Map<InetSocketAddress, LogicalServerState> allNodes;
+  @Parameter(names = {"-f"}, description = "Repair action to force: commit, rollback, reset", converter = RepairAction.RepairActionConverter.class)
+  RepairAction forcedRepairAction;
 
   @Override
   public void validate() {
     requireNonNull(node);
-
     validateAddress(node);
-
-    // this call can take some time and we can have some timeout
-    allNodes = findRuntimePeersStatus(node);
-
-    if (!areAllNodesActivated(filterOnlineNodes(allNodes).keySet())) {
-      throw new IllegalStateException("Cannot run repair command on a non activated cluster");
-    }
   }
 
   @Override
   public final void run() {
+    if (forcedRepairAction == RepairAction.RESET) {
+      resetAndRestart(node);
+    } else {
+      nomadRepair();
+    }
+    logger.info("Command successful!" + lineSeparator());
+  }
+
+  private void nomadRepair() {
+    Map<InetSocketAddress, LogicalServerState> allNodes = findRuntimePeersStatus(node);
+    Map<InetSocketAddress, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
+
+    if (onlineNodes.size() != allNodes.size()) {
+      Collection<InetSocketAddress> offlines = new ArrayList<>(allNodes.keySet());
+      offlines.removeAll(onlineNodes.keySet());
+      logger.warn("Some nodes are not reachable: {}", toString(offlines));
+    }
+
+    // the automatic repair command can only work on activated nodes
+    Map<InetSocketAddress, LogicalServerState> activatedNodes = filter(onlineNodes, (addr, state) -> isActivated(addr));
+
+    if (activatedNodes.isEmpty()) {
+      throw new IllegalStateException("No activated node found. Repair command only works with activated nodes.");
+    }
+
+    if (activatedNodes.size() != onlineNodes.size()) {
+      Collection<InetSocketAddress> unconfigured = new ArrayList<>(onlineNodes.keySet());
+      unconfigured.removeAll(activatedNodes.keySet());
+      logger.warn("Some online nodes are not activated: {}. Automatic repair will only work against activated nodes: {}", toString(unconfigured), toString(activatedNodes.keySet()));
+    }
+
     ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = analyzeNomadConsistency(allNodes);
 
     switch (consistencyAnalyzer.getGlobalState()) {
@@ -96,15 +120,15 @@ public class RepairCommand extends RemoteCommand {
           logger.info("All nodes are online.");
         }
 
-        logger.info("Attempting an automatic repair of the configuration...");
+        logger.info("Attempting an automatic repair of the configuration on nodes: {}...", toString(activatedNodes.keySet()));
 
-        if (forcedChangeState == null) {
+        if (forcedRepairAction == null) {
           logger.info("Auto-detecting what needs to be done...");
         } else {
-          logger.warn("Forcing a " + forcedChangeState.name().toLowerCase() + "...");
+          logger.warn("Forcing a " + forcedRepairAction.name().toLowerCase() + "...");
         }
 
-        runConfigurationRepair(allNodes, forcedChangeState == ChangeState.COMMIT ? COMMITTED : forcedChangeState == ChangeState.ROLLBACK ? ROLLED_BACK : null);
+        runConfigurationRepair(consistencyAnalyzer, forcedRepairAction == RepairAction.COMMIT ? COMMITTED : forcedRepairAction == RepairAction.ROLLBACK ? ROLLED_BACK : null);
         logger.info("Configuration is repaired.");
 
         break;

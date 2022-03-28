@@ -22,8 +22,8 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -44,7 +44,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
   @Override
   protected void startNode(int stripeId, int nodeId) {
     startNode(1, 1,
-        "--node-repository-dir", "terracotta" + combine(stripeId, nodeId) + "/repository",
+        "--node-repository-dir", getNodePath(stripeId, nodeId).resolve("repository").toString(),
         "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
     );
   }
@@ -52,7 +52,7 @@ public class TopologyServiceIT extends DynamicConfigIT {
   @Test
   public void test_getPendingTopology() throws Exception {
     try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        getNodeAddress(),
+        getNodeAddress(1, 1),
         getClass().getSimpleName(),
         Duration.ofSeconds(5),
         Duration.ofSeconds(5),
@@ -65,19 +65,19 @@ public class TopologyServiceIT extends DynamicConfigIT {
       // keep for debug please
       //System.out.println(toPrettyJson(pendingTopology));
 
-      assertThat(pendingCluster, is(equalTo(new Cluster(new Stripe(Node.newDefaultNode("node-1-1", "localhost", getNodePort())
-          .setNodeGroupPort(getNodeGroupPort())
+      assertThat(pendingCluster, is(equalTo(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node-1-1", "localhost", getNodePort())
+          .setNodeGroupPort(getNodeGroupPort(1, 1))
           .setNodeBindAddress("0.0.0.0")
           .setNodeGroupBindAddress("0.0.0.0")
           .setNodeMetadataDir(Paths.get("metadata", "stripe1"))
           .setNodeLogDir(Paths.get("logs", "stripe1", "node-1-1"))
           .setNodeBackupDir(Paths.get("backup", "stripe1"))
+          .setDataDir("main", Paths.get("user-data", "main", "stripe1"))
+      ))
           .setClientReconnectWindow(120, SECONDS)
           .setClientLeaseDuration(20, SECONDS)
           .setFailoverPriority(availability())
-          .setOffheapResource("main", 512, MB)
-          .setDataDir("main", Paths.get("user-data", "main", "stripe1"))
-      )))));
+          .setOffheapResource("main", 512, MB))));
     }
   }
 

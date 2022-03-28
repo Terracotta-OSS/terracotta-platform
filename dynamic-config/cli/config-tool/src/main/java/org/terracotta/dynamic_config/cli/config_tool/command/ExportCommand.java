@@ -22,7 +22,7 @@ import com.beust.jcommander.converters.PathConverter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Props;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OutputFormat;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
@@ -40,7 +40,7 @@ import java.util.Properties;
 import static java.lang.System.lineSeparator;
 
 @Parameters(commandNames = "export", commandDescription = "Export a cluster configuration")
-@Usage("export -s <hostname[:port]> [-f <config-file>] [-x] [-r]")
+@Usage("export -s <hostname[:port]> [-f <config-file>] [-i] [-r]")
 public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-s"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
@@ -48,8 +48,8 @@ public class ExportCommand extends RemoteCommand {
   @Parameter(names = {"-f"}, description = "Output configuration file", converter = PathConverter.class)
   private Path outputFile;
 
-  @Parameter(names = {"-x"}, description = "Exclude default values. Default: false", converter = BooleanConverter.class)
-  private boolean excludeDefaultValues;
+  @Parameter(names = {"-i"}, description = "Include default values. Default: false", converter = BooleanConverter.class)
+  private boolean includeDefaultValues;
 
   @Parameter(names = {"-r"}, description = "Export the runtime configuration instead of the configuration saved on disk. Default: false", converter = BooleanConverter.class)
   private boolean wantsRuntimeConfig;
@@ -109,7 +109,7 @@ public class ExportCommand extends RemoteCommand {
         Properties nonDefaults = cluster.toProperties(false, false);
         try (StringWriter out = new StringWriter()) {
           Props.store(out, nonDefaults, "Non-default configurations:");
-          if (!this.excludeDefaultValues) {
+          if (includeDefaultValues) {
             Properties defaults = cluster.toProperties(false, true);
             defaults.keySet().removeAll(nonDefaults.keySet());
             out.write(System.lineSeparator());

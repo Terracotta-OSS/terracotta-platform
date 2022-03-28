@@ -199,13 +199,13 @@ public class DataDirectoriesConfigImplTest {
 
   @Test
   public void testPlatformRootNotSpecified() throws Exception {
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(new String[] { "data" }, new String[1]);
+    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(new String[]{"data"}, new String[1]);
     assertThat(dataRootConfig.getPlatformRootIdentifier(), is(Optional.empty()));
   }
 
   @Test
   public void testPlatformRootSpecified() throws Exception {
-    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(new String[] { "data" }, new String[1], null, 0);
+    DataDirectoriesConfigImpl dataRootConfig = configureDataRoot(new String[]{"data"}, new String[1], null, 0);
     assertThat(dataRootConfig.getPlatformRootIdentifier().orElse("busted"), is("data"));
   }
 
@@ -252,7 +252,7 @@ public class DataDirectoriesConfigImplTest {
       dataDirectories.getDirectory().add(dataRootMapping);
     }
 
-    return new DataDirectoriesConfigImpl(source, dataDirectories);
+    return new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(source), dataDirectories);
   }
 
   private DataDirectoriesConfigImpl configureDataRoot(DataRootMapping[] dataRootMappings) throws IOException {
@@ -264,6 +264,6 @@ public class DataDirectoriesConfigImplTest {
       dataDirectories.getDirectory().add(dataRootMappings[i]);
     }
 
-    return new DataDirectoriesConfigImpl(null, dataDirectories);
+    return new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(null), dataDirectories);
   }
 }

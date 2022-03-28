@@ -26,24 +26,25 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>structures</artifactId>
+  <artifactId>common-structures</artifactId>
   <name>Common :: Structures</name>
 
   <dependencies>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>test-utilities</artifactId>
+      <artifactId>common-test-utilities</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>json-support</artifactId>
+      <artifactId>common-json-support</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

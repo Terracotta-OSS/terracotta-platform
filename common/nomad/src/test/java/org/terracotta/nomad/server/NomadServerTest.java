@@ -707,7 +707,7 @@ public class NomadServerTest {
   }
 
   @SuppressWarnings("unchecked")
-  @Test(expected = NullPointerException.class)
+  @Test
   public void testSetNullChangeApplicator() throws Exception {
     NomadServerState<String> serverState = mock(NomadServerState.class);
     when(serverState.isInitialized()).thenReturn(true);

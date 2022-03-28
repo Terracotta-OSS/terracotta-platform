@@ -59,7 +59,7 @@ public class UriUtils {
     if (auth == null) {
       return Collections.emptyList();
     }
-    return InetSocketAddressConvertor.getInetSocketAddresses(auth.split(","), defaultPort);
+    return InetSocketAddressConverter.getInetSocketAddresses(auth.split(","), defaultPort);
   }
 
   public static String parseScheme(String uri) {

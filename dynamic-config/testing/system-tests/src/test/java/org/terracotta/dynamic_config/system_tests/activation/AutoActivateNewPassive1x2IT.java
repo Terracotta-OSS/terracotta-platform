@@ -18,16 +18,15 @@ package org.terracotta.dynamic_config.system_tests.activation;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.SystemErrRule;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
-import org.terracotta.dynamic_config.system_tests.util.NodeOutputRule;
+import org.terracotta.angela.client.support.junit.NodeOutputRule;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Path;
 
 import static com.tc.util.Assert.fail;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsLog;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
@@ -41,13 +40,13 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   public void test_auto_activation_success_for_1x1_cluster() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/1x1.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort()), "--node-repository-dir", "repository/stripe1/node-1-1");
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
   }
 
   @Test
   public void test_auto_activation_failure_for_different_1x2_cluster() throws Exception {
     startNode(1, 1, "-f", copyConfigProperty("/config-property-files/1x2.properties").toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-repository-dir", "repository/stripe1/node-1-1");
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
 
     try {
       startNode(1, 2,
@@ -64,9 +63,9 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
   public void test_auto_activation_success_for_1x2_cluster() throws Exception {
     Path configurationFile = copyConfigProperty("/config-property-files/1x2.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--node-repository-dir", "repository/stripe1/node-1-1");
-    waitUntil(out.getLog(1, 1), containsLog("Moved to State[ ACTIVE-COORDINATOR ]"));
+    waitForActive(1, 1);
 
     startNode(1, 2, "-f", configurationFile.toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)), "--node-repository-dir", "repository/stripe1/node-1-2");
-    waitUntil(out.getLog(1, 2), containsLog("Moved to State[ PASSIVE-STANDBY ]"));
+    waitForPassive(1, 2);
   }
 }

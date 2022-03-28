@@ -17,12 +17,11 @@ package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.config_tool.nomad.ConsistencyAnalyzer;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.inet.InetSocketAddressUtils;
-import org.terracotta.nomad.client.results.ConsistencyAnalyzer;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.server.NomadServerMode;
 
@@ -32,12 +31,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
-import static org.terracotta.diagnostic.common.LogicalServerState.STARTING;
-import static org.terracotta.diagnostic.common.LogicalServerState.UNREACHABLE;
 
 /**
  * @author Mathieu Carbou
@@ -49,25 +45,22 @@ public class DiagnosticCommand extends RemoteCommand {
   @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
   InetSocketAddress node;
 
-  private Map<InetSocketAddress, LogicalServerState> allNodes;
-  private Map<InetSocketAddress, LogicalServerState> onlineNodes;
-  private Collection<InetSocketAddress> onlineActivatedNodes;
-
   @Override
   public void validate() {
     requireNonNull(node);
-
     validateAddress(node);
-
-    // this call can take some time and we can have some timeout
-    allNodes = findRuntimePeersStatus(node);
-    onlineNodes = filterOnlineNodes(allNodes);
-    onlineActivatedNodes = onlineNodes.keySet().stream().filter(this::isActivated).collect(Collectors.toSet());
   }
 
   @Override
   public final void run() {
+    // this call can take some time and we can have some timeout
+    Map<InetSocketAddress, LogicalServerState> allNodes = findRuntimePeersStatus(node);
+
     ConsistencyAnalyzer<NodeContext> consistencyAnalyzer = analyzeNomadConsistency(allNodes);
+    Collection<InetSocketAddress> onlineNodes = consistencyAnalyzer.getOnlineNodes().keySet();
+    Collection<InetSocketAddress> onlineActivatedNodes = consistencyAnalyzer.getOnlineActivatedNodes().keySet();
+    Collection<InetSocketAddress> onlineInConfigurationNodes = consistencyAnalyzer.getOnlineInConfigurationNodes().keySet();
+    Collection<InetSocketAddress> onlineInRepairNodes = consistencyAnalyzer.getOnlineInRepairNodes().keySet();
 
     Clock clock = Clock.systemDefaultZone();
     ZoneId zoneId = clock.getZone();
@@ -83,48 +76,58 @@ public class DiagnosticCommand extends RemoteCommand {
 
     sb.append("[Cluster]")
         .append(lineSeparator());
-    sb.append(" - Node count: ")
+    sb.append(" - Nodes: ")
         .append(consistencyAnalyzer.getNodeCount())
         .append(lineSeparator());
-    sb.append(" - Online node count: ")
+    sb.append(" - Nodes online: ")
         .append(onlineNodes.size())
         .append(lineSeparator());
-    sb.append(" - Online and activated node count: ")
+    sb.append(" - Nodes online, configured and activated: ")
         .append(onlineActivatedNodes.size())
+        .append(lineSeparator());
+    sb.append(" - Nodes online, configured and in repair: ")
+        .append(onlineInRepairNodes.size())
+        .append(lineSeparator());
+    sb.append(" - Nodes online, new and being configured: ")
+        .append(onlineInConfigurationNodes.size())
         .append(lineSeparator());
 
     sb.append(" - Configuration state: ")
         .append(meaningOf(consistencyAnalyzer))
         .append(lineSeparator());
-    sb.append(" - Configuration checkpoint found across all online nodes: ")
+    sb.append(" - Configuration checkpoint found across all online configured nodes (activated or in repair): ")
         .append(consistencyAnalyzer.getCheckpoint()
             .map(nci -> "YES (Version: " + nci.getVersion() + ", UUID: " + nci.getChangeUuid() + ", At: " + nci.getCreationTimestamp().atZone(zoneId).toLocalDateTime().format(ISO_8601) + ", Details: " + nci.getNomadChange().getSummary() + ")")
             .orElse("NO"))
         .append(lineSeparator());
 
     allNodes.keySet().forEach(nodeAddress -> {
-      LogicalServerState state = allNodes.getOrDefault(nodeAddress, UNREACHABLE);
-
       // header
       sb.append("[").append(nodeAddress).append("]").append(lineSeparator());
 
       // node status
       sb.append(" - Node state: ")
-          .append(state)
+          .append(consistencyAnalyzer.getState(nodeAddress))
+          .append(lineSeparator());
+      sb.append(" - Node online, configured and activated: ")
+          .append(consistencyAnalyzer.isOnlineAndActivated(nodeAddress) ?
+              "YES" :
+              "NO")
+          .append(lineSeparator());
+      sb.append(" - Node online, configured and in repair: ")
+          .append(consistencyAnalyzer.isOnlineAndInRepair(nodeAddress) ?
+              "YES" :
+              "NO")
+          .append(lineSeparator());
+      sb.append(" - Node online, new and being configured: ")
+          .append(consistencyAnalyzer.isOnlineAndInConfiguration(nodeAddress) ?
+              "YES" :
+              "NO")
           .append(lineSeparator());
 
-      // if not is online, display more information
-      if (onlineNodes.containsKey(nodeAddress)) {
-        sb.append(" - Node activated: ")
-            .append(isActivated(node) ?
-                "YES" :
-                "NO")
-            .append(lineSeparator());
-        sb.append(" - Node started in diagnostic mode for initial configuration or repair: ")
-            .append(state == STARTING && !InetSocketAddressUtils.contains(onlineActivatedNodes, nodeAddress) ?
-                "YES" :
-                "NO")
-            .append(lineSeparator());
+      // if node is online, display more information
+      if (onlineNodes.contains(nodeAddress)) {
+
         sb.append(" - Node restart required: ")
             .append(mustBeRestarted(node) ?
                 "YES" :

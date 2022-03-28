@@ -15,24 +15,26 @@
  */
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
+import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.common.struct.Tuple2;
-import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import static java.util.Collections.singletonList;
+import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.NODE;
 import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationType.STRIPE;
 
@@ -43,9 +45,24 @@ import static org.terracotta.dynamic_config.cli.config_tool.converter.OperationT
 @Usage("attach [-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class AttachCommand extends TopologyCommand {
 
+  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
+
+  @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
+
+  // list of new nodes to add with their backup topology
+  private final Map<InetSocketAddress, Cluster> newOnlineNodes = new LinkedHashMap<>();
+
+  private Cluster sourceCluster;
+
   @Override
   public void validate() {
     super.validate();
+
+    validateAddress(source);
+
+    sourceCluster = getUpcomingCluster(source);
 
     Collection<InetSocketAddress> destinationPeers = destinationCluster.getNodeAddresses();
     if (InetSocketAddressUtils.contains(destinationPeers, source)) {
@@ -83,6 +100,16 @@ public class AttachCommand extends TopologyCommand {
           "Source stripe from node: " + source + " is part of a cluster containing more than 1 stripes. " +
               "It must be detached first before being attached to a new cluster. " +
               "You can run the command with -f option to force the attachment at the risk of breaking the cluster from where the node is taken.");
+    }
+
+    // make sure nodes to attach are online
+    // building the list of nodes
+    if (operationType == NODE) {
+      // we attach only a node
+      newOnlineNodes.put(source, getUpcomingCluster(source));
+    } else {
+      // we attach a whole stripe
+      sourceCluster.getStripe(source).get().getNodeAddresses().forEach(addr -> newOnlineNodes.put(addr, getUpcomingCluster(addr)));
     }
   }
 
@@ -131,44 +158,31 @@ public class AttachCommand extends TopologyCommand {
   }
 
   @Override
-  protected void beforeNomadChange(Cluster result) {
-    setUpcomingCluster(Collections.singletonList(source), result);
+  protected void onNomadChangeReady(NodeNomadChange nomadChange) {
+    setUpcomingCluster(newOnlineNodes.keySet(), nomadChange.getCluster());
   }
 
   @Override
-  protected void afterNomadChange(Cluster result) {
-    Collection<InetSocketAddress> newNodes = operationType == NODE ?
-        singletonList(source) :
-        sourceCluster.getStripe(source).get().getNodeAddresses();
+  protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
+    Cluster result = nomadChange.getCluster();
+    activate(newOnlineNodes.keySet(), result, null, restartDelay, restartWaitTime);
+  }
 
-    logger.info("Activating nodes: {}", toString(newNodes));
+  @Override
+  protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
+    logger.error("An error occurred during the attach transaction." + lineSeparator() +
+        "The node information may still be added to the destination cluster: you will need to run the diagnostic / export command to check the state of the transaction." + lineSeparator() +
+        "The nodes to attach won't be activated and restarted, and their topology will be rolled back to their initial value."
+    );
+    newOnlineNodes.forEach((addr, cluster) -> {
+      logger.info("Rollback topology of node: {}", addr);
+      setUpcomingCluster(Collections.singletonList(addr), cluster);
+    });
+    throw error;
+  }
 
-    // we activate the passive node without any license: the license will be synced from active and installed
-    try (DiagnosticServices diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(newNodes)) {
-      // we are preparing the Nomad system only on the new nodes
-      dynamicConfigServices(diagnosticServices)
-          .map(Tuple2::getT2)
-          .forEach(service -> service.activate(result, null));
-    }
-
-    // we are running a cluster activation only on the new nodes
-    runClusterActivation(newNodes, result);
-    logger.debug("Configuration repositories have been created for nodes: {}", toString(newNodes));
-
-    //TODO [DYNAMIC-CONFIG]: TDB-4835: remove this code
-    // [[=====================================================================================
-    logger.info("Restarting nodes: {}", toString(destinationCluster.getNodeAddresses()));
-    restartNodes(
-        destinationCluster.getNodeAddresses(),
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
-    // =======================================================================================]]
-
-    logger.info("Restarting nodes: {}", toString(newNodes));
-    restartNodes(
-        newNodes,
-        Duration.ofMillis(restartWaitTime.getQuantity(TimeUnit.MILLISECONDS)),
-        Duration.ofMillis(restartDelay.getQuantity(TimeUnit.MILLISECONDS)));
-    logger.info("All nodes came back up");
+  @Override
+  protected Collection<InetSocketAddress> getAllOnlineSourceNodes() {
+    return newOnlineNodes.keySet();
   }
 }

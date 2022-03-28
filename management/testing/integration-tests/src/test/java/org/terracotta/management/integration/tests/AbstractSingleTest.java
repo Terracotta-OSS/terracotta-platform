@@ -20,7 +20,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.terracotta.testing.rules.Cluster;
 
-import java.io.File;
+import java.nio.file.Paths;
 
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
@@ -38,13 +38,12 @@ public abstract class AbstractSingleTest extends AbstractTest {
           "</config>\n";
 
   @Rule
-  public Cluster voltron =
-      newCluster()
-          .in(new File("target/galvan"))
-          .withSystemProperty("terracotta.management.assert", "true")
-          .withTcProperty("terracotta.management.assert", "true")
-          .withServiceFragment(resourceConfig)
-          .build();
+  public Cluster voltron = newCluster()
+      .in(Paths.get("target", "galvan"))
+      .withSystemProperty("terracotta.management.assert", "true")
+      .withTcProperty("terracotta.management.assert", "true")
+      .withServiceFragment(resourceConfig)
+      .build();
 
   @Before
   public void setUp() throws Exception {

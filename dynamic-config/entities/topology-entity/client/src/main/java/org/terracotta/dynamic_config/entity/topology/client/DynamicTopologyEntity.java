@@ -22,6 +22,7 @@ import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
 
 import java.time.Duration;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -69,6 +70,8 @@ public interface DynamicTopologyEntity extends Entity {
    * Can return null.
    */
   License getLicense() throws TimeoutException, InterruptedException;
+
+  Future<Void> releaseEntity();
 
   class Settings {
     private Duration requestTimeout = Duration.ofSeconds(20);

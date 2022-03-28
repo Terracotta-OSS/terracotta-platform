@@ -15,6 +15,8 @@
  */
 package org.terracotta.management.model.stats;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import java.io.Serializable;
 
 public class DelegatingSample<T extends Serializable> implements Sample<T> {
@@ -37,6 +39,8 @@ public class DelegatingSample<T extends Serializable> implements Sample<T> {
     return delegate.getTimestamp();
   }
 
+  @SuppressFBWarnings("EQ_CHECK_FOR_OPERAND_NOT_COMPATIBLE_WITH_THIS")
+  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object obj) {
     return delegate.equals(obj);

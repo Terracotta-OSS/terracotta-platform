@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
@@ -31,7 +30,6 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface EntityMonitoringService {
 
   /**

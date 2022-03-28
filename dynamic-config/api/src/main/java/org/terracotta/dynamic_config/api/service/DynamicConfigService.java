@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.dynamic_config.api.model.Cluster;
 
 import java.time.Duration;
@@ -23,15 +22,7 @@ import java.time.Duration;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface DynamicConfigService {
-
-  /**
-   * Restarts this node by invoking the appropriate platform APIs. Useful when a node needs to be restarted after activation.
-   *
-   * @param delay initial delay before restart happens
-   */
-  void restart(Duration delay);
 
   /**
    * Changes the in-memory cluster to a new one for this node while it is still not activated.
@@ -55,4 +46,27 @@ public interface DynamicConfigService {
    * @param licenseContent license file content
    */
   void upgradeLicense(String licenseContent);
+
+  /**
+   * Reset
+   * <p>
+   * This method will backup and reset the configurations and Nomad append log,
+   * <p>
+   * The node will restart in diagnostic mode if restarted.
+   */
+  void reset();
+
+  /**
+   * Restarts this node by invoking the appropriate platform APIs. Useful when a node needs to be restarted after activation.
+   *
+   * @param delay initial delay before restart happens
+   */
+  void restart(Duration delay);
+
+  /**
+   * Stops an activated node.
+   * <p>
+   * This method will zap and stop the node.
+   */
+  void stop(Duration delay);
 }

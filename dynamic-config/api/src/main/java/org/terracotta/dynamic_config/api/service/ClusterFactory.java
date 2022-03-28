@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
-import org.terracotta.dynamic_config.api.model.Props;
 import org.terracotta.dynamic_config.api.model.Setting;
 
 import java.nio.file.Path;
@@ -29,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
@@ -54,9 +54,10 @@ public class ClusterFactory {
 
   public Cluster create(Properties properties) {
     Collection<Configuration> defaultsAdded = new TreeSet<>(Comparator.comparing(Configuration::toString));
-    Cluster cluster = ConfigurationParser.parsePropertyConfiguration(properties, defaultsAdded::add);
+    Cluster cluster = create(properties, defaultsAdded::add);
 
-    LOGGER.info(
+    // keep that in trace because DynamicConfigConfiguration is responsible of the logging
+    LOGGER.trace(
         String.format(
             "%sRead the following configurations: %s%sAdded the following defaults: %s",
             lineSeparator(),
@@ -67,6 +68,10 @@ public class ClusterFactory {
     );
 
     return validated(cluster);
+  }
+
+  public Cluster create(Properties properties, Consumer<Configuration> added) {
+    return ConfigurationParser.parsePropertyConfiguration(properties, added);
   }
 
   /**
@@ -82,7 +87,8 @@ public class ClusterFactory {
     Collection<Configuration> defaultsAdded = new TreeSet<>(Comparator.comparing(Configuration::toString));
     Cluster cluster = ConfigurationParser.parseCommandLineParameters(paramValueMap, parameterSubstitutor, defaultsAdded::add);
 
-    LOGGER.info(
+    // keep that in trace because DynamicConfigConfiguration is responsible of the logging
+    LOGGER.trace(
         String.format(
             "%sRead the following parameters: %s%sAdded the following defaults: %s",
             lineSeparator(),

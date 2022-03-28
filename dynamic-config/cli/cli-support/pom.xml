@@ -32,7 +32,7 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-model</artifactId>
+      <artifactId>dynamic-config-api</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -47,7 +47,7 @@
 
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>test-utilities</artifactId>
+      <artifactId>common-test-utilities</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

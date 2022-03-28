@@ -16,20 +16,17 @@
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
 import com.beust.jcommander.Parameter;
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.config_tool.converter.OperationType;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.inet.InetSocketAddressUtils;
 import org.terracotta.json.Json;
 
 import java.net.InetSocketAddress;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -52,16 +49,9 @@ public abstract class TopologyCommand extends RemoteCommand {
   @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
 
-  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 60s", converter = TimeUnitConverter.class)
-  protected Measure<TimeUnit> restartWaitTime = Measure.of(60, TimeUnit.SECONDS);
-
-  @Parameter(names = {"-D"}, description = "Restart delay. Default: 2s", converter = TimeUnitConverter.class)
-  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
-
   protected Map<InetSocketAddress, LogicalServerState> destinationOnlineNodes;
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
-  protected Cluster sourceCluster;
 
   @Override
   public void validate() {
@@ -80,7 +70,6 @@ public abstract class TopologyCommand extends RemoteCommand {
 
     logger.debug("Validating the parameters");
     validateAddress(destination);
-    validateAddress(source);
 
     // prevent any topology change if a configuration change has been made through Nomad, requiring a restart, but nodes were not restarted yet
     validateLogOrFail(
@@ -104,8 +93,6 @@ public abstract class TopologyCommand extends RemoteCommand {
         throw new UnsupportedOperationException("Topology modifications of whole stripes on an activated cluster is not yet supported");
       }
     }
-
-    sourceCluster = getUpcomingCluster(source);
   }
 
   @Override
@@ -123,16 +110,25 @@ public abstract class TopologyCommand extends RemoteCommand {
     // push the updated topology to all the addresses
     // If a node has been removed, then it will make itself alone on its own cluster and will have no more links to the previous nodes
     // This is done in the DynamicConfigService#setUpcomingCluster() method
-    logger.info("Sending the topology change to all the nodes");
 
     if (destinationClusterActivated) {
-      beforeNomadChange(result);
       NodeNomadChange nomadChange = buildNomadChange(result);
-      runPassiveChange(destinationCluster, destinationOnlineNodes, nomadChange);
-      afterNomadChange(result);
+      licenseValidation(destination, nomadChange.getCluster());
+      onNomadChangeReady(nomadChange);
+      logger.info("Sending the topology change");
+      try {
+        runTopologyChange(destinationCluster, destinationOnlineNodes, nomadChange);
+      } catch (RuntimeException e) {
+        onNomadChangeFailure(nomadChange, e);
+      }
+      onNomadChangeSuccess(nomadChange);
 
     } else {
-      setUpcomingCluster(Collections.singletonList(source), result);
+      logger.info("Sending the topology change");
+      Collection<InetSocketAddress> allOnlineSourceNodes = getAllOnlineSourceNodes();
+      if (!allOnlineSourceNodes.isEmpty()) {
+        setUpcomingCluster(allOnlineSourceNodes, result);
+      }
       setUpcomingCluster(destinationOnlineNodes.keySet(), result);
     }
 
@@ -174,19 +170,24 @@ public abstract class TopologyCommand extends RemoteCommand {
   protected final void validateLogOrFail(Supplier<Boolean> expectedCondition, String error) {
     if (!expectedCondition.get()) {
       if (force) {
-        logger.warn("Force option supplied, not failing on the following validation:");
-        logger.warn(error);
+        logger.warn("Following validation has been bypassed with -f:{} - {}", lineSeparator(), error);
       } else {
         throw new IllegalArgumentException(error);
       }
     }
   }
 
-  protected void beforeNomadChange(Cluster result) {
+  protected void onNomadChangeReady(NodeNomadChange nomadChange) {
   }
 
-  protected void afterNomadChange(Cluster result) {
+  protected void onNomadChangeSuccess(NodeNomadChange nomadChange) {
   }
+
+  protected void onNomadChangeFailure(NodeNomadChange nomadChange, RuntimeException error) {
+    throw error;
+  }
+
+  protected abstract Collection<InetSocketAddress> getAllOnlineSourceNodes();
 
   protected abstract Cluster updateTopology();
 

@@ -22,8 +22,9 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
-import org.terracotta.diagnostic.common.LogicalServerState;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeNomadChange;
@@ -53,16 +54,20 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.ACTIVE_RECONNECTING;
-import static org.terracotta.diagnostic.common.LogicalServerState.PASSIVE;
-import static org.terracotta.diagnostic.common.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
+import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
 
 public class NomadManager<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadManager.class);
@@ -87,7 +92,6 @@ public class NomadManager<T> {
   public void runConfigurationDiscovery(Map<InetSocketAddress, LogicalServerState> nodes, DiscoverResultsReceiver<T> results) {
     LOGGER.debug("Attempting to discover nodes: {}", nodes);
     List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
-    checkServerStates(nodes);
     try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
       client.tryDiscovery(new MultiDiscoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)));
     }
@@ -100,28 +104,28 @@ public class NomadManager<T> {
     }
   }
 
-  public void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> nodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
-    LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, nodes);
-    checkServerStates(nodes);
-    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
+  public void runConfigurationChange(Map<InetSocketAddress, LogicalServerState> onlineNodes, MultiSettingNomadChange changes, ChangeResultReceiver<T> results) {
+    LOGGER.debug("Attempting to make co-ordinated configuration change: {} on nodes: {}", changes, onlineNodes);
+    checkServerStates(onlineNodes);
+    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(onlineNodes);
     try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
       client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), changes);
     }
   }
 
-  public void runConfigurationRepair(Map<InetSocketAddress, LogicalServerState> nodes, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
-    LOGGER.debug("Attempting to repair configuration on nodes: {}", nodes);
-    checkServerStates(nodes);
-    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(nodes);
+  public void runConfigurationRepair(ConsistencyAnalyzer<NodeContext> consistencyAnalyzer, RecoveryResultReceiver<T> results, ChangeRequestState forcedState) {
+    LOGGER.debug("Attempting to repair configuration on nodes: {}", consistencyAnalyzer.getAllNodes().keySet());
+    Map<InetSocketAddress, LogicalServerState> onlineActivatedNodes = consistencyAnalyzer.getOnlineActivatedNodes();
+    List<InetSocketAddress> orderedList = keepOnlineAndOrderPassivesFirst(onlineActivatedNodes);
     try (NomadClient<T> client = createDiagnosticNomadClient(orderedList)) {
-      client.tryRecovery(new MultiRecoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), nodes.size(), forcedState);
+      client.tryRecovery(new MultiRecoveryResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), consistencyAnalyzer.getNodeCount(), forcedState);
     }
   }
 
-  public void runPassiveChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, NodeNomadChange change, ChangeResultReceiver<T> results) {
+  public void runTopologyChange(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes, NodeNomadChange change, ChangeResultReceiver<T> results) {
     LOGGER.debug("Attempting to apply topology change: {} on cluster {}", change, destinationCluster);
     checkServerStates(onlineNodes);
-    try (NomadClient<T> client = createPassiveChangeNomadClient(destinationCluster, onlineNodes)) {
+    try (NomadClient<T> client = createTopologyChangeNomadClient(destinationCluster, onlineNodes)) {
       client.tryApplyChange(new MultiChangeResultReceiver<>(asList(new LoggingResultReceiver<>(), results)), change);
     }
   }
@@ -137,7 +141,7 @@ public class NomadManager<T> {
     return new NomadClient<>(nomadEndpoints, host, user, clock);
   }
 
-  private NomadClient<T> createPassiveChangeNomadClient(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
+  private NomadClient<T> createTopologyChangeNomadClient(Cluster destinationCluster, Map<InetSocketAddress, LogicalServerState> onlineNodes) {
     LOGGER.trace("createPassiveChangeNomadClient({}, {})", destinationCluster, onlineNodes);
 
     checkServerStates(onlineNodes);
@@ -191,23 +195,49 @@ public class NomadManager<T> {
     }
 
     // override the diagnostic endpoints to go over the entity channel for the nomad commit phase
-    AcceptRejectResponse[] commitResponses = new AcceptRejectResponse[stripeEndpoints.size()];
+    ConcurrentMap<Integer, CompletableFuture<AcceptRejectResponse>> cache = new ConcurrentHashMap<>(stripeEndpoints.size());
     nomadEndpoints = nomadEndpoints.stream().map(e -> new NomadEndpoint<T>(e.getAddress(), e) {
+      @SuppressWarnings("OptionalGetWithoutIsPresent")
       @Override
       public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
         // This method is called for each online node.
         // But for a stripe, we only need to do 1 call, to the active, which will be replicated to the passive servers.
         // So we cache the first response we got from a stripe, to return it immediately after for the other calls.
         // We consider that the commit response on the passive servers will be the same on the active servers.
-        // If the commit response on a passive server is not accept(), the passive will restart itself.
-        final InetSocketAddress address = getAddress();
-        final int stripeId = destinationCluster.getStripeId(address).getAsInt();
-        final int idx = stripeId - 1;
-        synchronized (commitResponses) {
-          if (commitResponses[idx] == null) {
-            commitResponses[idx] = stripeEndpoints.get(idx).commit(message);
+        InetSocketAddress address = getAddress();
+        int stripeId = destinationCluster.getStripeId(address).getAsInt();
+        CompletableFuture<AcceptRejectResponse> result = cache.computeIfAbsent(stripeId, sid -> {
+          LOGGER.info("Committing topology change to stripe ID: {}", stripeId);
+
+          LOGGER.trace("Sending commit message: {} to stripe ID: {}", message, stripeId);
+          CompletableFuture<AcceptRejectResponse> c = new CompletableFuture<>();
+          try {
+            AcceptRejectResponse acceptRejectResponse = stripeEndpoints.get(stripeId - 1).commit(message);
+            LOGGER.trace("Received commit response: {} from stripe ID: {}", message, stripeId);
+            c.complete(acceptRejectResponse);
+          } catch (NomadException | RuntimeException e) {
+            LOGGER.trace("Received commit failure: '{}' from stripe ID: {}", e.getMessage(), stripeId, e);
+            c.completeExceptionally(e);
           }
-          return commitResponses[idx];
+          return c;
+        });
+        try {
+          return result.get();
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          throw new NomadException(ie);
+        } catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof Error) {
+            throw (Error) cause;
+          }
+          if (cause instanceof NomadException) {
+            throw (NomadException) cause;
+          }
+          if (cause instanceof RuntimeException) {
+            throw (RuntimeException) cause;
+          }
+          throw new NomadException(e.getMessage(), e);
         }
       }
     }).collect(toList());

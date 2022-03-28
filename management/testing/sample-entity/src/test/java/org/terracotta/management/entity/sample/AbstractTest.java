@@ -26,9 +26,9 @@ import org.junit.rules.Timeout;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
+import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityClientService;
 import org.terracotta.management.entity.nms.agent.server.NmsAgentEntityServerService;
-import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.client.DefaultNmsService;
 import org.terracotta.management.entity.nms.client.NmsEntity;
 import org.terracotta.management.entity.nms.client.NmsEntityClientService;
@@ -74,7 +74,7 @@ public abstract class AbstractTest {
   protected NmsService nmsService;
 
   @Rule
-  public Timeout timeout = Timeout.seconds(60);
+  public Timeout timeout = Timeout.seconds(90);
 
   protected AbstractTest() {
     this(0);

@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -26,7 +25,6 @@ import java.util.Optional;
 /**
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface TopologyService {
 
   /**

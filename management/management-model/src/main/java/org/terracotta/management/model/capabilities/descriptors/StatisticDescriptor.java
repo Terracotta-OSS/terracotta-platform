@@ -15,9 +15,8 @@
  */
 package org.terracotta.management.model.capabilities.descriptors;
 
-import java.util.Objects;
-
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Ludovic Orban

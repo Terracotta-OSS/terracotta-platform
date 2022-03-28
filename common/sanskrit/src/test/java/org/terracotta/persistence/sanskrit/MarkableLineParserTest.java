@@ -50,7 +50,7 @@ public class MarkableLineParserTest {
 
   @Test
   public void brokenMultiByteCharacter() {
-    InputStream bytes = new ByteArrayInputStream(new byte[] { -58 });
+    InputStream bytes = new ByteArrayInputStream(new byte[]{-58});
     MarkableLineParser parser = new MarkableLineParser(bytes);
     List<String> lines = parser.lines().collect(Collectors.toList());
     assertThat(lines, empty());

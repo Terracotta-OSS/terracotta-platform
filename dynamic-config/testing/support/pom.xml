@@ -31,20 +31,45 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-api</artifactId>
+      <groupId>org.terracotta.dynamic-config.cli</groupId>
+      <artifactId>dynamic-config-cli-config-converter</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.diagnostic</groupId>
+      <artifactId>diagnostic-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-test-utilities</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-port-locking</artifactId>
       <version>${project.version}</version>
     </dependency>
 
-    <!-- server provided apis -->
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>entity-server-api</artifactId>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-all</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>packaging-support</artifactId>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
     </dependency>
 
+    <!-- provided libs because of EE/OSS diff -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>angela</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>entity-client-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>

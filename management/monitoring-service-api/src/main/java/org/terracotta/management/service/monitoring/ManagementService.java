@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.tc.classloader.CommonComponent;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.management.model.call.Parameter;
@@ -29,7 +28,6 @@ import java.io.Closeable;
  *
  * @author Mathieu Carbou
  */
-@CommonComponent
 public interface ManagementService extends Closeable {
 
   void setManagementExecutor(ManagementExecutor managementExecutor);

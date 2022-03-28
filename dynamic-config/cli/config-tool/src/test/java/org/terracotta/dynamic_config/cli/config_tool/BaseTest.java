@@ -29,6 +29,7 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.config_tool.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.config_tool.restart.RestartService;
+import org.terracotta.dynamic_config.cli.config_tool.stop.StopService;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.entity.client.NomadEntity;
 import org.terracotta.nomad.entity.client.NomadEntityProvider;
@@ -39,7 +40,7 @@ import org.terracotta.nomad.server.NomadServer;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -59,6 +60,7 @@ public abstract class BaseTest {
   protected NomadEntityProvider nomadEntityProvider;
   protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
+  protected StopService stopService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
 
   private final Cache<InetSocketAddress, TopologyService> topologyServices = new Cache<>(addr -> mock(TopologyService.class, addr.toString()));
@@ -76,7 +78,7 @@ public abstract class BaseTest {
     return diagnosticService;
   });
 
-  private final Cache<List<InetSocketAddress>, NomadEntity<?>> nomadEntities = new Cache<>(list -> {
+  private final Cache<Collection<InetSocketAddress>, NomadEntity<?>> nomadEntities = new Cache<>(list -> {
     final NomadEntity<?> entity = mock(NomadEntity.class, list.toString());
     try {
       lenient().when(entity.commit(any(CommitMessage.class))).thenReturn(AcceptRejectResponse.accept());
@@ -98,13 +100,14 @@ public abstract class BaseTest {
     nomadEntityProvider = new NomadEntityProvider(getClass().getSimpleName(), timeout, new NomadEntity.Settings().setRequestTimeout(timeout), null) {
       @SuppressWarnings("unchecked")
       @Override
-      public <T> NomadEntity<T> fetchNomadEntity(List<InetSocketAddress> addresses) throws ConnectionException {
+      public <T> NomadEntity<T> fetchNomadEntity(Collection<InetSocketAddress> addresses) throws ConnectionException {
         return (NomadEntity<T>) nomadEntities.get(addresses);
       }
     };
     multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
     nomadManager = new NomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
+    stopService = new StopService(diagnosticServiceProvider, concurrencySizing);
   }
 
   protected DiagnosticService diagnosticServiceMock(String host, int port) {

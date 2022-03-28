@@ -18,16 +18,16 @@ package org.terracotta.dynamic_config.system_tests.diagnostic;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static java.io.File.separator;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.successful;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.hasExitStatus;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition
 public class SetCommand1x1IT extends DynamicConfigIT {
@@ -61,27 +61,11 @@ public class SetCommand1x1IT extends DynamicConfigIT {
   }
 
   @Test
-  public void setSecurityAuthc() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-authc=file"), is(successful()));
-
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-authc"),
-        allOf(hasExitStatus(0), containsOutput("security-authc=file")));
-  }
-
-  @Test
   public void setNodeGroupPort() {
     assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port=9630"), is(successful()));
 
     assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.node-group-port"),
         allOf(hasExitStatus(0), containsOutput("stripe.1.node.1.node-group-port=9630")));
-  }
-
-  @Test
-  public void setSecurityWhitelist() {
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(), "-c", "security-dir=/path/to/security/dir", "-c", "security-whitelist=true"), is(successful()));
-
-    assertThat(configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-whitelist"),
-        allOf(hasExitStatus(0), containsOutput("security-whitelist=true")));
   }
 
   @Test

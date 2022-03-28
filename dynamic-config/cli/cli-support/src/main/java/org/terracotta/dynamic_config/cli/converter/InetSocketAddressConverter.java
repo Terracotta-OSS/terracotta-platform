@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.cli.converter;
 
 import com.beust.jcommander.IStringConverter;
-import org.terracotta.inet.InetSocketAddressConvertor;
 
 import java.net.InetSocketAddress;
 
@@ -26,6 +25,6 @@ import java.net.InetSocketAddress;
 public class InetSocketAddressConverter implements IStringConverter<InetSocketAddress> {
   @Override
   public InetSocketAddress convert(String value) {
-    return InetSocketAddressConvertor.getInetSocketAddress(value);
+    return org.terracotta.inet.InetSocketAddressConverter.getInetSocketAddress(value);
   }
 }

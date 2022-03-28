@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.terracotta.config.util.ParameterSubstitutor;
 import org.terracotta.data.config.DataDirectories;
 import org.terracotta.data.config.DataRootMapping;
 import org.terracotta.entity.PlatformConfiguration;
@@ -56,7 +57,7 @@ public class PassthroughIntegrationTest {
     DATA_ROOT_PATH = folder.newFolder().getAbsolutePath();
 
     this.passthroughServer = new PassthroughServer();
-    this.passthroughServer.registerExtendedConfiguration(new DataDirectoriesConfigImpl(null, getConfiguration()));
+    this.passthroughServer.registerExtendedConfiguration(new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(null), getConfiguration()));
     this.passthroughServer.registerServiceProvider(new TestServiceProvider(), null);
     this.passthroughServer.registerAsynchronousServerCrasher(p -> {});
     this.passthroughServer.start(true, false);

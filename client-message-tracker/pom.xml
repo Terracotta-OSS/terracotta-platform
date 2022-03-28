@@ -28,20 +28,18 @@
 
   <artifactId>client-message-tracker</artifactId>
 
-  <properties>
-    <java.version>1.8</java.version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
       <version>${terracotta-apis.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>packaging-support</artifactId>
       <version>${terracotta-apis.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>

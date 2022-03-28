@@ -21,17 +21,25 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
+import java.math.BigInteger;
+
 /**
  * @author Mathieu Carbou
  */
 @Parameters(commandNames = LocalMainCommand.NAME)
 public class RemoteMainCommand extends LocalMainCommand {
 
+  @Parameter(names = {"-er", "--entity-request-timeout"}, hidden = true, description = "Entity operation timeout. Default: 120s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> entityOperationTimeout;
+
+  @Parameter(names = {"-et", "--entity-connection-timeout"}, hidden = true, description = "Entity Connection timeout. Default: 30s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> entityConnectionTimeout;
+
   @Parameter(names = {"-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> requestTimeout = Measure.of(10, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-t", "--connection-timeout"}, description = "Connection timeout. Default: 30s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> connectionTimeout = Measure.of(30, TimeUnit.SECONDS);
+  @Parameter(names = {"-t", "--connection-timeout"}, description = "Connection timeout. Default: 10s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> connectionTimeout = Measure.of(10, TimeUnit.SECONDS);
 
   @Parameter(names = {"-srd", "--security-root-directory"}, description = "Security root directory")
   private String securityRootDirectory;
@@ -44,7 +52,30 @@ public class RemoteMainCommand extends LocalMainCommand {
     return connectionTimeout;
   }
 
+  public Measure<TimeUnit> getEntityOperationTimeout() {
+    return entityOperationTimeout;
+  }
+
+  public Measure<TimeUnit> getEntityConnectionTimeout() {
+    return entityConnectionTimeout;
+  }
+
   public String getSecurityRootDirectory() {
     return securityRootDirectory;
+  }
+
+  @Override
+  public void validate() {
+    super.validate();
+    if (entityOperationTimeout == null) {
+      entityOperationTimeout = Measure.of(
+          requestTimeout.getExactQuantity().multiply(BigInteger.valueOf(12)),
+          requestTimeout.getUnit());
+    }
+    if (entityConnectionTimeout == null) {
+      entityConnectionTimeout = Measure.of(
+          connectionTimeout.getExactQuantity().multiply(BigInteger.valueOf(3)),
+          connectionTimeout.getUnit());
+    }
   }
 }

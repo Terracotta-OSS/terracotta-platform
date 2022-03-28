@@ -16,15 +16,15 @@
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Test;
-import org.terracotta.dynamic_config.system_tests.ClusterDefinition;
-import org.terracotta.dynamic_config.system_tests.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static java.io.File.separator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.not;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.containsOutput;
-import static org.terracotta.dynamic_config.system_tests.util.AngelaMatchers.hasExitStatus;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.hasExitStatus;
 
 @ClusterDefinition
 public class GetCommand1x1IT extends DynamicConfigIT {
@@ -64,7 +64,7 @@ public class GetCommand1x1IT extends DynamicConfigIT {
   public void testNode_getAllDataDirs() {
     assertThat(
         configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.data-dirs"),
-        containsOutput("stripe.1.node.1.data-dirs=main:terracotta1-1" + separator + "data-dir"));
+        containsOutput("stripe.1.node.1.data-dirs=main:node-1-1" + separator + "data-dir"));
   }
 
   @Test
@@ -72,13 +72,6 @@ public class GetCommand1x1IT extends DynamicConfigIT {
     assertThat(
         configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "client-reconnect-window"),
         containsOutput("client-reconnect-window=120s"));
-  }
-
-  @Test
-  public void testNode_getSecurityAuthc() {
-    assertThat(
-        configToolInvocation("get", "-s", "localhost:" + getNodePort(), "-c", "security-authc"),
-        containsOutput("security-authc="));
   }
 
   @Test

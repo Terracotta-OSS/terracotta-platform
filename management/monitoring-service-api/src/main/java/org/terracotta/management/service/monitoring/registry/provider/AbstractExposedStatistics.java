@@ -15,7 +15,7 @@
  */
 package org.terracotta.management.service.monitoring.registry.provider;
 
-import com.tc.classloader.CommonComponent;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.stats.StatisticRegistry;
@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
-@CommonComponent
+@SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
 public class AbstractExposedStatistics<T extends AliasBinding> extends AliasBindingManagementProvider.ExposedAliasBinding<T> implements Closeable {
 
   private final StatisticRegistry statisticRegistry;
