@@ -89,11 +89,11 @@ public final class Stripe extends AbstractNode<Cluster> {
   }
 
   public Optional<Server> getServerByName(String serverName) {
-    return serverStream().filter(server -> server.getServerName().equals(serverName)).findFirst();
+    return serverStream().filter(server -> server.getServerName().equals(serverName)).findAny();
   }
 
   public Optional<Server> getActiveServer() {
-    return serverStream().filter(Server::isActive).findFirst();
+    return serverStream().filter(Server::isActive).findAny();
   }
 
   public Optional<Server> removeServerByName(String serverName) {

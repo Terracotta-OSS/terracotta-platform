@@ -15,13 +15,15 @@
  */
 package org.terracotta.diagnostic.server.extensions;
 
-import com.tc.objectserver.impl.JMXSubsystem;
 import org.junit.Before;
 import org.junit.Test;
+import org.terracotta.server.ServerJMX;
 
 import javax.management.NotCompliantMBeanException;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -31,16 +33,16 @@ import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVAL
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_SUSPENDED;
-import static org.terracotta.diagnostic.model.LogicalServerState.UNKNOWN;
+import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 public class LogicalServerStateTest {
-  private JMXSubsystem jmxSubsystem;
-  private LogicalServerStateMBeanImpl logicalServerState;
+  ServerJMX jmxSubsystem;
+  private DiagnosticExtensionsMBeanImpl logicalServerState;
 
   @Before
   public void setUp() throws NotCompliantMBeanException {
-    jmxSubsystem = mock(JMXSubsystem.class);
-    logicalServerState = new LogicalServerStateMBeanImpl(jmxSubsystem) {
+    jmxSubsystem = mock(ServerJMX.class);
+    logicalServerState = new DiagnosticExtensionsMBeanImpl(jmxSubsystem) {
       @Override
       boolean hasConsistencyManager() {
         return true;
@@ -54,7 +56,8 @@ public class LogicalServerStateTest {
     when(jmxSubsystem.call(MBEAN_SERVER, "isReconnectWindow", null)).thenReturn(MESSAGE_INVALID_JMX);
     when(jmxSubsystem.call(MBEAN_SERVER, "getState", null)).thenReturn(MESSAGE_INVALID_JMX);
 
-    assertThat(logicalServerState.getLogicalServerState(), equalTo(UNKNOWN));
+    assertThat(() -> logicalServerState.getLogicalServerState(), is(throwing(instanceOf(IllegalStateException.class))
+        .andMessage(is(equalTo("mBean call 'Server#isReconnectWindow' error: Invalid JMX")))));
   }
 
   @Test

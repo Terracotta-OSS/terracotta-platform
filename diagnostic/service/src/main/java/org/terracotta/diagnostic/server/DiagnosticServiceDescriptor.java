@@ -28,7 +28,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,26 +44,19 @@ class DiagnosticServiceDescriptor<T> implements DiagnosticServicesRegistration<T
   private final T serviceImplementation;
   private final Set<String> mBeans = ConcurrentHashMap.newKeySet();
   private final Runnable onClose;
-  private final Function<String, Boolean> jmxExpose;
 
-  DiagnosticServiceDescriptor(Class<T> serviceInterface, T serviceImplementation, Runnable onClose, Function<String, Boolean> jmxExpose) {
+  DiagnosticServiceDescriptor(Class<T> serviceInterface, T serviceImplementation, Runnable onClose) {
     if (!serviceInterface.isInterface()) {
       throw new IllegalArgumentException("Not an interface: " + serviceInterface.getName());
     }
     this.serviceInterface = requireNonNull(serviceInterface);
     this.serviceImplementation = requireNonNull(serviceImplementation);
     this.onClose = requireNonNull(onClose);
-    this.jmxExpose = requireNonNull(jmxExpose);
   }
 
   @Override
   public Class<T> getServiceInterface() {
     return serviceInterface;
-  }
-
-  @Override
-  public boolean exposeMBean(String name) {
-    return jmxExpose.apply(name);
   }
 
   @Override
@@ -107,15 +99,11 @@ class DiagnosticServiceDescriptor<T> implements DiagnosticServicesRegistration<T
     if (list.size() > 1) {
       throw new AssertionError("Method overloading not yet supported: " + serviceInterface.getName());
     }
-    return list.stream().findFirst();
+    return list.stream().findAny();
   }
 
   Optional<String> discoverMBeanName() {
     return Optional.ofNullable(serviceImplementation.getClass().getAnnotation(Expose.class)).map(Expose::value);
-  }
-
-  void addMBean(String name) {
-    mBeans.add(name);
   }
 
   public Set<String> getRegisteredMBeans() {

@@ -15,36 +15,41 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Version;
+import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.nomad.server.NomadException;
 import org.terracotta.persistence.sanskrit.HashUtils;
 
 /**
  * @author Mathieu Carbou
  */
-public class DefaultHashComputer implements HashComputer<NodeContext> {
+public class DefaultHashComputer implements HashComputer {
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultHashComputer.class);
 
-  private final ObjectMapper mapper;
-
-  public DefaultHashComputer(ObjectMapper mapper) {
-    this.mapper = mapper.copy();
-    this.mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+  @Override
+  public String computeHash(Config config) {
+    String output = Props.toString(config.getTopology().getCluster().toProperties(false, false, true, config.getVersion()));
+    String hash = HashUtils.generateHash(output);
+    LOGGER.trace("Computed hash: {} for config:\n{}", hash, output);
+    return hash;
   }
 
   @Override
-  public String computeHash(NodeContext o) {
-    try {
-      String json = mapper.writeValueAsString(o);
-      String hash = HashUtils.generateHash(json);
-      LOGGER.debug("Computed hash: {} for json: {}", hash, json);
-      return hash;
-    } catch (JsonProcessingException e) {
-      throw new IllegalStateException(e);
+  public void checkHash(Config config, String expectedHash) throws NomadException {
+    if (config.getVersion() == Version.V1) {
+      // we cannot check the hash of a V1 config because the V1 hash was computed based on the json output.
+      // Sadly this is not possible to keep backward compat' with that because json field ordering is hard
+      // to control: SORT_PROPERTIES_ALPHABETICALLY and ORDER_MAP_ENTRIES_BY_KEYS are often subject to bugs
+      // and are not reliable: https://www.stubbornjava.com/posts/creating-a-somewhat-deterministic-jackson-objectmapper
+      // The json output is non deterministic.
+      return;
+    }
+
+    String actualHash = computeHash(config);
+    if (!actualHash.equals(expectedHash)) {
+      throw new NomadException("Computed: " + actualHash + ". Expected: " + expectedHash + ". Configuration:\n" + config);
     }
   }
 }

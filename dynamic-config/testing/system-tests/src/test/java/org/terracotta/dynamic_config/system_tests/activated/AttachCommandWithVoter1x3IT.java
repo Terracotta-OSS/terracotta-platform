@@ -58,7 +58,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     //Activate cluster
     activateCluster();
@@ -78,7 +78,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
       waitForDiagnostic(1, 3);
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
-      assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+      assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
       String[] nodes = new String[]{
           getNode(1, activeId).getHostPort(),
@@ -90,7 +90,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
 
       // kill the old passive and detach it from cluster
       stopNode(1, passiveId);
-      assertThat(configToolInvocation("-t", "5s", "detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       nodes = new String[]{
           getNode(1, activeId).getHostPort(),
@@ -120,7 +120,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
       stopNode(1, activeId);
       waitForActive(1, passiveId);
 
-      assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+      assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
       String[] nodes = new String[]{
           getNode(1, activeId).getHostPort(),
@@ -145,7 +145,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
       waitForDiagnostic(1, 3);
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
-      assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+      assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
       String[] nodes = new String[]{
           getNode(1, activeId).getHostPort(),

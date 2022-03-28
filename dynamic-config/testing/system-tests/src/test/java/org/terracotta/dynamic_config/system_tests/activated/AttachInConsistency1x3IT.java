@@ -16,12 +16,11 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.InlineServers;
 
 import java.time.Duration;
 
@@ -35,8 +34,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(nodesPerStripe = 3, autoStart = false)
 public class AttachInConsistency1x3IT extends DynamicConfigIT {
-  @Rule
-  public final NodeOutputRule out = new NodeOutputRule();
 
   public AttachInConsistency1x3IT() {
     super(Duration.ofSeconds(180));
@@ -59,7 +56,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     //Activate cluster
     activateCluster();
@@ -70,7 +67,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
   @Test
   public void testAttachNodeFailAtPrepare() throws Exception {
     //create prepare failure on active
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
 
     startNode(1, 3);
     waitForDiagnostic(1, 3);
@@ -78,8 +75,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     // attach failure (forcing attach otherwise we have to restart cluster)
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, 1),
-            "-s", "localhost:" + getNodePort(1, 3)),
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)),
         containsOutput("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
@@ -92,6 +88,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
   }
 
   @Test
+  @InlineServers(false)
   public void attachNodeFailingBecauseOfNodeGoingDownInPreparePhase() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
@@ -102,11 +99,10 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     //create failover in prepare phase for active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-prepare";
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, 3)),
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)),
         containsOutput("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
@@ -124,6 +120,7 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
   }
 
   @Test
+  @InlineServers(false)
   public void testFailoverDuringNomadCommitForPassiveAddition() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
@@ -133,12 +130,11 @@ public class AttachInConsistency1x3IT extends DynamicConfigIT {
 
     //setup for failover in commit phase on active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     // active died and passive can't become active
     assertThat(
-        configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, 3)),
+        configTool("-er", "40s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)),
         containsOutput("Two-Phase commit failed"));
 
     //start the old active and verify it is in passive state

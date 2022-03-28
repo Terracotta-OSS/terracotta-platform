@@ -69,7 +69,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
       runSync(
           server::discover,
           discovery -> results.discovered(server.getAddress(), discovery),
-          unwrap(e -> results.discoverFail(server.getAddress(), stringify(e)))
+          unwrap(e -> results.discoverFail(server.getAddress(), e))
       );
     }
 
@@ -93,7 +93,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               results.discoverOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
             }
           },
-          unwrap(e -> results.discoverFail(server.getAddress(), stringify(e)))
+          unwrap(e -> results.discoverFail(server.getAddress(), e))
       );
     }
 
@@ -143,7 +143,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          unwrap(e -> results.prepareFail(server.getAddress(), stringify(e)))
+          unwrap(e -> results.prepareFail(server.getAddress(), e))
       );
     }
 
@@ -189,7 +189,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          unwrap(e -> results.commitFail(server.getAddress(), stringify(e)))
+          unwrap(e -> results.commitFail(server.getAddress(), e))
       );
     }
 
@@ -233,7 +233,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          unwrap(e -> results.rollbackFail(server.getAddress(), stringify(e)))
+          unwrap(e -> results.rollbackFail(server.getAddress(), e))
       );
     }
 
@@ -276,7 +276,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
               }
             }
           },
-          unwrap(e -> results.takeoverFail(server.getAddress(), stringify(e)))
+          unwrap(e -> results.takeoverFail(server.getAddress(), e))
       );
     }
 
@@ -294,7 +294,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   public final void registerPreparedServer(InetSocketAddress address) {
-    preparedServers.add(servers.stream().filter(s -> s.getAddress().equals(address)).findFirst().get());
+    preparedServers.add(servers.stream().filter(s -> s.getAddress().equals(address)).findAny().get());
   }
 
   private <T> void runSync(Callable<T> callable, Consumer<T> onSuccess, Consumer<Throwable> onError) {
@@ -311,9 +311,5 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
 
   private static Consumer<Throwable> unwrap(Consumer<Throwable> c) {
     return t -> c.accept(t instanceof NomadException && t.getCause() != null && t.getCause() != t ? t.getCause() : t);
-  }
-
-  private static String stringify(Throwable e) {
-    return e == null ? "" : e.getMessage() == null ? e.getClass().getName() : e.getMessage();
   }
 }

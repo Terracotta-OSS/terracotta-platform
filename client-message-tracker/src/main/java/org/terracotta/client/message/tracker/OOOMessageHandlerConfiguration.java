@@ -22,24 +22,16 @@ import org.terracotta.entity.ServiceConfiguration;
 import com.tc.classloader.CommonComponent;
 
 import java.util.function.Predicate;
-import java.util.function.ToIntFunction;
 
 @CommonComponent
 public class OOOMessageHandlerConfiguration<M extends EntityMessage, R extends EntityResponse> implements ServiceConfiguration<OOOMessageHandler<M, R>> {
 
   private final String entityIdentifier;
   private final Predicate<M> trackerPolicy;
-  private final int segments;
-  private final ToIntFunction<M> segmentationStrategy;
 
-  public OOOMessageHandlerConfiguration(String entityIdentifier, Predicate<M> trackerPolicy, int segments, ToIntFunction<M> segmentationStrategy) {
-    if (segments <= 0) {
-      throw new IllegalArgumentException("The segment size is a non-positive value: " + segments);
-    }
+  public OOOMessageHandlerConfiguration(String entityIdentifier, Predicate<M> trackerPolicy) {
     this.entityIdentifier = entityIdentifier;
     this.trackerPolicy = trackerPolicy;
-    this.segments = segments;
-    this.segmentationStrategy = segmentationStrategy;
   }
 
   public Predicate<M> getTrackerPolicy() {
@@ -48,14 +40,6 @@ public class OOOMessageHandlerConfiguration<M extends EntityMessage, R extends E
 
   public String getEntityIdentifier() {
     return entityIdentifier;
-  }
-
-  public ToIntFunction<M> getSegmentationStrategy() {
-    return segmentationStrategy;
-  }
-
-  public int getSegments() {
-    return segments;
   }
 
   @SuppressWarnings("unchecked")

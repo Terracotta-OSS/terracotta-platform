@@ -28,13 +28,11 @@ import org.terracotta.entity.PlatformConfiguration;
 public class OffHeapDynamicConfigExtension implements DynamicConfigExtension {
   @Override
   public void configure(Registrar registrar, PlatformConfiguration platformConfiguration) {
-    TopologyService topologyService = platformConfiguration.getExtendedConfiguration(TopologyService.class).iterator().next();
-    ConfigChangeHandlerManager configChangeHandlerManager = platformConfiguration.getExtendedConfiguration(ConfigChangeHandlerManager.class).iterator().next();
+    TopologyService topologyService = findService(platformConfiguration, TopologyService.class);
+    ConfigChangeHandlerManager configChangeHandlerManager = findService(platformConfiguration, ConfigChangeHandlerManager.class);
 
     NodeContext nodeContext = topologyService.getRuntimeNodeContext();
-
-    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(nodeContext.getCluster().getOffheapResources());
-
+    OffHeapResourcesProvider offHeapResourcesProvider = new OffHeapResourcesProvider(nodeContext.getCluster().getOffheapResources().orDefault());
     configChangeHandlerManager.set(Setting.OFFHEAP_RESOURCES, new OffheapResourceConfigChangeHandler(topologyService, offHeapResourcesProvider));
 
     registrar.registerExtendedConfiguration(offHeapResourcesProvider);

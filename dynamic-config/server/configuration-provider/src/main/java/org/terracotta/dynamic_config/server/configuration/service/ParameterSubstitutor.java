@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.server.configuration.service;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 
 import java.io.File;
@@ -24,11 +25,32 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static org.terracotta.common.struct.Tuple2.tuple2;
 
 /**
  * Copy from platform ParameterSubstitutor
  */
 public class ParameterSubstitutor implements IParameterSubstitutor {
+  private static final Map<Character, Tuple2<Supplier<String>, String>> ALL_PARAMS = new LinkedHashMap<>();
+
+  static {
+    ALL_PARAMS.put('D', tuple2(ParameterSubstitutor::getDatestamp, "date stamp corresponding to current time"));
+    ALL_PARAMS.put('H', tuple2(() -> System.getProperty("user.home"), "home directory of the user. Same as java 'user.home' property"));
+    ALL_PARAMS.put('a', tuple2(() -> System.getProperty("os.arch"), "architecture of the machine. Same as java 'os.arch' property"));
+    ALL_PARAMS.put('c', tuple2(ParameterSubstitutor::getCanonicalHostName, "canonical host name of the machine"));
+    ALL_PARAMS.put('d', tuple2(ParameterSubstitutor::getUniqueTempDirectory, "unique temporary directory"));
+    ALL_PARAMS.put('h', tuple2(ParameterSubstitutor::getHostName, "host name of the machine"));
+    ALL_PARAMS.put('i', tuple2(ParameterSubstitutor::getIpAddress, "IP address of the machine corresponding to localhost"));
+    ALL_PARAMS.put('n', tuple2(() -> System.getProperty("user.name"), "username of the user. Same as java 'user.name' property"));
+    ALL_PARAMS.put('o', tuple2(() -> System.getProperty("os.name"), "name of the operating system. Same as java 'os.name' property"));
+    ALL_PARAMS.put('v', tuple2(() -> System.getProperty("os.version"), "version of the operating system. Same as java 'os.version' property"));
+    ALL_PARAMS.put('t', tuple2(() -> System.getProperty("java.io.tmpdir"), "temporary directory of the machine. Same as java 'java.io.tmpdir' property"));
+  }
 
   private static String uniqueTempDirectory = null;
 
@@ -42,50 +64,21 @@ public class ParameterSubstitutor implements IParameterSubstitutor {
     for (int i = 0; i < sourceChars.length; ++i) {
       if (sourceChars[i] == '%') {
         char nextChar = sourceChars[++i];
-        String value = "" + nextChar;
+        String value;
 
         switch (nextChar) {
           case 'd':
-            value = getUniqueTempDirectory();
-            break;
-
-          case 'D':
-            value = getDatestamp();
-            break;
-
-          case 'h':
-            value = getHostName();
-            break;
-          case 'c':
-            value = getCanonicalHostName();
-            break;
-
-          case 'i':
-            value = getIpAddress();
-            break;
-
-          case 'H':
-            value = System.getProperty("user.home");
-            break;
-
-          case 'n':
-            value = System.getProperty("user.name");
-            break;
-
-          case 'o':
-            value = System.getProperty("os.name");
-            break;
-
-          case 'a':
-            value = System.getProperty("os.arch");
-            break;
-
           case 'v':
-            value = System.getProperty("os.version");
-            break;
-
+          case 'a':
+          case 'o':
+          case 'n':
+          case 'H':
+          case 'i':
+          case 'c':
+          case 'h':
+          case 'D':
           case 't':
-            value = System.getProperty("java.io.tmpdir");
+            value = ALL_PARAMS.get(nextChar).getT1().get();
             break;
 
           case '(':
@@ -134,8 +127,14 @@ public class ParameterSubstitutor implements IParameterSubstitutor {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
-  private static synchronized String getUniqueTempDirectory() {
-    if (uniqueTempDirectory == null) {
+  private static String getUniqueTempDirectory() {
+    if (uniqueTempDirectory != null) {
+      return uniqueTempDirectory;
+    }
+    synchronized (ParameterSubstitutor.class) {
+      if (uniqueTempDirectory != null) {
+        return uniqueTempDirectory;
+      }
       try {
         File theFile = File.createTempFile("terracotta", "data");
         theFile.delete();
@@ -147,14 +146,12 @@ public class ParameterSubstitutor implements IParameterSubstitutor {
       } catch (IOException ioe) {
         uniqueTempDirectory = System.getProperty("java.io.tmpdir");
       }
+      return uniqueTempDirectory;
     }
-
-    return uniqueTempDirectory;
   }
 
-  private static synchronized String getDatestamp() {
-    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-    return format.format(new Date(System.currentTimeMillis()));
+  private static String getDatestamp() {
+    return new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date(System.currentTimeMillis()));
   }
 
   public static String getCanonicalHostName() {
@@ -188,4 +185,11 @@ public class ParameterSubstitutor implements IParameterSubstitutor {
     }
   }
 
+  public static Map<String, String> getAllParams() {
+    return ALL_PARAMS.entrySet().stream()
+        .collect(Collectors.toMap(
+            keyMapper -> "%" + keyMapper.getKey(),
+            valueMapper -> valueMapper.getValue().getT2()
+        ));
+  }
 }

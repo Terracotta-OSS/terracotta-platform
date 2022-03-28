@@ -1,0 +1,26 @@
+{
+  "cluster": {
+    "stripes": [
+      {
+        "name": "Dog",
+        "nodes": [
+          {
+            "dataDirs": {
+              "main": "%H/terracotta/default-node1/user-data"
+            },
+            "hostname": "localhost",
+            "logDir": "%H/terracotta/default-node1/logs",
+            "metadataDir": "%H/terracotta/default-node1/metadata",
+            "name": "default-node1",
+            "uid": "9sxnw7nFQ1u0-mtl7ltwLw"
+          }
+        ],
+        "uid": "LQ230GdvTjmFewWXxB116A"
+      }
+    ],
+    "failoverPriority": "availability",
+    "name": "tc-cluster",
+    "uid": "Mu5eq_w_RrSUBzaEDhYvRA"
+  },
+  "nodeUID": "9sxnw7nFQ1u0-mtl7ltwLw"
+}

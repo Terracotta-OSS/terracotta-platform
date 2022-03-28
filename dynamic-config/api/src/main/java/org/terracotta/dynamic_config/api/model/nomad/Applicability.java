@@ -15,77 +15,39 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Scope;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 
-import java.util.Objects;
-import java.util.OptionalInt;
+import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Scope.NODE;
 import static org.terracotta.dynamic_config.api.model.Scope.STRIPE;
 
-public class Applicability {
-  private Scope scope;
-  private String nodeName;
-  private Integer stripeId;
+public interface Applicability {
 
-  public static Applicability cluster() {
-    return new Applicability(CLUSTER, null, null);
+  static Applicability cluster() {
+    return new DefaultApplicability(CLUSTER, null, null);
   }
 
-  public static Applicability stripe(int stripeId) {
-    return new Applicability(STRIPE, stripeId, null);
+  static Applicability stripe(UID stripeUID) {
+    return new DefaultApplicability(STRIPE, requireNonNull(stripeUID), null);
   }
 
-  public static Applicability node(int stripeId, String nodeName) {
-    return new Applicability(NODE, stripeId, requireNonNull(nodeName));
+  static Applicability node(UID nodeUID) {
+    return new DefaultApplicability(NODE, null, requireNonNull(nodeUID));
   }
 
-  @JsonCreator
-  private Applicability(@JsonProperty(value = "scope", required = true) Scope scope,
-                        @JsonProperty("stripeId") Integer stripeId,
-                        @JsonProperty("nodeName") String nodeName) {
-    this.scope = requireNonNull(scope);
-    this.stripeId = stripeId;
-    this.nodeName = nodeName;
-  }
+  Scope getLevel();
 
-  public Scope getScope() {
-    return scope;
-  }
+  Optional<Stripe> getStripe(Cluster cluster);
 
-  public String getNodeName() {
-    return nodeName;
-  }
+  Optional<Node> getNode(Cluster cluster);
 
-  public OptionalInt getStripeId() {
-    return stripeId == null ? OptionalInt.empty() : OptionalInt.of(stripeId);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof Applicability)) return false;
-    Applicability that = (Applicability) o;
-    return getScope() == that.getScope() &&
-        Objects.equals(getNodeName(), that.getNodeName()) &&
-        Objects.equals(getStripeId(), that.getStripeId());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(getScope(), getNodeName(), getStripeId());
-  }
-
-  @Override
-  public String toString() {
-    return "Applicability{" +
-        "scope=" + scope +
-        ", nodeName='" + nodeName + '\'' +
-        ", stripeId='" + stripeId + '\'' +
-        '}';
-  }
+  boolean isApplicableTo(NodeContext node);
 }

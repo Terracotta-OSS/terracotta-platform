@@ -17,7 +17,6 @@ package org.terracotta.persistence.sanskrit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.terracotta.persistence.sanskrit.change.SanskritChangeVisitor;
@@ -27,21 +26,21 @@ import org.terracotta.persistence.sanskrit.change.SanskritChangeVisitor;
  */
 public class JsonSanskritChangeVisitor implements SanskritChangeVisitor {
 
-  private final ObjectMapper objectMapper;
+  private final ObjectMapperSupplier objectMapperSupplier;
   private final ObjectNode objectNode;
 
-  public JsonSanskritChangeVisitor(ObjectMapper objectMapper) {
-    this(objectMapper, objectMapper.createObjectNode());
+  public JsonSanskritChangeVisitor(ObjectMapperSupplier objectMapperSupplier) {
+    this(objectMapperSupplier, objectMapperSupplier.getObjectMapper().createObjectNode());
   }
 
-  public JsonSanskritChangeVisitor(ObjectMapper objectMapper, ObjectNode objectNode) {
-    this.objectMapper = objectMapper;
+  public JsonSanskritChangeVisitor(ObjectMapperSupplier objectMapperSupplier, ObjectNode objectNode) {
+    this.objectMapperSupplier = objectMapperSupplier;
     this.objectNode = objectNode;
   }
 
-  public String getJson() throws SanskritException {
+  public String getJson(String version) throws SanskritException {
     try {
-      return objectMapper.writeValueAsString(objectNode);
+      return objectMapperSupplier.getObjectMapper(version).writeValueAsString(objectNode);
     } catch (JsonProcessingException e) {
       throw new SanskritException(e);
     }
@@ -60,7 +59,7 @@ public class JsonSanskritChangeVisitor implements SanskritChangeVisitor {
   @Override
   public void setObject(String key, SanskritObject value) {
     ObjectNode childObjectNode = objectNode.objectNode();
-    value.accept(new JsonSanskritChangeVisitor(objectMapper, childObjectNode));
+    value.accept(new JsonSanskritChangeVisitor(objectMapperSupplier, childObjectNode));
     objectNode.set(key, childObjectNode);
   }
 
@@ -71,7 +70,7 @@ public class JsonSanskritChangeVisitor implements SanskritChangeVisitor {
   }
 
   @Override
-  public <T> void setExternal(String key, T value) {
-    objectNode.set(key, value instanceof JsonNode ? (JsonNode) value : objectMapper.valueToTree(value));
+  public <T> void setExternal(String key, T value, String version) {
+    objectNode.set(key, value instanceof JsonNode ? (JsonNode) value : objectMapperSupplier.getObjectMapper(version).valueToTree(value));
   }
 }

@@ -1,0 +1,10 @@
+<configuration debug="false">
+  <property resource="logbackVars.properties" />
+
+  <root level="INFO">
+
+  </root>
+    
+  <include optional="true" resource="logback-ext-test.xml"/>
+
+</configuration>

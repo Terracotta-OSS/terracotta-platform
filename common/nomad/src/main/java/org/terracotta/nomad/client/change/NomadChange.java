@@ -15,14 +15,6 @@
  */
 package org.terracotta.nomad.client.change;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
-// Annotate with @JsonTypeName the sub-classes of an interface annotated with @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-// so that the Json class can discover and register the implementations of the class in the object mapper
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXTERNAL_PROPERTY, property = "type")
 public interface NomadChange {
-
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   String getSummary();
 }

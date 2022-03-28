@@ -15,6 +15,7 @@
  */
 package org.terracotta.nomad.entity.server;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.ClientDescriptor;
@@ -25,11 +26,11 @@ import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.MutativeMessage;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.nomad.server.NomadServer;
 
 
 public class NomadActiveServerEntity<T> extends NomadCommonServerEntity<T> implements ActiveServerEntity<NomadEntityMessage, NomadEntityResponse> {
-  public NomadActiveServerEntity(UpgradableNomadServer<T> nomadServer) {
+  public NomadActiveServerEntity(NomadServer<NodeContext> nomadServer) {
     super(nomadServer);
   }
 

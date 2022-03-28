@@ -27,11 +27,13 @@ import static org.terracotta.nomad.client.Consistency.CONSISTENT;
 import static org.terracotta.nomad.client.Consistency.MAY_NEED_RECOVERY;
 import static org.terracotta.nomad.client.Consistency.UNKNOWN_BUT_NO_CHANGE;
 import static org.terracotta.nomad.client.Consistency.UNRECOVERABLY_INCONSISTENT;
+import static org.terracotta.nomad.client.Consistency.UNRECOVERABLY_PARTITIONNED;
 import static org.terracotta.nomad.server.NomadServerMode.PREPARED;
 
 public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResultsReceiver<T> {
   private volatile boolean discoverFail;
-  private volatile boolean discoveryInconsistentCluster;
+  private volatile boolean discoveredConfigInconsistent;
+  private volatile boolean discoveredConfigPartitioned;
   private volatile boolean preparedServer;
   private volatile boolean prepareFail;
   private volatile boolean takeoverFail;
@@ -59,8 +61,12 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
 
   @Override
   public Consistency getConsistency() {
-    if (discoveryInconsistentCluster) {
+    if (discoveredConfigInconsistent) {
       return UNRECOVERABLY_INCONSISTENT;
+    }
+
+    if (discoveredConfigPartitioned) {
+      return UNRECOVERABLY_PARTITIONNED;
     }
 
     if (!isDiscoverSuccessful()) {
@@ -87,14 +93,20 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     discoverFail = true;
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     discoverFail = true;
-    discoveryInconsistentCluster = true;
+    discoveredConfigInconsistent = true;
+  }
+
+  @Override
+  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+    discoverFail = true;
+    discoveredConfigPartitioned = true;
   }
 
   @Override
@@ -103,7 +115,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
+  public void prepareFail(InetSocketAddress server, Throwable reason) {
     prepareFail = true;
   }
 
@@ -123,12 +135,12 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress server, String reason) {
+  public void takeoverFail(InetSocketAddress server, Throwable reason) {
     takeoverFail = true;
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, String reason) {
+  public void commitFail(InetSocketAddress server, Throwable reason) {
     commitRollbackFail = true;
   }
 
@@ -138,7 +150,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, String reason) {
+  public void rollbackFail(InetSocketAddress server, Throwable reason) {
     commitRollbackFail = true;
   }
 

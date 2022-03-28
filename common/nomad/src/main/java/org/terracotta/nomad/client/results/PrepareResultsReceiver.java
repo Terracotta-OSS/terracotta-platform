@@ -23,7 +23,7 @@ public interface PrepareResultsReceiver {
 
   default void prepared(InetSocketAddress server) {}
 
-  default void prepareFail(InetSocketAddress server, String reason) {}
+  default void prepareFail(InetSocketAddress server, Throwable reason) {}
 
   default void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
 

@@ -20,10 +20,13 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
+import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
@@ -37,14 +40,12 @@ import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import org.terracotta.nomad.server.ChangeState;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.UncheckedIOException;
+import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.Properties;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class ManagementCommonEntity implements CommonServerEntity<EntityMessage, EntityResponse> {
 
@@ -54,12 +55,14 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
   final boolean active;
 
   private final DynamicConfigEventService dynamicConfigEventService;
+  private final TopologyService topologyService;
   private volatile EventRegistration eventRegistration;
 
-  public ManagementCommonEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService) {
+  public ManagementCommonEntity(EntityManagementRegistry managementRegistry, DynamicConfigEventService dynamicConfigEventService, TopologyService topologyService) {
     // these can be null if management is not wired or if dynamic config is not available
     this.managementRegistry = managementRegistry;
     this.dynamicConfigEventService = dynamicConfigEventService;
+    this.topologyService = topologyService;
     this.active = managementRegistry != null && dynamicConfigEventService != null;
   }
 
@@ -95,13 +98,32 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
 
       Context source = Context.create("consumerId", String.valueOf(monitoringService.getConsumerId())).with("type", "DynamicConfig");
 
-      eventRegistration = dynamicConfigEventService.register(new DynamicConfigListenerAdapter() {
+      eventRegistration = dynamicConfigEventService.register(new DynamicConfigListener() {
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
-          boolean restartRequired = !change.canApplyAtRuntime();
+          NodeContext nodeContext = topologyService.getRuntimeNodeContext();
+          boolean restartRequired = !change.canUpdateRuntimeTopology(nodeContext);
           Map<String, String> data = new TreeMap<>();
           data.put("change", change.toString());
-          data.put("result", topologyToConfig(updated));
+          data.put("result", Props.toString(updated.toProperties(false, false, true)));
+          data.put("operation", change.getOperation().name().toLowerCase());
+          data.put("setting", change.getSetting().toString());
+          data.put("name", change.getName());
+          data.put("value", change.getValue());
+          data.put("scope", change.getApplicability().getLevel().name().toLowerCase());
+          data.put("summary", change.getSummary());
+          switch (change.getApplicability().getLevel()) {
+            case CLUSTER:
+              break;
+            case STRIPE:
+              data.put("stripeName", change.getApplicability().getStripe(updated).get().getName());
+              break;
+            case NODE:
+              data.put("stripeName", change.getApplicability().getStripe(updated).get().getName());
+              data.put("nodeName", change.getApplicability().getNode(updated).get().getName());
+              break;
+
+          }
           data.put("appliedAtRuntime", String.valueOf(!restartRequired));
           data.put("restartRequired", String.valueOf(restartRequired));
           String type = "DYNAMIC_CONFIG_" + change.getOperation();
@@ -112,7 +134,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         public void onNewConfigurationSaved(NodeContext nodeContext, Long version) {
           Map<String, String> data = new TreeMap<>();
           data.put("version", String.valueOf(version));
-          data.put("upcomingConfig", topologyToConfig(nodeContext.getCluster()));
+          data.put("upcomingConfig", Props.toString(nodeContext.getCluster().toProperties(false, false, true)));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_SAVED", data));
         }
 
@@ -133,7 +155,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         }
 
         @Override
-        public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, NomadChangeInfo changeInfo) {
+        public void onNomadCommit(CommitMessage message, AcceptRejectResponse response, ChangeState<NodeContext> changeState) {
           Map<String, String> data = new TreeMap<>();
           data.put("changeUuid", message.getChangeUuid().toString());
           data.put("host", String.valueOf(message.getMutationHost()));
@@ -161,41 +183,55 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
         }
 
         @Override
-        public void onNodeRemoval(int stripeId, Node removedNode) {
+        public void onNodeRemoval(UID stripeUID, Node removedNode) {
           Map<String, String> data = new TreeMap<>();
-          data.put("stripeId", String.valueOf(stripeId));
-          data.put("nodeName", removedNode.getNodeName());
-          data.put("nodeHostname", removedNode.getNodeHostname());
-          data.put("nodeAddress", removedNode.getNodeAddress().toString());
-          data.put("nodeInternalAddress", removedNode.getNodeInternalAddress().toString());
-          data.put("nodePublicAddress", removedNode.getNodePublicAddress().toString());
+          data.put("stripeUID", stripeUID.toString());
+          data.put("stripeName", topologyService.getRuntimeNodeContext().getCluster().getStripe(stripeUID).get().getName());
+          data.put("nodeName", removedNode.getName());
+          data.put("nodeHostname", removedNode.getHostname());
+          data.put("nodeAddress", removedNode.getInternalSocketAddress().toString());
+          data.put("nodeInternalAddress", removedNode.getInternalSocketAddress().toString());
+          removedNode.getPublicSocketAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_REMOVED", data));
         }
 
         @Override
-        public void onNodeAddition(int stripeId, Node addedNode) {
+        public void onNodeAddition(UID stripeUID, Node addedNode) {
           Map<String, String> data = new TreeMap<>();
-          data.put("stripeId", String.valueOf(stripeId));
-          data.put("nodeName", addedNode.getNodeName());
-          data.put("nodeHostname", addedNode.getNodeHostname());
-          data.put("nodeAddress", addedNode.getNodeAddress().toString());
-          data.put("nodeInternalAddress", addedNode.getNodeInternalAddress().toString());
-          data.put("nodePublicAddress", addedNode.getNodePublicAddress().toString());
+          data.put("stripeUID", stripeUID.toString());
+          data.put("stripeName", topologyService.getRuntimeNodeContext().getCluster().getStripe(stripeUID).get().getName());
+          data.put("nodeName", addedNode.getName());
+          data.put("nodeHostname", addedNode.getHostname());
+          data.put("nodeAddress", addedNode.getInternalSocketAddress().toString());
+          data.put("nodeInternalAddress", addedNode.getInternalSocketAddress().toString());
+          addedNode.getPublicSocketAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
+        }
+
+        @Override
+        public void onStripeAddition(Stripe addedStripe) {
+          Map<String, String> data = new TreeMap<>();
+          data.put("stripeUID", addedStripe.getUID().toString());
+          data.put("stripeName", addedStripe.getName());
+          data.put("nodeUIDs", addedStripe.getNodes().stream().map(Node::getUID).map(UID::toString).collect(Collectors.joining(",")));
+          data.put("nodeNames", addedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getInternalSocketAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_ADDED", data));
+        }
+
+        @Override
+        public void onStripeRemoval(Stripe removedStripe) {
+          Map<String, String> data = new TreeMap<>();
+          data.put("stripeUID", removedStripe.getUID().toString());
+          data.put("stripeName", removedStripe.getName());
+          data.put("nodeUIDs", removedStripe.getNodes().stream().map(Node::getUID).map(UID::toString).collect(Collectors.joining(",")));
+          data.put("nodeNames", removedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getInternalSocketAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_REMOVED", data));
         }
       });
 
       LOGGER.info("Activated management and monitoring for dynamic configuration");
-    }
-  }
-
-  private static String topologyToConfig(Cluster cluster) {
-    Properties properties = cluster.toProperties(false, true);
-    try (StringWriter out = new StringWriter()) {
-      Props.store(out, properties, "Configurations:");
-      return out.toString();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
 }

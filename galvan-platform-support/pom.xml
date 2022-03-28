@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
-    <version>5.7-SNAPSHOT</version>
+    <version>5.8-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -39,12 +39,19 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>test-interfaces</artifactId>
-      <version>${galvan.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>galvan</artifactId>
-      <version>${galvan.version}</version>
+    </dependency>
+    <!-- force new versions of JNA coming from Galvan and IPC Eventbus -->
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna-platform</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta.common</groupId>
@@ -54,8 +61,11 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <version>${terracotta-core.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>galvan-support</artifactId>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -63,13 +73,22 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-port-locking</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-tools</artifactId>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>terracotta-utilities-tools</artifactId>
+      <artifactId>terracotta-utilities-port-chooser</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.cli</groupId>
+      <artifactId>dynamic-config-cli-upgrade-tools</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.cli</groupId>
+      <artifactId>upgrade-tools-oss</artifactId>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 </project>

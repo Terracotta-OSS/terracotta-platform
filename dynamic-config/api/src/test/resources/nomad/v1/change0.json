@@ -1,0 +1,43 @@
+{
+  "type": "ClusterActivationNomadChange",
+  "cluster": {
+    "name": "myClusterName",
+    "stripes": [
+      {
+        "name": "stripe-1",
+        "nodes": [
+          {
+            "nodeHostname": "localhost",
+            "nodeName": "foo",
+            "nodePort": 9410,
+            "uid": "VOVyu3kuQxCRIu7dK_UZZA"
+          }
+        ],
+        "uid": "5Zv3uphiRLavoGZthy7JNg"
+      }
+    ],
+    "clientReconnectWindow": {
+      "quantity": 60,
+      "unit": "SECONDS",
+      "type": "TIME"
+    },
+    "failoverPriority": "availability",
+    "offheapResources": {
+      "foo": {
+        "quantity": 1,
+        "unit": "GB",
+        "type": "MEMORY"
+      },
+      "main": {
+        "quantity": 512,
+        "unit": "MB",
+        "type": "MEMORY"
+      }
+    },
+    "uid": "YLQguzhRSdS6y5M9vnA5mw"
+  },
+  "applicability": {
+    "scope": "CLUSTER"
+  },
+  "summary": "Activating cluster: myClusterName"
+}

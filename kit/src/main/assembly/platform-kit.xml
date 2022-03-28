@@ -32,7 +32,7 @@
       <outputDirectory>.</outputDirectory>
       <directory>${project.build.directory}/terracotta-kit-${terracotta-core.version}/terracotta-${terracotta-core.version}</directory>
       <excludes>
-        <exclude>server/conf/**</exclude>
+        <exclude>server/conf/**/*.xml</exclude>
         <exclude>server/plugins/lib/default-configuration-*.jar</exclude>
       </excludes>
     </fileSet>
@@ -71,7 +71,6 @@
     <dependencySet>
       <outputDirectory>server/plugins/api</outputDirectory>
       <includes>
-        <include>com.fasterxml.jackson.core:jackson-annotations</include>
         <include>org.terracotta:statistics</include>
         <include>org.terracotta.management:monitoring-service-api</include>
         <include>org.terracotta.management:cluster-topology</include>
@@ -83,24 +82,24 @@
         <include>org.terracotta.common:common-nomad</include>
         <include>org.terracotta.common:common-inet-support</include>
         <include>org.terracotta.common:common-structures</include>
+        <include>org.terracotta.common:common-json-support</include>
         <include>org.terracotta.dynamic-config.server:dynamic-config-server-api</include>
+        <include>org.terracotta.dynamic-config:dynamic-config-model</include>
         <include>org.terracotta.dynamic-config:dynamic-config-api</include>
+        <include>com.fasterxml.jackson.core:jackson-annotations</include>
+        <include>com.fasterxml.jackson.core:jackson-core</include>
+        <include>com.fasterxml.jackson.core:jackson-databind</include>
+        <include>com.fasterxml.jackson.datatype:jackson-datatype-jdk8</include>
+        <include>com.fasterxml.jackson.datatype:jackson-datatype-jsr310</include>
+        <include>org.terracotta:terracotta-utilities-tools</include>
       </includes>
     </dependencySet>
 
     <dependencySet>
       <outputDirectory>server/plugins/lib</outputDirectory>
       <includes>
-        <include>net.bytebuddy:byte-buddy</include>
-        <include>io.github.classgraph:classgraph</include>
-        <include>com.fasterxml.jackson.core:jackson-core</include>
-        <include>com.fasterxml.jackson.core:jackson-databind</include>
-        <include>com.fasterxml.jackson.datatype:jackson-datatype-jdk8</include>
-        <include>com.fasterxml.jackson.datatype:jackson-datatype-jsr310</include>
         <include>com.beust:jcommander</include>
-        <include>org.terracotta:terracotta-utilities-tools</include>
         <include>org.terracotta:offheap-resource</include>
-        <include>org.terracotta:data-root-resource</include>
         <include>org.terracotta:lease-entity-server</include>
         <include>org.terracotta:lease-entity-common</include>
         <include>org.terracotta:lease-common</include>
@@ -114,7 +113,6 @@
         <include>org.terracotta.voltron.proxy:voltron-proxy-server</include>
         <include>org.terracotta.diagnostic:diagnostic-service</include>
         <include>org.terracotta.diagnostic:diagnostic-common</include>
-        <include>org.terracotta.common:common-json-support</include>
         <include>org.terracotta.dynamic-config.server:dynamic-config-configuration-provider</include>
         <include>org.terracotta.dynamic-config.server:dynamic-config-configuration-repository</include>
         <include>org.terracotta.dynamic-config.server:dynamic-config-services</include>
@@ -123,7 +121,6 @@
         <include>org.terracotta.dynamic-config.entities:dynamic-config-nomad-entity-server</include>
         <include>org.terracotta.dynamic-config.entities:dynamic-config-topology-entity-common</include>
         <include>org.terracotta.dynamic-config.entities:dynamic-config-topology-entity-server</include>
-        <include>org.terracotta.common:common-json-support</include>
         <include>org.terracotta.common:common-sanskrit</include>
         <include>org.terracotta:client-message-tracker</include>
         <include>org.terracotta:platform-base</include>
@@ -131,9 +128,13 @@
     </dependencySet>
 
     <dependencySet>
-      <outputDirectory>tools/common/lib</outputDirectory>
+      <outputDirectory>tools/lib</outputDirectory>
       <includes>
-        <include>io.github.classgraph:classgraph</include>
+        <include>org.terracotta:terracotta-utilities-tools</include>
+        <include>org.terracotta.common:common-inet-support</include>
+        <include>org.terracotta.common:common-structures</include>
+        <include>org.terracotta.common:common-json-support</include>
+        <include>org.terracotta.common:common-nomad</include>
         <include>com.fasterxml.jackson.core:jackson-annotations</include>
         <include>com.fasterxml.jackson.core:jackson-core</include>
         <include>com.fasterxml.jackson.core:jackson-databind</include>
@@ -147,12 +148,13 @@
     </dependencySet>
 
     <dependencySet>
-      <outputDirectory>tools/config-converter/lib</outputDirectory>
+      <outputDirectory>tools/upgrade/lib</outputDirectory>
       <includes>
-        <include>org.terracotta.dynamic-config.cli:config-converter-oss</include>
-        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-converter</include>
+        <include>org.terracotta.dynamic-config.cli:upgrade-tools-oss</include>
+        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-upgrade-tools</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
-        <include>org.terracotta:terracotta-utilities-tools</include>
+        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-api</include>
+        <include>org.terracotta:data-root-resource</include>
         <include>org.terracotta.internal:tc-config-parser</include>
         <include>org.terracotta:tcconfig-schema</include>
         <include>com.sun.xml.fastinfoset:FastInfoset</include>
@@ -166,21 +168,19 @@
     </dependencySet>
 
     <dependencySet>
-      <outputDirectory>tools/config-tool/lib</outputDirectory>
+      <outputDirectory>tools/lib</outputDirectory>
       <includes>
         <include>org.terracotta.internal:client-runtime</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-tool</include>
+        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-api</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
+        <include>org.terracotta.dynamic-config:dynamic-config-model</include>
         <include>org.terracotta.dynamic-config:dynamic-config-api</include>
         <include>org.terracotta.dynamic-config.entities:dynamic-config-nomad-entity-common</include>
         <include>org.terracotta.dynamic-config.entities:dynamic-config-nomad-entity-client</include>
         <include>org.terracotta.diagnostic:diagnostic-client</include>
         <include>org.terracotta.diagnostic:diagnostic-common</include>
         <include>org.terracotta.diagnostic:diagnostic-model</include>
-        <include>org.terracotta.common:common-inet-support</include>
-        <include>org.terracotta.common:common-json-support</include>
-        <include>org.terracotta.common:common-nomad</include>
-        <include>org.terracotta.common:common-structures</include>
       </includes>
     </dependencySet>
 

@@ -56,7 +56,7 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress server, String reason) {
+  public void takeoverFail(InetSocketAddress server, Throwable reason) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.takeoverFail(server, reason);
     }
@@ -84,16 +84,23 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.discoverFail(server, reason);
     }
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
-      recoveryResultReceiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
+      recoveryResultReceiver.discoverConfigInconsistent(changeUuid, committedServers, rolledBackServers);
+    }
+  }
+
+  @Override
+  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+    for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
+      recoveryResultReceiver.discoverConfigPartitioned(partitions);
     }
   }
 
@@ -147,7 +154,7 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, String reason) {
+  public void commitFail(InetSocketAddress server, Throwable reason) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.commitFail(server, reason);
     }
@@ -182,7 +189,7 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, String reason) {
+  public void rollbackFail(InetSocketAddress server, Throwable reason) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.rollbackFail(server, reason);
     }

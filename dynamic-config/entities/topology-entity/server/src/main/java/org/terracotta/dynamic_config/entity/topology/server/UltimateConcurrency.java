@@ -15,7 +15,7 @@
  */
 package org.terracotta.dynamic_config.entity.topology.server;
 
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage;
+import org.terracotta.dynamic_config.entity.topology.common.Message;
 import org.terracotta.entity.ConcurrencyStrategy;
 
 import java.util.Collections;
@@ -24,8 +24,8 @@ import java.util.Set;
 /**
  * @author Mathieu Carbou
  */
-class UltimateConcurrency implements ConcurrencyStrategy<DynamicTopologyEntityMessage> {
-  public int concurrencyKey(DynamicTopologyEntityMessage message) {
+class UltimateConcurrency implements ConcurrencyStrategy<Message> {
+  public int concurrencyKey(Message message) {
     return ConcurrencyStrategy.UNIVERSAL_KEY;
   }
 

@@ -15,29 +15,28 @@
  */
 package org.terracotta.dynamic_config.server.configuration;
 
-import com.tc.exception.TCServerRestartException;
-import com.tc.exception.TCShutdownServerException;
-import com.tc.exception.ZapDirtyDbServerNodeException;
-import com.tc.server.ServiceClassLoader;
+import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationProvider;
+import org.terracotta.configuration.ConfigurationException;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesHolder;
-import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigExtension;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.LicenseParserDiscovery;
 import org.terracotta.dynamic_config.server.api.LicenseService;
+import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
+import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
 import org.terracotta.dynamic_config.server.api.PathResolver;
-import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.ConfigChangeHandlerManagerImpl;
-import org.terracotta.dynamic_config.server.configuration.service.DynamicConfigServiceImpl;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.dynamic_config.server.configuration.service.ParameterSubstitutor;
 import org.terracotta.dynamic_config.server.configuration.startup.CommandLineProcessor;
@@ -46,17 +45,24 @@ import org.terracotta.dynamic_config.server.configuration.startup.CustomJCommand
 import org.terracotta.dynamic_config.server.configuration.startup.MainCommandLineProcessor;
 import org.terracotta.dynamic_config.server.configuration.startup.Options;
 import org.terracotta.dynamic_config.server.configuration.startup.StartupConfiguration;
+import org.terracotta.dynamic_config.server.configuration.startup.parsing.OptionsParsing;
+import org.terracotta.dynamic_config.server.configuration.startup.parsing.OptionsParsingImpl;
+import org.terracotta.dynamic_config.server.configuration.startup.parsing.deprecated.DeprecatedOptionsParsingImpl;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
 import org.terracotta.dynamic_config.server.configuration.sync.Require;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
-import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.server.Server;
+import org.terracotta.server.ServerEnv;
+import org.terracotta.server.StopAction;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
@@ -67,12 +73,16 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   private volatile DynamicConfigurationPassiveSync dynamicConfigurationPassiveSync;
   private volatile NomadServerManager nomadServerManager;
+  private volatile DynamicConfigSyncData.Codec synCodec;
   private volatile StartupConfiguration configuration;
+  private volatile Server server;
 
   @Override
-  public void initialize(List<String> args) {
+  public void initialize(List<String> args) throws ConfigurationException {
     withMyClassLoader(() -> {
-      ClassLoader serviceClassLoader = getServiceClassLoader();
+      server = ServerEnv.getServer();
+
+      ClassLoader serviceClassLoader = getServiceClassLoader(server);
 
       // substitution service from placeholders
       IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
@@ -83,74 +93,97 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       // service used to create a topology from input CLI or config file
       ClusterFactory clusterFactory = new ClusterFactory();
 
+      // optional service enabling license parsing
+      LicenseService licenseService = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseService::unsupported);
+
+      // initialize the json system
+      ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+
+      // Service used to manage and initialize the Nomad 2PC system
+      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, server);
+      synCodec = new DynamicConfigSyncData.Codec(objectMapperFactory);
+
+      // CLI parsing
+      Options options = null;
+      try {
+        options = parseCommandLineOrExit(args);
+        if (options.isHelp()) {
+          System.out.println(getConfigurationParamsDescription());
+          throw new ConfigurationException("print usage information");
+        }
+      } catch (RuntimeException e) {
+        System.err.println(getConfigurationParamsDescription());
+        throw new ConfigurationException(e.getMessage(), e);
+      }
+
       // This path resolver is used when converting a model to XML.
       // It makes sure to resolve any relative path to absolute ones based on the working directory.
       // This is necessary because if some relative path ends up in the XML exactly like they are in the model,
       // then platform will rebase these paths relatively to the config XML file which is inside a sub-folder in
-      // the config repository: repository/config.
-      // So this has the effect of putting all defined directories inside such as repository/config/logs, repository/config/user-data, repository/metadata, etc
+      // the config directory: config/cluster.
+      // So this has the effect of putting all defined directories inside such as config/config/logs, config/config/user-data, config/metadata, etc
       // That is why we need to force the resolving within the XML relatively to the user directory.
-      Path baseDir = parameterSubstitutor.substitute(Paths.get("%(user.dir)"));
+      String serverHome = options.getServerHome();
+      if (serverHome == null) {
+        serverHome = System.getProperty("user.dir");
+      }
+      Path baseDir = Paths.get(parameterSubstitutor.substitute(serverHome));
       PathResolver userDirResolver = new PathResolver(baseDir, parameterSubstitutor::substitute);
-
-      // optional service enabling license parsing
-      LicenseService licenseService = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseService::unsupported);
-
-      // Service used to manage and initialize the Nomad 2PC system
-      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService);
 
       // Configuration generator class
       // Initialized when processing the CLI depending oin the user input, and called to generate a configuration
-      ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver);
-
-      // CLI parsing
-      Options options = parseCommandLineOrExit(args);
+      ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver, objectMapperFactory, server);
 
       // processors for the CLI
-      CommandLineProcessor commandLineProcessor = new MainCommandLineProcessor(options, clusterFactory, configurationGeneratorVisitor, parameterSubstitutor);
+      CommandLineProcessor commandLineProcessor = new MainCommandLineProcessor(options, clusterFactory, configurationGeneratorVisitor, parameterSubstitutor, server);
 
       // process the CLI and initialize the Nomad system and ConfigurationGeneratorVisitor
       commandLineProcessor.process();
 
       // retrieve initialized services
-      UpgradableNomadServer<NodeContext> nomadServer = nomadServerManager.getNomadServer();
-      DynamicConfigServiceImpl dynamicConfigService = nomadServerManager.getDynamicConfigService();
+      DynamicConfigNomadServer nomadServer = nomadServerManager.getNomadServer();
+      DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
+      TopologyService topologyService = nomadServerManager.getTopologyService();
+      DynamicConfigEventService eventService = nomadServerManager.getEventRegistrationService();
 
       // initialize the passive sync service
       dynamicConfigurationPassiveSync = new DynamicConfigurationPassiveSync(
           nomadServerManager.getConfiguration().orElse(null),
           nomadServer,
           dynamicConfigService,
-          () -> dynamicConfigService.getLicenseContent().orElse(null));
+          topologyService, () -> dynamicConfigService.getLicenseContent().orElse(null));
 
       // generate the configuration wrapper
       configuration = configurationGeneratorVisitor.generateConfiguration();
 
       //  exposes services through org.terracotta.entity.PlatformConfiguration
+      configuration.registerExtendedConfiguration(Server.class, server);
+      configuration.registerExtendedConfiguration(ObjectMapperFactory.class, objectMapperFactory);
       configuration.registerExtendedConfiguration(IParameterSubstitutor.class, parameterSubstitutor);
       configuration.registerExtendedConfiguration(ConfigChangeHandlerManager.class, configChangeHandlerManager);
-      configuration.registerExtendedConfiguration(DynamicConfigEventService.class, dynamicConfigService);
-      configuration.registerExtendedConfiguration(TopologyService.class, dynamicConfigService);
+      configuration.registerExtendedConfiguration(DynamicConfigEventService.class, eventService);
+      configuration.registerExtendedConfiguration(TopologyService.class, topologyService);
       configuration.registerExtendedConfiguration(DynamicConfigService.class, dynamicConfigService);
-      configuration.registerExtendedConfiguration(DynamicConfigListener.class, nomadServerManager.getDynamicConfigListener());
+      configuration.registerExtendedConfiguration(DynamicConfigEventFiring.class, nomadServerManager.getEventFiringService());
       configuration.registerExtendedConfiguration(NomadServer.class, nomadServer);
-      configuration.registerExtendedConfiguration(UpgradableNomadServer.class, nomadServer);
+      configuration.registerExtendedConfiguration(DynamicConfigNomadServer.class, nomadServer);
       configuration.registerExtendedConfiguration(LicenseService.class, licenseService);
       configuration.registerExtendedConfiguration(PathResolver.class, userDirResolver);
-      nomadServerManager.getRoutingNomadChangeProcessor()
-          .ifPresent(routingNomadChangeProcessor -> configuration.registerExtendedConfiguration(RoutingNomadChangeProcessor.class, routingNomadChangeProcessor));
+      configuration.registerExtendedConfiguration(NomadRoutingChangeProcessor.class, nomadServerManager.getNomadRoutingChangeProcessor());
+      configuration.registerExtendedConfiguration(NomadPermissionChangeProcessor.class, nomadServerManager.getNomadPermissionChangeProcessor());
 
       // discover the dynamic config extensions (offheap, dataroot, lease, etc)
       configuration.discoverExtensions();
 
       // Expose some services through diagnostic port
-      DiagnosticServicesHolder.willRegister(TopologyService.class, dynamicConfigService);
+      DiagnosticServicesHolder.willRegister(TopologyService.class, topologyService);
       DiagnosticServicesHolder.willRegister(DynamicConfigService.class, dynamicConfigService);
       DiagnosticServicesHolder.willRegister(NomadServer.class, nomadServer);
 
       LOGGER.info("Startup configuration of the node: {}{}{}", lineSeparator(), lineSeparator(), configuration);
 
       warnIfPreparedChange();
+      return null;
     });
   }
 
@@ -161,15 +194,15 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   @Override
   public String getConfigurationParamsDescription() {
-    StringBuilder out = new StringBuilder(System.lineSeparator());
-    CustomJCommander jCommander = new CustomJCommander(new Options());
-    jCommander.usage(out);
+    StringBuilder out = new StringBuilder("\n");
+    CustomJCommander jCommander = new CustomJCommander(new OptionsParsingImpl());
+    jCommander.getUsageFormatter().usage(out);
     return out.toString();
   }
 
   @Override
   public byte[] getSyncData() {
-    return dynamicConfigurationPassiveSync != null ? dynamicConfigurationPassiveSync.getSyncData().encode() : new byte[0];
+    return dynamicConfigurationPassiveSync == null ? new byte[0] : synCodec.encode(dynamicConfigurationPassiveSync.getSyncData());
   }
 
   @Override
@@ -178,17 +211,29 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
       Set<Require> requires;
       try {
-        requires = dynamicConfigurationPassiveSync.sync(DynamicConfigSyncData.decode(bytes));
-      } catch (NomadException | RuntimeException e) {
-        // shutdown the server because of a unrecoverable error
-        throw new TCShutdownServerException("Shutdown because of sync failure: " + e.getMessage(), e);
+        DynamicConfigSyncData data = synCodec.decode(bytes);
+        requires = dynamicConfigurationPassiveSync.sync(data);
+      } catch (RuntimeException | NomadException e) {
+        // only log the full trace if in trace/debug mode
+        LOGGER.debug("Error: {}", e.getMessage(), e);
+        server.warn(lineSeparator() + lineSeparator()
+                + "==============================================================================================================================================" + lineSeparator()
+                + "SERVER WILL STOP: PASSIVE SYNC FAILED WITH ERROR: {}" + lineSeparator()
+                + "(please change the logging config to see more details)" + lineSeparator()
+                + "==============================================================================================================================================" + lineSeparator(),
+            e.getMessage());
+        // ask for the server to stop and not restart
+        server.stop();
+        // do not continue anymore
+        return;
       }
 
       if (requires.contains(RESTART_REQUIRED)) {
         if (requires.contains(ZAP_REQUIRED)) {
-          throw new ZapDirtyDbServerNodeException("Zapping server");
+          server.warn("Zapping server");
+          server.stop(StopAction.ZAP, StopAction.RESTART);
         } else {
-          throw new TCServerRestartException("Restarting server");
+          server.stop(StopAction.RESTART);
         }
       }
 
@@ -198,15 +243,20 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
   @Override
   public void close() {
-    // Do nothing
+    nomadServerManager.getNomadServer().close();
   }
 
-  private void withMyClassLoader(Runnable runnable) {
+  private <T> T withMyClassLoader(Callable<T> runnable) throws ConfigurationException {
     ClassLoader classLoader = getClass().getClassLoader();
     ClassLoader oldloader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
-      runnable.run();
+      return runnable.call();
+    } catch (ConfigurationException ce) {
+      throw ce;
+    } catch (Exception e) {
+      LOGGER.error("error during configuration", e);
+      throw new ConfigurationException(e.getMessage(), e);
     } finally {
       Thread.currentThread().setContextClassLoader(oldloader);
     }
@@ -222,19 +272,29 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
     }
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  private ClassLoader getServiceClassLoader() {
-    return new ServiceClassLoader(getClass().getClassLoader(),
+  private ClassLoader getServiceClassLoader(Server server) {
+    return server.getServiceClassLoader(getClass().getClassLoader(),
         DynamicConfigExtension.class,
         LicenseService.class);
   }
 
   private static Options parseCommandLineOrExit(List<String> args) {
-    Options options = new Options();
-    CustomJCommander jCommander = new CustomJCommander(options);
-    jCommander.parse(args.toArray(new String[0]));
-    options.process(jCommander);
-    return options;
+    try {
+      OptionsParsing optionsParsing = new OptionsParsingImpl();
+      CustomJCommander jCommander = new CustomJCommander(optionsParsing);
+      jCommander.parse(args.toArray(new String[0]));
+      return optionsParsing.process(jCommander);
+    } catch (ParameterException e) {
+      // Fallback to deprecated options
+      try {
+        DeprecatedOptionsParsingImpl deprecatedOptionsParsing = new DeprecatedOptionsParsingImpl();
+        CustomJCommander jCommander = new CustomJCommander(deprecatedOptionsParsing);
+        jCommander.parse(args.toArray(new String[0]));
+        return deprecatedOptionsParsing.process(jCommander);
+      } catch (ParameterException de) {
+        throw e;
+      }
+    }
   }
 
 }

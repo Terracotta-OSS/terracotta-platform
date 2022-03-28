@@ -1,71 +1,86 @@
 {
-  "stripes" : [ {
-    "id" : "SINGLE",
-    "name" : "SINGLE",
-    "servers" : [ {
-      "id" : "server-1",
-      "serverEntities" : [ {
-        "id" : "entityName-1:entityType",
-        "type" : "entityType",
-        "name" : "entityName-1",
-        "consumerId" : 1,
-        "managementRegistry" : null
-      } ],
-      "serverName" : "server-1",
-      "hostName" : "localhost",
-      "hostAddress" : "127.0.0.1",
-      "bindAddress" : "0.0.0.0",
-      "bindPort" : 9510,
-      "groupPort" : 9610,
-      "state" : "ACTIVE",
-      "version" : "v1",
-      "buildId" : "b1",
-      "startTime" : 1476304913984,
-      "upTimeSec" : 0,
-      "activateTime" : 1476304913984
-    } ]
-  } ],
-  "clients" : [ {
-    "id" : "111@127.0.0.1:name:uuid-1",
-    "pid" : 111,
-    "hostAddress" : "127.0.0.1",
-    "name" : "name",
-    "logicalConnectionUid" : "uuid-1",
-    "vmId" : "111@127.0.0.1",
-    "clientId" : "111@127.0.0.1:name:uuid-1",
-    "hostName" : "localhost",
-    "tags" : [ ],
-    "properties" : {
-        "clientReportedAddress" : "localhost:65432",
-        "version" : "1.2.0"
-    },
-    "connections" : [ {
-      "id" : "uuid-1:SINGLE:server-1:127.0.0.1:5678",
-      "logicalConnectionUid" : "uuid-1",
-      "clientEndpoint" : {
-        "address" : "127.0.0.1",
-        "port" : 5678
-      },
-      "stripeId" : "SINGLE",
-      "serverId" : "server-1",
-      "serverEntityIds" : {
-        "entityName-1:entityType" : 1
-      }
-    } ],
-    "managementRegistry" : {
-      "contextContainer" : {
-        "ctName" : "ctValue",
-        "subContexts" : [ ]
-      },
-      "capabilities" : [ {
-        "name" : "capabilityName",
-        "context" : [ ],
-        "descriptors" : [ {
-          "name" : "myMethod",
-          "returnType" : "java.lang.String",
-          "parameters" : [ ]
-        } ]
-      } ]
+  "stripes": [
+    {
+      "id": "stripe[0]",
+      "name": "stripe[0]",
+      "servers": [
+        {
+          "id": "server-1",
+          "serverEntities": [
+            {
+              "id": "entityName-1:entityType",
+              "type": "entityType",
+              "name": "entityName-1",
+              "consumerId": 1,
+              "managementRegistry": null
+            }
+          ],
+          "serverName": "server-1",
+          "hostName": "localhost",
+          "hostAddress": "127.0.0.1",
+          "bindAddress": "0.0.0.0",
+          "bindPort": 9510,
+          "groupPort": 9610,
+          "state": "ACTIVE",
+          "version": "v1",
+          "buildId": "b1",
+          "startTime": 1476304913984,
+          "upTimeSec": 0,
+          "activateTime": 1615832230246
+        }
+      ]
     }
-  } ]
+  ],
+  "clients": [
+    {
+      "id": "111@127.0.0.1:name:uuid-1",
+      "pid": 111,
+      "hostAddress": "127.0.0.1",
+      "name": "name",
+      "logicalConnectionUid": "uuid-1",
+      "vmId": "111@127.0.0.1",
+      "clientId": "111@127.0.0.1:name:uuid-1",
+      "hostName": "localhost",
+      "tags": [],
+      "properties": {
+        "version": "1.2.0",
+        "clientReportedAddress": "localhost:65432"
+      },
+      "connections": [
+        {
+          "id": "uuid-1:stripe[0]:server-1:127.0.0.1:5678",
+          "logicalConnectionUid": "uuid-1",
+          "clientEndpoint": {
+            "address": "127.0.0.1",
+            "port": 5678
+          },
+          "stripeId": "stripe[0]",
+          "serverId": "server-1",
+          "serverEntityIds": {
+            "entityName-1:entityType": 1
+          }
+        }
+      ],
+      "managementRegistry": {
+        "rootContext": {},
+        "contextContainer": {
+          "ctName": "ctValue",
+          "subContexts": []
+        },
+        "capabilities": [
+          {
+            "name": "capabilityName",
+            "context": [],
+            "descriptors": [
+              {
+                "name": "myMethod",
+                "returnType": "java.lang.String",
+                "parameters": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

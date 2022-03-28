@@ -16,12 +16,15 @@
 package org.terracotta.persistence.sanskrit;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,9 +32,23 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.persistence.sanskrit.MarkableLineParser.CR;
 import static org.terracotta.persistence.sanskrit.MarkableLineParser.LS;
 
+@RunWith(Parameterized.class)
 public class MarkableLineParserTest {
+
+  private final String eol;
+
+  @Parameterized.Parameters(name = "{index}: eol={0}")
+  public static Iterable<Object[]> data() {
+    return Arrays.asList(new Object[][]{{CR + LS}, {LS}});
+  }
+
+  public MarkableLineParserTest(String eol) {
+    this.eol = eol;
+  }
+
   @Test
   public void iterateSimpleLines() throws Exception {
     InputStream bytes = makeStream("ab", "c", "", "def", "", "g");
@@ -66,7 +83,7 @@ public class MarkableLineParserTest {
       }
     });
 
-    int expectedMarkPosition = 6 + LS.length() * 5;
+    int expectedMarkPosition = 6 + eol.length() * 5;
 
     assertEquals(expectedMarkPosition, parser.getMark());
   }
@@ -76,7 +93,7 @@ public class MarkableLineParserTest {
 
     for (String line : lines) {
       text.append(line);
-      text.append(LS);
+      text.append(eol);
     }
 
     ByteBuffer byteBuffer = StandardCharsets.UTF_8.newEncoder().encode(CharBuffer.wrap(text));

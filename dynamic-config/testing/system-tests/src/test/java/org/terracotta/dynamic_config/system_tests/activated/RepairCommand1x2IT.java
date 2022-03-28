@@ -16,13 +16,15 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Test;
+import org.terracotta.angela.common.tcconfig.TerracottaServer;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.InlineServers;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.concurrent.TimeoutException;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.allOf;
@@ -42,7 +44,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 public class RepairCommand1x2IT extends DynamicConfigIT {
 
   public RepairCommand1x2IT() {
-    super(Duration.ofSeconds(240));
+    super(Duration.ofSeconds(300));
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -50,28 +52,41 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
   public void test_repair_partial_commit_when_passive_down() throws Exception {
     startNode(1, 1);
     startNode(1, 2);
+    waitForDiagnostic(1, 1);
+    waitForDiagnostic(1, 2);
     activate1x2Cluster();
 
     final int activeId = findActive(1).getAsInt();
     final int passiveId = findPassives(1)[0];
 
+    // triggers a failure during Nomad commit phase on all servers
+    // active entity will return the failure to the nomad client (commit phase done through entity)
+    // passive entity will fail and restart
     assertThat(
-        configToolInvocation("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "node-logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
         containsOutput("Commit failed for node"));
 
-    withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
-    withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.hasIncompleteChange()));
+    waitUntilServerStdOut(getNode(1, passiveId), "Requesting restart");
+
+    waitForPassive(1, passiveId);
+
+    // wait until we can really connect to the passive and see it has an incomplete change
+    // this is because he passive will restart after sync
+    waitUntil(() -> usingTopologyService(1, activeId, TopologyService::hasIncompleteChange), is(true));
+    waitUntil(() -> usingTopologyService(1, passiveId, TopologyService::hasIncompleteChange), is(true));
 
     // stop passive
     stopNode(1, passiveId);
 
     // cannot automatic repair since 1 node is down
     assertThat(
-        configToolInvocation("-t", "5s", "repair", "-s", "localhost:" + getNodePort(1, activeId)),
-        containsOutput("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback."));
+        configTool("repair", "-s", "localhost:" + getNodePort(1, activeId)),
+        containsOutput("Some nodes are offline. Unable to determine what kind of repair to run. Please refer to the Troubleshooting Guide."));
 
     // forces a repair
-    assertThat(configToolInvocation("-t", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)), containsOutput("Configuration is repaired."));
+    assertThat(
+        configTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        containsOutput("Configuration is repaired."));
     withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
 
     // restart passive - it should sync
@@ -81,6 +96,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  @InlineServers(false)
   public void test_repair_detach_node_partially_committed() throws Exception {
     startNode(1, 1);
     startNode(1, 2);
@@ -91,15 +107,14 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     //create failover while committing
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     // passive down
     stopNode(1, passiveId);
 
     // detach command will kill the active, so the stripe will go down
     assertThat(
-        configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, passiveId)),
+        configTool("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
     // we restart the active
@@ -114,10 +129,9 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     // we force a commit on the active
     assertThat(
-        configToolInvocation("-r", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration on nodes"),
-            containsOutput("Forcing a commit"),
+            containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));
 
     // the topology is down 1 node
@@ -133,6 +147,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  @InlineServers(false)
   public void test_repair_stripe_down_during_detach_node() throws Exception {
     startNode(1, 1);
     startNode(1, 2);
@@ -144,11 +159,10 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
 
     //setup for failover in commit phase on active
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     assertThat(
-        configToolInvocation("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, passiveId)),
+        configTool("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Commit failed for node localhost:" + getNodePort(1, activeId) + ". Reason: java.util.concurrent.TimeoutException"));
 
     // Stripe is lost no active
@@ -161,13 +175,14 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster(1, activeId).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster(1, activeId).getNodeCount(), is(equalTo(2)));
 
-    assertThat(configToolInvocation("-r", "5s", "diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
-        containsLinesStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic5.txt").toURI())).collect(toList())));
+    assertThat(
+        configTool("diagnostic", "-s", "localhost:" + getNodePort(1, activeId)),
+        containsLinesStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic5.txt").toURI())).collect(toList())));
 
     assertThat(
-        configToolInvocation("-r", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration on nodes"),
+            containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));
 
     withTopologyService(1, activeId, topologyService -> assertFalse(topologyService.hasIncompleteChange()));
@@ -176,6 +191,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
   }
 
   @Test
+  @InlineServers(false)
   public void test_repair_detached_node_restarting_as_active() throws Exception {
     startNode(1, 1);
     startNode(1, 2);
@@ -186,14 +202,13 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     //create failover while committing
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     stopNode(1, passiveId);
 
     //Both active and passive is down.
     assertThat(
-        configToolInvocation("-er", "40s", "-r", "5s", "-t", "5s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, passiveId)),
+        configTool("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
@@ -205,10 +220,9 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(2)));
 
     assertThat(
-        configToolInvocation("-r", "5s", "repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
+        configTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)),
         allOf(
-            containsOutput("Attempting an automatic repair of the configuration on nodes"),
-            containsOutput("Forcing a commit"),
+            containsOutput("Repairing configuration by running a commit..."),
             containsOutput("Configuration is repaired")));
 
     withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
@@ -216,36 +230,49 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(1)));
 
     // if we restart the detached node, that was offline  it will restart as active, which is expected in availability mode
-    startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo());
+    TerracottaServer toStart = getNode(1, passiveId);
+    startNode(1, passiveId, "-r", toStart.getConfigRepo());
     waitForActive(1, passiveId);
     withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
 
     // we can reset this node
-    configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort(1, passiveId));
+    assertThat(configTool("repair", "-f", "reset", "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+    waitForStopped(1, passiveId);
+
+    // TODO - simplify to startNode(1, passiveId) once TDB-5113 is fixed
+    startNode(1, passiveId, "-y", "availability", "-s", toStart.getHostName(),
+        "-p", String.valueOf(toStart.getTsaPort()), "-g", String.valueOf(toStart.getTsaGroupPort()),
+        "-L", toStart.getLogs(), "-r", tmpDir.getRoot().resolve("config").toString());
     waitForDiagnostic(1, passiveId);
   }
 
   @Test
-  public void test_reset_node() throws TimeoutException {
+  public void test_reset_node() {
     // reset diagnostic node
     startNode(1, 1);
     waitForDiagnostic(1, 1);
-    assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    assertThat(configTool("repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    waitForStopped(1, 1);
+    startNode(1, 1);
     waitForDiagnostic(1, 1);
 
     // reset activated node
-    assertThat(configToolInvocation("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
+    assertThat(configTool("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForActive(1, 1);
-    assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    assertThat(configTool("repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    waitForStopped(1, 1);
+    startNode(1, 1);
     waitForDiagnostic(1, 1);
 
     // reset node restarted in repair mode
-    assertThat(configToolInvocation("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
+    assertThat(configTool("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForActive(1, 1);
     stopNode(1, 1);
     startNode(1, 1, "-r", getNode(1, 1).getConfigRepo(), "--repair-mode");
     waitForDiagnostic(1, 1);
-    assertThat(configToolInvocation("-r", "5s", "repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    assertThat(configTool("repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
+    waitForStopped(1, 1);
+    startNode(1, 1);
     waitForDiagnostic(1, 1);
 
     // ensure we still can re-activate the node
@@ -253,15 +280,50 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     // restart but not in repair mode (angela keeps last params used)
     startNode(1, 1);
     waitForDiagnostic(1, 1);
-    assertThat(configToolInvocation("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
+    assertThat(configTool("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForActive(1, 1);
   }
 
-  private void activate1x2Cluster() throws TimeoutException {
+  @Test
+  public void test_repair_config_by_reset() {
+    startNode(1, 1);
+    startNode(1, 2);
+    activate1x2Cluster();
+
+    final int activeId = findActive(1).getAsInt();
+    final int passiveId = findPassives(1)[0];
+
+    // export config
+    String exportPath = tmpDir.getRoot().resolve("export.properties").toAbsolutePath().toString();
     assertThat(
-        configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)),
+        configTool("export", "-connect-to", "localhost:" + getNodePort(1, activeId), "-output-file", exportPath, "-output-format", "properties"),
         is(successful()));
-    assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+
+    // stop node
+    stopNode(1, passiveId);
+
+    // start it in repair mode
+    startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo(), "--repair-mode");
+    waitForDiagnostic(1, passiveId);
+
+    // reset
+    assertThat(configTool("repair", "-force", "reset", "-connect-to", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+    waitForStopped(1, passiveId);
+
+    // start it again
+    startNode(1, passiveId);
+    waitForDiagnostic(1, passiveId);
+
+    // restricted activation
+    assertThat(
+        configTool("activate", "-restrict", "-connect-to", "localhost:" + getNodePort(1, passiveId), "-config-file", exportPath),
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
+    waitForPassive(1, passiveId);
+  }
+
+  private void activate1x2Cluster() {
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
     waitForPassives(1);

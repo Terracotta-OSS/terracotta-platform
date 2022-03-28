@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.InlineServers;
 
 import java.time.Duration;
 
@@ -40,6 +41,16 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     super(Duration.ofSeconds(180));
   }
 
+  @Override
+  protected Duration getConnectionTimeout() {
+    return Duration.ofSeconds(30);
+  }
+
+  @Override
+  protected Duration getRequestTimeout() {
+    return Duration.ofSeconds(30);
+  }
+
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
@@ -52,7 +63,9 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(
+        configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)),
+        is(successful()));
 
     //Activate cluster
     activateCluster();
@@ -75,7 +88,8 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     // attach
-    assertThat(configToolInvocation("-v", "attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)),
+        is(successful()));
     waitForPassive(1, 3);
 
     // verify that the active node topology has 3 nodes
@@ -98,7 +112,8 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
   @Test
   public void attachNodeFailAtPrepare() throws Exception {
     //create prepare failure 
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"),
+        is(successful()));
 
     startNode(1, 3);
     waitForDiagnostic(1, 3);
@@ -106,8 +121,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
 
     // attach failure (forcing attach otherwise we have to restart cluster)
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, 1),
-            "-s", "localhost:" + getNodePort(1, 3)),
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)),
         containsOutput("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
@@ -120,6 +134,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
   }
 
   @Test
+  @InlineServers(false)
   public void attachNodeFailingBecauseOfNodeGoingDownInPreparePhase() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
@@ -130,11 +145,11 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
 
     //create failover in prepare phase for active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-prepare";
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString),
+        is(successful()));
 
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, 3)),
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)),
         containsOutput("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(2)));
@@ -145,6 +160,7 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
   }
 
   @Test
+  @InlineServers(false)
   public void testFailoverDuringNomadCommitForPassiveAddition() throws Exception {
     int activeId = findActive(1).getAsInt();
     int passiveId = findPassives(1)[0];
@@ -155,12 +171,8 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     //setup for failover in commit phase on active
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
-
-    assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId),
-            "-s", "localhost:" + getNodePort(1, 3)),
-        is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
     waitForPassive(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));

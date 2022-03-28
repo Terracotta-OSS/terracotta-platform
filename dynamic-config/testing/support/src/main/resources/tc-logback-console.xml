@@ -1,0 +1,21 @@
+<configuration debug="true">
+  <property resource="logbackVars.properties" />
+    
+  <appender name="SYSFILE" class="ch.qos.logback.core.FileAppender">
+    <file>${serverWorkingDir}/stdout.txt</file>
+    <encoder>
+      <pattern>%d [%t] %p %c - %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="INFO">
+
+  </root>
+  
+  <logger name="org.terracotta.console" level="INFO">
+    <appender-ref ref="SYSFILE" />
+  </logger>
+    
+  <include optional="true" resource="logback-ext-test.xml"/>
+
+</configuration>

@@ -17,6 +17,9 @@ package org.terracotta.offheapresource;
 
 import com.tc.classloader.CommonComponent;
 
+import java.util.UUID;
+import java.util.function.Consumer;
+
 /**
  * Represents an offheap resource, providing a reservation system that can be
  * used to control the combined memory usage of participating consumers.
@@ -69,4 +72,8 @@ public interface OffHeapResource {
    * @throws IllegalArgumentException if the new capacity is negative
    */
   boolean setCapacity(long size) throws IllegalArgumentException;
+
+  void addUsageListener(UUID listenerUUID, float threshold, Consumer<OffHeapUsageEvent> consumer);
+
+  void removeUsageListener(UUID listenerUUID) throws IllegalArgumentException;
 }

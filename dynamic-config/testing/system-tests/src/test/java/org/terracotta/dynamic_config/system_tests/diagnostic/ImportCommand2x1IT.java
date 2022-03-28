@@ -21,26 +21,34 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Path;
-import java.util.TreeMap;
+import java.util.Properties;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition(stripes = 2)
+@ClusterDefinition(stripes = 2, failoverPriority = "")
 public class ImportCommand2x1IT extends DynamicConfigIT {
+
   @Test
   public void test_import() throws Exception {
-    TreeMap<Object, Object> before = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true));
-    Path path = copyConfigProperty("/config-property-files/import2x1.properties");
-    assertThat(
-        configToolInvocation("import", "-f", path.toString()),
-        is(successful()));
-    TreeMap<Object, Object> after = new TreeMap<>(getUpcomingCluster("localhost", getNodePort()).toProperties(false, true));
-    TreeMap<Object, Object> expected = new TreeMap<>(Props.load(path));
-    assertThat(after, is(equalTo(expected)));
-    assertThat(before, is(not(equalTo(expected))));
+    getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true);
+
+    Path configFile = copyConfigProperty("/config-property-files/import2x1.properties");
+    assertThat(configTool("import", "-f", configFile.toString()), is(successful()));
+
+    Properties after = getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true);
+
+    Properties expected = Props.load(configFile);
+    Stream.of("cluster-uid",
+        "stripe.1.stripe-uid",
+        "stripe.2.stripe-uid",
+        "stripe.1.node.1.node-uid",
+        "stripe.2.node.1.node-uid"
+    ).forEach(prop -> expected.put(prop, after.get(prop)));
+
+    assertThat("EXPECTED:\n" + Props.toString(expected) + "\nAFTER\n" + Props.toString(after), after, is(equalTo(expected)));
   }
 }

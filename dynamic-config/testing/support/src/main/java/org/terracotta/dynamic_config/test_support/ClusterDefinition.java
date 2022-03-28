@@ -33,4 +33,10 @@ public @interface ClusterDefinition {
   boolean autoStart() default true;
 
   boolean autoActivate() default false;
+
+  boolean netDisruptionEnabled() default false;
+
+  boolean inlineServers() default true;
+
+  String failoverPriority() default "availability";
 }

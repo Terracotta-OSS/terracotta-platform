@@ -26,9 +26,11 @@ public interface DiscoverResultsReceiver<T> extends WrapUpResultsReceiver {
 
   default void discovered(InetSocketAddress endpoint, DiscoverResponse<T> discovery) {}
 
-  default void discoverFail(InetSocketAddress endpoint, String reason) {}
+  default void discoverFail(InetSocketAddress endpoint, Throwable reason) {}
 
-  default void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {}
+  default void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {}
+
+  default void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {}
 
   default void endDiscovery() {}
 

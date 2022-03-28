@@ -16,19 +16,22 @@
 package org.terracotta.persistence.sanskrit;
 
 import org.junit.Test;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.terracotta.persistence.sanskrit.MarkableLineParser.LS;
 
 public class JsonUtilsTest {
+
+  private final ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.notVersioned(new ObjectMapperFactory().create());
+
   @Test
   public void parseEmpty() throws Exception {
     String input = "{}";
 
-    SanskritObjectImpl result = new SanskritObjectImpl(Json.copyObjectMapper());
-    JsonUtils.parse(Json.copyObjectMapper(), input, result);
+    SanskritObjectImpl result = new SanskritObjectImpl(objectMapperSupplier);
+    JsonUtils.parse(objectMapperSupplier, null, input, result);
 
     assertNull(result.getString("A"));
   }
@@ -44,8 +47,8 @@ public class JsonUtilsTest {
         "  \"D\" : null" + LS +
         "}";
 
-    SanskritObjectImpl result = new SanskritObjectImpl(Json.copyObjectMapper());
-    JsonUtils.parse(Json.copyObjectMapper(), input, result);
+    SanskritObjectImpl result = new SanskritObjectImpl(objectMapperSupplier);
+    JsonUtils.parse(objectMapperSupplier, null, input, result);
 
     assertEquals("a", result.getString("A"));
     assertEquals(1L, (long) result.getLong("B"));

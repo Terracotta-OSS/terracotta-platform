@@ -29,7 +29,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(stripes = 2, nodesPerStripe = 2)
+@ClusterDefinition(stripes = 2, nodesPerStripe = 2, failoverPriority = "")
 public class AttachCommand2x2IT extends DynamicConfigIT {
 
   public AttachCommand2x2IT() {
@@ -39,28 +39,18 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
   @Test
   public void test_attach_stripe() throws Exception {
     // create a 1x2
-    assertThat(configToolInvocation("attach",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
 
     // create a 1x2
-    assertThat(configToolInvocation("attach",
-        "-d", "localhost:" + getNodePort(2, 1),
-        "-s", "localhost:" + getNodePort(2, 2)),
-        is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 2)).getNodeCount(), is(equalTo(2)));
 
-    assertThat(configToolInvocation("attach",
-        "-t", "stripe",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(2, 1)),
-        is(successful()));
+    assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(4)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(4)));
@@ -71,11 +61,7 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
   @Test
   public void test_attach_node() throws Exception {
     // create a 2x1
-    assertThat(configToolInvocation("attach",
-        "-t", "stripe",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+    assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getStripeCount(), is(equalTo(2)));
@@ -84,10 +70,7 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getStripeCount(), is(equalTo(2)));
 
     // attach node to stripe 1
-    assertThat(configToolInvocation("attach",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(2, 1)),
-        is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(3)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getStripeCount(), is(equalTo(2)));

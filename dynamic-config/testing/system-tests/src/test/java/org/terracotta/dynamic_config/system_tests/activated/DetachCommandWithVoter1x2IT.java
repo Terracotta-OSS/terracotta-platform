@@ -56,7 +56,7 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
       Thread.sleep(10000);
 
       stopNode(1, passiveId);
-      assertThat(configToolInvocation("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       String[] nodes = new String[]{getNode(1, activeId).getHostPort()};
 
@@ -78,7 +78,7 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
       // To ensure voter connects to all the servers 
       Thread.sleep(10000);
 
-      assertThat(configToolInvocation("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      assertThat(configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       String[] nodes = new String[]{getNode(1, activeId).getHostPort()};
 
@@ -88,7 +88,7 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
       startNode(1, passiveId);
       waitForDiagnostic(1, passiveId);
 
-      assertThat(configToolInvocation("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       nodes = new String[]{
           getNode(1, activeId).getHostPort(),

@@ -15,32 +15,36 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.server.Server;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFileCommandLineProcessor.class);
-
   private final Options options;
   private final ClusterFactory clusterCreator;
   private final CommandLineProcessor nextStarter;
   private final ConfigurationGeneratorVisitor configurationGeneratorVisitor;
   private final IParameterSubstitutor parameterSubstitutor;
+  private final Server server;
 
-  ConfigFileCommandLineProcessor(CommandLineProcessor nextStarter, Options options, ClusterFactory clusterCreator, ConfigurationGeneratorVisitor configurationGeneratorVisitor, IParameterSubstitutor parameterSubstitutor) {
+  ConfigFileCommandLineProcessor(CommandLineProcessor nextStarter,
+                                 Options options,
+                                 ClusterFactory clusterCreator,
+                                 ConfigurationGeneratorVisitor configurationGeneratorVisitor,
+                                 IParameterSubstitutor parameterSubstitutor,
+                                 Server server) {
     this.options = options;
     this.clusterCreator = clusterCreator;
     this.nextStarter = nextStarter;
     this.configurationGeneratorVisitor = configurationGeneratorVisitor;
     this.parameterSubstitutor = parameterSubstitutor;
+    this.server = server;
   }
 
   @Override
@@ -52,18 +56,20 @@ public class ConfigFileCommandLineProcessor implements CommandLineProcessor {
     }
 
     Path substitutedConfigFile = Paths.get(parameterSubstitutor.substitute(options.getConfigFile()));
-    LOGGER.info("Starting node from config file: {}", substitutedConfigFile);
+    server.console("Starting node from config file: {}", substitutedConfigFile);
     Cluster cluster = clusterCreator.create(substitutedConfigFile);
 
-    Node node = configurationGeneratorVisitor.getMatchingNodeFromConfigFile(options.getNodeHostname(), options.getNodePort(), options.getConfigFile(), cluster);
-
-    if (cluster.getName() != null) {
-      if (cluster.getStripeCount() > 1) {
-        throw new UnsupportedOperationException("Cannot start a pre-activated multi-stripe cluster");
-      }
-      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getNodeAddress()), options.getLicenseFile(), options.getNodeRepositoryDir());
+    Node node;
+    if (options.getNodeName() != null) {
+      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingNodeName(options.getNodeName(), options.getConfigFile(), cluster);
     } else {
-      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getNodeAddress()), options.getNodeRepositoryDir());
+      node = configurationGeneratorVisitor.getMatchingNodeFromConfigFileUsingHostPort(options.getHostname(), options.getPort(), options.getConfigFile(), cluster);
+    }
+
+    if (options.allowsAutoActivation()) {
+      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getUID()), options.getLicenseFile(), options.getConfigDir());
+    } else {
+      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getUID()), options.getConfigDir());
     }
   }
 }

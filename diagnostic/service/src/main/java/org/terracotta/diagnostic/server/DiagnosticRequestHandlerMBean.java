@@ -15,14 +15,12 @@
  */
 package org.terracotta.diagnostic.server;
 
-import com.tc.management.TerracottaMBean;
-
 /**
  * MBean interface used as a communication layer
  *
  * @author Mathieu Carbou
  */
-public interface DiagnosticRequestHandlerMBean extends TerracottaMBean {
+public interface DiagnosticRequestHandlerMBean {
   boolean hasServiceInterface(String serviceName);
 
   String request(String payload);

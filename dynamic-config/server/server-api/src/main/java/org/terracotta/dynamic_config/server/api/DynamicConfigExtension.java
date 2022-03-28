@@ -18,12 +18,21 @@ package org.terracotta.dynamic_config.server.api;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 
+import java.util.Collection;
+import java.util.function.Supplier;
+
 /**
  * Extension to implement as a META-INF/services to provide extensions on the servers
  *
  * @author Mathieu Carbou
  */
 public interface DynamicConfigExtension {
+
+  /**
+   * @return true if this extension can only be loaded when a node is starting from an already created configuration folder.
+   * If the node is starting in diagnostic mode (for repair or initially) then the extension won't be loaded except if this method returns false.
+   */
+  default boolean onlyWhenNodeConfigured() { return true; }
 
   /**
    * Implement this method to add configurations.
@@ -43,11 +52,31 @@ public interface DynamicConfigExtension {
    */
   void configure(Registrar registrar, PlatformConfiguration platformConfiguration);
 
+  default <T> T findService(PlatformConfiguration platformConfiguration, Class<T> type) {
+    Collection<T> services = platformConfiguration.getExtendedConfiguration(type);
+    if (services.isEmpty()) {
+      throw new AssertionError("No instance of service " + type + " found");
+    }
+
+    if (services.size() == 1) {
+      T instance = services.iterator().next();
+      if (instance == null) {
+        throw new AssertionError("Instance of service " + type + " found to be null");
+      }
+      return instance;
+    }
+    throw new AssertionError("Multiple instances of service " + type + " found");
+  }
+
   interface Registrar {
     /**
      * Register an extended configuration which will only be available when the user asks for a specific class
      */
-    <T> void registerExtendedConfiguration(Class<T> type, T implementation);
+    default <T> void registerExtendedConfiguration(Class<T> type, T implementation) {
+      registerExtendedConfigurationSupplier(type, () -> implementation);
+    }
+
+    <T> void registerExtendedConfigurationSupplier(Class<T> type, Supplier<T> implementation);
 
     /**
      * Register an extended configuration which will be available when the user asks for any super type

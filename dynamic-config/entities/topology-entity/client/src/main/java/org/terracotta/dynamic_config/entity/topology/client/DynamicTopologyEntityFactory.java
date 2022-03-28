@@ -90,7 +90,7 @@ public class DynamicTopologyEntityFactory {
 
   }
 
-  private static DynamicTopologyEntity fetch(Connection connection, DynamicTopologyEntity.Settings settings)
+  public static DynamicTopologyEntity fetch(Connection connection, DynamicTopologyEntity.Settings settings)
       throws EntityNotProvidedException, EntityVersionMismatchException, EntityNotFoundException {
     EntityRef<DynamicTopologyEntity, Object, DynamicTopologyEntity.Settings> ref = connection.getEntityRef(DynamicTopologyEntity.class, 1, DynamicTopologyEntityConstants.ENTITY_NAME);
     return ref.fetchEntity(settings);

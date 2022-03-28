@@ -15,6 +15,10 @@
  */
 package org.terracotta.management.model.capabilities.context;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.management.model.context.Context;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +31,8 @@ import java.util.Objects;
  * @author Mathieu Carbou
  */
 public final class CapabilityContext implements Serializable {
+
+  private static final Logger logger = LoggerFactory.getLogger(CapabilityContext.class);
 
   private static final long serialVersionUID = 1;
 
@@ -52,6 +58,22 @@ public final class CapabilityContext implements Serializable {
       }
     }
     return names;
+  }
+
+  /**
+   * Check if the context contains at least all required attributes
+   */
+  public boolean isValid(Context context) {
+    if (context == null) {
+      return false;
+    }
+    for (CapabilityContext.Attribute attribute : getRequiredAttributes()) {
+      if (context.get(attribute.getName()) == null) {
+        logger.debug("Required attribute: {} not found in context: {}", attribute.getName(), context);
+        return false;
+      }
+    }
+    return true;
   }
 
   public Collection<Attribute> getRequiredAttributes() {

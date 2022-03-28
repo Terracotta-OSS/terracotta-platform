@@ -1,0 +1,25 @@
+format version: 2
+2020-09-29T19:20:25.220Z
+{"mutativeMessageCount":1,"currentVersion":0,"mode":"ACCEPTING","highestVersion":0}
+36197cc89e54c783829c15c85bafa39280b052a7
+
+format version: 2
+2020-09-29T19:20:27.848Z
+{"mutativeMessageCount":2,"currentVersion":0,"request":"PREPARE","mode":"PREPARED","latestChangeUuid":"8dbfdbd5-18c2-40a3-8279-d2a70abea2a1","highestVersion":1,"lastMutationHost":"C02YJ2F2JGH6.local","lastMutationUser":"matc","lastMutationTimestamp":"2020-09-29T19:20:27.756Z","8dbfdbd5-18c2-40a3-8279-d2a70abea2a1":{"state":"PREPARED","version":1,"operation":{"type":"ClusterActivationNomadChange","cluster":{"stripes":[{"name":"GuineaPig","nodes":[{"dataDirs":{"main":"node-1-1/data-dir"},"groupPort":24364,"hostname":"localhost","logDir":"node-1-1/logs","metadataDir":"node-1-1/metadata","name":"node-1-1","port":43823,"uid":"Ps6VqKB7TEeDCAd5gJus8g"}],"uid":"pdvTnA9DSQao3IJ8DEAqeA"},{"name":"Rabbit","nodes":[{"dataDirs":{"main":"node-2-1/data-dir"},"groupPort":31511,"hostname":"localhost","logDir":"node-2-1/logs","metadataDir":"node-2-1/metadata","name":"node-2-1","port":2882,"uid":"KWcSIqiwQrW73l9UR06xHQ"}],"uid":"RsQcO7eUSiaBjmlCB9fflg"}],"failoverPriority":"availability","name":"tc-cluster","offheapResources":{"foo":{"quantity":1,"unit":"GB","type":"MEMORY"},"main":{"quantity":512,"unit":"MB","type":"MEMORY"}},"uid":"eGjR9cfjR5O69PTKijZu0g"},"applicability":{"level":"CLUSTER"},"summary":"Activating cluster: tc-cluster"},"formatVersion":"2","changeResultHash":"08bad93db12f25c5e2398d7d52cd69d21e974d6e","creationHost":"C02YJ2F2JGH6.local","creationUser":"matc","creationTimestamp":"2020-09-29T19:20:27.756Z"}}
+f4558e1d3387c8a2e3d1b8caac81320efde01145
+
+format version: 2
+2020-09-29T19:20:27.946Z
+{"mutativeMessageCount":3,"currentVersion":1,"request":"COMMIT","mode":"ACCEPTING","latestChangeUuid":"8dbfdbd5-18c2-40a3-8279-d2a70abea2a1","lastMutationHost":"C02YJ2F2JGH6.local","lastMutationUser":"matc","lastMutationTimestamp":"2020-09-29T19:20:27.859Z","8dbfdbd5-18c2-40a3-8279-d2a70abea2a1":{"state":"COMMITTED","version":1,"operation":{"type":"ClusterActivationNomadChange","cluster":{"stripes":[{"name":"GuineaPig","nodes":[{"dataDirs":{"main":"node-1-1/data-dir"},"groupPort":24364,"hostname":"localhost","logDir":"node-1-1/logs","metadataDir":"node-1-1/metadata","name":"node-1-1","port":43823,"uid":"Ps6VqKB7TEeDCAd5gJus8g"}],"uid":"pdvTnA9DSQao3IJ8DEAqeA"},{"name":"Rabbit","nodes":[{"dataDirs":{"main":"node-2-1/data-dir"},"groupPort":31511,"hostname":"localhost","logDir":"node-2-1/logs","metadataDir":"node-2-1/metadata","name":"node-2-1","port":2882,"uid":"KWcSIqiwQrW73l9UR06xHQ"}],"uid":"RsQcO7eUSiaBjmlCB9fflg"}],"failoverPriority":"availability","name":"tc-cluster","offheapResources":{"foo":{"quantity":1,"unit":"GB","type":"MEMORY"},"main":{"quantity":512,"unit":"MB","type":"MEMORY"}},"uid":"eGjR9cfjR5O69PTKijZu0g"},"applicability":{"level":"CLUSTER"},"summary":"Activating cluster: tc-cluster"},"formatVersion":"2","changeResultHash":"08bad93db12f25c5e2398d7d52cd69d21e974d6e","creationHost":"C02YJ2F2JGH6.local","creationUser":"matc","creationTimestamp":"2020-09-29T19:20:27.756Z"}}
+efe29ff9c4aea6c012fe79bee6c96db3b1878069
+
+format version: 2
+2020-09-29T19:20:36.749Z
+{"mutativeMessageCount":4,"currentVersion":1,"request":"PREPARE","mode":"PREPARED","latestChangeUuid":"c13705c6-c267-4b14-b478-92b6e3d90222","highestVersion":2,"lastMutationHost":"C02YJ2F2JGH6.local","lastMutationUser":"matc","lastMutationTimestamp":"2020-09-29T19:20:36.704Z","c13705c6-c267-4b14-b478-92b6e3d90222":{"state":"PREPARED","version":2,"prevChangeUuid":"8dbfdbd5-18c2-40a3-8279-d2a70abea2a1","operation":{"type":"MultiSettingNomadChange","changes":[{"type":"SettingNomadChange","applicability":{"level":"CLUSTER"},"name":"main","operation":"SET","setting":"OFFHEAP_RESOURCES","value":"65MB","summary":"set offheap-resources.main=65MB"}],"summary":"set offheap-resources.main=65MB"},"formatVersion":"2","changeResultHash":"216311637acc87d6036370eba9bf29a1ae7b24d2","creationHost":"C02YJ2F2JGH6.local","creationUser":"matc","creationTimestamp":"2020-09-29T19:20:36.704Z"}}
+c03358e455143b2bede4d5a00ab2ebeea0fec180
+
+format version: 2
+2020-09-29T19:20:36.818Z
+{"mutativeMessageCount":5,"currentVersion":1,"request":"ROLLBACK","mode":"ACCEPTING","lastMutationHost":"C02YJ2F2JGH6.local","lastMutationUser":"matc","lastMutationTimestamp":"2020-09-29T19:20:36.811Z","c13705c6-c267-4b14-b478-92b6e3d90222":{"state":"ROLLED_BACK","version":2,"prevChangeUuid":"8dbfdbd5-18c2-40a3-8279-d2a70abea2a1","operation":{"type":"MultiSettingNomadChange","changes":[{"type":"SettingNomadChange","applicability":{"level":"CLUSTER"},"name":"main","operation":"SET","setting":"OFFHEAP_RESOURCES","value":"65MB","summary":"set offheap-resources.main=65MB"}],"summary":"set offheap-resources.main=65MB"},"formatVersion":"2","changeResultHash":"216311637acc87d6036370eba9bf29a1ae7b24d2","creationHost":"C02YJ2F2JGH6.local","creationUser":"matc","creationTimestamp":"2020-09-29T19:20:36.704Z"}}
+8f43011b0c831c754a8b7a090b5076170c236cc4
+

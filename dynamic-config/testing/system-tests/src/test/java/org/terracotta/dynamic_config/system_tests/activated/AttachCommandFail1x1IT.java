@@ -44,12 +44,11 @@ public class AttachCommandFail1x1IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //create prepare failure
-    assertThat(configToolInvocation("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
 
     // attach failure (forcing attach otherwise we have to restart cluster)
     assertThat(
-        configToolInvocation("attach", "-f", "-d", "localhost:" + getNodePort(1, 1),
-            "-s", "localhost:" + getNodePort(1, 2)),
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)),
         containsOutput("Two-Phase commit failed"));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));

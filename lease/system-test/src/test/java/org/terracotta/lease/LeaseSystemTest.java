@@ -155,6 +155,11 @@ public class LeaseSystemTest {
     public void close() throws IOException {
       delegate.close();
     }
+
+    @Override
+    public boolean isValid() {
+      return delegate.isValid();
+    }
   }
 
   private static class LeaseDelayedEntityRef implements EntityRef<LeaseAcquirer, Properties, Object> {
@@ -196,6 +201,11 @@ public class LeaseSystemTest {
     @Override
     public String getName() {
       return delegate.getName();
+    }
+
+    @Override
+    public boolean isValid() {
+      return delegate.isValid();
     }
   }
 

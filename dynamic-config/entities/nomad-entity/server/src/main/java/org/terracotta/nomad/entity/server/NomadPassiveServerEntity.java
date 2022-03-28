@@ -15,23 +15,24 @@
  */
 package org.terracotta.nomad.entity.server;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeContext;
 import org.terracotta.entity.PassiveServerEntity;
-import org.terracotta.monitoring.PlatformService;
-import org.terracotta.monitoring.PlatformStopException;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.server.Server;
+import org.terracotta.server.StopAction;
 
 public class NomadPassiveServerEntity<T> extends NomadCommonServerEntity<T> implements PassiveServerEntity<NomadEntityMessage, NomadEntityResponse> {
-  private final PlatformService platformService;
+  private final Server server;
 
-  public NomadPassiveServerEntity(UpgradableNomadServer<T> nomadServer, PlatformService platformService) {
+  public NomadPassiveServerEntity(Server server, NomadServer<NodeContext> nomadServer) {
     super(nomadServer);
-    this.platformService = platformService;
+    this.server = server;
   }
 
   @Override
@@ -53,33 +54,33 @@ public class NomadPassiveServerEntity<T> extends NomadCommonServerEntity<T> impl
   @Override
   public void invokePassive(InvokeContext context, NomadEntityMessage message) throws EntityUserException {
     logger.trace("invokePassive({})", message);
+    boolean restarted = true;
     try {
-      try {
-        AcceptRejectResponse response = processMessage(message.getNomadMessage());
-        if (!response.isAccepted()) {
-          // if message is not accepted, we just log (error) but we do not crash the passive:
-          switch (response.getRejectionReason()) {
-            case DEAD:
-              logger.warn("Node was unable to process Nomad message: {}. Response: {}. This can happen when the same message is received more than once and the first one was already processed.", message, response);
-              break;
-            case BAD:
-              logger.error("RESTARTING: Node was unable to process Nomad message: {}. Response: {}. This can happen when the Nomad system is not accepting changes or when the change does not exist.", message, response);
-              platformService.stopPlatformIfPassive(PlatformService.RestartMode.STOP_AND_RESTART);
-              break;
-            case UNACCEPTABLE:
-              logger.error("RESTARTING: Node was unable to process Nomad message: {}. Response: {}. This can happen when the Nomad system is not able to execute the requested change", message, response);
-              platformService.stopPlatformIfPassive(PlatformService.RestartMode.STOP_AND_RESTART);
-              break;
-          }
+      AcceptRejectResponse response = processMessage(message.getNomadMessage());
+      if (!response.isAccepted()) {
+        // if message is not accepted, we just log (error) but we do not crash the passive:
+        switch (response.getRejectionReason()) {
+          case DEAD:
+            logger.warn("Node was unable to process Nomad message: {}. Response: {}. This can happen when the same message is received more than once and the first one was already processed.", message, response);
+            break;
+          case BAD:
+            logger.error("RESTARTING: Node was unable to process Nomad message: {}. Response: {}. This can happen when the Nomad system is not accepting changes or when the change does not exist.", message, response);
+            restarted = server.stopIfPassive(StopAction.RESTART);
+            break;
+          case UNACCEPTABLE:
+            logger.error("RESTARTING: Node was unable to process Nomad message: {}. Response: {}. This can happen when the Nomad system is not able to execute the requested change", message, response);
+            restarted = server.stopIfPassive(StopAction.RESTART);
+            break;
         }
-      } catch (NomadException | RuntimeException e) {
-        logger.error("RESTARTING: Failure happened while processing Nomad message: {}: {}", message, e.getMessage(), e);
-        platformService.stopPlatformIfPassive(PlatformService.RestartMode.STOP_AND_RESTART);
-        throw new EntityUserException(e.getMessage(), e);
       }
-    } catch (PlatformStopException e) {
-      logger.error("Failed restarting node: {}", e.getMessage(), e);
+    } catch (NomadException | RuntimeException e) {
+      logger.error("RESTARTING: Failure happened while processing Nomad message: {}: {}", message, e.getMessage(), e);
+      restarted = server.stopIfPassive(StopAction.RESTART);
       throw new EntityUserException(e.getMessage(), e);
+    }
+    if (!restarted) {
+      logger.error("Failed restarting node");
+      throw new EntityUserException("failed to restart");
     }
   }
 }

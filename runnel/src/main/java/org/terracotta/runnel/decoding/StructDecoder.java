@@ -120,6 +120,10 @@ public class StructDecoder<P> implements PrimitiveDecodingSupport {
     return fieldDecoder.decodeValueArray(name, StringField.class, this);
   }
 
+  public ArrayDecoder<ByteBuffer, StructDecoder<P>> byteBuffers(String name) {
+    return fieldDecoder.decodeValueArray(name, ByteBufferField.class, this);
+  }
+
   public StructDecoder<StructDecoder<P>> struct(String name) {
     return fieldDecoder.decodeStruct(name, this);
   }

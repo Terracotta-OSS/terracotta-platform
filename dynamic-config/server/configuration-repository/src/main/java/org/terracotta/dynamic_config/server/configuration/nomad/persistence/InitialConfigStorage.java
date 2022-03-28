@@ -15,26 +15,30 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
-public class InitialConfigStorage<T> implements ConfigStorage<T> {
+import org.terracotta.dynamic_config.api.model.NodeContext;
+
+import java.util.NoSuchElementException;
+
+public class InitialConfigStorage implements ConfigStorage {
   private static final long INITIAL_VERSION = 0L;
 
-  private final ConfigStorage<T> underlying;
+  private final ConfigStorage underlying;
 
-  public InitialConfigStorage(ConfigStorage<T> underlying) {
+  public InitialConfigStorage(ConfigStorage underlying) {
     this.underlying = underlying;
   }
 
   @Override
-  public T getConfig(long version) throws ConfigStorageException {
+  public Config getConfig(long version) throws ConfigStorageException {
     if (version == INITIAL_VERSION) {
-      return null;
+      throw new NoSuchElementException("No config for version: " + INITIAL_VERSION);
     }
 
     return underlying.getConfig(version);
   }
 
   @Override
-  public void saveConfig(long version, T config) throws ConfigStorageException {
+  public void saveConfig(long version, NodeContext config) throws ConfigStorageException {
     if (version == INITIAL_VERSION) {
       throw new AssertionError("Invalid version: " + version);
     }

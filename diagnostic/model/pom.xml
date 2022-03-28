@@ -22,10 +22,18 @@
   <parent>
     <groupId>org.terracotta.diagnostic</groupId>
     <artifactId>diagnostic</artifactId>
-    <version>5.7-SNAPSHOT</version>
+    <version>5.8-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>diagnostic-model</artifactId>
   <name>Diagnostic :: Model</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-structures</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 </project>

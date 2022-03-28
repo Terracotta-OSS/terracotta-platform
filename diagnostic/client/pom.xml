@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.diagnostic</groupId>
     <artifactId>diagnostic</artifactId>
-    <version>5.7-SNAPSHOT</version>
+    <version>5.8-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -55,12 +55,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>connection-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <!-- Diagnostics interface -->
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>dso-l1</artifactId>
       <scope>provided</scope>
     </dependency>
 

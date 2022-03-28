@@ -15,7 +15,6 @@
  */
 package org.terracotta.diagnostic.server;
 
-import com.tc.management.AbstractTerracottaMBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.Base64DiagnosticCodec;
@@ -24,11 +23,11 @@ import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
 
 import javax.management.NotCompliantMBeanException;
+import javax.management.StandardMBean;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_UNKNOWN_COMMAND;
@@ -36,7 +35,7 @@ import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_UNKNO
 /**
  * @author Mathieu Carbou
  */
-public class DiagnosticRequestHandler extends AbstractTerracottaMBean implements DiagnosticRequestHandlerMBean {
+public class DiagnosticRequestHandler extends StandardMBean implements DiagnosticRequestHandlerMBean {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DiagnosticRequestHandler.class);
 
@@ -44,8 +43,8 @@ public class DiagnosticRequestHandler extends AbstractTerracottaMBean implements
   private final Map<String, DiagnosticServiceDescriptor<?>> services = new ConcurrentHashMap<>();
 
   private DiagnosticRequestHandler(DiagnosticCodec<?> codec) throws NotCompliantMBeanException {
-    super(DiagnosticRequestHandlerMBean.class, false);
     // we need this chain of codecs to work around the badly written DiagnosticHandler that has some flaws in String processing.
+    super(DiagnosticRequestHandlerMBean.class, false);
     this.codec = new EmptyParameterDiagnosticCodec()
         .around(new Base64DiagnosticCodec())
         .around(codec);
@@ -57,10 +56,6 @@ public class DiagnosticRequestHandler extends AbstractTerracottaMBean implements
 
   public Collection<DiagnosticServiceDescriptor<?>> getServices() {
     return services.values();
-  }
-
-  @Override
-  public void reset() {
   }
 
   @Override
@@ -82,8 +77,8 @@ public class DiagnosticRequestHandler extends AbstractTerracottaMBean implements
         });
   }
 
-  <T> DiagnosticServiceDescriptor<T> add(Class<T> serviceInterface, T serviceImplementation, Runnable onClose, Function<String, Boolean> jmxExpose) {
-    DiagnosticServiceDescriptor<T> service = new DiagnosticServiceDescriptor<>(serviceInterface, serviceImplementation, onClose, jmxExpose);
+  <T> DiagnosticServiceDescriptor<T> add(Class<T> serviceInterface, T serviceImplementation, Runnable onClose) {
+    DiagnosticServiceDescriptor<T> service = new DiagnosticServiceDescriptor<>(serviceInterface, serviceImplementation, onClose);
     DiagnosticServiceDescriptor<?> previous = services.putIfAbsent(serviceInterface.getName(), service);
     if (previous == null) {
       return service;

@@ -15,24 +15,33 @@
  */
 package org.terracotta.diagnostic.client;
 
-import com.terracotta.diagnostic.Diagnostics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.common.struct.Version;
 import org.terracotta.connection.Connection;
+import org.terracotta.connection.Diagnostics;
 import org.terracotta.diagnostic.common.Base64DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
+import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
+import org.terracotta.exception.ConnectionClosedException;
 
 import java.lang.reflect.Proxy;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_EXTENSIONS;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
-import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_LOGICAL_SERVER_STATE;
+import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NOT_PERMITTED;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_NULL_RETURN;
@@ -50,7 +59,7 @@ class DiagnosticServiceImpl implements DiagnosticService {
   private final Diagnostics delegate;
   private final DiagnosticCodec<String> codec;
 
-  DiagnosticServiceImpl(Connection connection, com.terracotta.diagnostic.Diagnostics delegate, DiagnosticCodec<?> codec) {
+  DiagnosticServiceImpl(Connection connection, Diagnostics delegate, DiagnosticCodec<?> codec) {
     this.connection = requireNonNull(connection);
     this.delegate = requireNonNull(delegate);
     // we need to ensure the JMX parameter contains no space at all because the DiagnosticsHandler is poorly written
@@ -143,10 +152,16 @@ class DiagnosticServiceImpl implements DiagnosticService {
   @Override
   public LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
     try {
-      return LogicalServerState.parse(invoke(MBEAN_LOGICAL_SERVER_STATE, "getLogicalServerState"));
+      return LogicalServerState.parse(invoke(MBEAN_DIAGNOSTIC_EXTENSIONS, "getLogicalServerState"));
     } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException ignored) {
       // maybe we connect to an old version, 10.2 for example, that does not have this MBean. In this case, let's try the original Server state Mbean.
       // Other possibility: the MBean has been unregistered...
+    }
+
+    // backward compat'
+    try {
+      return LogicalServerState.parse(invoke("LogicalServerState", "getLogicalServerState"));
+    } catch (DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException ignored) {
     }
 
     String state = LogicalServerState.UNKNOWN.name();
@@ -164,6 +179,33 @@ class DiagnosticServiceImpl implements DiagnosticService {
     }
 
     return LogicalServerState.from(state, isReconnectWindow(), blocked);
+  }
+
+  @Override
+  public KitInformation getKitInformation() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
+    try {
+      // Implemented after 10.7.0.3
+      String props = invoke(MBEAN_DIAGNOSTIC_EXTENSIONS, "getKitInformation");
+      return KitInformation.fromProperties(props);
+
+    } catch (RuntimeException e) {
+      // Backward compatible with 10.7.0.3 and below
+
+      String v = invoke(MBEAN_SERVER, "getVersion"); // something like "Terracotta 5.8.2-pre6"
+      String b = invoke(MBEAN_SERVER, "getBuildID"); // something like "2021-06-29 at 20:54:46 UTC (Revision 4450fe6fc2c174abd3528b8636b3296a6a79df00 from UNKNOWN)"
+
+      int pos = v.indexOf(' ');
+      String version = pos == -1 ? v : v.substring(pos + 1); // the moniker is hard-coded in core project and can be Terracotta or terracotta-enterprise
+
+      Matcher matcher = Pattern.compile("^(?<date>.*) \\(Revision (?<revision>.*) from (?<branch>.*)\\)$").matcher(b);
+      if (matcher.matches()) {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH:mm:ss z"); // from core
+        Instant timestamp = dtf.parse(matcher.group("date"), Instant::from);
+        return new KitInformation(Version.valueOf(version), matcher.group("revision"), matcher.group("branch"), timestamp);
+      } else {
+        return new KitInformation(Version.valueOf(version), "UNKNOWN", "UNKNOWN", Instant.ofEpochMilli(0L));
+      }
+    }
   }
 
   // DiagnosticsHandler
@@ -203,7 +245,11 @@ class DiagnosticServiceImpl implements DiagnosticService {
     response.getError().map(DiagnosticOperationExecutionException::new).ifPresent(e -> {
       throw e;
     });
-    return returnType.isPrimitive() ? response.getBody() : returnType.cast(response.getBody());
+    return returnType.isPrimitive() ?
+        response.getBody() :
+        returnType.cast(returnType == Optional.class ?
+            Optional.ofNullable(response.getBody()) :
+            response.getBody());
   }
 
   private String execute(Supplier<String> execution) throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
@@ -214,33 +260,37 @@ class DiagnosticServiceImpl implements DiagnosticService {
     // JMXSubsystem transforms all null returns to empty strings.
     // null returns are in the case of EntityException, InterruptedException or MessageCodecException,
     // or in the case of terminateServer or forceTerminateServer
-    String result = execution.get();
-    if (result == null) {
-      if (allowNull) {
-        return null;
-      } else {
-        // a failure happened (EntityException, InterruptedException or MessageCodecException)
-        throw new DiagnosticConnectionException();
+    try {
+      String result = execution.get();
+      if (result == null) {
+        if (allowNull) {
+          return null;
+        } else {
+          // a failure happened (EntityException, InterruptedException or MessageCodecException)
+          throw new DiagnosticConnectionException();
+        }
       }
+      if (MESSAGE_NULL_RETURN.equals(result)) {
+        // convert back to null empty strings
+        return null;
+      }
+      // Handles all the errors from JMXSubsystem and DiagnosticsHandler
+      if (MESSAGE_NOT_PERMITTED.equals(result)) {
+        throw new DiagnosticOperationNotAllowedException(result);
+      }
+      if (MESSAGE_REQUEST_TIMEOUT.equals(result)) {
+        throw new DiagnosticOperationTimeoutException(result);
+      }
+      if (MESSAGE_UNKNOWN_COMMAND.equals(result)) {
+        throw new DiagnosticOperationUnsupportedException(result);
+      }
+      if (result.startsWith(MESSAGE_INVALID_JMX)) {
+        throw new DiagnosticOperationExecutionException(result);
+      }
+      return result;
+    } catch (ConnectionClosedException e) {
+      throw new DiagnosticConnectionException(e);
     }
-    if (MESSAGE_NULL_RETURN.equals(result)) {
-      // convert back to null empty strings
-      return null;
-    }
-    // Handles all the errors from JMXSubsystem and DiagnosticsHandler
-    if (MESSAGE_NOT_PERMITTED.equals(result)) {
-      throw new DiagnosticOperationNotAllowedException(result);
-    }
-    if (MESSAGE_REQUEST_TIMEOUT.equals(result)) {
-      throw new DiagnosticOperationTimeoutException(result);
-    }
-    if (MESSAGE_UNKNOWN_COMMAND.equals(result)) {
-      throw new DiagnosticOperationUnsupportedException(result);
-    }
-    if (result.startsWith(MESSAGE_INVALID_JMX)) {
-      throw new DiagnosticOperationExecutionException(result);
-    }
-    return result;
   }
 
 }

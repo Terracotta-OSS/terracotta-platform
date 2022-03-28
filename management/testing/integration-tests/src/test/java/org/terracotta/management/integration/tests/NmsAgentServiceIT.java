@@ -23,6 +23,7 @@ import org.junit.rules.Timeout;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionFactory;
+import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.agent.client.DefaultNmsAgentService;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentEntity;
@@ -48,6 +49,8 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import org.terracotta.testing.config.ConfigConstants;
+import org.terracotta.testing.config.ConfigRepoStartupBuilder;
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
 /**
@@ -72,6 +75,7 @@ public class NmsAgentServiceIT {
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(resourceConfig)
+      .startupBuilder(ConfigRepoStartupBuilder::new)
       .build();
 
   Connection managementConnection;
@@ -86,16 +90,16 @@ public class NmsAgentServiceIT {
   public void setUp() throws Exception {
     voltron.getClusterControl().waitForActive();
 
-    managementConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
+    managementConnection = createConnection();
 
     NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
     nmsService = new DefaultNmsService(nmsEntityFactory.retrieveOrCreate(new NmsConfig()));
     nmsService.setOperationTimeout(30, TimeUnit.SECONDS);
 
-    clientConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
+    clientConnection = createConnection();
 
     // note the supplier below, which is used to recycle the entity with a potentially new connection
-    nmsAgentService = new DefaultNmsAgentService(this::createAgentEntity);
+    nmsAgentService = new DefaultNmsAgentService(Context.empty(), this::createAgentEntity);
     nmsAgentService.setOperationTimeout(30, TimeUnit.SECONDS);
     nmsAgentService.setOnOperationError((operation, throwable) -> opErrors.incrementAndGet());
     nmsAgentService.setManagementRegistry(registry);
@@ -135,7 +139,7 @@ public class NmsAgentServiceIT {
     nmsAgentService.sendStates();
     assertThat(opErrors.get(), equalTo(2));
 
-    clientConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
+    clientConnection = createConnection();
     nmsAgentService.flushEntity();
     nmsAgentService.sendStates();
     assertThat(opErrors.get(), equalTo(2));
@@ -155,7 +159,7 @@ public class NmsAgentServiceIT {
     nmsAgentService.pushNotification(new ContextualNotification(Context.empty(), "MY_NOTIF_TYPE"));
     assertThat(opErrors.get(), equalTo(1));
 
-    clientConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
+    clientConnection = createConnection();
     nmsAgentService.pushNotification(new ContextualNotification(Context.empty(), "MY_NOTIF_TYPE"));
     assertThat(opErrors.get(), equalTo(1));
 
@@ -174,7 +178,7 @@ public class NmsAgentServiceIT {
 
       // recycle the connection
       try {
-        clientConnection = ConnectionFactory.connect(voltron.getConnectionURI(), new Properties());
+        clientConnection = createConnection();
       } catch (ConnectionException e) {
         throw new RuntimeException(e);
       }
@@ -208,5 +212,11 @@ public class NmsAgentServiceIT {
     // this connection ref will always be there, but might be "broken"
     assertNotNull(clientConnection);
     return new NmsAgentEntityFactory(clientConnection).retrieve();
+  }
+
+  private Connection createConnection() throws ConnectionException {
+    Properties properties = new Properties();
+    properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, "NmsAgentServiceIT");
+    return ConnectionFactory.connect(voltron.getConnectionURI(), properties);
   }
 }

@@ -35,8 +35,8 @@ public class PassiveLeaveIT extends AbstractHATest {
 
   @Test
   public void get_notifications_when_passive_leaves() throws Exception {
-    Server active = nmsService.readTopology().serverStream().filter(Server::isActive).findFirst().get();
-    Server passive = nmsService.readTopology().serverStream().filter(server -> !server.isActive()).findFirst().get();
+    Server active = nmsService.readTopology().serverStream().filter(Server::isActive).findAny().get();
+    Server passive = nmsService.readTopology().serverStream().filter(server -> !server.isActive()).findAny().get();
     assertThat(active.getState(), equalTo(Server.State.ACTIVE));
     assertThat(passive.getState(), equalTo(Server.State.PASSIVE));
 

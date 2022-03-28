@@ -15,6 +15,8 @@
  */
 package org.terracotta.diagnostic.client;
 
+import org.terracotta.diagnostic.model.ConnectedClientInformation;
+import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
 
 import java.io.Closeable;
@@ -25,12 +27,12 @@ import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SHUTDOWN;
 
 /**
- * This class can be used as a replacement of the {@link com.terracotta.diagnostic.Diagnostics} class.
+ * This class can be used as a replacement of the {@link org.terracotta.connection.Diagnostics} class.
  * <p>
  * This class supports exception handling and complex request/response objects thanks to the {@link #getProxy(Class)} method.
  * <p>
  * It also allows to commonly process the responses instead of having each module use directly the
- * {@link com.terracotta.diagnostic.Diagnostics} class and do their own processing and error handling.
+ * {@link org.terracotta.connection.Diagnostics} class and do their own processing and error handling.
  * <p>
  * This class also setup workarounds for several issues related to the use of string and string parsing in the diagnostic handler.
  *
@@ -51,6 +53,11 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
   // LogicalServerState
 
   LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException;
+
+  /**
+   * Get the kit information in one call instead of using MBEAN_SERVER#getVersion and MBEAN_SERVER#getBuildIDs
+   */
+  KitInformation getKitInformation() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException;
 
   // ConsistencyManager
 
@@ -112,8 +119,20 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
     return invoke(MBEAN_SERVER, "getEnvironment");
   }
 
+  default String getVersion() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
+    return invoke(MBEAN_SERVER, "getVersion");
+  }
+
+  default String getBuildID() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
+    return invoke(MBEAN_SERVER, "getBuildID");
+  }
+
   default boolean isReconnectWindow() {
     return Boolean.parseBoolean(invoke(MBEAN_SERVER, "isReconnectWindow"));
+  }
+
+  default ConnectedClientInformation getConnectedClientInformation() {
+    return ConnectedClientInformation.fromProperties(invoke(MBEAN_SERVER, "getConnectedClients"));
   }
 
   // DiagnosticsHandler

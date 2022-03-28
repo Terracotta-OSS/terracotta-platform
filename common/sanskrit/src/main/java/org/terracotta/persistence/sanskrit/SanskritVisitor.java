@@ -22,5 +22,5 @@ public interface SanskritVisitor {
 
   default void setObject(String key, SanskritObject value) {}
 
-  default <T> void setExternal(String key, T value) {}
+  default <T> void setExternal(String key, T value, String version) {}
 }

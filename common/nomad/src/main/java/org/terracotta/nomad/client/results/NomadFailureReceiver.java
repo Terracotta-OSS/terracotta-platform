@@ -16,6 +16,7 @@
 package org.terracotta.nomad.client.results;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static java.lang.System.lineSeparator;
@@ -25,31 +26,59 @@ import static java.lang.System.lineSeparator;
  */
 public class NomadFailureReceiver<T> extends LoggingResultReceiver<T> {
 
-  private final List<String> failures = new CopyOnWriteArrayList<>();
+  private final List<String> reasons = new CopyOnWriteArrayList<>();
+  private final List<Throwable> errors = new CopyOnWriteArrayList<>();
 
   @Override
-  protected void error(String line) {
-    failures.add(line);
+  protected void error(String line, Throwable e) {
+    reasons.add(e == null ? line : e.getMessage() == null ? (line + ". Reason: " + e) : (line + ". Reason: " + e.getMessage()));
+    if (e != null) {
+      errors.add(e);
+    }
   }
 
-  public List<String> getFailures() {
-    return failures;
+  public List<String> getReasons() {
+    return reasons;
+  }
+
+  public int getCount() {
+    return reasons.size();
   }
 
   public boolean isEmpty() {
-    return failures.isEmpty();
+    return reasons.isEmpty();
   }
 
-  public void reThrow() throws IllegalStateException {
+  public void reThrowReasons() throws IllegalStateException {
     if (!isEmpty()) {
-      StringBuilder msg = new StringBuilder("Two-Phase commit failed with " + failures.size() + " messages(s):" + lineSeparator() + lineSeparator());
-      for (int i = 0; i < failures.size(); i++) {
-        if (msg.charAt(msg.length() - 1) != '\n') {
-          msg.append(lineSeparator());
-        }
-        msg.append("(").append(i + 1).append(") ").append(failures.get(i));
-      }
-      throw new IllegalStateException(msg.toString());
+      throw buildError();
     }
+  }
+
+  public void reThrowErrors() throws IllegalStateException {
+    buildErrors().ifPresent(e -> {
+      throw e;
+    });
+  }
+
+  public Optional<IllegalStateException> buildErrors() {
+    if (!isEmpty()) {
+      IllegalStateException error = buildError();
+      errors.forEach(error::addSuppressed);
+      return Optional.of(error);
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  private IllegalStateException buildError() {
+    StringBuilder msg = new StringBuilder("Two-Phase commit failed with " + reasons.size() + " messages(s):" + lineSeparator() + lineSeparator());
+    for (int i = 0; i < reasons.size(); i++) {
+      if (msg.charAt(msg.length() - 1) != '\n') {
+        msg.append(lineSeparator());
+      }
+      msg.append("(").append(i + 1).append(") ").append(reasons.get(i));
+    }
+    return new IllegalStateException(msg.toString());
   }
 }

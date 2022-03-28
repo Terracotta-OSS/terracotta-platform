@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.server</groupId>
     <artifactId>dynamic-config-server</artifactId>
-    <version>5.7-SNAPSHOT</version>
+    <version>5.8-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -50,16 +50,25 @@
       <artifactId>terracotta-utilities-tools</artifactId>
     </dependency>
 
+    <!-- config repository uses json for nomad sanskrit -->
     <dependency>
       <groupId>org.terracotta.common</groupId>
-      <artifactId>common-test-utilities</artifactId>
+      <artifactId>common-json-support</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>management</artifactId>
-      <scope>provided</scope>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

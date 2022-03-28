@@ -46,6 +46,7 @@ public class ExceptionMatcher extends TypeSafeMatcher<ExceptionMatcher.Closure> 
   private Matcher<? super Class<? extends Throwable>> causeMatcher = ANY_CAUSE;
 
   private Throwable failure;
+  private boolean debug;
 
   private ExceptionMatcher(Matcher<? super Class<? extends Throwable>> typeMatcher) {
     this.typeMatcher = requireNonNull(typeMatcher);
@@ -70,8 +71,15 @@ public class ExceptionMatcher extends TypeSafeMatcher<ExceptionMatcher.Closure> 
       item.run();
       return false;
     } catch (Throwable e) {
+      if (debug) {
+        e.printStackTrace();
+      }
       failure = e;
-      return typeMatcher.matches(e) && messageMatcher.matches(e.getMessage()) && causeMatcher.matches(e.getCause());
+      boolean match = typeMatcher.matches(e) && messageMatcher.matches(e.getMessage()) && causeMatcher.matches(e.getCause());
+      if (!match) {
+        e.printStackTrace();
+      }
+      return match;
     }
   }
 
@@ -90,6 +98,11 @@ public class ExceptionMatcher extends TypeSafeMatcher<ExceptionMatcher.Closure> 
 
   public static ExceptionMatcher throwing(Matcher<? super Class<? extends Throwable>> err) {
     return new ExceptionMatcher(err);
+  }
+
+  public ExceptionMatcher debug() {
+    this.debug = true;
+    return this;
   }
 
   public ExceptionMatcher andMessage(Matcher<? super String> messageMatcher) {

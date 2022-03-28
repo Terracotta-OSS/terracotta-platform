@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
-    <version>5.7-SNAPSHOT</version>
+    <version>5.8-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -32,14 +32,13 @@
   <name>Common :: POM</name>
 
   <description>
-    Group of modules that are not related to platform: utilities, single libraries or stuff that could be easily moved out to another repository or on its own.
+    Group of modules that are not related to platform: utilities, single libraries or stuff that could be easily moved out to another configuration directory or on its own.
   </description>
 
   <modules>
     <module>inet-support</module>
     <module>json-support</module>
     <module>test-utilities</module>
-    <module>port-locking</module>
     <module>structures</module>
     <module>sanskrit</module>
     <module>nomad</module>

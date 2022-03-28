@@ -15,48 +15,49 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.server.Server;
 
 import static java.util.Objects.requireNonNull;
 
 public class ConsoleCommandLineProcessor implements CommandLineProcessor {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleCommandLineProcessor.class);
-
   private final Options options;
   private final ClusterFactory clusterCreator;
   private final ConfigurationGeneratorVisitor configurationGeneratorVisitor;
   private final IParameterSubstitutor parameterSubstitutor;
+  private final Server server;
 
   ConsoleCommandLineProcessor(Options options,
                               ClusterFactory clusterCreator,
                               ConfigurationGeneratorVisitor configurationGeneratorVisitor,
-                              IParameterSubstitutor parameterSubstitutor) {
+                              IParameterSubstitutor parameterSubstitutor,
+                              Server server) {
     this.options = options;
     this.clusterCreator = clusterCreator;
     this.configurationGeneratorVisitor = configurationGeneratorVisitor;
     this.parameterSubstitutor = parameterSubstitutor;
+    this.server = server;
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Override
   public void process() {
-    LOGGER.info("Starting node from command-line parameters");
+    server.console("Starting node from command-line parameters");
+
     Cluster cluster = clusterCreator.create(options.getTopologyOptions(), parameterSubstitutor);
     Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that
 
     if (options.getLicenseFile() != null) {
       requireNonNull(cluster.getName(), "Cluster name is required with license file");
     }
-    if (cluster.getName() != null) {
-      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getNodeAddress()), options.getLicenseFile(), options.getNodeRepositoryDir());
+    if (options.allowsAutoActivation()) {
+      configurationGeneratorVisitor.startActivated(new NodeContext(cluster, node.getUID()), options.getLicenseFile(), options.getConfigDir());
     } else {
-      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getNodeAddress()), options.getNodeRepositoryDir());
+      configurationGeneratorVisitor.startUnconfigured(new NodeContext(cluster, node.getUID()), options.getConfigDir());
     }
   }
 }

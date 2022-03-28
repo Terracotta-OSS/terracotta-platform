@@ -59,14 +59,13 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
 
   @Test
   public void can_do_local_management_calls() throws Exception {
+    Context rootContext = webappNodes.get(0).getRootContext();
     CapabilityManagementSupport registry = webappNodes.get(0).getManagementRegistry();
 
     // put
     ContextualReturn<?> put = registry.withCapability("CacheCalls")
         .call("put", new Parameter("pet1"), new Parameter("Cat"))
-        .on(Context.empty()
-            .with("appName", "pet-clinic")
-            .with("cacheName", "pets"))
+        .on(rootContext.with("cacheName", "pets"))
         .build()
         .execute()
         .getSingleResult();
@@ -77,9 +76,7 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
     // get
     ContextualReturn<String> get = registry.withCapability("CacheCalls")
         .call("get", String.class, new Parameter("pet1"))
-        .on(Context.empty()
-            .with("appName", "pet-clinic")
-            .with("cacheName", "pets"))
+        .on(rootContext.with("cacheName", "pets"))
         .build()
         .execute()
         .getSingleResult();
@@ -91,9 +88,7 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
     // size
     ContextualReturn<Integer> size = registry.withCapability("CacheCalls")
         .call("size", int.class)
-        .on(Context.empty()
-            .with("appName", "pet-clinic")
-            .with("cacheName", "pets"))
+        .on(rootContext.with("cacheName", "pets"))
         .build()
         .execute()
         .getSingleResult();
@@ -105,9 +100,7 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
     // clear
     ContextualReturn<?> result = registry.withCapability("CacheCalls")
         .call("clear")
-        .on(Context.empty()
-            .with("appName", "pet-clinic")
-            .with("cacheName", "pets"))
+        .on(rootContext.with("cacheName", "pets"))
         .build()
         .execute()
         .getSingleResult();
@@ -155,7 +148,7 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
     do {
       statistics = queryAllStats(node)
           .filter(o -> o.getContext().get("cacheName").equals(cacheName))
-          .findFirst()
+          .findAny()
           .get();
       Thread.yield();
     } while (!Thread.currentThread().isInterrupted() && !test.test(statistics));
@@ -164,6 +157,7 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
   }
 
   private Stream<? extends ContextualStatistics> queryAllStats(int node) {
+    Context rootContext = webappNodes.get(node).getRootContext();
     CapabilityManagementSupport registry = webappNodes.get(node).getManagementRegistry();
     // get all possible stat names
     List<String> statNames = registry.getCapabilities()
@@ -179,9 +173,7 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
         .filter(capability -> capability.getName().equals("CacheSettings"))
         .flatMap(capability -> capability.getDescriptors().stream())
         .map(descriptor -> ((Settings) descriptor).getString("cacheName"))
-        .map(c -> Context.empty()
-            .with("appName", "pet-clinic")
-            .with("cacheName", c))
+        .map(c -> rootContext.with("cacheName", c))
         .collect(Collectors.toList());
 
     // do a management call to activate all stats from all contexts

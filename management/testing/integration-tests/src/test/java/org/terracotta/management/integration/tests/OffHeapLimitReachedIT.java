@@ -38,40 +38,40 @@ public class OffHeapLimitReachedIT extends AbstractSingleTest {
     List<ContextualNotification> notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
     Map<String, String> attributes = notifications.stream()
         .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
-        .findFirst()
+        .findAny()
         .get()
         .getAttributes();
-    assertThat(attributes.keySet(), hasItem("oldThreshold"));
-    assertThat(attributes.keySet(), hasItem("threshold"));
+    assertThat(attributes.keySet(), hasItem("occupancy"));
+    assertThat(attributes.keySet(), hasItem("eventType"));
     assertThat(attributes.keySet(), hasItem("capacity"));
     assertThat(attributes.keySet(), hasItem("available"));
-    
-    assertThat(attributes.get("oldThreshold"), equalTo("0"));
-    assertThat(attributes.get("threshold"), equalTo("75"));
+
+    assertThat(attributes.get("occupancy"), equalTo("0.75"));
+    assertThat(attributes.get("eventType"), equalTo("RISING"));
 
     getCaches("another3");
 
     notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
     attributes = notifications.stream()
         .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
-        .findFirst()
+        .findAny()
         .get()
         .getAttributes();
-    
-    assertThat(attributes.get("oldThreshold"), equalTo("75"));
-    assertThat(attributes.get("threshold"), equalTo("90"));
+
+    assertThat(attributes.get("occupancy"), equalTo("0.9375"));
+    assertThat(attributes.get("eventType"), equalTo("RISING"));
 
     destroyCaches("another3");
 
     notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
     attributes = notifications.stream()
         .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
-        .findFirst()
+        .findAny()
         .get()
         .getAttributes();
-    
-    assertThat(attributes.get("oldThreshold"), equalTo("90"));
-    assertThat(attributes.get("threshold"), equalTo("75"));
+
+    assertThat(attributes.get("occupancy"), equalTo("0.75"));
+    assertThat(attributes.get("eventType"), equalTo("FALLING"));
 
     destroyCaches("another2");
     destroyCaches("another1");
@@ -79,12 +79,12 @@ public class OffHeapLimitReachedIT extends AbstractSingleTest {
     notifications = waitForAllNotifications("OFFHEAP_RESOURCE_THRESHOLD_REACHED");
     attributes = notifications.stream()
         .filter(n -> n.getType().equals("OFFHEAP_RESOURCE_THRESHOLD_REACHED"))
-        .findFirst()
+        .findAny()
         .get()
         .getAttributes();
-    
-    assertThat(attributes.get("oldThreshold"), equalTo("75"));
-    assertThat(attributes.get("threshold"), equalTo("0"));
+
+    assertThat(attributes.get("occupancy"), equalTo("0.5625"));
+    assertThat(attributes.get("eventType"), equalTo("FALLING"));
   }
 
 }

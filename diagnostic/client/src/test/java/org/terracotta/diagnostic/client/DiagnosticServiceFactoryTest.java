@@ -15,7 +15,6 @@
  */
 package org.terracotta.diagnostic.client;
 
-import com.terracotta.diagnostic.Diagnostics;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,10 +28,12 @@ import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionPropertyNames;
 import org.terracotta.connection.ConnectionService;
+import org.terracotta.connection.Diagnostics;
 import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -82,7 +83,8 @@ public class DiagnosticServiceFactoryTest {
         "ConnectionName",
         Duration.ofSeconds(2),
         Duration.ofSeconds(3),
-        null);
+        null,
+        new ObjectMapperFactory());
 
     assertThat(diagnosticService, is(not(nullValue())));
     assertThat(address.getValue().iterator().next(), is(equalTo(addr)));
@@ -103,7 +105,8 @@ public class DiagnosticServiceFactoryTest {
         "ConnectionName",
         Duration.ofSeconds(2),
         Duration.ofSeconds(3),
-        null);
+        null,
+        new ObjectMapperFactory());
 
     verify(connection, times(1)).close();
   }
@@ -121,7 +124,8 @@ public class DiagnosticServiceFactoryTest {
         "ConnectionName",
         Duration.ofSeconds(2),
         Duration.ofSeconds(3),
-        null);
+        null,
+        new ObjectMapperFactory());
 
     verify(connection, times(1)).close();
   }

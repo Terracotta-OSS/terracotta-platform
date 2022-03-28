@@ -57,7 +57,7 @@ public class PassthroughIntegrationTest {
     DATA_ROOT_PATH = folder.newFolder().getAbsolutePath();
 
     this.passthroughServer = new PassthroughServer();
-    this.passthroughServer.registerExtendedConfiguration(new DataDirectoriesConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(null), getConfiguration()));
+    this.passthroughServer.registerExtendedConfiguration(new DataDirsConfigImpl(ParameterSubstitutor::substitute, DataRootConfigParser.getPathResolver(null), getConfiguration()));
     this.passthroughServer.registerServiceProvider(new TestServiceProvider(), null);
     this.passthroughServer.registerAsynchronousServerCrasher(p -> {});
     this.passthroughServer.start(true, false);
@@ -67,15 +67,15 @@ public class PassthroughIntegrationTest {
   public void testDataRootConfig() throws Exception {
     TestService testService = TestServiceProvider.testService;
     assertNotNull(testService);
-    Collection<DataDirectoriesConfig> dataDirectoriesConfigs = testService.getDataRootConfigs();
-    assertNotNull(dataDirectoriesConfigs);
-    assertEquals(1, dataDirectoriesConfigs.size());
+    Collection<DataDirsConfig> dataDirsConfigs = testService.getDataRootConfigs();
+    assertNotNull(dataDirsConfigs);
+    assertEquals(1, dataDirsConfigs.size());
 
-    DataDirectoriesConfig dataDirectoriesConfig = dataDirectoriesConfigs.iterator().next();
+    DataDirsConfig dataDirsConfig = dataDirsConfigs.iterator().next();
     PlatformConfiguration platformConfiguration = mock(PlatformConfiguration.class);
     when(platformConfiguration.getServerName()).thenReturn("server");
 
-    assertEquals(Paths.get(DATA_ROOT_PATH).resolve("server"), dataDirectoriesConfig.getDataDirectoriesForServer(platformConfiguration).getDataDirectory(DATA_ROOT_ID));
+    assertEquals(Paths.get(DATA_ROOT_PATH).resolve("server"), dataDirsConfig.getDataDirectoriesForServer(platformConfiguration).getDataDirectory(DATA_ROOT_ID));
   }
 
   @After
@@ -103,7 +103,7 @@ public class PassthroughIntegrationTest {
     @Override
     public boolean initialize(ServiceProviderConfiguration serviceProviderConfiguration,
                               PlatformConfiguration platformConfiguration) {
-      testService = new TestService(platformConfiguration.getExtendedConfiguration(DataDirectoriesConfig.class));
+      testService = new TestService(platformConfiguration.getExtendedConfiguration(DataDirsConfig.class));
       return true;
     }
 
@@ -125,14 +125,14 @@ public class PassthroughIntegrationTest {
   }
 
   public static class TestService {
-    private final Collection<DataDirectoriesConfig> dataDirectoriesConfigs;
-    public TestService(Collection<DataDirectoriesConfig> dataDirectoriesConfigs) {
+    private final Collection<DataDirsConfig> dataDirsConfigs;
+    public TestService(Collection<DataDirsConfig> dataDirsConfigs) {
 
-      this.dataDirectoriesConfigs = dataDirectoriesConfigs;
+      this.dataDirsConfigs = dataDirsConfigs;
     }
 
-    public Collection<DataDirectoriesConfig> getDataRootConfigs() {
-      return dataDirectoriesConfigs;
+    public Collection<DataDirsConfig> getDataRootConfigs() {
+      return dataDirsConfigs;
     }
   }
 }

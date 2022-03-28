@@ -21,7 +21,11 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
+import org.terracotta.dynamic_config.entity.topology.common.Message;
+import org.terracotta.dynamic_config.entity.topology.common.Response;
+import org.terracotta.dynamic_config.entity.topology.common.Type;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.InvokeFuture;
@@ -29,15 +33,16 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.exception.EntityException;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_HAS_INCOMPLETE_CHANGE;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_LICENSE;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_MUST_BE_RESTARTED;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_RUNTIME_CLUSTER;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.REQ_UPCOMING_CLUSTER;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_HAS_INCOMPLETE_CHANGE;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_LICENSE;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_MUST_BE_RESTARTED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_RUNTIME_CLUSTER;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.REQ_UPCOMING_CLUSTER;
 
 /**
  * @author Mathieu Carbou
@@ -45,36 +50,51 @@ import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopolo
 class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicTopologyEntityImpl.class);
 
-  private final EntityClientEndpoint<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> endpoint;
+  private final EntityClientEndpoint<Message, Response> endpoint;
   private final Settings settings;
 
   private volatile Listener listener = new Listener() {};
 
-  public DynamicTopologyEntityImpl(EntityClientEndpoint<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> endpoint, Settings settings) {
+  public DynamicTopologyEntityImpl(EntityClientEndpoint<Message, Response> endpoint, Settings settings) {
     this.endpoint = endpoint;
     this.settings = settings == null ? new Settings() : settings;
 
-    endpoint.setDelegate(new EndpointDelegate<DynamicTopologyEntityMessage>() {
+    endpoint.setDelegate(new EndpointDelegate<Response>() {
       @Override
-      public void handleMessage(DynamicTopologyEntityMessage messageFromServer) {
-        switch (messageFromServer.getType()) {
-          case EVENT_NODE_ADDITION: {
-            Object[] payload = (Object[]) messageFromServer.getPayload();
-            listener.onNodeAddition((int) payload[0], (Node) payload[1]);
-            break;
+      public void handleMessage(Response messageFromServer) {
+        try {
+          LOGGER.trace("handleMessage({})", messageFromServer);
+          switch (messageFromServer.getType()) {
+            case EVENT_NODE_ADDITION: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onNodeAddition((Cluster) payload.get(0), (UID) payload.get(1));
+              break;
+            }
+            case EVENT_NODE_REMOVAL: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onNodeRemoval((Cluster) payload.get(0), (UID) payload.get(1), (Node) payload.get(2));
+              break;
+            }
+            case EVENT_SETTING_CHANGED: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onSettingChange((Cluster) payload.get(0), (Configuration) payload.get(1));
+              break;
+            }
+            case EVENT_STRIPE_ADDITION: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onStripeAddition((Cluster) payload.get(0), (UID) payload.get(1));
+              break;
+            }
+            case EVENT_STRIPE_REMOVAL: {
+              List<Object> payload = messageFromServer.getPayload();
+              listener.onStripeRemoval((Cluster) payload.get(0), (Stripe) payload.get(1));
+              break;
+            }
+            default:
+              throw new AssertionError(messageFromServer);
           }
-          case EVENT_NODE_REMOVAL: {
-            Object[] payload = (Object[]) messageFromServer.getPayload();
-            listener.onNodeRemoval((int) payload[0], (Node) payload[1]);
-            break;
-          }
-          case EVENT_SETTING_CHANGED: {
-            Object[] payload = (Object[]) messageFromServer.getPayload();
-            listener.onSettingChange((Configuration) payload[0], (Cluster) payload[1]);
-            break;
-          }
-          default:
-            throw new AssertionError(messageFromServer);
+        } catch (RuntimeException e) {
+          LOGGER.error("Error handling message: " + messageFromServer + ": " + e.getMessage(), e);
         }
       }
 
@@ -130,14 +150,14 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
     return endpoint.release();
   }
 
-  public <T> T request(DynamicTopologyEntityMessage.Type messageType, Class<T> type) throws TimeoutException, InterruptedException {
+  public <T> T request(Type messageType, Class<T> type) throws TimeoutException, InterruptedException {
     LOGGER.trace("request({})", messageType);
     Duration requestTimeout = settings.getRequestTimeout();
     try {
-      InvokeFuture<DynamicTopologyEntityMessage> invoke = endpoint.beginInvoke()
-          .message(new DynamicTopologyEntityMessage(messageType))
+      InvokeFuture<Response> invoke = endpoint.beginInvoke()
+          .message(new Message(messageType))
           .invoke();
-      DynamicTopologyEntityMessage response = (requestTimeout == null ? invoke.get() : invoke.getWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS));
+      Response response = (requestTimeout == null ? invoke.get() : invoke.getWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS));
       LOGGER.trace("response({})", response);
       return type.cast(response.getPayload());
     } catch (MessageCodecException | EntityException e) {

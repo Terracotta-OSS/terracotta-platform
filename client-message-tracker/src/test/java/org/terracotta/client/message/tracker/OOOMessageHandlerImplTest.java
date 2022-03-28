@@ -15,21 +15,24 @@
  */
 package org.terracotta.client.message.tracker;
 
+import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.EntityUserException;
 import org.terracotta.entity.InvokeContext;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
+import java.util.stream.Stream;
+import org.hamcrest.Matchers;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
@@ -42,7 +45,13 @@ public class OOOMessageHandlerImplTest {
 
   @Before
   public void setUp() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, m -> 0, () -> {});
+    messageHandler = new OOOMessageHandlerImpl<>(msg -> true, () -> {});
+  }
+
+  private static Map<Long, EntityResponse> toFilteredMap(Stream<RecordedMessage<EntityMessage, EntityResponse>> recorded, ToIntFunction<EntityMessage> segmenter, int targetSegment, ClientSourceId src) {
+    return recorded
+            .filter(t->segmenter.applyAsInt(t.getRequest()) == targetSegment && t.getClientSourceId().toLong() == src.toLong())
+            .collect(Collectors.toMap(RecordedMessage::getTransactionId, RecordedMessage::getResponse));
   }
 
   @Test
@@ -61,7 +70,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testInvokeDoesNotCacheUntrackableResponse() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(msg -> false, 1, m -> 0, () -> {});
+    messageHandler = new OOOMessageHandlerImpl<>(msg -> false, () -> {});
 
     InvokeContext context = new DummyContext(new DummyClientSourceId(1), 25, 18);
     EntityMessage message = mock(EntityMessage.class);
@@ -77,7 +86,7 @@ public class OOOMessageHandlerImplTest {
 
   @Test
   public void testInvokeDoesNotCacheMessagesNotFromRealClients() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, null, () -> {});
+    messageHandler = new OOOMessageHandlerImpl<>(msg -> true, () -> {});
 
     InvokeContext context = mock(InvokeContext.class);
     when(context.isValidClientInformation()).thenReturn(false);
@@ -103,6 +112,7 @@ public class OOOMessageHandlerImplTest {
     assertThat(entityResponse2, sameInstance(entityResponse1));
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void testSegmentation() throws Exception {
     EntityMessage message1 = mock(EntityMessage.class);
@@ -120,7 +130,7 @@ public class OOOMessageHandlerImplTest {
       }
     };
 
-    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, segmentationStrategy, () -> {});
+    messageHandler = new OOOMessageHandlerImpl<>(m -> true, () -> {});
 
     DummyClientSourceId clientSourceId1 = new DummyClientSourceId(1);
     DummyClientSourceId clientSourceId2 = new DummyClientSourceId(2);
@@ -150,84 +160,87 @@ public class OOOMessageHandlerImplTest {
     EntityResponse entityResponse4 = messageHandler.invoke(context4, message4, (ctxt, msg) -> response4);  //message mapped to segment 1
     assertThat(entityResponse4, is(response4));
 
-    Map<Long, EntityResponse> trackedResponsesForClient1Segment0 = messageHandler.getTrackedResponsesForSegment(0, clientSourceId1);
+    Map<Long, EntityResponse> trackedResponsesForClient1Segment0 = toFilteredMap(messageHandler.getRecordedMessages(), segmentationStrategy, 0, clientSourceId1);
     assertThat(trackedResponsesForClient1Segment0.size(), is(2));
     assertThat(trackedResponsesForClient1Segment0.get(txnId1), is(response1));
     assertThat(trackedResponsesForClient1Segment0.get(txnId3), is(response3));
 
-    Map<Long, EntityResponse> trackedResponsesForClient1Segment1 = messageHandler.getTrackedResponsesForSegment(1, clientSourceId1);
+    Map<Long, EntityResponse> trackedResponsesForClient1Segment1 = toFilteredMap(messageHandler.getRecordedMessages(), segmentationStrategy, 1, clientSourceId1);
     assertThat(trackedResponsesForClient1Segment1.size(), is(1));
     assertThat(trackedResponsesForClient1Segment1.get(txnId2), is(response2));
 
-    Map<Long, EntityResponse> trackedResponsesForClient2Segment0 = messageHandler.getTrackedResponsesForSegment(0, clientSourceId2);
+    Map<Long, EntityResponse> trackedResponsesForClient2Segment0 = toFilteredMap(messageHandler.getRecordedMessages(), segmentationStrategy, 0, clientSourceId2);
     assertThat(trackedResponsesForClient2Segment0.size(), is(0));
 
-    Map<Long, EntityResponse> trackedResponsesForClient2Segment1 = messageHandler.getTrackedResponsesForSegment(1, clientSourceId2);
+    Map<Long, EntityResponse> trackedResponsesForClient2Segment1 = toFilteredMap(messageHandler.getRecordedMessages(), segmentationStrategy, 1, clientSourceId2);
     assertThat(trackedResponsesForClient2Segment1.size(), is(1));
     assertThat(trackedResponsesForClient2Segment1.get(txnId4), is(response4));
   }
 
-  @Test
-  public void testLoadTrackedResponsesForSegment() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, m -> 0, () -> {});
+  private static RecordedMessage<EntityMessage, EntityResponse> mockRecorded(EntityMessage msg, EntityResponse resp, long tid, long sid, ClientSourceId cid) {
+    return new SequencedRecordedMessage<EntityMessage, EntityResponse>() {
+      @Override
+      public long getSequenceId() {
+        return sid;
+      }
 
-    EntityResponse response1 = mock(EntityResponse.class);
-    EntityResponse response2 = mock(EntityResponse.class);
+      @Override
+      public ClientSourceId getClientSourceId() {
+        return cid;
+      }
 
-    Map<Long, EntityResponse> trackedResponsesForSegment1 = new HashMap<>();
-    trackedResponsesForSegment1.put(1L, response1);
-    trackedResponsesForSegment1.put(2L, response2);
+      @Override
+      public long getTransactionId() {
+        return tid;
+      }
 
-    Map<Long, EntityResponse> trackedResponsesForSegment2 = new HashMap<>();
-    trackedResponsesForSegment2.put(3L, response1);
-    trackedResponsesForSegment2.put(4L, response2);
+      @Override
+      public EntityMessage getRequest() {
+        return msg;
+      }
 
-    DummyClientSourceId clientSourceId = new DummyClientSourceId(1);
-    messageHandler.loadTrackedResponsesForSegment(0, clientSourceId, trackedResponsesForSegment1);
-    messageHandler.loadTrackedResponsesForSegment(1, clientSourceId, trackedResponsesForSegment2);
-
-    Map<Long, EntityResponse> trackedResponses1 = messageHandler.getTrackedResponsesForSegment(0, clientSourceId);
-    assertThat(trackedResponses1.size(), is(2));
-    assertThat(trackedResponsesForSegment1, is(trackedResponsesForSegment1));
-
-    Map<Long, EntityResponse> trackedResponses2 = messageHandler.getTrackedResponsesForSegment(1, clientSourceId);
-    assertThat(trackedResponses2.size(), is(2));
-    assertThat(trackedResponses2, is(trackedResponsesForSegment2));
+      @Override
+      public EntityResponse getResponse() {
+        return resp;
+      }
+    };
   }
 
   @SuppressWarnings("deprecation")
   @Test
-  public void testLoadOnSyncWithOldServer() throws Exception {
-    messageHandler = new OOOMessageHandlerImpl<>(m -> true, 2, m -> 0, () -> {});
+  public void testLoadTrackedResponsesForSegment() throws Exception {
+    List<EntityMessage> seg1 = new ArrayList<>(2);
+    ToIntFunction<EntityMessage> segments = m -> seg1.contains(m) ? 0 : 1;
 
-    long txnId1 = 25;
-    long txnId2 = 26;
+    messageHandler = new OOOMessageHandlerImpl<>(m -> true, () -> {});
+
+    EntityMessage message1 = mock(EntityMessage.class);
+    seg1.add(message1);
+    EntityMessage message2 = mock(EntityMessage.class);
+    seg1.add(message2);
+    EntityMessage message3 = mock(EntityMessage.class);
+    EntityMessage message4 = mock(EntityMessage.class);
     EntityResponse response1 = mock(EntityResponse.class);
     EntityResponse response2 = mock(EntityResponse.class);
-
-    Map<Long, EntityResponse> trackedResponsesForSharedTracker = new HashMap<>();
-    trackedResponsesForSharedTracker.put(txnId1, response1);
-    trackedResponsesForSharedTracker.put(txnId2, response2);
-
     DummyClientSourceId clientSourceId = new DummyClientSourceId(1);
-    messageHandler.loadOnSync(clientSourceId, trackedResponsesForSharedTracker);
 
-    assertThat(messageHandler.getTrackedResponsesForSegment(0, clientSourceId).size(), is(0));
-    assertThat(messageHandler.getTrackedResponsesForSegment(1, clientSourceId).size(), is(0));
+    List<RecordedMessage<EntityMessage, EntityResponse>> tracked = new ArrayList<>();
+    tracked.add(mockRecorded(message1, response1, 1L, 1L, clientSourceId));
+    tracked.add(mockRecorded(message2, response2, 2L, 2L, clientSourceId));
+    tracked.add(mockRecorded(message3, response1, 3L, 3L, clientSourceId));
+    tracked.add(mockRecorded(message4, response2, 4L, 4L, clientSourceId));
 
-    InvokeContext context1 = new DummyContext(clientSourceId, txnId1, 18);
-    InvokeContext context2 = new DummyContext(clientSourceId, txnId2, txnId2);
-    EntityMessage message1 = mock(EntityMessage.class);
-    EntityMessage message2 = mock(EntityMessage.class);
+    messageHandler.loadRecordedMessages(tracked.stream());
 
-    EntityResponse entityResponse = messageHandler.invoke(context1, message1, null);
-    assertThat(entityResponse, is(response1));
-    entityResponse = messageHandler.invoke(context2, message2, null);
-    assertThat(entityResponse, is(response2));
+    Map<Long, EntityResponse> trackedResponses1 = toFilteredMap(messageHandler.getRecordedMessages(), segments, 0, clientSourceId);
+    assertThat(trackedResponses1.size(), is(2));
+    assertThat(trackedResponses1.keySet(), Matchers.contains(1L, 2L));
+    assertThat(trackedResponses1.values(), Matchers.contains(response1, response2));
 
-    EntityResponse response3 = mock(EntityResponse.class);
-    entityResponse = messageHandler.invoke(context1, message1, (ctxt, msg) -> response3); //Previous invoke should have reconciled the cached response1 for context1
-    assertThat(entityResponse, is(response3));
+    Map<Long, EntityResponse> trackedResponses2 = toFilteredMap(messageHandler.getRecordedMessages(), segments, 1, clientSourceId);
+    assertThat(trackedResponses2.size(), is(2));
+    assertThat(trackedResponses2.keySet(), Matchers.contains(3L, 4L));
+    assertThat(trackedResponses2.values(), Matchers.contains(response1, response2));
   }
 
   @Test
@@ -255,7 +268,7 @@ public class OOOMessageHandlerImplTest {
       }
     };
 
-    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy, 2, segmentationStrategy, () -> {});
+    messageHandler = new OOOMessageHandlerImpl<>(trackerPolicy,  () -> {});
 
     DummyClientSourceId clientSourceId1 = new DummyClientSourceId(1);
     DummyClientSourceId clientSourceId2 = new DummyClientSourceId(2);
@@ -276,26 +289,6 @@ public class OOOMessageHandlerImplTest {
     assertThat(clients.contains(clientSourceId1), is(true));
     assertThat(clients.contains(clientSourceId2), is(true));
     assertThat(clients.contains(clientSourceId3), is(false));
-  }
-
-  /**
-   * Test just making sure we got all the typing right. If it compiles, it means we do
-   *
-   * @throws EntityUserException
-   */
-  @Test
-  public void testTyping() throws EntityUserException {
-    OOOMessageHandler<DummyEntityMessage, DummyEntityResponse> messageHandler = new OOOMessageHandlerImpl<>(msg -> true, 1, m -> 0, () -> {});
-
-    DummyClientSourceId clientSourceId = new DummyClientSourceId(1);
-    InvokeContext context = new DummyContext(clientSourceId, 25, 25);
-    DummyEntityMessage message = new DummyEntityMessage();
-    DummyEntityResponse response = messageHandler.invoke(context, message, this::invokeActiveInternal);
-
-    Map<Long, DummyEntityResponse> messages = new HashMap<>();
-    messageHandler.loadTrackedResponsesForSegment(0, clientSourceId, messages);
-
-    Map<Long, DummyEntityResponse> responses = messageHandler.getTrackedResponsesForSegment(0, clientSourceId);
   }
 
   private DummyEntityResponse invokeActiveInternal(InvokeContext context, DummyEntityMessage message) {

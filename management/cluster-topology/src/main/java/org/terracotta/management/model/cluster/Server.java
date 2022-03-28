@@ -229,7 +229,7 @@ public final class Server extends AbstractNode<Stripe> {
     String consumerId = context.get(ServerEntity.CONSUMER_ID);
     if (consumerId != null) {
       long cid = Long.parseLong(consumerId);
-      return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == cid).findFirst();
+      return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == cid).findAny();
     }
     return Optional.empty();
   }
@@ -239,7 +239,7 @@ public final class Server extends AbstractNode<Stripe> {
   }
 
   public final Optional<ServerEntity> getServerEntity(long consumerId) {
-    return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == consumerId).findFirst();
+    return serverEntityStream().filter(serverEntity -> serverEntity.getConsumerId() == consumerId).findAny();
   }
 
   public final Optional<ServerEntity> getServerEntity(String id) {
@@ -247,7 +247,7 @@ public final class Server extends AbstractNode<Stripe> {
   }
 
   public final Optional<ServerEntity> getServerEntity(String name, String type) {
-    return serverEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findFirst();
+    return serverEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findAny();
   }
 
   public final boolean hasServerEntity(String name, String type) {
@@ -379,6 +379,26 @@ public final class Server extends AbstractNode<Stripe> {
      * Active server is ready to receive clients
      */
     ACTIVE("ACTIVE", "ACTIVE-COORDINATOR"),
+
+    /**
+     * Active server is blocked because of consistency votes
+     */
+    ACTIVE_SUSPENDED("ACTIVE_SUSPENDED"),
+
+    /**
+     * Passive server is blocked because of consistency votes
+     */
+    PASSIVE_SUSPENDED("PASSIVE_SUSPENDED"),
+
+    /**
+     * Server startup is suspended
+     */
+    START_SUSPENDED("START_SUSPENDED"),
+
+    /**
+     * DC configuration mode (only diagnostic port is available)
+     */
+    DIAGNOSTIC("DIAGNOSTIC"),
 
     /**
      * Status returned when parsing failed

@@ -17,44 +17,36 @@ package org.terracotta.dynamic_config.cli.command;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.slf4j.LoggerFactory;
 
-import java.util.stream.Stream;
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
-@Parameters(commandNames = LocalMainCommand.NAME)
 public class LocalMainCommand extends Command {
-  public static final String NAME = "main";
 
-  @Parameter(names = {"-v", "--verbose"}, description = "Verbose mode. Default: false")
-  private boolean verbose = false;
+  @Parameter(names = {"-verbose", "-v", "--verbose"}, description = "Verbose mode. Default: false")
+  public boolean verbose = false;
 
   @Override
   public void run() {
     if (verbose) {
-      Logger rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-      rootLogger.setLevel(Level.INFO);
-      Appender<ILoggingEvent> detailAppender = rootLogger.getAppender("STDOUT-DETAIL");
+      Logger rootLogger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
 
-      Stream.of(
-          "org.terracotta.dynamic_config",
-          "org.terracotta.nomad",
-          "org.terracotta.persistence.sanskrit",
-          "org.terracotta.diagnostic"
-      ).forEach(name -> {
-        Logger logger = (Logger) LoggerFactory.getLogger(name);
-        logger.setLevel(Level.TRACE);
-        //Detach the STDOUT appender which logs in a minimal pattern and attached STDOUT-DETAIL appender
-        logger.detachAppender("STDOUT");
-        logger.addAppender(detailAppender);
-      });
+      ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("STDERR");
+      if (appender == null) {
+        throw new IllegalStateException("Logging appender 'STDERR' is missing!");
+      }
+      PatternLayoutEncoder ple = new PatternLayoutEncoder();
+      ple.setPattern("%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n");
+      ple.setContext(appender.getContext());
+      ple.start();
+
+      appender.setEncoder(ple);
+      rootLogger.setLevel(Level.TRACE);
+      rootLogger.getLoggerContext().getLoggerList().forEach(logger -> logger.setLevel(Level.TRACE));
     }
-  }
-
-  public boolean isVerbose() {
-    return verbose;
   }
 }

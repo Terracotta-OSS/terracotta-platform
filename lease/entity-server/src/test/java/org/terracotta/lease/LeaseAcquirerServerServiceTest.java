@@ -55,8 +55,7 @@ public class LeaseAcquirerServerServiceTest {
   public void isPermanentEntity() {
     PermanentEntity permanentEntity = LeaseAcquirerServerService.class.getAnnotation(PermanentEntity.class);
     assertEquals(LeaseAcquirer.class.getCanonicalName(), permanentEntity.type());
-    assertEquals(1, permanentEntity.names().length);
-    assertEquals("SystemLeaseAcquirer", permanentEntity.names()[0]);
+    assertEquals("SystemLeaseAcquirer", permanentEntity.name());
     assertEquals(1L, permanentEntity.version());
   }
 

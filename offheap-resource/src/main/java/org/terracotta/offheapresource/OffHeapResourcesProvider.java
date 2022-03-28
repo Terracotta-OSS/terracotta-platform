@@ -84,7 +84,14 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
 
   @Override
   public boolean addOffHeapResource(OffHeapResourceIdentifier identifier, long capacityInBytes) {
-    return addToResources(identifier, capacityInBytes);
+    boolean wasAdded = addToResources(identifier, capacityInBytes);
+    if (wasAdded) {
+      for (EntityManagementRegistry registry : registries) {
+        OffHeapResourceBinding managementBinding = getOffHeapResource(identifier).getManagementBinding();
+        registry.registerAndRefresh(managementBinding);
+      }
+    }
+    return wasAdded;
   }
 
   @Override
@@ -162,14 +169,14 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
       OffHeapResourceImpl offHeapResource = new OffHeapResourceImpl(
           identifier.getName(),
           capacityInBytes,
-          (res, update) -> {
+          (event) -> {
             for (EntityManagementRegistry registry : registries) {
               Map<String, String> attrs = new HashMap<>();
-              attrs.put("oldThreshold", String.valueOf(update.old));
-              attrs.put("threshold", String.valueOf(update.now));
-              attrs.put("capacity", String.valueOf(res.capacity()));
-              attrs.put("available", String.valueOf(res.available()));
-              registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);
+              attrs.put("occupancy", Float.toString(event.getOccupancy()));
+              attrs.put("eventType", String.valueOf(event.getEventType()));
+              attrs.put("capacity", Long.toString(event.getTotal()));
+              attrs.put("available", Long.toString(event.getAvailable()));
+              registry.pushServerEntityNotification(getOffHeapResource(identifier).getManagementBinding(), "OFFHEAP_RESOURCE_THRESHOLD_REACHED", attrs);
             }
           },
           (res, oldCapacity, newCapacity) -> {
@@ -178,6 +185,7 @@ public class OffHeapResourcesProvider implements OffHeapResources, ManageableSer
               Map<String, String> attrs = new HashMap<>();
               attrs.put("oldCapacity", Long.toString(oldCapacity));
               attrs.put("newCapacity", Long.toString(newCapacity));
+              registry.refresh();
               registry.pushServerEntityNotification(res.getManagementBinding(), "OFFHEAP_RESOURCE_CAPACITY_CHANGED", attrs);
             }
           }

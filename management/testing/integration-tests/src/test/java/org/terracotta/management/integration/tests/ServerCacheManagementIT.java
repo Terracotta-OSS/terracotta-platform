@@ -44,7 +44,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     ManagementRegistry registry = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(serverEntity -> serverEntity.getName().equals("pet-clinic/clients"))
-        .findFirst()
+        .findAny()
         .flatMap(ServerEntity::getManagementRegistry)
         .get();
 
@@ -65,11 +65,11 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     registry = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(serverEntity -> serverEntity.getType().equals(NmsConfig.ENTITY_TYPE))
-        .findFirst()
+        .findAny()
         .flatMap(ServerEntity::getManagementRegistry)
         .get();
 
-    assertThat(registry.getCapabilities().size(), equalTo(5));
+    assertThat(registry.getCapabilities().size(), equalTo(3));
     assertThat(registry.getCapability("OffHeapResourceSettings"), is(notNullValue()));
     assertThat(registry.getCapability("OffHeapResourceStatistics"), is(notNullValue()));
     assertThat(registry.getCapability("StatisticCollectorCapability"), is(notNullValue()));
@@ -80,7 +80,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     ServerEntity serverEntity = nmsService.readTopology()
         .activeServerEntityStream()
         .filter(e -> e.getName().equals("pet-clinic/pets"))
-        .findFirst()
+        .findAny()
         .get();
 
     Context context = serverEntity.getContext().with("cacheName", "pet-clinic/pets");
@@ -127,6 +127,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     JsonNode expected = readJson("stats.json");
     queryAllRemoteStatsUntil(stats -> {
       JsonNode actual = removeRandomValues(toJson(stats));
+      System.out.println(actual.toPrettyString());
       return actual.equals(expected);
     });
 

@@ -55,13 +55,18 @@ public class DiscoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, String reason) {
+  public void discoverFail(InetSocketAddress server, Throwable reason) {
     receiver.discoverFail(server, reason);
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
-    receiver.discoverClusterInconsistent(changeUuid, committedServers, rolledBackServers);
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+    receiver.discoverConfigInconsistent(changeUuid, committedServers, rolledBackServers);
+  }
+
+  @Override
+  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+    receiver.discoverConfigPartitioned(partitions);
   }
 
   @Override
@@ -105,7 +110,7 @@ public class DiscoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, String reason) {
+  public void prepareFail(InetSocketAddress server, Throwable reason) {
     throw new AssertionError("This should not be called during the recovery process");
   }
 
