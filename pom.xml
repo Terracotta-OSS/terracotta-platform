@@ -35,11 +35,13 @@
     <terracotta-core.version>5.7.0-pre8</terracotta-core.version>
     <tripwire.version>1.0.0-pre4</tripwire.version>
     <statistics.version>2.1</statistics.version>
-    <jackson-databind.version>2.9.9</jackson-databind.version>
-    <jackson-annotations.version>2.9.0</jackson-annotations.version>
+    <jackson.version>2.13.2.20220324</jackson.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <java.version>1.8</java.version>
+    <terracotta-utilities.version>0.0.9</terracotta-utilities.version>
+    <test.parallel.forks>4</test.parallel.forks>
+    <jna.version>5.9.0</jna.version>
   </properties>
 
   <modules>
@@ -161,24 +163,11 @@
         <version>${terracotta-apis.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${jackson-databind.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${jackson-annotations.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jdk8</artifactId>
-        <version>${jackson-databind.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>${jackson-databind.version}</version>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jaxb</groupId>

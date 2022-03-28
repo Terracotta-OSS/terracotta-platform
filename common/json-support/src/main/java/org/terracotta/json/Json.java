@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.github.classgraph.ClassGraph;
@@ -56,9 +57,9 @@ public class Json {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Json.class);
 
-  private static final ObjectMapper OBJECT_MAPPER = installSupportedModules(new ObjectMapper()
-      .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
-      .setDefaultPropertyInclusion(JsonInclude.Include.NON_ABSENT)
+  private static final ObjectMapper OBJECT_MAPPER = installSupportedModules(JsonMapper.builder()
+      .serializationInclusion(JsonInclude.Include.NON_ABSENT)
+      .defaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_ABSENT, JsonInclude.Include.NON_ABSENT))
       .enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
       .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
       .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
@@ -66,6 +67,7 @@ public class Json {
       .enable(SerializationFeature.CLOSE_CLOSEABLE)
       .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
       .configure(SerializationFeature.INDENT_OUTPUT, false)
+      .build()
   );
 
   public static ObjectMapper copyObjectMapper() {
