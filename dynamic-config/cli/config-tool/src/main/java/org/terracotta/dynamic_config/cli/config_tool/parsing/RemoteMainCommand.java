@@ -27,11 +27,11 @@ public class RemoteMainCommand extends LocalMainCommand {
   @Parameter(names = {"-entity-request-timeout", "-er", "--entity-request-timeout"}, hidden = true, description = "Entity operation timeout. Default: 120s", converter = TimeUnitConverter.class)
   private Measure<TimeUnit> entityOperationTimeout;
 
-  @Parameter(names = {"-request-timeout", "-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> requestTimeout = Measure.of(10, TimeUnit.SECONDS);
+  @Parameter(names = {"-request-timeout", "-r", "--request-timeout"}, description = "Request timeout. Default: 30s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> requestTimeout = Measure.of(30, TimeUnit.SECONDS);
 
-  @Parameter(names = {"-connect-timeout", "-connection-timeout", "-t", "--connection-timeout"}, description = "Connection timeout. Default: 10s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> connectionTimeout = Measure.of(10, TimeUnit.SECONDS);
+  @Parameter(names = {"-connect-timeout", "-connection-timeout", "-t", "--connection-timeout"}, description = "Connection timeout. Default: 30s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> connectionTimeout = Measure.of(30, TimeUnit.SECONDS);
 
   @Parameter(names = {"-security-root-directory", "-srd", "--security-root-directory"}, description = "Security root directory")
   private String securityRootDirectory;
