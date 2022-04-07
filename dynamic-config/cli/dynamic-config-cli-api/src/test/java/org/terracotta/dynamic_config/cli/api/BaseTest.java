@@ -17,6 +17,8 @@ package org.terracotta.dynamic_config.cli.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.connection.ConnectionException;
@@ -50,6 +52,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -97,6 +100,9 @@ public abstract class BaseTest {
     }
     return entity;
   });
+
+  @Rule
+  public Timeout timeout = Timeout.builder().withLookingForStuckThread(true).withTimeout(1, TimeUnit.MINUTES).build();
 
   @Before
   public void setUp() throws Exception {

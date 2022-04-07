@@ -42,7 +42,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -75,12 +74,18 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 @RunWith(MockitoJUnitRunner.class)
 public class DiagnosticServiceImplTest {
 
-  @Rule public ExpectedException exception = ExpectedException.none();
-  @Mock public Diagnostics diagnostics;
-  @Mock public Connection connection;
-  @Spy public JsonDiagnosticCodec jsonCodec = new JsonDiagnosticCodec(new ObjectMapperFactory());
-  @Spy public JavaDiagnosticCodec javaCodec;
-  @Captor public ArgumentCaptor<String> request;
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
+  @Mock
+  public Diagnostics diagnostics;
+  @Mock
+  public Connection connection;
+  @Spy
+  public JsonDiagnosticCodec jsonCodec = new JsonDiagnosticCodec(new ObjectMapperFactory());
+  @Spy
+  public JavaDiagnosticCodec javaCodec;
+  @Captor
+  public ArgumentCaptor<String> request;
 
   DiagnosticService service;
   ObjectMapper objectMapper = new ObjectMapperFactory().create();
@@ -114,15 +119,10 @@ public class DiagnosticServiceImplTest {
 
   @Test
   public void test_isConnected() {
-    Stream.of("foo", MESSAGE_NOT_PERMITTED, MESSAGE_UNKNOWN_COMMAND, MESSAGE_INVALID_JMX).forEach(ret -> {
-      when(diagnostics.getState()).thenReturn(ret);
-      assertThat(service.isConnected(), is(true));
-    });
-    Stream.of(null, MESSAGE_REQUEST_TIMEOUT).forEach(ret -> {
-      when(diagnostics.getState()).thenReturn(ret);
-      assertThat(service.isConnected(), is(false));
-    });
-    verify(diagnostics, times(6)).getState();
+    when(connection.isValid()).thenReturn(true);
+    assertThat(service.isConnected(), is(true));
+    when(connection.isValid()).thenReturn(false);
+    assertThat(service.isConnected(), is(false));
   }
 
   @Test
@@ -291,7 +291,9 @@ public class DiagnosticServiceImplTest {
     private static final long serialVersionUID = 1L;
     final int time;
 
-    public Food(int time) {this.time = time;}
+    public Food(int time) {
+      this.time = time;
+    }
 
     public int getTime() {
       return time;

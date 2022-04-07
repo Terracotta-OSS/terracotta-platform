@@ -16,6 +16,7 @@
 package org.terracotta.diagnostic.client.connection;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -67,6 +68,13 @@ public interface MultiDiagnosticServiceProvider {
   <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses);
 
   /**
+   * Same as above but allows to override the connection timeout.
+   * If timeout is null, we will use a specific mode to ask TC client to connect once with its short hard-coded
+   * timeout of 5 seconds.
+   */
+  <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses, Duration connectionTimeout);
+
+  /**
    * Concurrently fetch any single online diagnostic service of all the provided nodes.
    * The method will not fail, except if some connection timeout is reached.
    * Offline nodes are ignored.
@@ -76,4 +84,11 @@ public interface MultiDiagnosticServiceProvider {
    * @param <K> a node identifier
    */
   <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses);
+
+  /**
+   * Same as above but allows to override the connection timeout.
+   * If timeout is null, we will use a specific mode to ask TC client to connect once with its short hard-coded
+   * timeout of 5 seconds.
+   */
+  <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, Duration connectionTimeout);
 }

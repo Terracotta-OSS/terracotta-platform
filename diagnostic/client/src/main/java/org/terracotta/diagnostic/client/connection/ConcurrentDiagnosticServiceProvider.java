@@ -50,15 +50,25 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
 
   @Override
   public <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses) {
-    return _fetchOnlineDiagnosticService(addresses, false);
+    return _fetchOnlineDiagnosticService(addresses, false, connectionTimeout);
+  }
+
+  @Override
+  public <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses, Duration connectionTimeout) {
+    return _fetchOnlineDiagnosticService(addresses, false, connectionTimeout);
   }
 
   @Override
   public <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses) {
-    return _fetchOnlineDiagnosticService(addresses, true);
+    return _fetchOnlineDiagnosticService(addresses, true, connectionTimeout);
   }
 
-  private <K> DiagnosticServices<K> _fetchOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, boolean firstAvailable) {
+  @Override
+  public <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, Duration connectionTimeout) {
+    return _fetchOnlineDiagnosticService(addresses, true, connectionTimeout);
+  }
+
+  private <K> DiagnosticServices<K> _fetchOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, boolean firstAvailable, Duration connTimeout) {
     if (addresses.isEmpty()) {
       return new DiagnosticServices<>(emptyMap(), emptyMap());
     }
@@ -71,10 +81,10 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
       CompletionService<Tuple3<K, DiagnosticService, DiagnosticServiceProviderException>> completionService = new ExecutorCompletionService<>(executor);
 
       // start all the fetches, record error if any
-      TimeBudget timeBudget = new TimeBudget(connectionTimeout.toMillis(), MILLISECONDS);
+      final TimeBudget timeBudget = connTimeout == null ? null : new TimeBudget(connTimeout.toMillis(), MILLISECONDS);
       addresses.forEach((id, address) -> completionService.submit(() -> {
         try {
-          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, Duration.ofMillis(timeBudget.remaining()));
+          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, timeBudget == null ? null : Duration.ofMillis(timeBudget.remaining()));
           return tuple3(id, diagnosticService, null);
         } catch (DiagnosticServiceProviderException e) {
           return tuple3(id, null, e);
