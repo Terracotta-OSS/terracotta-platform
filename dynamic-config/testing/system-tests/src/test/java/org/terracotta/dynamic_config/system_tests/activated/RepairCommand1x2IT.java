@@ -43,21 +43,14 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class RepairCommand1x2IT extends DynamicConfigIT {
 
-  public RepairCommand1x2IT() {
-    super(Duration.ofSeconds(300));
-  }
-
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
-  public void test_repair_partial_commit_when_passive_down() throws Exception {
+  public void test_repair_partial_commit_when_passive_down() {
     startNode(1, 1);
     startNode(1, 2);
-    waitForDiagnostic(1, 1);
-    waitForDiagnostic(1, 2);
     activate1x2Cluster();
 
-    final int activeId = findActive(1).getAsInt();
-    final int passiveId = findPassives(1)[0];
+    final int activeId = waitForActive(1);
+    final int passiveId = waitForNPassives(1, 1)[0];
 
     // triggers a failure during Nomad commit phase on all servers
     // active entity will return the failure to the nomad client (commit phase done through entity)
@@ -102,8 +95,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     startNode(1, 2);
     activate1x2Cluster();
 
-    final int activeId = findActive(1).getAsInt();
-    final int passiveId = findPassives(1)[0];
+    final int activeId = waitForActive(1);
+    final int passiveId = waitForNPassives(1, 1)[0];
 
     //create failover while committing
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
@@ -113,8 +106,9 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     stopNode(1, passiveId);
 
     // detach command will kill the active, so the stripe will go down
+    entityOperationTimeout = Duration.ofSeconds(5); // to not be stuck in failover
     assertThat(
-        configTool("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
     // we restart the active
@@ -153,16 +147,17 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     startNode(1, 2);
     activate1x2Cluster();
 
-    final int activeId = findActive(1).getAsInt();
-    final int passiveId = findPassives(1)[0];
+    final int activeId = waitForActive(1);
+    final int passiveId = waitForNPassives(1, 1)[0];
 
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
 
     //setup for failover in commit phase on active
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
+    entityOperationTimeout = Duration.ofSeconds(5); // to not be stuck in failover
     assertThat(
-        configTool("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Commit failed for node localhost:" + getNodePort(1, activeId) + ". Reason: java.util.concurrent.TimeoutException"));
 
     // Stripe is lost no active
@@ -192,13 +187,13 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
   @Test
   @InlineServers(false)
-  public void test_repair_detached_node_restarting_as_active() throws Exception {
+  public void test_repair_detached_node_restarting_as_active() {
     startNode(1, 1);
     startNode(1, 2);
     activate1x2Cluster();
 
-    final int activeId = findActive(1).getAsInt();
-    final int passiveId = findPassives(1)[0];
+    final int activeId = waitForActive(1);
+    final int passiveId = waitForNPassives(1, 1)[0];
 
     //create failover while committing
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverDeletion=killDeletion-commit";
@@ -207,8 +202,9 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     stopNode(1, passiveId);
 
     //Both active and passive is down.
+    entityOperationTimeout = Duration.ofSeconds(5); // to not be stuck in failover
     assertThat(
-        configTool("-er", "40s", "detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
+        configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)),
         containsOutput("Two-Phase commit failed"));
 
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
@@ -250,11 +246,9 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
   public void test_reset_node() {
     // reset diagnostic node
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(configTool("repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForStopped(1, 1);
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
 
     // reset activated node
     assertThat(configTool("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
@@ -262,14 +256,12 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     assertThat(configTool("repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForStopped(1, 1);
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
 
     // reset node restarted in repair mode
     assertThat(configTool("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForActive(1, 1);
     stopNode(1, 1);
     startNode(1, 1, "-r", getNode(1, 1).getConfigRepo(), "--repair-mode");
-    waitForDiagnostic(1, 1);
     assertThat(configTool("repair", "-f", "reset", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForStopped(1, 1);
     startNode(1, 1);
@@ -279,7 +271,6 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     stopNode(1, 1);
     // restart but not in repair mode (angela keeps last params used)
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(configTool("activate", "-n", "my-cluster", "-s", "localhost:" + getNodePort()), is(successful()));
     waitForActive(1, 1);
   }
@@ -290,8 +281,8 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     startNode(1, 2);
     activate1x2Cluster();
 
-    final int activeId = findActive(1).getAsInt();
-    final int passiveId = findPassives(1)[0];
+    final int activeId = waitForActive(1);
+    final int passiveId = waitForNPassives(1, 1)[0];
 
     // export config
     String exportPath = tmpDir.getRoot().resolve("export.properties").toAbsolutePath().toString();
@@ -304,7 +295,6 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     // start it in repair mode
     startNode(1, passiveId, "-r", getNode(1, passiveId).getConfigRepo(), "--repair-mode");
-    waitForDiagnostic(1, passiveId);
 
     // reset
     assertThat(configTool("repair", "-force", "reset", "-connect-to", "localhost:" + getNodePort(1, passiveId)), is(successful()));
@@ -312,7 +302,6 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
 
     // start it again
     startNode(1, passiveId);
-    waitForDiagnostic(1, passiveId);
 
     // restricted activation
     assertThat(

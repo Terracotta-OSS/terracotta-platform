@@ -46,8 +46,6 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
 
   @Test
   public void testSingleNodeStartupFromCliParamsAndActivateCommand() {
-    waitForDiagnostic(1, 1);
-
     assertThat(configTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
 
     waitForActive(1);
@@ -55,9 +53,6 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
 
   @Test
   public void testMultiNodeStartupFromCliParamsAndActivateCommand() {
-    waitForDiagnostic(1, 1);
-    waitForDiagnostic(1, 2);
-
     assertThat(configTool("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2)), is(successful()));
 
     assertThat(configTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));

@@ -71,7 +71,6 @@ public class NodeStartupIT extends DynamicConfigIT {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
 
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getHostname(), is(equalTo("localhost")));
   }
 
@@ -239,7 +238,6 @@ public class NodeStartupIT extends DynamicConfigIT {
     Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
     startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
 
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort()).getSingleNode().get().getHostname(), is(equalTo("localhost")));
   }
 

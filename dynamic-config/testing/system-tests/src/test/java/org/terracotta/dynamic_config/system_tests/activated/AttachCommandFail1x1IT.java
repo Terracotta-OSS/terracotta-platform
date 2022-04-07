@@ -34,13 +34,11 @@ public class AttachCommandFail1x1IT extends DynamicConfigIT {
   public void attachFailAtPrepareOnlyActiveInStripe() throws Exception {
     // activate a 1x1 cluster
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //create prepare failure

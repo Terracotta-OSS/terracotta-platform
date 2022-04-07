@@ -115,7 +115,6 @@ public class LockConfigIT extends DynamicConfigIT {
     assertThat(Props.toString(Props.load(exportedConfigPath)), Props.load(exportedConfigPath).stringPropertyNames(), hasItem("lock-context"));
 
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
 
     assertThat(
         configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportedConfigPath.toString()),
@@ -165,14 +164,12 @@ public class LockConfigIT extends DynamicConfigIT {
     assertThat(configTool(newArgs.toArray(new String[0])), is(successful()));
   }
 
-  private void activate() throws Exception {
+  private void activate() {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
