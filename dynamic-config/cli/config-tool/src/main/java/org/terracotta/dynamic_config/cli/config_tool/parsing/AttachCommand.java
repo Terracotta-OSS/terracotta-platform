@@ -17,21 +17,18 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.cli.api.command.AttachAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.RestartCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
 
 @Parameters(commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
 @Usage("(-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>) [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
-public class AttachCommand extends Command {
+public class AttachCommand extends RestartCommand {
 
   @Parameter(names = {"-to-cluster"}, description = "Cluster to attach to", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress destinationClusterAddress;
@@ -44,12 +41,6 @@ public class AttachCommand extends Command {
 
   @Parameter(names = {"-node"}, description = "Node to be attached", converter = InetSocketAddressConverter.class)
   protected InetSocketAddress sourceNodeAddress;
-
-  @Parameter(names = {"-restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
-  protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-
-  @Parameter(names = {"-restart-delay"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
-  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Parameter(names = {"-force"}, description = "Force the operation", hidden = true)
   protected boolean force;
@@ -88,8 +79,8 @@ public class AttachCommand extends Command {
       action.setSourceAddress(sourceNodeAddress);
     }
     action.setForce(force);
-    action.setRestartWaitTime(restartWaitTime);
-    action.setRestartDelay(restartDelay);
+    action.setRestartWaitTime(getRestartWaitTime());
+    action.setRestartDelay(getRestartDelay());
 
     action.run();
   }

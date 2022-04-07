@@ -17,6 +17,8 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing.deprecated;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.terracotta.common.struct.Measure;
+import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.cli.api.command.ConfigurationInput;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.command.UnsetAction;
@@ -25,6 +27,7 @@ import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.ConfigurationInputConverter;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
+import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -38,6 +41,12 @@ public class DeprecatedUnsetCommand extends Command {
 
   @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationInputConverter.class)
   List<ConfigurationInput> inputs;
+
+  @Parameter(names = {"-W"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
+
+  @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
+  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Inject
   public final UnsetAction action;
@@ -54,6 +63,8 @@ public class DeprecatedUnsetCommand extends Command {
   public void run() {
     action.setNode(node);
     action.setConfigurationInputs(inputs);
+    action.setRestartDelay(restartDelay);
+    action.setRestartWaitTime(restartWaitTime);
 
     action.run();
   }
