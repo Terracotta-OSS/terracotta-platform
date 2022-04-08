@@ -51,6 +51,14 @@
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>voter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>common</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.hamcrest</groupId>
