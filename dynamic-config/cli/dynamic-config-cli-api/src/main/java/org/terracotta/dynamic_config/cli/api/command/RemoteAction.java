@@ -559,7 +559,7 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final void resetAndStop(InetSocketAddress expectedOnlineNode) {
-    output.info("Reset node: {}. Node will stop in 5 seconds", expectedOnlineNode);
+    output.info("Reset node: {}. Node will stop...", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
       proxy.reset();
