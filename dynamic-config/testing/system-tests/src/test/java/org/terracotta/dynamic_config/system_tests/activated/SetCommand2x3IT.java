@@ -20,7 +20,6 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
 import java.util.stream.Stream;
 
 import static java.util.function.Predicate.isEqual;
@@ -36,13 +35,9 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(stripes = 2, nodesPerStripe = 3, autoActivate = true)
 public class SetCommand2x3IT extends DynamicConfigIT {
 
-  public SetCommand2x3IT() {
-    super(Duration.ofMinutes(5));
-  }
-
   @Test
   public void testAutoRestart() {
-    int passiveId = findPassives(1)[0];
+    int passiveId = waitForNPassives(1, 1)[0];
     stopNode(1, passiveId); // simulate a node down
     String exclude = "stripe.1.node." + passiveId + ".tc-properties.foo=bar";
 

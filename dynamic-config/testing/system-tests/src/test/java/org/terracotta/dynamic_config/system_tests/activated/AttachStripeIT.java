@@ -26,7 +26,6 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
@@ -38,19 +37,13 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
 public class AttachStripeIT extends DynamicConfigIT {
 
-  public AttachStripeIT() {
-    super(Duration.ofSeconds(180));
-  }
-
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
@@ -58,7 +51,6 @@ public class AttachStripeIT extends DynamicConfigIT {
 
     //Activate cluster
     activateCluster();
-    waitForNPassives(1, 1);
   }
 
   @Test
@@ -68,10 +60,8 @@ public class AttachStripeIT extends DynamicConfigIT {
 
     // start a 2 node stripe
     startNode(2, 1);
-    waitForDiagnostic(2, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getNodeCount(), is(equalTo(1)));
     startNode(2, 2);
-    waitForDiagnostic(2, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 2)).getNodeCount(), is(equalTo(1)));
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
 
@@ -101,19 +91,17 @@ public class AttachStripeIT extends DynamicConfigIT {
   @Test
   public void test_topology_entity_callback_onStripeAddition() throws Exception {
     startNode(2, 1);
-    waitForDiagnostic(2, 1);
     startNode(2, 2);
-    waitForDiagnostic(2, 2);
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
 
-    final int activeId = findActive(1).getAsInt();
+    final int activeId = waitForActive(1);
 
     try (DynamicTopologyEntity dynamicTopologyEntity = DynamicTopologyEntityFactory.fetch(
         new TerracottaConnectionService(),
         Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort(1, activeId))),
         "dynamic-config-topology-entity",
         getConnectionTimeout(),
-        new DynamicTopologyEntity.Settings().setRequestTimeout(getRequestTimeout()),
+        new DynamicTopologyEntity.Settings().setRequestTimeout(getDiagnosticOperationTimeout()),
         null)) {
 
       CountDownLatch called = new CountDownLatch(1);

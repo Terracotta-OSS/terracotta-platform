@@ -26,7 +26,6 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -43,10 +42,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 3, autoStart = false, netDisruptionEnabled = true)
 public class DetachInConsistency1x3IT extends DynamicConfigIT {
 
-  public DetachInConsistency1x3IT() {
-    super(Duration.ofSeconds(300));
-  }
-
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency();
@@ -55,17 +50,14 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // start the third node
     startNode(1, 3);
-    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     setClientServerDisruptionLinks(Collections.singletonMap(1, 3));
@@ -87,9 +79,10 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     TerracottaServer passive2 = iterator.next();
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passives);
-    int oldActiveId = findActive(1).getAsInt();
-    int passiveId1 = findPassives(1)[0];
-    int passiveId2 = findPassives(1)[1];
+    int oldActiveId = waitForActive(1);
+    final int[] pp = waitForNPassives(1, 2);
+    final int passiveId1 = pp[0];
+    final int passiveId2 = pp[1];
     int newActiveId;
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
 
@@ -131,7 +124,7 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_detach_when_active_client_and_passive_disrupted() throws Exception {
+  public void test_detach_when_active_client_and_passive_disrupted() {
     TerracottaServer active = angela.tsa().getActive();
     Collection<TerracottaServer> passives = angela.tsa().getPassives();
     Iterator<TerracottaServer> iterator = passives.iterator();
@@ -140,9 +133,10 @@ public class DetachInConsistency1x3IT extends DynamicConfigIT {
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passives);
     Map<ServerSymbolicName, Integer> map = angela.tsa().updateToProxiedPorts();
-    int oldActiveId = findActive(1).getAsInt();
-    int passiveId1 = findPassives(1)[0];
-    int passiveId2 = findPassives(1)[1];
+    int oldActiveId = waitForActive(1);
+    final int[] pp = waitForNPassives(1, 2);
+    final int passiveId1 = pp[0];
+    final int passiveId2 = pp[1];
     int newActiveId;
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
 

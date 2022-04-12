@@ -33,8 +33,8 @@ public class DetachCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void test_attach_and_activated_cluster() throws Exception {
-    final int activeId = findActive(1).getAsInt();
-    final int passiveId = findPassives(1)[0];
+    final int activeId = waitForActive(1);
+    final int passiveId = waitForNPassives(1, 1)[0];
 
     assertThat(configTool("detach", "-force", "-from-stripe", "localhost:" + getNodePort(1, passiveId), "-node", "localhost:" + getNodePort(1, activeId)), is(successful()));
 

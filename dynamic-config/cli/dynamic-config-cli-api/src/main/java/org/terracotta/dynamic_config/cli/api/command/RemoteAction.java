@@ -301,14 +301,34 @@ public abstract class RemoteAction implements Runnable {
     LOGGER.debug("Configuration directories have been created for all nodes");
   }
 
-  protected final LogicalServerState getState(Endpoint expectedOnlineNode) {
-    return getState(expectedOnlineNode.getAddress());
+  protected final LogicalServerState getLogicalServerState(Endpoint expectedOnlineNode) {
+    return getLogicalServerState(expectedOnlineNode.getAddress());
   }
 
-  protected final LogicalServerState getState(InetSocketAddress expectedOnlineNode) {
-    LOGGER.trace("getUpcomingCluster({})", expectedOnlineNode);
+  protected final LogicalServerState getLogicalServerState(InetSocketAddress expectedOnlineNode) {
+    LOGGER.trace("getLogicalServerState({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       return diagnosticService.getLogicalServerState();
+    }
+  }
+
+  protected final Map<Endpoint, LogicalServerState> getLogicalServerStates(Collection<Endpoint> endpoints) {
+    LOGGER.trace("getLogicalServerStates({})", endpoints);
+    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(endpointsToMap(endpoints), null)) {
+      LinkedHashMap<Endpoint, LogicalServerState> status = endpoints.stream()
+          .collect(toMap(
+              identity(),
+              endpoint -> diagnosticServices.getDiagnosticService(endpoint.getNodeUID()).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
+              (o1, o2) -> {
+                throw new UnsupportedOperationException();
+              },
+              LinkedHashMap::new));
+      status.forEach((address, state) -> {
+        if (state.isUnreacheable()) {
+          output.info(" - {} is not reachable", address);
+        }
+      });
+      return status;
     }
   }
 
@@ -444,22 +464,7 @@ public abstract class RemoteAction implements Runnable {
     Cluster cluster = getRuntimeCluster(expectedOnlineNode);
     Collection<Endpoint> endpoints = cluster.determineEndpoints(expectedOnlineNode);
     output.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(endpoints));
-    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(endpointsToMap(endpoints))) {
-      LinkedHashMap<Endpoint, LogicalServerState> status = endpoints.stream()
-          .collect(toMap(
-              identity(),
-              endpoint -> diagnosticServices.getDiagnosticService(endpoint.getNodeUID()).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
-              (o1, o2) -> {
-                throw new UnsupportedOperationException();
-              },
-              LinkedHashMap::new));
-      status.forEach((address, state) -> {
-        if (state.isUnreacheable()) {
-          output.info(" - {} is not reachable", address);
-        }
-      });
-      return status;
-    }
+    return getLogicalServerStates(endpoints);
   }
 
   protected final Map<Endpoint, LogicalServerState> findOnlineRuntimePeers(Endpoint expectedOnlineNode) {
@@ -559,7 +564,7 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final void resetAndStop(InetSocketAddress expectedOnlineNode) {
-    output.info("Reset node: {}. Node will stop in 5 seconds", expectedOnlineNode);
+    output.info("Reset node: {}. Node will stop...", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
       DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
       proxy.reset();

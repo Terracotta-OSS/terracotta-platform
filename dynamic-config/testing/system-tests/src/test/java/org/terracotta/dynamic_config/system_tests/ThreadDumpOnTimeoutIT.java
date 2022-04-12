@@ -20,14 +20,8 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
-
 @ClusterDefinition(autoActivate = true)
 public class ThreadDumpOnTimeoutIT extends DynamicConfigIT {
-
-  public ThreadDumpOnTimeoutIT() {
-    super(Duration.ofMinutes(30));
-  }
 
   @Test
   @Ignore("Un-ignore me to test the thread dump feature when an angela test times out")

@@ -24,7 +24,6 @@ import org.terracotta.dynamic_config.test_support.InlineServers;
 import org.terracotta.voter.ActiveVoter;
 import org.terracotta.voter.VoterStatus;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -38,10 +37,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 3)
 public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
 
-  public AttachCommandWithMultipleVoter1x3IT() {
-    super(Duration.ofSeconds(180));
-  }
-
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency(2);
@@ -50,12 +45,10 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
   @Before
   public void setUp() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
@@ -63,15 +56,13 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
 
     //Activate cluster
     activateCluster();
-    waitForActive(1);
-    waitForNPassives(1, 1);
   }
 
   @Test
   @InlineServers(false)
   public void testFailoverWhileAttachingAndVerifyWithVoter() throws Exception {
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
     CompletableFuture<VoterStatus> firstStatus = new CompletableFuture<>();
     CompletableFuture<VoterStatus> secondStatus = new CompletableFuture<>();
 
@@ -82,7 +73,6 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
 
       String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
       startNode(1, 3);
-      waitForDiagnostic(1, 3);
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
       //setup for failover in commit phase on active

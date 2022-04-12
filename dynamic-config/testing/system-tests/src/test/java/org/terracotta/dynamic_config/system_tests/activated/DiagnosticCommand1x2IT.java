@@ -38,7 +38,6 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_diagnostic_on_unconfigured_node() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(
         configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic1.txt").toURI())).collect(toList())));
@@ -47,7 +46,6 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_diagnostic_on_activated_node() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
     assertThat(
         configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
@@ -57,7 +55,6 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_diagnostic_on_repair_mode() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
 
     String nodeName = getNode(1, 1).getServerSymbolicName().getSymbolicName();
@@ -66,7 +63,6 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     stopNode(1, 1);
 
     startNode(1, 1, "--repair-mode", "--name", nodeName, "-r", repo);
-    waitForDiagnostic(1, 1);
     assertThat(
         configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic3.txt").toURI())).collect(toList())));
@@ -83,7 +79,6 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
     waitForActive(1, 1);
 
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
 
     assertThat(
         configTool("diagnostic", "-s", "localhost:" + getNodePort(1, 1)),
@@ -147,7 +142,6 @@ public class DiagnosticCommand1x2IT extends DynamicConfigIT {
   @Test
   public void testWhenConfigLocked() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
 
     LockContext lockContext = new LockContext("some-uuid", "test", "test");

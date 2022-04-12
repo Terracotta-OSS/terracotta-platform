@@ -20,8 +20,6 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
-
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -32,10 +30,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AttachInConsistency1x2IT extends DynamicConfigIT {
 
-  public AttachInConsistency1x2IT() {
-    super(Duration.ofSeconds(180));
-  }
-
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency();
@@ -45,13 +39,11 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
   public void test_attach_to_activated_cluster() throws Exception {
     // activate a 1x1 cluster
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // attach
@@ -77,7 +69,6 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
 
     // activate a 1x1 cluster
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
 
     // do a change requiring a restart
@@ -87,7 +78,6 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
 
     // try forcing the attach
     assertThat(configTool("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));

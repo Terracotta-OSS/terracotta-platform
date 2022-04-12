@@ -19,8 +19,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
-
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
@@ -31,10 +29,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
  */
 @ClusterDefinition(stripes = 2, nodesPerStripe = 1, autoActivate = true)
 public class DetachCommand2x1IT extends DynamicConfigIT {
-
-  public DetachCommand2x1IT() {
-    super(Duration.ofSeconds(180));
-  }
 
   @Test
   public void test_cannot_detach_leading_stripe() {

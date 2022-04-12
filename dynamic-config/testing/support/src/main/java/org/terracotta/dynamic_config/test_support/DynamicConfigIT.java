@@ -89,12 +89,14 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.lang.System.lineSeparator;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -113,28 +115,48 @@ import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
+import static org.terracotta.common.struct.Tuple3.tuple3;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
-  private static final Duration DEFAULT_TEST_TIMEOUT = Duration.ofMinutes(2);
 
   protected static final String CLUSTER_NAME = "tc-cluster";
   protected static final AngelaOrchestratorRule angelaOrchestratorRule;
 
   protected final TmpDir tmpDir;
   protected final AngelaRule angela;
-  protected final long timeout;
   protected final ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
-  @ClassRule public static final RuleChain classRules = RuleChain.emptyRuleChain()
+  // can be modified by sub-classes to update the timeouts
+
+  // We intentionally set a huge timeout for connection
+  protected Duration connectionTimeout = Duration.ofDays(1);
+
+  // time given for a diagnostic operation to complete
+  protected Duration diagnosticOperationTimeout = Duration.ofDays(1);
+
+  // time given for an entity operation to complete (there could be a failover in the middle)
+  protected Duration entityOperationTimeout = Duration.ofDays(1);
+
+  // time given for the nodes to restart
+  protected Duration restartTimeout = Duration.ofDays(1);
+
+  // time given for the nodes to be stopped
+  protected Duration stopTimeout = Duration.ofDays(1);
+
+  protected boolean verbose;
+
+  @ClassRule
+  public static final RuleChain classRules = RuleChain.emptyRuleChain()
       .around(angelaOrchestratorRule = new AngelaOrchestratorRule().igniteFree());
 
-  @Rule public final RuleChain testRules;
+  @Rule
+  public final RuleChain testRules;
 
   public DynamicConfigIT() {
-    this(DEFAULT_TEST_TIMEOUT);
+    this(Duration.ofMinutes(3));
   }
 
   public DynamicConfigIT(Duration testTimeout) {
@@ -143,7 +165,6 @@ public class DynamicConfigIT {
 
   public DynamicConfigIT(Duration testTimeout, Path parentTmpDir) {
     ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
-    this.timeout = testTimeout.toMillis();
     this.testRules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
         .around(angela = new AngelaRule(angelaOrchestratorRule::getAngelaOrchestrator, createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers()), false, false) {
@@ -231,14 +252,6 @@ public class DynamicConfigIT {
                 activateCluster();
               }
             }
-            if (clusterDef.autoStart() && clusterDef.autoActivate()) {
-              for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
-                waitForActive(stripeId);
-                LOGGER.info("1 ACTIVE server started for stripe: {}", stripeId);
-                int n = waitForPassives(stripeId);
-                LOGGER.info("{} PASSIVE servers started for stripe: {}", n, stripeId);
-              }
-            }
           }
         })
         .around(new TestWatcher() {
@@ -276,6 +289,32 @@ public class DynamicConfigIT {
             LOGGER.info("[SKIPPED] {}", description);
           }
         });
+  }
+
+  // timeouts
+
+  protected Duration getConnectionTimeout() {
+    return connectionTimeout;
+  }
+
+  protected Duration getDiagnosticOperationTimeout() {
+    return diagnosticOperationTimeout;
+  }
+
+  public Duration getEntityOperationTimeout() {
+    return entityOperationTimeout;
+  }
+
+  public Duration getRestartTimeout() {
+    return restartTimeout;
+  }
+
+  public Duration getStopTimeout() {
+    return stopTimeout;
+  }
+
+  public boolean isVerbose() {
+    return verbose;
   }
 
   // =========================================
@@ -365,11 +404,8 @@ public class DynamicConfigIT {
     for (int stripeId = 1; stripeId <= stripes; stripeId++) {
       List<TerracottaServer> stripe = angela.getStripe(stripeId);
       if (stripe.size() > 1) {
-        waitForDiagnostic(stripeId, 1);
         // Attach all servers in a stripe to form individual stripes
         for (int nodeId = 2; nodeId <= stripe.size(); nodeId++) {
-          waitForDiagnostic(stripeId, nodeId);
-
           List<String> command = new ArrayList<>();
           command.add("attach");
           command.add("-t");
@@ -415,61 +451,86 @@ public class DynamicConfigIT {
 
   protected ToolExecutionResult activateStripe(String name, int stripe) {
     Path licensePath = getLicensePath();
-    waitForDiagnostic(stripe, 1);
     ToolExecutionResult result = licensePath == null ?
         configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name) :
         configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name, "-l", licensePath.toString());
     assertThat(result, is(successful()));
-    waitForActive(stripe);
     return result;
   }
 
   protected ToolExecutionResult configTool(String... cli) {
-    return configTool(Collections.emptyMap(), cli);
-  }
+    String command = null;
+    List<String> globalOpts = new ArrayList<>(0);
+    List<String> commandOpts = new ArrayList<>(0);
+    boolean useDeprecatedCommands = false;
 
-  protected ToolExecutionResult configTool(Map<String, String> env, String... cli) {
-    List<String> enhancedCli = new ArrayList<>(cli.length);
-    List<String> configToolOptions = getConfigToolOptions(cli);
-
-    boolean addedOptions = false;
-
-    if (!configToolOptions.contains("-t") && !configToolOptions.contains("-connection-timeout") && !configToolOptions.contains("-connect-timeout")) {
-      // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
-      enhancedCli.add("-t");
-      enhancedCli.add(Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString());
-      addedOptions = true;
+    // parse the current command into parts
+    for (String opt : cli) {
+      useDeprecatedCommands |= opt.startsWith("--") || opt.startsWith("-") && opt.length() <= 3;
+      if (opt.startsWith("-")) {
+        if (command == null) {
+          globalOpts.add(opt);
+        } else {
+          commandOpts.add(opt);
+        }
+      } else if (command == null) {
+        command = opt;
+      }
     }
 
-    if (!configToolOptions.contains("-r") && !configToolOptions.contains("-request-timeout")) {
-      // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
-      enhancedCli.add("-r");
-      enhancedCli.add(Measure.of(getRequestTimeout().getSeconds(), TimeUnit.SECONDS).toString());
-      addedOptions = true;
+    // prevent any timeouts to be set through the CLI - we wil add them
+    Stream.of(
+        tuple3(globalOpts, asList("-verbose", "-v", "--verbose"), "Verbose mode must be controlled by the field #verbose"),
+        tuple3(globalOpts, asList("-connect-timeout", "-connection-timeout", "-t", "--connection-timeout"), "Connection timeout must be controlled by the field #connectionTimeout"),
+        tuple3(globalOpts, asList("-request-timeout", "-r", "--request-timeout"), "Diagnostic operation timeout must be controlled by the field #diagnosticOperationTimeout"),
+        tuple3(globalOpts, asList("-entity-request-timeout", "-er", "--entity-request-timeout"), "Entity operation timeout must be controlled by the field #entityOperationTimeout"),
+        tuple3(commandOpts, asList("-restart-wait-time", "-W"), "Restart timeout must be controlled by the field #restartTimeout"),
+        tuple3(commandOpts, asList("-stop-wait-time", "-W"), "Stop timeout must be controlled by the field #stopTimeout")
+    ).forEach(tuple -> {
+      if (tuple.t1.stream().anyMatch(tuple.t2::contains)) {
+        throw new IllegalArgumentException(tuple.t3);
+      }
+    });
+
+    List<String> newCli = new ArrayList<>(cli.length + 8);
+
+    // verbose
+    if (isVerbose()) {
+      newCli.add(useDeprecatedCommands ? "-v" : "-verbose");
     }
 
-    String[] cmd;
-    if (addedOptions) {
-      enhancedCli.addAll(Arrays.asList(cli));
-      cmd = enhancedCli.toArray(new String[0]);
-    } else {
-      cmd = cli;
-    }
+    // conn. timeout
+    newCli.add(useDeprecatedCommands ? "-t" : "-connect-timeout");
+    newCli.add(Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString());
 
-    // config-tool launched through angela from the kit in
-    // its own process. Slower and harder to debug.
-//    {
-//      return angela.configTool().executeCommand(env, cmd);
-//    }
+    // diag req. timeout
+    newCli.add(useDeprecatedCommands ? "-r" : "-request-timeout");
+    newCli.add(Measure.of(getDiagnosticOperationTimeout().getSeconds(), TimeUnit.SECONDS).toString());
+
+    // entity call timeout
+    newCli.add(useDeprecatedCommands ? "-er" : "-entity-request-timeout");
+    newCli.add(Measure.of(getEntityOperationTimeout().getSeconds(), TimeUnit.SECONDS).toString());
+
+    // user input
+    newCli.addAll(asList(cli));
+
+    if (asList("activate", "attach", "set", "unset").contains(command)) {
+      // restart timeout
+      newCli.add(useDeprecatedCommands ? "-W" : "-restart-wait-time");
+      newCli.add(Measure.of(getRestartTimeout().getSeconds(), TimeUnit.SECONDS).toString());
+    } else if ("detach".equals(command)) {
+      newCli.add(useDeprecatedCommands ? "-W" : "-stop-wait-time");
+      newCli.add(Measure.of(getStopTimeout().getSeconds(), TimeUnit.SECONDS).toString());
+    }
 
     // inline config-tool launched from within the test classpath.
     // faster and easier to debug, but does not test the kit packaging
     {
-      LOGGER.info("config-tool {}", String.join(" ", cmd));
+      LOGGER.info("config-tool {}", String.join(" ", newCli));
       InlineToolExecutionResult result = new InlineToolExecutionResult();
       OutputService out = new ConsoleOutputService().then(result);
       try {
-        new ConfigTool(out).run(cmd);
+        new ConfigTool(out).run(newCli.toArray(new String[0]));
         result.setExitStatus(0);
       } catch (Exception e) {
         result.setExitStatus(1);
@@ -477,20 +538,6 @@ public class DynamicConfigIT {
       }
       return result;
     }
-  }
-
-  private List<String> getConfigToolOptions(String[] cli) {
-    List<String> configToolOptions = new ArrayList<>(cli.length);
-    for (int i = 0; i < cli.length; i++) {
-      String opt = cli[i];
-      if (opt.startsWith("-")) {
-        configToolOptions.add(opt);
-        i++;
-      } else {
-        break;
-      }
-    }
-    return configToolOptions;
   }
 
   // =========================================
@@ -683,8 +730,9 @@ public class DynamicConfigIT {
     assertThat(callable, within(Duration.ofDays(1)).matches(matcher));
   }
 
-  protected final void waitForActive(int stripeId) {
+  protected final int waitForActive(int stripeId) {
     waitUntil(() -> findActive(stripeId).isPresent(), is(true));
+    return findActive(stripeId).getAsInt();
   }
 
   protected final void waitForActive(int stripeId, int nodeId) {
@@ -703,14 +751,15 @@ public class DynamicConfigIT {
     waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STOPPED)));
   }
 
-  protected final int waitForPassives(int stripeId) {
+  protected final int[] waitForPassives(int stripeId) {
     int expectedPassiveCount = angela.getNodeCount(stripeId) - 1;
     waitUntil(() -> findPassives(stripeId).length, is(equalTo(expectedPassiveCount)));
-    return expectedPassiveCount;
+    return findPassives(stripeId);
   }
 
-  protected final void waitForNPassives(int stripeId, int count) {
-    waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
+  protected final int[] waitForNPassives(int stripeId, int count) {
+    waitUntil(() -> findPassives(stripeId).length, is(greaterThanOrEqualTo(count)));
+    return findPassives(stripeId);
   }
 
   protected final Cluster getUpcomingCluster(int stripeId, int nodeId) {
@@ -757,30 +806,17 @@ public class DynamicConfigIT {
   }
 
   protected final <T> T usingDiagnosticService(String host, int port, Function<DiagnosticService, T> fn) {
-    // not expecting a connection exceptions here so retry a few times
-    int tc = 0;
-    for (tc = 0; tc < 3; tc++) {
-      try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-          InetSocketAddress.createUnresolved(host, port),
-          getClass().getSimpleName(),
-          getConnectionTimeout(),
-          getRequestTimeout(),
-          null,
-          objectMapperFactory)) {
-        return fn.apply(diagnosticService);
-      } catch (ConnectionException e) {
-        LOGGER.info("connection of diagnostics failed, retrying", e);
-      }
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
+        InetSocketAddress.createUnresolved(host, port),
+        getClass().getSimpleName(),
+        getConnectionTimeout(),
+        getDiagnosticOperationTimeout(),
+        null,
+        objectMapperFactory)) {
+      return fn.apply(diagnosticService);
+    } catch (ConnectionException e) {
+      throw new RuntimeException(e.getMessage(), e);
     }
-    throw new RuntimeException("connection failed " + tc + " times. Aborting");
-  }
-
-  protected Duration getConnectionTimeout() {
-    return Duration.ofSeconds(5);
-  }
-
-  protected Duration getRequestTimeout() {
-    return Duration.ofSeconds(10);
   }
 
   protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {
@@ -871,7 +907,7 @@ public class DynamicConfigIT {
         InetSocketAddress.createUnresolved(server.getHostName(), server.getTsaPort()),
         getClass().getSimpleName(),
         getConnectionTimeout(),
-        getRequestTimeout(),
+        getDiagnosticOperationTimeout(),
         null,
         objectMapperFactory)) {
       return diagnosticService.isBlocked();

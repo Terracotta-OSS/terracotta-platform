@@ -30,7 +30,6 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -83,7 +82,7 @@ public class RestartService {
     LOGGER.debug("Asking all nodes: {} to restart themselves", endpoints);
 
     // list of nodes that we asked for a restart
-    Collection<Node.Endpoint> restartRequested = new HashSet<>();
+    Map<Node.Endpoint, DiagnosticService> restartRequested = new HashMap<>();
 
     // list of nodes we failed to ask for a restart
     Map<Node.Endpoint, Exception> restartRequestFailed = new HashMap<>();
@@ -91,9 +90,11 @@ public class RestartService {
     // trigger a restart request for all nodes
     for (Node.Endpoint endpoint : endpoints) {
       // this call should be pretty fast and should not timeout if restart delay is long enough
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress())) {
+      try {
+        // do not close DiagnosticService: connection is used after to detect when server is stopped
+        DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress());
+        restartRequested.put(endpoint, diagnosticService);
         restart.accept(diagnosticService.getProxy(DynamicConfigService.class), restartDelay);
-        restartRequested.add(endpoint);
       } catch (Exception e) {
         // timeout should not occur with a restart delay. Any error is recorded an we won't wait for this node to restart
         restartRequestFailed.put(endpoint, e);
@@ -114,35 +115,40 @@ public class RestartService {
     AtomicBoolean continuePolling = new AtomicBoolean(true);
 
     ExecutorService executorService = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(endpoints.size()), r -> new Thread(r, getClass().getName()));
-    restartRequested.forEach(endpoint -> executorService.submit(() -> {
-
-      // wait for the restart delay to end so that servers gets restarted
-      try {
-        Thread.sleep(restartDelay.toMillis() + 5_000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return;
-      }
-
-      LogicalServerState state = null;
-      while (state == null && continuePolling.get() && !Thread.currentThread().isInterrupted()) {
+    restartRequested.forEach((endpoint, diagnosticService) -> executorService.submit(() -> {
+      while (continuePolling.get() && !Thread.currentThread().isInterrupted() && diagnosticService.isConnected()) {
         try {
-          state = isRestarted(endpoint, acceptedStates);
-          if (state != null) {
-            LOGGER.debug("Node: {} has restarted", endpoint);
-            restartedNodes.put(endpoint, state);
-            BiConsumer<Node.Endpoint, LogicalServerState> cb = progressCallback.get();
-            if (cb != null) {
-              cb.accept(endpoint, state);
-            }
-            done.countDown();
-          } else {
-            // introduce a force sleep because otherwise this cn loop pretty fast
-            Thread.sleep(1_000);
-          }
+          LOGGER.debug("Waiting for node: {} to stop...", endpoint);
+          Thread.sleep(500);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
         }
+      }
+      if (!diagnosticService.isConnected()) {
+        LOGGER.debug("Node: {} has stopped", endpoint);
+        LOGGER.debug("Waiting for node: {} to restart...", endpoint);
+        LogicalServerState state = null;
+        while (state == null && continuePolling.get() && !Thread.currentThread().isInterrupted()) {
+          try {
+            state = isRestarted(endpoint, acceptedStates);
+            if (state != null) {
+              LOGGER.debug("Node: {} has restarted", endpoint);
+              restartedNodes.put(endpoint, state);
+              BiConsumer<Node.Endpoint, LogicalServerState> cb = progressCallback.get();
+              if (cb != null) {
+                cb.accept(endpoint, state);
+              }
+              done.countDown();
+            } else {
+              // introduce a force sleep because otherwise this can loop pretty fast
+              Thread.sleep(500);
+            }
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+        }
+      } else {
+        LOGGER.warn("Restart of node: {} has been interrupted", endpoint);
       }
     }));
 

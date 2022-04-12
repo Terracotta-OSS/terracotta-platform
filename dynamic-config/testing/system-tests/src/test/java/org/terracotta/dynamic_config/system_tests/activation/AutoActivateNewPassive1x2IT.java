@@ -127,7 +127,6 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
     assertThat(Props.toString(Props.load(exportedConfigPath)), Props.load(exportedConfigPath).stringPropertyNames(), hasItem("stripe.1.node.1.logger-overrides"));
 
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
 
     assertThat(
         configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportedConfigPath.toString()),

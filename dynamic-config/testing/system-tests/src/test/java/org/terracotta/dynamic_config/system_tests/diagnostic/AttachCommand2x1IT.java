@@ -41,7 +41,6 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
     getNode(1, 1).configRepo("config-1-1").logs("logs-1-1");
     getNode(2, 1).configRepo("config-2-1").logs("logs-2-1");
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     withTopologyService(1, 1, topologyService -> {
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getNodeCount(), is(equalTo(1)));
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getSingleNode().get().getName(), is(equalTo("foo")));
@@ -49,7 +48,6 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
 
     // start a second node with same name
     startNode(2, 1);
-    waitForDiagnostic(2, 1);
     withTopologyService(2, 1, topologyService -> {
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getNodeCount(), is(equalTo(1)));
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getSingleNode().get().getName(), is(equalTo("foo")));

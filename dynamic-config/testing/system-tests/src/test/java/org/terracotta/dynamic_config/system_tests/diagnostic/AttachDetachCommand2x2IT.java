@@ -22,7 +22,6 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.nio.file.Path;
-import java.time.Duration;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -35,10 +34,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, failoverPriority = "")
 public class AttachDetachCommand2x2IT extends DynamicConfigIT {
   private static final String OUTPUT_JSON_FILE = "attach-detach-output.json";
-
-  public AttachDetachCommand2x2IT() {
-    super(Duration.ofSeconds(180));
-  }
 
   @Test
   public void test_attach_detach_with_unconfigured_nodes() throws Exception {

@@ -219,7 +219,8 @@ public class DetachAction extends TopologyAction {
       // - to check the server states again because:
       //    * a failover could happen after removal
       //    * a passive blocked could not become active in consistency mode
-      destinationOnlineNodes = findOnlineRuntimePeers(destination);
+      destinationOnlineNodes.keySet().removeAll(onlineNodesToRemove);
+      destinationOnlineNodes = getLogicalServerStates(destinationOnlineNodes.keySet());
     }
   }
 
@@ -261,7 +262,7 @@ public class DetachAction extends TopologyAction {
       destinationOnlineNodes.keySet().removeAll(onlineNodesToRemove);
 
       // if a failover happened, make sure we get the new server states
-      destinationOnlineNodes.entrySet().forEach(e -> e.setValue(getState(e.getKey())));
+      destinationOnlineNodes.entrySet().forEach(e -> e.setValue(getLogicalServerState(e.getKey())));
     }
   }
 
