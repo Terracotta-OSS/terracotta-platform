@@ -50,7 +50,6 @@ import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
-import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
 import org.terracotta.dynamic_config.cli.api.output.InMemoryOutputService;
@@ -76,12 +75,10 @@ import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -94,10 +91,6 @@ import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
@@ -105,8 +98,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
-import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
-import static org.terracotta.angela.common.TerracottaServerState.STOPPED;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
@@ -117,7 +108,6 @@ import static org.terracotta.angela.common.topology.Version.version;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.common.struct.Tuple3.tuple3;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
-import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
@@ -267,7 +257,9 @@ public class DynamicConfigIT {
             // to check if this is a timeout, use: if(throwable instanceof MultipleFailureException || throwable instanceof TestTimedOutException) {...}
             {
               // thread dumps
-              Path threadDumpOutput = parentTmpDir.resolve("thread-dumps").resolve(description.toString());
+              Path threadDumpOutput = parentTmpDir.resolve("thread-dumps")
+                  .resolve(description.getTestClass().getSimpleName())
+                  .resolve(description.getMethodName() == null ? "_class_" : description.getMethodName());
               LOGGER.info("Taking thread dumps after timeout of test: {} into: {}", description, threadDumpOutput);
               JavaTool.threadDumps(threadDumpOutput, Duration.ofSeconds(15));
             }
@@ -325,14 +317,6 @@ public class DynamicConfigIT {
     return tmpDir.getRoot();
   }
 
-  protected final Path getServerHome() {
-    return getServerHome(getNode(1, 1));
-  }
-
-  protected final Path getServerHome(TerracottaServer server) {
-    return Paths.get(angela.tsa().browse(server, "").getAbsoluteName());
-  }
-
   // =========================================
   // angela calls
   // =========================================
@@ -347,20 +331,15 @@ public class DynamicConfigIT {
   }
 
   protected final void startNode(TerracottaServer node, String... cli) {
-    startNode(node, Collections.emptyMap(), cli);
+    angela.startNode(node, cli);
   }
 
   protected final void startNode(TerracottaServer node, Map<String, String> env, String... cli) {
-    angela.tsa().start(node, env, cli);
+    angela.startNode(node, env, cli);
   }
 
   protected final void stopNode(int stripeId, int nodeId) {
-    angela.tsa().stop(getNode(stripeId, nodeId));
-    // waitForStopped is required because Ignite has a little cache
-    // and when the server is stopped, the angela server state read from the test jvm
-    // can still be an old state for some milliseconds.
-    // So this ensures the server has completed and also that this completion is seen on the test jvm
-    waitForStopped(stripeId, nodeId);
+    angela.stopNode(stripeId, nodeId);
   }
 
   protected final TerracottaServer getNode(int stripeId, int nodeId) {
@@ -375,20 +354,12 @@ public class DynamicConfigIT {
     return angela.getNodeGroupPort(stripeId, nodeId);
   }
 
-  protected final OptionalInt findActive(int stripeId) {
-    return angela.findActive(stripeId);
-  }
-
-  protected final int[] findPassives(int stripeId) {
-    return angela.findPassives(stripeId);
-  }
-
   protected final int getNodePort() {
     return getNodePort(1, 1);
   }
 
   protected final InetSocketAddress getNodeAddress(int stripeId, int nodeId) {
-    return InetSocketAddress.createUnresolved(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId));
+    return angela.getNodeAddress(stripeId, nodeId);
   }
 
   protected String getDefaultHostname(int stripeId, int nodeId) {
@@ -605,10 +576,6 @@ public class DynamicConfigIT {
     return "node-" + stripeId + "-" + nodeId;
   }
 
-  protected final RawPath getNodeConfigDir(int stripeId, int nodeId) {
-    return RawPath.valueOf("config");
-  }
-
   protected Path getLicensePath() {
     try {
       return getLicenceUrl() == null ? null : Paths.get(getLicenceUrl().toURI());
@@ -680,95 +647,64 @@ public class DynamicConfigIT {
   // =========================================
 
   protected final void waitUntil(ToolExecutionResult result, Matcher<ToolExecutionResult> matcher) {
-    waitUntil(() -> result, matcher);
+    angela.waitUntil(result, matcher);
   }
 
   protected final void waitUntilServerStdOut(TerracottaServer server, String matcher) {
-    assertThat(() -> serverStdOut(server), within(Duration.ofDays(1)).matches(hasItem(containsString(matcher))));
+    angela.waitUntilServerStdOut(server, matcher);
   }
 
   protected final void assertThatServerStdOut(TerracottaServer server, String matcher) {
-    assertThat(serverStdOut(server), hasItem(containsString(matcher)));
+    angela.assertThatServerStdOut(server, matcher);
   }
 
   protected final void assertThatServerStdOut(TerracottaServer server, Matcher<String> matcher) {
-    assertThat(serverStdOut(server), hasItem(matcher));
-  }
-
-  private List<String> serverStdOut(TerracottaServer server) {
-    try {
-      return Files.readAllLines(getServerHome(server).resolve("stdout.txt"));
-    } catch (IOException io) {
-      return Collections.emptyList();
-    }
+    angela.assertThatServerStdOut(server, matcher);
   }
 
   protected final void waitUntilServerLogs(TerracottaServer server, String matcher) {
-    assertThat(() -> serverLogs(server), within(Duration.ofDays(1)).matches(hasItem(containsString(matcher))));
-  }
-
-  protected final void assertThatServerLogs(TerracottaServer server, String matcher) {
-    assertThat(serverLogs(server), hasItem(containsString(matcher)));
-  }
-
-  protected final void assertThatServerLogs(TerracottaServer server, Matcher<String> matcher) {
-    assertThat(serverLogs(server), hasItem(matcher));
-  }
-
-  private List<String> serverLogs(TerracottaServer server) {
-    try {
-      return Files.readAllLines(getServerHome(server)
-          .resolve(server.getLogs())
-          .resolve(server.getServerSymbolicName().getSymbolicName())
-          .resolve("terracotta.server.log"));
-    } catch (IOException io) {
-      return Collections.emptyList();
-    }
+    angela.waitUntilServerLogs(server, matcher);
   }
 
   protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher) {
-    assertThat(callable, within(Duration.ofDays(1)).matches(matcher));
+    angela.waitUntil(callable, matcher);
   }
 
   protected final int waitForActive(int stripeId) {
-    waitUntil(() -> findActive(stripeId).isPresent(), is(true));
-    return findActive(stripeId).getAsInt();
+    return angela.waitForActive(stripeId);
   }
 
   protected final void waitForActive(int stripeId, int nodeId) {
-    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_ACTIVE)));
+    angela.waitForActive(stripeId, nodeId);
   }
 
   protected final void waitForPassive(int stripeId, int nodeId) {
-    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_PASSIVE)));
+    angela.waitForPassive(stripeId, nodeId);
   }
 
   protected final void waitForDiagnostic(int stripeId, int nodeId) {
-    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_IN_DIAGNOSTIC_MODE)));
+    angela.waitForDiagnostic(stripeId, nodeId);
   }
 
   protected final void waitForStopped(int stripeId, int nodeId) {
-    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STOPPED)));
+    angela.waitForStopped(stripeId, nodeId);
   }
 
   protected final int[] waitForPassives(int stripeId) {
-    int expectedPassiveCount = angela.getNodeCount(stripeId) - 1;
-    waitUntil(() -> findPassives(stripeId).length, is(equalTo(expectedPassiveCount)));
-    return findPassives(stripeId);
+    return angela.waitForPassives(stripeId);
   }
 
   protected final int[] waitForNPassives(int stripeId, int count) {
-    waitUntil(() -> findPassives(stripeId).length, is(greaterThanOrEqualTo(count)));
-    return findPassives(stripeId);
-  }
-
-  protected final Cluster getUpcomingCluster(int stripeId, int nodeId) {
-    return getUpcomingCluster(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId));
+    return angela.waitForNPassives(stripeId, count);
   }
 
   // =========================================
   // information retrieval
   // =========================================
+
+  protected final Cluster getUpcomingCluster(int stripeId, int nodeId) {
+    return getUpcomingCluster(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId));
+  }
 
   protected final Cluster getUpcomingCluster(String host, int port) {
     return usingTopologyService(host, port, topologyService -> topologyService.getUpcomingNodeContext().getCluster());

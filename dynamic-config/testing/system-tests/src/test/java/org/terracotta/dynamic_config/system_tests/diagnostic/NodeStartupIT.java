@@ -40,7 +40,7 @@ public class NodeStartupIT extends DynamicConfigIT {
 
   @Test
   public void testStartingWithNonExistentRepo() {
-    startSingleNode("-r", getNodeConfigDir(1, 1).toString());
+    startSingleNode("-r", "config");
     waitForDiagnostic(1, 1);
   }
 
@@ -124,7 +124,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testFailedStartupConfigFile_invalidCliParams_2() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
     try {
-      startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeConfigDir(1, 1).toString());
+      startNode(1, 1, "-f", configurationFile.toString(), "-m", "config");
       fail();
     } catch (Exception e) {
       waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
@@ -134,7 +134,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidAuthc() {
     try {
-      startSingleNode("--authc=blah", "-r", getNodeConfigDir(1, 1).toString());
+      startSingleNode("--authc=blah", "-r", "config");
       fail();
     } catch (Exception e) {
       waitUntilServerStdOut(getNode(1, 1), "authc should be one of: [file, ldap, certificate]");
@@ -144,7 +144,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidHostname() {
     try {
-      startNode(1, 1, "-y", "availability", "--hostname=:::", "-r", getNodeConfigDir(1, 1).toString());
+      startNode(1, 1, "-y", "availability", "--hostname=:::", "-r", "config");
       fail();
     } catch (Exception e) {
       waitUntilServerStdOut(getNode(1, 1), "<address> specified in hostname=<address> must be a valid hostname or IP address");
@@ -154,7 +154,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidFailoverPriority() {
     try {
-      startSingleNode("--failover-priority", "blah", "-r", getNodeConfigDir(1, 1).toString());
+      startSingleNode("--failover-priority", "blah", "-r", "config");
       fail();
     } catch (Exception e) {
       waitUntilServerStdOut(getNode(1, 1), "failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)");
@@ -164,7 +164,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupCliParams_invalidSecurity() {
     try {
-      startSingleNode("--audit-log-dir", "audit-dir", "-r", getNodeConfigDir(1, 1).toString());
+      startSingleNode("--audit-log-dir", "audit-dir", "-r", "config");
       fail();
     } catch (Exception e) {
       waitUntilServerStdOut(getNode(1, 1), "When no security root directories are configured audit-log-dir should also be unconfigured (unset)");
@@ -173,7 +173,7 @@ public class NodeStartupIT extends DynamicConfigIT {
 
   @Test
   public void testSuccessfulStartupCliParams() {
-    startSingleNode("-p", String.valueOf(getNodePort()), "-r", getNodeConfigDir(1, 1).toString());
+    startSingleNode("-p", String.valueOf(getNodePort()), "-r", "config");
     waitForDiagnostic(1, 1);
   }
 
@@ -182,7 +182,7 @@ public class NodeStartupIT extends DynamicConfigIT {
     startSingleNode(
         "--port", String.valueOf(getNodePort()),
         "--group-port", String.valueOf(getNodeGroupPort(1, 1)),
-        "--config-dir", getNodeConfigDir(1, 1).toString(),
+        "--config-dir", "config",
         "--hostname", "%c"
     );
     waitForDiagnostic(1, 1);
@@ -280,7 +280,7 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testFailedStartupNewConfigFile_invalidCliParams_2() {
     Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
     try {
-      startNode(1, 1, "-f", configurationFile.toString(), "-m", getNodeConfigDir(1, 1).toString());
+      startNode(1, 1, "-f", configurationFile.toString(), "-m", "config");
       fail();
     } catch (Exception e) {
       waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
