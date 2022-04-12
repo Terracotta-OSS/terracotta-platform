@@ -207,6 +207,7 @@
             </goals>
             <configuration>
               <outputDirectory>${project.build.directory}/terracotta-kit-${terracotta-core.version}</outputDirectory>
+              <excludes>**/server/bin/start-tc-server.bat</excludes>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.terracotta.internal</groupId>
