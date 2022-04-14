@@ -79,7 +79,7 @@ public class DcActiveVoter implements Closeable {
           public synchronized void close() {
             super.close();
             if (!expectedClose) {
-              logger.error("** UNEXPECTED CLOSE OF ClientVoterManager: {} for: {}", name, hostPort);
+              logger.error("** WARNING: CLOSE OF ClientVoterManager: {} for: {}", name, hostPort);
             }
           }
 
@@ -88,7 +88,7 @@ public class DcActiveVoter implements Closeable {
             try {
               return super.heartbeat(id);
             } catch (TimeoutException e) {
-              logger.error("** UNEXPECTED HEARTBEAT TIMEOUT FROM ClientVoterManager: {} TO: {} TIMED OUT: {}", name, hostPort, e.getMessage(), e);
+              logger.error("** WARNING: HEARTBEAT TIMEOUT FROM ClientVoterManager: {} TO: {} TIMED OUT: {}", name, hostPort, e.getMessage(), e);
               throw e;
             }
           }

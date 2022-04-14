@@ -19,15 +19,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
+import org.terracotta.dynamic_config.test_support.DcActiveVoter;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.InlineServers;
-import org.terracotta.voter.ActiveVoter;
-import org.terracotta.voter.VoterStatus;
 
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -60,16 +55,14 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
 
   @Test
   @InlineServers(false)
-  public void testFailoverWhileAttachingAndVerifyWithVoter() throws Exception {
+  public void testFailoverWhileAttachingAndVerifyWithVoter() {
     int activeId = waitForActive(1);
     int passiveId = waitForNPassives(1, 1)[0];
-    CompletableFuture<VoterStatus> firstStatus = new CompletableFuture<>();
-    CompletableFuture<VoterStatus> secondStatus = new CompletableFuture<>();
 
-    try (ActiveVoter activeVoter = new ActiveVoter("fvoter", firstStatus, Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
-         ActiveVoter secondVoter = new ActiveVoter("svoter", secondStatus, Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
-      activeVoter.start();
-      secondVoter.start();
+    try (DcActiveVoter activeVoter = new DcActiveVoter("fvoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
+         DcActiveVoter secondVoter = new DcActiveVoter("svoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
+      activeVoter.startAndAwaitRegistration();
+      secondVoter.startAndAwaitRegistration();
 
       String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
       startNode(1, 3);
@@ -81,18 +74,8 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
       assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
       waitForPassive(1, 3);
 
-      firstStatus.get().awaitRegistrationWithAll();
-      secondStatus.get().awaitRegistrationWithAll();
-
-      String[] nodes = new String[]{
-          getNode(1, activeId).getHostPort(),
-          getNode(1, passiveId).getHostPort(),
-          getNode(1, 3).getHostPort()};
-
-      waitUntil(activeVoter::getExistingTopology, containsInAnyOrder(nodes));
-      waitUntil(() -> activeVoter.getHeartbeatFutures().size(), is(3));
-      waitUntil(secondVoter::getExistingTopology, containsInAnyOrder(nodes));
-      waitUntil(() -> secondVoter.getHeartbeatFutures().size(), is(3));
+      waitUntil(activeVoter::getKnownHosts, is(3));
+      waitUntil(secondVoter::getKnownHosts, is(3));
 
       assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(3)));

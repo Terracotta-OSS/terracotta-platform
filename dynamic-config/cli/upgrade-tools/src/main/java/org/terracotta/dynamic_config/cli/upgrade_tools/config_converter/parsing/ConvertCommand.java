@@ -31,7 +31,7 @@ import java.util.List;
 import static org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConversionFormat.DIRECTORY;
 
 @Parameters(commandDescription = "Convert tc-config files to configuration directory format")
-@Usage("-tc-config <tc-config>,<tc-config>... ( -format directory [-license <license-file>] -new-cluster-name <new-cluster-name> | -format properties [-new-cluster-name <new-cluster-name>]) [-destination <destination-dir>] [-force]")
+@Usage("-tc-config <tc-config>,<tc-config>... [ -stripe-names <foo>,<bar>,<baz> ]  ( -format directory [-license <license-file>] -new-cluster-name <new-cluster-name> | -format properties [-new-cluster-name <new-cluster-name>]) [-destination <destination-dir>] [-force]")
 public class ConvertCommand extends Command {
 
   @Parameter(names = {"-tc-config"}, required = true, description = "An ordered list of tc-config files", converter = PathConverter.class)
