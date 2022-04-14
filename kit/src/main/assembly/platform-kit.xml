@@ -135,6 +135,7 @@
         <include>org.terracotta.common:common-structures</include>
         <include>org.terracotta.common:common-json-support</include>
         <include>org.terracotta.common:common-nomad</include>
+        <include>org.terracotta.common:output-service</include>
         <include>com.fasterxml.jackson.core:jackson-annotations</include>
         <include>com.fasterxml.jackson.core:jackson-core</include>
         <include>com.fasterxml.jackson.core:jackson-databind</include>
@@ -154,6 +155,7 @@
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-upgrade-tools</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-api</include>
+        <include>org.terracotta.common:output-service</include>
         <include>org.terracotta:data-root-resource</include>
         <include>org.terracotta.internal:tc-config-parser</include>
         <include>org.terracotta:tcconfig-schema</include>
