@@ -52,8 +52,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
+      <groupId>org.terracotta</groupId>
       <artifactId>voter</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>

@@ -170,6 +170,13 @@
     </dependencySet>
 
     <dependencySet>
+      <outputDirectory>tools/voter/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta:voter</include>
+      </includes>
+    </dependencySet>
+
+    <dependencySet>
       <outputDirectory>tools/lib</outputDirectory>
       <includes>
         <include>org.terracotta.internal:client-runtime</include>

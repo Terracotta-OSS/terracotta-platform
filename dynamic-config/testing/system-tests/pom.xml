@@ -79,8 +79,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
+      <groupId>org.terracotta</groupId>
       <artifactId>voter</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

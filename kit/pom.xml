@@ -32,6 +32,13 @@
 
   <dependencies>
 
+    <dependency>
+      <groupId>org.terracotta.test</groupId>
+      <artifactId>test-common</artifactId>
+      <version>${terracotta-core.version}</version>
+      <scope>test</scope>
+    </dependency>
+
     <!--
       server/plugins/api
     -->
@@ -160,6 +167,16 @@
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
       <artifactId>upgrade-tools-oss</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!--
+      tools/voter/lib
+    -->
+
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>voter</artifactId>
       <version>${project.version}</version>
     </dependency>
 
