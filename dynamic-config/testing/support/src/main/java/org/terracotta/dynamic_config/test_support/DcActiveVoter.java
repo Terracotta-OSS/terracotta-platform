@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -121,6 +122,10 @@ public class DcActiveVoter implements Closeable {
 
   public int getKnownHosts() {
     return activeVoter.getHeartbeatFutures().size();
+  }
+
+  public Set<String> getTopology() {
+    return activeVoter.getExistingTopology();
   }
 
   @Override

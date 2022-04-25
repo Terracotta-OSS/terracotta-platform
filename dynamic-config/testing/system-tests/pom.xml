@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.testing</groupId>
     <artifactId>dynamic-config-testing</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -79,8 +79,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
+      <groupId>org.terracotta</groupId>
       <artifactId>voter</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
