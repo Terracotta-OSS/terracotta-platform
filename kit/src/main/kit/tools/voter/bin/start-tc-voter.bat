@@ -36,7 +36,7 @@ if not defined JAVA_HOME (
 set "CLASSPATH=%TC_VOTER_DIR%\lib\*;%TC_VOTER_DIR%\..\lib\*"
 set "JAVA=%JAVA_HOME%\bin\java.exe"
 
-"%JAVA%" %JAVA_OPTS% -cp "%CLASSPATH%" org.terracotta.voter.cli.TCVoterMain %*
+"%JAVA%" %JAVA_OPTS% "-Dlogback.configurationFile=logback-voter.xml" -cp "%CLASSPATH%" org.terracotta.voter.cli.TCVoterMain %*
 
 exit /b %ERRORLEVEL%
 

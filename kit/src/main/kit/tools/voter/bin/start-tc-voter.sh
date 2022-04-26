@@ -29,4 +29,4 @@ fi
 
 CLASS_PATH="${TC_VOTER_DIR}/lib/*:${TC_VOTER_DIR}/../lib/*"
 
-"$JAVA_HOME/bin/java" ${JAVA_OPTS} -cp "$CLASS_PATH" org.terracotta.voter.cli.TCVoterMain "$@"
+"$JAVA_HOME/bin/java" ${JAVA_OPTS} "-Dlogback.configurationFile=logback-voter.xml" -cp "$CLASS_PATH" org.terracotta.voter.cli.TCVoterMain "$@"
