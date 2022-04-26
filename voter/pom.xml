@@ -74,13 +74,11 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>connection-impl</artifactId>
       <version>${terracotta-core.version}</version>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>common</artifactId>
       <version>${terracotta-core.version}</version>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
   <build>
