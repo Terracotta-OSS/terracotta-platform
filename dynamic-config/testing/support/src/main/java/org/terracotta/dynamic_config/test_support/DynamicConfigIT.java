@@ -28,7 +28,6 @@ import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.config.ConfigurationContext;
-import org.terracotta.angela.client.filesystem.RemoteFolder;
 import org.terracotta.angela.client.support.junit.AngelaOrchestratorRule;
 import org.terracotta.angela.client.support.junit.AngelaRule;
 import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
@@ -61,8 +60,6 @@ import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.JavaTool;
 import org.terracotta.testing.TmpDir;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
@@ -79,7 +76,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -105,7 +101,6 @@ import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
-import static org.terracotta.common.struct.Tuple2.tuple2;
 import static org.terracotta.common.struct.Tuple3.tuple3;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 
@@ -191,43 +186,6 @@ public class DynamicConfigIT {
         .around(new ExtendedTestRule() {
           @Override
           protected void before(Description description) {
-            String baseLogging = "tc-logback.xml";
-            String extraLogging = "logback-ext-test.xml";
-            ExtraLogging extra = description.getAnnotation(ExtraLogging.class);
-            if (extra != null) {
-              extraLogging = extra.value();
-            }
-            // upload tc logging config, but ONLY IF EXISTS !
-            Stream.of(tuple2(baseLogging, "logback-test.xml"), tuple2(extraLogging, "logback-ext-test.xml"))
-                .map(loggingConfig -> tuple2(getClass().getResource("/" + loggingConfig.t1), loggingConfig.t2))
-                .filter(tuple -> tuple.t1 != null)
-                .forEach(loggingConfig -> {
-                  angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
-                    try {
-                      RemoteFolder folder = angela.tsa().browse(s, "");
-                      folder.upload(loggingConfig.t2, loggingConfig.t1);
-                    } catch (IOException exp) {
-                      LOGGER.warn("unable to upload logback configuration", exp);
-                    }
-                  });
-                });
-            angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
-              try {
-                RemoteFolder folder = angela.tsa().browse(s, "");
-                Properties props = new Properties();
-                props.setProperty("serverWorkingDir", folder.getAbsoluteName());
-                props.setProperty("serverId", s.getServerSymbolicName().getSymbolicName());
-                props.setProperty("test.displayName", description.getDisplayName());
-                props.setProperty("test.className", description.getClassName());
-                props.setProperty("test.methodName", description.getMethodName());
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                props.store(bos, "logging properties");
-                bos.close();
-                folder.upload("logbackVars.properties", new ByteArrayInputStream(bos.toByteArray()));
-              } catch (IOException exp) {
-                LOGGER.warn("unable to upload logback configuration", exp);
-              }
-            });
             // wait for server startup if auto-activated
             if (clusterDef.autoStart()) {
               int stripes = angela.getStripeCount();

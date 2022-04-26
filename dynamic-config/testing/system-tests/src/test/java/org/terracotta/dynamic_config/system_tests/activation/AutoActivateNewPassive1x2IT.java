@@ -54,15 +54,12 @@ public class AutoActivateNewPassive1x2IT extends DynamicConfigIT {
     startNode(1, 1, "--auto-activate", "-f", copyConfigProperty("/config-property-files/1x2.properties").toString(), "-s", "localhost", "-p", String.valueOf(getNodePort(1, 1)), "--config-dir", "config/stripe1/1-1");
     waitForActive(1, 1);
 
-    try {
-      startNode(1, 2,
-          "--auto-activate", "-f", copyConfigProperty("/config-property-files/1x2-diff.properties").toString(),
-          "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)),
-          "--config-dir", "config/stripe1/node-1-2");
-      fail();
-    } catch (Throwable e) {
-      assertThatServerStdOut(getNode(1, 2), "Unable to find any change in the source node matching the topology used to activate this node");
-    }
+    startNode(1, 2,
+        "--auto-activate", "-f", copyConfigProperty("/config-property-files/1x2-diff.properties").toString(),
+        "-s", "localhost", "-p", String.valueOf(getNodePort(1, 2)),
+        "--config-dir", "config/stripe1/node-1-2");
+    waitForStopped(1, 2);
+    assertThatServerStdOut(getNode(1, 2), "Unable to find any change in the source node matching the topology used to activate this node");
   }
 
   @Test

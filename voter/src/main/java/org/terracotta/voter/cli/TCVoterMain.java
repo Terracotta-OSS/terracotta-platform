@@ -36,6 +36,7 @@ public class TCVoterMain {
 
   public static void main(String[] args) {
     TCVoterMain main = new TCVoterMain();
+    writePID();
     main.processArgs(args);
   }
 
@@ -50,7 +51,6 @@ public class TCVoterMain {
       return;
     }
 
-    writePID();
     Optional<Properties> connectionProps = getConnectionProperties(options);
     if (options.getServersHostPort() != null) {
       processServerArg(connectionProps, options.getServersHostPort().toArray(new String[0]));
@@ -106,7 +106,7 @@ public class TCVoterMain {
     }
   }
 
-  private static void writePID() {
+  protected static void writePID() {
     try {
       String processName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
       long pid = Long.parseLong(processName.split("@")[0]);
