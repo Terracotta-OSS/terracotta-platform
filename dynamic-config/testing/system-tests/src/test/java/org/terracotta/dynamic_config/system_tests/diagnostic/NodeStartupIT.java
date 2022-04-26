@@ -33,7 +33,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 @ClusterDefinition(autoStart = false, failoverPriority = "")
 public class NodeStartupIT extends DynamicConfigIT {
@@ -77,98 +76,71 @@ public class NodeStartupIT extends DynamicConfigIT {
   @Test
   public void testFailedStartupConfigFile_nonExistentFile() {
     Path configurationFile = Paths.get(".").resolve("blah.properties");
-    try {
-      startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "Failed to read config file");
-    }
+    startNode(1, 1, "--config-file", configurationFile.toString(), "--config-dir", "config/stripe1/node-1");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "Failed to read config file");
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidPort() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid1.properties");
-    try {
-      startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "<port> specified in port=<port> must be an integer between 1 and 65535");
-    }
+    startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "<port> specified in port=<port> must be an integer between 1 and 65535");
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidSecurity() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_invalid2.properties");
-    try {
-      startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "When no security root directories are configured all other security settings should also be unconfigured (unset)");
-    }
+    startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "When no security root directories are configured all other security settings should also be unconfigured (unset)");
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidCliParams() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    try {
-      startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
-    }
+    startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
   }
 
   @Test
   public void testFailedStartupConfigFile_invalidCliParams_2() {
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    try {
-      startNode(1, 1, "-f", configurationFile.toString(), "-m", "config");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
-    }
+    startNode(1, 1, "-f", configurationFile.toString(), "-m", "config");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
   }
 
   @Test
   public void testFailedStartupCliParams_invalidAuthc() {
-    try {
-      startSingleNode("--authc=blah", "-r", "config");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "authc should be one of: [file, ldap, certificate]");
-    }
+    startSingleNode("--authc=blah", "-r", "config");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "authc should be one of: [file, ldap, certificate]");
   }
 
   @Test
   public void testFailedStartupCliParams_invalidHostname() {
-    try {
-      startNode(1, 1, "-y", "availability", "--hostname=:::", "-r", "config");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "<address> specified in hostname=<address> must be a valid hostname or IP address");
-    }
+    startNode(1, 1, "-y", "availability", "--hostname=:::", "-r", "config");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "<address> specified in hostname=<address> must be a valid hostname or IP address");
   }
 
   @Test
   public void testFailedStartupCliParams_invalidFailoverPriority() {
-    try {
-      startSingleNode("--failover-priority", "blah", "-r", "config");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)");
-    }
+    startSingleNode("--failover-priority", "blah", "-r", "config");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "failover-priority should be either 'availability', 'consistency', or 'consistency:N' (where 'N' is the voter count expressed as a non-negative integer)");
   }
 
   @Test
   public void testFailedStartupCliParams_invalidSecurity() {
-    try {
-      startSingleNode("--audit-log-dir", "audit-dir", "-r", "config");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "When no security root directories are configured audit-log-dir should also be unconfigured (unset)");
-    }
+    startSingleNode("--audit-log-dir", "audit-dir", "-r", "config");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "When no security root directories are configured audit-log-dir should also be unconfigured (unset)");
   }
 
   @Test
@@ -193,29 +165,23 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testFailedStartupCliParamsWithConfigFileAndConfigDir() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe.properties");
-    try {
-      startNode(1, 1,
-          "--config-file", configurationFile.toString(),
-          "--hostname", "localhost",
-          "--port", port,
-          "--metadata-dir", "foo"
-      );
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
-    }
+    startNode(1, 1,
+        "--config-file", configurationFile.toString(),
+        "--hostname", "localhost",
+        "--port", port,
+        "--metadata-dir", "foo"
+    );
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
   }
 
   @Test
   public void testStartingNodeWhenMigrationDidNotCommit() throws Exception {
     Path configurationRepo = generateNodeConfigDir(1, 1, ConfigurationGenerator::generate1Stripe1NodeAndSkipCommit);
-    try {
-      startSingleNode("--config-dir", configurationRepo.toString());
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "Node has not been activated or migrated properly");
-      assertThatServerStdOut(getNode(1, 1), not(containsString("Moved to State[ ACTIVE-COORDINATOR ]")));
-    }
+    startSingleNode("--config-dir", configurationRepo.toString());
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "Node has not been activated or migrated properly");
+    assertThatServerStdOut(getNode(1, 1), not(containsString("Moved to State[ ACTIVE-COORDINATOR ]")));
   }
 
   @Test
@@ -245,63 +211,48 @@ public class NodeStartupIT extends DynamicConfigIT {
   public void testFailedStartupNewConfigFile_invalidPort() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe_invalid1.cfg");
-    try {
-      startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "<port> specified in port=<port> must be an integer between 1 and 65535");
-    }
+    startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "<port> specified in port=<port> must be an integer between 1 and 65535");
   }
 
   @Test
   public void testFailedStartupNewConfigFile_invalidSecurity() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe_invalid2.cfg");
-    try {
-      startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "When no security root directories are configured all other security settings should also be unconfigured (unset)");
-    }
+    startNode(1, 1, "--config-file", configurationFile.toString(), "--hostname", "localhost", "--port", port, "--config-dir", "config/stripe1/node-1");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "When no security root directories are configured all other security settings should also be unconfigured (unset)");
   }
 
   @Test
   public void testFailedStartupNewConfigFile_invalidCliParams() {
     Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
-    try {
-      startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
-    }
+    startSingleNode("--config-file", configurationFile.toString(), "--bind-address", "::1");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
   }
 
   @Test
   public void testFailedStartupNewConfigFile_invalidCliParams_2() {
     Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
-    try {
-      startNode(1, 1, "-f", configurationFile.toString(), "-m", "config");
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
-    }
+    startNode(1, 1, "-f", configurationFile.toString(), "-m", "config");
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
   }
 
   @Test
   public void testFailedStartupCliParamsWithNewConfigFileAndConfigDir() {
     String port = String.valueOf(getNodePort());
     Path configurationFile = copyConfigProperty("/config-property-files-new-format/single-stripe.cfg");
-    try {
-      startNode(1, 1,
-          "--config-file", configurationFile.toString(),
-          "--hostname", "localhost",
-          "--port", port,
-          "--metadata-dir", "foo"
-      );
-      fail();
-    } catch (Exception e) {
-      waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
-    }
+    startNode(1, 1,
+        "--config-file", configurationFile.toString(),
+        "--hostname", "localhost",
+        "--port", port,
+        "--metadata-dir", "foo"
+    );
+    waitForStopped(1, 1);
+    waitUntilServerStdOut(getNode(1, 1), "'--config-file' parameter can only be used with '--repair-mode', '--name', '--hostname', '--port' and '--config-dir' parameters");
   }
 
   private void startSingleNode(String... args) {
