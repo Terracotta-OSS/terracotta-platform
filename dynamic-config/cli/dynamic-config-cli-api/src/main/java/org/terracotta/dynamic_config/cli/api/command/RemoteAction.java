@@ -544,6 +544,23 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final void ensureNodesAreEitherActiveOrPassive(Map<Endpoint, LogicalServerState> onlineNodes) {
+    for (Map.Entry<Endpoint, LogicalServerState> entry : onlineNodes.entrySet()) {
+      if (entry.getValue().isStarting() || entry.getValue().isSynchronizing()) {
+        // this node will become passive in a few... Just wait instead of failing...
+        LOGGER.info("Waiting for node: {} to become passive or active...", entry.getKey());
+        while (entry.getValue().isSynchronizing() || entry.getValue().isStarting()) {
+          try {
+            Thread.sleep(1_000);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+          }
+          entry.setValue(getLogicalServerState(entry.getKey()));
+        }
+        LOGGER.info("Node: {} is: {}", entry.getKey(), entry.getValue());
+      }
+    }
+
     onlineNodes.forEach((addr, state) -> {
       if (!state.isActive() && !state.isPassive()) {
         throw new IllegalStateException("Unable to update node: " + addr + " that is currently in state: " + state
