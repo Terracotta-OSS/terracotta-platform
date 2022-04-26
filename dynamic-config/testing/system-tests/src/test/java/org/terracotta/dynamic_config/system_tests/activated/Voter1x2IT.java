@@ -20,8 +20,8 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
-import org.terracotta.dynamic_config.test_support.DcActiveVoter;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.voter.ActiveVoter;
 import org.terracotta.voter.TCVoter;
 import org.terracotta.voter.TCVoterImpl;
 import org.terracotta.voter.VoterStatus;
@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -73,21 +74,28 @@ public class Voter1x2IT extends DynamicConfigIT {
     String active = getNode(1, activeId).getHostPort();
     String passive = getNode(1, passiveId).getHostPort();
 
-    try (DcActiveVoter activeVoter = new DcActiveVoter("voter1", active, passive)) {
-      activeVoter.startAndAwaitRegistration();
+    try (ActiveVoter activeVoter = new ActiveVoter("voter1", active, passive)) {
+      activeVoter.startAndAwaitRegistrationWithAll();
 
       String[] hostPorts = {getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort()};
       Set<String> expectedTopology = new HashSet<>(Arrays.asList(hostPorts));
 
-      assertThat(activeVoter.getTopology(), CoreMatchers.is(expectedTopology));
+      assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
       assertThat(activeVoter.getKnownHosts(), CoreMatchers.is(hostPorts.length));
 
+      CountDownLatch voted = new CountDownLatch(1);
+      activeVoter.setVoteListener(s -> {
+        if (s.equals(active)) {
+          voted.countDown();
+        }
+      });
+
       stopNode(1, passiveId);
-      activeVoter.waitForVote(active);
+      voted.await();
       assertThat(configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       expectedTopology.remove(hostPorts[1]);
-      waitUntil(activeVoter::getTopology, is(expectedTopology));
+      waitUntil(activeVoter::getExistingTopology, is(expectedTopology));
       waitUntil(activeVoter::getKnownHosts, is(1));
     }
   }

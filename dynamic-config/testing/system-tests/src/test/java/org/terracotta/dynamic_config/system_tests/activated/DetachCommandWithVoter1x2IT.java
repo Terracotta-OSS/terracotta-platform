@@ -16,12 +16,13 @@
 
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
-import org.terracotta.dynamic_config.test_support.DcActiveVoter;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.voter.ActiveVoter;
+
+import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -44,18 +45,26 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
     String active = getNode(1, activeId).getHostPort();
     String passive = getNode(1, passiveId).getHostPort();
 
-    try (DcActiveVoter activeVoter = new DcActiveVoter("voter1", active, passive)) {
-      activeVoter.startAndAwaitRegistration();
+    try (ActiveVoter activeVoter = new ActiveVoter("voter1", active, passive)) {
+
+      CountDownLatch voted = new CountDownLatch(1);
+      activeVoter.setVoteListener(s -> {
+        if (s.equals(active)) {
+          voted.countDown();
+        }
+      });
+
+      activeVoter.startAndAwaitRegistrationWithAll();
 
       stopNode(1, passiveId);
-      activeVoter.waitForVote(active);
+      voted.await();
+
       assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     }
   }
 
-  @Ignore("https://github.com/Terracotta-OSS/terracotta-platform/issues/1083")
   @Test
   public void testDetachAndAttachVerifyWithVoter() {
     int activeId = waitForActive(1);
@@ -64,8 +73,8 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
     String active = getNode(1, activeId).getHostPort();
     String passive = getNode(1, passiveId).getHostPort();
 
-    try (DcActiveVoter activeVoter1 = new DcActiveVoter("voter1", active, passive)) {
-      activeVoter1.startAndAwaitRegistration();
+    try (ActiveVoter activeVoter1 = new ActiveVoter("voter1", active, passive)) {
+      activeVoter1.startAndAwaitRegistrationWithAll();
 
       waitUntil(() -> configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
