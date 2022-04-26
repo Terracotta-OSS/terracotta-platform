@@ -37,6 +37,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -65,6 +66,7 @@ public class ActiveVoter implements AutoCloseable {
   private final Thread voter;
   private final String id;
   private final Function<String, ClientVoterManager> clientVoterManagerFactory;
+  private final CompletableFuture<VoterStatus> voterStatus;
   private volatile boolean active = false;
   private volatile Future<?> topologyFetchingFuture = null;
   private final Set<String> existingTopology = new HashSet<>();
@@ -72,19 +74,44 @@ public class ActiveVoter implements AutoCloseable {
   private final Set<String> registrationLatch = new HashSet<>();
   private final Map<String, Future<?>> heartbeatFutures = new ConcurrentHashMap<>();
 
+  private volatile Consumer<String> voteListener = s -> {};
+
+  public ActiveVoter(String id, String... hostPorts) {
+    this(id, new CompletableFuture<>(), Optional.empty(), ClientVoterManagerImpl::new, hostPorts);
+  }
+
   public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps, String... hostPorts) {
     this(id, voterStatus, connectionProps, ClientVoterManagerImpl::new, hostPorts);
   }
 
   public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps,
                      Function<String, ClientVoterManager> clientVoterManagerFactory, String... hostPorts) {
-    this.voter = voterThread(voterStatus, connectionProps, hostPorts);
     this.id = id;
     this.clientVoterManagerFactory = clientVoterManagerFactory;
+    this.voterStatus = voterStatus;
+    this.voter = voterThread(voterStatus, connectionProps, hostPorts);
+  }
+
+  public ActiveVoter setVoteListener(Consumer<String> voteListener) {
+    this.voteListener = voteListener;
+    return this;
   }
 
   public ActiveVoter start() {
     this.voter.start();
+    return this;
+  }
+
+  public ActiveVoter startAndAwaitRegistrationWithAll() {
+    start();
+    try {
+      voterStatus.get().awaitRegistrationWithAll();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e.getCause());
+    }
     return this;
   }
 
@@ -270,6 +297,9 @@ public class ActiveVoter implements AutoCloseable {
                 lastVotedElection = election;
                 long result = voterManager.vote(id, election);
                 LOGGER.info("Own the vote, voting for {} for term: {}, result: {}", voterManager.getTargetHostPort(), election, result);
+                if (result == 0) {
+                  voteListener.accept(voterManager.getTargetHostPort());
+                }
               } else if (owner.isConnected()) {
                 // ignore, back to heartbeating
                 LOGGER.info("Not the vote owner and the owner is still connected, rejecting the vote request from {} for election term {}", voterManager.getTargetHostPort(), election);
@@ -283,6 +313,9 @@ public class ActiveVoter implements AutoCloseable {
                 owner.zombie();
                 long result = voterManager.vote(id, election);
                 LOGGER.info("Stole the vote from {}, voting for {} for term: {}, result: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, result);
+                if (result == 0) {
+                  voteListener.accept(voterManager.getTargetHostPort());
+                }
                 break;
               } else {
                 LOGGER.info("Failed to steal the vote from {}, rejecting the vote request from {} for term {}, last voted election: {}", owner.getTargetHostPort(), voterManager.getTargetHostPort(), election, lastVotedElection);
@@ -480,5 +513,9 @@ public class ActiveVoter implements AutoCloseable {
 
   public Map<String, Future<?>> getHeartbeatFutures() {
     return heartbeatFutures;
+  }
+
+  public int getKnownHosts() {
+    return getHeartbeatFutures().size();
   }
 }
