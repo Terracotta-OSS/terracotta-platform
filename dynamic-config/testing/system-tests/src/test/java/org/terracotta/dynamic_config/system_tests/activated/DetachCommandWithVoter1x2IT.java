@@ -16,7 +16,6 @@
 
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -66,7 +65,6 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
     }
   }
 
-  @Ignore("https://github.com/Terracotta-OSS/terracotta-platform/issues/1083")
   @Test
   public void testDetachAndAttachVerifyWithVoter() {
     int activeId = waitForActive(1);
