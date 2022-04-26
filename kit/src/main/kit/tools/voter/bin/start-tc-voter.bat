@@ -16,7 +16,6 @@
 
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-set TC_VOTER_MAIN=org.terracotta.voter.cli.TCVoterMain
 
 pushd "%~dp0.."
 set "TC_VOTER_DIR=%CD%"
@@ -34,16 +33,10 @@ if not defined JAVA_HOME (
   exit /b 1
 )
 
-pushd "%TC_VOTER_DIR%\..\.."
-set "TC_KIT_ROOT=%CD%"
-popd
-set "TC_LOGGING_ROOT=%TC_KIT_ROOT%\client\logging"
-set "TC_CLIENT_ROOT=%TC_KIT_ROOT%\client\lib"
-
-set "CLASSPATH=%TC_VOTER_DIR%\lib\*;%TC_CLIENT_ROOT%\*;%TC_LOGGING_ROOT%\*;%TC_LOGGING_ROOT%\impl\*;%TC_LOGGING_ROOT%\impl"
+set "CLASSPATH=%TC_VOTER_DIR%\lib\*;%TC_VOTER_DIR%\..\lib\*"
 set "JAVA=%JAVA_HOME%\bin\java.exe"
 
-"%JAVA%" %JAVA_OPTS% -cp "%CLASSPATH%" %TC_VOTER_MAIN% %*
+"%JAVA%" %JAVA_OPTS% -cp "%CLASSPATH%" org.terracotta.voter.cli.TCVoterMain %*
 
 exit /b %ERRORLEVEL%
 

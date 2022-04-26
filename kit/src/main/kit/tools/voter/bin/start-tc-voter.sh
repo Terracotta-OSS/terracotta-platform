@@ -16,7 +16,6 @@
 #
 
 TC_VOTER_DIR="$(dirname "$(cd "$(dirname "$0")";pwd)")"
-TC_VOTER_MAIN=org.terracotta.voter.cli.TCVoterMain
 
 # this will only happen if using sag installer
 if [ -r "${TC_VOTER_DIR}/bin/setenv.sh" ] ; then
@@ -28,10 +27,6 @@ if ! [ -d "${JAVA_HOME}" ]; then
   exit 2
 fi
 
-TC_KIT_ROOT="$(dirname "$(dirname "$TC_VOTER_DIR")")"
-TC_LOGGING_ROOT="$TC_KIT_ROOT/client/logging"
-TC_CLIENT_ROOT="$TC_KIT_ROOT/client/lib"
+CLASS_PATH="${TC_VOTER_DIR}/lib/*:${TC_VOTER_DIR}/../lib/*"
 
-CLASS_PATH="${TC_VOTER_DIR}/lib/*:${TC_CLIENT_ROOT}/*:${TC_LOGGING_ROOT}/*:${TC_LOGGING_ROOT}/impl/*:${TC_LOGGING_ROOT}/impl/"
-
-"$JAVA_HOME/bin/java" ${JAVA_OPTS} -cp "$CLASS_PATH" $TC_VOTER_MAIN "$@"
+"$JAVA_HOME/bin/java" ${JAVA_OPTS} -cp "$CLASS_PATH" org.terracotta.voter.cli.TCVoterMain "$@"
