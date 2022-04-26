@@ -19,9 +19,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
-import org.terracotta.dynamic_config.test_support.DcActiveVoter;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.InlineServers;
+import org.terracotta.voter.ActiveVoter;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -59,10 +59,10 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
     int activeId = waitForActive(1);
     int passiveId = waitForNPassives(1, 1)[0];
 
-    try (DcActiveVoter activeVoter = new DcActiveVoter("fvoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
-         DcActiveVoter secondVoter = new DcActiveVoter("svoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
-      activeVoter.startAndAwaitRegistration();
-      secondVoter.startAndAwaitRegistration();
+    try (ActiveVoter activeVoter = new ActiveVoter("fvoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
+         ActiveVoter secondVoter = new ActiveVoter("svoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
+      activeVoter.startAndAwaitRegistrationWithAll();
+      secondVoter.startAndAwaitRegistrationWithAll();
 
       String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
       startNode(1, 3);
