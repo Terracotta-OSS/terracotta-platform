@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Mathieu Carbou
@@ -40,7 +41,8 @@ public interface MultiDiagnosticServiceProvider {
     DiagnosticServices<K> diagnosticServices = fetchDiagnosticServices(expectedOnlineNodes);
     Collection<K> offlineEndpoints = diagnosticServices.getOfflineEndpoints().keySet();
     if (!offlineEndpoints.isEmpty()) {
-      DiagnosticServiceProviderException exception = new DiagnosticServiceProviderException("Diagnostic connection to: " + offlineEndpoints + " failed");
+      Collection<InetSocketAddress> failed = offlineEndpoints.stream().map(expectedOnlineNodes::get).collect(Collectors.toList());
+      DiagnosticServiceProviderException exception = new DiagnosticServiceProviderException("Diagnostic connection to: " + failed + " failed");
       // add all errors
       offlineEndpoints.stream()
           .map(address -> diagnosticServices.getError(address).orElse(null))
