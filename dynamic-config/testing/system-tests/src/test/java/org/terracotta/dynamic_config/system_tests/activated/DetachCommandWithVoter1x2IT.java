@@ -25,7 +25,6 @@ import org.terracotta.voter.ActiveVoter;
 import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
@@ -59,7 +58,7 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
       stopNode(1, passiveId);
       voted.await();
 
-      assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      waitUntil(()->configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
     }
@@ -82,7 +81,7 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
 
       startNode(1, passiveId);
 
-      assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
+      waitUntil(()->configTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       waitUntil(activeVoter1::getKnownHosts, is(2));
 
