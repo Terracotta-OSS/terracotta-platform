@@ -71,7 +71,10 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
       //setup for failover in commit phase on active
       assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
-      assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
+      // the shutdown of the active might break the entity connection during a commit and cause this error:
+      // Commit failed for node localhost:3908. Reason: Entity: org.terracotta.nomad.entity.client.NomadEntity:nomad-entity Connection closed under in-flight message
+      // Once the failover is done and voter voted, we should be able to retry the command
+      waitUntil(() -> configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
       waitForPassive(1, 3);
 
       waitUntil(activeVoter::getKnownHosts, is(3));
