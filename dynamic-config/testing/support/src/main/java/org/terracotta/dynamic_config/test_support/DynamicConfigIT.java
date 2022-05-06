@@ -604,10 +604,6 @@ public class DynamicConfigIT {
   // assertions
   // =========================================
 
-  protected final void waitUntil(ToolExecutionResult result, Matcher<ToolExecutionResult> matcher) {
-    angela.waitUntil(result, matcher);
-  }
-
   protected final void waitUntilServerStdOut(TerracottaServer server, String matcher) {
     angela.waitUntilServerStdOut(server, matcher);
   }
