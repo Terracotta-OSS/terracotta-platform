@@ -162,7 +162,7 @@ public class DynamicConfigIT {
           }
 
           @Override
-          protected void before(Description description) throws Throwable {
+          protected void before(Description description) {
             InlineServers inline = description.getAnnotation(InlineServers.class);
             if (inline != null) {
               oldConfiguration = configure(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), inline.value()));
@@ -171,7 +171,7 @@ public class DynamicConfigIT {
           }
 
           @Override
-          protected void after(Description description) throws Throwable {
+          protected void after(Description description) {
             super.after(description);
             if (oldConfiguration != null) {
               configure(oldConfiguration);
