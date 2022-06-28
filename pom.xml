@@ -53,10 +53,6 @@
   <modules>
     <module>offheap-resource</module>
     <module>voltron-proxy</module>
-    <module>concurrent-map-entity/common</module>
-    <module>concurrent-map-entity/client</module>
-    <module>concurrent-map-entity/server</module>
-    <module>concurrent-map-entity/integration-tests</module>
     <module>communicator-support</module>
     <module>healthchecker-entity</module>
     <module>lease</module>
