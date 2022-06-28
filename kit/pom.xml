@@ -32,13 +32,6 @@
 
   <dependencies>
 
-    <dependency>
-      <groupId>org.terracotta.test</groupId>
-      <artifactId>test-common</artifactId>
-      <version>${terracotta-core.version}</version>
-      <scope>test</scope>
-    </dependency>
-
     <!--
       server/plugins/api
     -->
