@@ -64,7 +64,6 @@ import java.util.Set;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
-import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
 
 public class DynamicConfigConfigurationProvider implements ConfigurationProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigConfigurationProvider.class);
@@ -201,12 +200,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
       if (requires.contains(RESTART_REQUIRED)) {
         Server server = ServerEnv.getServer();
-        if (requires.contains(ZAP_REQUIRED)) {
-          server.warn("Zapping server");
-          server.stop(StopAction.ZAP, StopAction.RESTART);
-        } else {
-          server.stop(StopAction.RESTART);
-        }
+        server.stop(StopAction.RESTART);
       }
 
       warnIfPreparedChange();

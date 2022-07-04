@@ -108,7 +108,6 @@ import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.NOTHING;
-import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
 
 @RunWith(Parameterized.class)
@@ -178,7 +177,7 @@ public class DesynchronizedNomadConfigTest {
 
       // force sync the passive to active
       try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"), passiveDetails)) {
-        assertThat(passive.sync.sync(active.sync.getSyncData()), hasItem(ZAP_REQUIRED));
+        passive.sync.sync(active.sync.getSyncData());
         assertThat(passive.nomad.getChangeHistory(), hasSize(2)); // the changes before any upgrade are not synced
       }
 
