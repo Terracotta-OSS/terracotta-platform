@@ -148,7 +148,7 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-" + LICENSE_FILE}, hidden = true)
   private String licenseFile;
 
-  @Parameter(names = {"-" + NODE_HOME_DIR}, hidden = true)
+  @Parameter(names = {"-" + NODE_HOME_DIR, "--" + NODE_HOME_DIR}, hidden = true)
   private String serverHome;
 
   @Parameter(names = {"-" + REPAIR_MODE}, description = "Start node in repair mode")
