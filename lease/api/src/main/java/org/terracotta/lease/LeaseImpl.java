@@ -15,10 +15,14 @@
  */
 package org.terracotta.lease;
 
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+
 /**
  * An implementation of Lease representing a granted lease, which may or may not have expired.
  */
 class LeaseImpl implements LeaseInternal {
+  private static final Logger LOGGER = LoggerFactory.getLogger(LeaseImpl.class);
   private final TimeSource timeSource;
   private final long startOfContiguousLeasedPeriod;
   private final long leaseExpiry;
@@ -38,6 +42,7 @@ class LeaseImpl implements LeaseInternal {
     LeaseImpl previousLeaseImpl = (LeaseImpl) previousLease;
 
     if (startOfContiguousLeasedPeriod != previousLeaseImpl.startOfContiguousLeasedPeriod) {
+      LOGGER.debug("not contiguous {} != {}", startOfContiguousLeasedPeriod, previousLeaseImpl.startOfContiguousLeasedPeriod);
       return false;
     }
 
@@ -55,7 +60,9 @@ class LeaseImpl implements LeaseInternal {
 
   private boolean isValid() {
     long now = timeSource.nanoTime();
-    return now - leaseExpiry < 0;
+    long diff = (now - leaseExpiry);
+    LOGGER.debug("now {} expire {} diff {}", now, leaseExpiry, diff);
+    return diff < 0L;
   }
 
   @Override

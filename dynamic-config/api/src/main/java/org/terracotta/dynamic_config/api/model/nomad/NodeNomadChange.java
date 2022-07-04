@@ -15,33 +15,26 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
-
-import java.net.InetSocketAddress;
+import org.terracotta.dynamic_config.api.model.UID;
 
 /**
  * @author Mathieu Carbou
  */
 public abstract class NodeNomadChange extends TopologyNomadChange {
 
-  private final int stripeId;
+  private final UID stripeUID;
   private final Node node;
 
-  public NodeNomadChange(Cluster updated, int stripeId, Node node) {
-    super(updated, Applicability.stripe(stripeId));
-    this.stripeId = stripeId;
+  public NodeNomadChange(Cluster updated, UID stripeUID, Node node) {
+    super(updated, Applicability.stripe(stripeUID));
+    this.stripeUID = stripeUID;
     this.node = node;
   }
 
-  public int getStripeId() {
-    return stripeId;
-  }
-
-  @JsonIgnore
-  public InetSocketAddress getNodeAddress() {
-    return getNode().getNodeAddress();
+  public UID getStripeUID() {
+    return stripeUID;
   }
 
   public Node getNode() {

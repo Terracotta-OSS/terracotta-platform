@@ -20,8 +20,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
-
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -30,40 +28,30 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(nodesPerStripe = 2)
+@ClusterDefinition(nodesPerStripe = 2, failoverPriority = "")
 public class DetachCommand1x2IT extends DynamicConfigIT {
-
-  public DetachCommand1x2IT() {
-    super(Duration.ofSeconds(180));
-  }
 
   @Before
   public void setUp() throws Exception {
-    assertThat(configToolInvocation("attach",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
   }
 
   @Test
-  public void test_detach() throws Exception {
-    assertThat(configToolInvocation("detach",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+  public void test_detach() {
+    assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
   }
 
   @Test
-  public void test_detach_offline() throws Exception {
+  public void test_detach_offline() {
     stopNode(1, 2);
-    assertThat(configToolInvocation("detach",
-        "-d", "localhost:" + getNodePort(1, 1),
-        "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+    assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
   }
 }

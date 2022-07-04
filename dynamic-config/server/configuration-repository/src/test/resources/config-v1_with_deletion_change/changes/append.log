@@ -1,0 +1,347 @@
+2021-01-21T14:37:30.507Z
+{
+  "mutativeMessageCount" : 1,
+  "currentVersion" : 0,
+  "mode" : "ACCEPTING",
+  "highestVersion" : 0
+}
+557db89985def2d0f67d198679f5429a9ac0a766
+
+2021-01-21T14:37:50.677Z
+{
+  "mutativeMessageCount" : 2,
+  "currentVersion" : 0,
+  "request" : "PREPARE",
+  "mode" : "PREPARED",
+  "latestChangeUuid" : "db4571f8-de9c-45a6-b824-18a5f188ec72",
+  "highestVersion" : 1,
+  "lastMutationHost" : "SAG-2H78NQ2-U",
+  "lastMutationUser" : "mdh@eur.ad.sag",
+  "lastMutationTimestamp" : "2021-01-21T14:37:50.533Z",
+  "db4571f8-de9c-45a6-b824-18a5f188ec72" : {
+    "state" : "PREPARED",
+    "version" : 1,
+    "operation" : {
+      "type" : "ClusterActivationNomadChange",
+      "cluster" : {
+        "name" : "mycluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "dataDirs" : {
+              "main" : "%H/terracotta/user-data/main"
+            },
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9431,
+            "nodeHostname" : "SAG-2H78NQ2-U",
+            "nodeLogDir" : "%H/terracotta/logs",
+            "nodeLoggerOverrides" : { },
+            "nodeMetadataDir" : "%H/terracotta/metadata",
+            "nodeName" : "node2",
+            "nodePort" : 9411,
+            "tcProperties" : { }
+          }, {
+            "dataDirs" : {
+              "main" : "%H/terracotta/user-data/main"
+            },
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "SAG-2H78NQ2-U",
+            "nodeLogDir" : "%H/terracotta/logs",
+            "nodeLoggerOverrides" : { },
+            "nodeMetadataDir" : "%H/terracotta/metadata",
+            "nodeName" : "node1",
+            "nodePort" : 9410,
+            "tcProperties" : { }
+          } ]
+        } ],
+        "clientLeaseDuration" : {
+          "quantity" : 150,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "clientReconnectWindow" : {
+          "quantity" : 120,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "failoverPriority" : "availability",
+        "offheapResources" : {
+          "main" : {
+            "quantity" : 512,
+            "unit" : "MB",
+            "type" : "MEMORY"
+          }
+        },
+        "securitySslTls" : false,
+        "securityWhitelist" : false
+      },
+      "applicability" : {
+        "scope" : "CLUSTER"
+      },
+      "summary" : "Activating cluster"
+    },
+    "changeResultHash" : "3e26256364f56d3b5f7f42d7ba269386f60374af",
+    "creationHost" : "SAG-2H78NQ2-U",
+    "creationUser" : "mdh@eur.ad.sag",
+    "creationTimestamp" : "2021-01-21T14:37:50.533Z"
+  }
+}
+de03775ffcfde8327763eb4cb9db28cc885c283c
+
+2021-01-21T14:37:50.806Z
+{
+  "mutativeMessageCount" : 3,
+  "currentVersion" : 1,
+  "request" : "COMMIT",
+  "mode" : "ACCEPTING",
+  "latestChangeUuid" : "db4571f8-de9c-45a6-b824-18a5f188ec72",
+  "lastMutationHost" : "SAG-2H78NQ2-U",
+  "lastMutationUser" : "mdh@eur.ad.sag",
+  "lastMutationTimestamp" : "2021-01-21T14:37:50.692Z",
+  "db4571f8-de9c-45a6-b824-18a5f188ec72" : {
+    "state" : "COMMITTED",
+    "version" : 1,
+    "operation" : {
+      "type" : "ClusterActivationNomadChange",
+      "cluster" : {
+        "name" : "mycluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "dataDirs" : {
+              "main" : "%H/terracotta/user-data/main"
+            },
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9431,
+            "nodeHostname" : "SAG-2H78NQ2-U",
+            "nodeLogDir" : "%H/terracotta/logs",
+            "nodeLoggerOverrides" : { },
+            "nodeMetadataDir" : "%H/terracotta/metadata",
+            "nodeName" : "node2",
+            "nodePort" : 9411,
+            "tcProperties" : { }
+          }, {
+            "dataDirs" : {
+              "main" : "%H/terracotta/user-data/main"
+            },
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "SAG-2H78NQ2-U",
+            "nodeLogDir" : "%H/terracotta/logs",
+            "nodeLoggerOverrides" : { },
+            "nodeMetadataDir" : "%H/terracotta/metadata",
+            "nodeName" : "node1",
+            "nodePort" : 9410,
+            "tcProperties" : { }
+          } ]
+        } ],
+        "clientLeaseDuration" : {
+          "quantity" : 150,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "clientReconnectWindow" : {
+          "quantity" : 120,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "failoverPriority" : "availability",
+        "offheapResources" : {
+          "main" : {
+            "quantity" : 512,
+            "unit" : "MB",
+            "type" : "MEMORY"
+          }
+        },
+        "securitySslTls" : false,
+        "securityWhitelist" : false
+      },
+      "applicability" : {
+        "scope" : "CLUSTER"
+      },
+      "summary" : "Activating cluster"
+    },
+    "changeResultHash" : "3e26256364f56d3b5f7f42d7ba269386f60374af",
+    "creationHost" : "SAG-2H78NQ2-U",
+    "creationUser" : "mdh@eur.ad.sag",
+    "creationTimestamp" : "2021-01-21T14:37:50.533Z"
+  }
+}
+17787c6a6901df0bceeaea91fb075802f3dcbb05
+
+2021-01-21T14:38:48.302Z
+{
+  "mutativeMessageCount" : 4,
+  "currentVersion" : 1,
+  "request" : "PREPARE",
+  "mode" : "PREPARED",
+  "latestChangeUuid" : "3453da01-1a34-420d-a977-6f42d6142834",
+  "highestVersion" : 2,
+  "lastMutationHost" : "SAG-2H78NQ2-U",
+  "lastMutationUser" : "mdh@eur.ad.sag",
+  "lastMutationTimestamp" : "2021-01-21T14:38:48.264Z",
+  "3453da01-1a34-420d-a977-6f42d6142834" : {
+    "state" : "PREPARED",
+    "version" : 2,
+    "prevChangeUuid" : "db4571f8-de9c-45a6-b824-18a5f188ec72",
+    "operation" : {
+      "type" : "NodeRemovalNomadChange",
+      "cluster" : {
+        "name" : "mycluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "dataDirs" : {
+              "main" : "%H/terracotta/user-data/main"
+            },
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "SAG-2H78NQ2-U",
+            "nodeLogDir" : "%H/terracotta/logs",
+            "nodeLoggerOverrides" : { },
+            "nodeMetadataDir" : "%H/terracotta/metadata",
+            "nodeName" : "node1",
+            "nodePort" : 9410,
+            "tcProperties" : { }
+          } ]
+        } ],
+        "clientLeaseDuration" : {
+          "quantity" : 150,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "clientReconnectWindow" : {
+          "quantity" : 120,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "failoverPriority" : "availability",
+        "offheapResources" : {
+          "main" : {
+            "quantity" : 512,
+            "unit" : "MB",
+            "type" : "MEMORY"
+          }
+        },
+        "securitySslTls" : false,
+        "securityWhitelist" : false
+      },
+      "node" : {
+        "dataDirs" : {
+          "main" : "%H/terracotta/user-data/main"
+        },
+        "nodeBindAddress" : "0.0.0.0",
+        "nodeGroupBindAddress" : "0.0.0.0",
+        "nodeGroupPort" : 9431,
+        "nodeHostname" : "SAG-2H78NQ2-U",
+        "nodeLogDir" : "%H/terracotta/logs",
+        "nodeLoggerOverrides" : { },
+        "nodeMetadataDir" : "%H/terracotta/metadata",
+        "nodeName" : "node2",
+        "nodePort" : 9411,
+        "tcProperties" : { }
+      },
+      "stripeId" : 1,
+      "applicability" : {
+        "scope" : "STRIPE",
+        "stripeId" : 1
+      },
+      "summary" : "Detaching node: SAG-2H78NQ2-U:9411 from stripe ID: 1"
+    },
+    "changeResultHash" : "378dd12a96ca59062a5d1b2031ee8f5fcdca376c",
+    "creationHost" : "SAG-2H78NQ2-U",
+    "creationUser" : "mdh@eur.ad.sag",
+    "creationTimestamp" : "2021-01-21T14:38:48.264Z"
+  }
+}
+a52725faee27c12f7e8a62da7cec8d7e06258014
+
+2021-01-21T14:38:48.609Z
+{
+  "mutativeMessageCount" : 5,
+  "currentVersion" : 2,
+  "request" : "COMMIT",
+  "mode" : "ACCEPTING",
+  "latestChangeUuid" : "3453da01-1a34-420d-a977-6f42d6142834",
+  "lastMutationHost" : "SAG-2H78NQ2-U",
+  "lastMutationUser" : "mdh@eur.ad.sag",
+  "lastMutationTimestamp" : "2021-01-21T14:38:48.333Z",
+  "3453da01-1a34-420d-a977-6f42d6142834" : {
+    "state" : "COMMITTED",
+    "version" : 2,
+    "prevChangeUuid" : "db4571f8-de9c-45a6-b824-18a5f188ec72",
+    "operation" : {
+      "type" : "NodeRemovalNomadChange",
+      "cluster" : {
+        "name" : "mycluster",
+        "stripes" : [ {
+          "nodes" : [ {
+            "dataDirs" : {
+              "main" : "%H/terracotta/user-data/main"
+            },
+            "nodeBindAddress" : "0.0.0.0",
+            "nodeGroupBindAddress" : "0.0.0.0",
+            "nodeGroupPort" : 9430,
+            "nodeHostname" : "SAG-2H78NQ2-U",
+            "nodeLogDir" : "%H/terracotta/logs",
+            "nodeLoggerOverrides" : { },
+            "nodeMetadataDir" : "%H/terracotta/metadata",
+            "nodeName" : "node1",
+            "nodePort" : 9410,
+            "tcProperties" : { }
+          } ]
+        } ],
+        "clientLeaseDuration" : {
+          "quantity" : 150,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "clientReconnectWindow" : {
+          "quantity" : 120,
+          "unit" : "SECONDS",
+          "type" : "TIME"
+        },
+        "failoverPriority" : "availability",
+        "offheapResources" : {
+          "main" : {
+            "quantity" : 512,
+            "unit" : "MB",
+            "type" : "MEMORY"
+          }
+        },
+        "securitySslTls" : false,
+        "securityWhitelist" : false
+      },
+      "node" : {
+        "dataDirs" : {
+          "main" : "%H/terracotta/user-data/main"
+        },
+        "nodeBindAddress" : "0.0.0.0",
+        "nodeGroupBindAddress" : "0.0.0.0",
+        "nodeGroupPort" : 9431,
+        "nodeHostname" : "SAG-2H78NQ2-U",
+        "nodeLogDir" : "%H/terracotta/logs",
+        "nodeLoggerOverrides" : { },
+        "nodeMetadataDir" : "%H/terracotta/metadata",
+        "nodeName" : "node2",
+        "nodePort" : 9411,
+        "tcProperties" : { }
+      },
+      "stripeId" : 1,
+      "applicability" : {
+        "scope" : "STRIPE",
+        "stripeId" : 1
+      },
+      "summary" : "Detaching node: SAG-2H78NQ2-U:9411 from stripe ID: 1"
+    },
+    "changeResultHash" : "378dd12a96ca59062a5d1b2031ee8f5fcdca376c",
+    "creationHost" : "SAG-2H78NQ2-U",
+    "creationUser" : "mdh@eur.ad.sag",
+    "creationTimestamp" : "2021-01-21T14:38:48.264Z"
+  }
+}
+ea8403f62ba50e63daf92cd4770f6f6392ce55b0
+

@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
+import org.terracotta.connection.DiagnosticsFactory;
 import org.terracotta.connection.entity.EntityRef;
 
 import java.net.URI;
@@ -37,16 +38,13 @@ import static org.junit.Assert.fail;
  */
 public class DiagnosticIT extends AbstractSingleTest {
 
-  private static final String PROP_REQUEST_TIMEOUT = "request.timeout";
-  private static final String PROP_REQUEST_TIMEOUTMESSAGE = "request.timeoutMessage";
-
   @Test
   public void cluster_state_dump() throws Exception {
     Properties properties = new Properties();
     properties.setProperty(ConnectionPropertyNames.CONNECTION_TIMEOUT, "10000");
     properties.setProperty(ConnectionPropertyNames.CONNECTION_NAME, "diagnostic");
-    properties.setProperty(PROP_REQUEST_TIMEOUT, "10000");
-    properties.setProperty(PROP_REQUEST_TIMEOUTMESSAGE, "10000");
+    properties.setProperty(DiagnosticsFactory.REQUEST_TIMEOUT, "10000");
+    properties.setProperty(DiagnosticsFactory.REQUEST_TIMEOUT_MESSAGE, "10000");
     URI uri = URI.create("diagnostic://" + voltron.getConnectionURI().getAuthority());
 
     while (!Thread.currentThread().isInterrupted()) {
@@ -55,16 +53,22 @@ public class DiagnosticIT extends AbstractSingleTest {
         EntityRef<Diagnostics, Object, Void> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
         Diagnostics diagnostics = ref.fetchEntity(null);
         String dump = diagnostics.getClusterState();
-//      System.out.println(dump);
-        try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/sate-dump-partial.txt").toURI()))) {
-          if (lines.allMatch(line -> containsString(line).matches(dump))) {
+        System.out.println(dump);
+        try (Stream<String> lines = Files.lines(Paths.get(getClass().getResource("/state-dump-partial.txt").toURI()))) {
+          if (lines.allMatch(line -> {
+            boolean match = containsString(line).matches(dump);
+            if (!match) {
+              System.out.println("==> MISSING: " + line);
+            }
+            return match;
+          })) {
             return;
           }
         }
       }
 
       try {
-        Thread.sleep(1_00);
+        Thread.sleep(1_000);
       } catch (InterruptedException e) {
         fail("interrupted");
       }

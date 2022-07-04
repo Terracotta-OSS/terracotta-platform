@@ -15,9 +15,19 @@
  */
 package org.terracotta.management.service.monitoring;
 
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.entity.PlatformConfiguration;
 
 import java.util.Collection;
+import java.util.Collections;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.terracotta.dynamic_config.api.model.Testing.N_UIDS;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
 
 public class MyPlatformConfiguration implements PlatformConfiguration {
 
@@ -25,10 +35,17 @@ public class MyPlatformConfiguration implements PlatformConfiguration {
   private final String host;
   private final int port;
 
+  private final NodeContext topology = new NodeContext(newTestCluster("my-cluster", new Stripe()
+      .setName("stripe[0]")
+      .addNode(Testing.newTestNode("bar", "localhost"))), N_UIDS[1]);
+  private final TopologyService topologyService = mock(TopologyService.class);
+
   public MyPlatformConfiguration(String serverName, String host, int port) {
-    this.serverName =  serverName;
+    this.serverName = serverName;
     this.host = host;
     this.port = port;
+
+    when(topologyService.getRuntimeNodeContext()).thenReturn(topology);
   }
 
   @Override
@@ -48,7 +65,10 @@ public class MyPlatformConfiguration implements PlatformConfiguration {
 
   @Override
   public <T> Collection<T> getExtendedConfiguration(Class<T> aClass) {
-    return null;
+    if (TopologyService.class == aClass) {
+      return Collections.singletonList(aClass.cast(topologyService));
+    }
+    return Collections.emptyList();
   }
 }
 

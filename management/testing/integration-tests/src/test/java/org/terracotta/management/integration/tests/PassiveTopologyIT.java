@@ -31,7 +31,7 @@ public class PassiveTopologyIT extends AbstractHATest {
   @Test
   public void topology_includes_passives() throws Exception {
     Cluster cluster = nmsService.readTopology();
-    Server passive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
+    Server passive = cluster.serverStream().filter(server -> !server.isActive()).findAny().get();
     final String[] currentPassive = {toJson(passive.toMap()).toString()};
     cluster.clientStream().forEach(client -> currentPassive[0] = currentPassive[0]
         .replace(passive.getServerName(), "stripe-PASSIVE"));
@@ -39,7 +39,7 @@ public class PassiveTopologyIT extends AbstractHATest {
     String actual = removeRandomValues(currentPassive[0]);
 
     // and compare
-    assertEquals(readJson("passive.json"), readJsonStr(actual));
+    assertEquals(readJsonStr(actual).toPrettyString(), readJson("passive.json"), readJsonStr(actual));
   }
 
   @Test
@@ -47,7 +47,7 @@ public class PassiveTopologyIT extends AbstractHATest {
     // clear buffer
     nmsService.readMessages();
 
-    CacheFactory cacheFactory = new CacheFactory(cluster.getConnectionURI(), "random-1");
+    CacheFactory cacheFactory = new CacheFactory(nextInstanceId(), cluster.getConnectionURI(), "random-1");
     cacheFactory.init();
     Cache cache = cacheFactory.getCache("my-cache");
     cache.put("key", "val");

@@ -16,30 +16,33 @@
 package org.terracotta.dynamic_config.server.service;
 
 import com.tc.classloader.BuiltinService;
+import com.tc.spi.NetworkTranslator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.LicenseService;
-import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
+import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.api.SelectingConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.ClientReconnectWindowConfigChangeHandler;
 import org.terracotta.dynamic_config.server.service.handler.LoggerOverrideConfigChangeHandler;
-import org.terracotta.dynamic_config.server.service.handler.ServerAttributeConfigChangeHandler;
+import org.terracotta.dynamic_config.server.service.handler.NodeLogDirChangeHandler;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.nomad.server.NomadServer;
-import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.server.Server;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,127 +50,78 @@ import java.util.Collection;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
 import static org.terracotta.dynamic_config.api.model.Setting.CLUSTER_NAME;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_BIND_ADDRESS;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_GROUP_PORT;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
+import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOGGER_OVERRIDES;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_LOG_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_METADATA_DIR;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
-import static org.terracotta.dynamic_config.api.model.Setting.NODE_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_PUBLIC_PORT;
 import static org.terracotta.dynamic_config.api.model.Setting.TC_PROPERTIES;
 import static org.terracotta.dynamic_config.server.api.ConfigChangeHandler.accept;
-import static org.terracotta.dynamic_config.server.api.ConfigChangeHandler.reject;
 
 @BuiltinService
 public class DynamicConfigServiceProvider implements ServiceProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceProvider.class);
 
-  private volatile IParameterSubstitutor parameterSubstitutor;
-  private volatile ConfigChangeHandlerManager configChangeHandlerManager;
-  private volatile DynamicConfigEventService dynamicConfigEventService;
-  private volatile TopologyService topologyService;
-  private volatile UpgradableNomadServer<NodeContext> nomadServer;
-  private volatile DynamicConfigService dynamicConfigService;
-  private volatile RoutingNomadChangeProcessor routingNomadChangeProcessor;
-  private volatile DynamicConfigListener dynamicConfigListener;
-  private volatile LicenseService licenseService;
+  private volatile PlatformConfiguration platformConfiguration;
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
-    parameterSubstitutor = find(platformConfiguration, IParameterSubstitutor.class);
-    configChangeHandlerManager = find(platformConfiguration, ConfigChangeHandlerManager.class);
-    dynamicConfigEventService = find(platformConfiguration, DynamicConfigEventService.class);
-    topologyService = find(platformConfiguration, TopologyService.class);
-    dynamicConfigService = find(platformConfiguration, DynamicConfigService.class);
-    nomadServer = find(platformConfiguration, (Class<UpgradableNomadServer<NodeContext>>) (Class) UpgradableNomadServer.class);
-    routingNomadChangeProcessor = find(platformConfiguration, RoutingNomadChangeProcessor.class);
-    dynamicConfigListener = find(platformConfiguration, DynamicConfigListener.class);
-    licenseService = find(platformConfiguration, LicenseService.class);
+    this.platformConfiguration = platformConfiguration;
 
-    // If the server is started without the startup manager, with the old script but not with not start-node.sh, then the diagnostic services won't be there.
-    if (configChangeHandlerManager != null) {
+    TopologyService topologyService = findService(TopologyService.class);
 
-      // client-reconnect-window
-      ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler();
-      addToManager(configChangeHandlerManager, clientReconnectWindowHandler, CLIENT_RECONNECT_WINDOW);
+    IParameterSubstitutor parameterSubstitutor = findService(IParameterSubstitutor.class);
+    PathResolver pathResolver = findService(PathResolver.class);
+    ConfigChangeHandlerManager configChangeHandlerManager = findService(ConfigChangeHandlerManager.class);
+    Server server = findService(Server.class);
 
-      // server attributes
-      ConfigChangeHandler serverAttributeConfigChangeHandler = new ServerAttributeConfigChangeHandler();
-      addToManager(configChangeHandlerManager, serverAttributeConfigChangeHandler, NODE_LOG_DIR);
-      addToManager(configChangeHandlerManager, serverAttributeConfigChangeHandler, NODE_BIND_ADDRESS);
-      addToManager(configChangeHandlerManager, serverAttributeConfigChangeHandler, NODE_GROUP_BIND_ADDRESS);
+    // client-reconnect-window
+    ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler();
+    addToManager(configChangeHandlerManager, clientReconnectWindowHandler, CLIENT_RECONNECT_WINDOW);
 
-      // settings applied directly without any config handler but which require a restart
-      addToManager(configChangeHandlerManager, accept(), FAILOVER_PRIORITY);
-      addToManager(configChangeHandlerManager, accept(), NODE_GROUP_PORT);
+    // log-dir
+    ConfigChangeHandler nodeLogDirChangeHandler = new NodeLogDirChangeHandler(parameterSubstitutor, pathResolver);
+    addToManager(configChangeHandlerManager, nodeLogDirChangeHandler, NODE_LOG_DIR);
 
-      // public hostname/port
-      addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);
-      addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_PORT);
+    // settings applied directly without any config handler but which require a restart
+    addToManager(configChangeHandlerManager, accept(), FAILOVER_PRIORITY);
 
-      // cluster name
-      addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);
+    // public hostname/port
+    addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_HOSTNAME);
+    addToManager(configChangeHandlerManager, accept(), NODE_PUBLIC_PORT);
 
-      // tc-logging
-      LoggerOverrideConfigChangeHandler loggerOverrideConfigChangeHandler = new LoggerOverrideConfigChangeHandler(topologyService);
-      addToManager(configChangeHandlerManager, loggerOverrideConfigChangeHandler, NODE_LOGGER_OVERRIDES);
+    // cluster name
+    addToManager(configChangeHandlerManager, accept(), CLUSTER_NAME);
 
-      // tc-properties
-      configChangeHandlerManager.set(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
-          .selector(Configuration::getKey)
-          .fallback(accept()));
+    // lock context
+    addToManager(configChangeHandlerManager, accept(), LOCK_CONTEXT);
 
-      // ensure to reject these changes
-      addToManager(configChangeHandlerManager, reject(), NODE_NAME);
-      addToManager(configChangeHandlerManager, reject(), NODE_HOSTNAME);
-      addToManager(configChangeHandlerManager, reject(), NODE_PORT);
-      addToManager(configChangeHandlerManager, reject(), NODE_METADATA_DIR);
+    // tc-logging
+    LoggerOverrideConfigChangeHandler loggerOverrideConfigChangeHandler = new LoggerOverrideConfigChangeHandler(topologyService);
+    addToManager(configChangeHandlerManager, loggerOverrideConfigChangeHandler, NODE_LOGGER_OVERRIDES);
 
-      // initialize the config handlers that need do to something at startup
-      loggerOverrideConfigChangeHandler.init();
-    }
+    // tc-properties
+    configChangeHandlerManager.set(TC_PROPERTIES, new SelectingConfigChangeHandler<String>()
+        .selector(Configuration::getKey)
+        .fallback(accept()));
+
+    // initialize the config handlers that need do to something at startup
+    loggerOverrideConfigChangeHandler.init();
+
+    NomadPermissionChangeProcessor permissions = findService(NomadPermissionChangeProcessor.class);
+    permissions.addCheck(new DisallowSettingChanges());
+    permissions.addCheck(new ServerStateCheck(server.getManagement()));
+
     return true;
   }
 
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
-    if (configuration.getServiceType() == IParameterSubstitutor.class) {
-      return configuration.getServiceType().cast(parameterSubstitutor);
+    if (configuration.getServiceType() == NetworkTranslator.class) {
+      return configuration.getServiceType().cast(new DynamicConfigNetworkTranslator(findService(TopologyService.class)));
     }
-    if (configuration.getServiceType() == ConfigChangeHandlerManager.class) {
-      return configuration.getServiceType().cast(configChangeHandlerManager);
-    }
-    if (configuration.getServiceType() == DynamicConfigEventService.class) {
-      return configuration.getServiceType().cast(dynamicConfigEventService);
-    }
-    if (configuration.getServiceType() == TopologyService.class) {
-      return configuration.getServiceType().cast(topologyService);
-    }
-    if (configuration.getServiceType() == NomadServer.class) {
-      return configuration.getServiceType().cast(nomadServer);
-    }
-    if (configuration.getServiceType() == UpgradableNomadServer.class) {
-      return configuration.getServiceType().cast(nomadServer);
-    }
-    if (configuration.getServiceType() == RoutingNomadChangeProcessor.class) {
-      return configuration.getServiceType().cast(routingNomadChangeProcessor);
-    }
-    if (configuration.getServiceType() == DynamicConfigService.class) {
-      return configuration.getServiceType().cast(dynamicConfigService);
-    }
-    if (configuration.getServiceType() == DynamicConfigListener.class) {
-      return configuration.getServiceType().cast(dynamicConfigListener);
-    }
-    if (configuration.getServiceType() == LicenseService.class) {
-      return configuration.getServiceType().cast(licenseService);
-    }
-    throw new UnsupportedOperationException(configuration.getServiceType().getName());
+    return findService(configuration.getServiceType());
   }
 
   @Override
@@ -178,11 +132,15 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         DynamicConfigEventService.class,
         TopologyService.class,
         DynamicConfigService.class,
-        DynamicConfigListener.class,
+        DynamicConfigEventFiring.class,
         NomadServer.class,
-        UpgradableNomadServer.class,
-        RoutingNomadChangeProcessor.class,
-        LicenseService.class
+        DynamicConfigNomadServer.class,
+        NomadRoutingChangeProcessor.class,
+        NomadPermissionChangeProcessor.class,
+        LicenseService.class,
+        PathResolver.class,
+        Server.class,
+        NetworkTranslator.class
     );
   }
 
@@ -198,14 +156,22 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     }
   }
 
-  private <T> T find(PlatformConfiguration platformConfiguration, Class<T> type) {
+  private <T> T findService(Class<T> type) {
+    if (!getProvidedServiceTypes().contains(type)) {
+      throw new IllegalArgumentException(String.valueOf(type));
+    }
     final Collection<T> services = platformConfiguration.getExtendedConfiguration(type);
     if (services.isEmpty()) {
-      return null;
+      throw new IllegalArgumentException("No instance of service " + type + " found");
     }
+
     if (services.size() == 1) {
-      return services.iterator().next();
+      T instance = services.iterator().next();
+      if (instance == null) {
+        throw new IllegalArgumentException("Instance of service " + type + " found to be null");
+      }
+      return instance;
     }
-    throw new IllegalStateException("Multiple instance of service " + type + " found");
+    throw new IllegalArgumentException("Multiple instances of service " + type + " found");
   }
 }

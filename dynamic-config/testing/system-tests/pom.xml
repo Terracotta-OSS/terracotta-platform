@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.testing</groupId>
     <artifactId>dynamic-config-testing</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -53,8 +53,15 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>config-converter-oss</artifactId>
+      <artifactId>upgrade-tools-oss</artifactId>
       <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.entities</groupId>
+      <artifactId>dynamic-config-topology-entity-client</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
@@ -67,19 +74,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.stefanbirkner</groupId>
-      <artifactId>system-rules</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>${logback.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
+      <groupId>org.terracotta</groupId>
       <artifactId>voter</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -97,7 +99,7 @@
               <goal>unpack</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/angela/kits/${project.version}</outputDirectory>
+              <outputDirectory>${project.build.directory}/angela</outputDirectory>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.terracotta</groupId>
@@ -115,7 +117,7 @@
               <goal>copy</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/angela/kits/${project.version}/platform-kit-${project.version}/server/plugins/lib</outputDirectory>
+              <outputDirectory>${project.build.directory}/angela/platform-kit-${project.version}/server/plugins/lib</outputDirectory>
               <artifactItems>
                 <artifactItem>
                   <groupId>org.terracotta.dynamic-config.testing</groupId>
@@ -128,74 +130,80 @@
         </executions>
       </plugin>
       <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <version>1.13.0</version>
         <executions>
           <execution>
-            <id>copy-logging-config</id>
-            <phase>package</phase>
+            <id>fake-hosts</id>
+            <phase>pre-integration-test</phase>
             <goals>
-              <goal>copy-resources</goal>
+              <goal>execute</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/angela/kits/${project.version}/platform-kit-${project.version}/server/lib</outputDirectory>
-              <overwrite>true</overwrite>
-              <resources>
-                <resource>
-                  <directory>${project.basedir}/src/test/resources</directory>
-                  <includes>
-                    <include>logback-ext.xml</include>
-                  </includes>
-                </resource>
-              </resources>
+              <scripts>
+                <script><![CDATA[
+new File(project.build.directory, "fake-hosts.txt").text = "127.0.0.1 localhost ${"hostname".execute().text.trim()} ${"hostname".execute().text.trim().split('[.]')[0]} testhostname"
+println(new File(project.build.directory, "fake-hosts.txt").text)
+]]>
+                </script>
+              </scripts>
+            </configuration>
+          </execution>
+          <execution>
+            <id>tc.properties</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <scripts>
+                <script><![CDATA[
+new File(project.build.directory, "angela/platform-kit-${project.version}/server/lib/tc.properties").text = """
+com.tc.server.entity.processor.threads=4
+com.tc.l2.tccom.workerthreads=4
+com.tc.tc.messages.packup.enabled=false
+com.tc.l2.seda.stage.stall.warning=1000
+"""
+println(new File(project.build.directory, "angela/platform-kit-${project.version}/server/lib/tc.properties").text)
+]]>
+                </script>
+              </scripts>
             </configuration>
           </execution>
         </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy</artifactId>
+            <version>3.0.7</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
       </plugin>
-      <!--
-        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section.
-        This section is used when running tests from Maven CLI
-        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
-      -->
-      <plugin>
-        <groupId>org.terracotta</groupId>
-        <artifactId>maven-forge-plugin</artifactId>
-        <configuration>
-          <forkCount>2</forkCount>
-          <systemPropertyVariables>
-            <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
-            <angela.skipUninstall>true</angela.skipUninstall>
-            <angela.skipKitInstall>true</angela.skipKitInstall>
-            <angela.tsa.fullLogging>true</angela.tsa.fullLogging>
-            <angela.distribution>${project.version}</angela.distribution>
-            <angela.kitInstallationDir>${project.build.directory}/angela/kits/${project.version}/platform-kit-${project.version}</angela.kitInstallationDir>
-            <angela.java.vendor/> <!--empty to allow any vendor-->
-            <angela.java.version>${java.test.version}</angela.java.version>
-            <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-      <!--
-        IDEs are not supporting forge when parsing the maven model so we have to duplicate the section
-        This section is used when running tests from the IDE
-        See: https://github.com/Terracotta-OSS/terracotta-platform/issues/673
-      -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <forkCount>2</forkCount>
+          <forkCount>${test.parallel.forks}</forkCount>
+          <reuseForks>false</reuseForks>
+          <rerunFailingTestsCount>2</rerunFailingTestsCount>
           <systemPropertyVariables>
             <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
             <angela.skipUninstall>true</angela.skipUninstall>
-            <angela.skipKitInstall>true</angela.skipKitInstall>
-            <angela.tsa.fullLogging>true</angela.tsa.fullLogging>
+            <angela.kitCopy>false</angela.kitCopy>
+            <angela.tsa.fullLogging>false</angela.tsa.fullLogging>
             <angela.distribution>${project.version}</angela.distribution>
-            <angela.kitInstallationDir>${project.build.directory}/angela/kits/${project.version}/platform-kit-${project.version}</angela.kitInstallationDir>
-            <angela.java.vendor/> <!--empty to allow any vendor-->
-            <angela.java.version>${java.test.version}</angela.java.version>
+            <angela.kitInstallationDir>${project.build.directory}/angela/platform-kit-${project.version}</angela.kitInstallationDir>
+            <angela.java.resolver>user</angela.java.resolver>
+            <angela.java.opts>-Djdk.net.hosts.file=${project.build.directory}/fake-hosts.txt -DIGNITE_UPDATE_NOTIFIER=false</angela.java.opts>
+            <angela.ssh.strictHostKeyChecking>false</angela.ssh.strictHostKeyChecking>
+            <angela.additionalLocalHostnames>testhostname</angela.additionalLocalHostnames>
             <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
-            <!--<angela.java.opts>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005</angela.java.opts>-->
+            <jdk.net.hosts.file>${project.build.directory}/fake-hosts.txt</jdk.net.hosts.file>
+            <IGNITE_UPDATE_NOTIFIER>false</IGNITE_UPDATE_NOTIFIER>
           </systemPropertyVariables>
+          <argLine>-XX:+UseG1GC -Xmx1g -Dorg.terracotta.disablePortReleaseCheck=true</argLine>
         </configuration>
       </plugin>
     </plugins>

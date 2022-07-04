@@ -1,8 +1,8 @@
 {
   "stripes": [
     {
-      "id": "SINGLE",
-      "name": "SINGLE",
+      "id": "stripe[0]",
+      "name": "stripe[0]",
       "servers": [
         {
           "id": "testServer0",
@@ -13,47 +13,12 @@
               "name": "FailoverIT",
               "consumerId": 6,
               "managementRegistry": {
+                "rootContext": {},
                 "contextContainer": {
                   "consumerId": "6",
                   "subContexts": []
                 },
                 "capabilities": [
-                  {
-                    "name": "DataRootSettings",
-                    "context": [
-                      {
-                        "name": "consumerId",
-                        "required": true
-                      },
-                      {
-                        "name": "type",
-                        "required": true
-                      },
-                      {
-                        "name": "alias",
-                        "required": true
-                      }
-                    ],
-                    "descriptors": []
-                  },
-                  {
-                    "name": "DataRootStatistics",
-                    "context": [
-                      {
-                        "name": "consumerId",
-                        "required": true
-                      },
-                      {
-                        "name": "type",
-                        "required": true
-                      },
-                      {
-                        "name": "alias",
-                        "required": true
-                      }
-                    ],
-                    "descriptors": []
-                  },
                   {
                     "name": "OffHeapResourceSettings",
                     "context": [
@@ -153,18 +118,12 @@
               "managementRegistry": null
             },
             {
-              "id": "SystemLeaseAcquirer:org.terracotta.lease.LeaseAcquirer",
-              "type": "org.terracotta.lease.LeaseAcquirer",
-              "name": "SystemLeaseAcquirer",
-              "consumerId": 1,
-              "managementRegistry": null
-            },
-            {
               "id": "dynamic-config-management-entity:org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
               "type": "org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
               "name": "dynamic-config-management-entity",
               "consumerId": 4,
               "managementRegistry": {
+                "rootContext": {},
                 "contextContainer": {
                   "consumerId": "4",
                   "subContexts": []
@@ -173,25 +132,12 @@
               }
             },
             {
-              "id": "dynamic-config-topology-entity:org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity",
-              "type": "org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity",
-              "name": "dynamic-config-topology-entity",
-              "consumerId": 2,
-              "managementRegistry": null
-            },
-            {
-              "id": "nomad-entity:org.terracotta.nomad.entity.client.NomadEntity",
-              "type": "org.terracotta.nomad.entity.client.NomadEntity",
-              "name": "nomad-entity",
-              "consumerId": 5,
-              "managementRegistry": null
-            },
-            {
               "id": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
               "type": "org.terracotta.management.entity.sample.client.CacheEntity",
               "name": "pet-clinic/clients",
               "consumerId": 8,
               "managementRegistry": {
+                "rootContext": {},
                 "contextContainer": {
                   "consumerId": "8",
                   "subContexts": []
@@ -362,6 +308,7 @@
               "name": "pet-clinic/pets",
               "consumerId": 7,
               "managementRegistry": {
+                "rootContext": {},
                 "contextContainer": {
                   "consumerId": "7",
                   "subContexts": []
@@ -556,17 +503,18 @@
       "tags": [],
       "properties": {
         "version": "<version>",
-        "clientReportedAddress": "<clientReportedAddress>"
+        "clientReportedAddress": "<clientReportedAddress>",
+        "clientRevision": "<uuid>"
       },
       "connections": [
         {
-          "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
+          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
           "logicalConnectionUid": "<uuid>",
           "clientEndpoint": {
             "address": "127.0.0.1",
             "port": 0
           },
-          "stripeId": "SINGLE",
+          "stripeId": "stripe[0]",
           "serverId": "testServer0",
           "serverEntityIds": {
             "FailoverIT:org.terracotta.management.entity.nms.client.NmsEntity": 1
@@ -589,18 +537,19 @@
         "pet-clinic"
       ],
       "properties": {
+        "version": "<version>",
         "clientReportedAddress": "<clientReportedAddress>",
-        "version": "<version>"
+        "clientRevision": "<uuid>"
       },
       "connections": [
         {
-          "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
+          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
           "logicalConnectionUid": "<uuid>",
           "clientEndpoint": {
             "address": "127.0.0.1",
             "port": 0
           },
-          "stripeId": "SINGLE",
+          "stripeId": "stripe[0]",
           "serverId": "testServer0",
           "serverEntityIds": {
             "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
@@ -610,6 +559,10 @@
         }
       ],
       "managementRegistry": {
+        "rootContext": {
+          "appName": "pet-clinic",
+          "instanceId": "instance-?"
+        },
         "contextContainer": {
           "appName": "pet-clinic",
           "subContexts": []
@@ -618,6 +571,10 @@
           {
             "name": "CacheCalls",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -668,6 +625,10 @@
             "name": "CacheSettings",
             "context": [
               {
+                "name": "instanceId",
+                "required": true
+              },
+              {
                 "name": "appName",
                 "required": true
               },
@@ -679,11 +640,13 @@
             "descriptors": [
               {
                 "appName": "pet-clinic",
+                "instanceId": "instance-?",
                 "cacheName": "pets",
                 "size": 0
               },
               {
                 "appName": "pet-clinic",
+                "instanceId": "instance-?",
                 "cacheName": "clients",
                 "size": 0
               }
@@ -692,6 +655,10 @@
           {
             "name": "CacheStatistics",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -739,6 +706,10 @@
           {
             "name": "StatisticCollectorCapability",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -788,18 +759,19 @@
         "pet-clinic"
       ],
       "properties": {
+        "version": "<version>",
         "clientReportedAddress": "<clientReportedAddress>",
-        "version": "<version>"
+        "clientRevision": "<uuid>"
       },
       "connections": [
         {
-          "id": "<uuid>:SINGLE:testServer0:127.0.0.1:0",
+          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
           "logicalConnectionUid": "<uuid>",
           "clientEndpoint": {
             "address": "127.0.0.1",
             "port": 0
           },
-          "stripeId": "SINGLE",
+          "stripeId": "stripe[0]",
           "serverId": "testServer0",
           "serverEntityIds": {
             "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
@@ -809,6 +781,10 @@
         }
       ],
       "managementRegistry": {
+        "rootContext": {
+          "appName": "pet-clinic",
+          "instanceId": "instance-?"
+        },
         "contextContainer": {
           "appName": "pet-clinic",
           "subContexts": []
@@ -817,6 +793,10 @@
           {
             "name": "CacheCalls",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -867,6 +847,10 @@
             "name": "CacheSettings",
             "context": [
               {
+                "name": "instanceId",
+                "required": true
+              },
+              {
                 "name": "appName",
                 "required": true
               },
@@ -878,11 +862,13 @@
             "descriptors": [
               {
                 "appName": "pet-clinic",
+                "instanceId": "instance-?",
                 "cacheName": "pets",
                 "size": 0
               },
               {
                 "appName": "pet-clinic",
+                "instanceId": "instance-?",
                 "cacheName": "clients",
                 "size": 0
               }
@@ -891,6 +877,10 @@
           {
             "name": "CacheStatistics",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -938,6 +928,10 @@
           {
             "name": "StatisticCollectorCapability",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true

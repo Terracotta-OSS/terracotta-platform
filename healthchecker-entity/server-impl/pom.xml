@@ -22,27 +22,27 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>healthchecker-entity</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
   <artifactId>healthchecker-server</artifactId>
 
   <dependencies>
-  <dependency>
+    <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>healthchecker-common</artifactId>
       <version>${project.version}</version>
-  </dependency>
+    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
-        <groupId>org.terracotta</groupId>
-        <artifactId>packaging-support</artifactId>
-        <scope>provided</scope>
+      <groupId>org.terracotta</groupId>
+      <artifactId>packaging-support</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>

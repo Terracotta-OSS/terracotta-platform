@@ -27,25 +27,29 @@ import org.terracotta.entity.PlatformConfiguration;
 import java.nio.file.Path;
 import java.util.Map;
 
+import static java.util.stream.Collectors.toMap;
+
 /**
  * @author Mathieu Carbou
  */
 public class DataRootsDynamicConfigExtension implements DynamicConfigExtension {
   @Override
   public void configure(Registrar registrar, PlatformConfiguration platformConfiguration) {
-    IParameterSubstitutor parameterSubstitutor = platformConfiguration.getExtendedConfiguration(IParameterSubstitutor.class).iterator().next();
-    PathResolver pathResolver = platformConfiguration.getExtendedConfiguration(PathResolver.class).iterator().next();
-    TopologyService topologyService = platformConfiguration.getExtendedConfiguration(TopologyService.class).iterator().next();
-    ConfigChangeHandlerManager configChangeHandlerManager = platformConfiguration.getExtendedConfiguration(ConfigChangeHandlerManager.class).iterator().next();
+    IParameterSubstitutor parameterSubstitutor = findService(platformConfiguration, IParameterSubstitutor.class);
+    PathResolver pathResolver = findService(platformConfiguration, PathResolver.class);
+    TopologyService topologyService = findService(platformConfiguration, TopologyService.class);
+    ConfigChangeHandlerManager configChangeHandlerManager = findService(platformConfiguration, ConfigChangeHandlerManager.class);
 
     NodeContext nodeContext = topologyService.getRuntimeNodeContext();
-
-    Path nodeMetadataDir = nodeContext.getNode().getNodeMetadataDir();
-    Map<String, Path> dataDirs = nodeContext.getNode().getDataDirs();
-    DataDirectoriesConfigImpl dataDirectoriesConfig = new DataDirectoriesConfigImpl(parameterSubstitutor, pathResolver, nodeMetadataDir, dataDirs);
-
-    configChangeHandlerManager.set(Setting.DATA_DIRS, new DataDirectoryConfigChangeHandler(dataDirectoriesConfig, parameterSubstitutor, pathResolver));
-
+    Path nodeMetadataDir = nodeContext.getNode().getMetadataDir().orDefault().toPath();
+    new MoveOperation(parameterSubstitutor.substitute(pathResolver.resolve(nodeMetadataDir))).move();
+    Map<String, Path> dataDirs = nodeContext.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().toPath()));
+    dataDirs.values().stream()
+        .map(path -> parameterSubstitutor.substitute(pathResolver.resolve(path)))
+        .forEach(path -> new MoveOperation(path).move());
+    DataDirsConfigImpl dataDirectoriesConfig = new DataDirsConfigImpl(parameterSubstitutor, pathResolver, nodeMetadataDir, dataDirs);
+    configChangeHandlerManager.set(Setting.DATA_DIRS, new DataDirConfigChangeHandler(dataDirectoriesConfig, parameterSubstitutor, pathResolver));
+    configChangeHandlerManager.set(Setting.NODE_METADATA_DIR, new MetaDataDirConfigChangeHandler(parameterSubstitutor, pathResolver));
     registrar.registerExtendedConfiguration(dataDirectoriesConfig);
   }
 }

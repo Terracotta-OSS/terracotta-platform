@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.entities</groupId>
     <artifactId>dynamic-config-entities</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -34,6 +34,13 @@
       <groupId>org.terracotta.dynamic-config.entities</groupId>
       <artifactId>dynamic-config-nomad-entity-common</artifactId>
       <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-server-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided by server -->

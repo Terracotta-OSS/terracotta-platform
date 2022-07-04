@@ -15,7 +15,7 @@
  */
 package org.terracotta.nomad.server.state;
 
-import org.terracotta.nomad.server.ChangeRequest;
+import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerMode;
 
@@ -42,13 +42,13 @@ public interface NomadServerState<T> {
 
   long getHighestVersion();
 
-  ChangeRequest<T> getChangeRequest(UUID changeUuid) throws NomadException;
+  ChangeState<T> getChangeState(UUID changeUuid) throws NomadException;
 
   NomadStateChange<T> newStateChange();
 
   void applyStateChange(NomadStateChange<T> change) throws NomadException;
 
-  Optional<T> getCurrentCommittedChangeResult() throws NomadException;
+  Optional<T> getCurrentCommittedConfig() throws NomadException;
 
   void reset() throws NomadException;
 }

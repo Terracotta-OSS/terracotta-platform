@@ -20,6 +20,8 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.License;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 
 import java.time.Duration;
 import java.util.concurrent.Future;
@@ -36,10 +38,10 @@ public interface DynamicTopologyEntity extends Entity {
   void setListener(Listener listener);
 
   /**
-   * Returns the topology that has been lastly persisted in the config repository and will be
+   * Returns the topology that has been lastly persisted in the configuration directory and will be
    * effective after a restart if the node needs to be restarted following a change
    * <p>
-   * If a configuration change is made, and this change does not require a restart, the change will be persisted in the config repository,
+   * If a configuration change is made, and this change does not require a restart, the change will be persisted in the configuration directory,
    * and the change will be directly applied to both the runtime topology and the upcoming one, so that they are equal.
    */
   Cluster getUpcomingCluster() throws TimeoutException, InterruptedException;
@@ -87,11 +89,15 @@ public interface DynamicTopologyEntity extends Entity {
   }
 
   interface Listener {
-    default void onNodeRemoval(int stripeId, Node removedNode) {}
+    default void onNodeRemoval(Cluster cluster, UID stripeUID, Node removedNode) {}
 
-    default void onNodeAddition(int stripeId, Node addedNode) {}
+    default void onNodeAddition(Cluster cluster, UID addedNodeUID) {}
 
-    default void onSettingChange(Configuration configuration, Cluster cluster) {}
+    default void onStripeAddition(Cluster cluster, UID addedStripeUID) {}
+
+    default void onStripeRemoval(Cluster cluster, Stripe removedStripe) {}
+
+    default void onSettingChange(Cluster cluster, Configuration configuration) {}
 
     default void onDisconnected() {}
   }

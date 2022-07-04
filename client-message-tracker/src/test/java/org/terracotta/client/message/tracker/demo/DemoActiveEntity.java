@@ -15,6 +15,7 @@
  */
 package org.terracotta.client.message.tracker.demo;
 
+import java.util.stream.Collectors;
 import org.terracotta.client.message.tracker.OOOMessageHandler;
 import org.terracotta.client.message.tracker.OOOMessageHandlerConfiguration;
 import org.terracotta.entity.ActiveInvokeContext;
@@ -30,7 +31,8 @@ import org.terracotta.entity.PassiveSynchronizationChannel;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 
-import java.util.Map;
+import java.util.stream.Stream;
+import org.terracotta.client.message.tracker.RecordedMessage;
 
 public class DemoActiveEntity implements ActiveServerEntity<EntityMessage, EntityResponse> {
 
@@ -38,7 +40,7 @@ public class DemoActiveEntity implements ActiveServerEntity<EntityMessage, Entit
 
   public DemoActiveEntity(ServiceRegistry serviceRegistry) throws ServiceException {
     OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> messageHandlerConfiguration =
-        new OOOMessageHandlerConfiguration<>("foo", msg -> msg instanceof TrackableMessage, 1, m -> 0);
+        new OOOMessageHandlerConfiguration<>("foo", msg -> msg instanceof TrackableMessage);
     messageHandler = serviceRegistry.getService(messageHandlerConfiguration);
   }
 
@@ -81,6 +83,7 @@ public class DemoActiveEntity implements ActiveServerEntity<EntityMessage, Entit
     };
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void synchronizeKeyToPassive(PassiveSynchronizationChannel<EntityMessage> passiveSynchronizationChannel, int concurrencyKey) {
     // Sync entity data for the given concurrency key
@@ -90,8 +93,8 @@ public class DemoActiveEntity implements ActiveServerEntity<EntityMessage, Entit
     // Sync client message tracker state
     int segmentIndex = concurrencyKeyToSegmentIndex(concurrencyKey);
     messageHandler.getTrackedClients().forEach(clientSourceId -> {
-      Map<Long, EntityResponse> trackedResponsesForSegment = messageHandler.getTrackedResponsesForSegment(segmentIndex, clientSourceId);
-      EntityMessage clientMessageTrackerSegmentData = new MessageTrackerSyncMessage(segmentIndex, clientSourceId, trackedResponsesForSegment);
+      Stream<RecordedMessage<EntityMessage, EntityResponse>> trackedResponsesForSegment = messageHandler.getRecordedMessages();
+      EntityMessage clientMessageTrackerSegmentData = new MessageTrackerSyncMessage(trackedResponsesForSegment.collect(Collectors.toList()));
       passiveSynchronizationChannel.synchronizeToPassive(clientMessageTrackerSegmentData);
     });
   }

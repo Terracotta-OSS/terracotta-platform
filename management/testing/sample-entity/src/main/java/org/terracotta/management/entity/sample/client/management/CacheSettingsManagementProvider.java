@@ -31,7 +31,7 @@ import java.util.Collections;
  * @author Mathieu Carbou
  */
 @Named("CacheSettings")
-@RequiredContext({@Named("appName"), @Named("cacheName")})
+@RequiredContext({@Named("instanceId"), @Named("appName"), @Named("cacheName")})
 class CacheSettingsManagementProvider extends AbstractManagementProvider<ClientCache> {
   private final Context parentContext;
 

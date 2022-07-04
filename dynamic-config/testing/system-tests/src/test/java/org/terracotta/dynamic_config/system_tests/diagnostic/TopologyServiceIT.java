@@ -16,69 +16,70 @@
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Test;
-import org.terracotta.diagnostic.client.DiagnosticService;
-import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
-import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.api.model.RawPath;
+import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.service.ClusterFactory;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.nio.file.Paths;
-import java.time.Duration;
+import java.nio.file.Path;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.common.struct.MemoryUnit.MB;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
 
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition
+@ClusterDefinition(failoverPriority = "")
 public class TopologyServiceIT extends DynamicConfigIT {
+
+  Path config;
+  Cluster cluster;
 
   @Override
   protected void startNode(int stripeId, int nodeId) {
+    config = copyConfigProperty("/config-property-files/single-stripe.properties");
+    cluster = new ClusterFactory().create(Props.load(config));
     startNode(1, 1,
-        "--node-repository-dir", getNodePath(stripeId, nodeId).resolve("repository").toString(),
-        "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString()
+        "--config-dir", getBaseDir().resolve(getNodeName(stripeId, nodeId)).resolve("config").toString(),
+        "-f", config.toString()
     );
   }
 
   @Test
   public void test_getPendingTopology() throws Exception {
-    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-        getNodeAddress(1, 1),
-        getClass().getSimpleName(),
-        Duration.ofSeconds(5),
-        Duration.ofSeconds(5),
-        null)
-    ) {
+    withTopologyService("localhost", getNodePort(1, 1), topologyService -> {
+      Cluster pendingCluster = topologyService.getUpcomingNodeContext().getCluster();
 
-      TopologyService proxy = diagnosticService.getProxy(TopologyService.class);
-      Cluster pendingCluster = proxy.getUpcomingNodeContext().getCluster();
+      Testing.replaceUIDs(pendingCluster);
+      Testing.replaceUIDs(cluster);
 
-      // keep for debug please
-      //System.out.println(toPrettyJson(pendingTopology));
-
-      assertThat(pendingCluster, is(equalTo(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode("node-1-1", "localhost", getNodePort())
-          .setNodeGroupPort(getNodeGroupPort(1, 1))
-          .setNodeBindAddress("0.0.0.0")
-          .setNodeGroupBindAddress("0.0.0.0")
-          .setNodeMetadataDir(Paths.get("metadata", "stripe1"))
-          .setNodeLogDir(Paths.get("logs", "stripe1", "node-1-1"))
-          .setNodeBackupDir(Paths.get("backup", "stripe1"))
-          .setDataDir("main", Paths.get("user-data", "main", "stripe1"))
-      ))
-          .setClientReconnectWindow(120, SECONDS)
+      assertThat(pendingCluster, is(equalTo(cluster)));
+      assertThat(pendingCluster, is(equalTo(newTestCluster(
+          newTestStripe("stripe1")
+              .setUID(Testing.S_UIDS[1])
+              .addNodes(
+                  newTestNode("node-1-1", "localhost", getNodePort())
+                      .setUID(Testing.N_UIDS[2])
+                      .setGroupPort(getNodeGroupPort(1, 1))
+                      .setMetadataDir(RawPath.valueOf("metadata/stripe1"))
+                      .setLogDir(RawPath.valueOf("logs/stripe1"))
+                      .setBackupDir(RawPath.valueOf("backup/stripe1"))
+                      .unsetDataDirs()
+                      .putDataDir("main", RawPath.valueOf("user-data/main/stripe1"))
+              ))
+          .setUID(Testing.C_UIDS[0])
           .setClientLeaseDuration(20, SECONDS)
-          .setFailoverPriority(availability())
-          .setOffheapResource("main", 512, MB))));
-    }
+          .setFailoverPriority(availability()))));
+    });
   }
 
 }

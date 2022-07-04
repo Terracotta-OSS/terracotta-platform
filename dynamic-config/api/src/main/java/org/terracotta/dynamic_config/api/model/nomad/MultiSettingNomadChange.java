@@ -15,10 +15,8 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.util.ArrayList;
@@ -35,14 +33,12 @@ import static java.util.Objects.requireNonNull;
  *
  * @author Mathieu Carbou
  */
-@JsonTypeName("MultiSettingNomadChange")
 public class MultiSettingNomadChange implements DynamicConfigNomadChange {
 
   // keep this as a list, because the ordering to apply the changes might be important
   private final List<SettingNomadChange> changes;
 
-  @JsonCreator
-  public MultiSettingNomadChange(@JsonProperty(value = "changes", required = true) List<SettingNomadChange> changes) {
+  public MultiSettingNomadChange(List<SettingNomadChange> changes) {
     this.changes = new ArrayList<>(requireNonNull(changes));
   }
 
@@ -68,7 +64,7 @@ public class MultiSettingNomadChange implements DynamicConfigNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime() {
+  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
     throw new UnsupportedOperationException();
   }
 

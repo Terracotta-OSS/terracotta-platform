@@ -16,6 +16,7 @@
 package org.terracotta.nomad.server;
 
 public enum NomadServerMode {
+  UNINITIALIZED,
   ACCEPTING,
   PREPARED
 }

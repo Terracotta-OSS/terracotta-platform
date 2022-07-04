@@ -75,11 +75,11 @@ public enum TimeUnit implements Unit<TimeUnit> {
   }
 
   public static Optional<TimeUnit> from(String shortName) {
-    return Arrays.stream(TimeUnit.values()).filter(timeUnit -> timeUnit.shortName.equals(shortName)).findFirst();
+    return Arrays.stream(TimeUnit.values()).filter(timeUnit -> timeUnit.shortName.equals(shortName)).findAny();
   }
 
   public static Optional<TimeUnit> from(java.util.concurrent.TimeUnit jdkTimeUnit) {
-    return Stream.of(values()).filter(unit -> unit.name().equals(jdkTimeUnit.name())).findFirst();
+    return Stream.of(values()).filter(unit -> unit.name().equals(jdkTimeUnit.name())).findAny();
   }
 
 }

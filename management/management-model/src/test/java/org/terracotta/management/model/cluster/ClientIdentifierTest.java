@@ -23,7 +23,6 @@ import java.lang.management.ManagementFactory;
 import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 /**
  * @author Mathieu Carbou
@@ -33,15 +32,13 @@ public class ClientIdentifierTest {
 
   @Test
   public void test_identifier() throws UnknownHostException {
-    ClientIdentifier identifier = ClientIdentifier.create("my-app", "uid");
+    ClientIdentifier identifier = ClientIdentifier.create("127.0.0.1", "my-app", "uid");
     System.out.println(identifier);
 
     assertEquals(Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]), identifier.getPid());
-    assertNotEquals("127.0.0.1", identifier.getHostAddress());
+    assertEquals("127.0.0.1", identifier.getHostAddress());
 
-    assertEquals(ClientIdentifier.create("my-app", "uid"), identifier);
-    assertEquals(ClientIdentifier.create(ClientIdentifier.discoverPID(), ClientIdentifier.discoverLANAddress().getHostAddress(), "my-app", "uid"), identifier);
-    assertEquals(ClientIdentifier.valueOf(ClientIdentifier.discoverPID() + "@" + ClientIdentifier.discoverLANAddress().getHostAddress() + ":my-app:uid"), identifier);
+    assertEquals(ClientIdentifier.create("127.0.0.1", "my-app", "uid"), identifier);
 
     identifier = ClientIdentifier.valueOf("123@127.0.0.1:jetty:app:3");
     assertEquals("123@127.0.0.1:jetty:app:3", identifier.getClientId());

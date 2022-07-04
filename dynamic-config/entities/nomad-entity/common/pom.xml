@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.entities</groupId>
     <artifactId>dynamic-config-entities</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -32,13 +32,30 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta.common</groupId>
+      <artifactId>common-nomad</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- required to access all the json modules for dynamic config -->
+    <dependency>
+      <groupId>org.terracotta.dynamic-config</groupId>
+      <artifactId>dynamic-config-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- for json mapping of request / response over the entity -->
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
       <artifactId>common-json-support</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-nomad</artifactId>
-      <version>${project.version}</version>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
     </dependency>
 
     <!-- provided by client runtime or server -->

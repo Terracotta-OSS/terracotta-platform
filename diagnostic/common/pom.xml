@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.diagnostic</groupId>
     <artifactId>diagnostic</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -30,10 +30,20 @@
   <name>Diagnostic :: Common</name>
 
   <dependencies>
+
+    <!-- for json mapping of request / response over diagnostic port -->
     <dependency>
       <groupId>org.terracotta.common</groupId>
       <artifactId>common-json-support</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
     </dependency>
 
     <dependency>

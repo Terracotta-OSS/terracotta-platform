@@ -15,6 +15,9 @@
  */
 package org.terracotta.persistence.sanskrit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Spliterator;
@@ -28,6 +31,7 @@ import java.util.stream.Stream;
  * Note that the final batch will be the last one terminated by a batch separator - any lines after that are ignored.
  */
 public class GroupingSpliterator implements Spliterator<Deque<String>> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(GroupingSpliterator.class);
   private final Spliterator<String> lines;
 
   public GroupingSpliterator(Stream<String> lines) {
@@ -49,8 +53,10 @@ public class GroupingSpliterator implements Spliterator<Deque<String>> {
       boolean more = lines.tryAdvance(line -> {
         if (line.equals("")) {
           batchFull.set(true);
+          LOGGER.trace("end of batch");
         } else {
           batch.add(line);
+          LOGGER.trace("new line: {}", line.replace("\r", "\\r").replace("\n", "\\n"));
         }
       });
 
@@ -60,9 +66,11 @@ public class GroupingSpliterator implements Spliterator<Deque<String>> {
     }
 
     if (!batchFull.get()) {
+      LOGGER.trace("no more lines");
       return false;
     }
 
+    LOGGER.trace("batch: {}", batch);
     action.accept(batch);
 
     return true;

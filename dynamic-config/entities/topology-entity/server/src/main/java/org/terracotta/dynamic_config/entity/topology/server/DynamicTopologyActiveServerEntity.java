@@ -20,11 +20,14 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage;
+import org.terracotta.dynamic_config.entity.topology.common.Message;
+import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
+import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
 import org.terracotta.dynamic_config.server.api.EventRegistration;
 import org.terracotta.entity.ActiveInvokeContext;
 import org.terracotta.entity.ActiveServerEntity;
@@ -39,14 +42,17 @@ import org.terracotta.entity.StateDumpCollector;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Arrays.asList;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_ADDITION;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_NODE_REMOVAL;
-import static org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage.Type.EVENT_SETTING_CHANGED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_ADDITION;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_NODE_REMOVAL;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_SETTING_CHANGED;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_ADDITION;
+import static org.terracotta.dynamic_config.entity.topology.common.Type.EVENT_STRIPE_REMOVAL;
 
 
-public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> {
+public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Message, Response> {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicTopologyActiveServerEntity.class);
 
   private final TopologyService topologyService;
@@ -77,7 +83,7 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Dyn
   }
 
   @Override
-  public void synchronizeKeyToPassive(PassiveSynchronizationChannel<DynamicTopologyEntityMessage> syncChannel, int concurrencyKey) {
+  public void synchronizeKeyToPassive(PassiveSynchronizationChannel<Message> syncChannel, int concurrencyKey) {
   }
 
   @Override
@@ -100,23 +106,23 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Dyn
   }
 
   @Override
-  public DynamicTopologyEntityMessage invokeActive(ActiveInvokeContext<DynamicTopologyEntityMessage> context, DynamicTopologyEntityMessage message) throws EntityUserException {
+  public Response invokeActive(ActiveInvokeContext<Response> context, Message message) throws EntityUserException {
     LOGGER.trace("invokeActive({})", message);
     switch (message.getType()) {
       case REQ_UPCOMING_CLUSTER: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.getUpcomingNodeContext().getCluster());
+        return new Response(message.getType(), topologyService.getUpcomingNodeContext().getCluster());
       }
       case REQ_RUNTIME_CLUSTER: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.getRuntimeNodeContext().getCluster());
+        return new Response(message.getType(), topologyService.getRuntimeNodeContext().getCluster());
       }
       case REQ_MUST_BE_RESTARTED: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.mustBeRestarted());
+        return new Response(message.getType(), topologyService.mustBeRestarted());
       }
       case REQ_HAS_INCOMPLETE_CHANGE: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.hasIncompleteChange());
+        return new Response(message.getType(), topologyService.hasIncompleteChange());
       }
       case REQ_LICENSE: {
-        return new DynamicTopologyEntityMessage(message.getType(), topologyService.getLicense().orElse(null));
+        return new Response(message.getType(), topologyService.getLicense().orElse(null));
       }
       default:
         throw new AssertionError(message);
@@ -130,29 +136,47 @@ public class DynamicTopologyActiveServerEntity implements ActiveServerEntity<Dyn
 
   private void listen() {
     if (eventRegistration == null) {
-      eventRegistration = eventService.register(new DynamicConfigListenerAdapter() {
+      eventRegistration = eventService.register(new DynamicConfigListener() {
         @Override
-        public void onNodeAddition(int stripeId, Node addedNode) {
-          fire(new DynamicTopologyEntityMessage(EVENT_NODE_ADDITION, new Object[]{stripeId, addedNode}));
+        public void onNodeAddition(UID stripeUID, Node addedNode) {
+          Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+          cluster.getStripe(stripeUID).get().addNode(addedNode);
+          fire(new Response(EVENT_NODE_ADDITION, asList(cluster, addedNode.getUID())));
         }
 
         @Override
-        public void onNodeRemoval(int stripeId, Node removedNode) {
-          fire(new DynamicTopologyEntityMessage(EVENT_NODE_REMOVAL, new Object[]{stripeId, removedNode}));
+        public void onNodeRemoval(UID stripeUID, Node removedNode) {
+          Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+          cluster.getStripe(stripeUID).get().removeNode(removedNode.getUID());
+          fire(new Response(EVENT_NODE_REMOVAL, asList(cluster, stripeUID, removedNode)));
+        }
+
+        @Override
+        public void onStripeAddition(Stripe addedStripe) {
+          Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+          cluster.addStripe(addedStripe);
+          fire(new Response(EVENT_STRIPE_ADDITION, asList(cluster, addedStripe.getUID())));
+        }
+
+        @Override
+        public void onStripeRemoval(Stripe removedStripe) {
+          Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+          cluster.removeStripe(removedStripe.getUID());
+          fire(new Response(EVENT_STRIPE_REMOVAL, asList(cluster, removedStripe)));
         }
 
         @Override
         public void onSettingChanged(SettingNomadChange change, Cluster updated) {
           Configuration configuration = change.toConfiguration(updated);
-          fire(new DynamicTopologyEntityMessage(EVENT_SETTING_CHANGED, new Object[]{configuration, updated}));
+          fire(new Response(EVENT_SETTING_CHANGED, asList(updated, configuration)));
         }
       });
     }
   }
 
-  private void fire(DynamicTopologyEntityMessage msg) {
+  private void fire(Response msg) {
     if (!clients.isEmpty()) {
-      LOGGER.trace("fire({})", msg);
+      LOGGER.trace("fire({}): clients: {}", msg, clients);
       for (ClientDescriptor client : clients) {
         try {
           clientCommunicator.sendNoResponse(client, msg);

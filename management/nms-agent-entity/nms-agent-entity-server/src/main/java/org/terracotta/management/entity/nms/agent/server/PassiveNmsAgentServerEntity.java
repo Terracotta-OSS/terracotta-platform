@@ -18,6 +18,7 @@ package org.terracotta.management.entity.nms.agent.server;
 import org.terracotta.management.entity.nms.agent.NmsAgent;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -31,7 +32,7 @@ import java.util.concurrent.Future;
  */
 class PassiveNmsAgentServerEntity extends PassiveProxiedServerEntity implements NmsAgent {
   @Override
-  public Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability... capabilities) {
+  public Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, Context root, ContextContainer contextContainer, Capability... capabilities) {
     throw new UnsupportedOperationException("Cannot be called on a passive server");
   }
 

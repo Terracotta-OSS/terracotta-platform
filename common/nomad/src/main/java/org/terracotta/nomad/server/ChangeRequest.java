@@ -15,23 +15,22 @@
  */
 package org.terracotta.nomad.server;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public class ChangeRequest<T> {
   private final ChangeRequestState state;
   private final long version;
-  private final String prevChangeId;
+  private final UUID prevChangeId;
   private final NomadChange change;
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
   private final T changeResult;
   private final String creationHost;
   private final String creationUser;
   private final Instant creationTimestamp;
 
-  public ChangeRequest(ChangeRequestState state, long version, String prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser, Instant creationTimestamp) {
+  public ChangeRequest(ChangeRequestState state, long version, UUID prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser, Instant creationTimestamp) {
     this.state = state;
     this.version = version;
     this.prevChangeId = prevChangeId;
@@ -50,7 +49,7 @@ public class ChangeRequest<T> {
     return version;
   }
 
-  public String getPrevChangeId() {
+  public UUID getPrevChangeId() {
     return prevChangeId;
   }
 

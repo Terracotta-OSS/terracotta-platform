@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config</groupId>
     <artifactId>dynamic-config</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -31,13 +31,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-inet-support</artifactId>
+      <groupId>org.terracotta.dynamic-config</groupId>
+      <artifactId>dynamic-config-model</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-structures</artifactId>
+      <groupId>org.terracotta.diagnostic</groupId>
+      <artifactId>diagnostic-model</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -45,22 +45,27 @@
       <artifactId>common-nomad</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
-    </dependency>
 
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-test-utilities</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
+    <!-- for json mapping module -->
+    <!-- optional required by felix to correctly create the optional attribute in Import-Package manifest entry -->
     <dependency>
       <groupId>org.terracotta.common</groupId>
       <artifactId>common-json-support</artifactId>
       <version>${project.version}</version>
-      <scope>test</scope>
+      <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+      <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
   </dependencies>
 </project>

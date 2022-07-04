@@ -1,0 +1,45 @@
+{
+  "type": "FormatUpgradeNomadChange",
+  "cluster": {
+    "stripes": [
+      {
+        "name": "stripe-1",
+        "nodes": [
+          {
+            "hostname": "localhost",
+            "name": "foo",
+            "port": 9410,
+            "uid": "qigu0DVZQ9uV2U3me4FLjg"
+          }
+        ],
+        "uid": "DQKxD6DSQN2juJNWAmOFDg"
+      }
+    ],
+    "clientReconnectWindow": {
+      "quantity": 60,
+      "unit": "SECONDS",
+      "type": "TIME"
+    },
+    "failoverPriority": "availability",
+    "name": "myClusterName",
+    "offheapResources": {
+      "foo": {
+        "quantity": 1,
+        "unit": "GB",
+        "type": "MEMORY"
+      },
+      "main": {
+        "quantity": 512,
+        "unit": "MB",
+        "type": "MEMORY"
+      }
+    },
+    "uid": "KA-qLyHMSnG6PL3PbH2_Pw"
+  },
+  "from": "1",
+  "to": "2",
+  "applicability": {
+    "level": "CLUSTER"
+  },
+  "summary": "Upgrading configuration format from version 1 to version 2"
+}

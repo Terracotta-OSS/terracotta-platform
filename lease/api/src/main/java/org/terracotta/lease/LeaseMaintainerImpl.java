@@ -76,10 +76,13 @@ class LeaseMaintainerImpl implements LeaseMaintainer, LeaseReconnectListener {
         long leaseRequestEndNanos = timeSource.nanoTime();
 
         boolean updated = updateLease(lease, leaseRequestStartNanos, leaseRequestEndNanos, leaseLengthMillis);
+        LOGGER.debug("Upodated lease {}", updated);
 
         if (updated) {
           hasLease.countDown();
-          return calculateWaitLength(leaseRequestStartNanos, leaseRequestEndNanos, leaseLengthMillis);
+          long waitTime = calculateWaitLength(leaseRequestStartNanos, leaseRequestEndNanos, leaseLengthMillis);
+          LOGGER.debug("lease wait time {}", waitTime);
+          return waitTime;
         }
 
         if (Thread.interrupted()) {

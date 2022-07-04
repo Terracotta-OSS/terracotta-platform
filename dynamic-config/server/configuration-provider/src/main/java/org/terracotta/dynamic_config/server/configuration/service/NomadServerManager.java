@@ -17,42 +17,56 @@ package org.terracotta.dynamic_config.server.configuration.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Setting;
-import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
+import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandlerManager;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListener;
-import org.terracotta.dynamic_config.server.api.DynamicConfigListenerAdapter;
+import org.terracotta.dynamic_config.server.api.DelegatingDynamicConfigNomadServer;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
+import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.LicenseService;
-import org.terracotta.dynamic_config.server.api.RoutingNomadChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.nomad.ConfigChangeApplicator;
+import org.terracotta.dynamic_config.server.api.NomadPermissionChangeProcessor;
+import org.terracotta.dynamic_config.server.api.NomadRoutingChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
-import org.terracotta.dynamic_config.server.configuration.nomad.UncheckedNomadException;
-import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadRepositoryManager;
-import org.terracotta.dynamic_config.server.configuration.nomad.processor.ApplicabilityNomadChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.nomad.processor.ClusterActivationNomadChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.nomad.processor.DefaultRoutingNomadChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.nomad.processor.MultiSettingNomadChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.nomad.processor.NodeAdditionNomadChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.nomad.processor.NodeRemovalNomadChangeProcessor;
-import org.terracotta.dynamic_config.server.configuration.nomad.processor.SettingNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ApplicabilityNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.ClusterActivationNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.DefaultNomadRoutingChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.FormatUpgradeNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockAwareNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.LockConfigNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.MultiSettingNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.NodeAdditionNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.NodeRemovalNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.NomadPermissionChangeProcessorImpl;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.SettingNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.StripeAdditionNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.StripeRemovalNomadChangeProcessor;
+import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.UnlockConfigNomadChangeProcessor;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.nomad.server.NomadServerMode;
+import org.terracotta.nomad.server.UncheckedNomadException;
 import org.terracotta.persistence.sanskrit.SanskritException;
+import org.terracotta.server.Server;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
-import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 
 /**
  * @author Mathieu Carbou
@@ -60,113 +74,240 @@ import static org.terracotta.dynamic_config.api.model.FailoverPriority.availabil
 public class NomadServerManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerManager.class);
 
+  private final ObjectMapperFactory objectMapperFactory;
+  private final NomadServerFactory nomadServerFactory;
   private final IParameterSubstitutor parameterSubstitutor;
   private final ConfigChangeHandlerManager configChangeHandlerManager;
   private final LicenseService licenseService;
-  private final DynamicConfigListener dynamicConfigListener;
+  private final Server server;
+  private final DefaultNomadRoutingChangeProcessor router = new DefaultNomadRoutingChangeProcessor();
+  private final NomadPermissionChangeProcessorImpl nomadPermissionChangeProcessor = new NomadPermissionChangeProcessorImpl();
+  private final DynamicConfigEventService eventRegistrationService;
+  private final DynamicConfigEventFiring eventFiringService;
+  private final DelegatingDynamicConfigNomadServer nomadServer = new DelegatingDynamicConfigNomadServer(DynamicConfigNomadServer.empty());
 
-  private volatile UpgradableNomadServer<NodeContext> nomadServer;
-  private volatile NomadRepositoryManager repositoryManager;
-  private volatile DynamicConfigServiceImpl dynamicConfigService;
-  private volatile RoutingNomadChangeProcessor routingNomadChangeProcessor;
+  private volatile NomadConfigurationManager configurationManager;
+  private volatile DynamicConfigService dynamicConfigService;
+  private volatile TopologyService topologyService;
 
-  public NomadServerManager(IParameterSubstitutor parameterSubstitutor, ConfigChangeHandlerManager configChangeHandlerManager, LicenseService licenseService) {
+  public NomadServerManager(IParameterSubstitutor parameterSubstitutor,
+                            ConfigChangeHandlerManager configChangeHandlerManager,
+                            LicenseService licenseService,
+                            ObjectMapperFactory objectMapperFactory,
+                            Server server) {
+    this.objectMapperFactory = requireNonNull(objectMapperFactory);
+    this.nomadServerFactory = new NomadServerFactory(objectMapperFactory);
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.configChangeHandlerManager = requireNonNull(configChangeHandlerManager);
     this.licenseService = requireNonNull(licenseService);
-    this.dynamicConfigListener = new DynamicConfigListenerAdapter(this::getDynamicConfigService);
+    this.server = server;
+
+    // the eventFiringService is used by callers to fire events
+    // events are received by the DC service, processed, and fired back to the listeners registered in the event service
+    DynamicConfigEventServiceImpl eventService = new DynamicConfigEventServiceImpl();
+    this.eventRegistrationService = eventService;
+    this.eventFiringService = eventService;
   }
 
-  public UpgradableNomadServer<NodeContext> getNomadServer() {
-    return nomadServer;
-  }
-
-  public DynamicConfigServiceImpl getDynamicConfigService() {
+  public DynamicConfigService getDynamicConfigService() {
+    if (dynamicConfigService == null) {
+      throw new AssertionError("Not initialized");
+    }
     return dynamicConfigService;
   }
 
-  public NomadRepositoryManager getRepositoryManager() {
-    return repositoryManager;
-  }
-
-  public Optional<RoutingNomadChangeProcessor> getRoutingNomadChangeProcessor() {
-    return Optional.ofNullable(routingNomadChangeProcessor);
-  }
-
-  public DynamicConfigListener getDynamicConfigListener() {
-    return dynamicConfigListener;
-  }
-
-  public void init(Path repositoryPath, String nodeName) throws UncheckedNomadException {
-    // Case where Nomad is bootstrapped from an existing config repository.
-    // We only know the node name.
-    // getConfiguration() can be empty in case the repo has been created
-    // but not yet populated with some Nomad entries, or it was reset.
-    // In these cases, node will start in diagnostic mode and use an existing
-    // repo structure. So we create an empty cluster / node topology
-    init(repositoryPath,
-        () -> nodeName,
-        () -> getConfiguration().orElseGet(
-            () -> new NodeContext(Cluster.newDefaultCluster(new Stripe(Node.newDefaultNode(nodeName, parameterSubstitutor.substitute(Setting.NODE_HOSTNAME.getDefaultValue()))))
-                //TODO [DYNAMIC-CONFIG]: TDB-4898 - correctly handle required settings
-                .setFailoverPriority(availability()), 1, nodeName)));
-  }
-
-  public void init(Path repositoryPath, NodeContext nodeContext) throws UncheckedNomadException {
-    init(repositoryPath, nodeContext::getNodeName, () -> nodeContext);
-  }
-
-  public void init(Path repositoryPath, Supplier<String> nodeName, Supplier<NodeContext> nodeContext) throws UncheckedNomadException {
-    requireNonNull(repositoryPath);
-    requireNonNull(nodeName);
-    requireNonNull(nodeContext);
-
-    this.repositoryManager = new NomadRepositoryManager(repositoryPath, parameterSubstitutor);
-    this.repositoryManager.createDirectories();
-
-    try {
-      this.nomadServer = NomadServerFactory.createServer(repositoryManager, null, nodeName.get(), dynamicConfigListener);
-    } catch (SanskritException | NomadException e) {
-      throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
+  public TopologyService getTopologyService() {
+    if (topologyService == null) {
+      throw new AssertionError("Not initialized");
     }
-
-    this.dynamicConfigService = new DynamicConfigServiceImpl(nodeContext.get(), licenseService, this);
-
-    LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(repositoryPath.toString()));
+    return topologyService;
   }
 
-  public void downgradeForRead() {
-    nomadServer.setChangeApplicator(null);
+  public NomadConfigurationManager getConfigurationManager() {
+    if (configurationManager == null) {
+      throw new AssertionError("Not initialized");
+    }
+    return configurationManager;
+  }
+
+  public DynamicConfigNomadServer getNomadServer() {
+    return nomadServer;
+  }
+
+  public DynamicConfigEventFiring getEventFiringService() {
+    return eventFiringService;
+  }
+
+  public DynamicConfigEventService getEventRegistrationService() {
+    return eventRegistrationService;
+  }
+
+  public NomadRoutingChangeProcessor getNomadRoutingChangeProcessor() {
+    return router;
+  }
+
+  public NomadPermissionChangeProcessor getNomadPermissionChangeProcessor() {
+    return nomadPermissionChangeProcessor;
   }
 
   /**
-   * Makes Nomad server capable of write operations.
-   *
-   * @param stripeId ID of the stripe where the node belongs, should be greater than 1
-   * @param nodeName Name of the running node, non-null
+   * Reloads from an existing config repository.
+   * This will initialize the nomad system based on a specific config directory.
    */
-  public void upgradeForWrite(int stripeId, String nodeName) {
+  public synchronized void reload(Path configPath, String nodeName, NodeContext alternate) throws UncheckedNomadException {
+    assertNotInitialized();
+
+    if (this.nomadServer.getNomadServerMode() != NomadServerMode.UNINITIALIZED) {
+      throw new AssertionError();
+    }
+
+    LOGGER.debug("reload({}, {}, {})", configPath, nodeName, alternate);
+
+    // Case where Nomad is bootstrapped from an existing configuration directory.
+    // We only know the node name.
+    // getConfiguration() can be empty in case the repo has been created
+    // but not yet populated with some Nomad entries, or it was reset, or tx was prepared but not committed.
+    // In these cases, node will start in diagnostic mode and use an alternate topology.
+    requireNonNull(configPath);
     requireNonNull(nodeName);
-    if (stripeId < 1) {
-      throw new IllegalArgumentException("Stripe ID should be greater than or equal to 1");
+    requireNonNull(alternate);
+
+    if (!Files.isDirectory(configPath)) {
+      // Note: this validation is done also upfront in the CLI. This one is for dev purposes.
+      throw new IllegalArgumentException("Path not found (or not  directory): " + configPath);
     }
-    if (nomadServer.getChangeApplicator() != null) {
-      throw new IllegalStateException("Nomad is already upgraded");
+
+    NodeContext startingConfig;
+    try {
+      this.configurationManager = new NomadConfigurationManager(configPath, parameterSubstitutor);
+      this.nomadServer.setDelegate(nomadServerFactory.createServer(configurationManager, nodeName, eventFiringService));
+      startingConfig = nomadServer.getCurrentCommittedConfig().orElse(alternate);
+    } catch (SanskritException | NomadException | ConfigStorageException e) {
+      throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
-    DefaultRoutingNomadChangeProcessor router = new DefaultRoutingNomadChangeProcessor();
-    router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(dynamicConfigService, configChangeHandlerManager, dynamicConfigListener));
-    router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
-    router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(dynamicConfigService, dynamicConfigListener));
-    router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(stripeId, nodeName));
+    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(startingConfig, licenseService, this, objectMapperFactory, server);
+    this.dynamicConfigService = new AuditService(dynamicConfigService, server);
+    this.topologyService = dynamicConfigService;
 
-    this.routingNomadChangeProcessor = router;
+    eventRegistrationService.register(dynamicConfigService);
+    eventRegistrationService.register(new AuditListener(server));
 
-    nomadServer.setChangeApplicator(
-        new ConfigChangeApplicator(stripeId, nodeName,  // receives the change and return the allow() or reject() result depending on processors, with the config to write on disk
-            new MultiSettingNomadChangeProcessor( // unwrap a MultiNomadChange and call underlying processors for each one
-                new ApplicabilityNomadChangeProcessor(stripeId, nodeName, router)))); // filter the nomad change validation and applicability
-    LOGGER.debug("Successfully completed upgradeForWrite procedure");
+    LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(configPath.toString()));
+  }
+
+  /**
+   * Configures a node in-memory without the Nomad system.
+   * No config directories are created and configPath should point to an inexisting folder.
+   */
+  public synchronized void configure(Path configPath, NodeContext nodeContext) throws UncheckedNomadException {
+    assertNotInitialized();
+
+    if (this.nomadServer.getNomadServerMode() != NomadServerMode.UNINITIALIZED) {
+      throw new AssertionError();
+    }
+
+    LOGGER.debug("configure({}, {})", configPath, nodeContext);
+
+    requireNonNull(configPath);
+    requireNonNull(nodeContext);
+
+    this.configurationManager = new NomadConfigurationManager(configPath, parameterSubstitutor);
+
+    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, licenseService, this, objectMapperFactory, server);
+    this.dynamicConfigService = new AuditService(dynamicConfigService, server);
+    this.topologyService = dynamicConfigService;
+
+    eventRegistrationService.register(dynamicConfigService);
+    eventRegistrationService.register(new AuditListener(server));
+
+    LOGGER.info("Bootstrapped nomad system with root: {}", parameterSubstitutor.substitute(configPath.toString()));
+  }
+
+  /**
+   * This method can be called to create the initial config repository when the node will be activated.
+   * It can only be called after the {@link #configure(Path, NodeContext)} method.
+   */
+  public synchronized void initNomad() {
+    assertInitialized();
+
+    if (this.nomadServer.getNomadServerMode() == NomadServerMode.UNINITIALIZED) {
+      NodeContext nodeContext = topologyService.getUpcomingNodeContext();
+      LOGGER.debug("initNomad({})", nodeContext);
+
+      this.configurationManager.createDirectories();
+      try {
+        this.nomadServer.setDelegate(nomadServerFactory.createServer(configurationManager, nodeContext.getNode().getName(), getEventFiringService()));
+      } catch (SanskritException | NomadException | ConfigStorageException e) {
+        throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
+      }
+    }
+  }
+
+  /**
+   * This method changes the Nomad ability to support transactions.
+   * RO will only allow discovery calls, RW will allow updates.
+   * <p>
+   * It requires the Nomad system to be initialized first with {@link #reload(Path, String, NodeContext)} or {@link #initNomad()}
+   */
+  public synchronized void setNomad(NomadMode nomadMode) {
+    assertInitialized();
+
+    switch (nomadMode) {
+
+      case RO:
+        if (nomadServer.getChangeApplicator() != null) {
+          LOGGER.debug("setNomad({})", nomadMode);
+          nomadServer.setChangeApplicator(null);
+        }
+        break;
+
+      case RW:
+        if (nomadServer.getChangeApplicator() == null) {
+          if (this.nomadServer.getNomadServerMode() == NomadServerMode.UNINITIALIZED) {
+            throw new AssertionError();
+          }
+
+          LOGGER.debug("setNomad({})", nomadMode);
+
+          NodeContext nodeContext = topologyService.getUpcomingNodeContext();
+
+          router.clear();
+          router.register(SettingNomadChange.class, new SettingNomadChangeProcessor(getTopologyService(), configChangeHandlerManager, getEventFiringService()));
+          router.register(NodeRemovalNomadChange.class, new NodeRemovalNomadChangeProcessor(server.getManagement().getMBeanServer(), getTopologyService(), getEventFiringService()));
+          router.register(NodeAdditionNomadChange.class, new NodeAdditionNomadChangeProcessor(server.getManagement().getMBeanServer(), getTopologyService(), getEventFiringService()));
+          router.register(ClusterActivationNomadChange.class, new ClusterActivationNomadChangeProcessor(nodeContext.getNodeUID()));
+          router.register(StripeAdditionNomadChange.class, new StripeAdditionNomadChangeProcessor(getTopologyService(), getEventFiringService(), licenseService));
+          router.register(StripeRemovalNomadChange.class, new StripeRemovalNomadChangeProcessor(getTopologyService(), getEventFiringService()));
+          router.register(FormatUpgradeNomadChange.class, new FormatUpgradeNomadChangeProcessor());
+          router.register(LockConfigNomadChange.class, new LockConfigNomadChangeProcessor());
+          router.register(UnlockConfigNomadChange.class, new UnlockConfigNomadChangeProcessor());
+
+          nomadServer.setChangeApplicator(
+              new ConfigChangeApplicator(
+                  nodeContext.getNodeUID(),
+                  new LockAwareNomadChangeProcessor(
+                      new MultiSettingNomadChangeProcessor(
+                          nomadPermissionChangeProcessor.then(new ApplicabilityNomadChangeProcessor(getTopologyService(), router))
+                      )
+                  )
+              )
+          );
+        }
+        break;
+
+      default:
+        throw new AssertionError(nomadMode);
+    }
+  }
+
+  public synchronized void reset() throws NomadException {
+    nomadServer.reset();
+    setNomad(NomadMode.RO);
+  }
+
+  public NomadMode getNomadMode() {
+    return nomadServer.getChangeApplicator() == null ? NomadMode.RO : NomadMode.RW;
   }
 
   /**
@@ -177,9 +318,21 @@ public class NomadServerManager {
    */
   public Optional<NodeContext> getConfiguration() throws UncheckedNomadException {
     try {
-      return nomadServer.getCurrentCommittedChangeResult();
+      return getNomadServer().getCurrentCommittedConfig();
     } catch (NomadException e) {
       throw new UncheckedNomadException("Exception while making discover call to Nomad", e);
+    }
+  }
+
+  private void assertNotInitialized() {
+    if (this.configurationManager != null || this.dynamicConfigService != null || this.topologyService != null) {
+      throw new AssertionError();
+    }
+  }
+
+  private void assertInitialized() {
+    if (this.configurationManager == null || this.dynamicConfigService == null || this.topologyService == null) {
+      throw new AssertionError();
     }
   }
 }

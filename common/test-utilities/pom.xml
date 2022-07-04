@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.common</groupId>
     <artifactId>common</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -35,14 +35,14 @@
       <artifactId>terracotta-utilities-test-tools</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-port-locking</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

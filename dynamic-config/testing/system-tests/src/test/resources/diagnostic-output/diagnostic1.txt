@@ -1,0 +1,18 @@
+Diagnostic result:
+[Cluster]
+ - Nodes: 1
+ - Nodes online: 1
+ - Nodes online, configured and activated: 0
+ - Nodes online, configured and in repair: 0
+ - Nodes online, new and being configured: 1
+ - Nodes pending restart: 0
+ - Configuration state: All the nodes are being configured (or being repaired).
+ - Node state: DIAGNOSTIC
+ - Node online, configured and activated: NO
+ - Node online, configured and in repair: NO
+ - Node online, new and being configured: YES
+ - Node restart required: NO
+ - Node configuration change in progress: NO
+ - Node can accept new changes: NO
+ - Node current configuration version: 0
+ - Node highest configuration version: 0

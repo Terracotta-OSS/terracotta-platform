@@ -1,0 +1,15 @@
+format version: 2
+2020-09-30T19:35:32.954Z
+{"mutativeMessageCount":1,"currentVersion":0,"mode":"ACCEPTING","highestVersion":0}
+bc8c13186cf609ea713a1f4f4155f3d78a585375
+
+format version: 2
+2020-09-30T19:35:36.992Z
+{"mutativeMessageCount":2,"currentVersion":0,"request":"PREPARE","mode":"PREPARED","latestChangeUuid":"64bcdfce-d098-4506-b90e-ae203fa5867b","highestVersion":1,"lastMutationHost":"C02YJ2F2JGH6.local","lastMutationUser":"matc","lastMutationTimestamp":"2020-09-30T19:35:36.951Z","64bcdfce-d098-4506-b90e-ae203fa5867b":{"state":"PREPARED","version":1,"operation":{"type":"ClusterActivationNomadChange","cluster":{"stripes":[{"name":"Canidae","nodes":[{"dataDirs":{"main":"node-1-1/data-dir"},"groupPort":17490,"hostname":"localhost","logDir":"node-1-1/logs","metadataDir":"node-1-1/metadata","name":"node-1-1","port":9823,"uid":"D-Idx5t0Tq-XeLwGhzQaug"},{"dataDirs":{"main":"node-1-2/data-dir"},"groupPort":15763,"hostname":"localhost","logDir":"node-1-2/logs","metadataDir":"node-1-2/metadata","name":"node-1-2","port":20561,"uid":"PHE-2_9dSHaNA-zYys4BFQ"}],"uid":"26aC0lSZR3-UdNwS2904Ww"}],"failoverPriority":"availability","name":"tc-cluster","offheapResources":{"foo":{"quantity":1,"unit":"GB","type":"MEMORY"},"main":{"quantity":512,"unit":"MB","type":"MEMORY"}},"uid":"MDfDJa-xR9Gzs8-s-CCIug"},"applicability":{"level":"CLUSTER"},"summary":"Activating cluster: tc-cluster"},"formatVersion":"2","changeResultHash":"0617049e07ca071c7cb7a3a761ba6cf0dc6c2355","creationHost":"C02YJ2F2JGH6.local","creationUser":"matc","creationTimestamp":"2020-09-30T19:35:36.951Z"}}
+6d528a7d2f67387a33a747688f8b484c26900614
+
+format version: 2
+2020-09-30T19:35:37.081Z
+{"mutativeMessageCount":3,"currentVersion":1,"request":"COMMIT","mode":"ACCEPTING","latestChangeUuid":"64bcdfce-d098-4506-b90e-ae203fa5867b","lastMutationHost":"C02YJ2F2JGH6.local","lastMutationUser":"matc","lastMutationTimestamp":"2020-09-30T19:35:37.050Z","64bcdfce-d098-4506-b90e-ae203fa5867b":{"state":"COMMITTED","version":1,"operation":{"type":"ClusterActivationNomadChange","cluster":{"stripes":[{"name":"Canidae","nodes":[{"dataDirs":{"main":"node-1-1/data-dir"},"groupPort":17490,"hostname":"localhost","logDir":"node-1-1/logs","metadataDir":"node-1-1/metadata","name":"node-1-1","port":9823,"uid":"D-Idx5t0Tq-XeLwGhzQaug"},{"dataDirs":{"main":"node-1-2/data-dir"},"groupPort":15763,"hostname":"localhost","logDir":"node-1-2/logs","metadataDir":"node-1-2/metadata","name":"node-1-2","port":20561,"uid":"PHE-2_9dSHaNA-zYys4BFQ"}],"uid":"26aC0lSZR3-UdNwS2904Ww"}],"failoverPriority":"availability","name":"tc-cluster","offheapResources":{"foo":{"quantity":1,"unit":"GB","type":"MEMORY"},"main":{"quantity":512,"unit":"MB","type":"MEMORY"}},"uid":"MDfDJa-xR9Gzs8-s-CCIug"},"applicability":{"level":"CLUSTER"},"summary":"Activating cluster: tc-cluster"},"formatVersion":"2","changeResultHash":"0617049e07ca071c7cb7a3a761ba6cf0dc6c2355","creationHost":"C02YJ2F2JGH6.local","creationUser":"matc","creationTimestamp":"2020-09-30T19:35:36.951Z"}}
+8b8170c7e10753f15e2020229826c9db65bddf94
+

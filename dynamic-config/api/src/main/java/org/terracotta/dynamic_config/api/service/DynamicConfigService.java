@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.api.service;
 import org.terracotta.dynamic_config.api.model.Cluster;
 
 import java.time.Duration;
+import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
@@ -31,7 +32,7 @@ public interface DynamicConfigService {
   void setUpcomingCluster(Cluster cluster);
 
   /**
-   * Activates the Nomad system so that we can write a first config repository version.
+   * Activates the Nomad system so that we can write a first configuration directory version.
    * This requires the topology to set plus eventually the license installed.
    * <p>
    * License can be null.
@@ -64,9 +65,34 @@ public interface DynamicConfigService {
   void restart(Duration delay);
 
   /**
+   * Restart this not after the specified delay only if its physical server state is PASSIVE (the node could be blocked or not)
+   *
+   * @param delay initial delay before restart happens
+   */
+  void restartIfPassive(Duration delay);
+
+  /**
+   * Restart this not after the specified delay only if its physical server state is ACTIVE (the node could be blocked,
+   * in a reconnect window, or serving clients)
+   *
+   * @param delay initial delay before restart happens
+   */
+  void restartIfActive(Duration delay);
+
+  /**
    * Stops an activated node.
    * <p>
    * This method will zap and stop the node.
    */
   void stop(Duration delay);
+
+  /**
+   * Get the content of the installed license if any
+   */
+  Optional<String> getLicenseContent();
+
+  /**
+   * Reset and sync this node's append log with the provided nomad changes and update the its configurations accordingly.
+   */
+  void resetAndSync(NomadChangeInfo[] nomadChanges, Cluster cluster);
 }

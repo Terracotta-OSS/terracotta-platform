@@ -28,12 +28,10 @@ import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
-import org.terracotta.nomad.messages.PrepareMessage;
-import org.terracotta.nomad.messages.RollbackMessage;
-import org.terracotta.nomad.messages.TakeoverMessage;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
+import org.terracotta.nomad.server.NomadServerAdapter;
 import org.terracotta.nomad.server.NomadServerImpl;
 import org.terracotta.nomad.server.state.MemoryNomadServerState;
 import org.terracotta.nomad.server.state.NomadServerState;
@@ -200,7 +198,7 @@ public class NomadIT {
     SimpleNomadChange change = new SimpleNomadChange("change", "summary");
 
     when(changeApplicator1.tryApply(null, change)).thenReturn(allow("changeResult"));
-    when(changeApplicator2.tryApply(null, change)).thenReturn(reject("fail"));
+    when(changeApplicator2.tryApply(null, change)).thenReturn(reject(null, "fail"));
     when(changeApplicator3.tryApply(null, change)).thenReturn(allow("changeResult"));
 
     client.tryApplyChange(changeResults, change);
@@ -225,6 +223,7 @@ public class NomadIT {
     verify(changeResults).endPrepare();
     verify(changeResults).startRollback();
     verify(changeResults).rolledBack(address1);
+    verify(changeResults).rolledBack(address2);
     verify(changeResults).rolledBack(address3);
     verify(changeResults).endRollback();
     verify(changeResults).done(CONSISTENT);
@@ -319,12 +318,11 @@ public class NomadIT {
     return interceptionServer;
   }
 
-  private static class InterceptionServer<T> implements NomadServer<T> {
-    private final NomadServer<T> underlying;
+  private static class InterceptionServer<T> extends NomadServerAdapter<T> {
     private volatile boolean allowCommit = true;
 
     public InterceptionServer(NomadServer<T> underlying) {
-      this.underlying = underlying;
+      super(underlying);
     }
 
     public void setAllowCommit(boolean allowCommit) {
@@ -332,37 +330,12 @@ public class NomadIT {
     }
 
     @Override
-    public DiscoverResponse<T> discover() throws NomadException {
-      return underlying.discover();
-    }
-
-    @Override
-    public AcceptRejectResponse prepare(PrepareMessage message) throws NomadException {
-      return underlying.prepare(message);
-    }
-
-    @Override
     public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
       if (allowCommit) {
-        return underlying.commit(message);
+        return delegate.commit(message);
       } else {
         throw new NomadException();
       }
-    }
-
-    @Override
-    public AcceptRejectResponse rollback(RollbackMessage message) throws NomadException {
-      return underlying.rollback(message);
-    }
-
-    @Override
-    public AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException {
-      return underlying.takeover(message);
-    }
-
-    @Override
-    public void close() {
-      underlying.close();
     }
   }
 }

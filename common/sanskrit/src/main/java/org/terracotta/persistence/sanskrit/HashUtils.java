@@ -15,12 +15,17 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-import java.nio.charset.Charset;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 public class HashUtils {
+  private static final Logger LOGGER = LoggerFactory.getLogger(HashUtils.class);
+
   private static final byte[] PRIVATE_BYTES = toBytes(
       0x71, 0x0d, 0x71, 0xd1, 0xca, 0xcd, 0xd1, 0xe1,
       0x8b, 0x56, 0x87, 0x66, 0x0e, 0x35, 0x84, 0xeb,
@@ -31,8 +36,6 @@ public class HashUtils {
       0x28, 0xb5, 0xca, 0xd5, 0x49, 0xd9, 0xcc, 0x77,
       0xba, 0x69, 0x49, 0x45, 0xd8, 0x1b, 0x49, 0xc9
   );
-
-  private static final Charset UTF_8 = Charset.forName("UTF-8");
 
   private static byte[] toBytes(int... ints) {
     byte[] bytes = new byte[ints.length];
@@ -49,7 +52,9 @@ public class HashUtils {
   }
 
   public static String generateHash(String input) {
-    return generateHash(input.getBytes(UTF_8));
+    final String hash = generateHash(input.getBytes(StandardCharsets.UTF_8));
+    LOGGER.trace("generateHash({}): {}", input, hash);
+    return hash;
   }
 
   public static String generateHash(byte[] input) {

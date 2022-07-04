@@ -15,6 +15,7 @@
  */
 package org.terracotta.management.model.cluster;
 
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.Contextual;
 
 import java.util.Optional;
@@ -44,6 +45,11 @@ public abstract class AbstractManageableNode<P extends Contextual> extends Abstr
 
   public final boolean isManageable() {
     return managementRegistry != null;
+  }
+
+  @Override
+  public Context getContext() {
+    return super.getContext().with(getManagementRegistry().map(ManagementRegistry::getContext).orElse(Context.empty()));
   }
 
   @Override

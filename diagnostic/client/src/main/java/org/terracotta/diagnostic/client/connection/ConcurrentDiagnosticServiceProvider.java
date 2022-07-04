@@ -21,7 +21,6 @@ import org.terracotta.diagnostic.client.DiagnosticService;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletionService;
@@ -50,9 +49,28 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
   }
 
   @Override
-  public DiagnosticServices fetchDiagnosticServices(Collection<InetSocketAddress> addresses) {
+  public <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses) {
+    return _fetchOnlineDiagnosticService(addresses, false, connectionTimeout);
+  }
+
+  @Override
+  public <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses, Duration connectionTimeout) {
+    return _fetchOnlineDiagnosticService(addresses, false, connectionTimeout);
+  }
+
+  @Override
+  public <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses) {
+    return _fetchOnlineDiagnosticService(addresses, true, connectionTimeout);
+  }
+
+  @Override
+  public <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, Duration connectionTimeout) {
+    return _fetchOnlineDiagnosticService(addresses, true, connectionTimeout);
+  }
+
+  private <K> DiagnosticServices<K> _fetchOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, boolean firstAvailable, Duration connTimeout) {
     if (addresses.isEmpty()) {
-      return new DiagnosticServices(emptyMap(), emptyMap());
+      return new DiagnosticServices<>(emptyMap(), emptyMap());
     }
 
     ExecutorService executor = Executors.newFixedThreadPool(
@@ -60,34 +78,38 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
         r -> new Thread(r, "diagnostics-connect"));
 
     try {
-      CompletionService<Tuple3<InetSocketAddress, DiagnosticService, DiagnosticServiceProviderException>> completionService = new ExecutorCompletionService<>(executor);
+      CompletionService<Tuple3<K, DiagnosticService, DiagnosticServiceProviderException>> completionService = new ExecutorCompletionService<>(executor);
 
       // start all the fetches, record error if any
-      TimeBudget timeBudget = new TimeBudget(connectionTimeout.toMillis(), MILLISECONDS);
-      addresses.forEach(address -> completionService.submit(() -> {
+      final TimeBudget timeBudget = connTimeout == null ? null : new TimeBudget(connTimeout.toMillis(), MILLISECONDS);
+      addresses.forEach((id, address) -> completionService.submit(() -> {
         try {
-          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, Duration.ofMillis(timeBudget.remaining()));
-          return tuple3(address, diagnosticService, null);
+          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, timeBudget == null ? null : Duration.ofMillis(timeBudget.remaining()));
+          return tuple3(id, diagnosticService, null);
         } catch (DiagnosticServiceProviderException e) {
-          return tuple3(address, null, e);
+          return tuple3(id, null, e);
         } catch (Exception e) {
-          return tuple3(address, null, new DiagnosticServiceProviderException("Failed to create diagnostic connection to " + address, e));
+          return tuple3(id, null, new DiagnosticServiceProviderException("Failed to create diagnostic connection to " + address, e));
         }
       }));
 
-      Map<InetSocketAddress, DiagnosticService> online = new HashMap<>(addresses.size());
-      Map<InetSocketAddress, DiagnosticServiceProviderException> offline = new HashMap<>(addresses.size());
+      Map<K, DiagnosticService> online = new HashMap<>(addresses.size());
+      Map<K, DiagnosticServiceProviderException> offline = new HashMap<>(addresses.size());
 
       try {
         // capture the task output
         int count = addresses.size();
         while (count-- > 0) {
           // we do not need to handle any timeout here during a take or get because they are handled in the submitted tasks
-          Future<Tuple3<InetSocketAddress, DiagnosticService, DiagnosticServiceProviderException>> completed = completionService.take();
-          Tuple3<InetSocketAddress, DiagnosticService, DiagnosticServiceProviderException> tuple = completed.get();
+          Future<Tuple3<K, DiagnosticService, DiagnosticServiceProviderException>> completed = completionService.take();
+          Tuple3<K, DiagnosticService, DiagnosticServiceProviderException> tuple = completed.get();
           if (tuple.t3 == null) {
             online.put(tuple.t1, tuple.t2);
-          } else {
+            if (firstAvailable) {
+              executor.shutdownNow();
+              break;
+            }
+          } else if (!firstAvailable) {
             offline.put(tuple.t1, tuple.t3);
           }
         }
@@ -101,7 +123,7 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
         throw new AssertionError(e);
       }
 
-      return new DiagnosticServices(online, offline);
+      return new DiagnosticServices<>(online, offline);
     } finally {
       shutdown(executor);
     }

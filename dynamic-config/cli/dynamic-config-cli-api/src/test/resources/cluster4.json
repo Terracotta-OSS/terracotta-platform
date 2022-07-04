@@ -1,0 +1,43 @@
+{
+  "stripes": [
+    {
+      "name": "stripe1",
+      "nodes": [
+        {
+          "dataDirs": {
+            "cache": "/data/cache1_1"
+          },
+          "hostname": "localhost",
+          "name": "node1_1",
+          "port": 9410,
+          "uid": "jUhhu1kRQd-x6iNgpo9Xyw"
+        },
+        {
+          "dataDirs": {
+            "cache": "/data/cache1_2"
+          },
+          "hostname": "localhost",
+          "name": "node1_2",
+          "port": 9411,
+          "uid": "VOVyu3kuQxCRIu7dK_UZZA"
+        }
+      ],
+      "uid": "5Zv3uphiRLavoGZthy7JNg"
+    }
+  ],
+  "failoverPriority": "availability",
+  "name": "my-cluster",
+  "offheapResources": {
+    "foo": {
+      "quantity": 1,
+      "unit": "GB",
+      "type": "MEMORY"
+    },
+    "main": {
+      "quantity": 512,
+      "unit": "MB",
+      "type": "MEMORY"
+    }
+  },
+  "uid": "YLQguzhRSdS6y5M9vnA5mw"
+}

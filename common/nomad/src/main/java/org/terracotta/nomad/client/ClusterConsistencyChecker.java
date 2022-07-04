@@ -24,6 +24,7 @@ import org.terracotta.nomad.server.ChangeRequestState;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,13 +32,26 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
   private final Map<UUID, Collection<InetSocketAddress>> commits = new ConcurrentHashMap<>();
   private final Map<UUID, Collection<InetSocketAddress>> rollbacks = new ConcurrentHashMap<>();
+  private final Map<String, Collection<InetSocketAddress>> lastCommittedChangeResultHashes = new ConcurrentHashMap<>();
 
   public void checkClusterConsistency(DiscoverResultsReceiver<T> results) {
     HashSet<UUID> inconsistentUUIDs = new HashSet<>(commits.keySet());
     inconsistentUUIDs.retainAll(rollbacks.keySet());
 
-    for (UUID uuid : inconsistentUUIDs) {
-      results.discoverClusterInconsistent(uuid, commits.get(uuid), rollbacks.get(uuid));
+    // check for inconsistency first
+    if (!inconsistentUUIDs.isEmpty()) {
+      for (UUID uuid : inconsistentUUIDs) {
+        results.discoverConfigInconsistent(uuid, commits.get(uuid), rollbacks.get(uuid));
+      }
+    } else {
+      // At this point, excluding any change in preparation (which would fail a discovery) we
+      // have all nodes having either all the same UUID in the same state or different UUID but
+      // either committed or rolled back (not a mix).
+      // The following code makes sure that all servers have the same configuration by
+      // looking at the last committed configuration.
+      if (lastCommittedChangeResultHashes.size() > 1) {
+        results.discoverConfigPartitioned(lastCommittedChangeResultHashes.values());
+      }
     }
   }
 
@@ -50,10 +64,12 @@ public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
       ChangeRequestState changeState = latestChange.getState();
       switch (changeState) {
         case COMMITTED:
-          addChangeState(commits, latestChangeUuid, server);
+          lastCommittedChangeResultHashes.computeIfAbsent(latestChange.getChangeResultHash(), k -> new LinkedHashSet<>()).add(server);
+          commits.computeIfAbsent(latestChangeUuid, k -> new LinkedHashSet<>()).add(server);
           break;
         case ROLLED_BACK:
-          addChangeState(rollbacks, latestChangeUuid, server);
+          lastCommittedChangeResultHashes.computeIfAbsent(discovery.getLatestCommittedChange().getChangeResultHash(), k -> new LinkedHashSet<>()).add(server);
+          rollbacks.computeIfAbsent(latestChangeUuid, k -> new LinkedHashSet<>()).add(server);
           break;
         case PREPARED:
           // Do nothing
@@ -62,9 +78,5 @@ public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
           throw new AssertionError("Unknown ChangeRequestState: " + changeState);
       }
     }
-  }
-
-  private void addChangeState(Map<UUID, Collection<InetSocketAddress>> map, UUID latestChangeUuid, InetSocketAddress server) {
-    map.computeIfAbsent(latestChangeUuid, k -> new HashSet<>()).add(server);
   }
 }

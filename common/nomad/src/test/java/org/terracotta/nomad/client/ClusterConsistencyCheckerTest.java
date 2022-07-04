@@ -25,6 +25,7 @@ import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import java.net.InetSocketAddress;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -35,15 +36,19 @@ import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterConsistencyCheckerTest {
+
+  UUID uuid1 = UUID.randomUUID();
+  UUID uuid2 = UUID.randomUUID();
+
   @Mock
   private DiscoverResultsReceiver<String> results;
 
-  private ClusterConsistencyChecker<String> consistencyChecker = new ClusterConsistencyChecker<>();
-  private InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
-  private InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
-  private InetSocketAddress address3 = InetSocketAddress.createUnresolved("localhost", 9412);
-  private InetSocketAddress address4 = InetSocketAddress.createUnresolved("localhost", 9413);
-  private InetSocketAddress address5 = InetSocketAddress.createUnresolved("localhost", 9414);
+  private final ClusterConsistencyChecker<String> consistencyChecker = new ClusterConsistencyChecker<>();
+  private final InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
+  private final InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
+  private final InetSocketAddress address3 = InetSocketAddress.createUnresolved("localhost", 9412);
+  private final InetSocketAddress address4 = InetSocketAddress.createUnresolved("localhost", 9413);
+  private final InetSocketAddress address5 = InetSocketAddress.createUnresolved("localhost", 9414);
 
   @After
   public void after() {
@@ -63,6 +68,51 @@ public class ClusterConsistencyCheckerTest {
   }
 
   @Test
+  public void allCommitForSameHash() {
+    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1, "hash"));
+    consistencyChecker.discovered(address2, discovery(COMMITTED, uuid2, "hash"));
+
+    consistencyChecker.checkClusterConsistency(results);
+
+    verifyNoMoreInteractions(results);
+  }
+
+  @Test
+  public void allCommitForSameHashWith1RollbackAtEnd() {
+    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1, "hash"));
+    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2, "hash1", uuid1, "hash"));
+
+    consistencyChecker.checkClusterConsistency(results);
+
+    verifyNoMoreInteractions(results);
+  }
+
+  @Test
+  public void allCommitForSameHashWith2RollbackAtEnd() {
+    UUID uuid3 = UUID.randomUUID();
+    UUID uuid4 = UUID.randomUUID();
+
+    consistencyChecker.discovered(address1, discovery(ROLLED_BACK, uuid1, "hash1", uuid3, "hash"));
+    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2, "hash2", uuid4, "hash"));
+
+    consistencyChecker.checkClusterConsistency(results);
+
+    verifyNoMoreInteractions(results);
+  }
+
+  @Test
+  public void allCommitForSameUuidWith2RollbackAtEnd() {
+    UUID uuid3 = UUID.randomUUID();
+
+    consistencyChecker.discovered(address1, discovery(ROLLED_BACK, uuid1, "hash1", uuid3, "hash"));
+    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2, "hash2", uuid3, "hash"));
+
+    consistencyChecker.checkClusterConsistency(results);
+
+    verifyNoMoreInteractions(results);
+  }
+
+  @Test
   public void allRollbackForSameUuid() {
     UUID uuid = UUID.randomUUID();
 
@@ -73,7 +123,32 @@ public class ClusterConsistencyCheckerTest {
   }
 
   @Test
-  public void inconsistentCluster() {
+  public void allRollbackForSameHash() {
+    consistencyChecker.discovered(address1, discovery(ROLLED_BACK, uuid1, "hash"));
+    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2, "hash"));
+
+    consistencyChecker.checkClusterConsistency(results);
+  }
+
+  @Test
+  public void allRollbackButSameCommittedHash() {
+    consistencyChecker.discovered(address1, discovery(ROLLED_BACK, uuid1, "hash1", UUID.randomUUID(), "hash"));
+    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2, "hash2", UUID.randomUUID(), "hash"));
+
+    consistencyChecker.checkClusterConsistency(results);
+  }
+
+  @Test
+  public void allRollbackButSameCommittedUuids() {
+    UUID lastCommittedChangeUid = UUID.randomUUID();
+    consistencyChecker.discovered(address1, discovery(ROLLED_BACK, uuid1, "hash1", lastCommittedChangeUid, "hash"));
+    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2, "hash2", lastCommittedChangeUid, "hash"));
+
+    consistencyChecker.checkClusterConsistency(results);
+  }
+
+  @Test
+  public void inconsistentConfig() {
     UUID uuid = UUID.randomUUID();
 
     consistencyChecker.discovered(address1, discovery(COMMITTED, uuid));
@@ -81,15 +156,40 @@ public class ClusterConsistencyCheckerTest {
 
     consistencyChecker.checkClusterConsistency(results);
 
-    verify(results).discoverClusterInconsistent(eq(uuid), withItems(address1), withItems(address2));
+    verify(results).discoverConfigInconsistent(eq(uuid), withItems(address1), withItems(address2));
   }
 
   @Test
-  public void differentUuids() {
-    consistencyChecker.discovered(address1, discovery(COMMITTED));
-    consistencyChecker.discovered(address2, discovery(ROLLED_BACK));
+  public void differentHashes() {
+    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1, "hash1"));
+    consistencyChecker.discovered(address2, discovery(COMMITTED, uuid2, "hash2"));
 
     consistencyChecker.checkClusterConsistency(results);
+
+    verify(results).discoverConfigPartitioned(any());
+  }
+
+  @Test
+  public void differentLastChange() {
+    consistencyChecker.discovered(address1, discovery(COMMITTED, uuid1, "hash1"));
+    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2, "hash2"));
+
+    consistencyChecker.checkClusterConsistency(results);
+
+    verify(results).discoverConfigPartitioned(any());
+  }
+
+  @Test
+  public void partitionSplitBeforeRollback() {
+    UUID uuid3 = UUID.randomUUID();
+    UUID uuid4 = UUID.randomUUID();
+
+    consistencyChecker.discovered(address1, discovery(ROLLED_BACK, uuid1, "hash1", uuid3, "hash3"));
+    consistencyChecker.discovered(address2, discovery(ROLLED_BACK, uuid2, "hash2", uuid4, "hash4"));
+
+    consistencyChecker.checkClusterConsistency(results);
+
+    verify(results).discoverConfigPartitioned(any());
   }
 
   @Test
@@ -105,7 +205,7 @@ public class ClusterConsistencyCheckerTest {
 
     consistencyChecker.checkClusterConsistency(results);
 
-    verify(results).discoverClusterInconsistent(eq(uuid1), withItems(address1), withItems(address2));
-    verify(results).discoverClusterInconsistent(eq(uuid2), withItems(address3, address4), withItems(address5));
+    verify(results).discoverConfigInconsistent(eq(uuid1), withItems(address1), withItems(address2));
+    verify(results).discoverConfigInconsistent(eq(uuid2), withItems(address3, address4), withItems(address5));
   }
 }

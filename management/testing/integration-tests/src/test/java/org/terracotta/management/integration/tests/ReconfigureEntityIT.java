@@ -25,6 +25,7 @@ import org.terracotta.management.entity.sample.client.CacheEntityFactory;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.notification.ContextualNotification;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -78,10 +79,15 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
 
   @Test
   public void topology_after_reconfigure() throws Exception {
-    Cluster cluster = nmsService.readTopology();
+    webappNodes.remove(1).close();
+    Cluster cluster;
+    do {
+      cluster = nmsService.readTopology();
+    } while (cluster.getClientCount() != 2);
+
     JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
     JsonNode expected = readJson("topology-before-reconfigure.json");
-    assertEquals(expected, actual);
+    assertEquals(actual.toPrettyString(), expected, actual);
 
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
     factory0.reconfigure("pet-clinic/pets", "pet-clinic/clients");
@@ -89,7 +95,7 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     cluster = nmsService.readTopology();
     actual = removeRandomValues(toJson(cluster.toMap()));
     expected = readJson("topology-reconfigured.json");
-    assertEquals(expected, actual);
+    assertEquals(actual.toPrettyString(), expected, actual);
   }
 
   @Test
@@ -101,12 +107,13 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
 
     String[] latestReceivedNotifs = {"SERVER_CACHE_DESTROYED", "SERVER_CACHE_CREATED", "CLIENT_ATTACHED", "CLIENT_ATTACHED", "SERVER_ENTITY_RECONFIGURED"};
     List<ContextualNotification> notifs = waitForAllNotifications(latestReceivedNotifs);
+    notifs.removeIf(notif -> !Arrays.asList(latestReceivedNotifs).contains(notif.getType()));
     notifs = notifs.subList(notifs.size() - latestReceivedNotifs.length, notifs.size());
 
     JsonNode actual = removeRandomValues(toJson(notifs));
     JsonNode expected = readJson("notifications-after-reconfigure.json");
 
-    assertEquals(expected, actual);
+    assertEquals(actual.toPrettyString(), expected, actual);
   }
 
 }

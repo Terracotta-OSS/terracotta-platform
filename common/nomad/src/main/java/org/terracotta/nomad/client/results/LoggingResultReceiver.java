@@ -21,6 +21,7 @@ import org.terracotta.nomad.client.Consistency;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
 import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
 import org.terracotta.nomad.messages.DiscoverResponse;
+import org.terracotta.nomad.server.ChangeRequestState;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -28,6 +29,7 @@ import java.util.UUID;
 
 public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, RecoveryResultReceiver<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(LoggingResultReceiver.class);
+  private volatile ChangeRequestState state;
 
   @Override
   public void startTakeover() {
@@ -45,8 +47,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress node, String reason) {
-    error("Takeover has failed: " + node + ": " + reason);
+  public void takeoverFail(InetSocketAddress node, Throwable reason) {
+    error("Takeover has failed: " + node, reason);
   }
 
   @Override
@@ -65,8 +67,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void discoverFail(InetSocketAddress node, String reason) {
-    error("Discover failed on node: " + node + ". Reason: " + reason);
+  public void discoverFail(InetSocketAddress node, Throwable reason) {
+    error("Discover failed on node: " + node, reason);
   }
 
   @Override
@@ -75,8 +77,13 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void discoverClusterInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
-    error("UNRECOVERABLE: Inconsistent cluster for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+    error("UNRECOVERABLE: Inconsistent config for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
+  }
+
+  @Override
+  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+    error("UNRECOVERABLE: Partitioned configuration on cluster. Subsets: " + partitions);
   }
 
   @Override
@@ -115,8 +122,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void prepareFail(InetSocketAddress node, String reason) {
-    error("Node: " + node + " failed when asked to prepare to make the change. Reason: " + reason);
+  public void prepareFail(InetSocketAddress node, Throwable reason) {
+    error("Node: " + node + " failed when asked to prepare to make the change", reason);
   }
 
   @Override
@@ -131,6 +138,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endPrepare() {
+    state = ChangeRequestState.PREPARED;
     log("Finished asking servers to prepare to make the change");
   }
 
@@ -145,8 +153,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void commitFail(InetSocketAddress node, String reason) {
-    error("Commit failed for node " + node + ". Reason: " + reason);
+  public void commitFail(InetSocketAddress node, Throwable reason) {
+    error("Commit failed for node " + node, reason);
   }
 
   @Override
@@ -156,6 +164,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endCommit() {
+    state = ChangeRequestState.COMMITTED;
     log("Finished asking servers to commit the change");
   }
 
@@ -170,8 +179,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress node, String reason) {
-    error("Rollback failed for node: " + node + ". Reason: " + reason);
+  public void rollbackFail(InetSocketAddress node, Throwable reason) {
+    error("Rollback failed for node: " + node, reason);
   }
 
   @Override
@@ -181,6 +190,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void endRollback() {
+    state = ChangeRequestState.ROLLED_BACK;
     log("Finished asking servers to rollback the change");
   }
 
@@ -188,7 +198,7 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   public void done(Consistency consistency) {
     switch (consistency) {
       case CONSISTENT:
-        log("The change has been made successfully");
+        log("The transaction is completed. State: " + state);
         break;
       case MAY_NEED_RECOVERY:
         error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command.");
@@ -197,7 +207,8 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
         log("Unable to determine new configuration consistency: configuration has not changed as no mutative operation has been performed");
         break;
       case UNRECOVERABLY_INCONSISTENT:
-        error("Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent and cannot be trivially recovered.");
+      case UNRECOVERABLY_PARTITIONNED:
+        error("Please run the 'diagnostic' command to diagnose the configuration state and please seek support. The cluster is inconsistent or partitioned and cannot be trivially recovered.");
         break;
       default:
         throw new AssertionError("Unknown Consistency: " + consistency);
@@ -206,14 +217,22 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
 
   @Override
   public void cannotDecideOverCommitOrRollback() {
-    error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command and force either a commit or rollback.");
+    error("Please run the 'diagnostic' command to diagnose the configuration state and try to run the 'repair' command. Please refer to the troubleshooting guide for more help.");
   }
 
-  protected void error(String line) {
+  private void error(String line) {
+    error(line, null);
+  }
+
+  protected void error(String line, Throwable e) {
     // debug level is normal hereL this class is used to "trace" all Nomad callbacks and print them to the console
     // if we are in verbose mode (trace level)
     // the errors occurring in nomad are handled at another place
-    LOGGER.debug(line);
+    if (e == null) {
+      LOGGER.debug(line);
+    } else {
+      LOGGER.debug(line + " Error: " + e.getMessage(), e);
+    }
   }
 
   protected void log(String line) {

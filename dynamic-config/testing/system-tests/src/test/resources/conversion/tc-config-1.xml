@@ -22,7 +22,7 @@
   <plugins>
     <config>
       <data:data-directories>
-        <data:directory name="root1">%(user.dir)/user-data/main/stripe1</data:directory>
+        <data:directory name="root1">${WORKING-DIR}/user-data/main/stripe1</data:directory>
       </data:data-directories>
     </config>
     <config>
@@ -31,15 +31,14 @@
       </ohr:offheap-resources>
     </config>
   </plugins>
-  <tc-properties/>
   <servers>
     <server host="localhost" name="node-1">
-      <logs>%(user.dir)/logs/stripe1/node-1</logs>
+      <logs>%h-logs</logs>
       <tsa-port>9410</tsa-port>
       <tsa-group-port>9430</tsa-group-port>
     </server>
     <server host="localhost" name="node-2">
-      <logs>%(user.dir)/logs/stripe1/node-2</logs>
+      <logs>%h-logs</logs>
       <tsa-port>9510</tsa-port>
       <tsa-group-port>9530</tsa-group-port>
     </server>

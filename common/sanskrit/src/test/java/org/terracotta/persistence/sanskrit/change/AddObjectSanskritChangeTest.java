@@ -19,7 +19,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.persistence.sanskrit.ObjectMapperSupplier;
 import org.terracotta.persistence.sanskrit.SanskritObject;
 import org.terracotta.persistence.sanskrit.SanskritObjectImpl;
 
@@ -33,7 +34,7 @@ public class AddObjectSanskritChangeTest {
 
   @Test
   public void callsSetObject() {
-    SanskritObject object = new SanskritObjectImpl(Json.copyObjectMapper());
+    SanskritObject object = new SanskritObjectImpl(ObjectMapperSupplier.notVersioned(new ObjectMapperFactory().create()));
     AddObjectSanskritChange change = new AddObjectSanskritChange("key", object);
     change.accept(visitor);
 

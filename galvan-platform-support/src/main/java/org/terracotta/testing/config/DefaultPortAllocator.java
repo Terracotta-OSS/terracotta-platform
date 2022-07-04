@@ -15,38 +15,42 @@
  */
 package org.terracotta.testing.config;
 
-import org.terracotta.port_locking.LockingPortChooser;
-import org.terracotta.port_locking.LockingPortChoosers;
-import org.terracotta.port_locking.MuxPortLock;
+import org.terracotta.utilities.test.net.PortManager;
+
+import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * @author Mathieu Carbou
  */
 public class DefaultPortAllocator implements PortAllocator {
 
-  private final LockingPortChooser lockingPortChooser;
-
-  public DefaultPortAllocator() {this(LockingPortChoosers.getFileLockingPortChooser());}
-
-  public DefaultPortAllocator(LockingPortChooser lockingPortChooser) {this.lockingPortChooser = lockingPortChooser;}
+  private final PortManager portManager = PortManager.getInstance();
 
   @Override
   public PortAllocation reserve(int portCounts) {
-    MuxPortLock muxPortLock = lockingPortChooser.choosePorts(portCounts);
+    List<PortManager.PortRef> portRefs = portManager.reservePorts(portCounts);
     return new PortAllocation() {
+      int i = 0;
+
       @Override
-      public int getBasePort() {
-        return muxPortLock.getPort();
+      public Integer next() {
+        if (i >= portRefs.size()) {
+          throw new NoSuchElementException();
+        }
+        return portRefs.get(i++).port();
       }
 
       @Override
-      public int getPortCount() {
-        return portCounts;
+      public boolean hasNext() {
+        return i < portRefs.size();
       }
 
       @Override
       public void close() {
-        muxPortLock.close();
+        for (PortManager.PortRef portRef : portRefs) {
+          portRef.close();
+        }
       }
     };
   }

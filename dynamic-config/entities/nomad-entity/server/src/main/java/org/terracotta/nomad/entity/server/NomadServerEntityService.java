@@ -16,6 +16,7 @@
 package org.terracotta.nomad.entity.server;
 
 import com.tc.classloader.PermanentEntity;
+import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.entity.BasicServiceConfiguration;
 import org.terracotta.entity.ConcurrencyStrategy;
 import org.terracotta.entity.ConfigurationException;
@@ -25,12 +26,11 @@ import org.terracotta.entity.MessageCodecException;
 import org.terracotta.entity.ServiceException;
 import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
-import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.entity.common.NomadEntityConstants;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
 import org.terracotta.nomad.entity.common.NomadMessageCodec;
-import org.terracotta.nomad.server.UpgradableNomadServer;
+import org.terracotta.server.Server;
 
 @PermanentEntity(type = NomadEntityConstants.ENTITY_TYPE, name = NomadEntityConstants.ENTITY_NAME)
 public class NomadServerEntityService<T> implements EntityServerService<NomadEntityMessage, NomadEntityResponse> {
@@ -41,7 +41,7 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
   public NomadActiveServerEntity<T> createActiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     try {
       @SuppressWarnings("unchecked")
-      UpgradableNomadServer<T> nomadServer = registry.getService(new BasicServiceConfiguration<>(UpgradableNomadServer.class));
+      DynamicConfigNomadServer nomadServer = registry.getService(new BasicServiceConfiguration<>(DynamicConfigNomadServer.class));
       return new NomadActiveServerEntity<>(nomadServer);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
@@ -52,9 +52,9 @@ public class NomadServerEntityService<T> implements EntityServerService<NomadEnt
   public NomadPassiveServerEntity<T> createPassiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     try {
       @SuppressWarnings("unchecked")
-      UpgradableNomadServer<T> nomadServer = registry.getService(new BasicServiceConfiguration<>(UpgradableNomadServer.class));
-      PlatformService platformService = registry.getService(new BasicServiceConfiguration<>(PlatformService.class));
-      return new NomadPassiveServerEntity<>(nomadServer, platformService);
+      DynamicConfigNomadServer nomadServer = registry.getService(new BasicServiceConfiguration<>(DynamicConfigNomadServer.class));
+      Server server = registry.getService(new BasicServiceConfiguration<>(Server.class));
+      return new NomadPassiveServerEntity<>(server, nomadServer);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
     }

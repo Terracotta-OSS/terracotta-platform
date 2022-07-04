@@ -19,42 +19,54 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.model.Version;
 
+import java.util.NoSuchElementException;
+
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
+import static org.terracotta.testing.ExceptionMatcher.throwing;
 
 @RunWith(MockitoJUnitRunner.class)
 public class InitialConfigStorageTest {
+
+  NodeContext topology = new NodeContext(Testing.newTestCluster("bar", newTestStripe("stripe1").addNodes(Testing.newTestNode("node-1", "localhost"))), Testing.N_UIDS[1]);
+
   @Mock
-  private ConfigStorage<String> underlying;
+  private ConfigStorage underlying;
 
   @Test
   public void getInitialVersion() throws Exception {
-    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
-    assertNull(storage.getConfig(0L));
+    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    assertThat(() -> storage.getConfig(0L), is(throwing(instanceOf(NoSuchElementException.class))));
   }
 
   @Test(expected = AssertionError.class)
   public void attemptToSaveInitialVersion() throws Exception {
-    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
-    storage.saveConfig(0L, "config");
+    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    storage.saveConfig(0L, topology);
   }
 
   @Test
   public void getOtherVersion() throws Exception {
-    when(underlying.getConfig(1L)).thenReturn("config");
+    when(underlying.getConfig(1L)).thenReturn(new Config(topology, Version.CURRENT));
 
-    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
-    assertEquals("config", storage.getConfig(1L));
+    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    assertEquals(new Config(topology, Version.CURRENT), storage.getConfig(1L));
   }
 
   @Test
   public void saveOtherVersion() throws Exception {
-    InitialConfigStorage<String> storage = new InitialConfigStorage<>(underlying);
-    storage.saveConfig(1L, "config");
+    InitialConfigStorage storage = new InitialConfigStorage(underlying);
+    storage.saveConfig(1L, topology);
 
-    verify(underlying).saveConfig(1L, "config");
+    verify(underlying).saveConfig(1L, topology);
   }
 }

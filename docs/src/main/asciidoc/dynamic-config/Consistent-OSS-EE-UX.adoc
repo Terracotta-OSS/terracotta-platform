@@ -1,0 +1,70 @@
+////
+    Copyright Terracotta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+////
+= OSS-EE startup and configuration UX parity
+
+== Goal
+
+* Be able to start and configure the nodes the same way both in OSS and EE with the dynamic config tool (`config-tool.sh`).
+* Consider the upgrade path from OSS to EE: ideally make it possible to just switch a KIT and not recreate the whole configuration
+
+== Proposal
+
+* We can move to OSS the `config-tool` and `start-node` (all dynamic config modules)
+* We can keep the same CLI for the user, but for EE options, we put a warning in the console saying that these are EE features.
+Here is a list of such CLI and settings:
+** attach/detach: for a stripe
+** activate: license will only be required for EE
+** get/set/unset: some settings won't be supported such as license, backup, node metadata, security
+
+=== Technical implications
+
+* The tests need to be updated to use Ehcache instead of TcStore
+* Modules to move to OSS: all dynamic config modules plus MBeans related to `DetailedServerState`, `common/diagnostic` modules,
+* The copy/paste of the OSS lease (`lease-server-ee`) should be removed and the changes applied in the OSS version
+* Provide feature detection of EE/OSS kit to change behavior and issue the right error messages
+* The `dynamic-config-xml` modules needs a refactor.
+Problem: this is the config repository xml marshalling/unmarshalling and it is tightly coupled to EE modules (for namespaces and parsing).
+The config repository is a tc-config file that has all the dynamic config information put inside as a plugin
+** __Solution A__:
+we extract interfaces and copy/paste all the classes to make an OSS flavor of this module
+*** pros: faster (~2 days)
+*** cons: ugly, duplicate code maintenance, fixes and upgrade path from OSS to EE not possible (whole cluster and config need to be recreated, except if we develop a migration tool from OSS to EE)
+** __Solution B__:
+we change the format of the config repository to not depend on XML, JAXB or any EE/OSS plugins directly.
+This can be done by reusing the config format we have in dynamic config and by creating a new `ConfigProvider` to core that will read this new format instead of reading a tc-config file.
+*** pros: cleaner, no code duplication, solution allows a transparent upgrade path from OSS to EE (we can keep the same config repository)
+*** cons: longer to implement (~4 days)
+
+*To consider:*
+
+* Angela needs to be moved to OSS so that we can use Angela in our tests (but currently, we do not depend on Angela so this dependency is not currently there)
+
+*To be decided:*
+
+* Where we move the modules in github ?
+Considering the number of modules, a new repository can be welcomed, but on the other hand, using tc-platform also works fine
+* Getting rid of Gradle, using Maven ?
+* Build pipelines to change
+* Update EE project and EE KIT creation to depend on the new dependencies
+
+=== Plan
+
+1. We can move to OSS the dynamic config project
+2. We can move to OSS Angela in parallel
+3. IT test migration to Angela can happen any time
+
+The efforts for (1) are around 7 days for ideally 1 or 2 persons (but some tasks are not parallel),
+when other persons are not there or if they work on something that won't be affected by the move.

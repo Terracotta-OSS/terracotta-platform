@@ -17,9 +17,10 @@ package org.terracotta.dynamic_config.entity.topology.server;
 
 import com.tc.classloader.PermanentEntity;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.entity.topology.common.Codec;
 import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityConstants;
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyEntityMessage;
-import org.terracotta.dynamic_config.entity.topology.common.DynamicTopologyMessageCodec;
+import org.terracotta.dynamic_config.entity.topology.common.Message;
+import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
@@ -35,12 +36,12 @@ import org.terracotta.entity.ServiceRegistry;
 import org.terracotta.entity.SyncMessageCodec;
 
 @PermanentEntity(type = DynamicTopologyEntityConstants.ENTITY_TYPE, name = DynamicTopologyEntityConstants.ENTITY_NAME)
-public class DynamicTopologyServerEntityService implements EntityServerService<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> {
+public class DynamicTopologyServerEntityService implements EntityServerService<Message, Response> {
 
-  private final DynamicTopologyMessageCodec messageCodec = new DynamicTopologyMessageCodec();
+  private final Codec messageCodec = new Codec();
 
   @Override
-  public ActiveServerEntity<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> createActiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
+  public ActiveServerEntity<Message, Response> createActiveEntity(ServiceRegistry registry, byte[] configuration) throws ConfigurationException {
     try {
       TopologyService topologyService = registry.getService(new BasicServiceConfiguration<>(TopologyService.class));
       DynamicConfigEventService eventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
@@ -57,37 +58,37 @@ public class DynamicTopologyServerEntityService implements EntityServerService<D
   }
 
   @Override
-  public PassiveServerEntity<DynamicTopologyEntityMessage, DynamicTopologyEntityMessage> createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
+  public PassiveServerEntity<Message, Response> createPassiveEntity(ServiceRegistry registry, byte[] configuration) {
     return new DynamicTopologyPassiveServerEntity();
   }
 
   @Override
-  public DynamicTopologyMessageCodec getMessageCodec() {
+  public Codec getMessageCodec() {
     return messageCodec;
   }
 
   @Override
-  public SyncMessageCodec<DynamicTopologyEntityMessage> getSyncMessageCodec() {
-    return new SyncMessageCodec<DynamicTopologyEntityMessage>() {
+  public SyncMessageCodec<Message> getSyncMessageCodec() {
+    return new SyncMessageCodec<Message>() {
       @Override
-      public byte[] encode(int concurrencyKey, DynamicTopologyEntityMessage response) throws MessageCodecException {
+      public byte[] encode(int concurrencyKey, Message response) throws MessageCodecException {
         return getMessageCodec().encodeMessage(response);
       }
 
       @Override
-      public DynamicTopologyEntityMessage decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
+      public Message decode(int concurrencyKey, byte[] payload) throws MessageCodecException {
         return getMessageCodec().decodeMessage(payload);
       }
     };
   }
 
   @Override
-  public ConcurrencyStrategy<DynamicTopologyEntityMessage> getConcurrencyStrategy(byte[] configuration) {
+  public ConcurrencyStrategy<Message> getConcurrencyStrategy(byte[] configuration) {
     return new UltimateConcurrency();
   }
 
   @Override
-  public ExecutionStrategy<DynamicTopologyEntityMessage> getExecutionStrategy(byte[] configuration) {
+  public ExecutionStrategy<Message> getExecutionStrategy(byte[] configuration) {
     return message -> ExecutionStrategy.Location.ACTIVE;
   }
 

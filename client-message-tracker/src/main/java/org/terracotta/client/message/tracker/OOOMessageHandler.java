@@ -24,7 +24,6 @@ import org.terracotta.entity.StateDumpable;
 
 import com.tc.classloader.CommonComponent;
 
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
@@ -59,38 +58,33 @@ public interface OOOMessageHandler<M extends EntityMessage, R extends EntityResp
    * @return a stream of tracked client sources
    */
   Stream<ClientSourceId> getTrackedClients();
+  /**
+   * lookup of duplicates has closed and will no longer occur
+   */
+  void closeDuplicatesWindow();
+  /**
+   * Lookup a response for a transaction for a client on a particular segment.
+   *
+   * @param src client source of the transaction
+   * @param txn the transaction id of the message
+   * @return response for the tracked message if available
+   */
+  R lookupResponse(ClientSourceId src, long txn);
 
   /**
-   * Get all message id - response mappings for the given {@code clientSourceId} in the given segment
+   * Get a stream of tracked messages ordered by sequence id - Order is important so replay is
+   * sequenced correctly.
    *
-   * @param index the segment index
-   * @param clientSourceId a client descriptor
-   * @return a map with message id - response mappings
+   * @return a stream of ordered RecordedMessages
    */
-  Map<Long, R> getTrackedResponsesForSegment(int index, ClientSourceId clientSourceId);
+  Stream<RecordedMessage<M, R>> getRecordedMessages();
 
   /**
-   * Bulk load a set of message ids, response mappings for the given client descriptor  in the given segment.
-   * To be used by a passive entity when the active syncs its message tracker data.
-   *
-   * @param index a segment index
-   * @param clientSourceId a client descriptor
-   * @param trackedResponses a map of message id, response mappings
+   * load all the sequenced messages to the current message tracker
+   * 
+   * @param recorded - a stream of recorded messages
    */
-  void loadTrackedResponsesForSegment(int index, ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
-
-  /**
-   * Bulk load a set of message ids, response mappings for the given client descriptor.
-   * To be used by a passive entity when the active syncs its message tracker data.
-   * The mappings loaded by this message will go to any of the segments but goes to a
-   * special tracker that is common between all segments.
-   *
-   * @param clientSourceId a client descriptor
-   * @param trackedResponses a map of message id, response mappings
-   */
-  @Deprecated
-  void loadOnSync(ClientSourceId clientSourceId, Map<Long, R> trackedResponses);
-
+  void loadRecordedMessages(Stream<RecordedMessage<M, R>> recorded);
   /**
    * Destroys the {@code OOOMessageHandler}
    */

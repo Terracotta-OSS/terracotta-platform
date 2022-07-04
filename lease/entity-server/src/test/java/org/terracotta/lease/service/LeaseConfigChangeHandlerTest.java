@@ -17,11 +17,9 @@ package org.terracotta.lease.service;
 
 import org.junit.Test;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
-import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 import org.terracotta.lease.service.config.LeaseConfiguration;
@@ -32,7 +30,11 @@ import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluste
 
 public class LeaseConfigChangeHandlerTest {
 
-  private NodeContext topology = new NodeContext(Cluster.newDefaultCluster("foo", new Stripe(Node.newDefaultNode("bar", "localhost"))), 1, "bar");
+  private NodeContext topology = new NodeContext(
+      Testing.newTestCluster("foo",
+          Testing.newTestStripe("stripe-1").addNodes(
+              Testing.newTestNode("bar", "localhost"))), Testing.N_UIDS[1]);
+
   private SettingNomadChange set = SettingNomadChange.set(cluster(), Setting.CLIENT_LEASE_DURATION, "20s");
 
   @Test
@@ -40,7 +42,7 @@ public class LeaseConfigChangeHandlerTest {
     LeaseConfiguration leaseConfiguration = new LeaseConfiguration(1000L);
     LeaseConfigChangeHandler leaseConfigChangeHandler = new LeaseConfigChangeHandler(leaseConfiguration);
     leaseConfigChangeHandler.validate(topology, set.toConfiguration(topology.getCluster()));
-    assertThat(set.apply(topology.getCluster()).getClientLeaseDuration().getQuantity(TimeUnit.SECONDS), is(20L));
+    assertThat(set.apply(topology.getCluster()).getClientLeaseDuration().get().getQuantity(TimeUnit.SECONDS), is(20L));
   }
 
   @Test

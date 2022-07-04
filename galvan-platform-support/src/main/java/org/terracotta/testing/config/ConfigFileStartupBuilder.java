@@ -16,8 +16,6 @@
 package org.terracotta.testing.config;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.terracotta.ipceventbus.proc.AnyProcess;
-import org.terracotta.ipceventbus.proc.AnyProcessBuilder;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -26,16 +24,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
 
-public class ConfigFileStartupBuilder extends StartupCommandBuilder {
+public class ConfigFileStartupBuilder extends AbstractStartupCommandBuilder {
   private String[] builtCommand;
+
+  public ConfigFileStartupBuilder() {
+  }
 
   @Override
   public String[] build() {
     if (builtCommand == null) {
       try {
         installServer();
-        Path configFile = convertToConfigFile().resolve("null.properties");
+        Path configFile = convertToConfigFile(true).resolve("test.properties");
         configFileStartupCommand(configFile);
       } catch (IOException e) {
         throw new UncheckedIOException(e);
@@ -49,88 +51,63 @@ public class ConfigFileStartupBuilder extends StartupCommandBuilder {
     String scriptPath = getAbsolutePath(Paths.get("server", "bin", "start-tc-server"));
     command.add(scriptPath);
 
-    if (isConsistentStartup()) {
-      command.add("-c");
-    }
-
     command.add("-f");
     command.add(configFile.toString());
 
-    command.add("-s");
-    command.add("localhost");
+    command.add("-n");
+    command.add(getServerName());
 
-    command.add("-p");
-    command.add(String.valueOf(getPort()));
+    command.add("--auto-activate");
 
-    Path repository;
+    Path configDir;
     try {
-      repository = Files.createTempDirectory(getServerWorkingDir(), "repository");
+      configDir = Files.createTempDirectory(getServerWorkingDir(), "config");
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
     command.add("-r");
-    command.add(repository.toString());
+    command.add(configDir.toString());
 
     builtCommand = command.toArray(new String[0]);
   }
 
   @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
-  private Path convertToConfigFile() {
-    Path generatedConfigFileDir = getServerWorkingDir().getParent().getParent().resolve("generated-config");
+  protected Path convertToConfigFile(boolean properties) {
+    Path generatedConfigFileDir = getServerWorkingDir().getParent().resolve("generated-configs");
 
     if (Files.exists(generatedConfigFileDir)) {
-      // this builder is called for each server, but the CLI will generate the repositories for all.
+      // this builder is called for each server, but the CLI will generate the config directories for all.
       return generatedConfigFileDir;
     }
 
     List<String> command = new ArrayList<>();
-    String scriptPath = getAbsolutePath(Paths.get("tools", "config-converter", "bin", "config-converter"));
-    command.add(scriptPath);
     command.add("convert");
 
-    for (Path tcConfig : getTcConfigs()) {
-      command.add("-c");
-      command.add(tcConfig.toString());
+    command.add("-c");
+    command.add(getServerWorkingDir().resolve(getTcConfig()).toString());
+
+    for (int i = 0; i < 1; i++) {
+      command.add("-s");
+      command.add("stripe[" + i + "]");
+    }
+    if (properties) {
+      command.add("-t");
+      command.add("properties");
     }
 
-    command.add("-t");
-    command.add("properties");
-
     command.add("-d");
-    command.add(getServerWorkingDir().relativize(generatedConfigFileDir).toString());
+    command.add(generatedConfigFileDir.toString());
 
     command.add("-f"); //Do not fail for relative paths
 
-    executeCommand(command, getServerWorkingDir());
+    command.add("-n");
+    command.add(getClusterName());
+
+    executeCommand(command);
     return generatedConfigFileDir;
   }
 
-  private void executeCommand(List<String> command, Path workingDir) {
-    AnyProcess process;
-    try {
-      AnyProcessBuilder<? extends AnyProcess> builder = AnyProcess.newBuilder()
-          .command(command.toArray(new String[0]))
-          .workingDir(workingDir.toFile())
-          .pipeStdout(System.out)
-          .pipeStderr(System.err);
-
-      if (getDebugPort() > 0) {
-        builder.env("JAVA_OPTS", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + getDebugPort());
-      }
-      process = builder.build();
-    } catch (Exception e) {
-      throw new IllegalStateException("Error launching command: " + String.join(" ", command), e);
-    }
-
-    int exitStatus;
-    try {
-      exitStatus = process.waitFor();
-    } catch (InterruptedException e) {
-      throw new IllegalStateException(e);
-    }
-
-    if (exitStatus != 0) {
-      throw new IllegalStateException("Process: '" + String.join(" ", command) + "' executed from '" + workingDir + "' exited with status: " + exitStatus);
-    }
+  protected static void executeCommand(List<String> command) {
+    new ConfigConverterTool().run(command.toArray(new String[command.size()]));
   }
 }

@@ -10,6 +10,9 @@
   } ],
   "capabilityContext" : {
     "attributes" : [ {
+      "name" : "instanceId",
+      "required" : true
+    }, {
       "name" : "cacheManagerName",
       "required" : true
     }, {

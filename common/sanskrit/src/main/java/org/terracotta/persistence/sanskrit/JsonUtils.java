@@ -16,23 +16,22 @@
 package org.terracotta.persistence.sanskrit;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 import java.io.IOException;
 import java.util.Map;
 
 public class JsonUtils {
-  public static void parse(ObjectMapper objectMapper, String json, MutableSanskritObject result) throws SanskritException {
+  public static void parse(ObjectMapperSupplier objectMapperSupplier, String version, String json, MutableSanskritObject result) throws SanskritException {
     try {
-      JsonNode jsonNode = objectMapper.readTree(json);
-      jsonNodeToSanskritObject(objectMapper, result, jsonNode);
+      JsonNode jsonNode = objectMapperSupplier.getObjectMapper(version).readTree(json);
+      jsonNodeToSanskritObject(objectMapperSupplier, version, result, jsonNode);
     } catch (IOException e) {
       throw new SanskritException(e);
     }
   }
 
-  private static void jsonNodeToSanskritObject(ObjectMapper objectMapper, MutableSanskritObject sanskritObject, JsonNode jsonNode) throws SanskritException {
+  private static void jsonNodeToSanskritObject(ObjectMapperSupplier objectMapperSupplier, String version, MutableSanskritObject sanskritObject, JsonNode jsonNode) throws SanskritException {
     for (Map.Entry<String, JsonNode> field : (Iterable<Map.Entry<String, JsonNode>>) jsonNode::fields) {
       String key = field.getKey();
       JsonNode value = field.getValue();
@@ -46,20 +45,20 @@ public class JsonUtils {
           sanskritObject.setString(key, value.textValue());
           break;
         case OBJECT:
-          sanskritObject.setObject(key, jsonNodeToSanskritObject(objectMapper, value));
+          sanskritObject.setObject(key, jsonNodeToSanskritObject(objectMapperSupplier, version, value));
           break;
         case NULL:
           sanskritObject.removeKey(key);
           break;
         default:
-          sanskritObject.setExternal(key, value);
+          sanskritObject.setExternal(key, value, version);
       }
     }
   }
 
-  private static MutableSanskritObject jsonNodeToSanskritObject(ObjectMapper objectMapper, JsonNode jsonNode) throws SanskritException {
-    SanskritObjectImpl sanskritObject = new SanskritObjectImpl(objectMapper);
-    jsonNodeToSanskritObject(objectMapper, sanskritObject, jsonNode);
+  private static MutableSanskritObject jsonNodeToSanskritObject(ObjectMapperSupplier objectMapperSupplier, String version, JsonNode jsonNode) throws SanskritException {
+    SanskritObjectImpl sanskritObject = new SanskritObjectImpl(objectMapperSupplier);
+    jsonNodeToSanskritObject(objectMapperSupplier, version, sanskritObject, jsonNode);
     return sanskritObject;
   }
 }

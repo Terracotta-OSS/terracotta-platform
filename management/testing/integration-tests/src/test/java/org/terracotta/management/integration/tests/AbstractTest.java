@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 import org.slf4j.Logger;
@@ -74,7 +75,7 @@ public abstract class AbstractTest {
 
   protected Logger logger = LoggerFactory.getLogger(getClass());
 
-  private final ObjectMapper mapper = new ObjectMapper().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+  private final ObjectMapper mapper = JsonMapper.builder().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true).build();
 
   private Connection managementConnection;
   protected Cluster cluster;
@@ -174,9 +175,13 @@ public abstract class AbstractTest {
   }
 
   protected void addWebappNode(URI uri, String path) throws Exception {
-    CacheFactory cacheFactory = new CacheFactory(uri, path);
+    CacheFactory cacheFactory = new CacheFactory(nextInstanceId(), uri, path);
     cacheFactory.init();
     webappNodes.add(cacheFactory);
+  }
+
+  protected final String nextInstanceId() {
+    return "instance-" + webappNodes.size();
   }
 
   private void connectManagementClient(URI uri) throws Exception {
@@ -188,8 +193,7 @@ public abstract class AbstractTest {
 
     // create a NMS Entity
     NmsEntityFactory nmsEntityFactory = new NmsEntityFactory(managementConnection, getClass().getSimpleName());
-    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig()
-        .setStripeName("SINGLE"));
+    NmsEntity nmsEntity = nmsEntityFactory.retrieveOrCreate(new NmsConfig());
     this.nmsService = new DefaultNmsService(nmsEntity);
     this.nmsService.setOperationTimeout(60, TimeUnit.SECONDS);
   }
@@ -240,11 +244,14 @@ public abstract class AbstractTest {
         .replaceAll("\"version\":\"[^\"]*\"", "\"version\":\"<version>\"")
         .replaceAll("\"clientId\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\"", "\"clientId\":\"0@127.0.0.1:$1:<uuid>\"")
         .replaceAll("\"logicalConnectionUid\":\"[^\"]*\"", "\"logicalConnectionUid\":\"<uuid>\"")
-        .replaceAll("\"id\":\"[^\"]+:(\\w+):[^\"]+:[^\"]+:[^\"]+\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
+        .replaceAll("\"id\":\"[^\"]+:([\\w\\[\\]]+):[^\"]+:[^\"]+:[^\"]+\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
         .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
         .replaceAll("-2", "")
+        .replaceAll("instance-0", "instance-?")
+        .replaceAll("instance-1", "instance-?")
         .replaceAll("testServer1", "testServer0")
-        .replaceAll("\"(clientReportedAddress)\":\"[^\"]*\"", "\"$1\":\"<$1>\"");
+        .replaceAll("\"(clientReportedAddress)\":\"[^\"]*\"", "\"$1\":\"<$1>\"")
+        .replaceAll("\"clientRevision\":\"[^\"]*\"", "\"clientRevision\":\"<uuid>\"");
   }
 
   protected void triggerServerStatComputation() throws Exception {
@@ -291,7 +298,7 @@ public abstract class AbstractTest {
         .clientStream()
         .filter(client -> client.getName().equals("pet-clinic"))
         .filter(AbstractManageableNode::isManageable)
-        .map(client -> client.getContext().with("appName", "pet-clinic"))
+        .map(AbstractManageableNode::getContext)
         .map(context -> {
           try {
             return nmsService.startStatisticCollector(context, interval, unit).asCompletionStage();
@@ -307,13 +314,13 @@ public abstract class AbstractTest {
     List<String> waitingFor = new ArrayList<>(Arrays.asList(notificationTypes));
     try {
       return nmsService.waitForMessage(message -> {
-        if (message.getType().equals("NOTIFICATION")) {
-          for (ContextualNotification notification : message.unwrap(ContextualNotification.class)) {
-            waitingFor.remove(notification.getType());
-          }
-        }
-        return waitingFor.isEmpty();
-      }).stream()
+            if (message.getType().equals("NOTIFICATION")) {
+              for (ContextualNotification notification : message.unwrap(ContextualNotification.class)) {
+                waitingFor.remove(notification.getType());
+              }
+            }
+            return waitingFor.isEmpty();
+          }).stream()
           .filter(message -> message.getType().equals("NOTIFICATION"))
           .flatMap(message -> message.unwrap(ContextualNotification.class).stream())
           .collect(Collectors.toList());

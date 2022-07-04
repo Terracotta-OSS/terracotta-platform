@@ -54,9 +54,9 @@ public class NomadClient<T> implements AutoCloseable {
     changeProcess.applyChange(results, change);
   }
 
-  public void tryRecovery(RecoveryResultReceiver<T> results, int expectedNodeCount, ChangeRequestState forcedState) {
+  public void tryRecovery(RecoveryResultReceiver<T> results, int expectedTotalNodeCount, ChangeRequestState forcedState) {
     RecoveryProcess<T> recoveryProcess = new RecoveryProcess<>(servers, host, user, clock);
-    recoveryProcess.recover(results, expectedNodeCount, forcedState);
+    recoveryProcess.recover(results, expectedTotalNodeCount, forcedState);
   }
 
   public void tryDiscovery(DiscoverResultsReceiver<T> results) {

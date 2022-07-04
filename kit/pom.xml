@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -32,6 +32,13 @@
 
   <dependencies>
 
+    <dependency>
+      <groupId>org.terracotta.test</groupId>
+      <artifactId>test-common</artifactId>
+      <version>${terracotta-core.version}</version>
+      <scope>test</scope>
+    </dependency>
+
     <!--
       server/plugins/api
     -->
@@ -39,7 +46,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>statistics</artifactId>
-      <version>${statistics.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.management</groupId>
@@ -150,17 +156,27 @@
     </dependency>
 
     <!--
-      tools/config-converter/lib
+      tools/upgrade/lib
     -->
 
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>dynamic-config-cli-config-converter</artifactId>
+      <artifactId>dynamic-config-cli-upgrade-tools</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>config-converter-oss</artifactId>
+      <artifactId>upgrade-tools-oss</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!--
+      tools/voter/lib
+    -->
+
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>voter</artifactId>
       <version>${project.version}</version>
     </dependency>
 

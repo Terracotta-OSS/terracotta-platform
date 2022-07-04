@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.api.model.nomad;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.nomad.client.change.NomadChange;
 
 /**
@@ -31,5 +32,12 @@ public interface DynamicConfigNomadChange extends NomadChange {
    */
   Cluster apply(Cluster original);
 
-  boolean canApplyAtRuntime();
+  /**
+   * Check if this change can be applied at runtime on this node
+   */
+  boolean canUpdateRuntimeTopology(NodeContext currentNode);
+
+  default DynamicConfigNomadChange unwrap() {
+    return this;
+  }
 }

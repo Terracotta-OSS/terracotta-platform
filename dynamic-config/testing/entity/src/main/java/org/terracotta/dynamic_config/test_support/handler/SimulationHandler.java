@@ -27,13 +27,13 @@ import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
  * <p>
  * <p>
  * Simulate a missing value with:
- * <pre>set -c stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=</pre>
+ * <pre>set -c stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=</pre>
  * <p>
  * Simulate a Nomad prepare failure with:
- * <pre>set -c stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=TRACE</pre>
+ * <pre>set -c stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=TRACE</pre>
  * <p>
  * Simulate a Nomad commit failure with:
- * <pre>set -c stripe.1.node.1.node-logger-overrides.org.terracotta.dynamic-config.simulate=INFO</pre>
+ * <pre>set -c stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=INFO</pre>
  *
  * @author Mathieu Carbou
  */
@@ -47,11 +47,11 @@ public class SimulationHandler implements ConfigChangeHandler {
   public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
     LOGGER.info("Received: {}", change);
 
-    if (change.getValue() == null) {
-      throw new InvalidConfigChangeException("Invalid change: " + change);
+    if (!change.hasValue()) {
+      throw new InvalidConfigChangeException("Operation not supported: " + change);
     }
 
-    if ("TRACE".equals(change.getValue())) {
+    if ("TRACE".equals(change.getValue().get())) {
       throw new InvalidConfigChangeException("Simulate prepare failure");
     }
   }
@@ -60,7 +60,7 @@ public class SimulationHandler implements ConfigChangeHandler {
   public void apply(Configuration change) {
     LOGGER.info("Received: {}", change);
 
-    switch (change.getValue()) {
+    switch (change.getValue().get()) {
 
       case "DEBUG":
         if (state.equals("failed") || state.equals("recovered")) {

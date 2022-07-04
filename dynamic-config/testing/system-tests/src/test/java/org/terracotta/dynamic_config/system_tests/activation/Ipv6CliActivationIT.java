@@ -19,8 +19,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.util.concurrent.TimeoutException;
-
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
@@ -31,38 +29,33 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
   @Override
   protected void startNode(int stripeId, int nodeId) {
     startNode(stripeId, nodeId,
-        "--node-name", getNodeName(stripeId, nodeId),
+        "--name", getNodeName(stripeId, nodeId),
         "--failover-priority", "availability",
-        "--node-hostname", "::1",
-        "--node-bind-address", "::",
-        "--node-group-bind-address", "::",
-        "--node-port", String.valueOf(getNodePort(stripeId, nodeId)),
-        "--node-group-port", String.valueOf(getNodeGroupPort(stripeId, nodeId)),
-        "--node-log-dir", getNodePath(stripeId, nodeId).resolve("logs").toString(),
-        "--node-backup-dir", getNodePath(stripeId, nodeId).resolve("backup").toString(),
-        "--node-metadata-dir", getNodePath(stripeId, nodeId).resolve("metadata").toString(),
-        "--node-repository-dir", getNodePath(stripeId, nodeId).resolve("repository").toString(),
-        "--data-dirs", "main:" + getNodePath(stripeId, nodeId).resolve("data-dir")
+        "--hostname", "::1",
+        "--bind-address", "::",
+        "--group-bind-address", "::",
+        "--port", String.valueOf(getNodePort(stripeId, nodeId)),
+        "--group-port", String.valueOf(getNodeGroupPort(stripeId, nodeId)),
+        "--log-dir", "logs",
+        "--backup-dir", "backup",
+        "--metadata-dir", "metadata",
+        "--config-dir", "config",
+        "--data-dirs", "main:data-dir"
     );
   }
 
   @Test
-  public void testSingleNodeStartupFromCliParamsAndActivateCommand() throws TimeoutException {
-    waitForDiagnostic(1, 1);
-
-    assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
+  public void testSingleNodeStartupFromCliParamsAndActivateCommand() {
+    assertThat(configTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
 
     waitForActive(1);
   }
 
   @Test
-  public void testMultiNodeStartupFromCliParamsAndActivateCommand() throws TimeoutException {
-    waitForDiagnostic(1, 1);
-    waitForDiagnostic(1, 2);
+  public void testMultiNodeStartupFromCliParamsAndActivateCommand() {
+    assertThat(configTool("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2)), is(successful()));
 
-    assertThat(configToolInvocation("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2)), is(successful()));
-
-    assertThat(configToolInvocation("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
+    assertThat(configTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
 
     waitForActive(1);
     waitForPassives(1);

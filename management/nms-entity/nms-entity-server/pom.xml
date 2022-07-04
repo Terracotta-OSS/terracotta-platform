@@ -22,7 +22,7 @@
   <parent>
     <artifactId>nms-entity</artifactId>
     <groupId>org.terracotta.management</groupId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -34,6 +34,12 @@
     <dependency>
       <groupId>org.terracotta.management</groupId>
       <artifactId>monitoring-service-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.server</groupId>
+      <artifactId>dynamic-config-server-api</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
@@ -73,6 +79,5 @@
       <artifactId>standard-cluster-services</artifactId>
       <scope>provided</scope>
     </dependency>
-
   </dependencies>
 </project>

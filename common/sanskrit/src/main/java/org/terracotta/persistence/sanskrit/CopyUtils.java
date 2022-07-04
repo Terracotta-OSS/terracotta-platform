@@ -15,15 +15,13 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class CopyUtils {
-  static SanskritObjectImpl makeCopy(ObjectMapper objectMapper, SanskritObject object) {
+  static SanskritObjectImpl makeCopy(ObjectMapperSupplier objectMapperSupplier, SanskritObject object) {
     if (object == null) {
       return null;
     }
 
-    SanskritObjectImpl copy = new SanskritObjectImpl(objectMapper);
+    SanskritObjectImpl copy = new SanskritObjectImpl(objectMapperSupplier);
     object.accept(copy);
     return copy;
   }

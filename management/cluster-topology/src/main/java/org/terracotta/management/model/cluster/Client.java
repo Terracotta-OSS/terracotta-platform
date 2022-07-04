@@ -172,7 +172,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
   public Optional<Connection> getConnection(Server server, Endpoint endpoint) {
     return connectionStream()
         .filter(c -> c.isConnectedTo(server) && c.isConnectedTo(endpoint))
-        .findFirst();
+        .findAny();
   }
 
   public Optional<Connection> removeConnection(String id) {
@@ -204,7 +204,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
   }
 
   public boolean isConnectedTo(Server server) {
-    return connectionStream(server).findFirst().isPresent();
+    return connectionStream(server).findAny().isPresent();
   }
 
   public boolean isConnected() {
@@ -220,7 +220,7 @@ public final class Client extends AbstractManageableNode<Cluster> {
   }
 
   public Optional<ServerEntity> getFetchedServerEntity(String name, String type) {
-    return fetchedServerEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findFirst();
+    return fetchedServerEntityStream().filter(serverEntity -> serverEntity.is(name, type)).findAny();
   }
 
   @Override

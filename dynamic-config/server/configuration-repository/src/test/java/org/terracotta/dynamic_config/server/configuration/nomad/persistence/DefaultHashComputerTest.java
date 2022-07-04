@@ -16,19 +16,18 @@
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
-import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.json.Json;
+import org.terracotta.dynamic_config.api.model.Testing;
+import org.terracotta.dynamic_config.api.model.Version;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 
 /**
  * @author Mathieu Carbou
@@ -36,16 +35,16 @@ import static org.terracotta.dynamic_config.api.model.Node.newDefaultNode;
 public class DefaultHashComputerTest {
   @Test
   public void computeHash() throws IOException {
-    ObjectMapper om = Json.copyObjectMapper(true).configure(SerializationFeature.INDENT_OUTPUT, false);
-    HashComputer<NodeContext> hashComputer = new DefaultHashComputer(Json.copyObjectMapper(true));
+    ObjectMapper om = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
+    HashComputer hashComputer = new DefaultHashComputer();
 
-    Node node = newDefaultNode("foo", "localhost");
-    NodeContext nodeContext = new NodeContext(Cluster.newDefaultCluster(new Stripe(node)), 1, "foo");
+    Node node = Testing.newTestNode("foo", "localhost");
+    NodeContext nodeContext = new NodeContext(Testing.newTestCluster(Testing.newTestStripe("stripe-1").addNodes(node)), Testing.N_UIDS[1]);
 
-    String hash = hashComputer.computeHash(nodeContext);
+    String hash = hashComputer.computeHash(new Config(nodeContext, Version.CURRENT));
     String json = om.writeValueAsString(nodeContext);
     NodeContext reloaded = om.readValue(json, NodeContext.class);
-    String reloadedHash = hashComputer.computeHash(reloaded);
+    String reloadedHash = hashComputer.computeHash(new Config(reloaded, Version.CURRENT));
 
     assertThat(reloaded, is(nodeContext));
     assertThat(reloadedHash, is(hash));

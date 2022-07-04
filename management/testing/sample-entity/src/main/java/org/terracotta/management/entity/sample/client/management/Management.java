@@ -49,8 +49,8 @@ public class Management {
 
   private NmsAgentService nmsAgentService;
 
-  public Management(ContextContainer contextContainer) {
-    this.parentContext = Context.create(contextContainer.getName(), contextContainer.getValue());
+  public Management(String instanceId, ContextContainer contextContainer) {
+    this.parentContext = Context.create(contextContainer.getName(), contextContainer.getValue()).with("instanceId", instanceId);
 
     // create a client-side management registry and add some providers for stats, calls and settings
     this.managementRegistry = new DefaultManagementRegistry(contextContainer);
@@ -72,6 +72,10 @@ public class Management {
 
   public ManagementRegistry getManagementRegistry() {
     return managementRegistry;
+  }
+
+  public Context getRootContext() {
+    return parentContext;
   }
 
   public void init(Connection connection) {
@@ -112,7 +116,7 @@ public class Management {
   }
 
   private NmsAgentService createNmsAgentService(Connection connection) {
-    DefaultNmsAgentService nmsAgentService = new DefaultNmsAgentService(new NmsAgentEntityFactory(connection).retrieve());
+    DefaultNmsAgentService nmsAgentService = new DefaultNmsAgentService(parentContext, new NmsAgentEntityFactory(connection).retrieve());
     nmsAgentService.setManagementCallExecutor(executorService);
     nmsAgentService.setOperationTimeout(5, TimeUnit.SECONDS);
     nmsAgentService.setManagementRegistry(managementRegistry);

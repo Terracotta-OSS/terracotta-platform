@@ -33,7 +33,7 @@ public abstract class TopologyNomadChange extends FilteredNomadChange {
     this.cluster = requireNonNull(cluster);
   }
 
-  public final Cluster getCluster() {
+  public Cluster getCluster() {
     return cluster;
   }
 

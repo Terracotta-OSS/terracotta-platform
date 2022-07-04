@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.entity.management.server;
 
 import com.tc.classloader.PermanentEntity;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventService;
 import org.terracotta.entity.ActiveServerEntity;
 import org.terracotta.entity.BasicServiceConfiguration;
@@ -33,7 +34,7 @@ import org.terracotta.entity.SyncMessageCodec;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
 import org.terracotta.management.service.monitoring.EntityManagementRegistryConfiguration;
 
-@PermanentEntity(type = "org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService", names = {"dynamic-config-management-entity"})
+@PermanentEntity(type = "org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService", name = "dynamic-config-management-entity")
 public class ManagementEntityServerService implements EntityServerService<EntityMessage, EntityResponse> {
 
   private static final String ENTITY_TYPE = ManagementEntityServerService.class.getName();
@@ -53,7 +54,8 @@ public class ManagementEntityServerService implements EntityServerService<Entity
     try {
       EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, true));
       DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
-      return new ManagementActiveEntity(managementRegistry, dynamicConfigEventService);
+      TopologyService topologyService = registry.getService(new BasicServiceConfiguration<>(TopologyService.class));
+      return new ManagementActiveEntity(managementRegistry, dynamicConfigEventService, topologyService);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
     }
@@ -64,7 +66,8 @@ public class ManagementEntityServerService implements EntityServerService<Entity
     try {
       EntityManagementRegistry managementRegistry = registry.getService(new EntityManagementRegistryConfiguration(registry, false));
       DynamicConfigEventService dynamicConfigEventService = registry.getService(new BasicServiceConfiguration<>(DynamicConfigEventService.class));
-      return new ManagementPassiveEntity(managementRegistry, dynamicConfigEventService);
+      TopologyService topologyService = registry.getService(new BasicServiceConfiguration<>(TopologyService.class));
+      return new ManagementPassiveEntity(managementRegistry, dynamicConfigEventService, topologyService);
     } catch (ServiceException e) {
       throw new ConfigurationException("Could not retrieve service ", e);
     }

@@ -22,27 +22,29 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.15</version>
+    <version>5.21</version>
   </parent>
 
   <artifactId>platform-root</artifactId>
-  <version>5.8-SNAPSHOT</version>
+  <version>5.9-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
     <maven.version>3.6.3</maven.version>
-    <slf4j.version>1.7.25</slf4j.version>
-    <logback.version>1.2.3</logback.version>
-    <terracotta-apis.version>1.7.0-pre2</terracotta-apis.version>
-    <terracotta-configuration.version>10.7.0-pre2</terracotta-configuration.version>
-    <passthrough-testing.version>1.7.0-pre13</passthrough-testing.version>
-    <terracotta-core.version>5.7.0-pre28</terracotta-core.version>
-    <tripwire.version>1.0.0-pre7</tripwire.version>
-    <galvan.version>1.5.0-pre3</galvan.version>
-    <angela.version>3.0.23</angela.version>
+    <slf4j.version>1.7.32</slf4j.version>
+    <logback.version>1.2.11</logback.version>
+    <terracotta-apis.version>1.8.2</terracotta-apis.version>
+    <terracotta-configuration.version>10.7.2</terracotta-configuration.version>
+    <passthrough-testing.version>1.8.3</passthrough-testing.version>
+    <terracotta-core.version>5.9.4</terracotta-core.version>
+    <tripwire.version>1.0.3</tripwire.version>
+    <galvan.version>1.6.4</galvan.version>
+    <angela.version>3.3.23</angela.version>
     <statistics.version>2.1</statistics.version>
-    <jackson.version>2.10.1</jackson.version>
-    <terracotta-utilities.version>0.0.2</terracotta-utilities.version>
+    <jackson.version>2.13.2.20220328</jackson.version>
+    <terracotta-utilities.version>0.0.13</terracotta-utilities.version>
+    <test.parallel.forks>4</test.parallel.forks>
+    <jna.version>5.9.0</jna.version>
   </properties>
 
   <modules>
@@ -65,6 +67,8 @@
     <module>dynamic-config</module>
     <module>galvan-platform-support</module>
     <module>kit</module>
+    <module>docs</module>
+    <module>voter</module>
   </modules>
 
   <dependencyManagement>
@@ -95,6 +99,16 @@
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>statistics</artifactId>
+        <version>${statistics.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>terracotta-utilities-test-tools</artifactId>
         <version>${terracotta-utilities.version}</version>
@@ -105,13 +119,28 @@
         <version>${terracotta-utilities.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.terracotta</groupId>
+        <artifactId>terracotta-utilities-port-chooser</artifactId>
+        <version>${terracotta-utilities.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-config-parser</artifactId>
         <version>${terracotta-configuration.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
+        <artifactId>common</artifactId>
+        <version>${terracotta-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
         <artifactId>common-spi</artifactId>
+        <version>${terracotta-core.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>server-spi</artifactId>
         <version>${terracotta-core.version}</version>
       </dependency>
       <dependency>
@@ -121,13 +150,14 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
-        <artifactId>client-runtime</artifactId>
+        <artifactId>client-spi</artifactId>
         <version>${terracotta-core.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
-        <artifactId>voter</artifactId>
+        <artifactId>client-runtime</artifactId>
         <version>${terracotta-core.version}</version>
+        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
@@ -176,8 +206,38 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
+        <artifactId>test-interfaces</artifactId>
+        <version>${galvan.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta</groupId>
         <artifactId>galvan</artifactId>
         <version>${galvan.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.terracotta.internal</groupId>
+        <artifactId>galvan-support</artifactId>
+        <version>${terracotta-core.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -185,39 +245,17 @@
         <version>${angela.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
         <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jdk8</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jaxb</groupId>
-        <artifactId>jaxb-runtime</artifactId>
-        <!--
-        Do not use 2.3.1
-        Jars are not correctly built (https://github.com/mojohaus/jaxb2-maven-plugin/issues/43)
-        We never saw that because we were not using -Xlint:all -Werror
-        -->
-        <version>2.3.2</version>
+        <scope>import</scope>
+        <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>tc-tripwire-plugin</artifactId>
         <version>${tripwire.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.xmlunit</groupId>
@@ -227,27 +265,22 @@
       <dependency>
         <groupId>com.beust</groupId>
         <artifactId>jcommander</artifactId>
-        <version>1.72</version>
+        <version>1.78</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
-        <version>1.2.3</version>
+        <version>${logback.version}</version>
       </dependency>
       <dependency>
-        <groupId>net.bytebuddy</groupId>
-        <artifactId>byte-buddy</artifactId>
-        <version>1.10.2</version>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna</artifactId>
+        <version>${jna.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.github.classgraph</groupId>
-        <artifactId>classgraph</artifactId>
-        <version>4.8.54</version>
-      </dependency>
-      <dependency>
-        <groupId>com.github.stefanbirkner</groupId>
-        <artifactId>system-rules</artifactId>
-        <version>1.19.0</version>
+        <groupId>net.java.dev.jna</groupId>
+        <artifactId>jna-platform</artifactId>
+        <version>${jna.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -303,6 +336,11 @@
           <configuration>
             <archive>
               <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+              <manifestEntries>
+                <Implementation-Title>${project.artifactId}</Implementation-Title>
+                <Implementation-Version>${project.version}</Implementation-Version>
+                <Implementation-Vendor-Id>${project.groupId}</Implementation-Vendor-Id>
+              </manifestEntries>
             </archive>
           </configuration>
         </plugin>
@@ -345,6 +383,19 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>${java.build.version}</source>
+          <target>${java.build.version}</target>
+          <showWarnings>true</showWarnings>
+          <showDeprecation>true</showDeprecation>
+          <failOnWarning>true</failOnWarning>
+          <compilerArgs>
+            <arg>-Xlint:all</arg>
+            <!-- -path is required because of the class-path manifest entries generated (jars won't be found) -->
+            <arg>-Xlint:-path</arg>
+            <arg>-Werror</arg>
+          </compilerArgs>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
@@ -389,6 +440,11 @@
                     <requireMavenVersion>
                       <version>[${maven.version},)</version>
                     </requireMavenVersion>
+                    <bannedDependencies>
+                      <excludes>
+                        <exclude>com.github.stefanbirkner:system-rules</exclude>
+                      </excludes>
+                    </bannedDependencies>
                   </rules>
                 </configuration>
               </execution>
@@ -409,8 +465,6 @@
               </execution>
             </executions>
           </plugin>
-
-
         </plugins>
       </build>
     </profile>
@@ -419,29 +473,12 @@
   <repositories>
     <repository>
       <id>terracotta-releases</id>
-      <url>https://www.terracotta.org/download/reflector/releases</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
+      <url>https://repo.terracotta.org/maven2</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
     </repository>
   </repositories>
-
-  <distributionManagement>
-    <repository>
-      <id>terracotta-os-releases</id>
-      <name>Terracotta OS Releases Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-releases</url>
-    </repository>
-    <snapshotRepository>
-      <id>terracotta-os-snapshots</id>
-      <uniqueVersion>false</uniqueVersion>
-      <name>Terracotta OS Snapshots Repository</name>
-      <url>http://nexus.terracotta.eur.ad.sag/content/repositories/terracotta-os-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
 
   <scm>
     <connection>scm:git:https://github.com/Terracotta-OSS/terracotta-platform.git</connection>

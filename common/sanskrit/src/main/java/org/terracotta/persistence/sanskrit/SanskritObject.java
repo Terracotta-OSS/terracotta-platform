@@ -21,7 +21,7 @@ package org.terracotta.persistence.sanskrit;
 public interface SanskritObject {
   void accept(SanskritVisitor visitor);
 
-  <T> T getObject(String key, Class<T> type);
+  <T> T getObject(String key, Class<T> type, String version);
 
   String getString(String key);
 

@@ -28,6 +28,8 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 
 /**
  * @author Mathieu Carbou
@@ -43,12 +45,12 @@ public class FailoverIT extends AbstractHATest {
     super.setUp();
 
     Cluster cluster = nmsService.readTopology();
-    oldActive = cluster.serverStream().filter(Server::isActive).findFirst().get();
+    oldActive = cluster.serverStream().filter(Server::isActive).findAny().get();
     assertThat(oldActive.getState(), equalTo(Server.State.ACTIVE));
 
     do {
       cluster = nmsService.readTopology();
-      oldPassive = cluster.serverStream().filter(server -> !server.isActive()).findFirst().get();
+      oldPassive = cluster.serverStream().filter(server -> !server.isActive()).findAny().get();
     } while (!Thread.currentThread().isInterrupted() && oldPassive.getState() != Server.State.PASSIVE);
     assertThat(oldPassive.getState(), equalTo(Server.State.PASSIVE));
 
@@ -80,8 +82,7 @@ public class FailoverIT extends AbstractHATest {
 
     // removes all random values
     JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
-
-    assertEquals(readJson("topology-after-failover.json"), actual);
+    JSONAssert.assertEquals(actual.toString(), readJson("topology-after-failover.json").toString(), actual.toString(), true);
   }
 
   @Test

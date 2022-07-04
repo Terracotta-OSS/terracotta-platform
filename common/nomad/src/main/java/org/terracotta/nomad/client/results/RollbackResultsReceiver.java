@@ -22,7 +22,7 @@ public interface RollbackResultsReceiver {
 
   default void rolledBack(InetSocketAddress server) {}
 
-  default void rollbackFail(InetSocketAddress server, String reason) {}
+  default void rollbackFail(InetSocketAddress server, Throwable reason) {}
 
   default void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
 

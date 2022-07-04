@@ -24,8 +24,8 @@ public class PotentialApplicationResult<T> {
     return new PotentialApplicationResult<>(true, newConfiguration, null);
   }
 
-  public static <T> PotentialApplicationResult<T> reject(String reason) {
-    return new PotentialApplicationResult<>(false, null, reason);
+  public static <T> PotentialApplicationResult<T> reject(T newConfiguration, String reason) {
+    return new PotentialApplicationResult<>(false, newConfiguration, reason);
   }
 
   private PotentialApplicationResult(boolean allowed, T newConfiguration, String rejectionReason) {

@@ -15,20 +15,11 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
-import org.terracotta.diagnostic.client.DiagnosticService;
-import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeoutException;
-
-import static java.time.Duration.ofSeconds;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -41,67 +32,81 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 2)
 public class ActivateCommand1x2IT extends DynamicConfigIT {
 
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
-
   @Test
-  public void testSingleNodeActivation() throws TimeoutException {
+  public void testSingleNodeActivation() {
     assertThat(activateCluster(),
-        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(is(successful()), containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForActive(1, 1);
   }
 
   @Test
-  public void testMultiNodeSingleStripeActivation() throws TimeoutException {
-    assertThat(
-        configToolInvocation("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)),
-        is(successful()));
+  public void testMultiNodeSingleStripeActivation() {
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
-    assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForActive(1);
     waitForPassives(1);
+  }
+
+  @Test
+  public void changeNodeNameAndActivate() throws Exception {
+    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getName()), is(equalTo("node-1-1")));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.name=foo"), is(successful()));
+    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getName()), is(equalTo("foo")));
+    activateCluster();
+    assertThat(usingTopologyService(1, 1, topologyService -> topologyService.getUpcomingNodeContext().getNode().getName()), is(equalTo("foo")));
   }
 
   @Test
   public void testSingleNodeActivationWithConfigFile() throws Exception {
     assertThat(
-        configToolInvocation("activate", "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString(), "-n", "my-cluster"),
-        allOf(
-            containsOutput("No license installed"),
-            containsOutput("came back up"),
-            is(successful())));
+        configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString(), "-n", "my-cluster"),
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1, 1);
 
-    // TDB-4726
-    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(InetSocketAddress.createUnresolved("localhost", getNodePort()), "diag", ofSeconds(10), ofSeconds(10), null)) {
-      NodeContext runtimeNodeContext = diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext();
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
       assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
-    }
+    });
   }
 
   @Test
-  public void testMultiNodeSingleStripeActivationWithConfigFile() throws TimeoutException {
+  public void testSingleNodeActivationWithConfigFileNoFailover() throws Exception {
     assertThat(
-        configToolInvocation(
-            "-r", timeout + "s",
-            "activate",
-            "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
-        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+        configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe-no-fo.properties").toString(), "-n", "my-cluster"),
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
+
+    waitForActive(1, 1);
+
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      NodeContext runtimeNodeContext = topologyService.getRuntimeNodeContext();
+      assertThat(runtimeNodeContext.getCluster().getName(), is(equalTo("my-cluster")));
+    });
+  }
+
+  @Test
+  public void testMultiNodeSingleStripeActivationWithConfigFile() {
+    assertThat(
+        configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
     waitForPassives(1);
   }
 
   @Test
+  public void testMultiNodeSingleStripeActivationWithConfigFileNoFailover() {
+    assertThat(
+        configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node-no-fo.properties").toString()),
+        containsOutput("failover-priority setting is not configured"));
+  }
+
+  @Test
   public void testRestrictedActivationToActivateNodesAtDifferentTime() throws Exception {
     assertThat(
-        configToolInvocation(
-            "-r", timeout + "s",
-            "activate",
-            "-R",
-            "-s", "localhost:" + getNodePort(1, 1),
-            "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
-        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+        configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 1), "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForActive(1, 1);
 
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
@@ -110,14 +115,12 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
+    String exportPath = tmpDir.getRoot().resolve("export.properties").toAbsolutePath().toString();
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, 1), "-f", exportPath, "-t", "properties"), is(successful()));
+
     assertThat(
-        configToolInvocation(
-            "-r", timeout + "s",
-            "activate",
-            "-R",
-            "-s", "localhost:" + getNodePort(1, 2),
-            "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
-        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+        configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportPath),
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForPassive(1, 2);
 
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
@@ -132,20 +135,23 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     String config = copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString();
 
     // import the cluster config to node 1 and node 2
-    assertThat(configToolInvocation("import", "-f", config), is(successful()));
+    assertThat(configTool("import", "-f", config), is(successful()));
 
     // restrict activation to only node 1
-    assertThat(configToolInvocation("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 1)),
-        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    assertThat(
+        configTool("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 1)),
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1, 1);
+    waitForDiagnostic(1, 2);
 
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, 2, topologyService -> assertFalse(topologyService.isActivated()));
 
     // restrict activation to only node 2, which will become passive as node 1
-    assertThat(configToolInvocation("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 2)),
-        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    assertThat(
+        configTool("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 2)),
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForPassive(1, 2);
 

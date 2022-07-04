@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
-import org.terracotta.entity.ServiceProviderCleanupException;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.offheapresource.OffHeapResource;
@@ -29,8 +28,8 @@ import org.terracotta.offheapresource.OffHeapResourceIdentifier;
 import org.terracotta.offheapresource.OffHeapResources;
 
 import java.io.Closeable;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,23 +42,22 @@ public class MapProvider implements ServiceProvider, Closeable {
   private static final Logger LOGGER = LoggerFactory.getLogger(MapProvider.class);
 
   private final Map<String, Map<String, String>> caches = new ConcurrentHashMap<>();
-
-  private OffHeapResource heapResource;
+  private OffHeapResource offHeapResource;
 
   @Override
   public Collection<Class<?>> getProvidedServiceTypes() {
-    return Arrays.asList(Map.class);
+    return Collections.singletonList(Map.class);
   }
 
   @Override
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
-    OffHeapResources offHeapResources = platformConfiguration.getExtendedConfiguration(OffHeapResources.class).iterator().next();
-    heapResource = offHeapResources.getOffHeapResource(OffHeapResourceIdentifier.identifier("primary-server-resource"));
+    OffHeapResources offHeapResources = findService(platformConfiguration, OffHeapResources.class);
+    offHeapResource = offHeapResources.getOffHeapResource(OffHeapResourceIdentifier.identifier("primary-server-resource"));
     return true;
   }
 
   @Override
-  public void prepareForSynchronization() throws ServiceProviderCleanupException {
+  public void prepareForSynchronization() {
   }
 
   @Override
@@ -67,7 +65,6 @@ public class MapProvider implements ServiceProvider, Closeable {
     caches.clear();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
     Class<T> serviceType = configuration.getServiceType();
@@ -78,12 +75,12 @@ public class MapProvider implements ServiceProvider, Closeable {
         LOGGER.trace("getService({}, {})", consumerID, configuration);
         return serviceType.cast(caches.computeIfAbsent(mapConfiguration.getName(), s -> {
           // just to mimic some allocation
-          heapResource.reserve(12 * 1024 * 1024);
+          offHeapResource.reserve(12 * 1024 * 1024);
           return new ConcurrentHashMap<>();
         }));
       
       } else if (configuration instanceof MapRelease) {
-        heapResource.release(12 * 1024 * 1024);
+        offHeapResource.release(12 * 1024 * 1024);
         return null;
       
       } else {
@@ -97,5 +94,21 @@ public class MapProvider implements ServiceProvider, Closeable {
   @Override
   public void addStateTo(StateDumpCollector stateDumper) {
     stateDumper.addState("caches", this.caches.keySet());
+  }
+
+  private <T> T findService(PlatformConfiguration platformConfiguration, Class<T> type) {
+    final Collection<T> services = platformConfiguration.getExtendedConfiguration(type);
+    if (services.isEmpty()) {
+      throw new AssertionError("No instance of service " + type + " found");
+    }
+
+    if (services.size() == 1) {
+      T instance = services.iterator().next();
+      if (instance == null) {
+        throw new AssertionError("Instance of service " + type + " found to be null");
+      }
+      return instance;
+    }
+    throw new AssertionError("Multiple instances of service " + type + " found");
   }
 }

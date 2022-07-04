@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.diagnostic</groupId>
     <artifactId>diagnostic</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -35,20 +35,11 @@
       <artifactId>diagnostic-common</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>net.bytebuddy</groupId>
-      <artifactId>byte-buddy</artifactId>
-    </dependency>
 
     <!-- provided on server -->
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>standard-cluster-services</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>common-spi</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>

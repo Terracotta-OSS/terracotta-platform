@@ -1,0 +1,1917 @@
+////
+    Copyright Terracotta, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+////
+:toc:
+:toclevels: 5
+
+= Dynamic-scaling with config-tool
+
+== Overview
+
+This paper describes the user-facing CLI interacting with a Terracotta cluster to achieve dynamic configuration and dynamic scaling.
+It covers:
+
+* <<Starting nodes (`start-tc-server.sh`),Starting nodes>>:
+Ability to start a node the easiest and fastest possible way
+* <<Dynamic topology changes>>:
+Ability to regroup started nodes to create stripes and clusters (and remove nodes)
+* <<Dynamic configuration>>:
+Ability to change node's configurations at runtime
+* <<Dynamic access control>>:
+Ability to configure at runtime authentication and authorization
+* <<Exporting cluster configuration with `export`,Exporting>>:
+Ability to export a cluster configuration
+* <<Attaching nodes and stripes with `attach`,Node configuration mismatch>>:
+How to fix a node that is not having the same configuration as the others
+* <<Download and dumping,Troubleshooting and support>>:
+How to get the internal files for support
+
+=== Goals
+
+The CLI needs to:
+
+. Focus on how to achieve quickly and efficiently 80% of the use cases
+. Be simple and designed in a way that it can be easily evolved and modified
+. Not "transpire" implementation details, technicalities or constraints we have from core
+. Consider the current Active/Passive architecture
+. Consider both single-stripe and multi-stripe
+. Make the setup of a cluster possible without a lot of interactions with the config-tool
+. Enabled startup of nodes pre-configured, so that we can easily start some nodes and get a working cluster without any config-tool calls
+. Be consistent in its commands, and not leak how it is implemented behind.
+How the settings are applied could be implemented in a different way.
+For example, the setting `my-cluster:license=/path/to/license` would be implemented through a license installation mechanism and will not go inside the config directory.
+
+=== Disclaimer
+
+. For OSS: things remain as they are today.
+So there is no cluster tool support for OSS (export, get, set, unset, etc), although that might change if TcStore gets open-sourced.
+. No support for arbitrary plugins or services in tc-config.xml.
+We are controlling the plugins and services and the set of configuration parameters is known.
+
+=== CLI overview
+
+Here are the list of all the commands to achieve dynamic-scale.
+Each command is described in detail in this document.
+
+==== `start-tc-server.sh`
+
+Node startup script:
+
+[source,bash]
+----
+> start-tc-server.sh \
+  --name=1 \
+  --hostname=localhost \
+  --port=9510 \
+  --public-hostname=node.foo.com \
+  --public-port=9510 \
+  --group-port=9430 \
+  --bind-address=0.0.0.0 \
+  --group-bind-address=0.0.0.0 \
+  --config-dir=%H/terracotta/config \
+  --metadata-dir=%H/terracotta/metadata \
+  --log-dir=%H/terracotta/logs \
+  --backup-dir=%H/terracotta/backup \
+  --tc-properties=server.entity.processor.threads:64,topology.validate:true \
+  --security-dir=%H/terracotta/security \
+  --audit-log-dir=%H/terracotta/audit \
+  --authc=file|ldap|certificate \
+  --ssl-tls=true \
+  --whitelist=true \
+  --failover-priority=availability|consistency:<N> \
+  --client-reconnect-window=120s \
+  --client-lease-duration=20s \
+  --offheap-resources=main:512MB \
+  --data-dirs=main:%H/terracotta/user-data/main \
+  --cluster-name=cluster-1 \
+  --config-file=/path/to/exported-cluster-config.properties \
+  --license-file=/path/to/license.xml \
+  --repair-mode
+----
+
+==== `attach`, `detach`
+
+Updating the topology:
+
+[source,bash]
+----
+> config-tool.sh [attach|detach] -t <node|stripe> -d <host:port> -s <host:port> -s <host:port>
+----
+
+==== `activate`
+
+Activating some nodes to form a cluster:
+
+[source,bash]
+----
+> config-tool.sh activate -s <host:port> -n <cluster-name> -l /path/to/license.xml -f /path/to/exported-cluster-config.properties
+----
+
+==== `get`, `set`, `unset`
+
+Updating the configuration:
+
+[source,bash]
+----
+> config-tool.sh [get|set|unset] -s <host:port> -s <host:port> -c <namespace.setting1=value1> -c <namespace.setting2=value2>
+----
+
+==== `import` / `export`
+
+Exporting the configuration:
+
+[source,bash]
+----
+> config-tool.sh export -s <host:port> -s <host:port> -f /path/to/exported-cluster-config.properties
+----
+
+Importing a cluster configuration:
+
+[source,bash]
+----
+> config-tool.sh import -f /path/to/exported-cluster-config.properties
+----
+
+==== `diagnostic`
+
+Check the configuration sanity on the nodes and display advanced details.
+
+[source,bash]
+----
+> config-tool.sh diagnostic -s <host:port>
+----
+
+==== `repair`
+
+Try to repair a broken configuration "state", i.e. when a partial commit or partial rollback occurs.
+If some nodes are partially committed or rolled back, and this can be fixed, trigger the commit or rollback phase again.
+
+It can happen that the automatic repair is not able to determine what to do.
+This can happen if some nodes are offline, and all remaining online servers are all prepared.
+In this case, a hint must be given to the CLI to force either the commit or rollback
+
+[source,bash]
+----
+> config-tool.sh repair -s <host:port> [-f commit|rollback]
+----
+
+==== `log`
+
+Display all the configuration changes of a node and their details
+
+[source,bash]
+----
+> config-tool.sh log -s <host:port>
+----
+
+=== Workflow overview
+
+*Building and activating a cluster:*
+
+Example 1:
+
+. Run `start-tc-server.sh`
+. Look if we have a config directory at `--config-dir` that is containing valid config files from a previous execution
+.. Yes: start the node with the existing config config
+.. No:
+... Parse the script parameters or the provided config file (and determine the node in the config file)
+.... Start the node "single" in `UNCONFIGURED` mode (diagnostic port available)
+.... Use the config-tool `attach` command to append other nodes and stripes
+.... Use the config-tool `activate` command to:
+..... Set a cluster name
+..... Install and validate the license
+..... Validate the configuration for each node
+..... Creating (saving) the validated cluster config into the config directory
+..... Restart the nodes
+. Connect any client and use the topology entity that will take it's information from the cluster config model
+
+Example 2:
+
+. Run `start-tc-server.sh`
+. Run `activate` command with a given config file, license and cluster name
+
+
+Example 3:
+
+. Run `start-tc-server.sh` with a cluster name and license
+
+*Updating a cluster's configuration:*
+
+[NOTE]
+====
+To be completed with the dynamic config steps later.
+====
+
+== Starting nodes (`start-tc-server.sh`)
+
+=== Overview
+
+A new startup script could be created because :
+
+* The existing one has some behaviors we might not want.
+* The existing one supports a different set of options.
+* To ensure backward compatibility and not break the existing script.
+* It will highlight the fact that dynamic scale is now in place, but users need to change their behavior to use it, and read the documentation about it.
+* Having a new script is flexible and not linked ot legacy stuff.
+* if at one point we see that we can refactor the old script to support that, then we can just do a redirection and call this new script from the old one or vice versa.
+The goal being that it is not disruptive to the user.
+
+*Supported use cases:*
+
+* Start an `UNCONFIGURED` node, using some CLI parameters
+* Start a `CONFIGURED` node directly by proving the required CLI parameters (license and cluster name)
+* Start a `CONFIGURED` node thanks to an exported cluster configuration and a given license file
+
+[NOTE]
+====
+Starting a node directly in a `CONFIGURED` mode would be possible for a single stripe single server with the addition of a `--license-file` parameter.
+This is interesting to support for full dynamic topology changes at runtime on an activated cluster because the user could start one activated cluster of 1 active and build its cluster live by adding passive servers and stripes with the `attach` command.
+====
+
+*System properties:*
+
+The startup script will also support Java system properties.
+To be determined how, but it could be through the form of an environment variable like `JAVA_OPTS="-Dkey=value"` that would also allow to set some JVM arguments easily.
+
+=== Starting a node using an exported config (`--config-file`)
+
+[source,bash]
+----
+> start-tc-server.sh \
+  --hostname=localhost \
+  --port=9410 \
+  --config-dir=%H/terracotta/config \
+  --config-file=/path/to/exported-cluster-config.properties
+----
+
+The config file is a human readable representation of the config directory: it contains the settings of all cluster nodes and the topology of the cluster.
+It can be exported from a cluster, eventually edited and then used to recreate a complete config directory with a whole cluster information on a node when used with `--config-file`.
+
+`--hostname` and `--port` are optional and have defaults (as specified below).
+
+The script will determine which node parameters to pick within the config file based on the hostname and port.
+
+If the script does not contain any definition for the hostname/port, an error is shown.
+
+*Steps:*
+
+. Script starts and loads the config file because no config directory is found
+. Script determines the hostname by looking at the `--hostname` parameter or gets the machine hostname
+. Script determines the port by looking at the `--port` parameter or gets default one:
+9410
+. Script finds the node settings in the configuration file thanks to the hostname and port combination
+
+If the script cannot find the node settings in the configuration file, an error is shown.
+
+[NOTE]
+====
+* `--config-file` parameter can only be used with `--hostname`, `--port`, `--config-dir`, `--license-file`, `--cluster-name`
+====
+
+=== Starting a node using script parameters
+
+[source,bash]
+----
+> start-tc-server.sh \
+  --name=1 \
+  --hostname=localhost \
+  --port=9510 \
+  --public-hostname=node.foo.com \
+  --public-port=9510 \
+  --group-port=9430 \
+  --bind-address=0.0.0.0 \
+  --group-bind-address=0.0.0.0 \
+  --config-dir=%H/terracotta/config-data \
+  --metadata-dir=%H/terracotta/metadata \
+  --log-dir=%H/terracotta/logs \
+  --backup-dir=%H/terracotta/backup \
+  --security-dir=%H/terracotta/security \
+  --audit-log-dir=%H/terracotta/audit \
+  --authc=file|ldap|certificate \
+  --ssl-tls=true \
+  --whitelist=true \
+  --failover-priority=availability|consistency:<N> \
+  --client-reconnect-window=120s \
+  --client-lease-duration=20s \
+  --offheap-resources=main:512MB \
+  --data-dirs=main:%H/terracotta/user-data/main \
+  --cluster-name=cluster-1 \
+  --license-file=/path/to/license.xml
+----
+
+[NOTE]
+====
+* `--config-file` parameter cannot be used.
+====
+
+=== Starting a node directly configured (`--license-file` and `--cluster-name`)
+
+It is possible to use any command above to start a node, either with CLI parameters or with a config file.
+By adding also the `--license-file` and `--cluster-name` parameters, the node will start in `CONFIGURED` mode, will be `ACTIVE` in its own stripe, own cluster.
+
+=== List of CLI parameters
+
+*All parameters are optional.* If not given, some defaults are applied like shown below.
+They apply only when a config directory does not yet exist.
+
+[NOTE]
+====
+* `--config-file` parameter can only be used with `--hostname`, `--port`, `--config-dir`, `--license-file`, `--cluster-name`
+====
+
+[cols="<.^,^.^,^.^,<.^",options="header"]
+|===
+
+^.^|*Parameter* |*Type / Unit* |*Default* ^.^|*Description*
+|`name`
+| STRING
+| Generated node name `<small-uuid>`
+| Node name is optional and if not provided will be defaulted to `` followed by a short random uuid.
+
+| `hostname`
+| RFC 1123 compliant hostname or a valid IP address
+| Machine hostname or first available LAN IP address.
+| Node hostname
+
+| `port`
+| PORT
+| 9410
+| Node listening port. If not available, startup fails.
+
+| `public-hostname`
+| RFC 1123 compliant hostname or a valid IP address
+|
+| Node public hostname
+
+| `public-port`
+| PORT
+|
+| Node public port to reach the node
+
+| `group-port`
+| PORT
+| 9430
+| Node group port. If not available, startup fails.
+
+| `bind-address`
+| IP
+| 0.0.0.0
+| Node bind address
+
+| `group-bind-address`
+| IP
+| 0.0.0.0
+| Node bind address for group port
+
+| `config-dir`
+| FOLDER
+| `%H/terracotta/config`
+| Location of the config directory
+
+| `metadata-dir`
+| FOLDER
+| `%H/terracotta/metadata`
+| Node platform data directory.
+
+Equivalent to: `<data:directory name="metadata" use-for-platform="true">%H/terracotta/metadata</data:directory>`
+
+| `log-dir`
+| FOLDER
+| `%H/terracotta/logs`
+|
+
+| `backup-dir`
+| FOLDER
+|
+|
+
+| `security-dir`
+| FOLDER
+|
+|
+
+| `audit-log-dir`
+| FOLDER
+|
+| Requires `security-dir` to be set
+
+| `authc`
+| ENUM
+|
+| `file`, `ldap` or `certificate`.
+
+Requires `security-dir` to be set
+
+| `ssl-tls`
+| BOOLEAN
+|
+| Activate SSL if the parameter is set to `true`.
+
+Requires `security-dir` to be set
+
+| `whitelist`
+| BOOLEAN
+|
+| Activate the use of the whitelist file if the parameter is set to `true`.
+
+Requires `security-dir` to be set
+
+| `client-reconnect-window`
+| TIME VALUE AND UNIT (s, m)
+| 120s
+|
+
+| `client-lease-duration`
+| TIME VALUE AND UNIT (s, m)
+| 20s
+|
+
+| `failover-priority`
+| ENUM + VALUE
+| `availability`
+| `availability` or `consistency:<N>`, where `<N>` is the number of voters
+
+| `offheap-resources`
+| LIST OF RESOURCES
+| main:512MB
+| Create some off-heap resources.
+There is one by default.
+This parameter takes a list of resource names with their associated amount of memory plus the unit (MB, GB, TB).
+
+`--offheap-resources=name1:xyzMB,name2:xyzGB,name3:xyzTB...`
+
+| `data-dirs`
+| LIST OF RESOURCES
+| main:%H/terracotta/user-data/main
+| Create some user data directories.
+There is one by default..
+This parameter takes a list of resource names with their associated data directory.
+
+`--data-dirs=name1:/path/to/name1,name2:/path/to/name2,name3:/path/to/name3...`
+
+| `config-file`
+| FILE
+|
+| Path to an exported cluster config to use when starting.
+
+|`cluster-name`
+| STRING
+|
+| Cluster name
+This can be used to directly start a node in a `CONFIGURED` state.
+
+| `--license-file`
+| FILE
+|
+| Path to the license file.
+This can be used to directly start a node in a `CONFIGURED` state.
+
+|===
+
+=== Rules and validations
+
+=== Parameter validation
+
+* We have to provide a user help and minimally validate the parameters.
+* The `activate` command will do a finer validation when doing the config consistency check, but the more validation done upfront, the best feedback we can give to the user.
+* Parameters have to be validated as early as possible to not delay the feedback given to the user
+
+==== `--config-dir`
+
+The `--config-dir` parameter can be set to point to a *non default* config directory.
+
+*If the config directory exists:*
+
+. The node starts with the existing configuration, *disregarding any parameters that might be set to the command-line*.
+. The license is checked.
+
+*If the config directory does not exists:*
+
+. If the `cluster-name` parameter is given in the command-line and the license is found, it is used to create a default config directory with the given parameters or their defaults.
+. If not, the node start in an `UNCONFIGURED` state, waiting to be `CONFIGURED` through config-tool, or to be attached to an existing stripe.
+
+[NOTE]
+====
+config directory cannot be used by more than 1 process.
+Like some other node related directories.
+A sort of locking mechanism should be put in place, or specific sub-folders per node (such as `hostname:port`).
+====
+
+==== `--config-file`
+
+A node starts `UNCONFIGURED` if it doesn't point to a valid config directory containing a cluster name, and the license is not installed.
+
+Basically, a node is `UNCONFIGURED` if the config-tool activate command has not been successfully called yet.
+
+An `UNCONFIGURED` node needs to be activated with the `activate` command before it can be used.
+Before this time, the node only starts in a mode where it knows itself, but the diagnostic port will be accessible from the cluster tool so that the user can use the `attach` and `detach` commands to build the topology model.
+
+Once the topology model is built, then the `activate` command can be called.
+
+The config directory is created only when the node is `CONFIGURED` and licensed, thanks to the `activate` command.
+The nodes are then `CONFIGURED` and restarted.
+
+Once restarted, clients can connect and use the topology entity, *which becomes a read-only entity and takes its information from the cluster config model.*
+
+== Dynamic topology changes
+
+Once some nodes have been started with `start-tc-server.sh`, we have the ability to modify the topology to build a cluster, whether it is `CONFIGURED` or not.
+We can:
+
+* Attach nodes into a stripe
+* Detach nodes from a stripe
+* Attach a whole stripe to a cluster
+* Detach a whole stripe from a cluster
+
+=== CLI overview
+
+==== `activate`
+
+Here is the CLI to activate all the nodes of a cluster, in case the cluster is not `CONFIGURED`:
+
+[source,bash]
+----
+> config-tool.sh activate -s <host:port> -n <cluster-name> -l /path/to/license.xml -f /path/to/exported-cluster-config.properties
+----
+
+* `-s`: one of the nodes in the cluster to activate (REQUIRED).
+* `-n`: the cluster name (REQUIRED)
+* `-l`: the license file (REQUIRED)
+* `-f`: the config file to push to all the nodes, to allow configuring and activating several nodes at once (OPTIONAL).
+
+==== `attach`, `detach`
+
+Here is the general CLI to attach/detach to update the topology:
+
+[source,bash]
+----
+> config-tool.sh [attach|detach] -t <node|stripe> -d <host:port> -s <host:port> -s <host:port>
+----
+
+* `-t`: type of attachment.
+Default is `node`
+- `-t node`: the type is a node attachment, which means that `-s` will identify the nodes that will be added or removed from a stripe, and `-d` identifies the destination stripe
+- `-t stripe`: the type is stripe attachment, which means that `-s` will identify the stripes that will be added or removed from a cluster, and `-d` identifies the destination cluster
+* `-d`: the destination stripe or cluster
+* `-s`: a list of nodes or stripes to add or remove
+
+=== Activating a cluster with `activate`
+
+The activation process of a cluster can only be done after the cluster is finally constructed and when all nodes are `UNCONFIGURED` (no cluster name and no license).
+
+The activation process:
+
+. validates the configuration consistency
+. validates the license
+. write the validated cluster config inside all the node's config directory
+. restart the nodes
+
+This is quite similar to the current cluster-tool `configure` command except that the command takes some other types of parameters and work with the config directory that has been built on each node.
+
+Once a cluster is activated (and nodes restarted), clients can connect and use the topology entity.
+
+Note: it is possible to push a configuration and activate all the nodes in one command using the `-f` option.
+
+=== Attaching nodes and stripes with `attach`
+
+==== When to use
+
+* when building a not yet activated cluster to add nodes and stripes
+* at runtime when cluster is activated to add nodes and stripes
+
+==== What it does
+
+* fixing version mismatch (feeding the right config to the attached node)
+* cluster topology changes if necessary when attaching a new node to a cluster
+* sending the new config to every node
+* license check
+* eventually restating the nodes
+
+Attaching a node or stripe to an existing cluster will erase its current cluster settings like off-heap, data roots, etc.
+But its node specific parameters are kept.
+
+==== Workflow
+
+1. The destination cluster's configuration does not yet contain a reference to the nodes to attach:
+
+.. If `-t node`:
+The stripe config of the cluster will be updated to add the new node and the new config is sent to every nodes
+.. If `-t stripe`:
+The cluster config is updated to add a new stripe (containing the node being attached) add the new node and the new config is sent to every nodes
+
+2. The destination cluster's configuration already contain a reference to nodes to attach, or the nodes to attach are in the `UNCONFIGURED` state:
+
+.. The nodes will be reconfigured with the current cluster configuration
+
+The `attach` command is used to both add new nodes and update the current cluster configuration, but also to re-reattach a node that could not be started because of a configuration mismatch, by running a configuration recovery.
+
+The attach command makes sure to validate the cluster configuration and that all nodes have the same config.
+
+The attach command itself takes care of version mismatch and cluster topology changes if necessary when attaching a new node or a broken node to a cluster.
+
+==== Parameter priority (`CLUSTER` vs `NODE`)
+
+It is possible to start an `UNCONFIGURED` node with some script parameters, so that when the node will be attached, these parameters will be taken in consideration.
+
+If the cluster already has a configuration for this node (i.e. case when we start with `--config-file`), then the node will be `CONFIGURED` using the cluster configuration and all parameters *that have an applicability level `NODE`* set to the node will take precedence and be considered.
+Other parameters like `--offheap-resources` that are `CLUSTER`
+wide won't be considered because they will come from the configuration sent to the attached node.
+
+_Example:_
+
+Let's say we want each node to have their log directory in a different directory.
+We can do:
+
+[source,bash]
+----
+# We start an UNCONFIGURED active server
+> start-tc-server.sh --name=server1 --hostname=10.0.0.1 --log-dir=%H/server1/logs --offheaps-resources=main:512MB
+
+# we start an UNCONFIGURED node
+> start-tc-server.sh --name=server2 --hostname=10.0.0.2 --log-dir=%H/server2/logs
+
+# we attach node 2 in the same stripe as node 1. node 2 will have the ame offheap resource main set to 512MB.
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.2
+----
+
+If we already have a stripe with 2 nodes having each one 1GB offheap, and we export the configuration and we build the cluster using it, then the attached nodes will take the configuration given by the destination cluster and any parameters used to start the attached node will taken in consideration if they are `NODE level. But any parameters that are `CLUSTER` wide will be disregarded.
+
+[source,bash]
+----
+# We start a UNCONFIGURED active server and its config directory is located at /path/to/config/node1.
+# The config says off-heap resource foo is 1GB
+> start-tc-server.sh --config-file=my-cluser.properties --config-dir=/path/to/config/node1
+
+# we start an UNCONFIGURED node, but we pass it some parameters
+> start-tc-server.sh --hostname=10.0.0.2 --log-dir=%H/server2/logs --config-dir=/path/to/config/node2 --offheaps-resources=foo:128MB
+
+# we attach node 2 to node 1
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.2
+----
+
+Since the cluster topology already contains some configuration for node 10.0.0.2, any `CLUSTER` wide parameters used to start it will be disregarded (--offheap-resources).
+Other parameters such as log-dir and --config-dir are taken in consideration. node will 2 have its config directory located at /path/to/config/node2. If the cluster config sent to the node had a different value for log-dir, it is changed to the value set in the command-line.
+`NODE` level parameters takes precedence, but not `CLUSTER` level parameters.
+So node 2 will have an offheap set to 1GB.
+
+==== Using `attach` with `UNCONFIGURED` nodes
+
+The `attach` command can be used to build a cluster when the cluster is not yet activated.
+
+When not yet activated, the topology is being built by updating the cluster model thanks to the diagnostic port.
+
+The `attach` command in this case is relatively an easy operation of merging the information from the node and the destination future "cluster".
+
+===== Attaching a node to a stripe
+
+It is possible to build the cluster step by step by attaching `UNCONFIGURED` nodes to a destination one.
+The cluster configuration of the destination mode will be sent to them.
+
+[source,bash]
+----
+> start-tc-server.sh --name=1 \
+                --hostname=10.0.0.1 \
+                --offheap-resources=main:512MB # will start UNCONFIGURED
+> start-tc-server.sh --name=2 \
+                --hostname=10.0.0.2 # will start UNCONFIGURED
+> start-tc-server.sh --name=3 \
+                --hostname=10.0.0.3 # will start UNCONFIGURED
+
+# regroup the nodes in the same stripe, and node 2 and 3 will also have the same offheap-resources config.
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.2 -s 10.0.0.3
+
+# we have finally finished building the topology, so we activate the cluster. Nodes will become `CONFIGURED`.
+> config-tool.sh activate -s 10.0.0.1 -n my-cluster -f license.xml
+----
+
+[NOTE]
+====
+We have only set cluster wide parameters like `--offheap-resources=main:512MB` when starting the first node, and since everything gets attached to it, its configuration is propagated to all other `UNCONFIGURED` nodes.
+====
+
+===== Attaching a new stripe
+
+We build the first stripe of `UNCONFIGURED` nodes like before:
+
+[source,bash]
+----
+> start-tc-server.sh --name=1 \
+                --hostname=10.0.0.1 \
+                --offheap-resources=main:512MB # will start UNCONFIGURED
+> start-tc-server.sh --name=2 \
+                --hostname=10.0.0.2 # will start UNCONFIGURED
+> start-tc-server.sh --name=3 \
+                --hostname=10.0.0.3 # will start UNCONFIGURED
+
+# regroup the nodes in the same stripe, and node 2 and 3 will also have the same offheap resources config.
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.2 -s 10.0.0.3
+----
+
+We start 3 other `UNCONFIGURED` nodes:
+
+[source,bash]
+----
+> start-tc-server.sh --name=4 --hostname=10.0.0.4 # will start UNCONFIGURED
+> start-tc-server.sh --name=5 --hostname=10.0.0.5 # will start UNCONFIGURED
+> start-tc-server.sh --name=6 --hostname=10.0.0.6 # will start UNCONFIGURED
+----
+
+We use attach to add a new stripe to the previous one, by using `-t stripe`:
+
+[source,bash]
+----
+> config-tool.sh attach -t stripe -d 10.0.0.1 -s 10.0.0.4
+----
+
+Then we attach the remaining nodes to the second stripe where 4 is:
+
+[source,bash]
+----
+> config-tool.sh attach -d 10.0.0.4 -s 10.0.0.5 -s 10.0.0.6
+----
+
+And we have finally finished building the topology, so we activate the cluster for it to become `CONFIGURED`:
+
+[source,bash]
+----
+> config-tool.sh activate -s 10.0.0.1 -n my-cluster -f license.xml
+----
+
+[NOTE]
+====
+We have only set cluster wide parameters like `--offheap-resources=main:512MB` when starting the first node, and since everything gets attached to it, its configuration is propagated to all other `UNCONFIGURED` nodes.
+====
+
+==== Using `attach` with `CONFIGURED` nodes at runtime
+
+When the cluster is activated, the `attach` command can be used to add nodes or stripes at runtime.
+
+===== Adding a passive to a stripe at runtime
+
+We create a cluster named 'my-cluster' of 1 stripe and 3 nodes.
+We first start the first node in a `CONFIGURED` mode (license file and cluster name provided).
+Then we add 2 other passive servers to the stripe
+
+Let's say we have a cluster named `my-cluster` with an active server `1` (10.0.0.1).
+The cluster is active.
+
+[source,bash]
+----
+> start-tc-server.sh --name=2 \
+                --hostname=10.0.0.2 # will start UNCONFIGURED
+> start-tc-server.sh --name=3 \
+                --hostname=10.0.0.3 # will start UNCONFIGURED
+
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.2 -s 10.0.0.3
+----
+
+This will update the topology information to add both 10.0.0.2 and 10.0.0.3, move them as PASSIVE nodes within the same stripe as 10.0.0.1, and they will be inside cluster `my-cluster`.
+The configuration of 10.0.0.1 will also be updated to to add the new nodes.
+
+[NOTE]
+====
+We do not need to run the activate command because the cluster is already activated and this is a runtime topology change.
+====
+
+===== Adding a new stripe at runtime
+
+Given the cluster named `my-cluster` containing 1 stripe:
+
+* my-cluster
+** stripe-1
+*** 10.0.0.1 (ACTIVE)
+*** 10.0.0.2 (PASSIVE)
+*** 10.0.0.3 (PASSIVE)
+
+We can add a second stripe like this:
+
+[source,bash]
+----
+> start-tc-server.sh --name=4 --hostname=10.0.0.4 # will start UNCONFIGURED
+> start-tc-server.sh --name=5 --hostname=10.0.0.5 # will start UNCONFIGURED
+> start-tc-server.sh --name=6 --hostname=10.0.0.6 # will start UNCONFIGURED
+
+# Will attach 4 to my-cluster
+# 4 will be the active of a new stripe
+> config-tool.sh attach -t stripe -d 10.0.0.1 -s 10.0.0.4
+
+# Attach the 2 other passive nodes into the second stripe of 4
+> config-tool.sh attach -d 10.0.0.4 -s 10.0.0.5 -s 10.0.0.6
+----
+
+Now, we have :
+
+* my-cluster
+** stripe-1
+*** 10.0.0.1 (ACTIVE)
+*** 10.0.0.2 (PASSIVE)
+*** 10.0.0.3 (PASSIVE)
+** stripe-2
+*** 10.0.0.4 (ACTIVE)
+*** 10.0.0.5 (PASSIVE)
+*** 10.0.0.6 (PASSIVE)
+
+[NOTE]
+====
+We do not need to run the activate command because the cluster is already activated and this is a runtime topology change.
+
+Once a node has accepted some data, adding another stripe is currently not possible.
+But it might be possible in the future to do it.
+
+*TBD:* we need to find a way to validate when a node is still not used (i.e. perhaps by looking at data directories ?)
+====
+
+=== Detaching nodes and stripes with `detach`
+
+==== Using `detach` with `UNCONFIGURED` nodes
+
+The `detach` command can be used to build a cluster when the cluster is not yet activated.
+
+When not yet activated, the topology is being built by updating the cluster model thanks to the diagnostic port.
+
+The `detach` command in this case is relatively an easy operation of updating the information of the remaining nodes in the future "cluster".
+
+===== Detaching a node from a stripe
+
+Given the "future" cluster that will be named `my-cluster` containing 1 stripe, and that is still `UNCONFIGURED`:
+
+* my-cluster
+** stripe-1
+*** 10.0.0.1
+*** 10.0.0.2
+*** 10.0.0.3
+
+Detach some nodes from an existing stripe:
+
+[source,bash]
+----
+> config-tool.sh detach -d 10.0.0.1 -s 10.0.0.2 -s 10.0.0.3
+----
+
+The model is updated through diagnostic port to remove the information related to node 2 and 3.
+
+===== Detaching a stripe
+
+Given the "future" cluster tha twill be named `my-cluster` containing 2 stripes, and that is still `UNCONFIGURED`:
+
+* my-cluster
+** stripe-1
+*** 10.0.0.1
+*** 10.0.0.2
+*** 10.0.0.3
+** stripe-2
+*** 10.0.0.4
+*** 10.0.0.5
+*** 10.0.0.6 (PASSIVE)
+
+[source,bash]
+----
+> config-tool.sh detach -t stripe -d 10.0.0.1 -s 10.0.0.4
+----
+
+The example above would completely remove all nodes from `stripe-2` identified by 10.0.0.4 from cluster `my-cluster` identified thanks to `-d 10.0.0.1`.
+
+The topology model will be updated through diagnostic port for all the remaining nodes.
+
+==== Using `detach` with `CONFIGURED` nodes at runtime
+
+===== Detaching a `PASSIVE` node from a stripe at runtime
+
+_TBD_
+
+===== Detaching an `ACTIVE` node from a stripe at runtime
+
+_TBD_
+
+===== Detaching a stripe at runtime
+
+_TBD_
+
+[NOTE]
+====
+Once a node has accepted some data, detaching a stripe is currently not possible.
+But it might be possible in the future to do it.
+
+*TBD:* we need to find a way to validate when a node is still not used (i.e. perhaps by looking at data directories ?)
+====
+
+== Dynamic configuration
+
+=== CLI overview
+
+==== `get`, `set`, `unset`
+
+Here is the general CLI to get, set or unset a setting:
+
+[source,bash]
+----
+> config-tool.sh [get|set|unset] -s <host:port> -s <host:port> -c <namespace.setting1=value1> -c <namespace.setting2=value2>
+----
+
+* `-s`: a list of nodes to determine the targeted nodes or stripes to apply the change
+* `-c`: a list of updates to apply (or just setting names to get)
+* `namespace` determines the scope of the update.
+The format can be:
+- `stripe.<stripeId>.node.<nodeId>:` to apply a change only on a specific node
+- `stripe.<stripeId>:` to apply a change only on the nodes on a stripe
+- `no namespace`: to apply a change on all nodes of the cluster
+
+The namespace depends on the setting: some settings can only be applied cluster-wide, some per node or per stripe.
+
+Also, some settings can only be changed when all the nodes are up and running, whereas some settings can be changed as long as at least 1 active per stripe is up.
+
+==== `export`
+
+Here is the general CLI to export a cluster configuration:
+
+[source,bash]
+----
+> config-tool.sh export -s <host:port> -s <host:port> -f /path/to/exported-cluster-config.properties
+----
+
+* `-s`: the target cluster to export
+* `-f`: the output (property file)
+
+=== Retrieving settings with `get`
+
+Get the value of a setting from a node
+
+[source,bash]
+----
+> config-tool.sh get -s 10.0.0.1 -c stripe.1.node.1.offheap-resources.foo
+> stripe.1.node.1.offheap-resources=foo:512MB
+----
+
+Get the values of somme offheap resources on a cluster
+
+[source,bash]
+----
+> config-tool.sh get -s 10.0.0.1 -c offheap-resources.foo -c offheap-resources.bar
+> stripe.1.node.1.offheap-resources=foo:512MB,bar:128MB
+> stripe.2.node.1.offheap-resources=foo:512MB,bar:128MB
+----
+
+Get the values of all the offheap resources on a cluster
+
+[source,bash]
+----
+> config-tool.sh get -s 10.0.0.1 -c offheap-resources
+> stripe.1.node.1.offheap-resources=foo:512MB,bar:128MB,baz:64MB
+> stripe.2.node.1.offheap-resources=foo:512MB,bar:128MB,baz:64MB
+----
+
+Get the values of all the offheap resources on a stripe
+
+[source,bash]
+----
+> config-tool.sh get -s 10.0.0.1 -c stripe.1.offheap-resources
+> stripe.1.node.1.offheap-resources=foo:512MB,bar:128MB,baz:64MB
+----
+
+All settings are outputted using the namespace format so that it is easy to read/parse/script.
+
+We can see in this example that 2 in stripe-2 does not have the offheap resource bar.
+
+=== Updating settings with `set`
+
+Set some settings in a node:
+
+[source,bash]
+----
+> config-tool.sh set -s 10.0.0.1 -c stripe.1.node.1.offheap-resources.foo=512MB
+----
+
+Set offheap resource `bar` to 512MB and `foo` to 1GB in the cluster:
+
+[source,bash]
+----
+> config-tool.sh set -s 10.0.0.1 -c offheap-resources.foo=1GB -c offheap-resources.bar=512MB
+
+# And we could verify that:
+> config-tool.sh get -s 10.0.0.1 -c offheap-resources.foo -c offheap-resources.bar
+> stripe.1.node.1.offheap-resources=foo:1GB,bar:512MB
+> stripe.2.node.1.offheap-resources=foo:1GB,bar:512MB
+
+# Or:
+> config-tool.sh get -s 10.0.0.1 -c offheap-resources
+> stripe.1.node.1.offheap-resources=foo:1GB,bar:512MB
+> stripe.2.node.1.offheap-resources=foo:1GB,bar:512MB
+----
+
+When updating (`set` or `unset`) whether the updates are applied to only some nodes or some stripes, the whole new configuration is send to all the nodes of the cluster.
+
+The CLI supports several `-c <setting>` parameters, to set or unset several settings at once.
+They all together form a "change-set" on its own that is either all applied or not.
+So if an error occurs during the apply of an update (or it cannot be applied), all the other updates are not applied or reverted.
+
+The `namespace.` option is used to scope the updates, but also to obtain consistent inputs and output for the CLI that can be easily scripted.
+Also, it serves as some check since the user exactly sees what will be modified and where.
+Some checks can be performed when connecting to the node to verify that the given namespace matched the cluster/stripe/node where we connect to.
+
+[NOTE]
+====
+A license check is done to make sure that the new settings are compliant with the installed license.
+====
+
+=== Removing settings with `unset`
+
+Removes an offheap resource from a node:
+
+[source,bash]
+----
+> config-tool.sh unset -s 10.0.0.1 -c stripe.1.node.1.:offheap-resources.foo
+----
+
+Removes an offheap resource from a cluster:
+
+[source,bash]
+----
+> config-tool.sh unset -s 10.0.0.1 -c offheap-resources.foo
+----
+
+=== Exporting cluster configuration with `export`
+
+* The whole cluster configuration can be exported as a property file.
+* The exported cluster configuration is the file you could pass to the starting script when starting a node, so that is gets directly `CONFIGURED`.
+* The export operation works on an activated cluster (that is having a name and is licensed)
+* The complete settings (from dynamic config and startup script) are exported.
+Note that these settings have the same names and are consistent both for startup script and dynamic config.
+* The export command exports the human readable properties from the LATEST config directory content (possibly not what is currently there at runtime, which can be outdated in case a change needs a restart)
+* The exported cluster configuration contains the same parameter names as the startup script parameters: this is a file that can be used instead of using the startup script parameters
+* The exported cluster configuration contains all the supported parameters.
+If some parameters are not used (like security and backup), the property file will contains the keys but no value will be assigned to them.
+All other parameters that are required for startup should be set.
+
+[source,bash]
+----
+> config-tool.sh export -s 10.0.0.1 -f /path/to/my-cluster-config.properties
+----
+
+The file `my-cluster-config.properties` will contain all the settings with their namespace.
+
+*Example:*
+
+[source,properties]
+----
+client-lease-duration=20s
+client-reconnect-window=120s
+cluster-name=my-cluster
+failover-priority=consistency:3
+offheap-resources=main:512MB
+authc=file
+ssl-tls=true
+whitelist=true
+#[...]
+stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main
+stripe.1.node.1.backup-dir=%H/terracotta/backup
+stripe.1.node.1.bind-address=0.1.0.0
+stripe.1.node.1.group-bind-address=0.1.0.0
+stripe.1.node.1.group-port=9430
+stripe.1.node.1.hostname=1.company.internal
+stripe.1.node.1.log-dir=%H/terracotta/logs
+stripe.1.node.1.metadata-dir=%H/terracotta/metadata
+stripe.1.node.1.name=1
+stripe.1.node.1.port=9510
+stripe.1.node.1.config-dir=%H/terracotta/config
+stripe.1.node.1.audit-log-dir=%H/terracotta/audit
+stripe.1.node.1.security-dir=%H/terracotta/security
+#[...]
+stripe.1.node.2.data-dirs=main:%H/terracotta/user-data/main
+stripe.1.node.2.backup-dir=%H/terracotta/backup
+stripe.1.node.2.group-bind-address=0.1.0.0
+stripe.1.node.2.group-port=9430
+stripe.1.node.2.hostname=2.company.internal
+stripe.1.node.2.log-dir=%H/terracotta/logs
+stripe.1.node.2.metadata-dir=%H/terracotta/metadata
+stripe.1.node.2.name=2
+stripe.1.node.2.port=9510
+stripe.1.node.2.config-dir=%H/terracotta/config
+stripe.1.node.2.audit-log-dir=%H/terracotta/audit
+stripe.1.node.2.security-dir=%H/terracotta/security
+#[...]
+----
+
+Using a property file has some benefits:
+
+* easy to read
+* easy to parse and load through code or script
+* XML, Json or Yaml format is harder to script
+* XML is ugly and not flexible
+* `get`, `set` and `unset` commands work on properties so this is consistent to export the cluster as properties
+
+I wouldn't use the direct XML file that is inside the config directory to use with `--config-file` or export because:
+
+* it leaks internal details
+* it is not providing a good user-facing api
+* this is not consistent with this API to set / unset settings
+* this is not understandable by the user, which is failing as a user-interface
+* it would be harder by the user to update this file and keep it valid against XSD
+* we would need to directly support backward compatibility in an internal stuff tah tis exposed to the user, which is harder and not cool.
+It is easier to export in a human-readable format and handle the backward compatibility closer to the user and be flexible on how things are implemented behind.
+
+=== List of settings
+
+Here is the list of settings that can be changed from the CLI, for each one if it an be applied at runtime or after a restart.
+
+The choice is made to define a hierarchy for the settings with a scope when they are set.
+Every setting can be represented in a sort of hierarchy.
+Every setting is a key/value pair with a default unit and settings have a common format: `namespace.name=value`.
+This property format has several benefits:
+
+* Easy to use
+* Can be script easily, loaded or saved from a property file, or parsed from environment variables
+* This is a common pattern used in Java
+* Output can be easily read/sent /from/to some monitoring platform or scripts
+* Can be validated
+* Contains information about hierarchy and scope
+
+Some settings can only be applied on a specific node, but not on all nodes on the cluster.
+
+* All settings are regrouped in the same CLI interface but the way to apply them behind can be different.
+* When applying some settings, we do not need to always go to the config store.
+* This is the case when setting the `license-file` for example: we read a local file and use the same mechanism as the old cluster-tool `configure` command.
+* This also might be the case when setting some security settings like passwords, certificates, etc.
+* Remember that the way to `set` and `unset` a setting is consistent from the user perspective, but behind, internally, we know that each setting can be applied at different places, stored at different places and eventually through different channels.
+
+#*Legend:*#
+
+* *Activation*: whether the setting change can be applied at `RUNTIME` or needs a `RESTART`
+* *Applicability*: whether a setting can be changed on a particular `NODE`, on all nodes of a `STRIPE`, or on all the nodes of a `CLUSTER`
+* *Requirement*: whether a setting can be changed if `ALL NODES` are up or only if at least all `ACTIVES` (1 active per stripe) are up.
+
+==== Settings applied to a specific node only
+
+[cols="<.^,^.^,^.^,^.^,^.^,<.^",options="header"]
+|===
+
+^.^|*Setting Name* |*Type / Unit* |*Activation* ^.^|*Applicability* ^.^|*Requirement* ^.^|*Description*
+
+|`name=1`
+| STRING
+| `READ ONLY`
+| `N/A`
+| `N/A`
+| Node name
+
+|`hostname=srv1`
+| DOMAIN NAME or IP
+| `RESTART`
+| `NODE`
+| `ALL NODES` up
+|
+
+|`port=9510`
+| PORT
+| `RESTART`
+| `NODE`
+| `ALL NODES` up
+|
+
+|`public-hostname=srv1.my.company.com`
+| DOMAIN NAME or IP
+| `RUNTIME`
+| `NODE`
+| `ACTIVES` up
+|
+
+|`public-port=9510`
+| PORT
+| `RUNTIME`
+| `NODE`
+| `ACTIVES` up
+|
+
+|`group-port=9430`
+| PORT
+| `RESTART`
+| `NODE`
+| `ALL NODES` up
+|
+
+|`bind-address=0.0.0.0`
+| IP
+| `RESTART`
+| `NODE`
+| `ACTIVES` up
+|
+
+|`group-bind-address=0.0.0.0`
+| IP
+| `RESTART`
+| `NODE`
+| `ACTIVES` up
+|
+
+|===
+
+==== Node configuration
+
+[cols="<.^,^.^,^.^,^.^,^.^,<.^",options="header"]
+|===
+
+^.^|*Setting Name* |*Type / Unit* |*Activation* ^.^|*Applicability* ^.^|*Requirement* ^.^|*Description*
+
+|`cluster-name=<name>`
+| STRING
+| `READ ONLY`
+| `N/A`
+| `N/A`
+| Cluster name
+
+|`config-dir=%H/terracotta/config`
+| DIR
+|`READ ONLY`
+| `N/A`
+| `N/A`
+| Config directory
+
+|`metadata-dir=%H/terracotta/metadata`
+| DIR
+| `RESTART`
+|`NODE`,
+`STRIPE`,
+`CLUSTER`
+| `ACTIVES` up
+| Platform data directory (used ot be defined as a data-root)
+
+|`log-dir=%H/terracotta/logs`
+| DIR
+| `RESTART`
+| `NODE`,
+`STRIPE`,
+`CLUSTER`
+| `ACTIVES` up
+|
+
+|`backup-dir=%H/terracotta/backup`
+| DIR
+|`RUNTIME`
+| `NODE`,
+`STRIPE`,
+`CLUSTER`
+| `ACTIVES` up
+|
+
+|`tc-properties.<name>=<value>`
+| TC-PROPERTY
+| `RESTART`
+| `NODE`,
+`STRIPE`,
+`CLUSTER`
+| `ACTIVES` up
+| Equivalent of the `<tc-properties/>`
+
+|`logger-overrides.<logger-name>=<level>`
+| MAP
+| `RUNTIME`
+| `NODE`,
+`STRIPE`,
+`CLUSTER`
+| `ACTIVES` up
+| Overrides the configured loggers at runtime and re-apply them at startup
+
+*Example:*
+
+`props.server.entity.processor.threads=64` matches:
+
+`<tc-properties><property name="server.entity.processor.threads" value="64"/></tc-properties>`
+
+
+|`client-reconnect-window=120s`
+| TIME VALUE AND UNIT (s, m)
+| `RESTART`
+| `CLUSTER`
+| `ACTIVES` up
+|
+
+|`client-lease-duration=20s`
+| TIME VALUE AND UNIT (s, m)
+|`RUNTIME`
+| `CLUSTER`
+| `ACTIVES` up
+|
+
+|`failover-priority=availability\|consistency:<N>`
+| ENUM + VALUE
+| `RESTART`
+| `CLUSTER`
+| `ALL NODES` up
+| `<N>` is the number of voters
+
+|`license-file=/local/path/to/license/file`
+| FILE
+|`RUNTIME`
+| `CLUSTER`
+| `ACTIVES` up
+| License is read locally and sent to the targeted nodes
+
+|===
+
+==== Security configuration
+
+[cols="<.^,^.^,^.^,^.^,^.^,<.^",options="header"]
+|===
+
+^.^|*Setting Name* |*Type / Unit* |*Activation* ^.^|*Applicability* ^.^|*Requirement* ^.^|*Description*
+
+|`security-dir=%H/terracotta/security`
+| DIR
+| `RESTART`
+| `NODE`,
+`STRIPE`,
+`CLUSTER`
+| `ALL NODES` up
+|
+
+|`audit-log-dir=%H/terracotta/audit`
+| DIR
+| `RESTART`
+| `NODE`,
+`STRIPE`,
+`CLUSTER`
+| `ACTIVES` up
+|
+
+|`authc=file\|ldap\|certificate`
+| ENUM
+| `RESTART`
+| `CLUSTER`
+| `ALL NODES` up
+|
+
+|`ssl-tls=true`
+| BOOLEAN
+| `RESTART`
+| `CLUSTER`
+| `ALL NODES` up
+|
+
+|`whitelist=true`
+| BOOLEAN
+|`RUNTIME`
+| `CLUSTER`
+| `ACTIVES` up
+| Note: config-tool will append the IPs of the servers in the same stripe by default, along with localhost IPs.
+
+|`auth.users.<username>.password-hash=<password-hash>`
+| BRYPT HASH
+|`RUNTIME`
+| `CLUSTER`
+| `ACTIVES` up
+| Add a new user (or set a new password for him)
+
+|`auth.users.<username>.roles=role1,role2`
+| LIST
+|`RUNTIME`
+| `CLUSTER`
+| `ACTIVES` up
+| Set user's roles
+
+|===
+
+==== Resources configuration
+
+[cols="<.^,^.^,^.^,^.^,^.^,<.^",options="header"]
+|===
+
+^.^|*Setting Name* |*Type / Unit* |*Activation* ^.^|*Applicability* ^.^|*Requirement*^.^|*Description*
+
+|`offheap-resources.<name>=512MB`
+| LIST OF RESOURCES
+|`RUNTIME`
+| `CLUSTER`
+| `ACTIVES` up
+| Adding or increasing an offheap resource. This setting takes a list of resource names with their associated amount of memory plus the unit (MB, GB, TB).
+
+Example: `offheap-resources.main=128MB`
+
+|`data-dirs.<name>=/path/to/dit`
+| LIST OF RESOURCES
+| `RUNTIME` (creation)
+
+`RESTART` (update or removal)
+| `NODE` (for the folders)
+
+`CLUSTER` (for the names)
+| `ACTIVES` up
+| Example: `data-dirs.ehcache-data=%H/terracotta/ehcache-data`
+
+|===
+
+=== Dynamic access control
+
+This section explains how to dynamically change the access control if security is enabled.
+If security is not enabled, this does not apply.
+
+Access control depends on the configured `authc` setting.
+
+==== File based access control
+
+In the case of file based access control (setting `authc=file`), we can use the `set`, `unset` commands to add, remove and update users with their roles in the `users.xml` file.
+
+*Examples:*
+
+[source,bash]
+----
+# Add a new user (or change an existing user's password)
+> config-tool.sh set -s 10.0.0.1 -c auth.users.chuck.password-hash=$2a$10$UoM85/5I4SnIbrOQuFZ43ekffuQKSxZmL93bR9VMcdr2URmPyjyX2
+
+# Set roles on this user
+> config-tool.sh set -s 10.0.0.1 -c auth.users.chuck.roles=god,norris
+
+# Removes all roles
+> config-tool.sh unset -s 10.0.0.1 -c auth.users.chuck.roles
+
+# Removes user
+> config-tool.sh unset -s 10.0.0.1 -c auth.users.chuck
+----
+
+==== Certificate based access control
+
+TBD.
+
+*Idea:* Could be done exactly like <<File based access control>> and by using a setting that will be handled like the <<Node configuration,license>> setting:
+we could point to a local file to setup in the security directory.
+
+[source,bash]
+----
+> config-tool.sh set -s 10.0.0.1 -c auth.certificate=/path/to/local/cert
+----
+
+==== LDAP based access control
+
+TBD
+
+*Idea:* Could be done exactly like <<File based access control>> by providing LDAP settings.
+
+[source,bash]
+----
+> config-tool.sh set -s 10.0.0.1 -c auth.ldap.server=ad.company.com
+----
+
+== Errors and troubleshooting
+
+=== Node configuration mismatch
+
+A node won't be able to start if its configuration version does not match the current configuration of the cluster.
+
+To fix a bad configuration version in a node, you will need to manually attach it again to the cluster with the `attach` command:
+
+[source,bash]
+----
+> config-tool.sh attach -d 10.0.0.1 -s <to-fix>
+----
+
+See the section <<Effects of the `attach` command>> for more information.
+
+=== CLI error codes
+
+Each CLI outputs an error code.
+
+The whole error code list is not given here because it depends on the kind of errors we will be able to output, and it is highly subject to change in case the implementation changes from the design.
+
+Instead, we give a structure and format to specify error codes.
+Error codes for dynamic-scale commands should be in the following format: `4WXYZ`
+
+* `4`:
+This is random. `D` for Dynamic is the 4th letter, 4 is also `2+2` and `2*2` and `2^2` and 4-digits available to customize the error code
+* `W`:
+This is the `ID` of the command:
+- `W=0` for `get`
+- `W=1` for `set`
+- `W=2` for `unset`
+* `XYZ`:
+Digits used for the specific command validations and errors.
+Example, first 2 digits could be used to categorize the setting and the last one for its validation
+
+Note that since we start our error codes with `4`, we know we are already in the context of a dynamic scale command.
+If the command name is invalid, we can use the more global config-tool error code that is responsible to parse valid command names.
+Same for connection errors: config-tool probably already has some error codes for that.
+
+[NOTE]
+====
+The idea is to have a structure we can rely on.
+But we can change the definition above to better match what will be implemented.
+====
+
+*Examples:*
+
+* `40000`,`41000`,`42000`:
+Target is invalid: specify either node, stripe or cluster
+* `4100X`: error codes for `config-tool.sh set -c namespace.offheap-resources.<name>=<value>`
+- `41000`: offheap value is missing
+- `41001`: offheap value is not a natural number
+- `41002`: offheap value is too big
+- `41003`: offheap name is missing
+* `4101X`: error codes for `config-tool.sh set -c namespace.data-dirs.<name>=<value>`
+- `41010`: directory value is missing
+- `41011`: directory cannot be created
+- `41012`: directory already exists and is not empty
+- `41013`: directory name is missing
+
+=== Download and dumping
+
+From a CLI UX perspective, I think that all dynamic-scale related commands should be consistent in the output and input and be human readable and editable easily.
+Also, they should not leak internal implementations so that any backward compatibility code could be achieved closer to the user interface which would allow us flexibility in how things are implemented.
+
+That being said, we should have a way to get the internal files for support:
+
+* the generated cluster xml file
+* and eventually all files that could be updated by the user from the CLI, that are subject to user input errors or bugs
+
+`export` is a way to export a human readable (and scriptable) view of a cluster which is consistent with the other dynamic scale command.
+And this can be used by the user to reconfigure easily several nodes at once and even re-create a copy of his cluster's topology elsewhere.
+
+To "dump" some specific implementation files easily from the config-tool for support purposes, the current cluster-tool
+`dump` command can be enhanced to support other options for exporting a set of configuration files or a specific internal file.
+This would be like a `download` command.
+
+An idea would be to enhance the current `config-tool.sh dump` command to be able to do:
+
+[source,bash]
+----
+> config-tool.sh dump -n <cluster> -s <host:port> -t cluster-config -f /path/to/output/dir`
+> config-tool.sh dump -n <cluster> -s <host:port> -t security-config -f /path/to/output/dir`
+> config-tool.sh dump -n <cluster> -s <host:port> -t all-config -f /path/to/output/dir`
+----
+
+Note: this is just an example but it could be implemented another way too, like with a new `download` command:
+
+[source,bash]
+----
+> config-tool.sh download -s <host:port> -t cluster-config -f /path/to/output/dir`
+> config-tool.sh download -s <host:port> -t security-config -f /path/to/output/dir`
+> config-tool.sh download -s <host:port> -t all-config -f /path/to/output/dir`
+----
+
+* `-t` would determine the "set" of internal files we want
+* `-f` would specify a local directory where we want the internal files to be downloaded
+
+== Examples of use cases
+
+=== Starting a node waiting for configuration
+
+[source,bash]
+----
+> start-tc-server.sh
+----
+
+=== Starting a node with a config directory at a specific location
+
+[source,bash]
+----
+> start-tc-server.sh --config-dir=/path/to/where/it/should/be
+----
+
+=== Starting a node with a cluster config and creates a config directory
+
+Starting the node in an `UNCONFIGURED` state:
+
+[source,bash]
+----
+> start-tc-server.sh --config-file=/path/to/exported-cluster-config.properties
+----
+
+Starting the node in a `CONFIGURED` state, by providing the license and identifying the node in the configuration file (as needed)
+
+[source,bash]
+----
+> start-tc-server.sh --config-file=/path/to/exported-cluster-config.properties --hostname=foo.mcompany.com
+----
+
+=== Building and activating a 1-stripe 2-nodes cluster
+
+We start a first node with some cluster wide parameters (offheap-resources):
+
+[source,bash]
+----
+> start-tc-server.sh --name=1 \
+                --hostname=10.0.0.1 \
+                --offheap-resources=main:512MB # will start UNCONFIGURED
+----
+
+Then we add 1 node:
+
+[source,bash]
+----
+> start-tc-server.sh --name=2 \
+                --hostname=10.0.0.2 # will start UNCONFIGURED
+
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.2
+----
+
+We now have a stripe of 2 nodes, and we need to activate the cluster:
+
+[source,bash]
+----
+> config-tool.sh activate -s 10.0.0.1 -n my-cluster -f license.xml
+----
+
+=== Building and activating a 2-stripes 2-nodes cluster
+
+We start a first node with some cluster wide parameters (offheap-resources):
+
+[source,bash]
+----
+> start-tc-server.sh --name=1 \
+                --hostname=10.0.0.1 \
+                --offheap-resources=main:512MB # will start UNCONFIGURED
+----
+
+Then we add 1 passive:
+
+[source,bash]
+----
+> start-tc-server.sh --name=2 \
+                --hostname=10.0.0.2 # will start UNCONFIGURED
+
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.2
+----
+
+We now have a stripe of 2 nodes.
+We add another stripe:
+
+[source,bash]
+----
+> start-tc-server.sh --name=3 # 10.0.0.3, will start UNCONFIGURED
+> config-tool.sh attach -t stripe -d 10.0.0.1 -s 10.0.0.3
+----
+
+We add a node to the second stripe:
+
+[source,bash]
+----
+> start-tc-server.sh --name=4 # 10.0.0.4, will start UNCONFIGURED
+> config-tool.sh attach -d 10.0.0.3 -s 10.0.0.4 # 4 comes in second stripe
+----
+
+Then we need to activate our cluster to make all the nodes `CONFIGURED`:
+
+[source,bash]
+----
+> config-tool.sh activate -s 10.0.0.1 -n my-cluster -f license.xml
+----
+
+=== Scaling at runtime from a cluster of 1-stripe 1-active to 2-stripes 2-nodes each
+
+Let's say we have an activated cluster of 1 active node that has been started with the following config:
+
+```
+  --name=1
+  --hostname=10.0.0.1
+  --config-dir=%H/terracotta/config
+  --metadata-dir=%H/terracotta/metadata
+  --log-dir=%H/terracotta/logs
+  --backup-dir=%H/terracotta/backup
+  --offheap-resources=main:512MB
+  --data-dirs=main:%H/terracotta/user-data
+  --client-reconnect-window=120s
+  --client-lease-duration=20s
+  --cluster-name=cluster-1
+  --license-file=/path/to/license.xml
+```
+
+We add a passive to the stripe:
+
+[source,bash]
+----
+> start-tc-server.sh --name=2 # 10.0.0.2 will start UNCONFIGURED
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.2
+----
+
+We add a new stripe:
+
+[source,bash]
+----
+> start-tc-server.sh --name=3 # 10.0.0.3
+> config-tool.sh attach -t stripe -d 10.0.0.1 -s 10.0.0.3
+----
+
+We add a passive to the second stripe:
+
+[source,bash]
+----
+> start-tc-server.sh --name=4 # 10.0.0.4
+> config-tool.sh attach -d 10.0.0.3 -s 10.0.0.4
+----
+
+=== Creating a cluster of 2 stripes 2 nodes each from an exported config
+
+First you'll need a cluster.properties config with the right host names.
+Let's take as an example that this file defined 2 stripes with 2 servers each:
+
+my-cluster:
+
+* stripe1:
+** server1
+** server2
+* stripe2:
+** server3
+** server4
+
+[source,bash]
+----
+# The script parameters are used to identify the node within the configuration file
+> start-tc-server.sh --hostname=server1 --config-file=cluster.properties # for 10.0.0.1
+> start-tc-server.sh --hostname=server2 --config-file=cluster.properties # for 10.0.0.2
+> start-tc-server.sh --hostname=server3 --config-file=cluster.properties # for 10.0.0.3
+> start-tc-server.sh --hostname=server4 --config-file=cluster.properties # for 10.0.0.4
+
+# This will make sure the 2 stripes are attached and that any necessary coordination is done
+> config-tool.sh activate -s 10.0.0.1 -f my-license.xml
+----
+
+=== Cluster replication
+
+Creating a replica of a 2 stripes cluster from an exported cluster configuration `my-cluster.properties`.
+We have a cluster of 2 stripe 2 nodes each.
+
+[source,bash]
+----
+# Export the config of the cluster
+> config-tool.sh export -s 10.1.1.1 -f my-cluster.properties
+
+# Edit the config to change the hostnames if needed, and other information if needed
+
+# We start all the nodes with the same config
+> start-tc-server.sh --config-file=my-cluster.properties # 10.0.0.1
+> start-tc-server.sh --config-file=my-cluster.properties # 10.0.0.2
+> start-tc-server.sh --config-file=my-cluster.properties # 10.0.0.3
+> start-tc-server.sh --config-file=my-cluster.properties # 10.0.0.4
+
+# This will make sure the 2 stripes are attached and that any necessary coordination is done
+> config-tool.sh activate -s 10.0.0.1 -f my-license.xml
+----
+
+=== Creating a secured cluster
+
+[NOTE]
+====
+The security directory needs to exist on the nodes and contains the necessary files.
+====
+
+Let's say we have an activated cluster of 1 active node that has been started with the following config:
+
+```
+  --name=1
+  --hostname=10.0.0.1
+  --cluster-name=cluster-1
+  --license-file=/path/to/license.xml
+  --config-dir=%H/terracotta/config1
+  --security-dir=%H/terracotta/security1
+  --audit-log-dir=%H/terracotta/audit1
+  --authc=file
+  --ssl-tls=true
+```
+
+Starts 2 other `UNCONFIGURED` nodes, one having some non-default parameters
+
+[source,bash]
+----
+> start-tc-server.sh --name=2 --hostname=10.0.0.2
+> start-tc-server.sh --name=3 --hostname=10.0.0.3 \
+  --config-dir=%H/terracotta/config3 \
+  --security-dir=%H/terracotta/security3 \
+  --audit-log-dir=%H/terracotta/audit3
+
+# We attach node 2 as a passive
+# This will add to the topology a new node with the same security settings,
+# and the server directories will be the default ones
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.2
+
+# We attach node 3 as a passive
+# This will add to the topology a new node with the same security settings, and the config,
+# security and audit directories will be the ones provided in the command-line
+> config-tool.sh attach -d 10.0.0.1 -s 10.0.0.3 # 3 comes in second stripe
+----
+
+=== Securing a non-secured cluster
+
+Let's say we have a non-secured cluster, and all the nodes have no security directory at all yet.
+
+my-cluster:
+
+* stripe1:
+** server1 # 10.0.0.1
+** server2
+* stripe2:
+** server3
+** server4
+
+Let's secure it!
+
+. First step: add the security directory to the nodes.
+In the example, we assume the security directory will be at the same location for all the machines.
+. Second step: activate security
+
+[source,bash]
+----
+> config-tool.sh set -d 10.0.0.1 \
+                      -c my-cluster:security-dir=%H/terracotta/security \
+                      -c my-cluster:audit-log-dir=%H/terracotta/audit \
+                      -c my-cluster:authc=file \
+                      -c my-cluster:ssl-tls=true \
+                      -c my-cluster:whitelist=true
+----
+
+Once security is activated, we can change dynamically the security configuration like this example:
+
+[source,bash]
+----
+> config-tool.sh set -d 10.0.0.1 \
+                      -c my-cluster:whitelist=10.0.0.100 \
+                      -c my-cluster:auth.users.dave.password-hash=$2a$10$UoM85/5I4SnIbrOQuFZ43ekffuQKSxZmL93bR9VMcdr2URmPyjyX2 \
+                      -c my-cluster:auth.users.dave.roles=admin,support
+----
+
+=== Upgrading the license on a cluster
+
+[source,bash]
+----
+> config-tool.sh set -d 10.0.0.1 -c my-cluster:license-file=/path/to/new/license.xml
+----
+
+=== Exporting a cluster config to create a replica
+
+Let's say we have an activated cluster in geographic zone EUROPE in a Kube env.
+
+cluster-EU in EUROPE:
+
+* stripe1
+** node1: `foo:9410`
+* stripe2
+** node1: `bar:9410`
+** node2: `bar:9411`
+
+node 1 and node 2 are on the same machine (`bar`) but with different port numbers.
+stripe1 and stripe2 both have nodes with the same server names.
+
+We export the cluster config:
+
+[source,bash]
+----
+> config-tool.sh export -s foo:9410 -f output.properties
+----
+
+[source,properties]
+----
+stripe.1.node..1.name=node1
+stripe.1.node.1.hostname=foo
+stripe.1.node.1.port=9410
+#[...]
+stripe.2.node.1.name=node1
+stripe.2.node.1.hostname=bar
+stripe.2.node.1.port=9410
+#[...]
+stripe.2.node.2.name=node2
+stripe.2.node.2.hostname=bar
+stripe.2.node.2.port=9411
+#[...]
+----
+
+The user edit the file because he wants to change some node ports in the target cluster cluster-AS
+
+[source,properties]
+----
+stripe.1.node.1.name=node1
+stripe.1.node.1.hostname=foo
+stripe.1.node.1.port=9411
+#[...]
+stripe.2.node.1.name=node1
+stripe.2.node.1.hostname=bar
+stripe.2.node.1.port=9412
+#[...]
+stripe.2.node.2.name=node2
+stripe.2.node.2.hostname=bar
+stripe.2.node.2.port=9413
+#[...]
+----
+
+There he uses this configuration in his new Kube environment that is matching the previous one.
+Though, the user made one mistake and one of the container has the wrong local hostname `baz` instead of `bar`.
+
+[source,bash]
+----
+# in container foo:
+
+> start-tc-server.sh --config-file=output.properties
+
+# in container baz:
+
+# this will restart stripe 2 node 1
+> start-tc-server.sh --config-file=output.properties --hostname=bar
+# this will restart stripe 2 node 2
+> start-tc-server.sh --config-file=output.properties --hostname=bar --port=9413
+----

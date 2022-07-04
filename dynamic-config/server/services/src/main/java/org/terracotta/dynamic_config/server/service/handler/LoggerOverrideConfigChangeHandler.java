@@ -25,6 +25,8 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 
+import java.util.Collections;
+
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -39,41 +41,69 @@ public class LoggerOverrideConfigChangeHandler implements ConfigChangeHandler {
   }
 
   @Override
-  public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
-    String logger = change.getKey();
-    String level = change.getValue();
-
-    // verify enum
-    if (level != null) {
-      try {
-        Level.valueOf(level);
-      } catch (RuntimeException e) {
-        throw new InvalidConfigChangeException("Illegal level: " + level, e);
-      }
-    }
-
-    // verify we can access the logger
+  public void validate(NodeContext nodeContext, Configuration changes) throws InvalidConfigChangeException {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-    Logger logbackLogger = loggerContext.getLogger(logger);
 
-    // verify illegal op
-    if (Logger.ROOT_LOGGER_NAME.equals(logbackLogger.getName()) && level == null) {
-      throw new InvalidConfigChangeException("Cannot remove the root logger");
+    if (!changes.hasValue()) {
+      if (changes.getKey() != null) {
+        // removal of a specific logger ?
+        Logger logbackLogger = loggerContext.getLogger(changes.getKey());
+
+        // verify illegal op
+        if (Logger.ROOT_LOGGER_NAME.equals(logbackLogger.getName())) {
+          throw new InvalidConfigChangeException("Cannot remove the root logger");
+        }
+      }
+
+    } else {
+      for (Configuration change : changes.expand()) {
+        String logger = change.getKey();
+        String level = change.getValue().get(); // we have a value otherwise the config was not valid
+
+        // verify enum
+        try {
+          Level.valueOf(level);
+        } catch (RuntimeException e) {
+          throw new InvalidConfigChangeException("Illegal level: " + level, e);
+        }
+
+        // verify we can access the logger
+        loggerContext.getLogger(logger);
+      }
     }
   }
 
   @Override
-  public void apply(Configuration change) {
+  public void apply(Configuration changes) {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-    String logger = change.getKey();
-    String level = change.getValue();
-    // setting the level to null will inherit from the parent
-    loggerContext.getLogger(logger).setLevel(level == null ? null : Level.valueOf(level));
+
+    if (!changes.hasValue()) {
+
+      if (changes.getKey() != null) {
+        // removal of a specific logger ?
+        loggerContext.getLogger(changes.getKey()).setLevel(null);
+
+      } else {
+        // remove all configured loggers ?
+        topologyService.getRuntimeNodeContext().getNode().getLoggerOverrides()
+            .orElse(Collections.emptyMap())
+            .keySet()
+            .forEach(logger -> loggerContext.getLogger(logger).setLevel(null));
+      }
+
+    } else {
+      for (Configuration change : changes.expand()) {
+        String logger = change.getKey();
+        String level = change.getValue().get();
+        // setting the level to null will inherit from the parent
+        loggerContext.getLogger(logger).setLevel(Level.valueOf(level));
+      }
+    }
   }
 
   public void init() {
     LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-    topologyService.getUpcomingNodeContext().getNode().getNodeLoggerOverrides()
-        .forEach((name, level) -> loggerContext.getLogger(name).setLevel(Level.valueOf(level.name())));
+    topologyService.getUpcomingNodeContext().getNode().getLoggerOverrides().orDefault()
+        .forEach((name, level) -> loggerContext.getLogger(name).setLevel(Level.valueOf(level)));
   }
 }

@@ -17,14 +17,16 @@ package org.terracotta.dynamic_config.server.configuration.sync;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.terracotta.nomad.server.NomadChangeInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
+import org.terracotta.json.ObjectMapperFactory;
 
+import java.io.UncheckedIOException;
 import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.terracotta.json.Json.parse;
-import static org.terracotta.json.Json.toJson;
 
 /**
  * @author Mathieu Carbou
@@ -33,11 +35,14 @@ public class DynamicConfigSyncData {
 
   private final List<NomadChangeInfo> nomadChanges;
   private final String license;
+  private final Cluster cluster;
 
   @JsonCreator
   public DynamicConfigSyncData(@JsonProperty(value = "nomadChanges", required = true) List<NomadChangeInfo> nomadChanges,
+                               @JsonProperty(value = "cluster", required = true) Cluster cluster,
                                @JsonProperty(value = "license") String license) {
     this.nomadChanges = nomadChanges;
+    this.cluster = cluster;
     this.license = license;
   }
 
@@ -49,11 +54,31 @@ public class DynamicConfigSyncData {
     return license;
   }
 
-  public static DynamicConfigSyncData decode(byte[] bytes) {
-    return parse(new String(bytes, UTF_8), new TypeReference<DynamicConfigSyncData>() {});
+  public Cluster getCluster() {
+    return cluster;
   }
 
-  public byte[] encode() {
-    return toJson(this).getBytes(UTF_8);
+  public static class Codec {
+    private final ObjectMapper objectMapper;
+
+    public Codec(ObjectMapperFactory objectMapperFactory) {
+      this.objectMapper = objectMapperFactory.create();
+    }
+
+    public byte[] encode(DynamicConfigSyncData o) {
+      try {
+        return objectMapper.writeValueAsString(o).getBytes(UTF_8);
+      } catch (JsonProcessingException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
+
+    public DynamicConfigSyncData decode(byte[] bytes) {
+      try {
+        return objectMapper.readValue(new String(bytes, UTF_8), DynamicConfigSyncData.class);
+      } catch (JsonProcessingException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
   }
 }

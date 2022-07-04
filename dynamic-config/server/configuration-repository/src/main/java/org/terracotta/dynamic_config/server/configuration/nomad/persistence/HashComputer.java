@@ -15,10 +15,19 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
+import org.terracotta.nomad.server.NomadException;
+
 /**
  * @author Mathieu Carbou
  */
 @FunctionalInterface
-public interface HashComputer<T> {
-  String computeHash(T o);
+public interface HashComputer {
+  String computeHash(Config config);
+
+  default void checkHash(Config config, String expectedHash) throws NomadException {
+    String actualHash = computeHash(config);
+    if (!actualHash.equals(expectedHash)) {
+      throw new NomadException("Computed: " + actualHash + ". Expected: " + expectedHash + ". Configuration: " + config);
+    }
+  }
 }

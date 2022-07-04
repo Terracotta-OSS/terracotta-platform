@@ -173,9 +173,7 @@ public class ClusterTest extends AbstractTest {
 
   @Test
   public void test_add_remove_server_entity() {
-    System.out.println(ClientIdentifier.discoverHostName());
-
-    Server server = cluster1.stripeStream().findFirst().get().getActiveServer().get();
+    Server server = cluster1.stripeStream().findAny().get().getActiveServer().get();
 
     assertEquals(1, server.getServerEntityCount());
 
@@ -195,7 +193,7 @@ public class ClusterTest extends AbstractTest {
 
   @Test
   public void test_fetch_unfetch() throws IOException {
-    Connection connection = client.connectionStream().findFirst().get();
+    Connection connection = client.connectionStream().findAny().get();
     assertFalse(connection.hasFetchedServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
 
     assertTrue(connection.fetchServerEntity("ehcache-entity-name-1", "org.ehcache.clustered.client.internal.EhcacheClientEntity"));
@@ -219,7 +217,7 @@ public class ClusterTest extends AbstractTest {
     Map actual = cluster1.toMap();
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    JSONAssert.assertEquals(expectedJson, mapper.writeValueAsString(actual), true);
+    JSONAssert.assertEquals(mapper.writeValueAsString(actual), expectedJson, mapper.writeValueAsString(actual), true);
   }
 
   @SuppressWarnings("unchecked")

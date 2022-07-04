@@ -15,8 +15,6 @@
  */
 package org.terracotta.nomad.messages;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.time.Instant;
@@ -29,14 +27,13 @@ public class PrepareMessage extends MutativeMessage {
   private final long versionNumber;
   private final NomadChange change;
 
-  @JsonCreator
-  public PrepareMessage(@JsonProperty(value = "expectedMutativeMessageCount", required = true) long expectedMutativeMessageCount,
-                        @JsonProperty(value = "mutationHost", required = true) String mutationHost,
-                        @JsonProperty(value = "mutationUser", required = true) String mutationUser,
-                        @JsonProperty(value = "mutationTimestamp", required = true) Instant mutationTimestamp,
-                        @JsonProperty(value = "changeUuid", required = true) UUID changeUuid,
-                        @JsonProperty(value = "versionNumber", required = true) long versionNumber,
-                        @JsonProperty(value = "change") NomadChange change) {
+  public PrepareMessage(long expectedMutativeMessageCount,
+                        String mutationHost,
+                        String mutationUser,
+                        Instant mutationTimestamp,
+                        UUID changeUuid,
+                        long versionNumber,
+                        NomadChange change) {
     super(expectedMutativeMessageCount, mutationHost, mutationUser, mutationTimestamp);
     this.changeUuid = requireNonNull(changeUuid);
     this.versionNumber = versionNumber;

@@ -17,6 +17,7 @@ package org.terracotta.management.entity.nms.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.management.entity.nms.Nms;
@@ -26,7 +27,6 @@ import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.call.Parameter;
 import org.terracotta.management.model.cluster.Client;
 import org.terracotta.management.model.cluster.Cluster;
-import org.terracotta.management.model.cluster.Connection;
 import org.terracotta.management.model.cluster.Server;
 import org.terracotta.management.model.cluster.Stripe;
 import org.terracotta.management.model.context.Context;
@@ -41,8 +41,6 @@ import org.terracotta.management.service.monitoring.SharedEntityManagementRegist
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.server.ActiveProxiedServerEntity;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -60,12 +58,12 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
   private final CapabilityManagementSupport capabilityManagementSupport;
   private final long consumerId;
 
-  ActiveNmsServerEntity(NmsConfig config, ManagementService managementService, EntityManagementRegistry entityManagementRegistry, SharedEntityManagementRegistry sharedEntityManagementRegistry) {
+  ActiveNmsServerEntity(NmsConfig config, ManagementService managementService, EntityManagementRegistry entityManagementRegistry, SharedEntityManagementRegistry sharedEntityManagementRegistry, TopologyService topologyService) {
     this.entityManagementRegistry = Objects.requireNonNull(entityManagementRegistry);
     // we create a group of registries from the entities shared registries plus this management registry (of this NMS entity)  
     this.capabilityManagementSupport = new CombiningCapabilityManagementSupport(sharedEntityManagementRegistry, entityManagementRegistry);
     this.managementService = Objects.requireNonNull(managementService);
-    this.stripeName = config.getStripeName();
+    this.stripeName = topologyService.getRuntimeNodeContext().getStripe().getName();
     this.consumerId = entityManagementRegistry.getMonitoringService().getConsumerId();
   }
 
@@ -110,48 +108,13 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
   @Override
   public Future<String> call(@ClientId Object callerDescriptor, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters) {
     if (context.contains(Stripe.KEY)) {
-      context = context.with(Stripe.KEY, "SINGLE");
+      context = context.with(Stripe.KEY, stripeName);
     }
     return CompletableFuture.completedFuture(managementService.sendManagementCallRequest((ClientDescriptor) callerDescriptor, context, capabilityName, methodName, returnType, parameters));
   }
 
   private Cluster readCluster() {
-    Cluster cluster = managementService.readTopology();
-    // if we want a specific name for our stripe, just rename it
-    if (!stripeName.equals(cluster.getSingleStripe().getName())) {
-
-      Stripe namedStripe = Stripe.create(stripeName);
-      Stripe currentStripe = cluster.getSingleStripe();
-
-      // move servers
-      currentStripe.serverStream().forEach(namedStripe::addServer);
-
-      // add stripe
-      cluster.addStripe(namedStripe);
-
-      cluster.clientStream().forEach(client -> {
-        // hole a list of connections to delete after
-        List<Connection> toDelete = new ArrayList<>(client.getConnectionCount());
-        List<Connection> toAdd = new ArrayList<>(client.getConnectionCount());
-
-        client.connectionStream().forEach(currentConn -> {
-          toDelete.add(currentConn);
-          namedStripe.getServer(currentConn.getServerId())
-              .ifPresent(server -> {
-                Connection newConnection = Connection.create(currentConn.getLogicalConnectionUid(), server, currentConn.getClientEndpoint());
-                currentConn.fetchedServerEntityStream().forEach(serverEntity -> newConnection.fetchServerEntity(serverEntity.getServerEntityIdentifier()));
-                toAdd.add(newConnection);
-              });
-        });
-
-        toDelete.forEach(Connection::remove);
-        toAdd.forEach(client::addConnection);
-      });
-
-      // remove current stripe and add new one
-      cluster.removeStripe(currentStripe.getId());
-    }
-    return cluster;
+    return managementService.readTopology();
   }
 
   // ManagementExecutor
@@ -182,7 +145,7 @@ class ActiveNmsServerEntity extends ActiveProxiedServerEntity<Void, Void, NmsCal
 
   @Override
   public void sendMessageToClients(Message message) {
-    LOGGER.trace("[{}] sendMessageToClients({}, {})", consumerId, message);
+    LOGGER.trace("[{}] sendMessageToClients({})", consumerId, message);
     // add stripe info to the message
     addStripeName(message);
     // send message

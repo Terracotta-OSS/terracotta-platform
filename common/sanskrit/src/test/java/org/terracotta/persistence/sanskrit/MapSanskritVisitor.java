@@ -44,7 +44,7 @@ public class MapSanskritVisitor implements SanskritVisitor {
   }
 
   @Override
-  public <T> void setExternal(String key, T value) {
+  public <T> void setExternal(String key, T value, String version) {
     result.put(key, value);
   }
 }

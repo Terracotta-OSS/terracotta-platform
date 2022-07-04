@@ -15,6 +15,9 @@
  */
 package org.terracotta.persistence.sanskrit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,12 +25,15 @@ import java.util.Map;
  * Matches up the record hashes to the hashes found in the hash files.
  */
 public class HashChecker {
+  private static final Logger LOGGER = LoggerFactory.getLogger(HashChecker.class);
+
   private final Map<String, String> hashes = new HashMap<>(2);
   private boolean laterHash;
   private String removedFirst;
   private int hashCount;
 
   public HashChecker(String hash0, String hash1) {
+    LOGGER.trace("HashChecker({}, {})", hash0, hash1);
     if (hash0 != null) {
       hashes.put(hash0, "hash0");
       hashCount++;
@@ -44,10 +50,12 @@ public class HashChecker {
         throw new SanskritException("Found hashes after the last recorded hash");
       }
       laterHash = true;
+      LOGGER.trace("check({}): {}", hash, false);
       return false;
     }
 
     String removed = hashes.remove(hash);
+    LOGGER.trace("check({}): removed: {}", hash, removed);
 
     if (removed != null) {
       if (removedFirst == null) {
@@ -59,6 +67,7 @@ public class HashChecker {
       }
     }
 
+    LOGGER.trace("check({}): {}", hash, true);
     return true;
   }
 
@@ -68,21 +77,27 @@ public class HashChecker {
     }
 
     if (hashCount == 2) {
+      LOGGER.trace("done(): {}", removedFirst);
       return removedFirst;
     }
 
+    LOGGER.trace("done(): <none>");
     return null;
   }
 
   public String nextHashFile() {
     if (hashCount == 2) {
+      LOGGER.trace("nextHashFile(): {}", removedFirst);
       return removedFirst;
     }
 
     if (hashCount == 1) {
-      return invert(removedFirst);
+      final String inverted = invert(removedFirst);
+      LOGGER.trace("nextHashFile(): inverted: {}", inverted);
+      return inverted;
     }
 
+    LOGGER.trace("nextHashFile(): hash0");
     return "hash0";
   }
 

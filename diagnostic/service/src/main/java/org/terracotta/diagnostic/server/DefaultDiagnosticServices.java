@@ -21,15 +21,16 @@ import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodec;
 import org.terracotta.diagnostic.server.api.DiagnosticServices;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
+import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.server.ServerJMX;
+import org.terracotta.server.ServerMBean;
 
-import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
+import javax.management.StandardMBean;
 import java.io.Closeable;
-import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -41,9 +42,7 @@ import java.util.function.Consumer;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import javax.management.StandardMBean;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
-import org.terracotta.server.ServerMBean;
 
 /**
  * Common manager holding all diagnostic services registered on a server
@@ -54,15 +53,16 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDiagnosticServices.class);
 
   private final Map<Class<?>, CompletableFuture<?>> listeners = new ConcurrentHashMap<>();
-  private final TerracottaMBeanGenerator generator = new TerracottaMBeanGenerator();
 
   private final DiagnosticRequestHandler handler;
+  private final ServerJMX serverJMX;
 
-  public DefaultDiagnosticServices() {
-    this(new JsonDiagnosticCodec(false));
+  public DefaultDiagnosticServices(ServerJMX serverJMX, ObjectMapperFactory objectMapperFactory) {
+    this(serverJMX, new JsonDiagnosticCodec(objectMapperFactory));
   }
 
-  public DefaultDiagnosticServices(DiagnosticCodec<String> codec) {
+  public DefaultDiagnosticServices(ServerJMX serverJMX, DiagnosticCodec<String> codec) {
+    this.serverJMX = serverJMX;
     this.handler = DiagnosticRequestHandler.withCodec(codec);
   }
 
@@ -81,10 +81,8 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
     DiagnosticServiceDescriptor<T> added = handler.add(
         serviceInterface,
         serviceImplementation,
-        () -> unregister(serviceInterface),
-        name -> registerMBean(name, serviceInterface));
+        () -> unregister(serviceInterface));
     LOGGER.info("Registered Diagnostic Service: {}", serviceInterface.getName());
-    added.discoverMBeanName().ifPresent(name -> registerMBean(name, added));
     fireOnService(serviceInterface, serviceImplementation);
     return added;
   }
@@ -125,40 +123,20 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
     requireNonNull(serviceInterface);
     DiagnosticServiceDescriptor<?> descriptor = handler.remove(serviceInterface);
     if (descriptor != null) {
-      descriptor.getRegisteredMBeans().forEach(DefaultDiagnosticServices::unregisterMBean);
+      descriptor.getRegisteredMBeans().forEach(this::unregisterMBean);
     }
     listeners.remove(serviceInterface);
   }
 
-  <T> boolean registerMBean(String name, Class<T> serviceInterface) {
-    DiagnosticServiceDescriptor<T> serviceDescriptor = handler.findService(serviceInterface).orElse(null);
-    if (serviceDescriptor == null) {
-      return false;
-    } else {
-      registerMBean(name, serviceDescriptor);
-      return true;
-    }
+  private void registerMBean(String name, StandardMBean mBean) {
+    serverJMX.registerMBean(name, mBean);
+    LOGGER.info("Registered MBean with name: {}", name);
   }
 
-  private <T> void registerMBean(String name, DiagnosticServiceDescriptor<T> descriptor) {
-    registerMBean(name, generator.generateMBean(descriptor));
-    descriptor.addMBean(name);
-  }
-
-  private static void registerMBean(String name, StandardMBean mBean) {
+  private void unregisterMBean(String name) {
     try {
       ObjectName beanName = ServerMBean.createMBeanName(name);
-      ManagementFactory.getPlatformMBeanServer().registerMBean(mBean, beanName);
-      LOGGER.info("Registered MBean with name: {}", name);
-    } catch (MalformedObjectNameException | NotCompliantMBeanException | InstanceAlreadyExistsException | MBeanRegistrationException e) {
-      throw new AssertionError(e);
-    }
-  }
-
-  private static void unregisterMBean(String name) {
-    try {
-      ObjectName beanName = ServerMBean.createMBeanName(name);
-      ManagementFactory.getPlatformMBeanServer().unregisterMBean(beanName);
+      serverJMX.getMBeanServer().unregisterMBean(beanName);
       LOGGER.info("Unregistered MBean with name: {}", name);
     } catch (MalformedObjectNameException | MBeanRegistrationException e) {
       throw new AssertionError(e);

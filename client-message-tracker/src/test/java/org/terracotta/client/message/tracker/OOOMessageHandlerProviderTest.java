@@ -31,11 +31,11 @@ public class OOOMessageHandlerProviderTest {
   public void getService() throws Exception {
     OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
     OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> config =
-        new OOOMessageHandlerConfiguration<>("foo", null, 1, m -> 0);
+        new OOOMessageHandlerConfiguration<>("foo", null);
     OOOMessageHandler<EntityMessage, EntityResponse> messageHandler = provider.getService(1L, config);
     assertThat(provider.getService(2L, config), sameInstance(messageHandler));
 
-    config = new OOOMessageHandlerConfiguration<>("bar", null, 1, m -> 0);
+    config = new OOOMessageHandlerConfiguration<>("bar", null);
     assertThat(provider.getService(2L, config), not(sameInstance(messageHandler)));
   }
 
@@ -50,7 +50,7 @@ public class OOOMessageHandlerProviderTest {
   public void testDestroyCallback() {
     OOOMessageHandlerProvider provider =  new OOOMessageHandlerProvider();
     OOOMessageHandlerConfiguration<EntityMessage, EntityResponse> config =
-      new OOOMessageHandlerConfiguration<>("foo", null, 1, m -> 0);
+      new OOOMessageHandlerConfiguration<>("foo", null);
     OOOMessageHandler<EntityMessage, EntityResponse> messageHandler = provider.getService(1L, config);
 
     messageHandler.destroy();

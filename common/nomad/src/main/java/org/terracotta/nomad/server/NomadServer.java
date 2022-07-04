@@ -22,7 +22,20 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 
+import java.util.Optional;
+import java.util.UUID;
+
 public interface NomadServer<T> extends AutoCloseable {
+  /**
+   * Last change has not been committed or rolled back yet.
+   * Nomad is in PREPARED mode and won't accept further changes.
+   */
+  boolean hasIncompleteChange();
+
+  Optional<ChangeState<T>> getConfig(UUID changeUUID) throws NomadException;
+
+  Optional<T> getCurrentCommittedConfig() throws NomadException;
+
   DiscoverResponse<T> discover() throws NomadException;
 
   AcceptRejectResponse prepare(PrepareMessage message) throws NomadException;
@@ -32,6 +45,8 @@ public interface NomadServer<T> extends AutoCloseable {
   AcceptRejectResponse rollback(RollbackMessage message) throws NomadException;
 
   AcceptRejectResponse takeover(TakeoverMessage message) throws NomadException;
+
+  void reset() throws NomadException;
 
   @Override
   void close();

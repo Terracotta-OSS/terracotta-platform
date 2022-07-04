@@ -30,10 +30,10 @@ public class RecoveryProcess<T> extends NomadClientProcess<Void, T> {
     super(servers, host, user, clock);
   }
 
-  public void recover(RecoveryResultReceiver<T> results, int expectedNodeCount, ChangeRequestState forcedState) {
+  public void recover(RecoveryResultReceiver<T> results, int expectedTotalNodeCount, ChangeRequestState forcedState) {
     runProcess(
         new RecoveryAllResultsReceiverAdapter<>(results),
-        new RecoveryProcessDecider<>(expectedNodeCount, forcedState),
+        new RecoveryProcessDecider<>(expectedTotalNodeCount, forcedState),
         new RecoveryMessageSender<>(servers, host, user, clock),
         null
     );

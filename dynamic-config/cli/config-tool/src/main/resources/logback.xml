@@ -19,36 +19,22 @@
 <configuration debug="false">
 
   <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
-
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>INFO</level>
-    </filter>
+  <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
     <layout class="ch.qos.logback.classic.PatternLayout">
       <pattern>%msg%n</pattern>
     </layout>
   </appender>
 
-  <appender name="STDOUT-DETAIL" class="ch.qos.logback.core.ConsoleAppender">
-    <layout class="ch.qos.logback.classic.PatternLayout">
-      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p %c{1}:%L - %msg%n</pattern>
-    </layout>
-  </appender>
-
   <root level="OFF">
-    <appender-ref ref="STDOUT-DETAIL"/>
+    <appender-ref ref="STDERR"/>
   </root>
 
-  <logger name="org.terracotta.dynamic_config" level="INFO" additivity="false">
-    <appender-ref ref="STDOUT"/>
+  <logger name="com.terracottatech.tools" level="INFO" additivity="false">
+    <appender-ref ref="STDERR"/>
   </logger>
-  <logger name="org.terracotta.nomad" level="INFO" additivity="false">
-    <appender-ref ref="STDOUT"/>
-  </logger>
-  <logger name="org.terracotta.persistence.sanskrit" level="INFO" additivity="false">
-    <appender-ref ref="STDOUT"/>
-  </logger>
-  <logger name="org.terracotta.diagnostic" level="INFO" additivity="false">
-    <appender-ref ref="STDOUT"/>
+
+  <logger name="org.terracotta.dynamic_config.cli" level="INFO" additivity="false">
+    <appender-ref ref="STDERR"/>
   </logger>
 </configuration>

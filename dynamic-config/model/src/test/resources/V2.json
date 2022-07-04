@@ -1,0 +1,78 @@
+{
+  "stripes": [
+    {
+      "name": "stripe1",
+      "nodes": [
+        {
+          "bindAddress": "0.0.0.0",
+          "dataDirs": {
+            "bar": "%H/tc1/bar",
+            "foo": "%H/tc1/foo"
+          },
+          "groupBindAddress": "0.0.0.0",
+          "groupPort": 9430,
+          "hostname": "localhost1",
+          "logDir": "%H/terracotta/logs",
+          "metadataDir": "%H/terracotta/metadata",
+          "name": "node-1",
+          "port": 9410,
+          "uid": "VOVyu3kuQxCRIu7dK_UZZA"
+        },
+        {
+          "bindAddress": "0.0.0.0",
+          "dataDirs": {
+            "bar": "%H/tc2/bar",
+            "foo": "%H/tc2/foo"
+          },
+          "groupBindAddress": "0.0.0.0",
+          "groupPort": 9430,
+          "hostname": "localhost2",
+          "logDir": "%H/terracotta/logs",
+          "metadataDir": "%H/terracotta/metadata",
+          "name": "node-2",
+          "port": 9410,
+          "tcProperties": {},
+          "uid": "ZwZtuxl6QlWGZVUJ_30uMQ"
+        }
+      ],
+      "uid": "5Zv3uphiRLavoGZthy7JNg"
+    }
+  ],
+  "clientLeaseDuration": {
+    "quantity": 150,
+    "unit": "SECONDS",
+    "type": "TIME"
+  },
+  "clientReconnectWindow": {
+    "quantity": 120,
+    "unit": "SECONDS",
+    "type": "TIME"
+  },
+  "configurationLockContext": {
+    "ownerName": "me",
+    "ownerTags": "tag",
+    "token": "30fc1dd1-0788-4592-8f49-d7dbb4daf45e"
+  },
+  "failoverPriority": "consistency:2",
+  "name": "my-cluster",
+  "offheapResources": {
+    "bar": {
+      "quantity": 2,
+      "unit": "GB",
+      "type": "MEMORY"
+    },
+    "foo": {
+      "quantity": 1,
+      "unit": "GB",
+      "type": "MEMORY"
+    },
+    "main": {
+      "quantity": 512,
+      "unit": "MB",
+      "type": "MEMORY"
+    }
+  },
+  "securitySslTls": false,
+  "securityWhitelist": false,
+  "uid": "YLQguzhRSdS6y5M9vnA5mw"
+}

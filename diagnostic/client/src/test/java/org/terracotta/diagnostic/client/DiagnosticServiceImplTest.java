@@ -17,6 +17,7 @@ package org.terracotta.diagnostic.client;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,19 +29,19 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.connection.Connection;
+import org.terracotta.connection.Diagnostics;
 import org.terracotta.diagnostic.common.Base64DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
 import org.terracotta.diagnostic.common.JavaDiagnosticCodec;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodec;
-import org.terracotta.json.Json;
+import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -58,7 +59,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import org.terracotta.connection.Diagnostics;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_DIAGNOSTIC_REQUEST_HANDLER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MBEAN_SERVER;
 import static org.terracotta.diagnostic.common.DiagnosticConstants.MESSAGE_INVALID_JMX;
@@ -74,14 +74,21 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
 @RunWith(MockitoJUnitRunner.class)
 public class DiagnosticServiceImplTest {
 
-  @Rule public ExpectedException exception = ExpectedException.none();
-  @Mock public Diagnostics diagnostics;
-  @Mock public Connection connection;
-  @Spy public JsonDiagnosticCodec jsonCodec;
-  @Spy public JavaDiagnosticCodec javaCodec;
-  @Captor public ArgumentCaptor<String> request;
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
+  @Mock
+  public Diagnostics diagnostics;
+  @Mock
+  public Connection connection;
+  @Spy
+  public JsonDiagnosticCodec jsonCodec = new JsonDiagnosticCodec(new ObjectMapperFactory());
+  @Spy
+  public JavaDiagnosticCodec javaCodec;
+  @Captor
+  public ArgumentCaptor<String> request;
 
   DiagnosticService service;
+  ObjectMapper objectMapper = new ObjectMapperFactory().create();
 
   @Before
   public void setUp() {
@@ -112,15 +119,10 @@ public class DiagnosticServiceImplTest {
 
   @Test
   public void test_isConnected() {
-    Stream.of("foo", MESSAGE_NOT_PERMITTED, MESSAGE_UNKNOWN_COMMAND, MESSAGE_INVALID_JMX).forEach(ret -> {
-      when(diagnostics.getState()).thenReturn(ret);
-      assertThat(service.isConnected(), is(true));
-    });
-    Stream.of(null, MESSAGE_REQUEST_TIMEOUT).forEach(ret -> {
-      when(diagnostics.getState()).thenReturn(ret);
-      assertThat(service.isConnected(), is(false));
-    });
-    verify(diagnostics, times(6)).getState();
+    when(connection.isValid()).thenReturn(true);
+    assertThat(service.isConnected(), is(true));
+    when(connection.isValid()).thenReturn(false);
+    assertThat(service.isConnected(), is(false));
   }
 
   @Test
@@ -240,7 +242,7 @@ public class DiagnosticServiceImplTest {
       Food out = foodService.cook(in);
       verify(jsonCodec).serialize(new DiagnosticRequest(FoodService.class, "cook", in));
       verify(jsonCodec).deserialize(json, DiagnosticResponse.class);
-      assertThat(Json.toJsonTree(out), is(equalTo(Json.toJsonTree(diagnosticResponse.getBody()))));
+      assertThat(objectMapper.valueToTree(out), is(equalTo(objectMapper.valueToTree(diagnosticResponse.getBody()))));
     }
 
     // test encoded request and error success answer
@@ -289,7 +291,9 @@ public class DiagnosticServiceImplTest {
     private static final long serialVersionUID = 1L;
     final int time;
 
-    public Food(int time) {this.time = time;}
+    public Food(int time) {
+      this.time = time;
+    }
 
     public int getTime() {
       return time;

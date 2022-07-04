@@ -74,7 +74,7 @@ public final class Cluster implements Contextual {
     if (getStripeCount() != 1) {
       throw new NoSuchElementException();
     }
-    return stripeStream().findFirst().get();
+    return stripeStream().findAny().get();
   }
 
   public boolean addClient(Client client) {
@@ -96,7 +96,7 @@ public final class Cluster implements Contextual {
   }
 
   public Optional<Client> getClient(ClientIdentifier clientIdentifier) {
-    return clientStream().filter(client -> client.getClientIdentifier().equals(clientIdentifier)).findFirst();
+    return clientStream().filter(client -> client.getClientIdentifier().equals(clientIdentifier)).findAny();
   }
 
   public Optional<Client> getClient(String id) {
