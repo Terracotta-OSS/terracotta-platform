@@ -46,7 +46,7 @@ public class NodeRemovalNomadChange extends NodeNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(NodeContext currentNode) {
+  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
     return true;
   }
 

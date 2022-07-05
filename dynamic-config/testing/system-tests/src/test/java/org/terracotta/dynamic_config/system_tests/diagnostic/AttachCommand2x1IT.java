@@ -16,18 +16,18 @@
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
 import org.junit.Test;
-import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(stripes = 2, nodesPerStripe = 1, autoStart = false)
+@ClusterDefinition(stripes = 2, nodesPerStripe = 1, autoStart = false, failoverPriority = "")
 public class AttachCommand2x1IT extends DynamicConfigIT {
 
   @Override
@@ -35,15 +35,12 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
     return "foo";
   }
 
-  protected RawPath getNodePath(int stripeId, int nodeId) {
-    return RawPath.valueOf("node-" + stripeId + "-" + nodeId);
-  }
-
   @Test
   public void test_prevent_duplicate_name_during_attach() throws Exception {
     // activate a 1x1 cluster
+    getNode(1, 1).configRepo("config-1-1").logs("logs-1-1");
+    getNode(2, 1).configRepo("config-2-1").logs("logs-2-1");
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     withTopologyService(1, 1, topologyService -> {
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getNodeCount(), is(equalTo(1)));
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getSingleNode().get().getName(), is(equalTo("foo")));
@@ -51,7 +48,6 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
 
     // start a second node with same name
     startNode(2, 1);
-    waitForDiagnostic(2, 1);
     withTopologyService(2, 1, topologyService -> {
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getNodeCount(), is(equalTo(1)));
       assertThat(topologyService.getUpcomingNodeContext().getCluster().getSingleNode().get().getName(), is(equalTo("foo")));
@@ -59,7 +55,7 @@ public class AttachCommand2x1IT extends DynamicConfigIT {
 
     // attach
     assertThat(
-        () -> invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
-        exceptionMatcher("Found duplicate node name: foo"));
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
+        containsOutput("Found duplicate node name: foo"));
   }
 }

@@ -18,27 +18,104 @@ package org.terracotta.dynamic_config.cli.config_tool;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.cli.api.command.Configuration;
+import org.terracotta.dynamic_config.cli.api.command.Injector;
+import org.terracotta.dynamic_config.cli.api.command.ServiceProvider;
+import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
+import org.terracotta.dynamic_config.cli.api.output.OutputService;
+import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.CustomJCommander;
-import org.terracotta.dynamic_config.cli.command.Injector;
-import org.terracotta.dynamic_config.cli.command.JCommanderCommand;
-import org.terracotta.dynamic_config.cli.command.JCommanderCommandRepository;
-import org.terracotta.dynamic_config.cli.command.RemoteMainCommand;
-import org.terracotta.dynamic_config.cli.config_tool.command.JCommanderCommandProvider;
-import org.terracotta.dynamic_config.cli.config_tool.command.ServiceProvider;
+import org.terracotta.dynamic_config.cli.config_tool.command.CommandProvider;
+import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainCommand;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import static java.lang.System.lineSeparator;
 
 public class ConfigTool {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigTool.class);
 
+  private final OutputService outputService;
+  private final CommandProvider commandProvider;
+
+  public ConfigTool() {
+    this(new ConsoleOutputService());
+  }
+
+  public ConfigTool(OutputService outputService) {
+    this(outputService, CommandProvider.get());
+  }
+
+  public ConfigTool(OutputService outputService, CommandProvider commandProvider) {
+    this.outputService = outputService;
+    this.commandProvider = commandProvider;
+  }
+
+  public void run(String... args) {
+    LOGGER.debug("Parsing command-line arguments");
+    CustomJCommander<RemoteMainCommand> jCommander = parseArguments(args);
+
+    // Process arguments like '-v'
+    RemoteMainCommand mainCommand = jCommander.getMainCommand();
+    mainCommand.run();
+
+    // create services
+    Collection<Object> services = ServiceProvider.get().createServices(mainCommand.getConfiguration());
+
+    jCommander.getAskedCommand().map(command -> {
+      // check for help
+      if (command.isHelp()) {
+        jCommander.printUsage();
+        return true;
+      } else {
+        LOGGER.debug("Injecting services in specified command");
+        Injector.inject(command, services);
+        // run the real command
+        command.run();
+        return true;
+      }
+    }).orElseGet(() -> {
+      // If no command is provided, process help command
+      jCommander.usage();
+      return false;
+    });
+  }
+
+  private CustomJCommander<RemoteMainCommand> parseArguments(String[] args) {
+    LOGGER.debug("Attempting parse using regular commands");
+    CustomJCommander<RemoteMainCommand> jCommander = getCustomJCommander(commandProvider.getCommands(), commandProvider.getMainCommand(new Configuration(outputService)));
+    try {
+      jCommander.parse(args);
+    } catch (ParameterException e) {
+      String command = jCommander.getParsedCommand();
+      if (command != null) {
+        // Fallback to deprecated version
+        try {
+          LOGGER.debug("Attempting parse using deprecated commands");
+          // Create New JCommander object to avoid repeated main command error.
+          CustomJCommander<RemoteMainCommand> deprecatedJCommander = getCustomJCommander(commandProvider.getDeprecatedCommands(), commandProvider.getMainCommand(new Configuration(outputService)));
+          deprecatedJCommander.parse(args);
+          // success ?
+          return deprecatedJCommander;
+        } catch (ParameterException pe) {
+          // error ?
+          // always display help file for new command
+          jCommander.printAskedCommandUsage(command);
+          throw e;
+        }
+      } else {
+        jCommander.printUsage();
+        throw e;
+      }
+    }
+    return jCommander;
+  }
+
   public static void main(String... args) {
     try {
-      ConfigTool.start(args);
+      new ConfigTool().run(args);
     } catch (Exception e) {
       String message = e.getMessage();
       if (message == null || message.isEmpty()) {
@@ -55,82 +132,8 @@ public class ConfigTool {
     }
   }
 
-  public static void start(String... args) {
-    JCommanderCommandProvider commandProvider = JCommanderCommandProvider.get();
-    final RemoteMainCommand mainCommand = new RemoteMainCommand();
-    LOGGER.debug("Registering commands with JCommanderCommandRepository");
-    JCommanderCommandRepository commandRepository = new JCommanderCommandRepository();
-    Set<JCommanderCommand> commands = commandProvider.getCommands();
-    commands.add(mainCommand);
-    commandRepository.addAll(commands);
-
-    LOGGER.debug("Parsing command-line arguments");
-    CustomJCommander jCommander = parseArguments(commandRepository, mainCommand, args);
-
-    // Process arguments like '-v'
-    mainCommand.validate();
-    mainCommand.run();
-
-    // create services
-    Collection<Object> services = ServiceProvider.get().createServices(mainCommand);
-
-    jCommander.getAskedCommand().map(command -> {
-      // check for help
-      if (command.isHelp()) {
-        jCommander.printUsage();
-        return true;
-      } else {
-        LOGGER.debug("Injecting services in specified command");
-        Injector.inject(command.getCommand(), services);
-        // validate the real command
-        command.validate();
-        // run the real command
-        command.run();
-        return true;
-      }
-    }).orElseGet(() -> {
-      // If no command is provided, process help command
-      jCommander.usage();
-      return false;
-    });
-  }
-
-  private static CustomJCommander parseArguments(JCommanderCommandRepository commandRepository, RemoteMainCommand mainCommand, String[] args) {
-    CustomJCommander jCommander = getCustomJCommander(commandRepository, mainCommand);
-    try {
-      jCommander.parse(args);
-    } catch (ParameterException e) {
-      String command = jCommander.getParsedCommand();
-      if (command != null) {
-        // Fallback to deprecated version
-        try {
-          for (int i = 0; i < args.length; ++i) {
-            if (args[i].equals(command)) {
-              args[i] = args[i].concat("-deprecated");
-              break;
-            }
-          }
-          // Create New JCommander object to avoid repeated main command error.
-          CustomJCommander deprecatedJCommander = getCustomJCommander(commandRepository, mainCommand);
-          deprecatedJCommander.parse(args);
-          // success ?
-          jCommander = deprecatedJCommander;
-        } catch (ParameterException pe) {
-          // error ?
-          // always display help file for new command
-          jCommander.printAskedCommandUsage(command);
-          throw e;
-        }
-      } else {
-        jCommander.printUsage();
-        throw e;
-      }
-    }
-    return jCommander;
-  }
-
-  private static CustomJCommander getCustomJCommander(JCommanderCommandRepository commandRepository, RemoteMainCommand mainCommand) {
-    CustomJCommander jCommander = new CustomJCommander("config-tool", commandRepository, mainCommand) {
+  private static CustomJCommander<RemoteMainCommand> getCustomJCommander(Map<String, Command> commands, RemoteMainCommand mainCommand) {
+    return new CustomJCommander<RemoteMainCommand>("config-tool", commands, mainCommand) {
       @Override
       public void appendDefinitions(StringBuilder out, String indent) {
         out.append(indent).append(lineSeparator()).append("Definitions:").append(lineSeparator());
@@ -158,6 +161,5 @@ public class ConfigTool {
         }
       }
     };
-    return jCommander;
   }
 }

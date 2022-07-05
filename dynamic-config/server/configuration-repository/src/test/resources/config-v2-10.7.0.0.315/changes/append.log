@@ -1,0 +1,25 @@
+format version: 2
+2021-03-03T14:32:45.850Z
+{"mutativeMessageCount":1,"currentVersion":0,"mode":"ACCEPTING","highestVersion":0}
+bd963a1f786697e942d8209a9060a13231a60d0d
+
+format version: 2
+2021-03-03T14:33:24.833Z
+{"mutativeMessageCount":2,"currentVersion":0,"request":"PREPARE","mode":"PREPARED","latestChangeUuid":"069fa954-81c1-40cf-bd59-ac9b7533ebe2","highestVersion":1,"lastMutationHost":"SAG-5WQ45Y2","lastMutationUser":"tmes","lastMutationTimestamp":"2021-03-03T14:33:24.752Z","069fa954-81c1-40cf-bd59-ac9b7533ebe2":{"state":"PREPARED","version":1,"operation":{"type":"ClusterActivationNomadChange","cluster":{"stripes":[{"name":"India","nodes":[{"backupDir":"dirs\\node1\\backup","bindAddress":"0.0.0.0","dataDirs":{"main":"dirs\\node1\\main"},"groupBindAddress":"0.0.0.0","groupPort":8430,"hostname":"host1","logDir":"dirs\\node1\\logs","metadataDir":"dirs\\node1\\metadata","name":"node1","port":9410,"uid":"ZL13Lc1ES7-30VgZwQ0ezg"},{"backupDir":"dirs\\node2\\backup","bindAddress":"0.0.0.0","dataDirs":{"main":"dirs\\node2\\main"},"groupBindAddress":"0.0.0.0","groupPort":8432,"hostname":"host2","logDir":"dirs\\node2\\logs","metadataDir":"dirs\\node2\\metadata","name":"node2","port":9412,"uid":"17ywktk1TNWVxHqqIM5fog"}],"uid":"iq1kITY7QDiwKKhkUElbpQ"}],"failoverPriority":"consistency","name":"cluster1","uid":"EhLFKbmhRsmXP_vWOVJ2CA"},"applicability":{"level":"CLUSTER"},"summary":"Activating cluster: cluster1"},"formatVersion":"2","changeResultHash":"652a698bdf832a9377f28773ec8b92a5304977ea","creationHost":"SAG-5WQ45Y2","creationUser":"tmes","creationTimestamp":"2021-03-03T14:33:24.752Z"}}
+c48cb2c49dc21af7cad12d5b3ec9481cbfcdfa0f
+
+format version: 2
+2021-03-03T14:33:25.024Z
+{"mutativeMessageCount":3,"currentVersion":1,"request":"COMMIT","mode":"ACCEPTING","latestChangeUuid":"069fa954-81c1-40cf-bd59-ac9b7533ebe2","lastMutationHost":"SAG-5WQ45Y2","lastMutationUser":"tmes","lastMutationTimestamp":"2021-03-03T14:33:24.970Z","069fa954-81c1-40cf-bd59-ac9b7533ebe2":{"state":"COMMITTED","version":1,"operation":{"type":"ClusterActivationNomadChange","cluster":{"stripes":[{"name":"India","nodes":[{"backupDir":"dirs\\node1\\backup","bindAddress":"0.0.0.0","dataDirs":{"main":"dirs\\node1\\main"},"groupBindAddress":"0.0.0.0","groupPort":8430,"hostname":"host1","logDir":"dirs\\node1\\logs","metadataDir":"dirs\\node1\\metadata","name":"node1","port":9410,"uid":"ZL13Lc1ES7-30VgZwQ0ezg"},{"backupDir":"dirs\\node2\\backup","bindAddress":"0.0.0.0","dataDirs":{"main":"dirs\\node2\\main"},"groupBindAddress":"0.0.0.0","groupPort":8432,"hostname":"host2","logDir":"dirs\\node2\\logs","metadataDir":"dirs\\node2\\metadata","name":"node2","port":9412,"uid":"17ywktk1TNWVxHqqIM5fog"}],"uid":"iq1kITY7QDiwKKhkUElbpQ"}],"failoverPriority":"consistency","name":"cluster1","uid":"EhLFKbmhRsmXP_vWOVJ2CA"},"applicability":{"level":"CLUSTER"},"summary":"Activating cluster: cluster1"},"formatVersion":"2","changeResultHash":"652a698bdf832a9377f28773ec8b92a5304977ea","creationHost":"SAG-5WQ45Y2","creationUser":"tmes","creationTimestamp":"2021-03-03T14:33:24.752Z"}}
+a2799ff9ed32361f7110757cfe33e3f5357d5293
+
+format version: 2
+2021-03-03T14:46:03.604Z
+{"mutativeMessageCount":4,"currentVersion":1,"request":"PREPARE","mode":"PREPARED","latestChangeUuid":"a67f6512-15e0-491f-8ec9-b2470d7b1cdb","highestVersion":2,"lastMutationHost":"SAG-5WQ45Y2","lastMutationUser":"tmes","lastMutationTimestamp":"2021-03-03T14:46:03.459Z","a67f6512-15e0-491f-8ec9-b2470d7b1cdb":{"state":"PREPARED","version":2,"prevChangeUuid":"069fa954-81c1-40cf-bd59-ac9b7533ebe2","operation":{"type":"MultiSettingNomadChange","changes":[{"type":"SettingNomadChange","applicability":{"level":"CLUSTER"},"name":"main2","operation":"SET","setting":"OFFHEAP_RESOURCES","value":"222MB","summary":"set offheap-resources.main2=222MB"}],"summary":"set offheap-resources.main2=222MB"},"formatVersion":"2","changeResultHash":"171a2b3d54ef867ec3d7d376c29dd87328d4f738","creationHost":"SAG-5WQ45Y2","creationUser":"tmes","creationTimestamp":"2021-03-03T14:46:03.459Z"}}
+f7c909153611f4b4f9800539d119e2c46862540c
+
+format version: 2
+2021-03-03T14:46:03.747Z
+{"mutativeMessageCount":5,"currentVersion":2,"request":"COMMIT","mode":"ACCEPTING","latestChangeUuid":"a67f6512-15e0-491f-8ec9-b2470d7b1cdb","lastMutationHost":"SAG-5WQ45Y2","lastMutationUser":"tmes","lastMutationTimestamp":"2021-03-03T14:46:03.620Z","a67f6512-15e0-491f-8ec9-b2470d7b1cdb":{"state":"COMMITTED","version":2,"prevChangeUuid":"069fa954-81c1-40cf-bd59-ac9b7533ebe2","operation":{"type":"MultiSettingNomadChange","changes":[{"type":"SettingNomadChange","applicability":{"level":"CLUSTER"},"name":"main2","operation":"SET","setting":"OFFHEAP_RESOURCES","value":"222MB","summary":"set offheap-resources.main2=222MB"}],"summary":"set offheap-resources.main2=222MB"},"formatVersion":"2","changeResultHash":"171a2b3d54ef867ec3d7d376c29dd87328d4f738","creationHost":"SAG-5WQ45Y2","creationUser":"tmes","creationTimestamp":"2021-03-03T14:46:03.459Z"}}
+ed1b4f6cd5ae0ee66779d4725be79345042e7669
+

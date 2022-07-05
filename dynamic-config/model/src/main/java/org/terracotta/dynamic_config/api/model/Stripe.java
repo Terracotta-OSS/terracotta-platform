@@ -19,20 +19,17 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.dynamic_config.api.service.Props;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toList;
 
 
 public class Stripe implements Cloneable, PropertyHolder {
@@ -121,26 +118,6 @@ public class Stripe implements Cloneable, PropertyHolder {
     return nodes.stream().anyMatch(node -> node.getName().equals(nodeName));
   }
 
-  /**
-   * Returns the endpoints to use to connect to the nodes of the cluster.
-   * The endpoints are using the same address "group" as the address used to access
-   * this node context.
-   * <p>
-   * In case no initiator is given, or if it is not found, the returned endpoints
-   * will be the public addresses if all nodes have a public address, otherwise it
-   * will be the internal addresses
-   *
-   * @param initiator Address used to load this class, can be null.
-   */
-  public Collection<Node.Endpoint> getEndpoints(InetSocketAddress initiator) {
-    Function<Node, Node.Endpoint> fetcher = getEndpointFetcher(initiator);
-    return getNodes().stream().map(fetcher).collect(toList());
-  }
-
-  public Collection<Node.Endpoint> getSimilarEndpoints(Node.Endpoint initiator) {
-    return getNodes().stream().map(node -> node.getSimilarEndpoint(initiator)).collect(toList());
-  }
-
   @Override
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @SuppressFBWarnings("CN_IDIOM_NO_SUPER_CALL")
@@ -200,26 +177,7 @@ public class Stripe implements Cloneable, PropertyHolder {
     return Scope.STRIPE;
   }
 
-  /**
-   * Finds an address group based on an address given by the user
-   * to connect to a node
-   */
-  private Function<Node, Node.Endpoint> getEndpointFetcher(InetSocketAddress initiator) {
-    boolean publicAddressConfigured = true;
-    for (Node node : getNodes()) {
-      if (node.getInternalAddress().equals(initiator)) {
-        return Node::getInternalEndpoint;
-      }
-      Optional<InetSocketAddress> publicAddress = node.getPublicAddress();
-      publicAddressConfigured &= publicAddress.isPresent();
-      if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
-        return n -> n.getPublicEndpoint().get();
-      }
-    }
-    // we didn't find any exact match...
-    // if the nodes have public addresses, then use them
-    return publicAddressConfigured ?
-        n -> n.getPublicEndpoint().get() :
-        Node::getInternalEndpoint;
+  public Optional<Node> findReachableNode(InetSocketAddress addr) {
+    return nodes.stream().filter(node -> node.isReachableWith(addr)).findFirst();
   }
 }

@@ -98,7 +98,7 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
       }
 
       @Override
-      protected RawPath _deserializeFromEmptyString() {
+      protected RawPath _deserializeFromEmptyString(DeserializationContext ctxt) {
         return RawPath.valueOf("");
       }
     });
@@ -269,14 +269,32 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
 
     @JsonIgnore
     @Override
-    public InetSocketAddress getInternalAddress() {
-      return super.getInternalAddress();
+    public InetSocketAddress getBindSocketAddress() {
+      return super.getBindSocketAddress();
     }
 
     @JsonIgnore
     @Override
-    public Optional<InetSocketAddress> getPublicAddress() {
-      return super.getPublicAddress();
+    public InetSocketAddress getInternalSocketAddress() {
+      return super.getInternalSocketAddress();
+    }
+
+    @JsonIgnore
+    @Override
+    public Optional<InetSocketAddress> getPublicSocketAddress() {
+      return super.getPublicSocketAddress();
+    }
+
+    @JsonIgnore
+    @Override
+    public Endpoint getBindEndpoint() {
+      return super.getBindEndpoint();
+    }
+
+    @JsonIgnore
+    @Override
+    public Collection<Endpoint> getEndpoints() {
+      return super.getEndpoints();
     }
 
     @JsonIgnore

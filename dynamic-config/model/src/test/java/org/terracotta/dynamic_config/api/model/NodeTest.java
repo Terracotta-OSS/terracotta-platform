@@ -23,7 +23,9 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.terracotta.dynamic_config.api.model.Testing.newTestNode;
 import static org.terracotta.testing.ExceptionMatcher.throwing;
 
@@ -62,57 +64,105 @@ public class NodeTest {
   @Test
   public void test_getNodeInternalAddress() {
     assertThat(
-        () -> new Node().getInternalAddress(),
+        () -> new Node().getInternalSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(equalTo("Node null is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> new Node().setName("node1").getInternalAddress(),
+        () -> new Node().setName("node1").getInternalSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> new Node().setName("node1").setPort(9410).getInternalAddress(),
+        () -> new Node().setName("node1").setPort(9410).getInternalSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: null:9410")))));
 
     assertThat(
-        () -> newTestNode("node1", "%h").getInternalAddress(),
+        () -> newTestNode("node1", "%h").getInternalSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with internal address: %h:9410")))));
   }
 
   @Test
   public void test_getNodePublicAddress() {
     assertThat(
-        newTestNode("node1", "localhost").getPublicAddress().isPresent(),
+        newTestNode("node1", "localhost").getPublicSocketAddress().isPresent(),
         is(false));
     assertThat(
-        newTestNode("node1", "localhost").setPublicHostname("foo").getPublicAddress().isPresent(),
+        newTestNode("node1", "localhost").setPublicHostname("foo").getPublicSocketAddress().isPresent(),
         is(false));
     assertThat(
-        newTestNode("node1", "localhost").setPublicPort(1234).getPublicAddress().isPresent(),
+        newTestNode("node1", "localhost").setPublicPort(1234).getPublicSocketAddress().isPresent(),
         is(false));
 
     assertThat(
-        () -> newTestNode("node1", "localhost").setPublicHostname("%h").setPublicPort(1234).getPublicAddress(),
+        () -> newTestNode("node1", "localhost").setPublicHostname("%h").setPublicPort(1234).getPublicSocketAddress(),
         is(throwing(instanceOf(AssertionError.class)).andMessage(is(containsString(" is not correctly defined with public address: %h:1234")))));
 
     assertThat(
-        newTestNode("node1", "localhost").setPublicHostname("foo").setPublicPort(1234).getPublicAddress().get(),
+        newTestNode("node1", "localhost").setPublicHostname("foo").setPublicPort(1234).getPublicSocketAddress().get(),
         is(equalTo(InetSocketAddress.createUnresolved("foo", 1234))));
   }
 
   @Test
-  public void test_hasAddress() {
+  public void test_isReachableWith() {
     assertThat(
-        newTestNode("node1", "localhost").hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),
+        newTestNode("node1", "localhost").isReachableWith(InetSocketAddress.createUnresolved("localhost", 9410)),
         is(true));
     assertThat(
         newTestNode("node1", "localhost")
-            .setPublicHostname("foo").setPublicPort(1234)
-            .hasAddress(InetSocketAddress.createUnresolved("localhost", 9410)),
+            .setPublicEndpoint("foo", 9410)
+            .isReachableWith(InetSocketAddress.createUnresolved("localhost", 9410)),
         is(true));
     assertThat(
         newTestNode("node1", "localhost")
-            .setPublicHostname("foo").setPublicPort(1234)
-            .hasAddress(InetSocketAddress.createUnresolved("foo", 1234)),
+            .setPublicEndpoint("foo", 1234)
+            .isReachableWith(InetSocketAddress.createUnresolved("foo", 1234)),
         is(true));
+
+    assertTrue(node.isReachableWith("localhost", 9410));
+    assertFalse(node.isReachableWith("127.0.0.1", 9410)); // this is normal, DC never resolves, only matches with configured entries
+
+    node = node.clone().setBindAddress("127.0.0.1");
+    assertTrue(node.isReachableWith("localhost", 9410));
+    assertTrue(node.isReachableWith("127.0.0.1", 9410));
+
+    node = node.clone().setBindAddress("127.0.0.1").setPublicEndpoint("foo", 9610);
+    assertTrue(node.isReachableWith("localhost", 9410));
+    assertTrue(node.isReachableWith("127.0.0.1", 9410));
+    assertTrue(node.isReachableWith("foo", 9610));
+  }
+
+  @Test
+  public void test_getEndpoint() {
+    assertThat(node.findEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
+    assertFalse(node.findEndpoint("127.0.0.1", 9410).isPresent()); // this is normal, DC never resolves, only matches with configured entries
+
+    node = node.clone().setBindAddress("127.0.0.1");
+    assertThat(node.findEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.findEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
+
+    node = node.clone().setBindAddress("127.0.0.1").setPublicEndpoint("foo", 9610);
+    assertThat(node.findEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.findEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.findEndpoint("foo", 9610).get(), is(equalTo(node.getBindEndpoint())));
+  }
+
+  @Test
+  public void test_getSimilarEndpoint() {
+    node = node.clone();
+    assertThat(node.determineEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.determineEndpoint(node.getBindEndpoint()), is(equalTo(node.getInternalEndpoint())));
+
+    node = node.clone().setBindAddress("127.0.0.1");
+    assertThat(node.determineEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.determineEndpoint(node.getBindEndpoint()), is(equalTo(node.getBindEndpoint())));
+
+    node = node.clone().setPublicEndpoint("foo", 9610);
+    assertThat(node.determineEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.determineEndpoint(node.getBindEndpoint()), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.determineEndpoint(node.getPublicEndpoint().get()), is(equalTo(node.getPublicEndpoint().get())));
+
+    node = node.clone().setBindAddress("0.0.0.0").setPublicEndpoint("foo", 9610);
+    assertThat(node.determineEndpoint(node.getInternalEndpoint()), is(equalTo(node.getInternalEndpoint())));
+    assertThat(node.determineEndpoint(node.getBindEndpoint()), is(equalTo(node.getPublicEndpoint().get())));
+    assertThat(node.determineEndpoint(node.getPublicEndpoint().get()), is(equalTo(node.getPublicEndpoint().get())));
   }
 }

@@ -13,6 +13,7 @@
               "name": "FailoverIT",
               "consumerId": 6,
               "managementRegistry": {
+                "rootContext": {},
                 "contextContainer": {
                   "consumerId": "6",
                   "subContexts": []
@@ -117,18 +118,12 @@
               "managementRegistry": null
             },
             {
-              "id": "SystemLeaseAcquirer:org.terracotta.lease.LeaseAcquirer",
-              "type": "org.terracotta.lease.LeaseAcquirer",
-              "name": "SystemLeaseAcquirer",
-              "consumerId": 1,
-              "managementRegistry": null
-            },
-            {
               "id": "dynamic-config-management-entity:org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
               "type": "org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
               "name": "dynamic-config-management-entity",
               "consumerId": 4,
               "managementRegistry": {
+                "rootContext": {},
                 "contextContainer": {
                   "consumerId": "4",
                   "subContexts": []
@@ -137,25 +132,12 @@
               }
             },
             {
-              "id": "dynamic-config-topology-entity:org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity",
-              "type": "org.terracotta.dynamic_config.entity.topology.client.DynamicTopologyEntity",
-              "name": "dynamic-config-topology-entity",
-              "consumerId": 2,
-              "managementRegistry": null
-            },
-            {
-              "id": "nomad-entity:org.terracotta.nomad.entity.client.NomadEntity",
-              "type": "org.terracotta.nomad.entity.client.NomadEntity",
-              "name": "nomad-entity",
-              "consumerId": 5,
-              "managementRegistry": null
-            },
-            {
               "id": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
               "type": "org.terracotta.management.entity.sample.client.CacheEntity",
               "name": "pet-clinic/clients",
               "consumerId": 8,
               "managementRegistry": {
+                "rootContext": {},
                 "contextContainer": {
                   "consumerId": "8",
                   "subContexts": []
@@ -326,6 +308,7 @@
               "name": "pet-clinic/pets",
               "consumerId": 7,
               "managementRegistry": {
+                "rootContext": {},
                 "contextContainer": {
                   "consumerId": "7",
                   "subContexts": []
@@ -520,7 +503,8 @@
       "tags": [],
       "properties": {
         "version": "<version>",
-        "clientReportedAddress": "<clientReportedAddress>"
+        "clientReportedAddress": "<clientReportedAddress>",
+        "clientRevision": "<uuid>"
       },
       "connections": [
         {
@@ -553,8 +537,9 @@
         "pet-clinic"
       ],
       "properties": {
+        "version": "<version>",
         "clientReportedAddress": "<clientReportedAddress>",
-        "version": "<version>"
+        "clientRevision": "<uuid>"
       },
       "connections": [
         {
@@ -574,6 +559,10 @@
         }
       ],
       "managementRegistry": {
+        "rootContext": {
+          "appName": "pet-clinic",
+          "instanceId": "instance-?"
+        },
         "contextContainer": {
           "appName": "pet-clinic",
           "subContexts": []
@@ -582,6 +571,10 @@
           {
             "name": "CacheCalls",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -632,6 +625,10 @@
             "name": "CacheSettings",
             "context": [
               {
+                "name": "instanceId",
+                "required": true
+              },
+              {
                 "name": "appName",
                 "required": true
               },
@@ -643,11 +640,13 @@
             "descriptors": [
               {
                 "appName": "pet-clinic",
+                "instanceId": "instance-?",
                 "cacheName": "pets",
                 "size": 0
               },
               {
                 "appName": "pet-clinic",
+                "instanceId": "instance-?",
                 "cacheName": "clients",
                 "size": 0
               }
@@ -656,6 +655,10 @@
           {
             "name": "CacheStatistics",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -703,6 +706,10 @@
           {
             "name": "StatisticCollectorCapability",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -752,8 +759,9 @@
         "pet-clinic"
       ],
       "properties": {
+        "version": "<version>",
         "clientReportedAddress": "<clientReportedAddress>",
-        "version": "<version>"
+        "clientRevision": "<uuid>"
       },
       "connections": [
         {
@@ -773,6 +781,10 @@
         }
       ],
       "managementRegistry": {
+        "rootContext": {
+          "appName": "pet-clinic",
+          "instanceId": "instance-?"
+        },
         "contextContainer": {
           "appName": "pet-clinic",
           "subContexts": []
@@ -781,6 +793,10 @@
           {
             "name": "CacheCalls",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -831,6 +847,10 @@
             "name": "CacheSettings",
             "context": [
               {
+                "name": "instanceId",
+                "required": true
+              },
+              {
                 "name": "appName",
                 "required": true
               },
@@ -842,11 +862,13 @@
             "descriptors": [
               {
                 "appName": "pet-clinic",
+                "instanceId": "instance-?",
                 "cacheName": "pets",
                 "size": 0
               },
               {
                 "appName": "pet-clinic",
+                "instanceId": "instance-?",
                 "cacheName": "clients",
                 "size": 0
               }
@@ -855,6 +877,10 @@
           {
             "name": "CacheStatistics",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true
@@ -902,6 +928,10 @@
           {
             "name": "StatisticCollectorCapability",
             "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
               {
                 "name": "appName",
                 "required": true

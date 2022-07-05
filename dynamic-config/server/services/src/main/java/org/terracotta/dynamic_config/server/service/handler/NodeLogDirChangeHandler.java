@@ -17,6 +17,8 @@ package org.terracotta.dynamic_config.server.service.handler;
 
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
+import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
@@ -39,7 +41,9 @@ public class NodeLogDirChangeHandler implements ConfigChangeHandler {
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
     String logPath = change.getValue().orElse(null);
     if (logPath == null) {
-      throw new InvalidConfigChangeException("Operation not supported");//unset not supported
+      // unset will rollback to default value
+      RawPath rawPath = Setting.NODE_LOG_DIR.getDefaultValue();
+      logPath = rawPath.getValue();
     }
 
     Path substitutedLogPath = substitute(Paths.get(logPath));

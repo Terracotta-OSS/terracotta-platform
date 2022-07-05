@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.server</groupId>
     <artifactId>dynamic-config-server</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -68,11 +68,6 @@
       <artifactId>packaging-support</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>management</artifactId>
-      <scope>provided</scope>
-    </dependency>
 
     <!-- Access TcServerMain from TcServer and the exception classes -->
     <dependency>
@@ -89,17 +84,6 @@
       <groupId>org.terracotta.internal</groupId>
       <artifactId>configuration-provider</artifactId>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.github.stefanbirkner</groupId>
-      <artifactId>system-rules</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-test-utilities</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

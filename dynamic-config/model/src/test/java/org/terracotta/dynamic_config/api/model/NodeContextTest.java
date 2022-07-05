@@ -58,7 +58,7 @@ public class NodeContextTest {
 
   @Before
   public void setUp() throws Exception {
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
   }
 
   @Test

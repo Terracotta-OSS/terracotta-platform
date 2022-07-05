@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.cli</groupId>
     <artifactId>dynamic-config-cli</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -54,10 +54,6 @@
       <groupId>org.terracotta</groupId>
       <artifactId>entity-server-api</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>tc-tripwire-plugin</artifactId>
-    </dependency>
 
     <!-- server plugins -->
     <dependency>
@@ -79,13 +75,6 @@
       <groupId>org.terracotta</groupId>
       <artifactId>lease-entity-server</artifactId>
       <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-test-utilities</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

@@ -47,7 +47,6 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 import org.terracotta.dynamic_config.server.api.LicenseParserDiscovery;
 import org.terracotta.dynamic_config.server.api.LicenseService;
-import org.terracotta.dynamic_config.server.configuration.nomad.UncheckedNomadException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
@@ -61,11 +60,16 @@ import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.client.status.MultiDiscoveryResultReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadException;
+import org.terracotta.nomad.server.UncheckedNomadException;
 import org.terracotta.server.Server;
+import org.terracotta.server.ServerJMX;
+import org.terracotta.testing.Retry;
 import org.terracotta.testing.TmpDir;
 
+import javax.management.MBeanServerFactory;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -102,6 +106,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_HOSTNAME;
 import static org.terracotta.dynamic_config.api.model.Setting.NODE_NAME;
@@ -119,7 +124,8 @@ public class DesynchronizedNomadConfigTest {
         {"v1-config"},
         {"v1-config-migrated"},
         {"v2-concurrent-tx-rolled-back"},
-        {"v2-config"}
+        {"v2-config"},
+        {"v2-config-10.7.0.0.315"},
     });
   }
 
@@ -143,6 +149,8 @@ public class DesynchronizedNomadConfigTest {
 
   @Test
   public void test_restricted_activation() throws NomadException {
+    // This test assumes that we have a stripe with 2 nodes: 1 active and  1 passive
+    // but "v2-concurrent-tx-rolled-back" is a cluster with 2 stripe 1 node each.
     assumeThat(rootName, is(not(equalTo("v2-concurrent-tx-rolled-back"))));
 
     Path root = copy(rootName);
@@ -156,7 +164,7 @@ public class DesynchronizedNomadConfigTest {
          NomadClient<NodeContext> activeNomadClient = active.createNomadClient()) {
 
       runNormalChange(activeNomadClient);
-      assertThat(active.nomad.getChangeHistory(), hasSize(2));
+      assertThat(active.nomad.getChangeHistory().size(), greaterThanOrEqualTo(2));
 
       // grab last topology
       Cluster lastTopology = active.nomad.discover().getLatestChange().getResult().getCluster();
@@ -178,7 +186,7 @@ public class DesynchronizedNomadConfigTest {
       // force sync the passive to active
       try (FakeNode passive = FakeNode.create(root.resolve("node2").resolve("config"), passiveDetails)) {
         passive.sync.sync(active.sync.getSyncData());
-        assertThat(passive.nomad.getChangeHistory(), hasSize(2)); // the changes before any upgrade are not synced
+        assertThat(passive.nomad.getChangeHistory().size(), greaterThanOrEqualTo(2)); // the changes before any upgrade are not synced
       }
 
       // run a normal change across the cluster
@@ -187,8 +195,8 @@ public class DesynchronizedNomadConfigTest {
         NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
         clusterNomadClient.tryApplyChange(failureRecorder, SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "3GB"));
         failureRecorder.reThrowErrors();
-        assertThat(active.nomad.getChangeHistory(), hasSize(3));
-        assertThat(active.nomad.getChangeHistory(), hasSize(3));
+        assertThat(active.nomad.getChangeHistory().size(), greaterThanOrEqualTo(3));
+        assertThat(active.nomad.getChangeHistory().size(), greaterThanOrEqualTo(3));
       }
 
       // nothing to sync next time
@@ -237,16 +245,30 @@ public class DesynchronizedNomadConfigTest {
   }
 
   @Test(timeout = 10 * 1000)
-  public void test_concurrent_prepare_leading_to_reject_and_rollback() {
+  public void test_concurrent_prepare_leading_to_reject_and_rollback() throws InterruptedException {
     assumeThat(Runtime.getRuntime().availableProcessors(), is(greaterThanOrEqualTo(4)));
-    runConcurrentNomadTx(4, idx -> SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "64MB"));
+    Retry.untilInterrupted(() -> {
+      try {
+        org.terracotta.utilities.io.Files.deleteTree(temporaryFolder.getRoot().toAbsolutePath());
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      runConcurrentNomadTx(4, idx -> SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", "64MB"));
+    });
   }
 
   @Test(timeout = 10 * 1000)
-  public void test_concurrent_prepare_leading_to_accept() {
+  public void test_concurrent_prepare_leading_to_accept() throws InterruptedException {
     assumeThat(Runtime.getRuntime().availableProcessors(), is(greaterThanOrEqualTo(4)));
-    AtomicInteger memory = new AtomicInteger();
-    runConcurrentNomadTx(4, idx -> SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", (1 + memory.incrementAndGet()) + "GB"));
+    Retry.untilInterrupted(() -> {
+      try {
+        org.terracotta.utilities.io.Files.deleteTree(temporaryFolder.getRoot().toAbsolutePath());
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      AtomicInteger memory = new AtomicInteger();
+      runConcurrentNomadTx(4, idx -> SettingNomadChange.set(Applicability.cluster(), OFFHEAP_RESOURCES, "main", (1 + memory.incrementAndGet()) + "GB"));
+    });
   }
 
   private void runConcurrentNomadTx(int concurrency, Function<Integer, NomadChange> changeFactory) {
@@ -382,7 +404,7 @@ public class DesynchronizedNomadConfigTest {
 
     InetSocketAddress getAddress() {
       try {
-        return nomad.getCurrentCommittedConfig().map(c -> c.getNode().getInternalAddress()).orElse(alternateConfig.getNode().getInternalAddress());
+        return nomad.getCurrentCommittedConfig().map(c -> c.getNode().getInternalSocketAddress()).orElse(alternateConfig.getNode().getInternalSocketAddress());
       } catch (NomadException e) {
         throw new UncheckedNomadException(e);
       }
@@ -400,7 +422,7 @@ public class DesynchronizedNomadConfigTest {
 
     void reset() throws NomadException {
       nomad.reset();
-      manager.downgradeForRead();
+      manager.setNomad(NomadMode.RO);
     }
 
     /**
@@ -419,13 +441,17 @@ public class DesynchronizedNomadConfigTest {
       ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
       ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
       LicenseService licenseService = new LicenseParserDiscovery(FakeNode.class.getClassLoader()).find().orElseGet(LicenseService::unsupported);
-      NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, mock(Server.class));
+      Server server = mock(Server.class);
+      ServerJMX serverJMX = mock(ServerJMX.class);
+      when(serverJMX.getMBeanServer()).thenReturn(MBeanServerFactory.newMBeanServer());
+      when(server.getManagement()).thenReturn(serverJMX);
+      NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, server);
 
       // add an off-heap change handler
       configChangeHandlerManager.set(Setting.OFFHEAP_RESOURCES, new ConfigChangeHandler() {
         @Override
         public void validate(NodeContext baseConfig, Configuration change) throws InvalidConfigChangeException {
-          if (!change.getValue().isPresent()) {
+          if (!change.hasValue()) {
             throw new InvalidConfigChangeException("Operation not supported"); //unset not supported
           }
           try {
@@ -463,7 +489,7 @@ public class DesynchronizedNomadConfigTest {
       String nodeName = NomadConfigurationManager.findNodeName(configDir, parameterSubstitutor).orElse(null);
 
       // initialize nomad
-      nomadServerManager.init(configDir, nodeName == null ? alternateConfig.getNode().getName() : nodeName, alternateConfig);
+      nomadServerManager.reload(configDir, nodeName == null ? alternateConfig.getNode().getName() : nodeName, alternateConfig);
 
       // get the initialized DC services
       DynamicConfigNomadServer nomadServer = nomadServerManager.getNomadServer();

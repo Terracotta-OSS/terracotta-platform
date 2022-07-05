@@ -29,8 +29,10 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.api.service.MalformedClusterException;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.ConfigConverterTool;
+import org.terracotta.dynamic_config.cli.upgrade_tools.config_converter.exception.ConfigConversionException;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
@@ -46,19 +48,20 @@ import java.nio.file.Paths;
 import java.util.Properties;
 
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class ConfigConversionIT {
   @Rule
-  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target"), false);
+  public TmpDir tmpDir = new TmpDir(Paths.get(System.getProperty("user.dir"), "target", "test-data"), false);
   @Rule
   public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
   public void test_basic_conversion() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -71,7 +74,7 @@ public class ConfigConversionIT {
     assertThat(cluster.getName(), is("my-cluster"));
     assertThat(cluster.getDataDirNames().size(), is(1));
     assertThat(cluster.getOffheapResources().get().size(), is(1));
-    assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
+    assertThat(cluster.getFailoverPriority().get(), is(FailoverPriority.availability()));
     assertFalse(cluster.getClientLeaseDuration().isConfigured());
     assertThat(cluster.getClientLeaseDuration().orDefault(), is(Measure.of(150, TimeUnit.SECONDS)));
     assertThat(cluster.getClientReconnectWindow().get(), is(Measure.of(120, TimeUnit.SECONDS)));
@@ -89,7 +92,7 @@ public class ConfigConversionIT {
 
   @Test
   public void test_server_defaults() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-4.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -113,7 +116,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testWithoutOffheap() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-3.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -128,9 +131,99 @@ public class ConfigConversionIT {
   }
 
   @Test
+  public void testWithoutHostPort() {
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-5.xml",
+        "-n", "my-cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
+    assertTrue(Files.exists(config));
+    Cluster cluster = new ClusterFactory().create(config);
+
+    assertEquals("my-cluster", cluster.getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getSingleNode().get().getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getSingleNode().get().getHostname());
+  }
+
+  @Test
+  public void testWithoutServerName() {
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-6.xml",
+        "-n", "my-cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
+    assertTrue(Files.exists(config));
+    Cluster cluster = new ClusterFactory().create(config);
+
+    assertEquals("my-cluster", cluster.getName());
+    assertEquals("foo-9410", cluster.getSingleStripe().get().getSingleNode().get().getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getSingleNode().get().getHostname());
+  }
+
+  @Test
+  public void testBadClusterName() {
+    exceptionRule.expect(MalformedClusterException.class);
+    exceptionRule.expectMessage("Invalid character in cluster name: ':'");
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-8.xml",
+        "-n", "my:cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+  }
+
+  @Test
+  public void testBadStripeName() {
+    exceptionRule.expect(MalformedClusterException.class);
+    exceptionRule.expectMessage("Invalid character in stripe name: ':'");
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-8.xml",
+        "-n", "my-cluster",
+        "-s", "my:stripe",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+  }
+
+  @Test
+  public void testWithoutServerNameSameHost() {
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-8.xml",
+        "-n", "my-cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+    Path config = tmpDir.getRoot().resolve("generated-configs").resolve("my-cluster.properties");
+    assertTrue(Files.exists(config));
+    Cluster cluster = new ClusterFactory().create(config);
+
+    assertEquals("my-cluster", cluster.getName());
+    assertEquals("foo-1234", cluster.getSingleStripe().get().getNodes().get(0).getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getNodes().get(0).getHostname());
+    assertEquals("foo-1235", cluster.getSingleStripe().get().getNodes().get(1).getName());
+    assertEquals("foo", cluster.getSingleStripe().get().getNodes().get(1).getHostname());
+  }
+
+  @Test
+  public void testWithoutServerNameAndHost() {
+    exceptionRule.expect(ConfigConversionException.class);
+    exceptionRule.expectMessage("Unexpected error while migrating the configuration files: Conversion process requires a valid server name or hostname");
+    new ConfigConverterTool().run("convert",
+        "-c", "src/test/resources/conversion/tc-config-7.xml",
+        "-n", "my-cluster",
+        "-t", "properties",
+        "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
+        "-f");
+  }
+
+  @Test
   public void test_conversion_fail_due_to_relative_paths_and_not_forcing_conversion() {
     exceptionRule.expect(RuntimeException.class);
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString());
@@ -140,7 +233,7 @@ public class ConfigConversionIT {
   public void test_conversion_no_server_element() {
     exceptionRule.expect(RuntimeException.class);
     exceptionRule.expectMessage("No server specified.");
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_no_server_element.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -150,7 +243,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithPlaceHolders() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1.xml",
         "-n", "my-cluster",
         "-t", "properties",
@@ -165,7 +258,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithLeaseMissingInConfig() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
         "-t", "properties",
@@ -180,7 +273,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithoutFailoverPriority() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
         "-t", "properties",
@@ -189,12 +282,12 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_default_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
+    assertThat(cluster.getFailoverPriority().get(), is(FailoverPriority.availability()));
   }
 
   @Test
   public void testConversionWithoutClientReconnectWindow() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_default_lease_failover_reconnect_window",
         "-t", "properties",
@@ -209,7 +302,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithLease() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_lease_failover_reconnect_window",
         "-t", "properties",
@@ -223,7 +316,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testConversionWithFailoverPriority() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_lease_failover_reconnect_window",
         "-t", "properties",
@@ -232,12 +325,12 @@ public class ConfigConversionIT {
     Path config = tmpDir.getRoot().resolve("generated-configs").resolve("cluster_lease_failover_reconnect_window.properties");
     assertTrue(Files.exists(config));
     Cluster cluster = new ClusterFactory().create(config);
-    assertThat(cluster.getFailoverPriority(), is(FailoverPriority.availability()));
+    assertThat(cluster.getFailoverPriority().get(), is(FailoverPriority.availability()));
   }
 
   @Test
   public void testConversionWithClientReconnectWindow() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_lease_failover_and_reconnect_window.xml",
         "-n", "cluster_lease_failover_reconnect_window",
         "-t", "properties",
@@ -251,7 +344,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testNodePort() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-port-bind-address",
         "-t", "properties",
@@ -265,7 +358,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testNodeBindAddress() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-port-bind-address",
         "-t", "properties",
@@ -279,7 +372,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testNodeGroupPort() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-group-port-group-bind-address",
         "-t", "properties",
@@ -293,7 +386,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testNodeGroupBindAddress() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-group-port-group-bind-address",
         "-t", "properties",
@@ -307,7 +400,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testLogDir() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-log-dir-tc-prop",
         "-t", "properties",
@@ -321,7 +414,7 @@ public class ConfigConversionIT {
 
   @Test
   public void testTcProperty() {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config-1_default_lease_failover_and_reconnect_window.xml",
         "-n", "cluster-log-dir-tc-prop",
         "-t", "properties",
@@ -336,7 +429,7 @@ public class ConfigConversionIT {
 
   @Test
   public void test_conversion_with_explicit_repository_option() throws Exception {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
         "-t", "directory",
@@ -349,7 +442,7 @@ public class ConfigConversionIT {
 
   @Test
   public void test_conversion_with_repository_option() throws Exception {
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/conversion/tc-config.xml",
         "-n", "my-cluster",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),

@@ -21,6 +21,7 @@ import org.terracotta.management.entity.sample.client.CacheFactory;
 
 import java.net.URI;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class StartSampleEntity {
   public static void main(String[] args) throws ConnectionException, ExecutionException, TimeoutException, InterruptedException {
-    CacheFactory cacheFactory = new CacheFactory(URI.create("terracotta://localhost:9510"), "pet-clinic");
+    CacheFactory cacheFactory = new CacheFactory(UUID.randomUUID().toString(), URI.create("terracotta://localhost:9510"), "pet-clinic");
 
     cacheFactory.init();
 

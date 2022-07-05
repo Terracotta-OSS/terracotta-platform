@@ -23,6 +23,7 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
@@ -62,6 +63,13 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterFactoryTest {
+
+  private static final String securityDirError = "Within a cluster, all nodes must have a security root directory defined or no security root directory defined";
+  private static final String minimumSecurityError = "When security root directories are configured across the cluster at least one of authc, ssl-tls or whitelist must also be configured";
+  private static final String certificateSslTlsError = "When authc=certificate ssl-tls must be configured";
+  private static final String securityDisallowedError = "When no security root directories are configured all other security settings should also be unconfigured (unset)";
+  private static final String auditLogDirError = "Within a cluster, all nodes must have an audit log directory defined or no audit log directory defined";
+  private static final String auditLogDirDisallowedError = "When no security root directories are configured audit-log-dir should also be unconfigured (unset) for all nodes in the cluster";
 
   private final ClusterFactory clusterFactory = new ClusterFactory();
 
@@ -123,7 +131,7 @@ public class ClusterFactoryTest {
           .unsetDataDirs()
           .putDataDir("foo", RawPath.valueOf("%H/tc2/foo"))
           .putDataDir("bar", RawPath.valueOf("%H/tc2/bar"))
-          .setTcProperties(emptyMap()))) // specifically set the map to empty one by teh user
+          .setTcProperties(emptyMap()))) // specifically set the map to empty one by the user
       .setUID(Testing.C_UIDS[0])
       .setSecuritySslTls(false)
       .setSecurityWhitelist(false)
@@ -142,14 +150,14 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_create_cli_validated() {
-    assertCliFail(cli("failover-priority=availability", "ssl-tls=false", "authc=certificate"), "ssl-tls is required for authc=certificate");
-    assertCliFail(cli("failover-priority=availability", "ssl-tls=true", "authc=certificate"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "ssl-tls=true"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "authc=file"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "authc=ldap"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "audit-log-dir=foo"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "whitelist=true"), "security-dir is mandatory for any of the security configuration");
-    assertCliFail(cli("failover-priority=availability", "security-dir=foo"), "One of ssl-tls, authc, or whitelist is required for security configuration");
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "ssl-tls=false", "authc=certificate"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "ssl-tls=true", "authc=certificate"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "ssl-tls=true"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "authc=file"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "authc=ldap"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "audit-log-dir=foo"), auditLogDirDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "whitelist=true"), securityDisallowedError);
+    assertCliFail(cli("cluster-name=foo", "failover-priority=availability", "security-dir=foo"), minimumSecurityError);
   }
 
   @Test
@@ -262,33 +270,43 @@ public class ClusterFactoryTest {
   public void test_create_config_validated() {
     // security
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "ssl-tls=false", "authc=certificate"),
-        "ssl-tls is required for authc=certificate");
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+            "ssl-tls=false", "authc=certificate"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "ssl-tls=true", "authc=certificate"),
-        "security-dir is mandatory for any of the security configuration");
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+            "ssl-tls=true", "authc=certificate"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "ssl-tls=true"),
-        "security-dir is mandatory for any of the security configuration");
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+            "ssl-tls=true"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "authc=file"),
-        "security-dir is mandatory for any of the security configuration");
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+            "authc=file"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "authc=ldap"),
-        "security-dir is mandatory for any of the security configuration");
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+            "authc=ldap"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "stripe.1.node.1.audit-log-dir=foo"),
-        "security-dir is mandatory for any of the security configuration");
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+            "stripe.1.node.1.audit-log-dir=foo"), auditLogDirDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "whitelist=true"),
-        "security-dir is mandatory for any of the security configuration");
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+            "whitelist=true"), securityDisallowedError);
     assertConfigFail(
-        config("failover-priority=availability", "stripe.1.node.1.hostname=localhost", "stripe.1.node.1.security-dir=foo"),
-        "One of ssl-tls, authc, or whitelist is required for security configuration");
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+            "stripe.1.node.1.security-dir=foo"), minimumSecurityError);
+    assertConfigFail(
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost",
+            "stripe.1.node.1.security-dir=foo", "ssl-tls=false", "authc=certificate"), certificateSslTlsError);
+    assertConfigFail(
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost1", "stripe.1.node.2.hostname=localhost2",
+            "stripe.1.node.1.security-dir=foo"), securityDirError);
+    assertConfigFail(
+        config("cluster-name=foo", "failover-priority=availability", "stripe.1.node.1.hostname=localhost1", "stripe.1.node.2.hostname=localhost2",
+            "stripe.1.node.1.security-dir=foo", "stripe.1.node.2.security-dir=foo", "whitelist=true", "stripe.1.node.1.audit-log-dir=foo"), auditLogDirError);
 
     // duplicate node name
     assertConfigFail(
         config(
+            "cluster-name=foo",
             "failover-priority=availability",
             "stripe.1.node.1.hostname=localhost1", "stripe.1.node.1.name=foo",
             "stripe.1.node.2.hostname=localhost2", "stripe.1.node.2.name=foo"
@@ -296,6 +314,7 @@ public class ClusterFactoryTest {
         "Found duplicate node name: foo");
     assertConfigFail(
         config(
+            "cluster-name=foo",
             "failover-priority=availability",
             "stripe.1.node.1.hostname=localhost1", "stripe.1.node.1.name=foo",
             "stripe.2.node.1.hostname=localhost2", "stripe.2.node.1.name=foo"
@@ -425,7 +444,7 @@ public class ClusterFactoryTest {
 
   private void assertCliFail(Map<Setting, String> params, String err) {
     assertThat(
-        () -> clusterFactory.create(params, substitutor),
+        () -> new ClusterValidator(clusterFactory.create(params, substitutor)).validate(ClusterState.ACTIVATED),
         is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
   }
 
@@ -443,7 +462,7 @@ public class ClusterFactoryTest {
 
   private void assertConfigFail(Properties config, String err) {
     assertThat(
-        () -> clusterFactory.create(config),
+        () -> new ClusterValidator(clusterFactory.create(config)).validate(ClusterState.ACTIVATED),
         is(throwing(instanceOf(MalformedClusterException.class)).andMessage(containsString(err))));
   }
 

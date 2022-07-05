@@ -6,7 +6,7 @@ Diagnostic result:
  - Nodes online, configured and in repair: 0
  - Nodes online, new and being configured: 1
  - Nodes pending restart: 0
- - Configuration state: The cluster configuration is healthy and all nodes are online. No repair needed. New configuration changes are possible.
+ - Configuration state: Unable to determine the global configuration state. There might be some configuration inconsistencies or some nodes being repaired. Please look at each node details. A manual intervention might be needed to reset some nodes.
 [node-1-
  - Node state: ACTIVE
  - Node online, configured and activated: YES
@@ -27,12 +27,12 @@ Diagnostic result:
  - Node last mutation from:
  - Node last mutation by:
 [node-1-
- - Node state: STARTING
+ - Node state: DIAGNOSTIC
  - Node online, configured and activated: NO
  - Node online, configured and in repair: NO
  - Node online, new and being configured: YES
  - Node restart required: NO
  - Node configuration change in progress: NO
- - Node can accept new changes: YES
+ - Node can accept new changes: NO
  - Node current configuration version: 0
  - Node highest configuration version: 0

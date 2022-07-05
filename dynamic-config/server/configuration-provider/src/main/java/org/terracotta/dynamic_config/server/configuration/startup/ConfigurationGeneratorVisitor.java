@@ -85,12 +85,8 @@ public class ConfigurationGeneratorVisitor {
     this.server = server;
   }
 
-  public boolean isUnConfiguredMode() {
-    return unConfiguredMode;
-  }
-
-  public boolean isRepairMode() {
-    return repairMode;
+  public TopologyService getTopologyService() {
+    return nomadServerManager.getTopologyService();
   }
 
   public StartupConfiguration generateConfiguration() {
@@ -102,13 +98,13 @@ public class ConfigurationGeneratorVisitor {
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the config created will be stripped to make platform think this node is alone;
-      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
+      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory, server);
     } else {
       // configured mode
       return new StartupConfiguration(
           () -> nomadServerManager.getConfiguration()
               .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again.")),
-          unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory);
+          unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory, server);
     }
   }
 
@@ -117,7 +113,7 @@ public class ConfigurationGeneratorVisitor {
     server.console("Starting unconfigured node: {}", nodeName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirFromCLI);
 
-    nomadServerManager.init(nodeConfigurationDir, nodeContext);
+    nomadServerManager.configure(nodeConfigurationDir, nodeContext);
 
     this.nodeContext = nodeContext;
     this.repairMode = false;
@@ -148,7 +144,7 @@ public class ConfigurationGeneratorVisitor {
     server.console("Starting node: {} in cluster: {}", nodeName, clusterName);
     Path nodeConfigurationDir = getOrDefaultConfigurationDirectory(optionalNodeConfigurationDirectoryFromCLI);
     server.console("Creating node configuration directory at: {}", parameterSubstitutor.substitute(nodeConfigurationDir).toAbsolutePath());
-    nomadServerManager.init(nodeConfigurationDir, nodeContext);
+    nomadServerManager.configure(nodeConfigurationDir, nodeContext);
 
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
     dynamicConfigService.activate(nodeContext.getCluster(), optionalLicenseFile == null ? null : read(optionalLicenseFile));
@@ -161,11 +157,15 @@ public class ConfigurationGeneratorVisitor {
 
   void startUsingConfigRepo(Path nodeConfigurationDir, String nodeName, boolean repairMode, NodeContext alternate) {
     server.console("Starting node: {} from configuration directory: {}", nodeName, parameterSubstitutor.substitute(nodeConfigurationDir));
-    nomadServerManager.init(nodeConfigurationDir, nodeName, alternate);
+    nomadServerManager.reload(nodeConfigurationDir, nodeName, alternate);
 
     DynamicConfigService dynamicConfigService = nomadServerManager.getDynamicConfigService();
     TopologyService topologyService = nomadServerManager.getTopologyService();
     if (!repairMode) {
+      // if not in repair mode, ensure we do not start a node with an empty or prepared activate change that has not been completed
+      if (!nomadServerManager.getConfiguration().isPresent()) {
+        throw new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again. Location: " + nodeConfigurationDir);
+      }
       dynamicConfigService.activate(topologyService.getUpcomingNodeContext().getCluster(), dynamicConfigService.getLicenseContent().orElse(null));
     } else {
       // If repair mode mode is ON:
@@ -198,7 +198,7 @@ public class ConfigurationGeneratorVisitor {
 
     Collection<Node> allNodes = cluster.getNodes();
     Optional<Node> matchingNode = allNodes.stream()
-        .filter(node1 -> InetSocketAddressUtils.areEqual(node1.getInternalAddress(), specifiedSockAddr))
+        .filter(node1 -> InetSocketAddressUtils.areEqual(node1.getInternalSocketAddress(), specifiedSockAddr))
         .findAny();
 
     HashMap<String, String> logParams = new HashMap<>();
@@ -241,7 +241,8 @@ public class ConfigurationGeneratorVisitor {
   }
 
   Path getOrDefaultConfigurationDirectory(String configPath) {
-    return configPath != null ? Paths.get(configPath) : Setting.NODE_CONFIG_DIR.<RawPath>getDefaultValue().toPath();
+    configPath = parameterSubstitutor.substitute(configPath != null ? configPath : Setting.NODE_CONFIG_DIR.<RawPath>getDefaultValue().getValue());
+    return pathResolver.resolve(Paths.get(configPath));
   }
 
   Optional<String> findNodeName(Path configPath, IParameterSubstitutor parameterSubstitutor) {
@@ -261,7 +262,7 @@ public class ConfigurationGeneratorVisitor {
     requireNonNull(nodeConfigurationDir);
     NomadEnvironment environment = new NomadEnvironment();
     // Note: do NOT close this nomad client - it would close the server and sanskrit!
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getInternalAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getInternalSocketAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrowErrors();

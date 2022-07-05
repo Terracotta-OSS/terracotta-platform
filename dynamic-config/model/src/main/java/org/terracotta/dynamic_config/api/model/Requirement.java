@@ -21,24 +21,22 @@ package org.terracotta.dynamic_config.api.model;
 public enum Requirement {
 
   /**
-   * Setting change needs a restart of all the nodes
+   * Setting change needs a restart of all the nodes.
+   * APPLY TO CLUSTER-WIDE SETTING ONLY
    */
   CLUSTER_RESTART,
 
   /**
-   * Setting change needs a restart of only the impacted nodes
+   * Setting change needs all nodes online (active and passives).
+   * APPLY TO CLUSTER-WIDE SETTING ONLY
+   */
+  CLUSTER_ONLINE,
+
+  /**
+   * Setting change needs a restart of only the impacted nodes.
+   * APPLY TO NODE SETTING ONLY
    */
   NODE_RESTART,
-
-  /**
-   * Setting change needs only active servers to be online plus the targeted objects (which can be nodes, stripes or the cluster)
-   */
-  TARGETS_ONLINE,
-
-  /**
-   * Setting change needs all nodes online (active and passives)
-   */
-  ALL_NODES_ONLINE,
 
   /**
    * A setting that must be eagerly resolved (placeholders) on server-side as soon as possible before any configuration parsing.
@@ -47,7 +45,7 @@ public enum Requirement {
   RESOLVE_EAGERLY,
 
   /**
-   * A setting that must be set by the user or which must have a default because teh presence of a value is required at runtime
+   * A setting that must be set by the user or which must have a default because the presence of a value is required at runtime
    */
   PRESENCE,
 

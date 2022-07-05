@@ -36,7 +36,7 @@ public class LockAwareDynamicConfigNomadChange implements DynamicConfigNomadChan
   }
 
   @Override
-  public boolean canApplyAtRuntime(NodeContext currentNode) {
+  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
     throw new UnsupportedOperationException();
   }
 

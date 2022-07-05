@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.test_support.processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
@@ -25,16 +26,15 @@ import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
-import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.server.NomadException;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;
-import java.lang.management.ManagementFactory;
 import java.util.stream.Stream;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.test_support.processor.ServerCrasher.crash;
 
 public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor<NodeAdditionNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(MyDummyNomadAdditionChangeProcessor.class);
@@ -46,13 +46,12 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
   private static final String attachStatusKey = "attachStatus";
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
-  private final PlatformService platformService;
-  private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+  private final MBeanServer mbeanServer;
 
-  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, PlatformService platformService) {
+  public MyDummyNomadAdditionChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, MBeanServer mbeanServer) {
+    this.mbeanServer = mbeanServer;
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
-    this.platformService = platformService;
   }
 
   @Override
@@ -68,14 +67,14 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
     try {
       checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
-      new ClusterValidator(updated).validate();
+      new ClusterValidator(updated).validate(ClusterState.ACTIVATED);
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
 
     // cause failure when in prepare phase
     if (killAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
-      platformService.stopPlatform();
+      crash();
     }
   }
 
@@ -88,7 +87,7 @@ public class MyDummyNomadAdditionChangeProcessor implements NomadChangeProcessor
 
     // cause failover when in commit phase
     if (killAtCommit.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
-      platformService.stopPlatform();
+      crash();
     }
 
     try {

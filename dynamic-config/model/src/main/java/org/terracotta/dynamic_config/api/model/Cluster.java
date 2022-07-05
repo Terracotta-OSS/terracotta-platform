@@ -54,6 +54,7 @@ import static java.util.stream.Stream.of;
 import static org.terracotta.dynamic_config.api.model.Scope.CLUSTER;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_LEASE_DURATION;
 import static org.terracotta.dynamic_config.api.model.Setting.CLIENT_RECONNECT_WINDOW;
+import static org.terracotta.dynamic_config.api.model.Setting.FAILOVER_PRIORITY;
 import static org.terracotta.dynamic_config.api.model.Setting.LOCK_CONTEXT;
 import static org.terracotta.dynamic_config.api.model.Setting.OFFHEAP_RESOURCES;
 import static org.terracotta.dynamic_config.api.model.Setting.SECURITY_AUTHC;
@@ -114,8 +115,8 @@ public class Cluster implements Cloneable, PropertyHolder {
     return OptionalConfig.of(SECURITY_WHITELIST, securityWhitelist);
   }
 
-  public FailoverPriority getFailoverPriority() {
-    return failoverPriority;
+  public OptionalConfig<FailoverPriority> getFailoverPriority() {
+    return OptionalConfig.of(FAILOVER_PRIORITY, failoverPriority);
   }
 
   public OptionalConfig<Measure<TimeUnit>> getClientReconnectWindow() {
@@ -146,7 +147,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Cluster setFailoverPriority(FailoverPriority failoverPriority) {
-    this.failoverPriority = requireNonNull(failoverPriority);
+    this.failoverPriority = failoverPriority;
     return this;
   }
 
@@ -212,14 +213,8 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Cluster unsetOffheapResources() {
-    if (this.offheapResources != null) {
-      setOffheapResources(emptyMap());
-    } else {
-      Map<String, Measure<MemoryUnit>> def = OFFHEAP_RESOURCES.getDefaultValue();
-      if (def != null && !def.isEmpty()) {
-        setOffheapResources(emptyMap());
-      }
-    }
+    Map<String, String> def = OFFHEAP_RESOURCES.getDefaultValue();
+    setOffheapResources(def == null || def.isEmpty() ? null : emptyMap());
     return this;
   }
 
@@ -303,26 +298,6 @@ public class Cluster implements Cloneable, PropertyHolder {
     return getNodes().stream().map(Node::getInternalEndpoint).collect(toList());
   }
 
-  /**
-   * Returns the endpoints to use to connect to the nodes of the cluster.
-   * The endpoints are using the same address "group" as the address used to access
-   * this node context.
-   * <p>
-   * In case no initiator is given, or if it is not found, the returned endpoints
-   * will be the public addresses if all nodes have a public address, otherwise it
-   * will be the internal addresses
-   *
-   * @param initiator Address used to load this class, can be null.
-   */
-  public Collection<Endpoint> getEndpoints(InetSocketAddress initiator) {
-    Function<Node, Endpoint> fetcher = getEndpointFetcher(initiator);
-    return getNodes().stream().map(fetcher).collect(toList());
-  }
-
-  public Collection<Endpoint> getSimilarEndpoints(Endpoint initiator) {
-    return getNodes().stream().map(node -> node.getSimilarEndpoint(initiator)).collect(toList());
-  }
-
   public boolean containsNode(UID nodeUID) {
     return getNode(nodeUID).isPresent();
   }
@@ -383,6 +358,10 @@ public class Cluster implements Cloneable, PropertyHolder {
     return getStripes().stream().filter(s -> s.getUID().equals(stripeUID)).findAny();
   }
 
+  public Optional<Stripe> getStripeByName(String name) {
+    return getStripes().stream().filter(s -> s.getName().equals(name)).findAny();
+  }
+
   public Optional<Stripe> getStripe(int stripeId) {
     if (stripeId < 1) {
       throw new IllegalArgumentException("Invalid stripe ID: " + stripeId);
@@ -391,6 +370,16 @@ public class Cluster implements Cloneable, PropertyHolder {
       return Optional.empty();
     }
     return Optional.of(stripes.get(stripeId - 1));
+  }
+
+  public OptionalInt getNodeId(UID nodeUID) {
+    List<Node> nodes = stripes.stream()
+        .filter(s -> s.containsNode(nodeUID))
+        .findAny().get().getNodes();
+    return IntStream.range(0, nodes.size())
+        .filter(idx -> nodes.get(idx).getUID().equals(nodeUID))
+        .map(idx -> idx + 1)
+        .findAny();
   }
 
   public OptionalInt getStripeId(UID stripeUID) {
@@ -505,26 +494,67 @@ public class Cluster implements Cloneable, PropertyHolder {
     return uuid;
   }
 
+  public Optional<Node> findReachableNode(InetSocketAddress addr) {
+    return stripes.stream()
+        .map(stripe -> stripe.findReachableNode(addr).orElse(null))
+        .filter(Objects::nonNull)
+        .findFirst();
+  }
+
+  public Collection<? extends Endpoint> search(Collection<? extends InetSocketAddress> addresses) {
+    return search(addresses, node -> null);
+  }
+
+  public Collection<? extends Endpoint> search(Collection<? extends InetSocketAddress> addresses, Function<Node, Endpoint> noMatch) {
+    return addresses.stream()
+        .flatMap(addr -> getNodes().stream().map(node -> node.findEndpoint(addr).orElseGet(() -> noMatch.apply(node))))
+        .filter(Objects::nonNull)
+        .collect(toList());
+  }
+
   /**
-   * Finds an address group based on an address given by the user
-   * to connect to a node
+   * Returns the endpoints to use to connect to the nodes of the cluster.
+   * The endpoints are using the same address "group" as the address used to access
+   * this node context.
+   * <p>
+   * In case no initiator is given, or if it is not found, the returned endpoints
+   * will be the public addresses if all nodes have a public address, otherwise it
+   * will be the internal addresses
+   *
+   * @param initiators Addresses used to load this class, can be null.
    */
-  private Function<Node, Endpoint> getEndpointFetcher(InetSocketAddress initiator) {
-    boolean publicAddressConfigured = true;
-    for (Node node : getNodes()) {
-      if (node.getInternalAddress().equals(initiator)) {
-        return Node::getInternalEndpoint;
-      }
-      Optional<InetSocketAddress> publicAddress = node.getPublicAddress();
-      publicAddressConfigured &= publicAddress.isPresent();
-      if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
-        return n -> n.getPublicEndpoint().get();
-      }
+  public Collection<Endpoint> determineEndpoints(InetSocketAddress... initiators) {
+    return determineEndpoints(Arrays.asList(initiators));
+  }
+
+  public Collection<Endpoint> determineEndpoints(Collection<? extends InetSocketAddress> initiators) {
+    final Collection<? extends Endpoint> results = search(initiators);
+    if (results.isEmpty()) {
+      return getNodes().stream().map(Node::determineEndpoint).collect(toList());
+    } else {
+      return determineEndpoints(results.iterator().next());
     }
-    // we didn't find any exact match...
-    // if the nodes have public addresses, then use them
-    return publicAddressConfigured ?
-        n -> n.getPublicEndpoint().get() :
-        Node::getInternalEndpoint;
+  }
+
+  public Collection<Endpoint> determineEndpoints() {
+    return getNodes().stream().map(Node::determineEndpoint).collect(toList());
+  }
+
+  public Optional<Endpoint> determineEndpoint(UID node, InetSocketAddress... initiators) {
+    return determineEndpoint(node, Arrays.asList(initiators));
+  }
+
+  public Optional<Endpoint> determineEndpoint(UID node, Collection<? extends InetSocketAddress> initiators) {
+    final Collection<? extends Endpoint> results = search(initiators);
+    if (results.isEmpty()) {
+      return getNode(uid).map(Node::determineEndpoint);
+    } else {
+      final Endpoint endpoint = results.iterator().next();
+      return getNode(uid).map(n -> n.determineEndpoint(endpoint));
+    }
+  }
+
+  public Collection<Endpoint> determineEndpoints(Endpoint initiator) {
+    return getNodes().stream().map(node -> node.determineEndpoint(initiator)).collect(toList());
   }
 }

@@ -18,7 +18,6 @@ package org.terracotta.dynamic_config.server.configuration.startup;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.SystemOutRule;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -29,6 +28,7 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
+import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.server.Server;
 
 import java.nio.file.Paths;
@@ -59,8 +59,6 @@ public class CommandLineProcessorChainTest {
   private static final String NODE_NAME = "node-1";
   private static final String NODE_PORT = "19410";
 
-  @Rule
-  public final SystemOutRule systemOutRule = new SystemOutRule().enableLog().muteForSuccessfulTests();
   @Rule
   public final TemporaryFolder tempFolder = new TemporaryFolder();
   @Rule
@@ -93,11 +91,16 @@ public class CommandLineProcessorChainTest {
     when(configurationGeneratorVisitor.findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class))).thenReturn(Optional.of(NODE_NAME));
     when(clusterCreator.create(any(), eq(parameterSubstitutor))).thenReturn(cluster);
 
+    TopologyService topologyService = mock(TopologyService.class);
+    when(topologyService.getUpcomingNodeContext()).thenReturn(nodeContext);
+    when(configurationGeneratorVisitor.getTopologyService()).thenReturn(topologyService);
+
     mainCommandLineProcessor.process();
 
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(null);
     verify(configurationGeneratorVisitor).findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false, nodeContext);
+    verify(configurationGeneratorVisitor).getTopologyService();
     verifyNoMoreInteractions(configurationGeneratorVisitor);
   }
 
@@ -108,11 +111,16 @@ public class CommandLineProcessorChainTest {
     when(configurationGeneratorVisitor.findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class))).thenReturn(Optional.of(NODE_NAME));
     when(clusterCreator.create(any(), eq(parameterSubstitutor))).thenReturn(cluster);
 
+    TopologyService topologyService = mock(TopologyService.class);
+    when(topologyService.getUpcomingNodeContext()).thenReturn(nodeContext);
+    when(configurationGeneratorVisitor.getTopologyService()).thenReturn(topologyService);
+
     mainCommandLineProcessor.process();
 
     verify(configurationGeneratorVisitor).getOrDefaultConfigurationDirectory(NODE_REPOSITORY_DIR);
     verify(configurationGeneratorVisitor).findNodeName(eq(Paths.get(NODE_REPOSITORY_DIR)), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUsingConfigRepo(Paths.get(NODE_REPOSITORY_DIR), NODE_NAME, false, nodeContext);
+    verify(configurationGeneratorVisitor).getTopologyService();
     verifyNoMoreInteractions(configurationGeneratorVisitor);
   }
 
@@ -298,8 +306,8 @@ public class CommandLineProcessorChainTest {
 
   @Test
   public void testUnconfiguredWithCliParams() {
+    cluster.setFailoverPriority(null);
     when(clusterCreator.create(paramValueMap, parameterSubstitutor)).thenReturn(cluster);
-    when(options.getFailoverPriority()).thenReturn(availability().toString());
 
     mainCommandLineProcessor.process();
 
@@ -307,12 +315,5 @@ public class CommandLineProcessorChainTest {
     verify(configurationGeneratorVisitor).findNodeName(any(), any(IParameterSubstitutor.class));
     verify(configurationGeneratorVisitor).startUnconfigured(nodeContext, null);
     verifyNoMoreInteractions(configurationGeneratorVisitor);
-  }
-
-  @Test
-  public void testWithCliParams_missingFailoverPriority() {
-    expectedException.expect(IllegalArgumentException.class);
-    expectedException.expectMessage("failover-priority is required");
-    mainCommandLineProcessor.process();
   }
 }

@@ -22,7 +22,7 @@
   <parent>
     <artifactId>terracotta-management</artifactId>
     <groupId>org.terracotta.management</groupId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -41,9 +41,12 @@
 
     <!-- voltron cli -->
     <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>connection-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <version>${terracotta-core.version}</version>
     </dependency>
 
     <!-- sample entity client -->
@@ -58,7 +61,6 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>${logback.version}</version>
     </dependency>
 
     <!-- just for pretty printing-->

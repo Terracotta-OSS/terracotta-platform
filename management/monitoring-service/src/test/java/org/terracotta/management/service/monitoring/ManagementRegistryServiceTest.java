@@ -129,7 +129,7 @@ public class ManagementRegistryServiceTest {
     registry.register(new MyObject("myCacheManagerName2", "myCacheName2"));
     registry.refresh();
 
-    assertThat(buffer.size(), equalTo(0));
+    assertThat(buffer.size(), equalTo(1));
   }
 
 }

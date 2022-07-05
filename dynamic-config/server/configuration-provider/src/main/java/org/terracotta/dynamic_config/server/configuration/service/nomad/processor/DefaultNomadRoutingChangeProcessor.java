@@ -39,6 +39,11 @@ public class DefaultNomadRoutingChangeProcessor implements NomadChangeProcessor<
   }
 
   @Override
+  public void clear() {
+    processors.clear();
+  }
+
+  @Override
   public void validate(NodeContext baseConfig, DynamicConfigNomadChange change) throws NomadException {
     NomadChangeProcessor<DynamicConfigNomadChange> processor = getProcessor(change);
     processor.validate(baseConfig, change);

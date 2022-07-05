@@ -21,6 +21,9 @@ import org.junit.Rule;
 import org.terracotta.testing.rules.Cluster;
 
 import java.nio.file.Paths;
+import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLUSTER_NAME;
+import org.terracotta.testing.config.ConfigFileStartupBuilder;
+import org.terracotta.testing.config.ConfigRepoStartupBuilder;
 
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
@@ -43,6 +46,7 @@ public abstract class AbstractSingleTest extends AbstractTest {
       .withSystemProperty("terracotta.management.assert", "true")
       .withTcProperty("terracotta.management.assert", "true")
       .withServiceFragment(resourceConfig)
+      .startupBuilder(ConfigRepoStartupBuilder::new)
       .build();
 
   @Before

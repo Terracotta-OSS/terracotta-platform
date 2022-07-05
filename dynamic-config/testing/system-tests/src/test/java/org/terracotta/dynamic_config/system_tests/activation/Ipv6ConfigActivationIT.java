@@ -15,9 +15,7 @@
  */
 package org.terracotta.dynamic_config.system_tests.activation;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
@@ -27,10 +25,8 @@ import java.nio.file.Path;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
-@ClusterDefinition(autoStart = false)
+@ClusterDefinition(autoStart = false, failoverPriority = "")
 public class Ipv6ConfigActivationIT extends DynamicConfigIT {
-
-  @Rule public final NodeOutputRule out = new NodeOutputRule();
 
   @Test
   public void testStartupFromMigratedConfigRepoAndGetCommand() throws Exception {
@@ -39,7 +35,7 @@ public class Ipv6ConfigActivationIT extends DynamicConfigIT {
     waitForActive(1, 1);
 
     assertThat(
-        invokeConfigTool("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"),
+        configTool("get", "-s", "[::1]:" + getNodePort(), "-c", "offheap-resources.main"),
         containsOutput("offheap-resources.main=512MB"));
   }
 }

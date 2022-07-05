@@ -19,6 +19,7 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.server.api.ConfigChangeHandler;
 import org.terracotta.dynamic_config.server.api.InvalidConfigChangeException;
 import org.terracotta.lease.service.config.LeaseConfiguration;
@@ -32,16 +33,21 @@ public class LeaseConfigChangeHandler implements ConfigChangeHandler {
 
   @Override
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
-    try {
-      Measure.parse(change.getValue().get(), TimeUnit.class);
-    } catch (Exception e) {
-      throw new InvalidConfigChangeException(e.toString(), e);
+    // if the change has no value, this is an unset which rolls back to the default system value
+    if (change.hasValue()) {
+      try {
+        Measure.parse(change.getValue().get(), TimeUnit.class);
+      } catch (Exception e) {
+        throw new InvalidConfigChangeException(e.toString(), e);
+      }
     }
   }
 
   @Override
   public void apply(Configuration change) {
-    Measure<TimeUnit> measure = Measure.parse(change.getValue().get(), TimeUnit.class);
+    Measure<TimeUnit> measure = change.getValue().isPresent() ?
+        Measure.parse(change.getValue().get(), TimeUnit.class) :
+        Setting.CLIENT_LEASE_DURATION.getDefaultValue();
     long quantity = measure.to(TimeUnit.MILLISECONDS).getQuantity();
     leaseConfiguration.setLeaseLength(quantity);
   }

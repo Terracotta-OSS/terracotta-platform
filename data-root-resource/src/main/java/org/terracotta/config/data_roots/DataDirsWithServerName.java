@@ -113,6 +113,16 @@ class DataDirsWithServerName implements DataDirs {
     }
   }
 
+  void updateDataDir(String name) {
+    Path resolved = wrapped.getRoot(name).resolve(serverName);
+    try {
+      wrapped.ensureDirectory(resolved);
+      lockDirectory(name, resolved);
+    } catch (IOException e) {
+      throw new DataDirsConfigurationException(e.toString(), e);
+    }
+  }
+
   private static class FileLocking {
     private final RandomAccessFile lockFile;
     private final FileLock fileLock;

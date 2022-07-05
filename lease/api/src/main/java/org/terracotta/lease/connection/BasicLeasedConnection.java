@@ -82,5 +82,9 @@ public class BasicLeasedConnection implements LeasedConnection {
      */
     leaseMaintainer.destroy();
   }
-
+  
+  @Override
+  public boolean isValid() {
+    return base.isValid();
+  }
 }

@@ -135,8 +135,8 @@ public class Identifier {
     for (Node node : nodes) {
       if (node.getName().equals(identifier)
           || node.getUID().equals(uid)
-          || node.getInternalAddress().equals(address)
-          || node.getPublicAddress().isPresent() && node.getPublicAddress().get().equals(address)) {
+          || node.getInternalSocketAddress().equals(address)
+          || node.getPublicSocketAddress().isPresent() && node.getPublicSocketAddress().get().equals(address)) {
         return Optional.of(node);
       }
     }

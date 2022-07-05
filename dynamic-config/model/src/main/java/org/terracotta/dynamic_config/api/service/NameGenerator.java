@@ -57,25 +57,24 @@ public class NameGenerator {
    * Assign friendly names on all the stripes and nodes on a cluster
    */
   public static void assignFriendlyNames(Cluster cluster) {
-    cluster.getStripes().forEach(stripe -> assignFriendlyNames(cluster, stripe.getUID()));
+    cluster.getStripes().forEach(stripe -> assignFriendlyNames(cluster, stripe));
   }
 
   /**
    * Assign friendly names to a whole stripe in a cluster, plus its nodes
    */
-  public static void assignFriendlyNames(Cluster cluster, UID stripeUID) {
+  public static void assignFriendlyNames(Cluster cluster, Stripe stripe) {
     ThreadLocalRandom random = ThreadLocalRandom.current();
-    Stripe stripe = cluster.getStripe(stripeUID).get();
     assignFriendlyStripeName(cluster, stripe, random);
-    stripe.getNodes().forEach(node -> assignFriendlyNodeName(cluster, node.getUID(), random));
+    stripe.getNodes().forEach(node -> assignFriendlyNodeName(cluster, stripe, node, random));
   }
 
   /**
    * Assign a friendly name to a node in this cluster
    */
-  public static void assignFriendlyNodeName(Cluster cluster, UID nodeUID) {
+  public static void assignFriendlyNodeName(Cluster cluster, Stripe stripe, Node node) {
     ThreadLocalRandom random = ThreadLocalRandom.current();
-    assignFriendlyNodeName(cluster, nodeUID, random);
+    assignFriendlyNodeName(cluster, stripe, node, random);
   }
 
   /**
@@ -86,11 +85,9 @@ public class NameGenerator {
     cluster.getStripes().forEach(stripe -> assignFriendlyStripeName(cluster, stripe, random));
   }
 
-  private static void assignFriendlyNodeName(Cluster cluster, UID nodeUID, Random random) {
-    Node node = cluster.getNode(nodeUID).get();
+  private static void assignFriendlyNodeName(Cluster cluster, Stripe stripe, Node node, Random random) {
     if (nameCanBeSet(node)) {
-      Stripe stripe = cluster.getStripeByNode(node.getUID()).get();
-      List<String> used = stripe.getNodes().stream().map(Node::getName).collect(toList());
+      List<String> used = cluster.getNodes().stream().map(Node::getName).collect(toList());
       List<String> dict = readLines("dict/greek.txt");
       node.setName(pickRandomNodeName(dict, used, random, stripe.getName() + "-"));
     }
@@ -173,28 +170,25 @@ public class NameGenerator {
 
   private static String pickRandomNodeName(List<String> dict, List<String> used, Random random, String prefix) {
     dict = new ArrayList<>(dict);
-    dict.removeAll(used);
+
+    String name = null;
+    while (!dict.isEmpty() && used.contains((name = prefix + dict.remove(random.nextInt(dict.size()))))) ;
 
     if (dict.isEmpty()) {
-      String name;
+      String incrName;
       do {
         nodeFallbackCount++;
-        name = prefix + nodeFallbackCount;
-      } while (used.contains(name));
-      return name;
+        incrName = prefix + nodeFallbackCount;
+      } while (used.contains(incrName));
+      return incrName;
     }
-
-    if (dict.size() == 1) {
-      return prefix + dict.get(0);
-    }
-
-    return prefix + dict.get(random.nextInt(dict.size()));
+    return name;
   }
 
   private static String pickRandomStripeName(List<String> dict, List<String> used, Random random) {
     dict = new ArrayList<>(dict);
     dict.removeAll(used);
-
+    
     if (dict.isEmpty()) {
       String name;
       do {
@@ -203,11 +197,6 @@ public class NameGenerator {
       } while (used.contains(name));
       return name;
     }
-
-    if (dict.size() == 1) {
-      return dict.get(0);
-    }
-
     return dict.get(random.nextInt(dict.size()));
   }
 

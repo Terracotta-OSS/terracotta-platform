@@ -25,8 +25,10 @@ public class Options {
   private String configDir;
   private String configFile;
   private String licenseFile;
+  private String serverHome;
   private boolean wantsRepairMode;
   private boolean allowsAutoActivation;
+  private boolean help;
 
   private final Map<Setting, String> paramValueMap = new HashMap<>();
 
@@ -82,6 +84,14 @@ public class Options {
     return licenseFile;
   }
 
+  public void setServerHome(String home) {
+    this.serverHome = home;
+  }
+
+  public String getServerHome() {
+    return serverHome;
+  }
+
   public void setWantsRepairMode(boolean wantsRepairMode) {
     this.wantsRepairMode = wantsRepairMode;
   }
@@ -96,5 +106,13 @@ public class Options {
 
   public boolean allowsAutoActivation() {
     return allowsAutoActivation;
+  }
+
+  public void setHelp(boolean help) {
+    this.help = help;
+  }
+
+  public boolean isHelp() {
+    return help;
   }
 }

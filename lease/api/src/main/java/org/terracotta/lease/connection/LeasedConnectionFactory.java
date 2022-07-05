@@ -15,7 +15,7 @@
  */
 package org.terracotta.lease.connection;
 
-import com.tc.util.ManagedServiceLoader;
+import com.tc.util.TCServiceLoader;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.connection.ConnectionPropertyNames;
 
@@ -80,7 +80,7 @@ public class LeasedConnectionFactory {
     return leasedConnectionService.connect(servers, properties);
   }
 
-  private static Collection<LeasedConnectionService> getServices() {
-    return ManagedServiceLoader.loadServices(LeasedConnectionService.class, LeasedConnectionService.class.getClassLoader());
+  private static Collection<? extends LeasedConnectionService> getServices() {
+    return TCServiceLoader.loadServices(LeasedConnectionService.class);
   }
 }

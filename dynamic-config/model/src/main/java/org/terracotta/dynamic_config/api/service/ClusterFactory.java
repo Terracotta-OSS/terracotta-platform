@@ -18,6 +18,8 @@ package org.terracotta.dynamic_config.api.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
+import org.terracotta.dynamic_config.api.model.ConfigFormat;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Version;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Map.Entry.comparingByKey;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 
 /**
@@ -60,7 +63,17 @@ public class ClusterFactory {
    * @return a {@code Cluster} object
    */
   public Cluster create(Path configFile) {
-    return create(Props.load(configFile));
+    requireNonNull(configFile);
+    final ConfigFormat configFormat = ConfigFormat.from(configFile);
+    switch (configFormat) {
+      case PROPERTIES:
+        return create(Props.load(configFile));
+      case CONFIG:
+        return create(new ConfigPropertiesTranslator().load(configFile));
+      default:
+        // json or anything else
+        throw new IllegalArgumentException("Invalid format: " + configFormat + ". Supported formats: " + String.join(", ", ConfigFormat.supported()));
+    }
   }
 
   public Cluster create(Properties properties) {
@@ -106,7 +119,7 @@ public class ClusterFactory {
             toDisplayParams("-", paramValueMap),
             lineSeparator(),
             toDisplayParams("-", defaultsAdded.stream()
-                .filter(configuration -> configuration.getValue().isPresent())
+                .filter(Configuration::hasValue)
                 .collect(toMap(Configuration::getSetting, cfg -> cfg.getValue().get()))
             )
         )
@@ -116,7 +129,8 @@ public class ClusterFactory {
   }
 
   private Cluster validated(Cluster cluster) {
-    new ClusterValidator(cluster).validate(version);
+    // do a minimal validation after having parsed the CLI or config
+    new ClusterValidator(cluster).validate(ClusterState.CONFIGURING, version);
     return cluster;
   }
 
@@ -152,7 +166,7 @@ public class ClusterFactory {
 
   private String toDisplayParams(Collection<Configuration> configurations) {
     String suppliedParameters = configurations.stream()
-        .filter(c -> c.getValue().isPresent())
+        .filter(c -> c.hasValue())
         .map(Configuration::toString)
         .sorted()
         .collect(Collectors.joining(lineSeparator() + "    ", "    ", ""));

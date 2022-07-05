@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.api.service;
 
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
@@ -53,10 +54,10 @@ public class NameGeneratorTest {
 
     Stripe newStripe = newTestStripe(STRIPE_NAME.getDefaultValue(), UID.newUID());
     cluster.addStripe(newStripe);
-    NameGenerator.assignFriendlyNames(cluster, newStripe.getUID());
+    NameGenerator.assignFriendlyNames(cluster, newStripe);
 
     assertThat(newStripe.getName(), is(equalTo("stripe-3")));
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
   }
 
   @Test
@@ -65,7 +66,7 @@ public class NameGeneratorTest {
     Cluster cluster = newTestCluster("foo", stripe);
     try (Stream<String> lines = Files.lines(Paths.get("src/main/resources/dict/greek.txt"))) {
       lines
-          .map(name -> newTestNode(name, "hostname-" + UID.newUID(), UID.newUID()))
+          .map(name -> newTestNode(stripe.getName() + "-" + name, "hostname-" + UID.newUID(), UID.newUID()))
           .forEach(stripe::addNode);
     }
     stripe.addNode(newTestNode("Canidae-1", "hostname-" + UID.newUID(), UID.newUID()));
@@ -73,9 +74,9 @@ public class NameGeneratorTest {
 
     Node newNode = newTestNode(NODE_NAME.getDefaultValue(), "hostname-" + UID.newUID(), UID.newUID());
     stripe.addNode(newNode);
-    NameGenerator.assignFriendlyNodeName(cluster, newNode.getUID());
+    NameGenerator.assignFriendlyNodeName(cluster, stripe, newNode);
 
     assertThat(newNode.getName(), is(equalTo("Canidae-3")));
-    new ClusterValidator(cluster).validate();
+    new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);
   }
 }

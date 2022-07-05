@@ -84,8 +84,9 @@ public class SetSettingTest {
   public void test_setProperty_LICENSE_FILE() {
     Node node = Testing.newTestNode("node1", "localhost");
 
-    // not throwing - noop
+    // not throwing - noop (license uninstall)
     LICENSE_FILE.setProperty(node, null);
+
     LICENSE_FILE.setProperty(node, "a.xml");
   }
 

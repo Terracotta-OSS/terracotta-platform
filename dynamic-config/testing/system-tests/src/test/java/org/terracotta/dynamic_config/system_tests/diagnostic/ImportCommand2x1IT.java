@@ -27,15 +27,17 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition(stripes = 2)
+@ClusterDefinition(stripes = 2, failoverPriority = "")
 public class ImportCommand2x1IT extends DynamicConfigIT {
+
   @Test
   public void test_import() throws Exception {
     getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true);
 
     Path configFile = copyConfigProperty("/config-property-files/import2x1.properties");
-    invokeConfigTool("import", "-f", configFile.toString());
+    assertThat(configTool("import", "-f", configFile.toString()), is(successful()));
 
     Properties after = getUpcomingCluster("localhost", getNodePort()).toProperties(false, true, true);
 

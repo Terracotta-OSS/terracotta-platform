@@ -22,6 +22,7 @@ import org.terracotta.management.entity.nms.agent.NmsAgent;
 import org.terracotta.management.entity.nms.agent.ReconnectData;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -59,7 +60,7 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
     if (reconnectData != null && clientMonitoringService != null) {
       LOGGER.info("Client reconnecting: {}", clientDescriptor);
       exposeTags(clientDescriptor, reconnectData.tags);
-      exposeManagementMetadata(clientDescriptor, reconnectData.contextContainer, reconnectData.capabilities);
+      exposeManagementMetadata(clientDescriptor, reconnectData.root == null ? Context.empty() : reconnectData.root, reconnectData.contextContainer, reconnectData.capabilities);
       pushNotification(clientDescriptor, reconnectData.contextualNotification);
     }
   }
@@ -81,9 +82,9 @@ class ActiveNmsAgentServerEntity extends ActiveProxiedServerEntity<Void, Reconne
   }
 
   @Override
-  public Future<Void> exposeManagementMetadata(@ClientId Object caller, ContextContainer contextContainer, Capability... capabilities) {
+  public Future<Void> exposeManagementMetadata(@ClientId Object caller, Context root, ContextContainer contextContainer, Capability... capabilities) {
     if (clientMonitoringService != null && contextContainer != null && capabilities != null) {
-      clientMonitoringService.exposeManagementRegistry((ClientDescriptor) caller, contextContainer, capabilities);
+      clientMonitoringService.exposeManagementRegistry((ClientDescriptor) caller, root, contextContainer, capabilities);
     }
     return CompletableFuture.completedFuture(null);
   }

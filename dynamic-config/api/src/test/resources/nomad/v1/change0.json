@@ -1,6 +1,7 @@
 {
   "type": "ClusterActivationNomadChange",
   "cluster": {
+    "name": "myClusterName",
     "stripes": [
       {
         "name": "stripe-1",
@@ -21,7 +22,6 @@
       "type": "TIME"
     },
     "failoverPriority": "availability",
-    "name": "myClusterName",
     "offheapResources": {
       "foo": {
         "quantity": 1,

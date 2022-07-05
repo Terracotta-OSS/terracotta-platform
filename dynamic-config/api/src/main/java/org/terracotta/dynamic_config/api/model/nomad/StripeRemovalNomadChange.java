@@ -31,7 +31,7 @@ public class StripeRemovalNomadChange extends StripeNomadChange {
   public Cluster apply(Cluster original) {
     requireNonNull(original);
 
-    if (!original.getStripes().contains(getStripe())) {
+    if (!original.getStripe(getStripe().getUID()).isPresent()) {
       throw new IllegalArgumentException("Stripe : " + getStripe() + " is not in cluster: " + original);
     }
 
@@ -41,7 +41,7 @@ public class StripeRemovalNomadChange extends StripeNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(NodeContext nodeContext) {
+  public boolean canUpdateRuntimeTopology(NodeContext nodeContext) {
     return true;
   }
 

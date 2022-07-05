@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
+import org.terracotta.dynamic_config.test_support.InlineServers;
 
 import java.time.Duration;
 
@@ -30,13 +31,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 4, autoStart = false)
 public class AttachInConsistency1x4IT extends DynamicConfigIT {
-
-  public AttachInConsistency1x4IT() {
-    super(Duration.ofSeconds(300));
-  }
 
   @Override
   protected FailoverPriority getFailoverPriority() {
@@ -46,41 +44,36 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // start the third node
     startNode(1, 3);
-    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     //attach the third node
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
     //Activate cluster
     activateCluster();
-    waitForNPassives(1, 2);
   }
 
   @Test
-  public void testAttachNodeFailAtPrepare() throws Exception {
+  public void testAttachNodeFailAtPrepare() {
     //create prepare failure on active
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure");
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", "stripe.1.node.1.tc-properties.attachStatus=prepareAddition-failure"), is(successful()));
 
     startNode(1, 4);
-    waitForDiagnostic(1, 4);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
 
     // attach failure (forcing attach otherwise we have to restart cluster)
     assertThat(
-        () -> invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 4)),
-        exceptionMatcher("Two-Phase commit failed"));
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 4)),
+        containsOutput("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(3)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(3)));
@@ -94,22 +87,23 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   }
 
   @Test
-  public void attachNodeFailingBecauseOfNodeGoingDownInPreparePhase() throws Exception {
-    int activeId = findActive(1).getAsInt();
-    int passiveId1 = findPassives(1)[0];
-    int passiveId2 = findPassives(1)[1];
+  @InlineServers(false)
+  public void attachNodeFailingBecauseOfNodeGoingDownInPreparePhase() {
+    int activeId = waitForActive(1);
+    final int[] passives = waitForNPassives(1, 2);
+    int passiveId1 = passives[0];
+    int passiveId2 = passives[1];
 
     startNode(1, 4);
-    waitForDiagnostic(1, 4);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
 
     //create failover in prepare phase for active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-prepare";
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     assertThat(
-        () -> invokeConfigTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 4)),
-        exceptionMatcher("Two-Phase commit failed"));
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 4)),
+        containsOutput("Two-Phase commit failed"));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId1)).getNodeCount(), is(equalTo(3)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(3)));
@@ -126,18 +120,19 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testFailoverDuringNomadCommitForPassiveAddition() throws Exception {
-    int activeId = findActive(1).getAsInt();
-    int passiveId1 = findPassives(1)[0];
-    int passiveId2 = findPassives(1)[1];
+  @InlineServers(false)
+  public void testFailoverDuringNomadCommitForPassiveAddition() {
+    int activeId = waitForActive(1);
+    final int[] passives = waitForNPassives(1, 2);
+    int passiveId1 = passives[0];
+    int passiveId2 = passives[1];
 
     startNode(1, 4);
-    waitForDiagnostic(1, 4);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
 
     //setup for failover in commit phase on active
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
-    invokeConfigTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString);
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
 
     // attach command, and failover triggered during commit
     // this will bring down the active
@@ -145,9 +140,10 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     // 1. but the 2 other passives cannot decide which one will become active because they are only 2 nodes so no majority
     //    so the command will block... Until the thread has time to restart the old active (which will become passive and vote)!
     // 2. or it might be possible that one of the passive has time ot become active
+    entityOperationTimeout = Duration.ofSeconds(5); // to not be stuck in failover
     assertThat(
-        () -> invokeConfigTool("-er", "40s", "attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 4)),
-        exceptionMatcher("Two-Phase commit failed"));
+        configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 4)),
+        containsOutput("Two-Phase commit failed"));
 
     //start the old active and verify it becomes passive
     startNode(1, activeId, "-r", getNode(1, activeId).getConfigRepo());
@@ -159,7 +155,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     // change was not committed on the active that has crashed, but if the passive replication was done,
     // it is possible that one of the passive that became active got the change and committed.
     // repair command will be able to replay the commit if necessary
-    invokeConfigTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId));
+    assertThat(configTool("repair", "-f", "commit", "-s", "localhost:" + getNodePort(1, activeId)), is(successful()));
 
     // all nodes of the destination cluster now have the updated topology
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(4)));
@@ -171,10 +167,10 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
 
     // we will be able to add it through a restrictive activation
-    invokeConfigTool("export", "-s", "localhost:" + getNodePort(1, activeId), "-f", tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath().toString());
+    assertThat(configTool("export", "-s", "localhost:" + getNodePort(1, activeId), "-f", tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath().toString(), "-t", "properties"), is(successful()));
     assertThat(
-        invokeConfigTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 4), "-f", tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath().toString()),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 4), "-f", tmpDir.getRoot().resolve("cluster.properties").toAbsolutePath().toString()),
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     // we finally verify that the added node became passive, activated with the right topology
     waitForPassive(1, 4);

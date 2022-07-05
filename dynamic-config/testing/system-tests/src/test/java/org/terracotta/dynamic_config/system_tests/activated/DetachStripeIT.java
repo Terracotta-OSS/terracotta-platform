@@ -17,7 +17,6 @@ package org.terracotta.dynamic_config.system_tests.activated;
 
 import com.terracotta.connection.api.TerracottaConnectionService;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Stripe;
@@ -27,7 +26,6 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 
@@ -36,37 +34,28 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@Ignore("Detaching *any* stripes from an activated cluster is currently unsupported")
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, autoStart = false)
 public class DetachStripeIT extends DynamicConfigIT {
-
-  public DetachStripeIT() {
-    super(Duration.ofSeconds(180));
-  }
 
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
     //attach the second node
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     // stripe-2
     startNode(2, 1);
-    waitForDiagnostic(2, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getNodeCount(), is(equalTo(1)));
     startNode(2, 2);
-    waitForDiagnostic(2, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 2)).getNodeCount(), is(equalTo(1)));
-    assertThat(invokeConfigTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(2, 1), "-s", "localhost:" + getNodePort(2, 2)), is(successful()));
 
     // attach the two stripes to form a 2x2 cluster
-    assertThat(invokeConfigTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+    assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
 
     //Activate cluster
     activateCluster();
@@ -80,7 +69,7 @@ public class DetachStripeIT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getStripeCount(), is(equalTo(2)));
 
     // detach second stripe from the activated 2x2 cluster to form a 1x2 cluster
-    assertThat(invokeConfigTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
+    assertThat(configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
 
     // verify the #nodes in the new topology of the cluster
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
@@ -98,7 +87,7 @@ public class DetachStripeIT extends DynamicConfigIT {
         Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort(1, 1))),
         "dynamic-config-topology-entity",
         getConnectionTimeout(),
-        new DynamicTopologyEntity.Settings().setRequestTimeout(getConnectionTimeout()),
+        new DynamicTopologyEntity.Settings().setRequestTimeout(getDiagnosticOperationTimeout()),
         null)) {
 
       CountDownLatch called = new CountDownLatch(1);
@@ -110,7 +99,7 @@ public class DetachStripeIT extends DynamicConfigIT {
         }
       });
 
-      invokeConfigTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1));
+      assertThat(configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
 
       called.await();
     }

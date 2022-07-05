@@ -22,49 +22,52 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.is;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
-@ClusterDefinition(nodesPerStripe = 2)
+@ClusterDefinition(nodesPerStripe = 2, failoverPriority = "")
 public class GetCommand1x2IT extends DynamicConfigIT {
+
   @Before
   public void before() throws Exception {
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
   }
 
   @Test
   public void testStripe_getOneOffheap() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main"),
         containsOutput("offheap-resources.main=512MB"));
   }
 
   @Test
   public void testStripe_getTwoOffheaps() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "offheap-resources.foo"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources.main", "-c", "offheap-resources.foo"),
         allOf(containsOutput("offheap-resources.main=512MB"), containsOutput("offheap-resources.foo=1GB")));
   }
 
   @Test
   public void testStripe_getAllOffheaps() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "offheap-resources"),
         containsOutput("offheap-resources=foo:1GB,main:512MB"));
   }
 
   @Test
   public void testStripe_getAllDataDirs() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "data-dirs", "-t", "index"),
         allOf(
-            containsOutput("stripe.1.node.1.data-dirs=main:node-1-1/data-dir"),
-            containsOutput("stripe.1.node.2.data-dirs=main:node-1-2/data-dir")));
+            containsOutput("stripe.1.node.1.data-dirs=main:"),
+            containsOutput("stripe.1.node.2.data-dirs=main:")));
   }
 
   @Test
   public void testStripe_getAllNodeHostnames() {
     assertThat(
-        invokeConfigTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.hostname"),
+        configTool("get", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.hostname", "-t", "index"),
         allOf(
             containsOutput("stripe.1.node.1.hostname=localhost"),
             containsOutput("stripe.1.node.2.hostname=localhost")));

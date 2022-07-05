@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.cli</groupId>
     <artifactId>dynamic-config-cli</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -35,6 +35,11 @@
       <artifactId>dynamic-config-model</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.dynamic-config.cli</groupId>
+      <artifactId>dynamic-config-cli-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>com.beust</groupId>
@@ -43,13 +48,6 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-test-utilities</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

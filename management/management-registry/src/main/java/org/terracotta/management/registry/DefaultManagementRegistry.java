@@ -16,6 +16,7 @@
 package org.terracotta.management.registry;
 
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 
 import java.io.Closeable;
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -33,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class DefaultManagementRegistry implements ManagementRegistry, Closeable {
 
+  private final Context context;
   private final ContextContainer contextContainer;
 
   private static final Comparator<Capability> CAPABILITY_COMPARATOR = new Comparator<Capability>() {
@@ -44,8 +47,24 @@ public class DefaultManagementRegistry implements ManagementRegistry, Closeable 
 
   protected final List<ManagementProvider<?>> managementProviders = new CopyOnWriteArrayList<ManagementProvider<?>>();
 
+  public DefaultManagementRegistry() {
+    this.context = Context.empty();
+    this.contextContainer = null;
+  }
+
+  public DefaultManagementRegistry(Context context) {
+    this.context = Objects.requireNonNull(context);
+    this.contextContainer = null;
+  }
+
   public DefaultManagementRegistry(ContextContainer contextContainer) {
-    this.contextContainer = contextContainer; // accept null values - can be overridden
+    this.contextContainer = Objects.requireNonNull(contextContainer);
+    this.context = Context.create(contextContainer.getName(), contextContainer.getValue());
+  }
+
+  public DefaultManagementRegistry(Context context, ContextContainer contextContainer) {
+    this.contextContainer = Objects.requireNonNull(contextContainer);
+    this.context = Objects.requireNonNull(context).with(contextContainer.getName(), contextContainer.getValue());
   }
 
   @Override
@@ -122,6 +141,11 @@ public class DefaultManagementRegistry implements ManagementRegistry, Closeable 
   @Override
   public ContextContainer getContextContainer() {
     return contextContainer;
+  }
+
+  @Override
+  public Context getContext() {
+    return context;
   }
 
   @Override

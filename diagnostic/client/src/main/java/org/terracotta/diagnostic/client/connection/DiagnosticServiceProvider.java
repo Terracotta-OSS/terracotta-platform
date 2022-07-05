@@ -15,44 +15,16 @@
  */
 package org.terracotta.diagnostic.client.connection;
 
-import org.terracotta.connection.ConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
-import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
-import org.terracotta.json.ObjectMapperFactory;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
 
-import static java.util.Objects.requireNonNull;
-
 /**
  * @author Mathieu Carbou
  */
-public class DiagnosticServiceProvider {
+public interface DiagnosticServiceProvider {
+  DiagnosticService fetchDiagnosticService(InetSocketAddress address) throws DiagnosticServiceProviderException;
 
-  private final String connectionName;
-  private final Duration diagnosticInvokeTimeout;
-  private final Duration connectTimeout;
-  private final String securityRootDirectory;
-  private final ObjectMapperFactory objectMapperFactory;
-
-  public DiagnosticServiceProvider(String connectionName, Duration connectTimeout, Duration diagnosticInvokeTimeout, String securityRootDirectory, ObjectMapperFactory objectMapperFactory) {
-    this.connectionName = requireNonNull(connectionName);
-    this.diagnosticInvokeTimeout = requireNonNull(diagnosticInvokeTimeout);
-    this.connectTimeout = requireNonNull(connectTimeout);
-    this.securityRootDirectory = securityRootDirectory;
-    this.objectMapperFactory = objectMapperFactory;
-  }
-
-  public DiagnosticService fetchDiagnosticService(InetSocketAddress address) throws DiagnosticServiceProviderException {
-    return fetchDiagnosticService(address, connectTimeout);
-  }
-
-  public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration connectTimeout) throws DiagnosticServiceProviderException {
-    try {
-      return DiagnosticServiceFactory.fetch(address, connectionName, connectTimeout, diagnosticInvokeTimeout, securityRootDirectory, objectMapperFactory);
-    } catch (ConnectionException e) {
-      throw new DiagnosticServiceProviderException(e);
-    }
-  }
+  DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration connectTimeout) throws DiagnosticServiceProviderException;
 }

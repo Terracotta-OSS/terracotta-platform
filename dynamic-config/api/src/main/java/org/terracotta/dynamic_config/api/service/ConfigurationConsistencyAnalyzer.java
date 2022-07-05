@@ -38,14 +38,16 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toMap;
-import static org.terracotta.diagnostic.model.LogicalServerState.STARTING;
+import static org.terracotta.diagnostic.model.LogicalServerState.DIAGNOSTIC;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ALL_ACCEPTING;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ALL_PREPARED;
+import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ALL_UNINITIALIZED;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.CHANGE_IN_PROGRESS;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.DISCOVERY_FAILURE;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.INCONSISTENT;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ONLINE_ACCEPTING;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ONLINE_PREPARED;
+import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.ONLINE_UNINITIALIZED;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.PARTIALLY_COMMITTED;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.PARTIALLY_PREPARED;
 import static org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState.PARTIALLY_ROLLED_BACK;
@@ -188,7 +190,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     // activated nodes are passive / actives that have some nomad changes
     return responses.entrySet()
         .stream()
-        .filter(e -> allNodes.get(e.getKey()) != STARTING && e.getValue().getLatestChange() != null)
+        .filter(e -> allNodes.get(e.getKey()) != DIAGNOSTIC && e.getValue().getLatestChange() != null)
         .collect(responseEntryToMap());
   }
 
@@ -196,7 +198,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     // nodes in repair are started in diagnostic mode and have nomad changes
     return responses.entrySet()
         .stream()
-        .filter(e -> allNodes.get(e.getKey()) == STARTING && e.getValue().getLatestChange() != null)
+        .filter(e -> allNodes.get(e.getKey()) == DIAGNOSTIC && e.getValue().getLatestChange() != null)
         .collect(responseEntryToMap());
   }
 
@@ -204,7 +206,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     // new nodes in configuration are started in diagnostic mode and have no nomad change yet
     return responses.entrySet()
         .stream()
-        .filter(e -> allNodes.get(e.getKey()) == STARTING && e.getValue().getLatestChange() == null)
+        .filter(e -> allNodes.get(e.getKey()) == DIAGNOSTIC && e.getValue().getLatestChange() == null)
         .collect(responseEntryToMap());
   }
 
@@ -238,6 +240,11 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
       return onlineNodeCount >= totalNodeCount ? ALL_PREPARED : ONLINE_PREPARED;
     }
 
+    boolean areAllUninitialized = responses.values().stream().map(DiscoverResponse::getMode).allMatch(Predicate.isEqual(NomadServerMode.UNINITIALIZED));
+    if (areAllUninitialized) {
+      return onlineNodeCount >= totalNodeCount ? ALL_UNINITIALIZED : ONLINE_UNINITIALIZED;
+    }
+
     // We have a mix of NomadServerMode == PREPARED / ACCEPTING
     // And we know our config is not inconsistent or partitioned
     // So we are in an on-going unfinished change process
@@ -246,7 +253,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     // So if we end up here were a change is in progress it means:
     // - all servers had the same result hash (have the same configuration in force)
     // - all servers either ends with the same change UUID or ends with any rolled back entries,
-    // but their last committed change had teh same UUID or led to the same change result hash (same config)
+    // but their last committed change had the same UUID or led to the same change result hash (same config)
 
     if (recoveryProcessDecider.partiallyPrepared()) {
       return PARTIALLY_PREPARED;
@@ -300,8 +307,14 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
       case ONLINE_PREPARED:
         return "A new cluster configuration has been prepared but not yet committed or rolled back on online nodes."
             + " Some nodes are unreachable so we do not know if the last configuration change has been committed or rolled back on them."
-            + " No further configuration change can be done until the 'repair' command is run to finalize the configuration change."
-            + " If the unreachable nodes do not become available again, you might need to use the '-force' option to force a commit or rollback.";
+            + " No further configuration change can be done until the offline nodes are restarted and the 'repair' command is run again"
+            + " to finalize the configuration change. Please refer to the Troubleshooting Guide if needed.";
+
+      case ALL_UNINITIALIZED:
+        return "All the nodes are being configured (or being repaired).";
+
+      case ONLINE_UNINITIALIZED:
+        return "All the online nodes are being configured (or being repaired).";
 
       case PARTIALLY_PREPARED:
         return "A new  cluster configuration has been *partially* prepared (some nodes didn't get the new change)."
@@ -317,7 +330,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
 
       case UNKNOWN:
         return "Unable to determine the global configuration state."
-            + " There might be some configuration inconsistencies."
+            + " There might be some configuration inconsistencies or some nodes being repaired."
             + " Please look at each node details."
             + " A manual intervention might be needed to reset some nodes.";
 

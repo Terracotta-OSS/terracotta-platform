@@ -65,6 +65,21 @@ public interface DynamicConfigService {
   void restart(Duration delay);
 
   /**
+   * Restart this not after the specified delay only if its physical server state is PASSIVE (the node could be blocked or not)
+   *
+   * @param delay initial delay before restart happens
+   */
+  void restartIfPassive(Duration delay);
+
+  /**
+   * Restart this not after the specified delay only if its physical server state is ACTIVE (the node could be blocked,
+   * in a reconnect window, or serving clients)
+   *
+   * @param delay initial delay before restart happens
+   */
+  void restartIfActive(Duration delay);
+
+  /**
    * Stops an activated node.
    * <p>
    * This method will zap and stop the node.

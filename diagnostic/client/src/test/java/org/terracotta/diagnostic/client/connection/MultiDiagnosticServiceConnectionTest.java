@@ -42,7 +42,7 @@ public class MultiDiagnosticServiceConnectionTest {
   @Mock
   private DiagnosticService diagnosticService;
 
-  private MultiDiagnosticServiceProvider<InetSocketAddress> multiDiagnosticServiceProvider;
+  private MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
 
   private Map<InetSocketAddress, InetSocketAddress> nodes = Stream.of(
       InetSocketAddress.createUnresolved("host1", 1234),
@@ -53,13 +53,13 @@ public class MultiDiagnosticServiceConnectionTest {
   @Before
   public void setUp() {
     Duration timeout = Duration.ofSeconds(1);
-    DiagnosticServiceProvider diagnosticServiceProvider = new DiagnosticServiceProvider("conn-name", timeout, timeout, null, new ObjectMapperFactory()) {
+    DiagnosticServiceProvider diagnosticServiceProvider = new DefaultDiagnosticServiceProvider("conn-name", timeout, timeout, null, new ObjectMapperFactory()) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration timeout) {
         return diagnosticService;
       }
     };
-    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider<>(diagnosticServiceProvider, timeout, new ConcurrencySizing());
+    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
   }
 
   @Test

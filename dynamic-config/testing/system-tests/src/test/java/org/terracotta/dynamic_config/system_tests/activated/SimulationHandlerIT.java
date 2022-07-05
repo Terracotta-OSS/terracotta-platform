@@ -20,37 +20,38 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
 
 /**
  * @author Mathieu Carbou
  */
-@ClusterDefinition(autoActivate = true)
+@ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class SimulationHandlerIT extends DynamicConfigIT {
   @Test
   public void test_missing_value() {
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate="),
-        exceptionMatcher("Invalid input: 'stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate='. Reason: Operation set requires a value"));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate="),
+        containsOutput("Invalid input: 'stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate='. Reason: Operation set requires a value"));
   }
 
   @Test
   public void test_prepare_fails() {
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=TRACE"),
-        exceptionMatcher("Prepare rejected for node localhost:" + getNodePort() + ". Reason: 'set logger-overrides.org.terracotta.dynamic-config.simulate=TRACE (on node UID: "));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=TRACE"),
+        containsOutput("Prepare rejected for node localhost:" + getNodePort() + ". Reason: 'set logger-overrides.org.terracotta.dynamic-config.simulate=TRACE (on node UID: "));
   }
 
   @Test
   public void test_commit_fails_permanently() {
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
-        exceptionMatcher("Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=INFO (on node UID: "));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=INFO"),
+        containsOutput("Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=INFO (on node UID: "));
   }
 
   @Test
   public void test_commit_fails_temporary() {
     assertThat(
-        () -> invokeConfigTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
-        exceptionMatcher("Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (on node UID: "));
+        configTool("set", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node.1.logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG"),
+        containsOutput("Reason: Error when applying setting change: 'set logger-overrides.org.terracotta.dynamic-config.simulate=DEBUG (on node UID: "));
   }
 }

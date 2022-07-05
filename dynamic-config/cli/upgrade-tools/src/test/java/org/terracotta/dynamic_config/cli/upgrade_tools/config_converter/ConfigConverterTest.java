@@ -33,7 +33,7 @@ public class ConfigConverterTest {
   public void test_conversion_fail_cluster_name_missing() {
     exceptionRule.expect(ParameterException.class);
     exceptionRule.expectMessage("Cluster name is required for conversion into a configuration directory");
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/tc-config.xml",
         "-d", tmpDir.getRoot().resolve("generated-configs").toAbsolutePath().toString(),
         "-f");
@@ -43,7 +43,7 @@ public class ConfigConverterTest {
   public void test_conversion_fail_already_existing_dir() {
     exceptionRule.expect(ParameterException.class);
     exceptionRule.expectMessage("Please specify a non-existent directory");
-    ConfigConverterTool.start("convert",
+    new ConfigConverterTool().run("convert",
         "-c", "src/test/resources/tc-config.xml",
         "-n", "my-cluster",
         "-d", tmpDir.getRoot().toAbsolutePath().toString(),

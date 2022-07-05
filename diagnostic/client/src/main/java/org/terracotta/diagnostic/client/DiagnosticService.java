@@ -15,6 +15,8 @@
  */
 package org.terracotta.diagnostic.client;
 
+import org.terracotta.diagnostic.model.ConnectedClientInformation;
+import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.diagnostic.model.LogicalServerState;
 
 import java.io.Closeable;
@@ -51,6 +53,11 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
   // LogicalServerState
 
   LogicalServerState getLogicalServerState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException;
+
+  /**
+   * Get the kit information in one call instead of using MBEAN_SERVER#getVersion and MBEAN_SERVER#getBuildIDs
+   */
+  KitInformation getKitInformation() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException;
 
   // ConsistencyManager
 
@@ -112,8 +119,20 @@ public interface DiagnosticService extends DiagnosticMBeanSupport, Closeable {
     return invoke(MBEAN_SERVER, "getEnvironment");
   }
 
+  default String getVersion() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
+    return invoke(MBEAN_SERVER, "getVersion");
+  }
+
+  default String getBuildID() throws DiagnosticOperationTimeoutException, DiagnosticOperationExecutionException, DiagnosticConnectionException {
+    return invoke(MBEAN_SERVER, "getBuildID");
+  }
+
   default boolean isReconnectWindow() {
     return Boolean.parseBoolean(invoke(MBEAN_SERVER, "isReconnectWindow"));
+  }
+
+  default ConnectedClientInformation getConnectedClientInformation() {
+    return ConnectedClientInformation.fromProperties(invoke(MBEAN_SERVER, "getConnectedClients"));
   }
 
   // DiagnosticsHandler

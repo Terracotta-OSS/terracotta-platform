@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.test_support.processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
@@ -27,13 +28,11 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigEventFiring;
 import org.terracotta.dynamic_config.server.api.NomadChangeProcessor;
 import org.terracotta.dynamic_config.server.api.PathResolver;
-import org.terracotta.monitoring.PlatformService;
 import org.terracotta.nomad.server.NomadException;
 
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +40,7 @@ import java.util.stream.Stream;
 
 import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.dynamic_config.test_support.processor.ServerCrasher.crash;
 
 public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<NodeRemovalNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(MyDummyNomadAdditionChangeProcessor.class);
@@ -52,15 +52,14 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
   private static final String detachStatusKey = "detachStatus";
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
-  private final PlatformService platformService;
   private final IParameterSubstitutor parameterSubstitutor;
   private final PathResolver pathResolver;
-  private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+  private final MBeanServer mbeanServer;
 
-  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, PlatformService platformService, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver) {
+  public MyDummyNomadRemovalChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring, IParameterSubstitutor parameterSubstitutor, PathResolver pathResolver, MBeanServer mbeanServer) {
+    this.mbeanServer = mbeanServer;
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
-    this.platformService = platformService;
     this.parameterSubstitutor = parameterSubstitutor;
     this.pathResolver = pathResolver;
   }
@@ -77,13 +76,13 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
     try {
       checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
-      new ClusterValidator(updated).validate();
+      new ClusterValidator(updated).validate(ClusterState.ACTIVATED);
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
     // cause failure when in prepare phase
     if (killAtPrepare.equals(topologyService.getUpcomingNodeContext().getNode().getTcProperties().orDefault().get(failoverKey))) {
-      platformService.stopPlatform();
+      crash();
     }
   }
 
@@ -105,9 +104,9 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
         // This hack is so only trigger the commit failure once
         path = path().resolve("killed");
         Files.createFile(path);
-        platformService.stopPlatform();
+        crash();
       } catch (FileAlreadyExistsException e) {
-        // this exception si normal for teh second run
+        // this exception si normal for the second run
         LOGGER.warn(e.getMessage(), e);
         try {
           org.terracotta.utilities.io.Files.deleteIfExists(path);

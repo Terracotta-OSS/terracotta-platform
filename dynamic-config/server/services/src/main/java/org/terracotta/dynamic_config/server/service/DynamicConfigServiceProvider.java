@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.server.service;
 
 import com.tc.classloader.BuiltinService;
+import com.tc.spi.NetworkTranslator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Configuration;
@@ -41,7 +42,7 @@ import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.nomad.server.NomadServer;
-import org.terracotta.server.ServerEnv;
+import org.terracotta.server.Server;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -68,10 +69,12 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
   public boolean initialize(ServiceProviderConfiguration configuration, PlatformConfiguration platformConfiguration) {
     this.platformConfiguration = platformConfiguration;
 
-    IParameterSubstitutor parameterSubstitutor = findService(platformConfiguration, IParameterSubstitutor.class);
-    PathResolver pathResolver = findService(platformConfiguration, PathResolver.class);
-    ConfigChangeHandlerManager configChangeHandlerManager = findService(platformConfiguration, ConfigChangeHandlerManager.class);
-    TopologyService topologyService = findService(platformConfiguration, TopologyService.class);
+    TopologyService topologyService = findService(TopologyService.class);
+
+    IParameterSubstitutor parameterSubstitutor = findService(IParameterSubstitutor.class);
+    PathResolver pathResolver = findService(PathResolver.class);
+    ConfigChangeHandlerManager configChangeHandlerManager = findService(ConfigChangeHandlerManager.class);
+    Server server = findService(Server.class);
 
     // client-reconnect-window
     ConfigChangeHandler clientReconnectWindowHandler = new ClientReconnectWindowConfigChangeHandler();
@@ -106,16 +109,19 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     // initialize the config handlers that need do to something at startup
     loggerOverrideConfigChangeHandler.init();
 
-    NomadPermissionChangeProcessor permissions = findService(platformConfiguration, NomadPermissionChangeProcessor.class);
+    NomadPermissionChangeProcessor permissions = findService(NomadPermissionChangeProcessor.class);
     permissions.addCheck(new DisallowSettingChanges());
-    permissions.addCheck(new ServerStateCheck(ServerEnv.getDefaultServer().getManagement()));
+    permissions.addCheck(new ServerStateCheck(server.getManagement()));
 
     return true;
   }
 
   @Override
   public <T> T getService(long consumerID, ServiceConfiguration<T> configuration) {
-    return findService(platformConfiguration, configuration.getServiceType());
+    if (configuration.getServiceType() == NetworkTranslator.class) {
+      return configuration.getServiceType().cast(new DynamicConfigNetworkTranslator(findService(TopologyService.class)));
+    }
+    return findService(configuration.getServiceType());
   }
 
   @Override
@@ -132,7 +138,9 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
         NomadRoutingChangeProcessor.class,
         NomadPermissionChangeProcessor.class,
         LicenseService.class,
-        PathResolver.class
+        PathResolver.class,
+        Server.class,
+        NetworkTranslator.class
     );
   }
 
@@ -148,7 +156,7 @@ public class DynamicConfigServiceProvider implements ServiceProvider {
     }
   }
 
-  private <T> T findService(PlatformConfiguration platformConfiguration, Class<T> type) {
+  private <T> T findService(Class<T> type) {
     if (!getProvidedServiceTypes().contains(type)) {
       throw new IllegalArgumentException(String.valueOf(type));
     }

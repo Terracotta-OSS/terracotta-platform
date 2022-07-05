@@ -249,15 +249,19 @@ public class NonSubstitutingTCConfigurationParser {
   private static void initializeNameAndHost(Server server) {
     if (server.getHost() == null || server.getHost().trim().length() == 0) {
       if (server.getName() == null) {
-        server.setHost("%i");
+        throw new IllegalStateException("Conversion process requires at least a server name or host name to be defined");
       } else {
         server.setHost(server.getName());
       }
     }
 
     if (server.getName() == null || server.getName().trim().length() == 0) {
+      // host at least will be defined
       int tsaPort = server.getTsaPort().getValue();
-      server.setName(server.getHost() + (tsaPort > 0 ? ":" + tsaPort : ""));
+      // DC does not support : in server name
+      // using '-' as a replacement of ':' when the server name is generated from host/port.
+      // this matched the normalization that is done in data dirs code for folder name
+      server.setName(server.getHost() + (tsaPort > 0 ? "-" + tsaPort : ""));
     }
   }
 

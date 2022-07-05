@@ -24,7 +24,6 @@ import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.Closeable;
 import java.io.Serializable;
-import java.util.function.Function;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -41,7 +40,6 @@ public class DiagnosticServiceDescriptorTest {
 
   private final Runnable noop = () -> {
   };
-  private final Function<String, Boolean> mbean = name -> true;
 
   ObjectMapper objectMapper = new ObjectMapperFactory().create();
 
@@ -49,19 +47,19 @@ public class DiagnosticServiceDescriptorTest {
   public void test_ctor_params_validation() {
     // param validation
     assertThat(
-        () -> new DiagnosticServiceDescriptor<>(null, objectMapper, noop, mbean),
+        () -> new DiagnosticServiceDescriptor<>(null, objectMapper, noop),
         is(throwing(instanceOf(NullPointerException.class))));
     assertThat(
-        () -> new DiagnosticServiceDescriptor<>(Serializable.class, null, noop, mbean),
+        () -> new DiagnosticServiceDescriptor<>(Serializable.class, null, noop),
         is(throwing(instanceOf(NullPointerException.class))));
     assertThat(
-        () -> new DiagnosticServiceDescriptor<>(ObjectCodec.class, objectMapper, noop, mbean),
+        () -> new DiagnosticServiceDescriptor<>(ObjectCodec.class, objectMapper, noop),
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Not an interface: " + ObjectCodec.class.getName())))));
   }
 
   @Test
   public void test_matches() {
-    DiagnosticServiceDescriptor<Serializable> descriptor = new DiagnosticServiceDescriptor<>(Serializable.class, objectMapper, noop, mbean);
+    DiagnosticServiceDescriptor<Serializable> descriptor = new DiagnosticServiceDescriptor<>(Serializable.class, objectMapper, noop);
     assertThat(() -> descriptor.matches(null), is(throwing(instanceOf(NullPointerException.class))));
     assertThat(descriptor.matches(Serializable.class), is(true));
     assertThat(descriptor.matches(Closeable.class), is(false));
@@ -69,16 +67,16 @@ public class DiagnosticServiceDescriptorTest {
 
   @Test
   public void test_mustBeExposed() {
-    DiagnosticServiceDescriptor<Serializable> descriptor1 = new DiagnosticServiceDescriptor<>(Serializable.class, objectMapper, noop, mbean);
+    DiagnosticServiceDescriptor<Serializable> descriptor1 = new DiagnosticServiceDescriptor<>(Serializable.class, objectMapper, noop);
     assertThat(descriptor1.discoverMBeanName().isPresent(), is(false));
 
-    DiagnosticServiceDescriptor<MyService> descriptor2 = new DiagnosticServiceDescriptor<>(MyService.class, new MyServiceImpl(), noop, mbean);
+    DiagnosticServiceDescriptor<MyService> descriptor2 = new DiagnosticServiceDescriptor<>(MyService.class, new MyServiceImpl(), noop);
     assertThat(descriptor2.discoverMBeanName().isPresent(), is(true));
   }
 
   @Test
   public void test_invoke() {
-    DiagnosticServiceDescriptor<MyService> descriptor = new DiagnosticServiceDescriptor<>(MyService.class, new MyService() {}, noop, mbean);
+    DiagnosticServiceDescriptor<MyService> descriptor = new DiagnosticServiceDescriptor<>(MyService.class, new MyService() {}, noop);
     // OK
     {
       DiagnosticResponse<?> response = descriptor.invoke("bar").get();

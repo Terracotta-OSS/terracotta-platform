@@ -15,30 +15,20 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.terracotta.angela.client.support.junit.NodeOutputRule;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-
-import java.time.Duration;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsLog;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false)
 public class AttachInConsistency1x2IT extends DynamicConfigIT {
-  @Rule
-  public final NodeOutputRule out = new NodeOutputRule();
-
-  public AttachInConsistency1x2IT() {
-    super(Duration.ofSeconds(180));
-  }
 
   @Override
   protected FailoverPriority getFailoverPriority() {
@@ -49,17 +39,15 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
   public void test_attach_to_activated_cluster() throws Exception {
     // activate a 1x1 cluster
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // attach
-    invokeConfigTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     waitForPassive(1, 2);
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
@@ -71,9 +59,8 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
     withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
 
-    out.clearLog(1, 2);
     stopNode(1, 1);
-    waitUntil(out.getLog(1, 2), containsLog("Not enough registered voters.  Require override intervention or 1 members of the stripe to be connected for action MOVE_TO_ACTIVE"));
+    waitUntilServerStdOut(getNode(1, 2), "Not enough registered voters.  Require override intervention or 1 members of the stripe to be connected for action MOVE_TO_ACTIVE");
   }
 
   @Test
@@ -86,15 +73,14 @@ public class AttachInConsistency1x2IT extends DynamicConfigIT {
 
     // do a change requiring a restart
     assertThat(
-        invokeConfigTool("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"),
-        containsOutput("IMPORTANT: A restart of the cluster is required to apply the changes"));
+        configTool("set", "-s", destination, "-c", "stripe.1.node.1.tc-properties.foo=bar"),
+        containsOutput("Restart required for nodes:"));
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
 
     // try forcing the attach
-    invokeConfigTool("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     waitForPassive(1, 2);
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));

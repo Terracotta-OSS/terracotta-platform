@@ -15,14 +15,14 @@
  */
 package org.terracotta.dynamic_config.cli.command;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.beust.jcommander.Parameter;
 
-/**
- * @author Mathieu Carbou
- */
 public abstract class Command implements Runnable {
 
-  protected final Logger logger = LoggerFactory.getLogger(getClass());
+  @Parameter(names = {"-help", "-h", "--help"}, description = "Help", help = true)
+  private boolean help;
 
+  public boolean isHelp() {
+    return help;
+  }
 }

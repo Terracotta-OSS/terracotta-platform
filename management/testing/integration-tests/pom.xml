@@ -22,7 +22,7 @@
   <parent>
     <artifactId>terracotta-management</artifactId>
     <groupId>org.terracotta.management</groupId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -72,7 +72,6 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <version>${terracotta-core.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -87,14 +86,23 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>galvan-support</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>${logback.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.skyscreamer</groupId>
+      <artifactId>jsonassert</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -171,10 +179,12 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <forkCount>${test.parallel.forks}</forkCount>
+          <reuseForks>false</reuseForks>
           <systemPropertyVariables>
             <kitInstallationPath>${project.build.directory}/platform-kit-${project.version}</kitInstallationPath>
-            <!--            <serverDebugPortStart>5005</serverDebugPortStart>-->
+            <serverWorkingDir>${project.build.directory}</serverWorkingDir>
           </systemPropertyVariables>
+          <argLine>-XX:+UseG1GC</argLine>
         </configuration>
       </plugin>
     </plugins>

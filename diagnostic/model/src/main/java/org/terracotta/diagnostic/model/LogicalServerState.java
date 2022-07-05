@@ -70,7 +70,12 @@ public enum LogicalServerState {
   /**
    * Passive server is synchronizing with active server
    */
-  SYNCHRONIZING("SYNCHRONIZING", "PASSIVE-SYNCING");
+  SYNCHRONIZING("SYNCHRONIZING", "PASSIVE-SYNCING"),
+
+  /**
+   * Server is not yet configured
+   */
+  DIAGNOSTIC("DIAGNOSTIC");
 
   private final String[] mappings;
 
@@ -99,9 +104,7 @@ public enum LogicalServerState {
       return LogicalServerState.PASSIVE_SUSPENDED;
     } else if (parsedLogicalServerState == LogicalServerState.STARTING && isBlocked) {
       return LogicalServerState.START_SUSPENDED;
-    } else {
-      return parsedLogicalServerState;
-    }
+    } else return parsedLogicalServerState;
   }
 
   public boolean canConnect() {
@@ -120,7 +123,19 @@ public enum LogicalServerState {
     return this == ACTIVE || this == ACTIVE_RECONNECTING;
   }
 
+  public boolean isStarting() {
+    return this == STARTING;
+  }
+
+  public boolean isSynchronizing() {
+    return this == SYNCHRONIZING;
+  }
+
   public boolean isPassive() {
     return this == PASSIVE;
+  }
+
+  public boolean isBlocked() {
+    return this == START_SUSPENDED || this == ACTIVE_SUSPENDED || this == PASSIVE_SUSPENDED;
   }
 }

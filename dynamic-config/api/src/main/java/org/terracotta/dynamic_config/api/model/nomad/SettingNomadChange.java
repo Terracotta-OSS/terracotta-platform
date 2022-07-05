@@ -15,6 +15,8 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -40,6 +42,8 @@ import static org.terracotta.dynamic_config.api.model.Requirement.NODE_RESTART;
  * @author Mathieu Carbou
  */
 public class SettingNomadChange extends FilteredNomadChange {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(SettingNomadChange.class);
 
   private final Operation operation;
   private final Setting setting;
@@ -74,19 +78,50 @@ public class SettingNomadChange extends FilteredNomadChange {
 
   @Override
   public Cluster apply(Cluster original) {
-    Cluster updated = original.clone();
-    Configuration configuration = toConfiguration(updated);
+    Configuration configuration = toConfiguration(original);
     configuration.validate(ACTIVATED, getOperation());
+    Cluster updated = original.clone();
     configuration.apply(updated);
     return updated;
   }
 
   @Override
-  public boolean canApplyAtRuntime(NodeContext currentNode) {
-    Setting setting = getSetting();
-    boolean requiresClusterRestart = setting.requires(CLUSTER_RESTART);
-    boolean requiresThisNodeRestart = setting.requires(NODE_RESTART) && getSetting().isScope(Scope.NODE) && getApplicability().isApplicableTo(currentNode);
-    return !requiresClusterRestart && !requiresThisNodeRestart;
+  public boolean canUpdateRuntimeTopology(NodeContext currentNode) {
+    final Configuration configuration = toConfiguration(currentNode.getCluster());
+    final boolean requiresClusterRestart = setting.requires(CLUSTER_RESTART);
+
+    if (requiresClusterRestart) {
+      // we cannot apply at runtime any change requiring a cluster restart
+      LOGGER.trace("canUpdateRuntimeTopology({}): NO (cluster requires a restart)", configuration);
+      return false;
+    }
+
+    final boolean thisNodeIsTargeted = getSetting().isScope(Scope.NODE) && getApplicability().isApplicableTo(currentNode);
+    final boolean requiresThisTargetedNodeToRestart = thisNodeIsTargeted && setting.requires(NODE_RESTART);
+    if (requiresThisTargetedNodeToRestart) {
+      // We cannot apply at runtime on this node a change that targets this node and requires a restart.
+      // Yeah you've read it... Complex ;-)
+      // Here is an example with a cluster of 2 nodes node1 and node2.
+      // You run: set stripe.1.node.1.log-dir=foo (which targets node1 and log dir requires a restart)
+      // What you want:
+      // - is to create a new config on disk for all the nodes
+      // - NOT call any config handler #apply() method
+      // - NOT update the runtime topology of node1 (since it requires a restart)
+      // - BUT update the runtime topology of node1 once Nomad commits because node2 is not part of the change
+      LOGGER.trace("canUpdateRuntimeTopology({}, {}, {}): NO (this targeted node requires a restart)", configuration, getApplicability(), currentNode);
+      return false;
+    }
+
+    boolean vetoFromThisTargetedNode = thisNodeIsTargeted && setting.vetoRuntimeChange(currentNode, configuration);
+    // check if this setting wants to veto the change. If "vetoRuntimeChange" returns true,
+    // then the change won't be applied at runtime and will require a restart
+    if (vetoFromThisTargetedNode) {
+      LOGGER.trace("canUpdateRuntimeTopology({}, {}, {}): NO (targeted node has vetoed the runtime change and will need to restart)", configuration, getApplicability(), currentNode);
+    } else {
+      LOGGER.trace("canUpdateRuntimeTopology({}, {}, {}): YES", configuration, getApplicability(), currentNode);
+    }
+
+    return !vetoFromThisTargetedNode;
   }
 
   public String getName() {

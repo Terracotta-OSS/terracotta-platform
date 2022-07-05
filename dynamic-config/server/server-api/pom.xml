@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.server</groupId>
     <artifactId>dynamic-config-server</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -34,6 +34,10 @@
       <groupId>org.terracotta.dynamic-config</groupId>
       <artifactId>dynamic-config-api</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>terracotta-utilities-tools</artifactId>
     </dependency>
 
     <!-- server provided -->

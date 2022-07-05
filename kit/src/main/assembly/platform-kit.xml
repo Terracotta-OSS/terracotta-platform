@@ -91,15 +91,14 @@
         <include>com.fasterxml.jackson.core:jackson-databind</include>
         <include>com.fasterxml.jackson.datatype:jackson-datatype-jdk8</include>
         <include>com.fasterxml.jackson.datatype:jackson-datatype-jsr310</include>
+        <include>org.terracotta:terracotta-utilities-tools</include>
       </includes>
     </dependencySet>
 
     <dependencySet>
       <outputDirectory>server/plugins/lib</outputDirectory>
       <includes>
-        <include>net.bytebuddy:byte-buddy</include>
         <include>com.beust:jcommander</include>
-        <include>org.terracotta:terracotta-utilities-tools</include>
         <include>org.terracotta:offheap-resource</include>
         <include>org.terracotta:lease-entity-server</include>
         <include>org.terracotta:lease-entity-common</include>
@@ -136,6 +135,7 @@
         <include>org.terracotta.common:common-structures</include>
         <include>org.terracotta.common:common-json-support</include>
         <include>org.terracotta.common:common-nomad</include>
+        <include>org.terracotta.common:output-service</include>
         <include>com.fasterxml.jackson.core:jackson-annotations</include>
         <include>com.fasterxml.jackson.core:jackson-core</include>
         <include>com.fasterxml.jackson.core:jackson-databind</include>
@@ -154,6 +154,8 @@
         <include>org.terracotta.dynamic-config.cli:upgrade-tools-oss</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-upgrade-tools</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
+        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-api</include>
+        <include>org.terracotta.common:output-service</include>
         <include>org.terracotta:data-root-resource</include>
         <include>org.terracotta.internal:tc-config-parser</include>
         <include>org.terracotta:tcconfig-schema</include>
@@ -168,10 +170,18 @@
     </dependencySet>
 
     <dependencySet>
+      <outputDirectory>tools/voter/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta:voter</include>
+      </includes>
+    </dependencySet>
+
+    <dependencySet>
       <outputDirectory>tools/lib</outputDirectory>
       <includes>
         <include>org.terracotta.internal:client-runtime</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-config-tool</include>
+        <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-api</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
         <include>org.terracotta.dynamic-config:dynamic-config-model</include>
         <include>org.terracotta.dynamic-config:dynamic-config-api</include>

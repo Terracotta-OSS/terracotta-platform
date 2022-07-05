@@ -17,6 +17,7 @@ package org.terracotta.management.entity.nms.agent;
 
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -40,11 +41,27 @@ public interface NmsAgent {
    * @param contextContainer output from Management registry
    * @param capabilities     output from Management registry
    * @param clientDescriptor must be null, used only for implementation
+   * @deprecated Use instead: {@link #exposeManagementMetadata(Object, Context, ContextContainer, Capability...)}
    */
   @Async(Async.Ack.NONE)
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
-  Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability... capabilities);
+  @Deprecated
+  default Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, ContextContainer contextContainer, Capability... capabilities) {
+    return exposeManagementMetadata(clientDescriptor, Context.empty(), contextContainer, capabilities);
+  }
+
+  /**
+   * Exposes this management registry output (context container and capabilities) over this connection.
+   *
+   * @param contextContainer output from Management registry
+   * @param capabilities     output from Management registry
+   * @param clientDescriptor must be null, used only for implementation
+   */
+  @Async(Async.Ack.NONE)
+  @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
+  @ExecutionStrategy(location = ACTIVE)
+  Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, Context root, ContextContainer contextContainer, Capability... capabilities);
 
   /**
    * Exposes client tags
@@ -79,7 +96,7 @@ public interface NmsAgent {
   /**
    * Sends client's stats to the server
    *
-   * @param statistics     the client's stats
+   * @param statistics       the client's stats
    * @param clientDescriptor must be null, used only for implementation
    */
   @Async(Async.Ack.NONE)

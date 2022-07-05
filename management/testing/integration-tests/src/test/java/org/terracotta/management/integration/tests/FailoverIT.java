@@ -28,6 +28,8 @@ import java.util.Set;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 
 /**
  * @author Mathieu Carbou
@@ -80,8 +82,7 @@ public class FailoverIT extends AbstractHATest {
 
     // removes all random values
     JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
-
-    assertEquals(actual.toPrettyString(), readJson("topology-after-failover.json"), actual);
+    JSONAssert.assertEquals(actual.toString(), readJson("topology-after-failover.json").toString(), actual.toString(), true);
   }
 
   @Test

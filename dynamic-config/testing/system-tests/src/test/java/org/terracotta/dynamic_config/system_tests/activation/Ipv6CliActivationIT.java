@@ -19,6 +19,10 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+
 @ClusterDefinition(nodesPerStripe = 2)
 public class Ipv6CliActivationIT extends DynamicConfigIT {
 
@@ -32,31 +36,26 @@ public class Ipv6CliActivationIT extends DynamicConfigIT {
         "--group-bind-address", "::",
         "--port", String.valueOf(getNodePort(stripeId, nodeId)),
         "--group-port", String.valueOf(getNodeGroupPort(stripeId, nodeId)),
-        "--log-dir", getNodePath(stripeId, nodeId).append("/logs").toString(),
-        "--backup-dir", getNodePath(stripeId, nodeId).append("/backup").toString(),
-        "--metadata-dir", getNodePath(stripeId, nodeId).append("/metadata").toString(),
-        "--config-dir", getNodePath(stripeId, nodeId).append("/config").toString(),
-        "--data-dirs", "main:" + getNodePath(stripeId, nodeId).append("/data-dir")
+        "--log-dir", "logs",
+        "--backup-dir", "backup",
+        "--metadata-dir", "metadata",
+        "--config-dir", "config",
+        "--data-dirs", "main:data-dir"
     );
   }
 
   @Test
   public void testSingleNodeStartupFromCliParamsAndActivateCommand() {
-    waitForDiagnostic(1, 1);
-
-    invokeConfigTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
+    assertThat(configTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
 
     waitForActive(1);
   }
 
   @Test
   public void testMultiNodeStartupFromCliParamsAndActivateCommand() {
-    waitForDiagnostic(1, 1);
-    waitForDiagnostic(1, 2);
+    assertThat(configTool("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2)), is(successful()));
 
-    invokeConfigTool("attach", "-d", "[::1]:" + getNodePort(), "-s", "[::1]:" + getNodePort(1, 2));
-
-    invokeConfigTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster");
+    assertThat(configTool("activate", "-s", "[::1]:" + getNodePort(), "-n", "tc-cluster"), is(successful()));
 
     waitForActive(1);
     waitForPassives(1);

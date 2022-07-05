@@ -122,6 +122,10 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
   @Override
   public void addDataDirectory(String name, String path) {
     addDataDirectory(name, path, false);
+    // For newly added data-dirs as part of dynamic-config.
+    for (DataDirs dataDirs : serverToDataRoots.values()) {
+      ((DataDirsWithServerName)dataDirs).updateDataDir(name);
+    }
   }
 
   public void addDataDirectory(String name, String path, boolean skipIO) {
@@ -174,14 +178,15 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
   @Override
   public void onManagementRegistryCreated(EntityManagementRegistry registry) {
     long consumerId = registry.getMonitoringService().getConsumerId();
+    String serverName = registry.getMonitoringService().getServerName();
     LOGGER.trace("[{}] onManagementRegistryCreated()", consumerId);
 
     registries.add(registry);
 
     registry.addManagementProvider(new DataRootSettingsManagementProvider());
-    registry.addManagementProvider(new DataRootStatisticsManagementProvider(this));
+    registry.addManagementProvider(new DataRootStatisticsManagementProvider(this, serverName));
 
-    DataDirs dataDirs = getDataRootsForServer(registry.getMonitoringService().getServerName());
+    DataDirs dataDirs = getDataRootsForServer(serverName);
 
     for (String identifier : dataDirs.getDataDirectoryNames()) {
       LOGGER.trace("[{}] onManagementRegistryCreated() - Exposing DataDirectory:{}", consumerId, identifier);
@@ -234,6 +239,11 @@ public class DataDirsConfigImpl implements DataDirsConfig, ManageableServerCompo
 
   public long getDiskUsageByRootIdentifier(String identifier) {
     return computeFolderSize(getRoot(identifier));
+  }
+
+  public long getDiskUsageByRootIdentifierForServer(String identifier, String serverName) {
+    DataDirs dataDirs = getDataRootsForServer(serverName);
+    return computeFolderSize(dataDirs.getDataDirectory(identifier));
   }
 
   void ensureDirectory(Path directory) throws IOException {

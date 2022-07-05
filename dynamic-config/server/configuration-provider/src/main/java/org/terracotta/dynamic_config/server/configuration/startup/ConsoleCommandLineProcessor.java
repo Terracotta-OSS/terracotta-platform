@@ -23,7 +23,6 @@ import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.server.Server;
 
 import static java.util.Objects.requireNonNull;
-import static org.terracotta.dynamic_config.api.model.SettingName.FAILOVER_PRIORITY;
 
 public class ConsoleCommandLineProcessor implements CommandLineProcessor {
   private final Options options;
@@ -48,9 +47,6 @@ public class ConsoleCommandLineProcessor implements CommandLineProcessor {
   @Override
   public void process() {
     server.console("Starting node from command-line parameters");
-    if (options.getFailoverPriority() == null) {
-      throw new IllegalArgumentException(FAILOVER_PRIORITY + " is required");
-    }
 
     Cluster cluster = clusterCreator.create(options.getTopologyOptions(), parameterSubstitutor);
     Node node = cluster.getSingleNode().get(); // Cluster object will have only 1 node, just get that

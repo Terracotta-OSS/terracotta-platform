@@ -34,18 +34,16 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
   public void test_attach_and_activated_cluster() throws Exception {
     // activate a 1x1 cluster
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
-    assertThat(invokeConfigTool("activate", "-connect-to", "localhost:" + getNodePort(), "-cluster-name", "tc-cluster"),
+    assertThat(configTool("activate", "-connect-to", "localhost:" + getNodePort(), "-cluster-name", "tc-cluster"),
         is(successful()));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // attach
-    invokeConfigTool("attach", "-to-stripe", "localhost:" + getNodePort(1, 1), "-node", "localhost:" + getNodePort(1, 2));
+    assertThat(configTool("attach", "-to-stripe", "localhost:" + getNodePort(1, 1), "-node", "localhost:" + getNodePort(1, 2)), is(successful()));
     waitForPassive(1, 2);
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));

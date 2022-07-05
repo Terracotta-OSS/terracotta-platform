@@ -66,7 +66,7 @@ public class OssTcConfigMapper extends AbstractTcConfigMapper implements TcConfi
           .setGroupBindAddress(commonMapper.moreRestrictive(server.getTsaGroupPort().getBind(), server.getBind()))
           .setLogDir(RawPath.valueOf(server.getLogs()))
           .setTcProperties(commonMapper.toProperties(tcConfig).orElse(emptyMap()))
-          .setMetadataDir(commonMapper.toMetadataDir(xmlPlugins).map(Map.Entry::getValue).orElse(null))
+          .setMetadataDir(null)
           .setDataDirs(commonMapper.toDataDirs(xmlPlugins, dataRootMapping -> true).orElse(emptyMap()))
           .setBackupDir(null)
       ));

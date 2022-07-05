@@ -22,4 +22,6 @@ import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
  */
 public interface NomadRoutingChangeProcessor {
   <T extends DynamicConfigNomadChange> void register(Class<? extends T> changeType, NomadChangeProcessor<T> processor);
+
+  void clear();
 }

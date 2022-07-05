@@ -42,10 +42,14 @@ public class DataRootsDynamicConfigExtension implements DynamicConfigExtension {
 
     NodeContext nodeContext = topologyService.getRuntimeNodeContext();
     Path nodeMetadataDir = nodeContext.getNode().getMetadataDir().orDefault().toPath();
+    new MoveOperation(parameterSubstitutor.substitute(pathResolver.resolve(nodeMetadataDir))).move();
     Map<String, Path> dataDirs = nodeContext.getNode().getDataDirs().orDefault().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().toPath()));
+    dataDirs.values().stream()
+        .map(path -> parameterSubstitutor.substitute(pathResolver.resolve(path)))
+        .forEach(path -> new MoveOperation(path).move());
     DataDirsConfigImpl dataDirectoriesConfig = new DataDirsConfigImpl(parameterSubstitutor, pathResolver, nodeMetadataDir, dataDirs);
     configChangeHandlerManager.set(Setting.DATA_DIRS, new DataDirConfigChangeHandler(dataDirectoriesConfig, parameterSubstitutor, pathResolver));
-
+    configChangeHandlerManager.set(Setting.NODE_METADATA_DIR, new MetaDataDirConfigChangeHandler(parameterSubstitutor, pathResolver));
     registrar.registerExtendedConfiguration(dataDirectoriesConfig);
   }
 }

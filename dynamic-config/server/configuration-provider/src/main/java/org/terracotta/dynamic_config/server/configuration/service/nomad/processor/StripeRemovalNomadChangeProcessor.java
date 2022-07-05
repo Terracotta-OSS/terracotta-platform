@@ -18,6 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.service.nomad.process
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -47,7 +48,7 @@ public class StripeRemovalNomadChangeProcessor implements NomadChangeProcessor<S
     }
     try {
       Cluster updated = change.apply(baseConfig.getCluster());
-      new ClusterValidator(updated).validate();
+      new ClusterValidator(updated).validate(ClusterState.ACTIVATED);
     } catch (RuntimeException e) {
       throw new NomadException("Error when trying to apply: '" + change.getSummary() + "': " + e.getMessage(), e);
     }

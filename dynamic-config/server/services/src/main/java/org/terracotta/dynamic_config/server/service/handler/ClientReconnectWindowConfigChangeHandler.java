@@ -27,14 +27,13 @@ public class ClientReconnectWindowConfigChangeHandler implements ConfigChangeHan
 
   @Override
   public void validate(NodeContext nodeContext, Configuration change) throws InvalidConfigChangeException {
-    if (!change.getValue().isPresent()) {
-      throw new InvalidConfigChangeException("Operation not supported");//unset not supported
-    }
-
-    try {
-      Measure.parse(change.getValue().get(), TimeUnit.class);
-    } catch (RuntimeException e) {
-      throw new InvalidConfigChangeException(e.toString(), e);
+    // if the change has no value, this is an unset which rolls back to the default system value
+    if (change.hasValue()) {
+      try {
+        Measure.parse(change.getValue().get(), TimeUnit.class);
+      } catch (RuntimeException e) {
+        throw new InvalidConfigChangeException(e.toString(), e);
+      }
     }
   }
 }

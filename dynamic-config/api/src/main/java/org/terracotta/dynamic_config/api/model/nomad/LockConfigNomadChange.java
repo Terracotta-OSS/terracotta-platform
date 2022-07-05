@@ -38,7 +38,7 @@ public class LockConfigNomadChange extends FilteredNomadChange {
   }
 
   @Override
-  public boolean canApplyAtRuntime(NodeContext nodeContext) {
+  public boolean canUpdateRuntimeTopology(NodeContext nodeContext) {
     return true;
   }
 
