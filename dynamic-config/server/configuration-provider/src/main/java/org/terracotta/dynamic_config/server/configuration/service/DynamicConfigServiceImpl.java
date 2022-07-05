@@ -65,7 +65,6 @@ import java.util.Optional;
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.server.StopAction.RESTART;
-import static org.terracotta.server.StopAction.ZAP;
 
 public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigListener, StateDumpable {
 
@@ -344,7 +343,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.info("Will stop node in {} seconds", delayInSeconds.getSeconds());
     runAfterDelay(delayInSeconds, () -> {
       LOGGER.info("Stopping node");
-      server.stop(ZAP);
+      server.stop();
     });
   }
 
