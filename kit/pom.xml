@@ -183,7 +183,7 @@
     <!--
       KIT
     -->
-    
+
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>terracotta-kit</artifactId>
