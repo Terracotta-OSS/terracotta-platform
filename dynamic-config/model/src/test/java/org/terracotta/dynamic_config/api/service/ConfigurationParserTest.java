@@ -97,6 +97,22 @@ public class ConfigurationParserTest {
   }
 
   @Test
+  public void test_cli_no_logDir() {
+    // node hostname should be resolved from default value (%h) if not given
+    assertCliEquals(
+        cli("failover-priority=availability", "log-dir="),
+        Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "localhost").setLogDir(null)))
+            .setFailoverPriority(availability()),
+        "stripe.1.node.1.name=<GENERATED>",
+        "stripe.1.stripe-name=<GENERATED>",
+        "stripe.1.node.1.node-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "cluster-uid=<GENERATED>",
+        "stripe.1.node.1.hostname=localhost"
+    );
+  }
+
+  @Test
   public void test_cliToProperties_2() {
     // placeholder in node hostname should be resolved eagerly
     assertCliEquals(
@@ -282,6 +298,24 @@ public class ConfigurationParserTest {
   }
 
   @Test
+  public void test_parsing_no_log_dir() {
+    // minimal config is to only have hostname, but to facilitate testing we add name
+    assertConfigEquals(
+        config(
+            "stripe.1.stripe-name=<GENERATED>",
+            "stripe.1.node.1.name=node1",
+            "stripe.1.node.1.hostname=localhost",
+            "stripe.1.node.1.log-dir=",
+            "cluster-name=foo"
+        ),
+        Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost").setLogDir(null))).setFailoverPriority(null),
+        "cluster-uid=<GENERATED>",
+        "stripe.1.stripe-uid=<GENERATED>",
+        "stripe.1.node.1.node-uid=<GENERATED>"
+    );
+  }
+
+  @Test
   public void test_parsing_complete_1x1() {
     // minimal config is to only have hostname, but to facilitate testing we add name
     assertConfigEquals(
@@ -314,16 +348,16 @@ public class ConfigurationParserTest {
             "stripe.1.node.1.data-dirs=main:%H/terracotta/user-data/main"
         ),
         Testing.newTestCluster("foo", new Stripe().addNodes(Testing.newTestNode("node1", "localhost")
-            .setPort(9410)
-            .setGroupPort(9430)
-            .setBindAddress("0.0.0.0")
-            .setGroupBindAddress("0.0.0.0")
-            .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
-            .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
-            .setLoggerOverrides(emptyMap())
-            .setTcProperties(emptyMap())
-            .putDataDir("main", RawPath.valueOf("%H/terracotta/user-data/main"))
-        ))
+                .setPort(9410)
+                .setGroupPort(9430)
+                .setBindAddress("0.0.0.0")
+                .setGroupBindAddress("0.0.0.0")
+                .setMetadataDir(RawPath.valueOf("%H/terracotta/metadata"))
+                .setLogDir(RawPath.valueOf("%H/terracotta/logs"))
+                .setLoggerOverrides(emptyMap())
+                .setTcProperties(emptyMap())
+                .putDataDir("main", RawPath.valueOf("%H/terracotta/user-data/main"))
+            ))
             .setClientReconnectWindow(120, TimeUnit.SECONDS)
             .setFailoverPriority(availability())
             .setClientLeaseDuration(150, TimeUnit.SECONDS)
@@ -416,7 +450,7 @@ public class ConfigurationParserTest {
   private static Map<Setting, String> cli(String... params) {
     return Stream.of(params)
         .map(p -> p.split("="))
-        .map(kv -> new AbstractMap.SimpleEntry<>(Setting.fromName(kv[0]), kv[1]))
+        .map(kv -> new AbstractMap.SimpleEntry<>(Setting.fromName(kv[0]), kv.length == 2 ? kv[1] : ""))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 

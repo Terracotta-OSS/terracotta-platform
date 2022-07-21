@@ -84,8 +84,13 @@ class DynamicConfigServerConfiguration implements ServerConfiguration {
 
   @Override
   public File getLogsLocation() {
+    if (unConfigured || !node.getLogDir().isConfigured()) {
+      // node log dir can be unset at runtime
+      // core now supports returning null even on an activated node
+      return null;
+    }
     String sanitizedNodeName = node.getName().replace(":", "-"); // Sanitize for path
-    return unConfigured ? null : substitutor.substitute(pathResolver.resolve(node.getLogDir().orDefault().toPath().resolve(sanitizedNodeName))).toFile();
+    return substitutor.substitute(pathResolver.resolve(node.getLogDir().get().toPath().resolve(sanitizedNodeName))).toFile();
   }
 
   @Override

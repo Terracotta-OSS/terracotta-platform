@@ -439,7 +439,7 @@ public enum Setting {
           when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
           when(ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(NODE_RESTART, PRESENCE),
+      of(NODE_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_LOG_DIR, tuple2(key, value))

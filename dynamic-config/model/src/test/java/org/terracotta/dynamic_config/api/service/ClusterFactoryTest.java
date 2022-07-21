@@ -143,6 +143,7 @@ public class ClusterFactoryTest {
 
   @Test
   public void test_create_cli() {
+    assertCliEquals(cli("failover-priority=availability", "hostname=foo", "log-dir="), Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "foo").setLogDir(null))));
     assertCliEquals(cli("failover-priority=availability"), Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "localhost"))));
     assertCliEquals(cli("failover-priority=availability", "hostname=%c"), Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "localhost.home"))));
     assertCliEquals(cli("failover-priority=availability", "hostname=foo"), Testing.newTestCluster(new Stripe().addNodes(Testing.newTestNode("<GENERATED>", "foo"))));
@@ -469,7 +470,7 @@ public class ClusterFactoryTest {
   private static Map<Setting, String> cli(String... params) {
     return Stream.of(params)
         .map(p -> p.split("="))
-        .map(kv -> new AbstractMap.SimpleEntry<>(Setting.fromName(kv[0]), kv[1]))
+        .map(kv -> new AbstractMap.SimpleEntry<>(Setting.fromName(kv[0]), kv.length == 2 ? kv[1] : ""))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
