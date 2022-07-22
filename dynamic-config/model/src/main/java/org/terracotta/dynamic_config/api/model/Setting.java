@@ -430,7 +430,13 @@ public enum Setting {
   NODE_LOG_DIR(SettingName.NODE_LOG_DIR,
       of(V1, V2),
       false,
-      always(RawPath.valueOf(Paths.get("%H", "terracotta", "logs").toString())),
+      // Default behaviour is to ALWAYS have a log-dir value returned to core. Core will then always log to a file.
+      // This value can either be the configured value or the default one.
+      // In a Docker environment, logging should be sent to stdout (with or without json format)/
+      // These images should start the server with -Dterracotta.config.logDir.noDefault=true.
+      // If the user configures a value for log-dir, core will use it and log in a file (within the container or in a user-mounted volume).
+      // If the user didn't set a value, then logs will be sent to stdout and no file will be written.
+      () -> Boolean.getBoolean("terracotta.config.logDir.noDefault") ? null : RawPath.valueOf(Paths.get("%H", "terracotta", "logs").toString()),
       NODE,
       fromNode(Node::getLogDir),
       intoNode((node, value) -> node.setLogDir(value == null ? null : RawPath.valueOf(value))),
@@ -439,7 +445,7 @@ public enum Setting {
           when(CONFIGURING).allow(GET, SET, UNSET).atAnyLevels(),
           when(ACTIVATED).allow(GET, SET, UNSET).atAnyLevels()
       ),
-      of(NODE_RESTART, PRESENCE),
+      of(NODE_RESTART),
       emptyList(),
       emptyList(),
       (key, value) -> PATH_VALIDATOR.accept(SettingName.NODE_LOG_DIR, tuple2(key, value))

@@ -327,7 +327,6 @@ public class ConfigurationTest {
           tuple2(NODE_GROUP_PORT, "9410"),
           tuple2(NODE_BIND_ADDRESS, "0.0.0.0"),
           tuple2(NODE_GROUP_BIND_ADDRESS, "0.0.0.0"),
-          tuple2(NODE_LOG_DIR, "foo/bar"),
           tuple2(NODE_METADATA_DIR, "foo/bar")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
@@ -349,6 +348,7 @@ public class ConfigurationTest {
       Stream.of(
           tuple2(NODE_BACKUP_DIR, "foo/bar"),
           tuple2(SECURITY_DIR, "foo/bar"),
+          tuple2(NODE_LOG_DIR, "foo/bar"),
           tuple2(SECURITY_AUDIT_LOG_DIR, "foo/bar")
       ).forEach(tuple -> {
         allowInput(tuple.t1.toString(), tuple.t1, CLUSTER, null, null, null, null);
@@ -754,7 +754,7 @@ public class ConfigurationTest {
       reject(state, op, "log-dir=foo");
       reject(state, op, "stripe.1.log-dir=foo");
       allow(state, op, "stripe.1.node.1.log-dir=foo");
-      reject(state, op, "stripe.1.node.1.log-dir=");
+      allow(state, op, "stripe.1.node.1.log-dir=");
     }));
 
     // cluster-name, offheap-resources, failover-priority

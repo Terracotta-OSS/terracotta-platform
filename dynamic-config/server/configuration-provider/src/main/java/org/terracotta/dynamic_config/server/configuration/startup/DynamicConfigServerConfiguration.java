@@ -19,6 +19,7 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.configuration.ServerConfiguration;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.server.api.GroupPortMapper;
 import org.terracotta.dynamic_config.server.api.PathResolver;
@@ -84,8 +85,19 @@ class DynamicConfigServerConfiguration implements ServerConfiguration {
 
   @Override
   public File getLogsLocation() {
+    if (unConfigured) {
+      return null;
+    }
+    RawPath rawPath = node.getLogDir().orDefault();
+    // rawPath can be:
+    // - non-null if user has set a value
+    // - non-null if user didn't set a value and the default is returned (terracotta.config.logDir.noDefault not set to true)
+    // - null     if user didn't set a value and terracotta.config.logDir.noDefault is set to true
+    if (rawPath == null) {
+      return null;
+    }
     String sanitizedNodeName = node.getName().replace(":", "-"); // Sanitize for path
-    return unConfigured ? null : substitutor.substitute(pathResolver.resolve(node.getLogDir().orDefault().toPath().resolve(sanitizedNodeName))).toFile();
+    return substitutor.substitute(pathResolver.resolve(rawPath.toPath().resolve(sanitizedNodeName))).toFile();
   }
 
   @Override
