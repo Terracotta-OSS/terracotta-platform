@@ -29,6 +29,22 @@
   <artifactId>nms-entity-server</artifactId>
   <name>Terracotta Management :: NMS Entity :: Server</name>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <!-- common server classpath -->
     <dependency>

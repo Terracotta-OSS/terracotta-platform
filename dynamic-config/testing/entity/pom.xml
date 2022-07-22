@@ -29,6 +29,22 @@
   <artifactId>dynamic-config-testing-entity</artifactId>
   <name>Dynamic Config :: Testing :: Entity</name>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta.dynamic-config.server</groupId>
@@ -66,6 +82,11 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>standard-cluster-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>
