@@ -28,6 +28,22 @@
 
   <artifactId>voltron-proxy-server</artifactId>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>org.terracotta.voltron.proxy</groupId>
@@ -48,6 +64,11 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>connection-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
       <scope>provided</scope>
     </dependency>
 
