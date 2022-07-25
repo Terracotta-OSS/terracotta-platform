@@ -31,11 +31,6 @@
   <dependencies>
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>lease-common</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>
       <scope>provided</scope>
     </dependency>
