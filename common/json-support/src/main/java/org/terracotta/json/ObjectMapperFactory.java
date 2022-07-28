@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +83,7 @@ public class ObjectMapperFactory {
 
   public ObjectMapper create() {
     ObjectMapper mapper = JsonMapper.builder()
+        .typeFactory(TypeFactory.defaultInstance().withClassLoader(getClass().getClassLoader()))
         .serializationInclusion(JsonInclude.Include.NON_ABSENT)
         .defaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_ABSENT, JsonInclude.Include.NON_ABSENT))
         .enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
