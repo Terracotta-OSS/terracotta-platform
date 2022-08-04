@@ -27,6 +27,6 @@ if ! [ -d "${JAVA_HOME}" ]; then
   exit 2
 fi
 
-CLASS_PATH="${TC_VOTER_DIR}/../../client/lib/*:${TC_VOTER_DIR}/lib/*:${TC_VOTER_DIR}/../lib/*"
+CLASS_PATH="${TC_VOTER_DIR}/../../client/lib/*:${TC_VOTER_DIR}/../../client/logging/*:${TC_VOTER_DIR}/../../client/logging/impl/*:${TC_VOTER_DIR}/lib/*:${TC_VOTER_DIR}/../lib/*"
 
 "$JAVA_HOME/bin/java" ${JAVA_OPTS} "-Dlogback.configurationFile=logback-voter.xml" -cp "$CLASS_PATH" org.terracotta.voter.cli.TCVoterMain "$@"

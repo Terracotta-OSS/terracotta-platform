@@ -20,7 +20,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 pushd "%~dp0.."
 set "CONFIG_TOOL_DIR=%CD%"
 popd
-set "CP=%CONFIG_TOOL_DIR%\..\client\lib\*;%CONFIG_TOOL_DIR%\lib\*"
+set "CP=%CONFIG_TOOL_DIR%\..\client\lib\*;%CONFIG_TOOL_DIR%\..\client\logging\*;%CONFIG_TOOL_DIR%\..\client\logging\impl\*;%CONFIG_TOOL_DIR%\lib\*"
 
 if exist "!CONFIG_TOOL_DIR!\bin\setenv.bat" (
   pushd "!CONFIG_TOOL_DIR!\bin" && (
