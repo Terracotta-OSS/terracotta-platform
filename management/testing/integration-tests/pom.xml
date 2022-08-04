@@ -129,9 +129,6 @@
                       <replacement>./platform-kit-${project.version}</replacement>
                     </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
                   </fileMappers>
-                  <excludes>
-                    **\/server\/conf\/**\/*.xml,**\/server\/plugins\/lib\/default-configuration-*.jar
-                  </excludes>
                   <groupId>org.terracotta.internal</groupId>
                   <artifactId>terracotta-kit</artifactId>
                   <version>${terracotta-core.version}</version>
