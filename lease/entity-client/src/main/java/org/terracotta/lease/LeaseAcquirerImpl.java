@@ -16,10 +16,9 @@
 package org.terracotta.lease;
 
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvokeFuture;
-import org.terracotta.entity.MessageCodecException;
-import org.terracotta.exception.EntityException;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 class LeaseAcquirerImpl implements LeaseAcquirer, LeaseReconnectListener, LeaseReconnectDataSupplier {
@@ -43,11 +42,7 @@ class LeaseAcquirerImpl implements LeaseAcquirer, LeaseReconnectListener, LeaseR
     }
 
     try {
-      InvokeFuture<LeaseResponse> invokeFuture = endpoint.beginInvoke()
-              .message(new LeaseRequest(currentConnectionSequenceNumber))
-              .replicate(false)
-              .ackCompleted()
-              .invoke();
+      Future<LeaseResponse> invokeFuture = endpoint.message(new LeaseRequest(currentConnectionSequenceNumber)).invoke();
 
       LeaseRequestResult leaseRequestResult = (LeaseRequestResult) invokeFuture.get();
 
@@ -60,10 +55,8 @@ class LeaseAcquirerImpl implements LeaseAcquirer, LeaseReconnectListener, LeaseR
       }
 
       return leaseRequestResult.getLeaseLength();
-    } catch (MessageCodecException e) {
-      throw new LeaseException(e);
-    } catch (EntityException e) {
-      throw new LeaseException(e);
+    } catch (ExecutionException e) {
+      throw new LeaseException(e.getCause());
     }
   }
 
