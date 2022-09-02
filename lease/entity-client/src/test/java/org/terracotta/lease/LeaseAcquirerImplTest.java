@@ -22,8 +22,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvocationBuilder;
-import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.Invocation;
+
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,10 +37,10 @@ public class LeaseAcquirerImplTest {
   private EntityClientEndpoint<LeaseMessage, LeaseResponse> endpoint;
 
   @Mock
-  private InvocationBuilder<LeaseMessage, LeaseResponse> invocationBuilder;
+  private Invocation<LeaseResponse> invocationBuilder;
 
   @Mock
-  private InvokeFuture<LeaseResponse> invokeFuture;
+  private Future<LeaseResponse> invokeFuture;
 
   @Mock
   private LeaseRequestResult leaseRequestResult;
@@ -54,10 +55,7 @@ public class LeaseAcquirerImplTest {
   @Before
   public void before() throws Exception {
     leaseMessageCaptor = ArgumentCaptor.forClass(LeaseMessage.class);
-    when(endpoint.beginInvoke()).thenReturn(invocationBuilder);
-    when(invocationBuilder.message(leaseMessageCaptor.capture())).thenReturn(invocationBuilder);
-    when(invocationBuilder.replicate(any(Boolean.class))).thenReturn(invocationBuilder);
-    when(invocationBuilder.ackCompleted()).thenReturn(invocationBuilder);
+    when(endpoint.message(leaseMessageCaptor.capture())).thenReturn(invocationBuilder);
     when(invocationBuilder.invoke()).thenReturn(invokeFuture);
     when(invokeFuture.get()).thenReturn(leaseRequestResult);
 

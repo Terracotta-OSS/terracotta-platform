@@ -24,11 +24,9 @@ import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.InvocationBuilder;
-import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.Invocation;
+import org.terracotta.entity.InvocationCallback;
 import org.terracotta.entity.MessageCodec;
-import org.terracotta.entity.MessageCodecException;
-import org.terracotta.exception.EntityException;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.MessageListener;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
@@ -40,13 +38,10 @@ import org.terracotta.voltron.proxy.client.ServerMessageAware;
 
 import java.io.Serializable;
 import java.util.Properties;
-import java.util.concurrent.Callable;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,10 +52,10 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.terracotta.entity.ActiveInvokeChannel;
-import org.terracotta.entity.InvokeMonitor;
 
 /**
  * @author Alex Snaps
@@ -79,9 +74,7 @@ public class EndToEndTest {
       }
     });
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
-    final RecordingInvocationBuilder builder = new RecordingInvocationBuilder(proxyInvoker, messageCodec);
-    when(endpoint.beginInvoke()).thenReturn(builder);
-
+    when(endpoint.message(any())).thenAnswer(invocation -> new RecordingInvocation(proxyInvoker, messageCodec, invocation.getArgument(0)));
 
     final Comparable proxy = ClientProxyFactory.createProxy(Comparable.class, Comparable.class, endpoint, null, codec);
     assertThat(proxy.compareTo("blah!"), is(42));
@@ -109,8 +102,7 @@ public class EndToEndTest {
         throw new UnsupportedOperationException("Implement me!");
       }
     }, new Class[] {String.class});
-    final RecordingInvocationBuilder builder = new RecordingInvocationBuilder(proxyInvoker, messageCodec);
-    final EntityClientEndpoint endpoint = new EntityClientEndpoint() {
+    final EntityClientEndpoint endpoint = new EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse>() {
       public byte[] getEntityConfiguration() {
         throw new UnsupportedOperationException("Implement me!");
       }
@@ -119,8 +111,8 @@ public class EndToEndTest {
         delegate.set(endpointDelegate);
       }
 
-      public InvocationBuilder beginInvoke() {
-        return builder;
+      public Invocation message(ProxyEntityMessage message) {
+        return new RecordingInvocation(proxyInvoker, messageCodec, message);
       }
 
       public byte[] getExtendedReconnectData() {
@@ -185,8 +177,7 @@ public class EndToEndTest {
     }, new Class[] {Integer.class});
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
     final MyClientDescriptor myClient = new MyClientDescriptor();
-    final RecordingInvocationBuilder builder = new RecordingInvocationBuilder(proxyInvoker, msgCodec, myClient);
-    when(endpoint.beginInvoke()).thenReturn(builder);
+    when(endpoint.message(any())).thenAnswer(invocation -> new RecordingInvocation(proxyInvoker, msgCodec, invocation.getArgument(0), myClient));
     proxyInvoker.addClient(new MyClientDescriptor());
     proxyInvoker.addClient(myClient);
 
@@ -221,8 +212,7 @@ public class EndToEndTest {
       }
     });
     final EntityClientEndpoint endpoint = mock(EntityClientEndpoint.class);
-    final RecordingInvocationBuilder builder = new RecordingInvocationBuilder(proxyInvoker, messageCodec);
-    when(endpoint.beginInvoke()).thenReturn(builder);
+    when(endpoint.message(any())).thenAnswer(invocation -> new RecordingInvocation(proxyInvoker, messageCodec, invocation.getArgument(0)));
 
 
     final ClientIdAware proxy = ClientProxyFactory.createProxy(ClientIdAware.class, ClientIdAware.class, endpoint, null, codec);
@@ -232,158 +222,79 @@ public class EndToEndTest {
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private static class RecordingInvocationBuilder implements InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> {
-    private final MessageCodec<ProxyEntityMessage, ProxyEntityResponse> codec;
+  private static class RecordingInvocation implements Invocation<ProxyEntityResponse> {
     private final ProxyInvoker<?> proxyInvoker;
-    private ProxyEntityMessage message;
-    private MyClientDescriptor clientDescriptor;
+    private final ProxyEntityMessage message;
+    private final MyClientDescriptor clientDescriptor;
 
-    public RecordingInvocationBuilder(final ProxyInvoker<?> proxyInvoker, MessageCodec<ProxyEntityMessage, ProxyEntityResponse> codec) {
-      this(proxyInvoker, codec, new MyClientDescriptor());
+    public RecordingInvocation(final ProxyInvoker<?> proxyInvoker, MessageCodec<ProxyEntityMessage, ProxyEntityResponse> codec, ProxyEntityMessage message) {
+      this(proxyInvoker, codec, message, new MyClientDescriptor());
     }
 
-    public RecordingInvocationBuilder(final ProxyInvoker<?> proxyInvoker, MessageCodec<ProxyEntityMessage, ProxyEntityResponse> codec, final MyClientDescriptor clientDescriptor) {
+    public RecordingInvocation(final ProxyInvoker<?> proxyInvoker, MessageCodec<ProxyEntityMessage, ProxyEntityResponse> codec, ProxyEntityMessage message, final MyClientDescriptor clientDescriptor) {
       this.proxyInvoker = proxyInvoker;
       this.clientDescriptor = clientDescriptor;
-      this.codec = codec;
+      this.message = message;
     }
 
     @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> ackReceived() {
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> ackCompleted() {
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> ackRetired() {
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> ackSent() {
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> monitor(InvokeMonitor<ProxyEntityResponse> im) {
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> withExecutor(Executor exctr) {
-      return this;
-    }
-
-    @Override
-    @Deprecated
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> asDeferredResponse() {
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> replicate(final boolean b) {
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> message(ProxyEntityMessage bytes) {
-      message = bytes;
-      return this;
-    }
-
-    @Override
-    public InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> blockGetOnRetire(boolean shouldBlock) {
-      return this;
-    }
-
-    @Override
-    public InvokeFuture<ProxyEntityResponse> invokeWithTimeout(long time, TimeUnit units) throws InterruptedException, TimeoutException, MessageCodecException {
-      return null;
-    }
-
-    @Override
-    public InvokeFuture<ProxyEntityResponse> invoke() {
-      final FutureTask<ProxyEntityResponse> futureTask = new FutureTask<ProxyEntityResponse>(new Callable<ProxyEntityResponse>() {
-        @Override
-        public ProxyEntityResponse call() throws Exception {
-          return proxyInvoker.invoke(new ActiveInvokeContext() {
-            @Override
-            public ClientDescriptor getClientDescriptor() {
-              return clientDescriptor;
-            }
-
-            @Override
-            public ActiveInvokeChannel openInvokeChannel() {
-              throw new UnsupportedOperationException("Not supported yet.");
-            }
-
-            @Override
-            public ClientSourceId getClientSource() {
-              return null;
-            }
-
-            @Override
-            public long getCurrentTransactionId() {
-              return 0;
-            }
-
-            @Override
-            public long getOldestTransactionId() {
-              return 0;
-            }
-
-            @Override
-            public boolean isValidClientInformation() {
-              return false;
-            }
-
-            @Override
-            public ClientSourceId makeClientSourceId(long l) {
-              return null;
-            }
-
-            @Override
-            public int getConcurrencyKey() {
-              return 0;
-            }
-
-            @Override
-            public Properties getClientSourceProperties() {
-              return new Properties();
-            }
-          }, message);
-        }
-      });
-      futureTask.run();
-      return new InvokeFuture<ProxyEntityResponse>() {
-        @Override
-        public boolean isDone() {
-          throw new UnsupportedOperationException("Implement me!");
-        }
-
-        @Override
-        public ProxyEntityResponse get() throws InterruptedException, EntityException {
-          try {
-            return futureTask.get();
-          } catch (ExecutionException e) {
-            throw new RuntimeException(e.getCause());
+    public Task invoke(InvocationCallback<ProxyEntityResponse> callback, Set<InvocationCallback.Types> callbacks) {
+      callback.sent();
+      callback.received();
+      try {
+        callback.result(proxyInvoker.invoke(new ActiveInvokeContext() {
+          @Override
+          public ClientDescriptor getClientDescriptor() {
+            return clientDescriptor;
           }
-        }
 
-        @Override
-        public ProxyEntityResponse getWithTimeout(final long l, final TimeUnit timeUnit) throws InterruptedException, EntityException, TimeoutException {
-          throw new UnsupportedOperationException("Implement me!");
-        }
+          @Override
+          public ActiveInvokeChannel openInvokeChannel() {
+            throw new UnsupportedOperationException("Not supported yet.");
+          }
 
-        @Override
-        public void interrupt() {
-          throw new UnsupportedOperationException("Implement me!");
-        }
-      };
+          @Override
+          public ClientSourceId getClientSource() {
+            return null;
+          }
+
+          @Override
+          public long getCurrentTransactionId() {
+            return 0;
+          }
+
+          @Override
+          public long getOldestTransactionId() {
+            return 0;
+          }
+
+          @Override
+          public boolean isValidClientInformation() {
+            return false;
+          }
+
+          @Override
+          public ClientSourceId makeClientSourceId(long l) {
+            return null;
+          }
+
+          @Override
+          public int getConcurrencyKey() {
+            return 0;
+          }
+
+          @Override
+          public Properties getClientSourceProperties() {
+            return new Properties();
+          }
+        }, message));
+      } catch (Throwable t) {
+        callback.failure(t);
+      } finally {
+        callback.complete();
+        callback.retired();
+      }
+      return () -> false;
     }
 
   }

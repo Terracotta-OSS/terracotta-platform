@@ -26,13 +26,4 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Async {
-
-  Ack value() default Ack.NONE;
-
-  enum Ack {
-    NONE,
-    RECEIVED;
-  }
-
-
 }

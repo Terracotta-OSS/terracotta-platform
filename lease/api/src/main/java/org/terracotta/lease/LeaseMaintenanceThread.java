@@ -49,12 +49,14 @@ class LeaseMaintenanceThread extends Thread implements Closeable {
         if (waitLength > 0) {
           timeSource.sleep(waitLength);
         }
-      } catch (ConnectionClosedException e) {
-        return;
       } catch (InterruptedException e) {
         //reloop and check
       } catch (LeaseException e) {
-        LOGGER.error("Error obtaining lease", e);
+        if (containsCause(e, ConnectionClosedException.class)) {
+          return;
+        } else {
+          LOGGER.error("Error obtaining lease", e);
+        }
       } finally {
         //force a clean shutdown by silencing exceptions received after being shutdown
         // Java 8 would allow us to do that in a catch block, 6 does not
@@ -70,5 +72,16 @@ class LeaseMaintenanceThread extends Thread implements Closeable {
     // We need to shutdown and interrupt as we may be in a blocking call
     shutdown = true;
     this.interrupt();
+  }
+
+  private boolean containsCause(Throwable failure, Class<? extends Throwable> cause) {
+    Throwable intermediate = failure;
+    do {
+      if (cause.isInstance(intermediate)) {
+        return true;
+      }
+    } while ((intermediate = intermediate.getCause()) != null);
+
+    return false;
   }
 }
