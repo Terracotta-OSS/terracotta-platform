@@ -59,6 +59,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided libs because of EE/OSS diff -->
