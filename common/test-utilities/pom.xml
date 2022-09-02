@@ -34,9 +34,11 @@
       <groupId>org.terracotta</groupId>
       <artifactId>terracotta-utilities-test-tools</artifactId>
     </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
