@@ -16,6 +16,7 @@
 package org.terracotta.entity.map;
 
 import org.terracotta.entity.EntityClientEndpoint;
+import org.terracotta.entity.Invocation;
 import org.terracotta.entity.map.common.BooleanResponse;
 import org.terracotta.entity.map.common.ClearOperation;
 import org.terracotta.entity.map.common.ConcurrentClusteredMap;
@@ -136,15 +137,7 @@ public class TerracottaClusteredMap<K, V> implements ConcurrentClusteredMap<K, V
   }
 
   private MapResponse invokeWithReturn(MapOperation operation) {
-    try {
-      return endpoint.beginInvoke()
-          .message(operation)
-          .replicate(operation.operationType().replicate())
-          .invoke()
-          .get();
-    } catch (Exception e) {
-      throw new RuntimeException("Exception while processing map operation " + operation, e);
-    }
+    return Invocation.uninterruptiblyGet(endpoint.message(operation).invoke());
   }
 
   @Override

@@ -35,7 +35,6 @@ public final class MethodDescriptor {
   private final boolean async;
   private final Class<?> messageType;
   private final Method method;
-  private final Async.Ack ack;
   private final ExecutionStrategy.Location location;
   private final int concurrencyKey;
   
@@ -43,20 +42,17 @@ public final class MethodDescriptor {
     this.method = method;
 
     // @Async
-    Async asyncAnnot = method.getAnnotation(Async.class);
-    async = asyncAnnot != null;
+    async = method.getAnnotation(Async.class) != null;
     if (async) {
       // @Async required a Future
       if (method.getReturnType() != Future.class) {
         throw new IllegalStateException("@Async requires a Future as a return type on method: " + method);
       }
-      ack = asyncAnnot.value();
       Type returnType = method.getGenericReturnType();
       messageType = returnType instanceof Class<?> ?
           Object.class : // this is the case where a Future is returned with no given generic type
           determineRawType(((ParameterizedType) returnType).getActualTypeArguments()[0]);
     } else {
-      ack = Async.Ack.NONE;
       messageType = method.getReturnType();
     }
 
@@ -75,10 +71,6 @@ public final class MethodDescriptor {
 
   public ExecutionStrategy.Location getExecutionLocation() {
     return location;
-  }
-
-  public Async.Ack getAck() {
-    return ack;
   }
 
   public boolean isAsync() {
