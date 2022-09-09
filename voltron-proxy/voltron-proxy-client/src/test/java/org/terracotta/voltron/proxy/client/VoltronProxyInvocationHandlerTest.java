@@ -19,8 +19,7 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityMessage;
-import org.terracotta.entity.InvocationBuilder;
-import org.terracotta.entity.InvokeFuture;
+import org.terracotta.entity.Invocation;
 import org.terracotta.voltron.proxy.ClientId;
 import org.terracotta.voltron.proxy.MethodDescriptor;
 import org.terracotta.voltron.proxy.ProxyEntityMessage;
@@ -31,7 +30,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
@@ -59,11 +58,9 @@ public class VoltronProxyInvocationHandlerTest {
       }
     };
     final EntityClientEndpoint<ProxyEntityMessage, ProxyEntityResponse> endpoint = mock(EntityClientEndpoint.class);
-    final InvocationBuilder builder = mock(InvocationBuilder.class);
-    when(endpoint.beginInvoke()).thenReturn(builder);
-    when(builder.message(ArgumentMatchers.<EntityMessage>any())).thenReturn(builder);
-    when(builder.withExecutor(ArgumentMatchers.<Executor>any())).thenReturn(builder);
-    final InvokeFuture future = mock(InvokeFuture.class);
+    final Invocation builder = mock(Invocation.class);
+    when(endpoint.message(ArgumentMatchers.any())).thenReturn(builder);
+    final Future future = mock(Future.class);
     when(builder.invoke()).thenReturn(future);
     when(future.get()).thenReturn(ProxyEntityResponse.messageResponse(Void.TYPE, null));
 
