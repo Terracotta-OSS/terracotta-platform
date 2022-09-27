@@ -23,6 +23,7 @@ nbactions.xml
 target/
 dependency-reduced-pom.xml
 .fbExcludeFilterFile
+.mvn/repository
 
 .checkstyle
 *~

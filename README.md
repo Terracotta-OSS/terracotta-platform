@@ -2,6 +2,13 @@
 
 ## For Developers
 
+### IMPORTANT: settings.xml
+
+You can run all the Maven commands with `-s settings.xml` to use the project's settings.xml 
+and isolate downloaded libraries inside. Change the repo location to point to your default m2 home if needed.
+
+Example: `./mvnw -s settings.xml clean install`
+
 ### License Headers
 
 Check for missing licenses:
