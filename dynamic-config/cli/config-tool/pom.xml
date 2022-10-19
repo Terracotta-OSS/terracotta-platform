@@ -43,7 +43,7 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <scope>runtime</scope>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>

@@ -123,6 +123,18 @@
               <outputDirectory>${project.build.directory}</outputDirectory>
               <artifactItems>
                 <artifactItem>
+                  <fileMappers>
+                    <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                      <pattern>^\Qterracotta-${terracotta-core.version}\E</pattern>
+                      <replacement>./platform-kit-${project.version}</replacement>
+                    </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                  </fileMappers>
+                  <groupId>org.terracotta.internal</groupId>
+                  <artifactId>terracotta-kit</artifactId>
+                  <version>${terracotta-core.version}</version>
+                  <type>tar.gz</type>
+                </artifactItem>
+                <artifactItem>
                   <groupId>org.terracotta</groupId>
                   <artifactId>platform-kit</artifactId>
                   <version>${project.version}</version>

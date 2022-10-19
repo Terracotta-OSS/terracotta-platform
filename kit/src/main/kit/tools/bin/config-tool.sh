@@ -32,4 +32,4 @@ fi
 
 JAVA="$JAVA_HOME/bin/java"
 
-"$JAVA" $java_opts -cp "$CONFIG_TOOL_DIR/lib/*" org.terracotta.dynamic_config.cli.config_tool.ConfigTool "$@"
+"$JAVA" $java_opts -cp "${CONFIG_TOOL_DIR}/../client/lib/*:${CONFIG_TOOL_DIR}/../client/logging/*:${CONFIG_TOOL_DIR}/../client/logging/impl/*:$CONFIG_TOOL_DIR/lib/*" org.terracotta.dynamic_config.cli.config_tool.ConfigTool "$@"

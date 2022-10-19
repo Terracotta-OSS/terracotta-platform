@@ -81,15 +81,5 @@
       <artifactId>terracotta-utilities-test-tools</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>connection-impl</artifactId>
-      <version>${terracotta-core.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>common</artifactId>
-      <version>${terracotta-core.version}</version>
-    </dependency>
   </dependencies>
 </project>
