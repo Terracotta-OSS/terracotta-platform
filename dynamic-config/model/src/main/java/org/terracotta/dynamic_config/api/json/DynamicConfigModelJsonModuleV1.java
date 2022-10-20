@@ -28,8 +28,8 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.Collection;
@@ -118,20 +118,20 @@ public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
 
     @JsonIgnore
     @Override
-    public InetSocketAddress getBindSocketAddress() {
-      return super.getBindSocketAddress();
+    public HostPort getBindHostPort() {
+      return super.getBindHostPort();
     }
 
     @JsonIgnore
     @Override
-    public InetSocketAddress getInternalSocketAddress() {
-      return super.getInternalSocketAddress();
+    public HostPort getInternalHostPort() {
+      return super.getInternalHostPort();
     }
 
     @JsonIgnore
     @Override
-    public Optional<InetSocketAddress> getPublicSocketAddress() {
-      return super.getPublicSocketAddress();
+    public Optional<HostPort> getPublicHostPort() {
+      return super.getPublicHostPort();
     }
 
     @JsonIgnore

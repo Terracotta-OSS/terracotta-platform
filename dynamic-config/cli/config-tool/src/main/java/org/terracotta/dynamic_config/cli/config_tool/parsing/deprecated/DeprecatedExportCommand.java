@@ -25,17 +25,17 @@ import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.ConfigFormatConverter;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 @Parameters(commandDescription = "Export a cluster configuration")
 @Usage("-s <hostname[:port]> [-f <config.cfg|config.properties>] [-i] [-r]")
 public class DeprecatedExportCommand extends Command {
 
-  @Parameter(names = {"-s"}, required = true, description = "Node to connect to", converter = InetSocketAddressConverter.class)
-  private InetSocketAddress node;
+  @Parameter(names = {"-s"}, required = true, description = "Node to connect to", converter = HostPortConverter.class)
+  private HostPort node;
 
   @Parameter(names = {"-f"}, description = "Output configuration file", converter = PathConverter.class)
   private Path outputFile;

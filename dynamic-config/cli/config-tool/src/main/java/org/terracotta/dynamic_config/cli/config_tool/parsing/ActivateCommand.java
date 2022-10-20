@@ -23,17 +23,17 @@ import org.terracotta.dynamic_config.cli.api.command.ActivateAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.RestartCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 @Parameters(commandDescription = "Activate a cluster")
 @Usage("(-connect-to <hostname[:port]> | -config-file <config.cfg|config.properties>) [-cluster-name <cluster-name>] [-restrict] [-license-file <license-file>] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class ActivateCommand extends RestartCommand {
 
-  @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
-  private InetSocketAddress node;
+  @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = HostPortConverter.class)
+  private HostPort node;
 
   @Parameter(names = {"-config-file"}, description = "Configuration properties file containing nodes to be activated", converter = PathConverter.class)
   private Path configPropertiesFile;

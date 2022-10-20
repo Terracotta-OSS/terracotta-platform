@@ -15,11 +15,11 @@
  */
 package org.terracotta.nomad.client;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.results.AllResultsReceiver;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.NomadServerMode;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -85,7 +85,7 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
+  public void discovered(HostPort server, DiscoverResponse<T> discovery) {
     NomadServerMode mode = discovery.getMode();
     if (mode == PREPARED) {
       preparedServer = true;
@@ -93,69 +93,69 @@ public abstract class BaseNomadDecider<T> implements NomadDecider<T>, AllResults
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, Throwable reason) {
+  public void discoverFail(HostPort server, Throwable reason) {
     discoverFail = true;
   }
 
   @Override
-  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<HostPort> committedServers, Collection<HostPort> rolledBackServers) {
     discoverFail = true;
     discoveredConfigInconsistent = true;
   }
 
   @Override
-  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+  public void discoverConfigPartitioned(Collection<Collection<HostPort>> partitions) {
     discoverFail = true;
     discoveredConfigPartitioned = true;
   }
 
   @Override
-  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     discoverFail = true;
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, Throwable reason) {
+  public void prepareFail(HostPort server, Throwable reason) {
     prepareFail = true;
   }
 
   @Override
-  public void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void prepareOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     prepareFail = true;
   }
 
   @Override
-  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
+  public void prepareChangeUnacceptable(HostPort server, String rejectionReason) {
     prepareFail = true;
   }
 
   @Override
-  public void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void takeoverOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     takeoverFail = true;
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress server, Throwable reason) {
+  public void takeoverFail(HostPort server, Throwable reason) {
     takeoverFail = true;
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, Throwable reason) {
+  public void commitFail(HostPort server, Throwable reason) {
     commitRollbackFail = true;
   }
 
   @Override
-  public void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void commitOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     commitRollbackFail = true;
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, Throwable reason) {
+  public void rollbackFail(HostPort server, Throwable reason) {
     commitRollbackFail = true;
   }
 
   @Override
-  public void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void rollbackOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     commitRollbackFail = true;
   }
 }

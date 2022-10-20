@@ -23,8 +23,8 @@ import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyAnalyzer;
 import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyState;
 import org.terracotta.dynamic_config.cli.api.converter.RepairMethod;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -40,10 +40,10 @@ public class RepairAction extends RemoteAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RepairAction.class);
 
-  private InetSocketAddress node;
+  private HostPort node;
   private RepairMethod forcedRepairMethod;
 
-  public void setNode(InetSocketAddress node) {
+  public void setNode(HostPort node) {
     this.node = node;
   }
 
@@ -162,9 +162,9 @@ public class RepairAction extends RemoteAction {
   }
 
   private void repair(Map<Endpoint, LogicalServerState> allNodes, ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer, RepairMethod fallbackRepairMethod) {
-    Collection<InetSocketAddress> onlineActivatedAddresses = configurationConsistencyAnalyzer.getOnlineNodesActivated().keySet();
+    Collection<HostPort> onlineActivatedAddresses = configurationConsistencyAnalyzer.getOnlineNodesActivated().keySet();
     Map<Endpoint, LogicalServerState> onlineActivatedEndpoints = allNodes.entrySet().stream()
-        .filter(e -> onlineActivatedAddresses.contains(e.getKey().getAddress()))
+        .filter(e -> onlineActivatedAddresses.contains(e.getKey().getHostPort()))
         .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     RepairMethod wanted = forcedRepairMethod == null ? fallbackRepairMethod : forcedRepairMethod;
     if (wanted == null) {

@@ -26,12 +26,11 @@ import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.inet.HostPort;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.List;
 
-import static java.net.InetSocketAddress.createUnresolved;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -96,9 +95,9 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
   @Test
   public void test_validate_failures() {
     AttachAction command = newCommand();
-    command.setSourceAddress(InetSocketAddress.createUnresolved("localhost", 9410));
+    command.setSourceHostPort(HostPort.create("localhost", 9410));
     command.setOperationType(NODE);
-    command.setDestinationAddress(InetSocketAddress.createUnresolved("localhost", 9410));
+    command.setDestinationHostPort(HostPort.create("localhost", 9410));
     assertThat(
         command::run,
         is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("The destination and the source endpoints must not be the same")))));
@@ -109,9 +108,9 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
 
     AttachAction command = newCommand();
-    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setSourceHostPort(HostPort.create("localhost", 9411));
     command.setOperationType(NODE);
-    command.setDestinationAddress(createUnresolved("localhost", 9410));
+    command.setDestinationHostPort(HostPort.create("localhost", 9410));
 
     assertThat(
         command::run,
@@ -124,9 +123,9 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     AttachAction command = newCommand();
-    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setSourceHostPort(HostPort.create("localhost", 9411));
     command.setOperationType(NODE);
-    command.setDestinationAddress(createUnresolved("localhost", 9410));
+    command.setDestinationHostPort(HostPort.create("localhost", 9410));
 
     assertThat(
         command::run,
@@ -139,9 +138,9 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
     AttachAction command = newCommand();
-    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setSourceHostPort(HostPort.create("localhost", 9411));
     command.setOperationType(NODE);
-    command.setDestinationAddress(createUnresolved("localhost", 9410));
+    command.setDestinationHostPort(HostPort.create("localhost", 9410));
     command.run();
 
     // capture the new topology set calls
@@ -167,9 +166,9 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
 
     AttachAction command = newCommand();
-    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setSourceHostPort(HostPort.create("localhost", 9411));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(createUnresolved("localhost", 9410));
+    command.setDestinationHostPort(HostPort.create("localhost", 9410));
 
     assertThat(
         command::run,
@@ -182,9 +181,9 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     AttachAction command = newCommand();
-    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setSourceHostPort(HostPort.create("localhost", 9411));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(createUnresolved("localhost", 9410));
+    command.setDestinationHostPort(HostPort.create("localhost", 9410));
 
     assertThat(
         command::run,
@@ -200,9 +199,9 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
     AttachAction command = newCommand();
-    command.setSourceAddress(createUnresolved("localhost", 9411));
+    command.setSourceHostPort(HostPort.create("localhost", 9411));
     command.setOperationType(STRIPE);
-    command.setDestinationAddress(createUnresolved("localhost", 9410));
+    command.setDestinationHostPort(HostPort.create("localhost", 9410));
     command.run();
 
     // capture the new topology set calls

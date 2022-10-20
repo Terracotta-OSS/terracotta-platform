@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializerBase;
+import org.terracotta.inet.HostPort;
 import org.terracotta.inet.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
@@ -32,13 +34,29 @@ public class InetJsonModule extends SimpleModule {
 
   public InetJsonModule() {
     super(InetJsonModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
-    addSerializer(InetSocketAddress.class, ToStringSerializer.instance);
+    addSerializer(InetSocketAddress.class, new ToStringSerializerBase(InetSocketAddress.class) {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public String valueToString(Object value) {
+        return HostPort.create(((InetSocketAddress) value)).toString();
+      }
+    });
     addDeserializer(InetSocketAddress.class, new FromStringDeserializer<InetSocketAddress>(InetSocketAddress.class) {
       private static final long serialVersionUID = 1L;
 
       @Override
       protected InetSocketAddress _deserialize(String value, DeserializationContext ctxt) {
         return InetSocketAddressConverter.getInetSocketAddress(value);
+      }
+    });
+    addSerializer(HostPort.class, ToStringSerializer.instance);
+    addDeserializer(HostPort.class, new FromStringDeserializer<HostPort>(HostPort.class) {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      protected HostPort _deserialize(String value, DeserializationContext ctxt) {
+        return InetSocketAddressConverter.getHostPort(value);
       }
     });
   }

@@ -15,19 +15,24 @@
  */
 package org.terracotta.nomad.client.results;
 
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
+
 import java.util.UUID;
 
 public interface PrepareResultsReceiver {
   default void startPrepare(UUID newChangeUuid) {}
 
-  default void prepared(InetSocketAddress server) {}
+  default void prepared(HostPort server) {
+  }
 
-  default void prepareFail(InetSocketAddress server, Throwable reason) {}
+  default void prepareFail(HostPort server, Throwable reason) {
+  }
 
-  default void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
+  default void prepareOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
+  }
 
-  default void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {}
+  default void prepareChangeUnacceptable(HostPort server, String rejectionReason) {
+  }
 
   default void endPrepare() {}
 }

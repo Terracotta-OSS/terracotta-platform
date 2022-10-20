@@ -17,7 +17,6 @@ package org.terracotta.inet;
 
 import org.junit.Test;
 
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
@@ -37,37 +36,37 @@ public class UriUtilsTest {
   /*parseInetSocketAddresses tests*/
   @Test
   public void testParseAuthorities_missing_authority() {
-    assertThat(UriUtils.parseInetSocketAddresses("localhost").size(), equalTo(0));
+    assertThat(UriUtils.parseHostPorts("localhost").size(), equalTo(0));
   }
 
   @Test
   public void testParseAuthorities_missing_port() {
-    List<InetSocketAddress> socketAddresses = UriUtils.parseInetSocketAddresses("scheme://localhost");
+    List<HostPort> socketAddresses = UriUtils.parseHostPorts("scheme://localhost");
     assertThat(socketAddresses.size(), equalTo(1));
-    assertThat(socketAddresses.get(0).getHostString(), equalTo("localhost"));
+    assertThat(socketAddresses.get(0).getHost(), equalTo("localhost"));
     assertThat(socketAddresses.get(0).getPort(), equalTo(9410));
   }
 
   @Test
   public void testParseAuthorities_all_explicit_port() {
-    List<InetSocketAddress> socketAddresses = UriUtils.parseInetSocketAddresses("scheme://localhost:9510");
+    List<HostPort> socketAddresses = UriUtils.parseHostPorts("scheme://localhost:9510");
     assertThat(socketAddresses.size(), equalTo(1));
-    assertThat(socketAddresses.get(0).getHostString(), equalTo("localhost"));
+    assertThat(socketAddresses.get(0).getHost(), equalTo("localhost"));
     assertThat(socketAddresses.get(0).getPort(), equalTo(9510));
   }
 
   @Test
   public void generateHostPortsByServerNamesFromUriTest() {
-    List<InetSocketAddress> hostPortsByServerNames = UriUtils.parseInetSocketAddresses("terracotta://server1:9510,server2:9511/anEntity");
+    List<HostPort> hostPortsByServerNames = UriUtils.parseHostPorts("terracotta://server1:9510,server2:9511/anEntity");
     assertEquals(hostPortsByServerNames, Arrays.asList(
-        InetSocketAddress.createUnresolved("server1", 9510),
-        InetSocketAddress.createUnresolved("server2", 9511)
+        HostPort.create("server1", 9510),
+        HostPort.create("server2", 9511)
     ));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testParseAuthorities_too_many_colons() {
-    UriUtils.parseInetSocketAddresses("scheme://localhost:9510:110");
+    UriUtils.parseHostPorts("scheme://localhost:9510:110");
   }
 
   /*parseScheme tests*/

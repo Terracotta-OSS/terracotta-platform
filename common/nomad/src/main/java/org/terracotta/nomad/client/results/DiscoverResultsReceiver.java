@@ -15,30 +15,37 @@
  */
 package org.terracotta.nomad.client.results;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.messages.DiscoverResponse;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
 
 public interface DiscoverResultsReceiver<T> extends WrapUpResultsReceiver {
-  default void startDiscovery(Collection<InetSocketAddress> endpoints) {}
+  default void startDiscovery(Collection<HostPort> endpoints) {
+  }
 
-  default void discovered(InetSocketAddress endpoint, DiscoverResponse<T> discovery) {}
+  default void discovered(HostPort endpoint, DiscoverResponse<T> discovery) {
+  }
 
-  default void discoverFail(InetSocketAddress endpoint, Throwable reason) {}
+  default void discoverFail(HostPort endpoint, Throwable reason) {
+  }
 
-  default void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {}
+  default void discoverConfigInconsistent(UUID changeUuid, Collection<HostPort> committedServers, Collection<HostPort> rolledBackServers) {
+  }
 
-  default void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {}
+  default void discoverConfigPartitioned(Collection<Collection<HostPort>> partitions) {
+  }
 
   default void endDiscovery() {}
 
   default void startSecondDiscovery() {}
 
-  default void discoverRepeated(InetSocketAddress server) {}
+  default void discoverRepeated(HostPort server) {
+  }
 
-  default void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
+  default void discoverOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
+  }
 
   default void endSecondDiscovery() {}
 }

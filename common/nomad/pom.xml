@@ -45,6 +45,11 @@
       <scope>provided</scope>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.terracotta.common</groupId>
+      <artifactId>common-inet-support</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
   </dependencies>
 </project>

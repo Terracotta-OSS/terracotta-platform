@@ -16,8 +16,8 @@
 package org.terracotta.dynamic_config.cli.api.command;
 
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -30,9 +30,9 @@ import java.util.stream.Stream;
  */
 public class LogAction extends RemoteAction {
 
-  private InetSocketAddress node;
+  private HostPort node;
 
-  public void setNode(InetSocketAddress node) {
+  public void setNode(HostPort node) {
     this.node = node;
   }
 
