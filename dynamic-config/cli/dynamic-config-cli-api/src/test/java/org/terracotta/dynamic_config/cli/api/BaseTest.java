@@ -38,6 +38,7 @@ import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
 import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
+import org.terracotta.inet.HostPort;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.entity.client.NomadEntity;
@@ -54,6 +55,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -76,14 +78,14 @@ public abstract class BaseTest {
   protected ObjectMapper objectMapper = objectMapperFactory.create();
   protected OutputService outputService;
 
-  private final Cache<InetSocketAddress, TopologyService> topologyServices = new Cache<>(addr -> mock(TopologyService.class, addr.toString()));
+  private final Cache<HostPort, TopologyService> topologyServices = new Cache<>(addr -> mock(TopologyService.class, addr.toString()));
 
-  private final Cache<InetSocketAddress, DynamicConfigService> dynamicConfigServices = new Cache<>(addr -> mock(DynamicConfigService.class, addr.toString()));
+  private final Cache<HostPort, DynamicConfigService> dynamicConfigServices = new Cache<>(addr -> mock(DynamicConfigService.class, addr.toString()));
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private final Cache<InetSocketAddress, NomadServer<NodeContext>> nomadServers = new Cache<>(addr -> mock(NomadServer.class, addr.toString()));
+  private final Cache<HostPort, NomadServer<NodeContext>> nomadServers = new Cache<>(addr -> mock(NomadServer.class, addr.toString()));
 
-  private final Cache<InetSocketAddress, DiagnosticService> diagnosticServices = new Cache<>(addr -> {
+  private final Cache<HostPort, DiagnosticService> diagnosticServices = new Cache<>(addr -> {
     final DiagnosticService diagnosticService = mock(DiagnosticService.class, addr.toString());
     lenient().when(diagnosticService.getProxy(TopologyService.class)).thenAnswer(invocation -> topologyServices.get(addr));
     lenient().when(diagnosticService.getProxy(DynamicConfigService.class)).thenAnswer(invocation -> dynamicConfigServices.get(addr));
@@ -91,7 +93,7 @@ public abstract class BaseTest {
     return diagnosticService;
   });
 
-  private final Cache<Collection<InetSocketAddress>, NomadEntity<?>> nomadEntities = new Cache<>(list -> {
+  private final Cache<Collection<HostPort>, NomadEntity<?>> nomadEntities = new Cache<>(list -> {
     final NomadEntity<?> entity = mock(NomadEntity.class, list.toString());
     try {
       lenient().when(entity.commit(any(CommitMessage.class))).thenReturn(AcceptRejectResponse.accept());
@@ -110,14 +112,14 @@ public abstract class BaseTest {
     diagnosticServiceProvider = new DefaultDiagnosticServiceProvider(getClass().getSimpleName(), timeout, timeout, null, new ObjectMapperFactory()) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration timeout) {
-        return diagnosticServices.get(address);
+        return diagnosticServices.get(HostPort.create(address));
       }
     };
     nomadEntityProvider = new NomadEntityProvider(getClass().getSimpleName(), timeout, new NomadEntity.Settings().setRequestTimeout(timeout), null) {
       @SuppressWarnings("unchecked")
       @Override
       public <T> NomadEntity<T> fetchNomadEntity(Collection<InetSocketAddress> addresses) throws ConnectionException {
-        return (NomadEntity<T>) nomadEntities.get(addresses);
+        return (NomadEntity<T>) nomadEntities.get(addresses.stream().map(HostPort::create).collect(Collectors.toList()));
       }
     };
     multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
@@ -128,31 +130,31 @@ public abstract class BaseTest {
   }
 
   protected DiagnosticService diagnosticServiceMock(String host, int port) {
-    return diagnosticServiceMock(InetSocketAddress.createUnresolved(host, port));
+    return diagnosticServiceMock(HostPort.create(host, port));
   }
 
-  protected DiagnosticService diagnosticServiceMock(InetSocketAddress address) {
+  protected DiagnosticService diagnosticServiceMock(HostPort address) {
     return diagnosticServices.get(address);
   }
 
-  protected TopologyService topologyServiceMock(InetSocketAddress address) {
+  protected TopologyService topologyServiceMock(HostPort address) {
     return topologyServices.get(address);
   }
 
   protected TopologyService topologyServiceMock(String host, int port) {
-    return topologyServiceMock(InetSocketAddress.createUnresolved(host, port));
+    return topologyServiceMock(HostPort.create(host, port));
   }
 
-  protected DynamicConfigService dynamicConfigServiceMock(InetSocketAddress address) {
+  protected DynamicConfigService dynamicConfigServiceMock(HostPort address) {
     return dynamicConfigServices.get(address);
   }
 
   protected DynamicConfigService dynamicConfigServiceMock(String host, int port) {
-    return dynamicConfigServiceMock(InetSocketAddress.createUnresolved(host, port));
+    return dynamicConfigServiceMock(HostPort.create(host, port));
   }
 
   protected NomadServer<NodeContext> nomadServerMock(String host, int port) {
-    return nomadServers.get(InetSocketAddress.createUnresolved(host, port));
+    return nomadServers.get(HostPort.create(host, port));
   }
 
   /**

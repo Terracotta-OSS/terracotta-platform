@@ -15,9 +15,11 @@
  */
 package org.terracotta.nomad.client.results;
 
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
+
 import java.util.UUID;
 
 public interface ServerPreparedResultsReceiver {
-  default void discoverAlreadyPrepared(InetSocketAddress server, UUID changeUuid, String creationHost, String creationUser) {}
+  default void discoverAlreadyPrepared(HostPort server, UUID changeUuid, String creationHost, String creationUser) {
+  }
 }

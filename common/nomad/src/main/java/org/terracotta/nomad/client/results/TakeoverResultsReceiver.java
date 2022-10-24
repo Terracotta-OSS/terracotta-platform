@@ -15,16 +15,19 @@
  */
 package org.terracotta.nomad.client.results;
 
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
 
 public interface TakeoverResultsReceiver {
   default void startTakeover() {}
 
-  default void takeover(InetSocketAddress server) {}
+  default void takeover(HostPort server) {
+  }
 
-  default void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
+  default void takeoverOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
+  }
 
-  default void takeoverFail(InetSocketAddress server, Throwable reason) {}
+  default void takeoverFail(HostPort server, Throwable reason) {
+  }
 
   default void endTakeover() {}
 }

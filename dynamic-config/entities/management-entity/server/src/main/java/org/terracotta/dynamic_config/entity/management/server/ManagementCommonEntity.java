@@ -32,6 +32,7 @@ import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.StateDumpCollector;
+import org.terracotta.inet.HostPort;
 import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.service.monitoring.EntityManagementRegistry;
@@ -42,7 +43,6 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.ChangeState;
 
-import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -189,9 +189,9 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("stripeName", topologyService.getRuntimeNodeContext().getCluster().getStripe(stripeUID).get().getName());
           data.put("nodeName", removedNode.getName());
           data.put("nodeHostname", removedNode.getHostname());
-          data.put("nodeAddress", removedNode.getInternalSocketAddress().toString());
-          data.put("nodeInternalAddress", removedNode.getInternalSocketAddress().toString());
-          removedNode.getPublicSocketAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
+          data.put("nodeAddress", removedNode.getInternalHostPort().toString());
+          data.put("nodeInternalAddress", removedNode.getInternalHostPort().toString());
+          removedNode.getPublicHostPort().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_REMOVED", data));
         }
 
@@ -202,9 +202,9 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("stripeName", topologyService.getRuntimeNodeContext().getCluster().getStripe(stripeUID).get().getName());
           data.put("nodeName", addedNode.getName());
           data.put("nodeHostname", addedNode.getHostname());
-          data.put("nodeAddress", addedNode.getInternalSocketAddress().toString());
-          data.put("nodeInternalAddress", addedNode.getInternalSocketAddress().toString());
-          addedNode.getPublicSocketAddress().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
+          data.put("nodeAddress", addedNode.getInternalHostPort().toString());
+          data.put("nodeInternalAddress", addedNode.getInternalHostPort().toString());
+          addedNode.getPublicHostPort().ifPresent(addr -> data.put("nodePublicAddress", addr.toString()));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_NODE_ADDED", data));
         }
 
@@ -215,7 +215,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("stripeName", addedStripe.getName());
           data.put("nodeUIDs", addedStripe.getNodes().stream().map(Node::getUID).map(UID::toString).collect(Collectors.joining(",")));
           data.put("nodeNames", addedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
-          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getInternalSocketAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", addedStripe.getNodes().stream().map(Node::getInternalHostPort).map(HostPort::toString).collect(Collectors.joining(",")));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_ADDED", data));
         }
 
@@ -226,7 +226,7 @@ public class ManagementCommonEntity implements CommonServerEntity<EntityMessage,
           data.put("stripeName", removedStripe.getName());
           data.put("nodeUIDs", removedStripe.getNodes().stream().map(Node::getUID).map(UID::toString).collect(Collectors.joining(",")));
           data.put("nodeNames", removedStripe.getNodes().stream().map(Node::getName).collect(Collectors.joining(",")));
-          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getInternalSocketAddress).map(InetSocketAddress::toString).collect(Collectors.joining(",")));
+          data.put("nodeAddresses", removedStripe.getNodes().stream().map(Node::getInternalHostPort).map(HostPort::toString).collect(Collectors.joining(",")));
           monitoringService.pushNotification(new ContextualNotification(source, "DYNAMIC_CONFIG_STRIPE_REMOVED", data));
         }
       });

@@ -15,11 +15,11 @@
  */
 package org.terracotta.nomad.client.recovery;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.BaseNomadDecider;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.ChangeRequestState;
 
-import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +52,7 @@ public class RecoveryProcessDecider<T> extends BaseNomadDecider<T> {
   }
 
   @Override
-  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
+  public void discovered(HostPort server, DiscoverResponse<T> discovery) {
     super.discovered(server, discovery);
 
     UUID latestChangeUuid = getLatestChangeUuid(discovery);

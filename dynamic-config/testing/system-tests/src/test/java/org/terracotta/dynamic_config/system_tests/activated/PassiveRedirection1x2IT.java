@@ -65,7 +65,7 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
     try (Connection connection = ConnectionFactory.connect(singletonList(getNodeAddress(1, passiveId)), new Properties())) {
       assertTrue(connection.isValid());
       waitUntilServerLogs(getNode(1, passiveId), "Redirecting client: ");
-      waitUntilServerLogs(getNode(1, passiveId), " to proposed address: " + getNodeAddress(1, activeId)); // localhost:port (== <hostname>:<bind-port>)
+      waitUntilServerLogs(getNode(1, passiveId), " to proposed address: " + getNodeHostPort(1, activeId)); // localhost:port (== <hostname>:<bind-port>)
     }
   }
 

@@ -15,13 +15,13 @@
  */
 package org.terracotta.nomad.client;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.results.AllResultsReceiver;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.ChangeRequestState;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -30,9 +30,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
-  private final Map<UUID, Collection<InetSocketAddress>> commits = new ConcurrentHashMap<>();
-  private final Map<UUID, Collection<InetSocketAddress>> rollbacks = new ConcurrentHashMap<>();
-  private final Map<String, Collection<InetSocketAddress>> lastCommittedChangeResultHashes = new ConcurrentHashMap<>();
+  private final Map<UUID, Collection<HostPort>> commits = new ConcurrentHashMap<>();
+  private final Map<UUID, Collection<HostPort>> rollbacks = new ConcurrentHashMap<>();
+  private final Map<String, Collection<HostPort>> lastCommittedChangeResultHashes = new ConcurrentHashMap<>();
 
   public void checkClusterConsistency(DiscoverResultsReceiver<T> results) {
     HashSet<UUID> inconsistentUUIDs = new HashSet<>(commits.keySet());
@@ -56,7 +56,7 @@ public class ClusterConsistencyChecker<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
+  public void discovered(HostPort server, DiscoverResponse<T> discovery) {
     ChangeDetails<T> latestChange = discovery.getLatestChange();
 
     if (latestChange != null) {

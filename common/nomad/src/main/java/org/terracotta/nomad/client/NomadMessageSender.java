@@ -15,6 +15,7 @@
  */
 package org.terracotta.nomad.client;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.client.results.AllResultsReceiver;
 import org.terracotta.nomad.client.results.CommitResultsReceiver;
@@ -30,7 +31,6 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 import org.terracotta.nomad.server.NomadException;
 
-import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -50,7 +50,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   private final Clock clock;
   private final String host;
   private final String user;
-  private final Map<InetSocketAddress, Long> mutativeMessageCounts = new ConcurrentHashMap<>();
+  private final Map<HostPort, Long> mutativeMessageCounts = new ConcurrentHashMap<>();
   private final AtomicLong maxVersionNumber = new AtomicLong();
 
   private final List<NomadEndpoint<T>> preparedServers = new CopyOnWriteArrayList<>();
@@ -64,12 +64,12 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   }
 
   public void sendDiscovers(DiscoverResultsReceiver<T> results) {
-    results.startDiscovery(servers.stream().map(NomadEndpoint::getAddress).collect(toList()));
+    results.startDiscovery(servers.stream().map(NomadEndpoint::getHostPort).collect(toList()));
     for (NomadEndpoint<T> server : servers) {
       runSync(
           server::discover,
-          discovery -> results.discovered(server.getAddress(), discovery),
-          unwrap(e -> results.discoverFail(server.getAddress(), e))
+          discovery -> results.discovered(server.getHostPort(), discovery),
+          unwrap(e -> results.discoverFail(server.getHostPort(), e))
       );
     }
 
@@ -80,20 +80,20 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     results.startSecondDiscovery();
 
     for (NomadEndpoint<T> server : servers) {
-      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getHostPort());
       runSync(
           server::discover,
           discovery -> {
             long secondMutativeMessageCount = discovery.getMutativeMessageCount();
             if (secondMutativeMessageCount == mutativeMessageCount) {
-              results.discoverRepeated(server.getAddress());
+              results.discoverRepeated(server.getHostPort());
             } else {
               String lastMutationHost = discovery.getLastMutationHost();
               String lastMutationUser = discovery.getLastMutationUser();
-              results.discoverOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
+              results.discoverOtherClient(server.getHostPort(), lastMutationHost, lastMutationUser);
             }
           },
-          unwrap(e -> results.discoverFail(server.getAddress(), e))
+          unwrap(e -> results.discoverFail(server.getHostPort(), e))
       );
     }
 
@@ -107,7 +107,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     Instant now = clock.instant();
 
     for (NomadEndpoint<T> server : servers) {
-      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getHostPort());
       runSync(
           () -> server.prepare(
               new PrepareMessage(
@@ -122,28 +122,28 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           ),
           response -> {
             if (response.isAccepted()) {
-              results.prepared(server.getAddress());
+              results.prepared(server.getHostPort());
             } else {
               RejectionReason rejectionReason = response.getRejectionReason();
 
               switch (rejectionReason) {
                 case UNACCEPTABLE:
                   String rejectionMessage = response.getRejectionMessage();
-                  results.prepareChangeUnacceptable(server.getAddress(), rejectionMessage);
+                  results.prepareChangeUnacceptable(server.getHostPort(), rejectionMessage);
                   break;
                 case DEAD:
                   String lastMutationHost = response.getLastMutationHost();
                   String lastMutationUser = response.getLastMutationUser();
-                  results.prepareOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
+                  results.prepareOtherClient(server.getHostPort(), lastMutationHost, lastMutationUser);
                   break;
                 case BAD:
-                  throw new AssertionError("A server rejected a message as bad: " + server.getAddress());
+                  throw new AssertionError("A server rejected a message as bad: " + server.getHostPort());
                 default:
                   throw new AssertionError("Unexpected RejectionReason: " + rejectionReason);
               }
             }
           },
-          unwrap(e -> results.prepareFail(server.getAddress(), e))
+          unwrap(e -> results.prepareFail(server.getHostPort(), e))
       );
     }
 
@@ -156,7 +156,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     Instant now = clock.instant();
 
     for (NomadEndpoint<T> server : preparedServers) {
-      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getHostPort());
       runSync(
           () -> {
             return server.commit(
@@ -171,7 +171,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           },
           response -> {
             if (response.isAccepted()) {
-              results.committed(server.getAddress());
+              results.committed(server.getHostPort());
             } else {
               RejectionReason rejectionReason = response.getRejectionReason();
               switch (rejectionReason) {
@@ -180,16 +180,16 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
                 case DEAD:
                   String lastMutationHost = response.getLastMutationHost();
                   String lastMutationUser = response.getLastMutationUser();
-                  results.commitOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
+                  results.commitOtherClient(server.getHostPort(), lastMutationHost, lastMutationUser);
                   break;
                 case BAD:
-                  throw new AssertionError("A server rejected a message as bad: " + server.getAddress());
+                  throw new AssertionError("A server rejected a message as bad: " + server.getHostPort());
                 default:
                   throw new AssertionError("Unexpected RejectionReason: " + rejectionReason);
               }
             }
           },
-          unwrap(e -> results.commitFail(server.getAddress(), e))
+          unwrap(e -> results.commitFail(server.getHostPort(), e))
       );
     }
 
@@ -202,7 +202,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     Instant now = clock.instant();
 
     for (NomadEndpoint<T> server : preparedServers) {
-      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getHostPort());
       runSync(
           () -> server.rollback(
               new RollbackMessage(
@@ -215,7 +215,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           ),
           response -> {
             if (response.isAccepted()) {
-              results.rolledBack(server.getAddress());
+              results.rolledBack(server.getHostPort());
             } else {
               RejectionReason rejectionReason = response.getRejectionReason();
               switch (rejectionReason) {
@@ -224,16 +224,16 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
                 case DEAD:
                   String lastMutationHost = response.getLastMutationHost();
                   String lastMutationUser = response.getLastMutationUser();
-                  results.rollbackOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
+                  results.rollbackOtherClient(server.getHostPort(), lastMutationHost, lastMutationUser);
                   break;
                 case BAD:
-                  throw new AssertionError("A server rejected a message as bad: " + server.getAddress());
+                  throw new AssertionError("A server rejected a message as bad: " + server.getHostPort());
                 default:
                   throw new AssertionError("Unexpected RejectionReason: " + rejectionReason);
               }
             }
           },
-          unwrap(e -> results.rollbackFail(server.getAddress(), e))
+          unwrap(e -> results.rollbackFail(server.getHostPort(), e))
       );
     }
 
@@ -246,7 +246,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
     Instant now = clock.instant();
 
     for (NomadEndpoint<T> server : servers) {
-      long mutativeMessageCount = mutativeMessageCounts.get(server.getAddress());
+      long mutativeMessageCount = mutativeMessageCounts.get(server.getHostPort());
       runSync(
           () -> server.takeover(
               new TakeoverMessage(
@@ -258,7 +258,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
           ),
           response -> {
             if (response.isAccepted()) {
-              results.takeover(server.getAddress());
+              results.takeover(server.getHostPort());
             } else {
               RejectionReason rejectionReason = response.getRejectionReason();
               switch (rejectionReason) {
@@ -267,16 +267,16 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
                 case DEAD:
                   String lastMutationHost = response.getLastMutationHost();
                   String lastMutationUser = response.getLastMutationUser();
-                  results.takeoverOtherClient(server.getAddress(), lastMutationHost, lastMutationUser);
+                  results.takeoverOtherClient(server.getHostPort(), lastMutationHost, lastMutationUser);
                   break;
                 case BAD:
-                  throw new AssertionError("A server rejected a message as bad: " + server.getAddress());
+                  throw new AssertionError("A server rejected a message as bad: " + server.getHostPort());
                 default:
                   throw new AssertionError("Unexpected RejectionReason: " + rejectionReason);
               }
             }
           },
-          unwrap(e -> results.takeoverFail(server.getAddress(), e))
+          unwrap(e -> results.takeoverFail(server.getHostPort(), e))
       );
     }
 
@@ -284,7 +284,7 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   }
 
   @Override
-  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
+  public void discovered(HostPort server, DiscoverResponse<T> discovery) {
     long expectedMutativeMessageCount = discovery.getMutativeMessageCount();
     long highestVersionNumber = discovery.getHighestVersion();
 
@@ -293,8 +293,8 @@ public class NomadMessageSender<T> implements AllResultsReceiver<T> {
   }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
-  public final void registerPreparedServer(InetSocketAddress address) {
-    preparedServers.add(servers.stream().filter(s -> s.getAddress().equals(address)).findAny().get());
+  public final void registerPreparedServer(HostPort address) {
+    preparedServers.add(servers.stream().filter(s -> s.getHostPort().equals(address)).findAny().get());
   }
 
   private <T> void runSync(Callable<T> callable, Consumer<T> onSuccess, Consumer<Throwable> onError) {

@@ -55,6 +55,7 @@ import org.terracotta.dynamic_config.cli.api.output.InMemoryOutputService;
 import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
+import org.terracotta.inet.HostPort;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.JavaTool;
@@ -320,6 +321,10 @@ public class DynamicConfigIT {
     return angela.getNodeAddress(stripeId, nodeId);
   }
 
+  protected final HostPort getNodeHostPort(int stripeId, int nodeId) {
+    return HostPort.create(getNodeAddress(stripeId, nodeId));
+  }
+
   protected String getDefaultHostname(int stripeId, int nodeId) {
     return "localhost";
   }
@@ -340,9 +345,9 @@ public class DynamicConfigIT {
           command.add("-t");
           command.add("node");
           command.add("-d");
-          command.add(getNodeAddress(stripeId, 1).toString());
+          command.add(getNodeHostPort(stripeId, 1).toString());
           command.add("-s");
-          command.add(getNodeAddress(stripeId, nodeId).toString());
+          command.add(getNodeHostPort(stripeId, nodeId).toString());
 
           ToolExecutionResult result = configTool(command.toArray(new String[0]));
           if (result.getExitStatus() != 0) {

@@ -133,7 +133,7 @@ class Topologies {
     final Node me = getUpcomingNodeContext().getNode();
     for (Node node : updatedCluster.getNodes()) {
       if (node.getUID().equals(me.getUID())
-          || node.getInternalSocketAddress().equals(me.getInternalSocketAddress())
+          || node.getInternalHostPort().equals(me.getInternalHostPort())
           || node.getName().equals(me.getName())) {
         return node;
       }

@@ -23,8 +23,8 @@ import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
@@ -33,7 +33,7 @@ import static java.util.Collections.singletonList;
 
 public class ActivateAction extends RemoteAction {
 
-  private InetSocketAddress node;
+  private HostPort node;
   private Path configPropertiesFile;
   private String clusterName;
   private Path licenseFile;
@@ -41,7 +41,7 @@ public class ActivateAction extends RemoteAction {
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
   protected boolean restrictedActivation;
 
-  public void setNode(InetSocketAddress node) {
+  public void setNode(HostPort node) {
     this.node = node;
   }
 

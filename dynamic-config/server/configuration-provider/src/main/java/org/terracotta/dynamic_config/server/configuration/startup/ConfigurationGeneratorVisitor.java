@@ -29,7 +29,7 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
-import org.terracotta.inet.InetSocketAddressUtils;
+import org.terracotta.inet.HostPort;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
@@ -39,7 +39,6 @@ import org.terracotta.server.Server;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -194,11 +193,11 @@ public class ConfigurationGeneratorVisitor {
 
     String substitutedHost = parameterSubstitutor.substitute(isHostnameSpecified ? specifiedHostName : Setting.NODE_HOSTNAME.getDefaultValue());
     int port = isPortSpecified ? Integer.parseInt(specifiedPort) : Setting.NODE_PORT.getDefaultValue();
-    InetSocketAddress specifiedSockAddr = InetSocketAddress.createUnresolved(substitutedHost, port);
+    HostPort specifiedHostPort = HostPort.create(substitutedHost, port);
 
     Collection<Node> allNodes = cluster.getNodes();
     Optional<Node> matchingNode = allNodes.stream()
-        .filter(node1 -> InetSocketAddressUtils.areEqual(node1.getInternalSocketAddress(), specifiedSockAddr))
+        .filter(node1 -> node1.getInternalHostPort().equals(specifiedHostPort))
         .findAny();
 
     HashMap<String, String> logParams = new HashMap<>();
@@ -262,7 +261,7 @@ public class ConfigurationGeneratorVisitor {
     requireNonNull(nodeConfigurationDir);
     NomadEnvironment environment = new NomadEnvironment();
     // Note: do NOT close this nomad client - it would close the server and sanskrit!
-    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getInternalSocketAddress(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
+    NomadClient<NodeContext> nomadClient = new NomadClient<>(singletonList(new NomadEndpoint<>(node.getInternalHostPort(), nomadServerManager.getNomadServer())), environment.getHost(), environment.getUser(), Clock.systemUTC());
     NomadFailureReceiver<NodeContext> failureRecorder = new NomadFailureReceiver<>();
     nomadClient.tryApplyChange(failureRecorder, new ClusterActivationNomadChange(cluster));
     failureRecorder.reThrowErrors();
