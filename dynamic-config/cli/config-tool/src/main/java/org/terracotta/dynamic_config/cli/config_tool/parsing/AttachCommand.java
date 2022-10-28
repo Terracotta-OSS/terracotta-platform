@@ -26,7 +26,7 @@ import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
-@Usage("(-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>) [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
+@Usage("(-stripe <hostname[:port]> -to-cluster <hostname[:port]> | -node <hostname[:port]> -to-stripe <hostname[:port]>) [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class AttachCommand extends RestartCommand {
 
   @Parameter(names = {"-to-cluster"}, description = "Cluster to attach to", converter = HostPortConverter.class)
