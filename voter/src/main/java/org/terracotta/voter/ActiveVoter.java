@@ -154,7 +154,12 @@ public class ActiveVoter implements AutoCloseable {
 
     List<ScheduledFuture<?>> futures = voterManagers.stream().map(voterManager -> executorService.scheduleAtFixedRate(() -> {
       if (!voterManager.isConnected()) {
-        voterManager.connect(connectionProps);
+        try {
+          voterManager.connect(connectionProps);
+        } catch (Exception e) {
+          LOGGER.warn("unable to connect to server", e);
+          return;
+        }
       }
 
       if (!registrationLatch.isDone()) {
