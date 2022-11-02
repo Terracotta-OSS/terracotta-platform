@@ -47,7 +47,7 @@ public class InetJsonModule extends SimpleModule {
 
       @Override
       protected InetSocketAddress _deserialize(String value, DeserializationContext ctxt) {
-        return InetSocketAddressConverter.getInetSocketAddress(value);
+        return InetSocketAddressConverter.parseInetSocketAddress(value);
       }
     });
     addSerializer(HostPort.class, ToStringSerializer.instance);
@@ -56,7 +56,7 @@ public class InetJsonModule extends SimpleModule {
 
       @Override
       protected HostPort _deserialize(String value, DeserializationContext ctxt) {
-        return InetSocketAddressConverter.getHostPort(value);
+        return HostPort.parse(value);
       }
     });
   }

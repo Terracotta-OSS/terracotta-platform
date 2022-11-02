@@ -58,7 +58,7 @@ public class UriUtils {
     if (auth == null) {
       return Collections.emptyList();
     }
-    return InetSocketAddressConverter.getHostPorts(auth.split(","), defaultPort);
+    return HostPort.parse(auth.split(","), defaultPort);
   }
 
   public static String parseScheme(String uri) {
