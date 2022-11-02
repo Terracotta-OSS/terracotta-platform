@@ -102,7 +102,9 @@ public class DiagnosticServiceFactory {
       throws EntityNotProvidedException, EntityVersionMismatchException, EntityNotFoundException {
     EntityRef<Diagnostics, Object, Properties> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
     Properties properties = new Properties();
-    properties.setProperty(DiagnosticsFactory.REQUEST_TIMEOUT, String.valueOf(diagnosticInvokeTimeout.toMillis()));
+    if (diagnosticInvokeTimeout != null) {
+      properties.setProperty(DiagnosticsFactory.REQUEST_TIMEOUT, String.valueOf(diagnosticInvokeTimeout.toMillis()));
+    }
     Diagnostics delegate = ref.fetchEntity(properties);
     return getDiagnosticService(connection, delegate, objectMapperFactory);
   }
