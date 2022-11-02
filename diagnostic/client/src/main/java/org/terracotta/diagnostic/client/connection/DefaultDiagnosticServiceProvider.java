@@ -38,8 +38,8 @@ public class DefaultDiagnosticServiceProvider implements DiagnosticServiceProvid
 
   public DefaultDiagnosticServiceProvider(String connectionName, Duration connectTimeout, Duration diagnosticInvokeTimeout, String securityRootDirectory, ObjectMapperFactory objectMapperFactory) {
     this.connectionName = requireNonNull(connectionName);
-    this.diagnosticInvokeTimeout = requireNonNull(diagnosticInvokeTimeout);
-    this.connectTimeout = requireNonNull(connectTimeout);
+    this.diagnosticInvokeTimeout = diagnosticInvokeTimeout;
+    this.connectTimeout = connectTimeout;
     this.securityRootDirectory = securityRootDirectory;
     this.objectMapperFactory = objectMapperFactory;
   }
