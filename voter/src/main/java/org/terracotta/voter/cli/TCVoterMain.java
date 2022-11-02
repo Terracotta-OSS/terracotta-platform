@@ -17,16 +17,38 @@ package org.terracotta.voter.cli;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.diagnostic.client.connection.CompatibleDiagnosticServiceProvider;
+import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
+import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
+import org.terracotta.diagnostic.client.connection.DefaultDiagnosticServiceProvider;
+import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
+import org.terracotta.diagnostic.client.connection.DiagnosticServices;
+import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
+import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.inet.InetSocketAddressConverter;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.voter.ActiveVoter;
 import org.terracotta.voter.TCVoter;
 import org.terracotta.voter.TCVoterImpl;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 public class TCVoterMain {
 
@@ -53,13 +75,49 @@ public class TCVoterMain {
 
     Optional<Properties> connectionProps = getConnectionProperties(options);
     if (options.getServersHostPort() != null) {
-      processServerArg(connectionProps, options.getServersHostPort().toArray(new String[0]));
+      options.getServersHostPort().forEach(this::validateHostPort);
+      processServerArg(connectionProps, options);
     } else if (options.getOverrideHostPort() != null) {
       String hostPort = options.getOverrideHostPort();
       validateHostPort(hostPort);
       getVoter(connectionProps).overrideVote(hostPort);
     } else {
       throw new AssertionError("This should not happen");
+    }
+  }
+
+  protected DiagnosticServiceProvider createDiagnosticServiceProvider(Options options) {
+    ObjectMapperFactory objectMapperFactory = createObjectMapperFactory();
+    return new CompatibleDiagnosticServiceProvider(new DefaultDiagnosticServiceProvider("Voter", null, null, null, objectMapperFactory));
+  }
+
+  protected ObjectMapperFactory createObjectMapperFactory() {
+    return new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+  }
+
+  private static ConcurrencySizing createConcurrencySizing() {
+    return new ConcurrencySizing();
+  }
+
+  // concurrently connects to the user-provided servers to fetch the topology and returns as soon as we get one
+  protected Cluster fetchTopology(Options options) {
+    DiagnosticServiceProvider diagnosticServiceProvider = createDiagnosticServiceProvider(options);
+    ConcurrencySizing concurrencySizing = createConcurrencySizing();
+    MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, null, concurrencySizing);
+
+    final Map<String, InetSocketAddress> addresses = options.getServersHostPort()
+        .stream()
+        .collect(toMap(identity(), InetSocketAddressConverter::getInetSocketAddress, (value1, value2) -> value1));
+
+    try (final DiagnosticServices<String> diagnosticServices = multiDiagnosticServiceProvider.fetchAnyOnlineDiagnosticService(addresses)) {
+      return diagnosticServices.getOnlineEndpoints()
+          .values()
+          .stream()
+          .findFirst()
+          .map(ds -> ds.getProxy(TopologyService.class))
+          .map(TopologyService::getUpcomingNodeContext)
+          .map(NodeContext::getCluster)
+          .orElseThrow(() -> new IllegalStateException("All servers are unreachable"));
     }
   }
 
@@ -71,13 +129,18 @@ public class TCVoterMain {
     return Optional.empty();
   }
 
-  protected void processServerArg(Optional<Properties> connectionProps, String[] stripes) {
-    validateStripesLimit(stripes);
-    String[] hostPorts = stripes[0].split(",");
-    for (String hostPort : hostPorts) {
-      validateHostPort(hostPort);
-    }
-    startVoter(connectionProps, hostPorts);
+  protected void processServerArg(Optional<Properties> connectionProps, Options options) {
+    Cluster cluster = fetchTopology(options);
+    validateCLuster(cluster);
+
+    // The endpoints we should use (public or internal) based on the user-provided list
+    final List<InetSocketAddress> initiators = options.getServersHostPort().stream().map(InetSocketAddressConverter::getInetSocketAddress).collect(toList());
+    cluster.determineEndpoints(initiators)
+        .stream()
+        .collect(groupingBy(
+            endpoint -> cluster.getStripeByNode(endpoint.getNodeUID()).get().getUID(),
+            mapping(endpoint -> endpoint.getAddress().toString(), toList())))
+        .forEach((uid, endpoints) -> startVoter(connectionProps, endpoints.toArray(new String[0])));
   }
 
   protected TCVoter getVoter(Optional<Properties> connectionProps) {
@@ -88,9 +151,9 @@ public class TCVoterMain {
     new ActiveVoter(ID, new CompletableFuture<>(), connectionProps, hostPorts).start();
   }
 
-  protected void validateStripesLimit(String[] args) {
-    if (args.length > 1) {
-      throw new RuntimeException("Usage of multiple -connect-to options not supported");
+  protected void validateCLuster(Cluster cluster) {
+    if (cluster.getStripeCount() > 1) {
+      throw new RuntimeException("Usage of multiple stripes is not supported");
     }
   }
 
