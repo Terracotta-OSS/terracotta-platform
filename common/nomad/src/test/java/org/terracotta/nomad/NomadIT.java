@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
@@ -36,7 +37,6 @@ import org.terracotta.nomad.server.NomadServerImpl;
 import org.terracotta.nomad.server.state.MemoryNomadServerState;
 import org.terracotta.nomad.server.state.NomadServerState;
 
-import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,9 +78,9 @@ public class NomadIT {
   private List<NomadEndpoint<String>> servers;
   private NomadClient<String> client;
   private boolean assertNoMoreInteractions = true;
-  private InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
-  private InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
-  private InetSocketAddress address3 = InetSocketAddress.createUnresolved("localhost", 9412);
+  private HostPort address1 = HostPort.create("localhost", 9410);
+  private HostPort address2 = HostPort.create("localhost", 9411);
+  private HostPort address3 = HostPort.create("localhost", 9412);
 
   @Before
   @SuppressWarnings("unchecked")
@@ -301,13 +301,13 @@ public class NomadIT {
     verify(recoveryResults).done(CONSISTENT);
   }
 
-  private InterceptionServer<String> interceptServer(InetSocketAddress address) {
+  private InterceptionServer<String> interceptServer(HostPort address) {
     List<NomadEndpoint<String>> serverList = new ArrayList<>(servers);
     servers.clear();
 
     InterceptionServer<String> interceptionServer = null;
     for (NomadEndpoint<String> server : serverList) {
-      if (server.getAddress().equals(address)) {
+      if (server.getHostPort().equals(address)) {
         interceptionServer = new InterceptionServer<>(server);
         servers.add(new NomadEndpoint<>(address, interceptionServer));
       } else {

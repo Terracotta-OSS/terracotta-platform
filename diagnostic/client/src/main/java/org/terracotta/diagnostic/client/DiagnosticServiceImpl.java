@@ -74,12 +74,8 @@ class DiagnosticServiceImpl implements DiagnosticService {
   @Override
   public boolean isConnected() {
     try {
-      getState();
-      return true;
-    } catch (DiagnosticOperationNotAllowedException | DiagnosticOperationUnsupportedException | DiagnosticOperationExecutionException e) {
-      // should never happen for #getState()
-      return true;
-    } catch (DiagnosticOperationTimeoutException | DiagnosticConnectionException e) {
+      return connection.isValid();
+    } catch (ConnectionClosedException e) {
       return false;
     }
   }
@@ -211,25 +207,39 @@ class DiagnosticServiceImpl implements DiagnosticService {
   // DiagnosticsHandler
 
   @Override
-  public String getInitialState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {return execute(delegate::getInitialState);}
+  public String getInitialState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
+    return execute(delegate::getInitialState);
+  }
 
   @Override
-  public String getClusterState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {return execute(delegate::getClusterState);}
+  public String getClusterState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
+    return execute(delegate::getClusterState);
+  }
 
   @Override
-  public String getConfig() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {return execute(delegate::getConfig);}
+  public String getConfig() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
+    return execute(delegate::getConfig);
+  }
 
   @Override
-  public String getProcessArguments() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {return execute(delegate::getProcessArguments);}
+  public String getProcessArguments() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
+    return execute(delegate::getProcessArguments);
+  }
 
   @Override
-  public String getThreadDump() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {return execute(delegate::getThreadDump);}
+  public String getThreadDump() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
+    return execute(delegate::getThreadDump);
+  }
 
   @Override
-  public void terminateServer() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {execute(true, delegate::terminateServer);}
+  public void terminateServer() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
+    execute(true, delegate::terminateServer);
+  }
 
   @Override
-  public void forceTerminateServer() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {execute(true, delegate::forceTerminateServer);}
+  public void forceTerminateServer() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
+    execute(true, delegate::forceTerminateServer);
+  }
 
   private String getState() throws DiagnosticOperationTimeoutException, DiagnosticConnectionException {
     return execute(delegate::getState);

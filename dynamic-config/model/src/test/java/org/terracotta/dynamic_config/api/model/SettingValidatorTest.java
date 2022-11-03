@@ -145,7 +145,7 @@ public class SettingValidatorTest {
 
   @Test
   public void test_paths() {
-    Stream.of(NODE_LOG_DIR, NODE_METADATA_DIR).forEach(setting -> {
+    Stream.of(NODE_METADATA_DIR).forEach(setting -> {
       validateRequired(setting);
       assertThat(
           () -> setting.validate("/\u0000/"),
@@ -157,7 +157,7 @@ public class SettingValidatorTest {
       setting.validate(null); // unset - switch back to default value
     });
 
-    Stream.of(NODE_BACKUP_DIR, SECURITY_DIR, SECURITY_AUDIT_LOG_DIR).forEach(setting -> {
+    Stream.of(NODE_BACKUP_DIR, SECURITY_DIR, SECURITY_AUDIT_LOG_DIR, NODE_LOG_DIR).forEach(setting -> {
       validateOptional(setting);
       assertThat(
           () -> setting.validate("/\u0000/"),

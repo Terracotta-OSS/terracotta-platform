@@ -25,10 +25,10 @@ import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
+import org.terracotta.inet.HostPort;
 import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.UncheckedIOException;
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -46,7 +46,7 @@ public abstract class TopologyAction extends RemoteAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopologyAction.class);
 
   protected OperationType operationType = OperationType.NODE;
-  protected InetSocketAddress destinationAddress;
+  protected HostPort destinationHostPort;
   protected boolean force;
 
   @Inject public ObjectMapperFactory objectMapperFactory;
@@ -61,8 +61,8 @@ public abstract class TopologyAction extends RemoteAction {
     this.operationType = operationType;
   }
 
-  public void setDestinationAddress(InetSocketAddress destinationAddress) {
-    this.destinationAddress = destinationAddress;
+  public void setDestinationHostPort(HostPort destinationHostPort) {
+    this.destinationHostPort = destinationHostPort;
   }
 
   public void setForce(boolean force) {
@@ -70,7 +70,7 @@ public abstract class TopologyAction extends RemoteAction {
   }
 
   protected void validate() {
-    destination = getEndpoint(destinationAddress);
+    destination = getEndpoint(destinationHostPort);
     destinationCluster = getUpcomingCluster(destination);
     destinationOnlineNodes = findOnlineRuntimePeers(destination);
     destinationClusterActivated = areAllNodesActivated(destinationOnlineNodes.keySet());
@@ -112,7 +112,7 @@ public abstract class TopologyAction extends RemoteAction {
 
     if (destinationClusterActivated) {
       TopologyNomadChange nomadChange = buildNomadChange(result);
-      licenseValidation(destination, nomadChange.getCluster());
+      licenseValidation(destination.getHostPort(), nomadChange.getCluster());
       onNomadChangeReady(nomadChange);
       output.info("Sending the topology change");
       try {

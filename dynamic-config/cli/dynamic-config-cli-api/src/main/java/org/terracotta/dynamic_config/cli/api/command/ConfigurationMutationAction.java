@@ -32,8 +32,8 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -213,10 +213,10 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
         }
 
         if (!nodesRequiringRestart.isEmpty()) {
-          List<InetSocketAddress> addresses = onlineNodes.keySet()
+          List<HostPort> addresses = onlineNodes.keySet()
               .stream()
               .filter(endpoint -> nodesRequiringRestart.contains(endpoint.getNodeName()))
-              .map(Endpoint::getAddress)
+              .map(Endpoint::getHostPort)
               .collect(toList());
           output.out("Restart required for nodes: {} ", toString(addresses));
           if (autoRestart) {
@@ -285,7 +285,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
           // get the node state again (we are searching for actives)
           LogicalServerState state = UNREACHABLE;
           try {
-            state = getState(endpoint);
+            state = getLogicalServerState(endpoint);
           } catch (RuntimeException e) {
             LOGGER.warn("Node: {} in stripe '{}' is not reachable anymore: {}", endpoint, stripe.getName(), e.getMessage(), e);
             cannotRestart.add(endpoint);

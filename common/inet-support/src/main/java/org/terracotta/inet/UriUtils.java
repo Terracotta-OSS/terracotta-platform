@@ -16,7 +16,6 @@
 package org.terracotta.inet;
 
 import java.io.UnsupportedEncodingException;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -50,16 +49,16 @@ public class UriUtils {
     }
   }
 
-  public static List<InetSocketAddress> parseInetSocketAddresses(String uri) {
-    return parseInetSocketAddresses(uri, 9410);
+  public static List<HostPort> parseHostPorts(String uri) {
+    return parseHostPorts(uri, 9410);
   }
 
-  public static List<InetSocketAddress> parseInetSocketAddresses(String uri, int defaultPort) {
+  public static List<HostPort> parseHostPorts(String uri, int defaultPort) {
     String auth = parseAuthority(uri);
     if (auth == null) {
       return Collections.emptyList();
     }
-    return InetSocketAddressConverter.getInetSocketAddresses(auth.split(","), defaultPort);
+    return HostPort.parse(auth.split(","), defaultPort);
   }
 
   public static String parseScheme(String uri) {

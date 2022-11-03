@@ -22,18 +22,13 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>lease</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
   <artifactId>lease-entity-api</artifactId>
 
   <dependencies>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>lease-common</artifactId>
-      <version>${project.version}</version>
-    </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>entity-client-api</artifactId>

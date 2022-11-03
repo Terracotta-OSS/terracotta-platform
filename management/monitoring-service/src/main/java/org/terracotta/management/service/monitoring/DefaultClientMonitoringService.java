@@ -84,12 +84,12 @@ class DefaultClientMonitoringService implements ClientMonitoringService, Topolog
   }
 
   @Override
-  public void exposeManagementRegistry(ClientDescriptor from, ContextContainer contextContainer, Capability... capabilities) {
+  public void exposeManagementRegistry(ClientDescriptor from, Context root, ContextContainer contextContainer, Capability... capabilities) {
     if (LOGGER.isTraceEnabled()) {
       List<String> names = Stream.of(capabilities).map(Capability::getName).collect(Collectors.toList());
       LOGGER.trace("[{}] exposeManagementRegistry({}, {})", consumerId, from, names);
     }
-    ManagementRegistry newRegistry = ManagementRegistry.create(contextContainer);
+    ManagementRegistry newRegistry = ManagementRegistry.create(root, contextContainer);
     newRegistry.addCapabilities(capabilities);
     topologyService.willSetClientManagementRegistry(consumerId, from, newRegistry);
     topologyService.getClientIdentifier(consumerId, from)

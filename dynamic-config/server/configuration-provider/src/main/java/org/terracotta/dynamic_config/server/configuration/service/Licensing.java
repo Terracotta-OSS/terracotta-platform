@@ -41,16 +41,19 @@ class Licensing {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Licensing.class);
   private static final String LICENSE_FILE_NAME = "license.xml";
-
+  private static final String DATAHUB_LICENSE_FLAG = "DatahubLicense";
   // guard access to the installed license
   private final ReadWriteLock licenseLock = new ReentrantReadWriteLock();
 
   private final LicenseService licenseService;
   private final Path licenseFile;
+  private volatile String unconfiguredLicenseContent; // set only when the server is unconfigured (RO mode)
+  private final NomadServerManager nomadServerManager;
 
-  public Licensing(LicenseService licenseService, Path licenseDir) {
+  public Licensing(LicenseService licenseService, NomadServerManager nomadServerManager) {
     this.licenseService = requireNonNull(licenseService);
-    this.licenseFile = requireNonNull(licenseDir).resolve(LICENSE_FILE_NAME);
+    this.nomadServerManager = nomadServerManager;
+    this.licenseFile = requireNonNull(nomadServerManager.getConfigurationManager().getLicensePath()).resolve(LICENSE_FILE_NAME);
   }
 
   public Path getLicenseFile() {
@@ -66,7 +69,19 @@ class Licensing {
     }
   }
 
-  public Optional<String> read() throws UncheckedIOException, IllegalStateException {
+  public Optional<String> getLicenseContent() {
+    return Optional.ofNullable(read().orElseGet(() -> getUnconfiguredLicenseContent().orElse(null)));
+  }
+
+  /**
+   * Only return the unconfiguredLicenseContent if the server is unconfigured (i.e. RO mode).
+   */
+  private Optional<String> getUnconfiguredLicenseContent() {
+    return nomadServerManager.getNomadMode() == NomadMode.RO && unconfiguredLicenseContent != null ?
+        Optional.of(unconfiguredLicenseContent) : Optional.empty();
+  }
+
+  private Optional<String> read() throws UncheckedIOException, IllegalStateException {
     licenseLock.readLock().lock();
     try {
       return licenseFile.toFile().exists() ?
@@ -106,30 +121,67 @@ class Licensing {
     }
   }
 
+  /**
+   * Licenses can be configured (set/unset) when the server is ACTIVE or UNCONFIGURED.
+   * Since the config folder does not yet exist when the server is UNCONFIGURED, we only 'install' the license
+   * (i.e. copy the specified file to the config folder) when the server is ACTIVE.
+   * If install is called when the server is UNCONFIGURED (RO mode), we simply update the unconfiguredLicenseContent
+   * member with the supplied licenseContent.
+   * If install is called when the server is CONFIGURED (RW mode), we use the license that was supplied during activation.
+   * If a license was not specified during activation, we use the unconfiguredLicenseContent that was set when the
+   * server was UNCONFIGURED (if one was specified).
+   */
   public void install(String licenseContent, Cluster cluster) {
     licenseLock.writeLock().lock();
     try {
-      if (licenseContent != null) {
-        try {
-          final Path tempFile = Files.createTempFile("terracotta-license-", ".xml");
-          try {
-            Files.write(tempFile, licenseContent.getBytes(StandardCharsets.UTF_8));
-            licenseService.validate(tempFile, cluster);
-            LOGGER.info("License validated");
-            LOGGER.debug("Moving license file: {} to: {}", tempFile, licenseFile);
-            org.terracotta.utilities.io.Files.relocate(tempFile, licenseFile, StandardCopyOption.REPLACE_EXISTING);
-            LOGGER.info("License installed");
-          } finally {
-            try {
-              org.terracotta.utilities.io.Files.deleteIfExists(tempFile);
-            } catch (IOException ignored) {
-            }
-          }
-        } catch (IOException e) {
-          throw new UncheckedIOException(e);
+      if (nomadServerManager.getNomadMode() == NomadMode.RO) {
+        // server is unconfigured (or in Repair)
+        unconfiguredLicenseContent = licenseContent;
+      } else {
+        // server is configured
+        if (licenseContent == null && unconfiguredLicenseContent != null) {
+          // no license specified; if available, use the license set when unconfigured
+          licenseContent = unconfiguredLicenseContent;
         }
-        LOGGER.info("License installation successful");
-      } else if (isInstalled()) {
+        if (licenseContent != null) {
+          // only perform file operations on activated servers (config folders do not exist when unconfigured)
+          try {
+            final Path tempFile = Files.createTempFile("terracotta-license-", ".xml");
+            try {
+              Files.write(tempFile, licenseContent.getBytes(StandardCharsets.UTF_8));
+              License license = licenseService.parse(tempFile);
+              LOGGER.info("Validating license");
+              LOGGER.info(license.toLoggingString());
+              licenseService.validate(tempFile, cluster);
+              LOGGER.info("License validated");
+              if (license.getType().equals(DATAHUB_LICENSE_FLAG)) {
+                LOGGER.info("This Terracotta cluster is licensed for use only with webMethods DataHub");
+              }
+              LOGGER.debug("Moving license file: {} to: {}", tempFile, licenseFile);
+              org.terracotta.utilities.io.Files.relocate(tempFile, licenseFile, StandardCopyOption.REPLACE_EXISTING);
+              LOGGER.info("License installed");
+            } finally {
+              try {
+                org.terracotta.utilities.io.Files.deleteIfExists(tempFile);
+              } catch (IOException ignored) {
+              }
+            }
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+          LOGGER.info("License installation successful");
+        }
+      }
+    } finally {
+      licenseLock.writeLock().unlock();
+    }
+  }
+
+  public void uninstall() {
+    licenseLock.writeLock().lock();
+    try {
+      unconfiguredLicenseContent = null;
+      if (isInstalled()) {
         try {
           org.terracotta.utilities.io.Files.deleteIfExists(licenseFile);
         } catch (IOException e) {

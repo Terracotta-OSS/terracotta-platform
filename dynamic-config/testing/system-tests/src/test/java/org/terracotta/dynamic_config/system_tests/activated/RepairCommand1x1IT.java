@@ -21,8 +21,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
-
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.Matchers.allOf;
@@ -40,10 +38,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
  */
 @ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class RepairCommand1x1IT extends DynamicConfigIT {
-
-  public RepairCommand1x1IT() {
-    super(Duration.ofSeconds(180));
-  }
 
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test

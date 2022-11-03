@@ -40,6 +40,12 @@ public class Context extends AbstractMap<String, String> implements Serializable
     return Collections.unmodifiableMap(back);
   }
 
+  public Context without(String key) {
+    Context context = new Context(back);
+    context.back.remove(key);
+    return context;
+  }
+
   public Context with(String key, String val) {
     if (val == null) {
       throw new NullPointerException();
@@ -68,7 +74,7 @@ public class Context extends AbstractMap<String, String> implements Serializable
     return back.size();
   }
 
-  public boolean isEmpty() { return back.isEmpty(); }
+  public boolean isEmpty() {return back.isEmpty();}
 
   @Override
   public Set<Entry<String, String>> entrySet() {

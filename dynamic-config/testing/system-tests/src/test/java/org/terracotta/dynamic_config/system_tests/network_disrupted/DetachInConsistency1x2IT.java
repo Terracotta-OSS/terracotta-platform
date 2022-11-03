@@ -26,7 +26,6 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 
@@ -40,10 +39,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 2, autoStart = false, netDisruptionEnabled = true)
 public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
-  public DetachInConsistency1x2IT() {
-    super(Duration.ofSeconds(300));
-  }
-
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency();
@@ -52,12 +47,10 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     setClientServerDisruptionLinks(Collections.singletonMap(1, 2));
@@ -71,13 +64,13 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_detach_when_active_passive_disrupted() throws Exception {
+  public void test_detach_when_active_passive_disrupted() {
     TerracottaServer active = angela.tsa().getActive();
     TerracottaServer passive = angela.tsa().getPassive();
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passive);
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
 
       //start partition
@@ -92,16 +85,19 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
 
       //stop partition
       disruptor.undisrupt();
+
       waitForPassive(1, passiveId);
+      waitForActive(1);
+
+      waitUntil(() -> getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+      waitUntil(() -> getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
+
+      waitUntil(() -> getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
+      waitUntil(() -> getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
+
+      withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
+      withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
     }
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
-
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
-
-    withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
-    withTopologyService(1, 2, topologyService -> assertTrue(topologyService.isActivated()));
   }
 
   @Test
@@ -111,8 +107,8 @@ public class DetachInConsistency1x2IT extends DynamicConfigIT {
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passive);
     Map<ServerSymbolicName, Integer> map = angela.tsa().updateToProxiedPorts();
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
 
       //start partition

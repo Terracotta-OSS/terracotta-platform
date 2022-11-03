@@ -5,13 +5,18 @@
     <parent>
         <artifactId>dynamic-config-cli</artifactId>
         <groupId>org.terracotta.dynamic-config.cli</groupId>
-        <version>5.8-SNAPSHOT</version>
+        <version>5.9-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>dynamic-config-cli-api</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>org.terracotta.common</groupId>
+            <artifactId>output-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.terracotta.diagnostic</groupId>
             <artifactId>diagnostic-client</artifactId>
@@ -31,8 +36,7 @@
         <!-- connection -->
         <dependency>
             <groupId>org.terracotta.internal</groupId>
-            <artifactId>common</artifactId>
-            <version>${terracotta-core.version}</version>
+            <artifactId>common-spi</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>

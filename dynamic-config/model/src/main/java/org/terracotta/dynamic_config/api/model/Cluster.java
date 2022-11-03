@@ -21,8 +21,8 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -494,18 +494,18 @@ public class Cluster implements Cloneable, PropertyHolder {
     return uuid;
   }
 
-  public Optional<Node> findReachableNode(InetSocketAddress addr) {
+  public Optional<Node> findReachableNode(HostPort hostPort) {
     return stripes.stream()
-        .map(stripe -> stripe.findReachableNode(addr).orElse(null))
+        .map(stripe -> stripe.findReachableNode(hostPort).orElse(null))
         .filter(Objects::nonNull)
         .findFirst();
   }
 
-  public Collection<? extends Endpoint> search(Collection<? extends InetSocketAddress> addresses) {
+  public Collection<? extends Endpoint> search(Collection<? extends HostPort> addresses) {
     return search(addresses, node -> null);
   }
 
-  public Collection<? extends Endpoint> search(Collection<? extends InetSocketAddress> addresses, Function<Node, Endpoint> noMatch) {
+  public Collection<? extends Endpoint> search(Collection<? extends HostPort> addresses, Function<Node, Endpoint> noMatch) {
     return addresses.stream()
         .flatMap(addr -> getNodes().stream().map(node -> node.findEndpoint(addr).orElseGet(() -> noMatch.apply(node))))
         .filter(Objects::nonNull)
@@ -523,11 +523,11 @@ public class Cluster implements Cloneable, PropertyHolder {
    *
    * @param initiators Addresses used to load this class, can be null.
    */
-  public Collection<Endpoint> determineEndpoints(InetSocketAddress... initiators) {
+  public Collection<Endpoint> determineEndpoints(HostPort... initiators) {
     return determineEndpoints(Arrays.asList(initiators));
   }
 
-  public Collection<Endpoint> determineEndpoints(Collection<? extends InetSocketAddress> initiators) {
+  public Collection<Endpoint> determineEndpoints(Collection<? extends HostPort> initiators) {
     final Collection<? extends Endpoint> results = search(initiators);
     if (results.isEmpty()) {
       return getNodes().stream().map(Node::determineEndpoint).collect(toList());
@@ -540,11 +540,11 @@ public class Cluster implements Cloneable, PropertyHolder {
     return getNodes().stream().map(Node::determineEndpoint).collect(toList());
   }
 
-  public Optional<Endpoint> determineEndpoint(UID nodeUID, InetSocketAddress... initiators) {
+  public Optional<Endpoint> determineEndpoint(UID nodeUID, HostPort... initiators) {
     return determineEndpoint(nodeUID, Arrays.asList(initiators));
   }
 
-  public Optional<Endpoint> determineEndpoint(UID nodeUID, Collection<? extends InetSocketAddress> initiators) {
+  public Optional<Endpoint> determineEndpoint(UID nodeUID, Collection<? extends HostPort> initiators) {
     final Collection<? extends Endpoint> results = search(initiators);
     if (results.isEmpty()) {
       return getNode(nodeUID).map(Node::determineEndpoint);

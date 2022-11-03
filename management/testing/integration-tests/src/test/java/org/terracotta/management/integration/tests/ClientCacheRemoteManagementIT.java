@@ -37,7 +37,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
   public void can_access_remote_management_registry_of_client() throws Exception {
     ManagementRegistry registry = nmsService.readTopology()
         .clientStream()
-        .filter(cli -> cli.getName().equals("pet-clinic"))
+        .filter(cli -> cli.getName().equals("pet-clinic") && cli.getContext().get("instanceId").equals("instance-0"))
         .findAny()
         .flatMap(Client::getManagementRegistry)
         .get();
@@ -63,9 +63,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
         .get();
 
     // similar to cacheManagerName and cacheName context
-    Context context = client.getContext()
-        .with("appName", "pet-clinic")
-        .with("cacheName", "pets");
+    Context context = client.getContext().with("cacheName", "pets");
 
     // put
     nmsService.call(context, "CacheCalls", "put", Void.TYPE, new Parameter("pet1"), new Parameter("Cat")).waitForReturn();

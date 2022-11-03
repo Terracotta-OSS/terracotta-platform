@@ -22,6 +22,7 @@ import org.terracotta.management.model.capabilities.descriptors.CallDescriptor;
 import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 import org.terracotta.management.model.capabilities.descriptors.Settings;
 import org.terracotta.management.model.capabilities.descriptors.StatisticDescriptor;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 
 import java.io.Serializable;
@@ -43,11 +44,19 @@ public final class ManagementRegistry implements Serializable {
 
   private static final long serialVersionUID = 2;
 
+  // added later in next version, so could be null if deserializing a previous object
+  private final Context rootContext;
+
   private final ContextContainer contextContainer;
   private final Collection<Capability> capabilities = new ArrayList<>();
 
-  private ManagementRegistry(ContextContainer contextContainer) {
+  private ManagementRegistry(Context root, ContextContainer contextContainer) {
+    this.rootContext = Objects.requireNonNull(root);
     this.contextContainer = Objects.requireNonNull(contextContainer);
+  }
+
+  public Context getContext() {
+    return getRootContext().with(contextContainer.getName(), contextContainer.getValue());
   }
 
   public ManagementRegistry setCapabilities(Collection<Capability> capabilities) {
@@ -88,25 +97,20 @@ public final class ManagementRegistry implements Serializable {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     ManagementRegistry that = (ManagementRegistry) o;
-
-    if (!contextContainer.equals(that.contextContainer)) return false;
-    return capabilities.equals(that.capabilities);
-
+    return contextContainer.equals(that.contextContainer) && Objects.equals(capabilities, that.capabilities) && Objects.equals(getRootContext(), that.getRootContext());
   }
 
   @Override
   public int hashCode() {
-    int result = contextContainer.hashCode();
-    result = 31 * result + capabilities.hashCode();
-    return result;
+    return Objects.hash(getRootContext(), contextContainer, capabilities);
   }
 
   @Override
   public String toString() {
     final StringBuilder sb = new StringBuilder("ManagementRegistry{");
-    sb.append("contextContainer=").append(contextContainer);
+    sb.append("rootContext=").append(getRootContext());
+    sb.append(", contextContainer=").append(contextContainer);
     sb.append(", capabilities=").append(capabilities.size());
     sb.append('}');
     return sb.toString();
@@ -114,9 +118,17 @@ public final class ManagementRegistry implements Serializable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> map = new LinkedHashMap<>();
+    map.put("rootContext", getRootContext());
     map.put("contextContainer", toMap(contextContainer));
     map.put("capabilities", this.capabilities.stream().map(ManagementRegistry::toMap).collect(Collectors.toList()));
     return map;
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  private Context getRootContext() {
+    // rootContext could be null after an old object is deserialized.
+    // This field was added after.
+    return rootContext == null ? Context.empty() : rootContext;
   }
 
   private static Map<String, Object> toMap(Capability capability) {
@@ -187,8 +199,8 @@ public final class ManagementRegistry implements Serializable {
     return map;
   }
 
-  public static ManagementRegistry create(ContextContainer contextContainer) {
-    return new ManagementRegistry(contextContainer);
+  public static ManagementRegistry create(Context root, ContextContainer contextContainer) {
+    return new ManagementRegistry(root, contextContainer);
   }
 
 }

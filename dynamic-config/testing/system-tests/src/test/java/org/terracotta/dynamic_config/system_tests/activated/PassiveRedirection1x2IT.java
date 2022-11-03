@@ -25,7 +25,6 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.time.Duration;
 import java.util.Properties;
 
 import static java.util.Collections.singletonList;
@@ -39,10 +38,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(nodesPerStripe = 2)
 public class PassiveRedirection1x2IT extends DynamicConfigIT {
-
-  public PassiveRedirection1x2IT() {
-    super(Duration.ofSeconds(180));
-  }
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -63,14 +58,14 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
         configTool("set", "-s", "localhost:" + getNodePort(), "-c", "logger-overrides=org.terracotta.dynamic_config.server.service.DynamicConfigNetworkTranslator:TRACE"),
         is(successful()));
 
-    int passiveId = findPassives(1)[0];
-    int activeId = findActive(1).getAsInt();
+    int passiveId = waitForNPassives(1, 1)[0];
+    int activeId = waitForActive(1);
 
     // Redirecting client: /127.0.0.1:58937 to proposed address: C02YJ2F2JGH6.local:46238
     try (Connection connection = ConnectionFactory.connect(singletonList(getNodeAddress(1, passiveId)), new Properties())) {
       assertTrue(connection.isValid());
       waitUntilServerLogs(getNode(1, passiveId), "Redirecting client: ");
-      waitUntilServerLogs(getNode(1, passiveId), " to proposed address: " + getNodeAddress(1, activeId)); // localhost:port (== <hostname>:<bind-port>)
+      waitUntilServerLogs(getNode(1, passiveId), " to proposed address: " + getNodeHostPort(1, activeId)); // localhost:port (== <hostname>:<bind-port>)
     }
   }
 
@@ -92,8 +87,8 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
         ),
         is(successful()));
 
-    int passiveId = findPassives(1)[0];
-    int activeId = findActive(1).getAsInt();
+    int passiveId = waitForNPassives(1, 1)[0];
+    int activeId = waitForActive(1);
 
     // Redirecting client: /127.0.0.1:59121 to node: node-1-1@localhost:42894 through public endpoint
     try (Connection connection = ConnectionFactory.connect(singletonList(InetSocketAddress.createUnresolved(getDefaultHostname(1, passiveId), getNodePort(1, passiveId))), new Properties())) {
@@ -120,11 +115,8 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
 
     attachAll();
     activateCluster();
-    waitForActive(1);
-    waitForPassives(1);
-
-    int passiveId = findPassives(1)[0];
-    int activeId = findActive(1).getAsInt();
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
 
     // Redirecting client: /127.0.0.1:59053 to proposed address: 127.0.0.1:37132
     try (Connection connection = ConnectionFactory.connect(singletonList(InetSocketAddress.createUnresolved(getDefaultHostname(1, passiveId), getNodePort(1, passiveId))), new Properties())) {
@@ -151,8 +143,8 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
 
     attachAll();
     activateCluster();
-    waitForActive(1);
-    waitForPassives(1);
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
 
     assertThat(
         configTool("set", "-s", "localhost:" + getNodePort(),
@@ -162,9 +154,6 @@ public class PassiveRedirection1x2IT extends DynamicConfigIT {
             "-c", "stripe.1.node.2.public-port=" + getNodePort(1, 2)
         ),
         is(successful()));
-
-    int passiveId = findPassives(1)[0];
-    int activeId = findActive(1).getAsInt();
 
     // Redirecting client: /127.0.0.1:59447 to node: node-1-2@localhost:46384 through public endpoint
     try (Connection connection = ConnectionFactory.connect(singletonList(InetSocketAddress.createUnresolved(getDefaultHostname(1, passiveId), getNodePort(1, passiveId))), new Properties())) {

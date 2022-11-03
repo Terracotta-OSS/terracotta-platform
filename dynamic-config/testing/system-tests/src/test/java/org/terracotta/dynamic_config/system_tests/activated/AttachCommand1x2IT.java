@@ -44,13 +44,11 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
   public void test_attach_to_activated_cluster() throws Exception {
     // activate a 1x1 cluster
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // attach
@@ -73,19 +71,17 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
   public void test_topology_entity_callback_onNodeAddition() throws Exception {
     // activate a 1x1 cluster
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
 
     try (DynamicTopologyEntity dynamicTopologyEntity = DynamicTopologyEntityFactory.fetch(
         new TerracottaConnectionService(),
         Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort())),
         "dynamic-config-topology-entity",
         getConnectionTimeout(),
-        new DynamicTopologyEntity.Settings().setRequestTimeout(getConnectionTimeout()),
+        new DynamicTopologyEntity.Settings().setRequestTimeout(getDiagnosticOperationTimeout()),
         null)) {
 
       CountDownLatch called = new CountDownLatch(1);
@@ -110,7 +106,6 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
 
     // activate a 1x1 cluster
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     activateCluster();
 
     // do a change requiring a restart
@@ -120,7 +115,6 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
 
     // start a second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
 
     // try to attach this node to the cluster
     assertThat(
@@ -129,7 +123,6 @@ public class AttachCommand1x2IT extends DynamicConfigIT {
 
     // try forcing the attach
     assertThat(configTool("attach", "-f", "-d", destination, "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
-    waitForPassive(1, 2);
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));

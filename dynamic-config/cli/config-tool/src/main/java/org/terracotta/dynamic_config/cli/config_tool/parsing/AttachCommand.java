@@ -17,39 +17,29 @@ package org.terracotta.dynamic_config.cli.config_tool.parsing;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.cli.api.command.AttachAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.RestartCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
-@Usage("(-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>) [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
-public class AttachCommand extends Command {
+@Usage("(-stripe <hostname[:port]> -to-cluster <hostname[:port]> | -node <hostname[:port]> -to-stripe <hostname[:port]>) [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
+public class AttachCommand extends RestartCommand {
 
-  @Parameter(names = {"-to-cluster"}, description = "Cluster to attach to", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress destinationClusterAddress;
+  @Parameter(names = {"-to-cluster"}, description = "Cluster to attach to", converter = HostPortConverter.class)
+  protected HostPort destinationCluster;
 
-  @Parameter(names = {"-stripe"}, description = "Stripe to be attached", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress sourceStripeAddress;
+  @Parameter(names = {"-stripe"}, description = "Stripe to be attached", converter = HostPortConverter.class)
+  protected HostPort sourceStripe;
 
-  @Parameter(names = {"-to-stripe"}, description = "Stripe to attach to", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress destinationStripeAddress;
+  @Parameter(names = {"-to-stripe"}, description = "Stripe to attach to", converter = HostPortConverter.class)
+  protected HostPort destinationStripe;
 
-  @Parameter(names = {"-node"}, description = "Node to be attached", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress sourceNodeAddress;
-
-  @Parameter(names = {"-restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
-  protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-
-  @Parameter(names = {"-restart-delay"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
-  protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
+  @Parameter(names = {"-node"}, description = "Node to be attached", converter = HostPortConverter.class)
+  protected HostPort sourceNode;
 
   @Parameter(names = {"-force"}, description = "Force the operation", hidden = true)
   protected boolean force;
@@ -67,29 +57,29 @@ public class AttachCommand extends Command {
 
   @Override
   public void run() {
-    if ((destinationClusterAddress != null && sourceStripeAddress == null) ||
-        (destinationClusterAddress == null && sourceStripeAddress != null)) {
+    if ((destinationCluster != null && sourceStripe == null) ||
+        (destinationCluster == null && sourceStripe != null)) {
       throw new IllegalArgumentException("Both -to-cluster and -stripe must be provided for stripe addition to cluster");
     }
-    if ((destinationStripeAddress != null && sourceNodeAddress == null) ||
-        (destinationStripeAddress == null && sourceNodeAddress != null)) {
+    if ((destinationStripe != null && sourceNode == null) ||
+        (destinationStripe == null && sourceNode != null)) {
       throw new IllegalArgumentException("Both -to-stripe and -node must be provided for node addition to cluster");
     }
-    if (destinationClusterAddress != null && destinationStripeAddress != null) {
+    if (destinationCluster != null && destinationStripe != null) {
       throw new IllegalArgumentException("Either you can perform stripe addition to the cluster or node addition to the stripe");
     }
-    if (destinationClusterAddress != null) {
+    if (destinationCluster != null) {
       action.setOperationType(OperationType.STRIPE);
-      action.setDestinationAddress(destinationClusterAddress);
-      action.setSourceAddress(sourceStripeAddress);
-    } else if (destinationStripeAddress != null) {
+      action.setDestinationHostPort(destinationCluster);
+      action.setSourceHostPort(sourceStripe);
+    } else if (destinationStripe != null) {
       action.setOperationType(OperationType.NODE);
-      action.setDestinationAddress(destinationStripeAddress);
-      action.setSourceAddress(sourceNodeAddress);
+      action.setDestinationHostPort(destinationStripe);
+      action.setSourceHostPort(sourceNode);
     }
     action.setForce(force);
-    action.setRestartWaitTime(restartWaitTime);
-    action.setRestartDelay(restartDelay);
+    action.setRestartWaitTime(getRestartWaitTime());
+    action.setRestartDelay(getRestartDelay());
 
     action.run();
   }

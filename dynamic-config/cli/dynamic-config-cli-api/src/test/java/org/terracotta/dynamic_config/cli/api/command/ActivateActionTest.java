@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.diagnostic.client.DiagnosticConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -27,13 +28,13 @@ import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.BaseTest;
 import org.terracotta.dynamic_config.cli.api.NomadTestHelper;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
-import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
@@ -82,7 +83,7 @@ public class ActivateActionTest extends BaseTest {
           Testing.newTestNode("node2", "localhost", 9421, Testing.N_UIDS[2]),
           Testing.newTestNode("node3", "localhost", 9422, Testing.N_UIDS[3])
       ));
-  private final int[] ports = cluster.getNodes().stream().map(Node::getInternalSocketAddress).mapToInt(InetSocketAddress::getPort).toArray();
+  private final int[] ports = cluster.getNodes().stream().map(Node::getInternalHostPort).mapToInt(HostPort::getPort).toArray();
 
   @Override
   @Before
@@ -243,7 +244,7 @@ public class ActivateActionTest extends BaseTest {
   @Test
   public void test_activate_from_node_and_cluster_name() {
     ActivateAction command = command();
-    command.setNode(InetSocketAddress.createUnresolved("localhost", 9411));
+    command.setNode(HostPort.create("localhost", 9411));
     command.setClusterName("foo");
     doRunAndVerify("foo", command);
   }
@@ -260,7 +261,9 @@ public class ActivateActionTest extends BaseTest {
       doReturn(NomadTestHelper.discovery(COMMITTED, lastChangeUUID)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenReturn(accept());
-      when(diagnosticService.getLogicalServerState()).thenReturn(PASSIVE);
+      when(diagnosticService.getLogicalServerState()).thenReturn(PASSIVE)
+        .thenThrow(DiagnosticConnectionException.class)
+        .thenReturn(PASSIVE);
     }));
 
     command.run();

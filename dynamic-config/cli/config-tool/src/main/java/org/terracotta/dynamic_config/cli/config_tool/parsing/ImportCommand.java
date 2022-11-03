@@ -22,17 +22,17 @@ import org.terracotta.dynamic_config.cli.api.command.ImportAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 @Parameters(commandDescription = "Import a cluster configuration")
 @Usage("-config-file <config.cfg|config.properties> [-connect-to <hostname[:port]>]")
 public class ImportCommand extends Command {
 
-  @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
-  private InetSocketAddress node;
+  @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = HostPortConverter.class)
+  private HostPort node;
 
   @Parameter(names = {"-config-file"}, description = "Config file", required = true, converter = PathConverter.class)
   private Path configFile;

@@ -15,11 +15,11 @@
  */
 package org.terracotta.nomad.client.results;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.Consistency;
 import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
 import org.terracotta.nomad.messages.DiscoverResponse;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -42,21 +42,21 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
   }
 
   @Override
-  public void takeover(InetSocketAddress server) {
+  public void takeover(HostPort server) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.takeover(server);
     }
   }
 
   @Override
-  public void takeoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void takeoverOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.takeoverOtherClient(server, lastMutationHost, lastMutationUser);
     }
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress server, Throwable reason) {
+  public void takeoverFail(HostPort server, Throwable reason) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.takeoverFail(server, reason);
     }
@@ -70,35 +70,35 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
   }
 
   @Override
-  public void startDiscovery(Collection<InetSocketAddress> servers) {
+  public void startDiscovery(Collection<HostPort> servers) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.startDiscovery(servers);
     }
   }
 
   @Override
-  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
+  public void discovered(HostPort server, DiscoverResponse<T> discovery) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.discovered(server, discovery);
     }
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, Throwable reason) {
+  public void discoverFail(HostPort server, Throwable reason) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.discoverFail(server, reason);
     }
   }
 
   @Override
-  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<HostPort> committedServers, Collection<HostPort> rolledBackServers) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.discoverConfigInconsistent(changeUuid, committedServers, rolledBackServers);
     }
   }
 
   @Override
-  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+  public void discoverConfigPartitioned(Collection<Collection<HostPort>> partitions) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.discoverConfigPartitioned(partitions);
     }
@@ -119,14 +119,14 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
   }
 
   @Override
-  public void discoverRepeated(InetSocketAddress server) {
+  public void discoverRepeated(HostPort server) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.discoverRepeated(server);
     }
   }
 
   @Override
-  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.discoverOtherClient(server, lastMutationHost, lastMutationUser);
     }
@@ -147,21 +147,21 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
   }
 
   @Override
-  public void committed(InetSocketAddress server) {
+  public void committed(HostPort server) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.committed(server);
     }
   }
 
   @Override
-  public void commitFail(InetSocketAddress server, Throwable reason) {
+  public void commitFail(HostPort server, Throwable reason) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.commitFail(server, reason);
     }
   }
 
   @Override
-  public void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void commitOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.commitOtherClient(server, lastMutationHost, lastMutationUser);
     }
@@ -182,21 +182,21 @@ public class MultiRecoveryResultReceiver<T> implements RecoveryResultReceiver<T>
   }
 
   @Override
-  public void rolledBack(InetSocketAddress server) {
+  public void rolledBack(HostPort server) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.rolledBack(server);
     }
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress server, Throwable reason) {
+  public void rollbackFail(HostPort server, Throwable reason) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.rollbackFail(server, reason);
     }
   }
 
   @Override
-  public void rollbackOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void rollbackOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     for (RecoveryResultReceiver<T> recoveryResultReceiver : recoveryResultReceivers) {
       recoveryResultReceiver.rollbackOtherClient(server, lastMutationHost, lastMutationUser);
     }

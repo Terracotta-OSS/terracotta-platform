@@ -48,6 +48,7 @@ import org.terracotta.dynamic_config.cli.api.restart.RestartProgress;
 import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopProgress;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
 
@@ -95,20 +96,22 @@ public abstract class RemoteAction implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RemoteAction.class);
 
-  @Inject public MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider;
-  @Inject public DiagnosticServiceProvider diagnosticServiceProvider;
-  @Inject public NomadManager<NodeContext> nomadManager;
-  @Inject public RestartService restartService;
-  @Inject public StopService stopService;
-  @Inject public OutputService output;
+  @Inject
+  public MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
+  @Inject
+  public DiagnosticServiceProvider diagnosticServiceProvider;
+  @Inject
+  public NomadManager<NodeContext> nomadManager;
+  @Inject
+  public RestartService restartService;
+  @Inject
+  public StopService stopService;
+  @Inject
+  public OutputService output;
 
-  protected void licenseValidation(Endpoint endpoint, Cluster cluster) {
-    licenseValidation(endpoint.getAddress(), cluster);
-  }
-
-  protected void licenseValidation(InetSocketAddress node, Cluster cluster) {
-    LOGGER.trace("licenseValidation({}, {})", node, cluster);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node)) {
+  protected void licenseValidation(HostPort hostPort, Cluster cluster) {
+    LOGGER.trace("licenseValidation({}, {})", hostPort, cluster);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(hostPort.createInetSocketAddress())) {
       if (diagnosticService.getProxy(TopologyService.class).validateAgainstLicense(cluster)) {
         LOGGER.debug("License validation passed: configuration change(s) can be applied");
       } else {
@@ -125,7 +128,7 @@ public abstract class RemoteAction implements Runnable {
           .map(Tuple2::getT2)
           .forEach(service -> service.activate(cluster, licenseContent));
       if (licenseContent == null) {
-        output.info("No license installed. If you are attaching a node, the license will be synced.");
+        output.info("No license specified for activation. If a license was previously configured, it will take effect. If you are attaching a node, the license will be synced.");
       } else {
         output.info("License installation successful");
       }
@@ -167,18 +170,18 @@ public abstract class RemoteAction implements Runnable {
 
   private Optional<String> getLicenseContentFrom(Endpoint node) {
     LOGGER.trace("getLicenseContent({})", node);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node.getAddress())) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(node.getHostPort().createInetSocketAddress())) {
       return diagnosticService.getProxy(DynamicConfigService.class).getLicenseContent();
     }
   }
 
   protected final NomadChangeInfo[] getChangeHistory(Endpoint node) {
-    return getChangeHistory(node.getAddress());
+    return getChangeHistory(node.getHostPort());
   }
 
-  protected final NomadChangeInfo[] getChangeHistory(InetSocketAddress address) {
-    LOGGER.trace("getChangeHistory({})", address);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address)) {
+  protected final NomadChangeInfo[] getChangeHistory(HostPort hostPort) {
+    LOGGER.trace("getChangeHistory({})", hostPort);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(hostPort.createInetSocketAddress())) {
       return diagnosticService.getProxy(TopologyService.class).getChangeHistory();
     }
   }
@@ -195,23 +198,23 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final boolean mustBeRestarted(Endpoint endpoint) {
-    return mustBeRestarted(endpoint.getAddress());
+    return mustBeRestarted(endpoint.getHostPort());
   }
 
-  protected final boolean mustBeRestarted(InetSocketAddress expectedOnlineNode) {
+  protected final boolean mustBeRestarted(HostPort expectedOnlineNode) {
     LOGGER.trace("mustBeRestarted({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       return diagnosticService.getProxy(TopologyService.class).mustBeRestarted();
     }
   }
 
   protected final boolean hasIncompleteChange(Endpoint endpoint) {
-    return hasIncompleteChange(endpoint.getAddress());
+    return hasIncompleteChange(endpoint.getHostPort());
   }
 
-  protected final boolean hasIncompleteChange(InetSocketAddress expectedOnlineNode) {
+  protected final boolean hasIncompleteChange(HostPort expectedOnlineNode) {
     LOGGER.trace("hasIncompleteChange({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       return diagnosticService.getProxy(TopologyService.class).hasIncompleteChange();
     }
   }
@@ -221,7 +224,7 @@ public abstract class RemoteAction implements Runnable {
    */
   protected final ConfigurationConsistencyAnalyzer analyzeNomadConsistency(Map<Endpoint, LogicalServerState> allNodes) {
     LOGGER.trace("analyzeNomadConsistency({})", allNodes);
-    Map<InetSocketAddress, LogicalServerState> addresses = allNodes.entrySet().stream().collect(toMap(e -> e.getKey().getAddress(), Map.Entry::getValue));
+    Map<HostPort, LogicalServerState> addresses = allNodes.entrySet().stream().collect(toMap(e -> e.getKey().getHostPort(), Map.Entry::getValue));
     ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = new ConfigurationConsistencyAnalyzer(addresses);
     nomadManager.runConfigurationDiscovery(allNodes, configurationConsistencyAnalyzer);
     return configurationConsistencyAnalyzer;
@@ -301,24 +304,44 @@ public abstract class RemoteAction implements Runnable {
     LOGGER.debug("Configuration directories have been created for all nodes");
   }
 
-  protected final LogicalServerState getState(Endpoint expectedOnlineNode) {
-    return getState(expectedOnlineNode.getAddress());
+  protected final LogicalServerState getLogicalServerState(Endpoint expectedOnlineNode) {
+    return getLogicalServerState(expectedOnlineNode.getHostPort());
   }
 
-  protected final LogicalServerState getState(InetSocketAddress expectedOnlineNode) {
-    LOGGER.trace("getUpcomingCluster({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+  protected final LogicalServerState getLogicalServerState(HostPort expectedOnlineNode) {
+    LOGGER.trace("getLogicalServerState({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       return diagnosticService.getLogicalServerState();
     }
   }
 
-  protected final Cluster getUpcomingCluster(Endpoint expectedOnlineNode) {
-    return getUpcomingCluster(expectedOnlineNode.getAddress());
+  protected final Map<Endpoint, LogicalServerState> getLogicalServerStates(Collection<Endpoint> endpoints) {
+    LOGGER.trace("getLogicalServerStates({})", endpoints);
+    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(endpointsToMap(endpoints), null)) {
+      LinkedHashMap<Endpoint, LogicalServerState> status = endpoints.stream()
+          .collect(toMap(
+              identity(),
+              endpoint -> diagnosticServices.getDiagnosticService(endpoint.getNodeUID()).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
+              (o1, o2) -> {
+                throw new UnsupportedOperationException();
+              },
+              LinkedHashMap::new));
+      status.forEach((address, state) -> {
+        if (state.isUnreacheable()) {
+          output.info(" - {} is not reachable", address);
+        }
+      });
+      return status;
+    }
   }
 
-  protected final Cluster getUpcomingCluster(InetSocketAddress expectedOnlineNode) {
+  protected final Cluster getUpcomingCluster(Endpoint expectedOnlineNode) {
+    return getUpcomingCluster(expectedOnlineNode.getHostPort());
+  }
+
+  protected final Cluster getUpcomingCluster(HostPort expectedOnlineNode) {
     LOGGER.trace("getUpcomingCluster({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
     }
   }
@@ -326,19 +349,19 @@ public abstract class RemoteAction implements Runnable {
   protected final void setUpcomingCluster(Collection<Endpoint> expectedOnlineNodes, Cluster cluster) {
     LOGGER.trace("setUpcomingCluster({})", expectedOnlineNodes);
     for (Endpoint expectedOnlineNode : expectedOnlineNodes) {
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.getAddress())) {
+      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.getHostPort().createInetSocketAddress())) {
         diagnosticService.getProxy(DynamicConfigService.class).setUpcomingCluster(cluster);
       }
     }
   }
 
   protected final Cluster getRuntimeCluster(Endpoint expectedOnlineNode) {
-    return getRuntimeCluster(expectedOnlineNode.getAddress());
+    return getRuntimeCluster(expectedOnlineNode.getHostPort());
   }
 
-  protected final Cluster getRuntimeCluster(InetSocketAddress expectedOnlineNode) {
+  protected final Cluster getRuntimeCluster(HostPort expectedOnlineNode) {
     LOGGER.trace("getRuntimeCluster({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
     }
   }
@@ -349,9 +372,9 @@ public abstract class RemoteAction implements Runnable {
    * with the node addresses to determine the endpoint and group we have to use to connect
    * to other nodes (group: through bind addresses, hostname:port, or public addresses)
    */
-  protected final Endpoint getEndpoint(InetSocketAddress expectedOnlineNode) {
+  protected final Endpoint getEndpoint(HostPort expectedOnlineNode) {
     LOGGER.trace("getEndpoint({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       Node node = diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getNode();
       return node.determineEndpoint(expectedOnlineNode);
     }
@@ -429,7 +452,7 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
-  protected final Collection<Endpoint> findRuntimePeers(InetSocketAddress expectedOnlineNode) {
+  protected final Collection<Endpoint> findRuntimePeers(HostPort expectedOnlineNode) {
     LOGGER.trace("findRuntimePeers({})", expectedOnlineNode);
     Cluster cluster = getRuntimeCluster(expectedOnlineNode);
     Collection<Endpoint> peers = cluster.determineEndpoints(expectedOnlineNode);
@@ -439,34 +462,19 @@ public abstract class RemoteAction implements Runnable {
     return peers;
   }
 
-  protected final Map<Endpoint, LogicalServerState> findRuntimePeersStatus(InetSocketAddress expectedOnlineNode) {
+  protected final Map<Endpoint, LogicalServerState> findRuntimePeersStatus(HostPort expectedOnlineNode) {
     LOGGER.trace("findRuntimePeersStatus({})", expectedOnlineNode);
     Cluster cluster = getRuntimeCluster(expectedOnlineNode);
     Collection<Endpoint> endpoints = cluster.determineEndpoints(expectedOnlineNode);
     output.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(endpoints));
-    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(endpointsToMap(endpoints))) {
-      LinkedHashMap<Endpoint, LogicalServerState> status = endpoints.stream()
-          .collect(toMap(
-              identity(),
-              endpoint -> diagnosticServices.getDiagnosticService(endpoint.getNodeUID()).map(DiagnosticService::getLogicalServerState).orElse(UNREACHABLE),
-              (o1, o2) -> {
-                throw new UnsupportedOperationException();
-              },
-              LinkedHashMap::new));
-      status.forEach((address, state) -> {
-        if (state.isUnreacheable()) {
-          output.info(" - {} is not reachable", address);
-        }
-      });
-      return status;
-    }
+    return getLogicalServerStates(endpoints);
   }
 
   protected final Map<Endpoint, LogicalServerState> findOnlineRuntimePeers(Endpoint expectedOnlineNode) {
-    return findOnlineRuntimePeers(expectedOnlineNode.getAddress());
+    return findOnlineRuntimePeers(expectedOnlineNode.getHostPort());
   }
 
-  protected final Map<Endpoint, LogicalServerState> findOnlineRuntimePeers(InetSocketAddress expectedOnlineNode) {
+  protected final Map<Endpoint, LogicalServerState> findOnlineRuntimePeers(HostPort expectedOnlineNode) {
     LOGGER.trace("findOnlineRuntimePeers({})", expectedOnlineNode);
     Map<Endpoint, LogicalServerState> nodes = findRuntimePeersStatus(expectedOnlineNode);
     return filterOnlineNodes(nodes);
@@ -539,6 +547,23 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final void ensureNodesAreEitherActiveOrPassive(Map<Endpoint, LogicalServerState> onlineNodes) {
+    for (Map.Entry<Endpoint, LogicalServerState> entry : onlineNodes.entrySet()) {
+      if (entry.getValue().isStarting() || entry.getValue().isSynchronizing()) {
+        // this node will become passive in a few... Just wait instead of failing...
+        LOGGER.info("Waiting for node: {} to become passive or active...", entry.getKey());
+        while (entry.getValue().isSynchronizing() || entry.getValue().isStarting()) {
+          try {
+            Thread.sleep(1_000);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+          }
+          entry.setValue(getLogicalServerState(entry.getKey()));
+        }
+        LOGGER.info("Node: {} is: {}", entry.getKey(), entry.getValue());
+      }
+    }
+
     onlineNodes.forEach((addr, state) -> {
       if (!state.isActive() && !state.isPassive()) {
         throw new IllegalStateException("Unable to update node: " + addr + " that is currently in state: " + state
@@ -548,19 +573,19 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final boolean isActivated(Endpoint expectedOnlineNode) {
-    return isActivated(expectedOnlineNode.getAddress());
+    return isActivated(expectedOnlineNode.getHostPort());
   }
 
-  protected final boolean isActivated(InetSocketAddress expectedOnlineNode) {
+  protected final boolean isActivated(HostPort expectedOnlineNode) {
     LOGGER.trace("isActivated({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       return diagnosticService.getProxy(TopologyService.class).isActivated();
     }
   }
 
-  protected final void resetAndStop(InetSocketAddress expectedOnlineNode) {
-    output.info("Reset node: {}. Node will stop in 5 seconds", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+  protected final void resetAndStop(HostPort expectedOnlineNode) {
+    output.info("Reset node: {}. Node will stop...", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
       proxy.reset();
       proxy.stop(Duration.ofSeconds(5));
@@ -568,12 +593,8 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final void reset(Endpoint expectedOnlineNode) {
-    reset(expectedOnlineNode.getAddress());
-  }
-
-  protected final void reset(InetSocketAddress expectedOnlineNode) {
-    output.info("Reset node: {}", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode)) {
+    output.info("Reset node: {}", expectedOnlineNode.getHostPort());
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.getHostPort().createInetSocketAddress())) {
       DynamicConfigService proxy = diagnosticService.getProxy(DynamicConfigService.class);
       proxy.reset();
     }
@@ -583,9 +604,10 @@ public abstract class RemoteAction implements Runnable {
     LOGGER.trace("areAllNodesActivated({})", expectedOnlineNodes);
     final Map<UID, InetSocketAddress> map = endpointsToMap(expectedOnlineNodes);
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(map)) {
-      Map<Boolean, Collection<InetSocketAddress>> activations = topologyServices(diagnosticServices)
+      final Map<UID, HostPort> map2 = map.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> HostPort.create(e.getValue())));
+      Map<Boolean, Collection<HostPort>> activations = topologyServices(diagnosticServices)
           .map(tuple -> tuple.map(identity(), TopologyService::isActivated))
-          .collect(groupingBy(Tuple2::getT2, mapping(tuple -> map.get(tuple.getT1()), toCollection(() -> new TreeSet<>(Comparator.comparing(InetSocketAddress::toString))))));
+          .collect(groupingBy(Tuple2::getT2, mapping(tuple -> map2.get(tuple.getT1()), toCollection(() -> new TreeSet<>(Comparator.comparing(HostPort::toString))))));
       if (activations.isEmpty()) {
         throw new IllegalArgumentException("Cluster is empty or offline");
       }
@@ -629,7 +651,7 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected static Map<UID, InetSocketAddress> endpointsToMap(Collection<Endpoint> newNodes) {
-    return newNodes.stream().collect(toMap(Endpoint::getNodeUID, Endpoint::getAddress));
+    return newNodes.stream().collect(toMap(Endpoint::getNodeUID, e -> e.getHostPort().createInetSocketAddress()));
   }
 
   protected static Stream<Tuple2<UID, TopologyService>> topologyServices(DiagnosticServices<UID> diagnosticServices) {

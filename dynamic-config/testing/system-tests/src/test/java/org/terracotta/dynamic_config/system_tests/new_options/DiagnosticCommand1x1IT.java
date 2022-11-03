@@ -31,7 +31,6 @@ public class DiagnosticCommand1x1IT extends DynamicConfigIT {
   @Test
   public void test_diagnostic_on_unconfigured_node() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(
         configTool("diagnostic", "-connect-to", "localhost:" + getNodePort(1, 1)),
         containsLinesInOrderStartingWith(Files.lines(Paths.get(getClass().getResource("/diagnostic-output/diagnostic1.txt").toURI())).collect(toList())));

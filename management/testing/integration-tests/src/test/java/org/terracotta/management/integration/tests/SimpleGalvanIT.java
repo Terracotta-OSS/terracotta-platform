@@ -65,7 +65,7 @@ public class SimpleGalvanIT {
   @Before
   public void setUp() throws Exception {
     URI uri = CLUSTER.getConnectionURI();
-    cacheFactory = new CacheFactory(uri, "pif");
+    cacheFactory = new CacheFactory("instance-0", uri, "pif");
   }
 
   @After

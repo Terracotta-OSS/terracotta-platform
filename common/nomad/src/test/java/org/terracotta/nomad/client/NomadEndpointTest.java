@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
@@ -26,8 +27,6 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.messages.TakeoverMessage;
 import org.terracotta.nomad.server.NomadServer;
-
-import java.net.InetSocketAddress;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -56,12 +55,12 @@ public class NomadEndpointTest {
   @Mock
   private RollbackMessage rollbackMessage;
 
-  protected InetSocketAddress name = InetSocketAddress.createUnresolved("localhost", 9410);
+  protected HostPort name = HostPort.create("localhost", 9410);
 
   @Test
   public void getName() {
     NomadEndpoint<String> namedServer = new NomadEndpoint<>(name, server);
-    assertEquals(name, namedServer.getAddress());
+    assertEquals(name, namedServer.getHostPort());
   }
 
   @Test

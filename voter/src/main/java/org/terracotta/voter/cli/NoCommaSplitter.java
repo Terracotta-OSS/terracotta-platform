@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.cli.converter;
+package org.terracotta.voter.cli;
 
-import com.beust.jcommander.IStringConverter;
+import com.beust.jcommander.converters.IParameterSplitter;
 
-import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * @author Mathieu Carbou
- */
-public class InetSocketAddressConverter implements IStringConverter<InetSocketAddress> {
+public class NoCommaSplitter implements IParameterSplitter {
   @Override
-  public InetSocketAddress convert(String value) {
-    return org.terracotta.inet.InetSocketAddressConverter.getInetSocketAddress(value);
+  public List<String> split(String s) {
+    List<String> res = new ArrayList<>();
+    res.add(s);
+    return res;
   }
 }

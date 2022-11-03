@@ -19,9 +19,9 @@ import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.server.NomadServer;
 
-import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -37,8 +37,8 @@ public abstract class NomadClientProcessTest {
 
   protected List<NomadEndpoint<String>> servers;
 
-  protected InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
-  protected InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
+  protected HostPort address1 = HostPort.create("localhost", 9410);
+  protected HostPort address2 = HostPort.create("localhost", 9411);
 
   @Before
   public void before() {
