@@ -24,7 +24,7 @@ import org.terracotta.management.registry.RequiredContext;
  * @author Mathieu Carbou
  */
 @Named("TheActionProvider")
-@RequiredContext({@Named("cacheManagerName"), @Named("cacheName")})
+@RequiredContext({@Named("instanceId"), @Named("cacheManagerName"), @Named("cacheName")})
 public class MyManagementProvider extends AbstractManagementProvider<MyObject> {
   public MyManagementProvider() {
     super(MyObject.class);

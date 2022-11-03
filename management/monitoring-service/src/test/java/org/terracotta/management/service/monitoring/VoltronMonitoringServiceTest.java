@@ -304,6 +304,7 @@ public class VoltronMonitoringServiceTest {
     test_fetch_entity();
     clientMonitoringService.exposeManagementRegistry(
         new FakeDesc("1-1"),
+        Context.empty(),
         new ContextContainer("ctName", "ctValue"),
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
     assertTopologyEquals("cluster-7.json");
@@ -406,6 +407,7 @@ public class VoltronMonitoringServiceTest {
 
     clientMonitoringService.exposeManagementRegistry(
         new FakeDesc("2-1"),
+        Context.empty(),
         new ContextContainer("ctName", "ctValue"),
         new DefaultCapability("capabilityName", new CapabilityContext(), new CallDescriptor("myMethod", "java.lang.String")));
 
@@ -439,7 +441,7 @@ public class VoltronMonitoringServiceTest {
     });
     String expected = new String(Files.readAllBytes(new File("src/test/resources/" + file).toPath()), "UTF-8");
     String sampled = mapper.writeValueAsString(cluster.toMap());
-    JSONAssert.assertEquals(expected, sampled, true);
+    JSONAssert.assertEquals(sampled, expected, sampled, true);
   }
 
   private List<Message> messages() {

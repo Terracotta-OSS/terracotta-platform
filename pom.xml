@@ -22,27 +22,30 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>5.20</version>
+    <version>5.21</version>
   </parent>
 
   <artifactId>platform-root</artifactId>
-  <version>5.8-SNAPSHOT</version>
+  <version>5.10-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
     <maven.version>3.6.3</maven.version>
-    <slf4j.version>1.7.25</slf4j.version>
-    <logback.version>1.2.3</logback.version>
-    <terracotta-apis.version>1.8.1</terracotta-apis.version>
-    <terracotta-configuration.version>10.7.1</terracotta-configuration.version>
-    <passthrough-testing.version>1.8.2</passthrough-testing.version>
-    <terracotta-core.version>5.8.4</terracotta-core.version>
-    <tripwire.version>1.0.2</tripwire.version>
-    <galvan.version>1.6.3</galvan.version>
-    <angela.version>3.2.5</angela.version>
-    <statistics.version>2.1</statistics.version>
-    <jackson.version>2.12.4</jackson.version>
-    <terracotta-utilities.version>0.0.9</terracotta-utilities.version>
+    <slf4j.base.version>1.7.32</slf4j.base.version>
+    <slf4j.range.version>[${slf4j.base.version},1.7.9999)</slf4j.range.version>
+    <logback.base.version>1.2.11</logback.base.version>
+    <logback.range.version>[${logback.base.version},1.2.9999)</logback.range.version>
+    <terracotta-apis.version>1.9.0</terracotta-apis.version>
+    <terracotta-configuration.version>10.7.4</terracotta-configuration.version>
+    <passthrough-testing.version>1.9.0</passthrough-testing.version>
+    <terracotta-core.version>5.10.4</terracotta-core.version>
+    <tripwire.version>1.0.4</tripwire.version>
+    <galvan.version>1.6.5</galvan.version>
+    <angela.version>3.3.26</angela.version>
+    <statistics.version>2.1.2</statistics.version>
+    <jackson.version>2.13.4</jackson.version>
+    <terracotta-utilities.base.version>0.0.14</terracotta-utilities.base.version>
+    <terracotta-utilities.range.version>[${terracotta-utilities.base.version},)</terracotta-utilities.range.version>
     <test.parallel.forks>4</test.parallel.forks>
     <jna.version>5.9.0</jna.version>
   </properties>
@@ -50,10 +53,6 @@
   <modules>
     <module>offheap-resource</module>
     <module>voltron-proxy</module>
-    <module>concurrent-map-entity/common</module>
-    <module>concurrent-map-entity/client</module>
-    <module>concurrent-map-entity/server</module>
-    <module>concurrent-map-entity/integration-tests</module>
     <module>communicator-support</module>
     <module>healthchecker-entity</module>
     <module>lease</module>
@@ -68,6 +67,7 @@
     <module>galvan-platform-support</module>
     <module>kit</module>
     <module>docs</module>
+    <module>voter</module>
   </modules>
 
   <dependencyManagement>
@@ -95,12 +95,12 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
+        <version>${slf4j.range.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-simple</artifactId>
-        <version>${slf4j.version}</version>
+        <version>${slf4j.range.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -110,17 +110,17 @@
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>terracotta-utilities-test-tools</artifactId>
-        <version>${terracotta-utilities.version}</version>
+        <version>${terracotta-utilities.range.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>terracotta-utilities-tools</artifactId>
-        <version>${terracotta-utilities.version}</version>
+        <version>${terracotta-utilities.range.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
         <artifactId>terracotta-utilities-port-chooser</artifactId>
-        <version>${terracotta-utilities.version}</version>
+        <version>${terracotta-utilities.range.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
@@ -144,13 +144,14 @@
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
-        <artifactId>client-runtime</artifactId>
+        <artifactId>client-spi</artifactId>
         <version>${terracotta-core.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
-        <artifactId>voter</artifactId>
+        <artifactId>client-runtime</artifactId>
         <version>${terracotta-core.version}</version>
+        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
@@ -238,19 +239,11 @@
         <version>${angela.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
         <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jdk8</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-jsr310</artifactId>
-        <version>${jackson.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -271,7 +264,17 @@
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
-        <version>${logback.version}</version>
+        <version>${logback.range.version}</version>
+        <exclusions>
+          <!--
+            Excluding slf4j-api to upgrade the version of slf4j-api used -
+            logback 1.2.11 pins slf4j-api to 1.7.32 but we want 1.7.36+.
+            -->
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>net.java.dev.jna</groupId>
@@ -301,7 +304,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.3.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
@@ -349,13 +352,6 @@
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
           <version>2.5.4</version>
-          <configuration>
-            <archive>
-              <manifest>
-                <addClasspath>true</addClasspath>
-              </manifest>
-            </archive>
-          </configuration>
           <executions>
             <execution>
               <phase>process-classes</phase>
@@ -425,31 +421,25 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>enforce</goal>
-                </goals>
-                <configuration>
-                  <rules>
-                    <dependencyConvergence>
-                      <uniqueVersions>true</uniqueVersions>
-                    </dependencyConvergence>
-                    <requireJavaVersion>
-                      <version>[${java.build.version},)</version>
-                    </requireJavaVersion>
-                    <requireMavenVersion>
-                      <version>[${maven.version},)</version>
-                    </requireMavenVersion>
-                    <bannedDependencies>
-                      <excludes>
-                        <exclude>com.github.stefanbirkner:system-rules</exclude>
-                      </excludes>
-                    </bannedDependencies>
-                  </rules>
-                </configuration>
-              </execution>
-            </executions>
+            <version>3.0.0-M3</version>
+            <configuration>
+              <rules>
+                <dependencyConvergence>
+                  <uniqueVersions>true</uniqueVersions>
+                </dependencyConvergence>
+                <requireJavaVersion>
+                  <version>[${java.build.version},)</version>
+                </requireJavaVersion>
+                <requireMavenVersion>
+                  <version>[${maven.version},)</version>
+                </requireMavenVersion>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>com.github.stefanbirkner:system-rules</exclude>
+                  </excludes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>

@@ -22,12 +22,28 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.testing</groupId>
     <artifactId>dynamic-config-testing</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>dynamic-config-testing-entity</artifactId>
   <name>Dynamic Config :: Testing :: Entity</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <dependencies>
     <dependency>
@@ -66,6 +82,11 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>standard-cluster-services</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>

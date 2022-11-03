@@ -66,15 +66,15 @@ public class NameGenerator {
   public static void assignFriendlyNames(Cluster cluster, Stripe stripe) {
     ThreadLocalRandom random = ThreadLocalRandom.current();
     assignFriendlyStripeName(cluster, stripe, random);
-    stripe.getNodes().forEach(node -> assignFriendlyNodeName(cluster, node, random));
+    stripe.getNodes().forEach(node -> assignFriendlyNodeName(cluster, stripe, node, random));
   }
 
   /**
    * Assign a friendly name to a node in this cluster
    */
-  public static void assignFriendlyNodeName(Cluster cluster, Node node) {
+  public static void assignFriendlyNodeName(Cluster cluster, Stripe stripe, Node node) {
     ThreadLocalRandom random = ThreadLocalRandom.current();
-    assignFriendlyNodeName(cluster, node, random);
+    assignFriendlyNodeName(cluster, stripe, node, random);
   }
 
   /**
@@ -85,10 +85,9 @@ public class NameGenerator {
     cluster.getStripes().forEach(stripe -> assignFriendlyStripeName(cluster, stripe, random));
   }
 
-  private static void assignFriendlyNodeName(Cluster cluster, Node node, Random random) {
+  private static void assignFriendlyNodeName(Cluster cluster, Stripe stripe, Node node, Random random) {
     if (nameCanBeSet(node)) {
-      Stripe stripe = cluster.getStripeByNode(node.getUID()).orElseThrow(IllegalArgumentException::new);
-      List<String> used = stripe.getNodes().stream().map(Node::getName).collect(toList());
+      List<String> used = cluster.getNodes().stream().map(Node::getName).collect(toList());
       List<String> dict = readLines("dict/greek.txt");
       node.setName(pickRandomNodeName(dict, used, random, stripe.getName() + "-"));
     }
@@ -171,28 +170,25 @@ public class NameGenerator {
 
   private static String pickRandomNodeName(List<String> dict, List<String> used, Random random, String prefix) {
     dict = new ArrayList<>(dict);
-    dict.removeAll(used);
+
+    String name = null;
+    while (!dict.isEmpty() && used.contains((name = prefix + dict.remove(random.nextInt(dict.size()))))) ;
 
     if (dict.isEmpty()) {
-      String name;
+      String incrName;
       do {
         nodeFallbackCount++;
-        name = prefix + nodeFallbackCount;
-      } while (used.contains(name));
-      return name;
+        incrName = prefix + nodeFallbackCount;
+      } while (used.contains(incrName));
+      return incrName;
     }
-
-    if (dict.size() == 1) {
-      return prefix + dict.get(0);
-    }
-
-    return prefix + dict.get(random.nextInt(dict.size()));
+    return name;
   }
 
   private static String pickRandomStripeName(List<String> dict, List<String> used, Random random) {
     dict = new ArrayList<>(dict);
     dict.removeAll(used);
-
+    
     if (dict.isEmpty()) {
       String name;
       do {
@@ -201,11 +197,6 @@ public class NameGenerator {
       } while (used.contains(name));
       return name;
     }
-
-    if (dict.size() == 1) {
-      return dict.get(0);
-    }
-
     return dict.get(random.nextInt(dict.size()));
   }
 

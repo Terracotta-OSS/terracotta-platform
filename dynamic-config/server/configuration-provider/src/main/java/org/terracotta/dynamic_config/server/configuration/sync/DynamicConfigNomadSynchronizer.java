@@ -49,7 +49,6 @@ import static org.terracotta.dynamic_config.server.configuration.sync.Check.asse
 import static org.terracotta.dynamic_config.server.configuration.sync.Check.unwrap;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.NOTHING;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
-import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -151,9 +150,6 @@ public class DynamicConfigNomadSynchronizer {
           return nodeStartupConfiguration.withCluster(update).orElseGet(nodeStartupConfiguration::alone);
         });
       }
-
-      // if we reset the append log of a node, we need to zap it
-      requires.add(ZAP_REQUIRED);
 
     } else {
       // This node is either not new or the activation was done at the same time with the source node

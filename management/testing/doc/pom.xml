@@ -22,7 +22,7 @@
   <parent>
     <artifactId>terracotta-management</artifactId>
     <groupId>org.terracotta.management</groupId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.10-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -40,6 +40,10 @@
     </dependency>
 
     <!-- voltron cli -->
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>connection-api</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>

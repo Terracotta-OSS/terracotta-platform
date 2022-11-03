@@ -38,6 +38,7 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 
 @ClusterDefinition(autoActivate = true, failoverPriority = "")
 public class SetCommand1x1IT extends DynamicConfigIT {
+
   @Test
   public void setOffheapResource_decreaseSize() {
     assertThat(
@@ -159,6 +160,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
     // Restart node and verify that the change has taken effect
     stopNode(1, 1);
     startNode(1, 1);
+    waitForActive(1);
 
     assertThat(
         configTool("get", "-s", "localhost:" + getNodePort(), "-r", "-c", "log-dir", "-t", "index"),
@@ -276,7 +278,7 @@ public class SetCommand1x1IT extends DynamicConfigIT {
         Collections.singletonList(InetSocketAddress.createUnresolved("localhost", getNodePort())),
         "dynamic-config-topology-entity",
         getConnectionTimeout(),
-        new DynamicTopologyEntity.Settings().setRequestTimeout(getConnectionTimeout()),
+        new DynamicTopologyEntity.Settings().setRequestTimeout(getDiagnosticOperationTimeout()),
         null)) {
 
       CountDownLatch called = new CountDownLatch(1);

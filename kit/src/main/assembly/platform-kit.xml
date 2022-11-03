@@ -30,14 +30,6 @@
   <fileSets>
     <fileSet>
       <outputDirectory>.</outputDirectory>
-      <directory>${project.build.directory}/terracotta-kit-${terracotta-core.version}/terracotta-${terracotta-core.version}</directory>
-      <excludes>
-        <exclude>server/conf/**/*.xml</exclude>
-        <exclude>server/plugins/lib/default-configuration-*.jar</exclude>
-      </excludes>
-    </fileSet>
-    <fileSet>
-      <outputDirectory>.</outputDirectory>
       <directory>${project.build.directory}/packages</directory>
       <excludes>
         <exclude>**/original-terracotta-*.jar</exclude>
@@ -135,6 +127,7 @@
         <include>org.terracotta.common:common-structures</include>
         <include>org.terracotta.common:common-json-support</include>
         <include>org.terracotta.common:common-nomad</include>
+        <include>org.terracotta.common:output-service</include>
         <include>com.fasterxml.jackson.core:jackson-annotations</include>
         <include>com.fasterxml.jackson.core:jackson-core</include>
         <include>com.fasterxml.jackson.core:jackson-databind</include>
@@ -154,6 +147,7 @@
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-upgrade-tools</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-api</include>
+        <include>org.terracotta.common:output-service</include>
         <include>org.terracotta:data-root-resource</include>
         <include>org.terracotta.internal:tc-config-parser</include>
         <include>org.terracotta:tcconfig-schema</include>
@@ -164,6 +158,13 @@
         <include>org.glassfish.jaxb:jaxb-runtime</include>
         <include>org.jvnet.staxex:stax-ex</include>
         <include>org.glassfish.jaxb:txw2</include>
+      </includes>
+    </dependencySet>
+
+    <dependencySet>
+      <outputDirectory>tools/voter/lib</outputDirectory>
+      <includes>
+        <include>org.terracotta:voter</include>
       </includes>
     </dependencySet>
 

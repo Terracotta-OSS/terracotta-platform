@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.junit.Test;
 import org.terracotta.common.struct.json.StructJsonModule;
 
@@ -35,10 +36,11 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class VersionTest {
 
-  private final ObjectMapper json = new ObjectMapper()
+  private final ObjectMapper json = JsonMapper.builder()
       .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
       .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-      .registerModule(new StructJsonModule());
+      .addModule(new StructJsonModule())
+      .build();
 
   @Test
   public void test_bad_versions() {

@@ -63,7 +63,6 @@ import static org.terracotta.common.struct.MemoryUnit.MB;
 import static org.terracotta.dynamic_config.api.model.nomad.Applicability.cluster;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.NOTHING;
 import static org.terracotta.dynamic_config.server.configuration.sync.Require.RESTART_REQUIRED;
-import static org.terracotta.dynamic_config.server.configuration.sync.Require.ZAP_REQUIRED;
 import static org.terracotta.nomad.messages.AcceptRejectResponse.accept;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.PREPARED;
@@ -508,7 +507,7 @@ public class DynamicConfigurationPassiveSyncTest {
     passiveActivation = committed(randomUUID(), new ClusterActivationNomadChange(activeTopology.getCluster().clone()), 1L);
     passive.add(passiveActivation);
 
-    assertThat(sync(), hasItems(ZAP_REQUIRED));
+    sync();
 
     verify(passiveNomadServer).forceSync(any(), any());
 

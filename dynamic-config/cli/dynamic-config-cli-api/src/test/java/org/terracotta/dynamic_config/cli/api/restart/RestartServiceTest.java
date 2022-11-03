@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.diagnostic.client.DiagnosticConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticOperationTimeoutException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
@@ -44,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.common.struct.TimeUnit.SECONDS;
@@ -103,13 +105,13 @@ public class RestartServiceTest extends BaseTest {
     IntStream.of(PORTS).forEach(port -> {
       verify(diagnosticServiceMock("localhost", port)).getProxy(DynamicConfigService.class);
       verify(dynamicConfigServiceMock("localhost", port)).restart(any());
-      verify(diagnosticServiceMock("localhost", port)).getLogicalServerState();
+      verify(diagnosticServiceMock("localhost", port), times(1)).getLogicalServerState();
     });
   }
 
   @Test
   public void test_restart_call_throws_DiagnosticOperationTimeoutException() throws InterruptedException {
-    mockSuccessfulServerRestart();
+    mockFailedServerRestart();
 
     IntStream.of(PORTS).forEach(port -> {
       DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
@@ -120,7 +122,7 @@ public class RestartServiceTest extends BaseTest {
     assertThat(restartProgress.getErrors().size(), is(equalTo(6)));
 
     Map<Endpoint, LogicalServerState> restarted = restartProgress.await(Duration.ofSeconds(10));
-    assertThat(restarted.toString(), restarted.size(), is(equalTo(0)));
+    assertThat(restarted.toString(), restarted.size(), is(equalTo(6)));
 
     IntStream.of(PORTS).forEach(port -> {
       verify(diagnosticServiceMock("localhost", port)).getProxy(DynamicConfigService.class);
@@ -198,17 +200,45 @@ public class RestartServiceTest extends BaseTest {
     DiagnosticService diagnosticService22 = diagnosticServiceMock("localhost", 9422);
     DiagnosticService diagnosticService23 = diagnosticServiceMock("localhost", 9423);
 
+    when(diagnosticService11.getLogicalServerState()).thenReturn(ACTIVE)
+      .thenThrow(DiagnosticConnectionException.class)
+      .thenReturn(ACTIVE);
+    when(diagnosticService12.getLogicalServerState()).thenReturn(PASSIVE)
+      .thenThrow(DiagnosticConnectionException.class)
+      .thenReturn(PASSIVE);
+    when(diagnosticService13.getLogicalServerState()).thenReturn(PASSIVE)
+      .thenThrow(DiagnosticConnectionException.class)
+      .thenReturn(PASSIVE);
+    when(diagnosticService21.getLogicalServerState()).thenReturn(ACTIVE)
+      .thenThrow(DiagnosticConnectionException.class)
+      .thenReturn(ACTIVE);
+    when(diagnosticService22.getLogicalServerState()).thenReturn(PASSIVE)
+      .thenThrow(DiagnosticConnectionException.class)
+      .thenReturn(PASSIVE);
+    when(diagnosticService23.getLogicalServerState()).thenReturn(PASSIVE)
+      .thenThrow(DiagnosticConnectionException.class)
+      .thenReturn(PASSIVE);
+
+    IntStream.of(PORTS).forEach(port -> {
+      DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
+      doNothing().when(dynamicConfigService).restart(any());
+    });
+  }
+
+  private void mockFailedServerRestart() {
+    DiagnosticService diagnosticService11 = diagnosticServiceMock("localhost", 9411);
+    DiagnosticService diagnosticService12 = diagnosticServiceMock("localhost", 9412);
+    DiagnosticService diagnosticService13 = diagnosticServiceMock("localhost", 9413);
+    DiagnosticService diagnosticService21 = diagnosticServiceMock("localhost", 9421);
+    DiagnosticService diagnosticService22 = diagnosticServiceMock("localhost", 9422);
+    DiagnosticService diagnosticService23 = diagnosticServiceMock("localhost", 9423);
+
     when(diagnosticService11.getLogicalServerState()).thenReturn(ACTIVE);
     when(diagnosticService12.getLogicalServerState()).thenReturn(PASSIVE);
     when(diagnosticService13.getLogicalServerState()).thenReturn(PASSIVE);
     when(diagnosticService21.getLogicalServerState()).thenReturn(ACTIVE);
     when(diagnosticService22.getLogicalServerState()).thenReturn(PASSIVE);
     when(diagnosticService23.getLogicalServerState()).thenReturn(PASSIVE);
-
-    IntStream.of(PORTS).forEach(port -> {
-      DynamicConfigService dynamicConfigService = dynamicConfigServiceMock("localhost", port);
-      doNothing().when(dynamicConfigService).restart(any());
-    });
   }
 
   public static <T> Answer<T> sleep(long time, TimeUnit unit) {

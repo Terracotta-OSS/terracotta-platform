@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.testing</groupId>
     <artifactId>dynamic-config-testing</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -79,8 +79,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.terracotta.internal</groupId>
+      <groupId>org.terracotta</groupId>
       <artifactId>voter</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -100,6 +101,18 @@
             <configuration>
               <outputDirectory>${project.build.directory}/angela</outputDirectory>
               <artifactItems>
+                <artifactItem>
+                  <fileMappers>
+                    <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                      <pattern>^\Qterracotta-${terracotta-core.version}\E</pattern>
+                      <replacement>./platform-kit-${project.version}</replacement>
+                    </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                  </fileMappers>
+                  <groupId>org.terracotta.internal</groupId>
+                  <artifactId>terracotta-kit</artifactId>
+                  <version>${terracotta-core.version}</version>
+                  <type>tar.gz</type>
+                </artifactItem>
                 <artifactItem>
                   <groupId>org.terracotta</groupId>
                   <artifactId>platform-kit</artifactId>
@@ -139,17 +152,38 @@
             <goals>
               <goal>execute</goal>
             </goals>
+            <configuration>
+              <scripts>
+                <script><![CDATA[
+new File(project.build.directory, "fake-hosts.txt").text = "127.0.0.1 localhost ${"hostname".execute().text.trim()} ${"hostname".execute().text.trim().split('[.]')[0]} testhostname"
+println(new File(project.build.directory, "fake-hosts.txt").text)
+]]>
+                </script>
+              </scripts>
+            </configuration>
+          </execution>
+          <execution>
+            <id>tc.properties</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <scripts>
+                <script><![CDATA[
+new File(project.build.directory, "angela/platform-kit-${project.version}/server/lib/tc.properties").text = """
+com.tc.server.entity.processor.threads=4
+com.tc.l2.tccom.workerthreads=4
+com.tc.tc.messages.packup.enabled=false
+com.tc.l2.seda.stage.stall.warning=1000
+"""
+println(new File(project.build.directory, "angela/platform-kit-${project.version}/server/lib/tc.properties").text)
+]]>
+                </script>
+              </scripts>
+            </configuration>
           </execution>
         </executions>
-        <configuration>
-
-          <scripts>
-            <script><![CDATA[
-new File(project.build.directory, "fake-hosts.txt").text = "127.0.0.1 testhostname ${InetAddress.getLocalHost().getHostName()}"
-println(new File(project.build.directory, "fake-hosts.txt").text)
-          ]]></script>
-          </scripts>
-        </configuration>
         <dependencies>
           <dependency>
             <groupId>org.codehaus.groovy</groupId>
@@ -165,17 +199,21 @@ println(new File(project.build.directory, "fake-hosts.txt").text)
         <configuration>
           <forkCount>${test.parallel.forks}</forkCount>
           <reuseForks>false</reuseForks>
+          <rerunFailingTestsCount>2</rerunFailingTestsCount>
           <systemPropertyVariables>
             <angela.rootDir>${project.build.directory}/angela</angela.rootDir>
             <angela.skipUninstall>true</angela.skipUninstall>
             <angela.kitCopy>false</angela.kitCopy>
-            <angela.tsa.fullLogging>true</angela.tsa.fullLogging>
+            <angela.tsa.fullLogging>false</angela.tsa.fullLogging>
             <angela.distribution>${project.version}</angela.distribution>
             <angela.kitInstallationDir>${project.build.directory}/angela/platform-kit-${project.version}</angela.kitInstallationDir>
             <angela.java.resolver>user</angela.java.resolver>
+            <angela.java.opts>-Djdk.net.hosts.file=${project.build.directory}/fake-hosts.txt -DIGNITE_UPDATE_NOTIFIER=false</angela.java.opts>
             <angela.ssh.strictHostKeyChecking>false</angela.ssh.strictHostKeyChecking>
+            <angela.additionalLocalHostnames>testhostname</angela.additionalLocalHostnames>
             <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
             <jdk.net.hosts.file>${project.build.directory}/fake-hosts.txt</jdk.net.hosts.file>
+            <IGNITE_UPDATE_NOTIFIER>false</IGNITE_UPDATE_NOTIFIER>
           </systemPropertyVariables>
           <argLine>-XX:+UseG1GC -Xmx1g -Dorg.terracotta.disablePortReleaseCheck=true</argLine>
         </configuration>

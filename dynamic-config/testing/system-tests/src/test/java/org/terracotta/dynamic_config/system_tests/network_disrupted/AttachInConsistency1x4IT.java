@@ -28,7 +28,6 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -45,10 +44,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 4, autoStart = false, netDisruptionEnabled = true)
 public class AttachInConsistency1x4IT extends DynamicConfigIT {
 
-  public AttachInConsistency1x4IT() {
-    super(Duration.ofSeconds(300));
-  }
-
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency();
@@ -57,17 +52,14 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     // start the third node
     startNode(1, 3);
-    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     setClientServerDisruptionLinks(Collections.singletonMap(1, 3));
@@ -84,9 +76,8 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   }
 
   @Test
-  public void test_attach_when_active_passives_disrupted() throws Exception {
+  public void test_attach_when_active_passives_disrupted() {
     startNode(1, 4);
-    waitForDiagnostic(1, 4);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
 
     TerracottaServer active = angela.tsa().getActive();
@@ -96,8 +87,8 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     TerracottaServer passive2 = iterator.next();
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passives);
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
     //server to server disruption with active at one end and passives at other end.
     try (ServerToServerDisruptor disruptor = angela.tsa().disruptionController().newServerToServerDisruptor(split1, split2)) {
 
@@ -142,16 +133,16 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
   @Test
   public void test_attach_when_active_client_and_passives_disrupted() throws Exception {
     startNode(1, 4);
-    waitForDiagnostic(1, 4);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 4)).getNodeCount(), is(equalTo(1)));
 
     TerracottaServer active = angela.tsa().getActive();
     Collection<TerracottaServer> passives = angela.tsa().getPassives();
     SplitCluster split1 = new SplitCluster(active);
     SplitCluster split2 = new SplitCluster(passives);
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
-    int passiveId2 = findPassives(1)[1];
+    int activeId = waitForActive(1);
+    final int[] pp = waitForNPassives(1, 2);
+    final int passiveId1 = pp[0];
+    final int passiveId2 = pp[1];
     Map<ServerSymbolicName, Integer> map = angela.tsa().updateToProxiedPorts();
     TerracottaServer passive = passives.iterator().next();
     //server to server disruption with active at one end and passives at other end.
@@ -161,7 +152,7 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
       disruptor.disrupt();
 
       waitForServerBlocked(active);
-      Thread.sleep(5000);
+
       try (ClientToServerDisruptor clientToServerDisruptor = angela.tsa().disruptionController().newClientToServerDisruptor()) {
         clientToServerDisruptor.disrupt(Collections.singletonList(active.getServerSymbolicName()));
         String publicHostName = "stripe.1.node.1.public-hostname=localhost";
@@ -177,8 +168,8 @@ public class AttachInConsistency1x4IT extends DynamicConfigIT {
     assertThat(getUpcomingCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(4)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, activeId)).getNodeCount(), is(equalTo(4)));
 
-    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(4)));
-    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(4)));
+    assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId1)).getNodeCount(), is(equalTo(4)));
+    assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId1)).getNodeCount(), is(equalTo(4)));
 
     assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(4)));
     assertThat(getRuntimeCluster("localhost", getNodePort(1, passiveId2)).getNodeCount(), is(equalTo(4)));

@@ -21,9 +21,7 @@ import org.terracotta.connection.entity.Entity;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
 import org.terracotta.entity.EntityUserException;
-import org.terracotta.entity.InvocationBuilder;
-import org.terracotta.entity.InvokeFuture;
-import org.terracotta.exception.EntityException;
+import org.terracotta.entity.Invocation;
 import org.terracotta.voltron.proxy.Codec;
 import org.terracotta.voltron.proxy.MessageListener;
 import org.terracotta.voltron.proxy.MessageType;
@@ -44,7 +42,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Alex Snaps
@@ -153,23 +150,16 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
     final MethodDescriptor methodDescriptor = MethodDescriptor.of(method);
 
-    final InvocationBuilder<ProxyEntityMessage, ProxyEntityResponse> builder = entityClientEndpoint.beginInvoke()
-        .message(new ProxyEntityMessage(methodDescriptor, args, MessageType.MESSAGE)).withExecutor(handler);
+    final Invocation<ProxyEntityResponse> builder = entityClientEndpoint.message(new ProxyEntityMessage(methodDescriptor, args, MessageType.MESSAGE));
 
     if (methodDescriptor.isAsync()) {
-      switch (methodDescriptor.getAck()) {
-        case NONE:
-          break;
-        case RECEIVED:
-          builder.ackReceived();
-          break;
-        default:
-          throw new IllegalStateException(methodDescriptor.getAck().name());
-      }
       return new ProxiedInvokeFuture<>(builder.invoke());
-
     } else {
-      return getResponse(builder.invoke().get());
+      try {
+        return getResponse(builder.invoke().get());
+      } catch (ExecutionException e) {
+        throw e.getCause();
+      }
     }
   }
 
@@ -185,26 +175,20 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
 
   private static class ProxiedInvokeFuture<T> implements Future<T> {
 
-    private final InvokeFuture<ProxyEntityResponse> future;
+    private final Future<ProxyEntityResponse> future;
 
-    private final AtomicBoolean cancelled = new AtomicBoolean(false);
-
-    public ProxiedInvokeFuture(final InvokeFuture<ProxyEntityResponse> future) {
+    public ProxiedInvokeFuture(final Future<ProxyEntityResponse> future) {
       this.future = future;
     }
 
     @Override
     public boolean cancel(final boolean mayInterruptIfRunning) {
-      if (cancelled.compareAndSet(false, true)) {
-        future.interrupt();
-        return true;
-      }
-      return false;
+      return future.cancel(mayInterruptIfRunning);
     }
 
     @Override
     public boolean isCancelled() {
-      return cancelled.get();
+      return future.isCancelled();
     }
 
     @Override
@@ -215,9 +199,10 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     @SuppressWarnings("unchecked")
     @Override
     public T get() throws InterruptedException, ExecutionException {
+      ProxyEntityResponse response = future.get();
       try {
-        return (T) getResponse(future.get());
-      } catch (EntityException | EntityUserException e) {
+        return (T) getResponse(response);
+      } catch (EntityUserException e) {
         throw new ExecutionException(e);
       }
     }
@@ -225,9 +210,10 @@ class VoltronProxyInvocationHandler implements InvocationHandler {
     @SuppressWarnings("unchecked")
     @Override
     public T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+      ProxyEntityResponse response = future.get(timeout, unit);
       try {
-        return (T) getResponse(future.getWithTimeout(timeout, unit));
-      } catch (EntityException | EntityUserException e) {
+        return (T) getResponse(response);
+      } catch (EntityUserException e) {
         throw new ExecutionException(e);
       }
     }

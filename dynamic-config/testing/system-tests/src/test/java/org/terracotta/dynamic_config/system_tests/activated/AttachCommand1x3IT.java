@@ -21,8 +21,6 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.InlineServers;
 
-import java.time.Duration;
-
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -37,19 +35,13 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 3, autoStart = false)
 public class AttachCommand1x3IT extends DynamicConfigIT {
 
-  public AttachCommand1x3IT() {
-    super(Duration.ofSeconds(180));
-  }
-
   @Before
   public void setup() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
@@ -59,22 +51,20 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
 
     //Activate cluster
     activateCluster();
-    waitForNPassives(1, 1);
   }
 
   @Test
   public void test_attach_to_activated_cluster_with_offline_node() throws Exception {
+    int activeId = waitForActive(1); // either 1 or 2
+    int passiveId = waitForNPassives(1, 1)[0]; // either 1 or 2
+
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(2)));
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(2)));
-
-    int activeId = findActive(1).getAsInt(); // either 1 or 2
-    int passiveId = findPassives(1)[0]; // either 1 or 2
 
     stopNode(1, passiveId);
 
     // start a third node
     startNode(1, 3);
-    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     // attach
@@ -106,7 +96,6 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
         is(successful()));
 
     startNode(1, 3);
-    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     // attach failure (forcing attach otherwise we have to restart cluster)
@@ -126,11 +115,10 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
   @Test
   @InlineServers(false)
   public void attachNodeFailingBecauseOfNodeGoingDownInPreparePhase() throws Exception {
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
 
     startNode(1, 3);
-    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     //create failover in prepare phase for active
@@ -152,16 +140,15 @@ public class AttachCommand1x3IT extends DynamicConfigIT {
   @Test
   @InlineServers(false)
   public void testFailoverDuringNomadCommitForPassiveAddition() throws Exception {
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
     String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
 
     startNode(1, 3);
-    waitForDiagnostic(1, 3);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
     //setup for failover in commit phase on active
-    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, 1), "-c", propertySettingString), is(successful()));
+    assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", propertySettingString), is(successful()));
     assertThat(configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
 
     waitForPassive(1, 3);

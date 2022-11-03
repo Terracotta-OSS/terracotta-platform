@@ -16,7 +16,7 @@
 
 package org.terracotta.dynamic_config.cli.config_tool.command;
 
-import com.tc.util.ManagedServiceLoader;
+import com.tc.util.TCServiceLoader;
 import org.terracotta.dynamic_config.cli.api.command.Configuration;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.config_tool.parsing.RemoteMainCommand;
@@ -33,7 +33,7 @@ public interface CommandProvider {
   Map<String, Command> getDeprecatedCommands();
 
   static CommandProvider get() {
-    Collection<CommandProvider> services = ManagedServiceLoader.loadServices(CommandProvider.class, CommandProvider.class.getClassLoader());
+    Collection<? extends CommandProvider> services = TCServiceLoader.loadServices(CommandProvider.class);
     if (services.size() != 1) {
       throw new AssertionError("expected exactly one command provider, but found :" + services.size());
     }

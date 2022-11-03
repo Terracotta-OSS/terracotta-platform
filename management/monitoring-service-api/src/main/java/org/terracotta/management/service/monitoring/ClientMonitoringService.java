@@ -19,6 +19,7 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.CommonServerEntity;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -58,7 +59,7 @@ public interface ClientMonitoringService extends Closeable {
    * <p>
    * Can be called from active entity only
    */
-  void exposeManagementRegistry(ClientDescriptor caller, ContextContainer contextContainer, Capability... capabilities);
+  void exposeManagementRegistry(ClientDescriptor caller, Context root, ContextContainer contextContainer, Capability... capabilities);
 
   /**
    * Answer a management call we received and executed

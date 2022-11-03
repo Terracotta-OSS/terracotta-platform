@@ -22,8 +22,6 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
-
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -35,46 +33,38 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.conta
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DiagnosticMode1x2IT extends DynamicConfigIT {
 
-  public DiagnosticMode1x2IT() {
-    super(Duration.ofSeconds(180));
-  }
-
   @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void test_restart_active_in_diagnostic_mode() {
-    int activeNodeId = findActive(1).getAsInt();
+    int activeNodeId = waitForActive(1);
     TerracottaServer active = getNode(1, activeNodeId);
     angela.tsa().stop(active);
     assertThat(angela.tsa().getStopped().size(), is(1));
 
     startNode(active, "--repair-mode", "--name", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
-    waitForDiagnostic(1, activeNodeId);
     waitUntil(() -> usingTopologyService(1, activeNodeId, TopologyService::isActivated), is(false));
   }
 
   @Test
   public void test_restart_passive_in_diagnostic_mode() {
-    int passiveNodeId = findPassives(1)[0];
+    int passiveNodeId = waitForNPassives(1, 1)[0];
     TerracottaServer passive = getNode(1, passiveNodeId);
     angela.tsa().stop(passive);
     assertThat(angela.tsa().getStopped().size(), is(1));
 
     startNode(passive, "--repair-mode", "--name", passive.getServerSymbolicName().getSymbolicName(), "-r", passive.getConfigRepo());
-    waitForDiagnostic(1, passiveNodeId);
     waitUntil(() -> usingTopologyService(1, passiveNodeId, TopologyService::isActivated), is(false));
   }
 
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   @Test
   public void test_diagnostic_port_accessible_but_nomad_change_impossible() throws Exception {
-    int activeNodeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeNodeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
     TerracottaServer active = getNode(1, activeNodeId);
     angela.tsa().stop(active);
     assertThat(angela.tsa().getStopped().size(), is(1));
 
     startNode(active, "--repair-mode", "-n", active.getServerSymbolicName().getSymbolicName(), "-r", active.getConfigRepo());
-    waitForDiagnostic(1, activeNodeId);
 
     // diag port available
     Cluster cluster = getUpcomingCluster("localhost", getNodePort(1, activeNodeId));
