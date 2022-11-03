@@ -17,7 +17,6 @@ package org.terracotta.dynamic_config.cli.converter;
 
 import com.beust.jcommander.IStringConverter;
 import org.terracotta.inet.HostPort;
-import org.terracotta.inet.InetSocketAddressConverter;
 
 /**
  * @author Mathieu Carbou
@@ -25,6 +24,6 @@ import org.terracotta.inet.InetSocketAddressConverter;
 public class HostPortConverter implements IStringConverter<HostPort> {
   @Override
   public HostPort convert(String value) {
-    return InetSocketAddressConverter.getHostPort(value);
+    return HostPort.parse(value, 9410);
   }
 }

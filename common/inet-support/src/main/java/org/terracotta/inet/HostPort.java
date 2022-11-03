@@ -16,10 +16,14 @@
 package org.terracotta.inet;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static java.lang.Math.max;
 import static java.util.Objects.requireNonNull;
+import static org.terracotta.inet.HostAndIpValidator.isValidHost;
+import static org.terracotta.inet.HostAndIpValidator.isValidIPv4;
 import static org.terracotta.inet.HostAndIpValidator.isValidIPv6;
 
 /**
@@ -29,6 +33,7 @@ import static org.terracotta.inet.HostAndIpValidator.isValidIPv6;
  * @see InetSocketAddress
  */
 public class HostPort {
+  private static final String INVALID_HOST_OR_IP_MESSAGE = "Server must be an RFC 1123 compliant hostname or a valid IP address";
 
   private final String host;
   private final int port;
@@ -104,6 +109,63 @@ public class HostPort {
       throw new IllegalArgumentException("host name can not be blank");
     }
     return new HostPort(host, port);
+  }
+
+  /**
+   * Takes a string array where each string is of the form {@code host:port}, or {@code host}, checks each parsed host
+   * for validity, and returns a list of {@code HostPort}s.
+   *
+   * @param hostPorts   an array of {@code String}s representing the server addresses
+   * @param defaultPort the default port to be used if a port is not found
+   * @return a {@code List} of {@code HostPort}s from the input servers
+   */
+  public static List<HostPort> parse(String[] hostPorts, int defaultPort) {
+    List<HostPort> serversList = new ArrayList<>();
+    for (String hostPort : hostPorts) {
+      serversList.add(parse(hostPort, defaultPort));
+    }
+    return serversList;
+  }
+
+  public static List<HostPort> parse(String... hostPorts) {
+    List<HostPort> serversList = new ArrayList<>();
+    for (String hostPort : hostPorts) {
+      serversList.add(parse(hostPort));
+    }
+    return serversList;
+  }
+
+  /**
+   * Takes a string of the form {@code host:port}, or {@code host}, checks the parsed host for validity, and returns an
+   * {@code HostPort}. Uses a default of {@code 9410} if a port is not found.
+   *
+   * @param hostPort a {@code String} representing the server address
+   * @return a {@code HostPort} from the input server
+   */
+  public static HostPort parse(String hostPort, int defaultPort) {
+    int lastColon = hostPort.lastIndexOf(":");
+    if (lastColon == -1) {
+      if (!isValidIPv4(hostPort) && !isValidHost(hostPort)) {
+        throw new IllegalArgumentException(INVALID_HOST_OR_IP_MESSAGE);
+      }
+      return HostPort.create(hostPort, defaultPort);
+    } else if (isValidIPv6(hostPort)) {
+      return HostPort.create(hostPort, defaultPort);
+    } else {
+      return parse(hostPort);
+    }
+  }
+
+  public static HostPort parse(String hostPort) {
+    int lastColon = hostPort.lastIndexOf(":");
+    if (lastColon == -1 || isValidIPv6(hostPort)) {
+      throw new IllegalArgumentException("Missing port: " + hostPort);
+    }
+    String hostOrIp = hostPort.substring(0, lastColon);
+    if (!isValidIPv4(hostOrIp) && !isValidHost(hostOrIp) && !isValidIPv6(hostOrIp, true)) {
+      throw new IllegalArgumentException(INVALID_HOST_OR_IP_MESSAGE);
+    }
+    return HostPort.create(hostOrIp, Integer.parseInt(hostPort.substring(lastColon + 1)));
   }
 
   public boolean isWildcard() {

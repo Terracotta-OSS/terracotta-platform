@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.api.model;
 
 import org.terracotta.inet.HostPort;
-import org.terracotta.inet.InetSocketAddressConverter;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -85,7 +84,7 @@ public class Identifier {
 
     HostPort hostPort;
     try {
-      hostPort = InetSocketAddressConverter.getHostPort(identifier);
+      hostPort = HostPort.parse(identifier, 9410);
     } catch (RuntimeException e) {
       hostPort = null;
     }

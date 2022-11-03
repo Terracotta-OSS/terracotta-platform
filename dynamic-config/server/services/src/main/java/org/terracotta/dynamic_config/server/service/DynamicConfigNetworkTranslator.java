@@ -69,7 +69,7 @@ class DynamicConfigNetworkTranslator implements com.tc.spi.NetworkTranslator {
     final Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
     InetSocketAddress proposedRedirect;
     try {
-      proposedRedirect = InetSocketAddressConverter.getInetSocketAddress(serverHostPort);
+      proposedRedirect = InetSocketAddressConverter.parseInetSocketAddress(serverHostPort, 9410);
     } catch (IllegalArgumentException e) {
       // Workaround because core does not correctly support / adhere to the new Ipv6 format for InetSocketAddresses (https://bugs.openjdk.java.net/browse/JDK-8232002)
       // In core, the same "hack" is used to extract the port when we know that a string contains a concatenation of ip:port
