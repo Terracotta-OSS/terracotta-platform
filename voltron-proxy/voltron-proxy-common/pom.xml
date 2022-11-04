@@ -22,7 +22,7 @@
   <parent>
     <artifactId>voltron-proxy</artifactId>
     <groupId>org.terracotta.voltron.proxy</groupId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.10-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -32,6 +32,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>

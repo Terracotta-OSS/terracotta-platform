@@ -23,6 +23,9 @@ import ch.qos.logback.core.ConsoleAppender;
 import com.beust.jcommander.Parameter;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+import java.util.stream.Stream;
+
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
 public class LocalMainCommand extends Command {
@@ -35,7 +38,12 @@ public class LocalMainCommand extends Command {
     if (verbose) {
       Logger rootLogger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
 
-      ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) rootLogger.getAppender("STDERR");
+      ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) Stream.of("STDERR", "STDOUT", "CONSOLE")
+          .map(rootLogger::getAppender)
+          .filter(Objects::nonNull)
+          .findFirst()
+          .orElse(null);
+
       if (appender == null) {
         throw new IllegalStateException("Logging appender 'STDERR' is missing!");
       }

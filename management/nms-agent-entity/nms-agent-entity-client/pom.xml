@@ -22,7 +22,7 @@
   <parent>
     <artifactId>nms-agent-entity</artifactId>
     <groupId>org.terracotta.management</groupId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.10-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -48,7 +48,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <!-- provided by voltron-management module (client) -->

@@ -123,7 +123,19 @@ public enum LogicalServerState {
     return this == ACTIVE || this == ACTIVE_RECONNECTING;
   }
 
+  public boolean isStarting() {
+    return this == STARTING;
+  }
+
+  public boolean isSynchronizing() {
+    return this == SYNCHRONIZING;
+  }
+
   public boolean isPassive() {
     return this == PASSIVE;
+  }
+
+  public boolean isBlocked() {
+    return this == START_SUSPENDED || this == ACTIVE_SUSPENDED || this == PASSIVE_SUSPENDED;
   }
 }

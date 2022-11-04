@@ -36,7 +36,6 @@ public class Ipv6ConfigIT extends DynamicConfigIT {
 
     Path configurationFile = copyConfigProperty("/config-property-files/single-stripe_multi-node_ipv6.properties");
     startNode(1, 1, "-f", configurationFile.toString(), "-s", "[::1]", "-p", String.valueOf(getNodePort()), "-r", "config");
-    waitForDiagnostic(1, 1);
 
     assertThat(configTool("export", "-s", "[::1]:" + getNodePort(), "-f", file.toString(), "-t", "json"), is(successful()));
     stopNode(1, 1);

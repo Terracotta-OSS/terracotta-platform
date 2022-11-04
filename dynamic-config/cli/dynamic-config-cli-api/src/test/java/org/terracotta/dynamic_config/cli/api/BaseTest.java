@@ -17,6 +17,8 @@ package org.terracotta.dynamic_config.cli.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.connection.ConnectionException;
@@ -28,7 +30,6 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
-import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
@@ -51,6 +52,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -64,7 +66,7 @@ import static org.mockito.Mockito.mock;
 public abstract class BaseTest {
 
   protected DiagnosticServiceProvider diagnosticServiceProvider;
-  protected MultiDiagnosticServiceProvider<UID> multiDiagnosticServiceProvider;
+  protected MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
   protected NomadEntityProvider nomadEntityProvider;
   protected NomadManager<NodeContext> nomadManager;
   protected RestartService restartService;
@@ -99,6 +101,9 @@ public abstract class BaseTest {
     return entity;
   });
 
+  @Rule
+  public Timeout timeout = Timeout.builder().withLookingForStuckThread(true).withTimeout(1, TimeUnit.MINUTES).build();
+
   @Before
   public void setUp() throws Exception {
     Duration timeout = Duration.ofSeconds(2);
@@ -115,7 +120,7 @@ public abstract class BaseTest {
         return (NomadEntity<T>) nomadEntities.get(addresses);
       }
     };
-    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider<>(diagnosticServiceProvider, timeout, new ConcurrencySizing());
+    multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, timeout, new ConcurrencySizing());
     nomadManager = new DefaultNomadManager<>(new NomadEnvironment(), multiDiagnosticServiceProvider, nomadEntityProvider);
     restartService = new RestartService(diagnosticServiceProvider, concurrencySizing);
     stopService = new StopService(diagnosticServiceProvider, concurrencySizing);

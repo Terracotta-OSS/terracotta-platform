@@ -19,21 +19,18 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
 import com.beust.jcommander.converters.PathConverter;
-import org.terracotta.common.struct.Measure;
-import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.cli.api.command.ActivateAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
-import org.terracotta.dynamic_config.cli.command.Command;
+import org.terracotta.dynamic_config.cli.command.RestartCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 @Parameters(commandDescription = "Activate a cluster")
 @Usage("(-connect-to <hostname[:port]> | -config-file <config.cfg|config.properties>) [-cluster-name <cluster-name>] [-restrict] [-license-file <license-file>] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
-public class ActivateCommand extends Command {
+public class ActivateCommand extends RestartCommand {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = InetSocketAddressConverter.class)
   private InetSocketAddress node;
@@ -46,12 +43,6 @@ public class ActivateCommand extends Command {
 
   @Parameter(names = {"-license-file"}, description = "License file", converter = PathConverter.class)
   private Path licenseFile;
-
-  @Parameter(names = {"-restart-wait-time"}, description = "Maximum time to wait for the nodes to restart. Default: 120s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
-
-  @Parameter(names = {"-restart-delay"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
-  private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
   @Parameter(names = {"-restrict"}, description = "Restrict the activation process to the node only")
   protected boolean restrictedActivation = false;
@@ -86,8 +77,8 @@ public class ActivateCommand extends Command {
     action.setConfigPropertiesFile(configPropertiesFile);
     action.setClusterName(clusterName);
     action.setLicenseFile(licenseFile);
-    action.setRestartWaitTime(restartWaitTime);
-    action.setRestartDelay(restartDelay);
+    action.setRestartWaitTime(getRestartWaitTime());
+    action.setRestartDelay(getRestartDelay());
     action.setRestrictedActivation(restrictedActivation);
 
     action.run();

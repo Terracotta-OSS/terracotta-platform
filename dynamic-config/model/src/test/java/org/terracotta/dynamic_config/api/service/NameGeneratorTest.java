@@ -66,7 +66,7 @@ public class NameGeneratorTest {
     Cluster cluster = newTestCluster("foo", stripe);
     try (Stream<String> lines = Files.lines(Paths.get("src/main/resources/dict/greek.txt"))) {
       lines
-          .map(name -> newTestNode(name, "hostname-" + UID.newUID(), UID.newUID()))
+          .map(name -> newTestNode(stripe.getName() + "-" + name, "hostname-" + UID.newUID(), UID.newUID()))
           .forEach(stripe::addNode);
     }
     stripe.addNode(newTestNode("Canidae-1", "hostname-" + UID.newUID(), UID.newUID()));
@@ -74,7 +74,7 @@ public class NameGeneratorTest {
 
     Node newNode = newTestNode(NODE_NAME.getDefaultValue(), "hostname-" + UID.newUID(), UID.newUID());
     stripe.addNode(newNode);
-    NameGenerator.assignFriendlyNodeName(cluster, newNode);
+    NameGenerator.assignFriendlyNodeName(cluster, stripe, newNode);
 
     assertThat(newNode.getName(), is(equalTo("Canidae-3")));
     new ClusterValidator(cluster).validate(ClusterState.ACTIVATED);

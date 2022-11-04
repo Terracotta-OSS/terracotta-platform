@@ -22,6 +22,7 @@ import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.Capability;
 import org.terracotta.management.model.cluster.ClientIdentifier;
 import org.terracotta.management.model.cluster.ManagementRegistry;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
@@ -82,7 +83,7 @@ class DefaultEntityMonitoringService implements EntityMonitoringService {
       List<String> names = Stream.of(capabilities).map(Capability::getName).collect(Collectors.toList());
       LOGGER.trace("[{}] exposeManagementRegistry({})", getConsumerId(), names);
     }
-    ManagementRegistry registry = ManagementRegistry.create(contextContainer);
+    ManagementRegistry registry = ManagementRegistry.create(Context.empty(), contextContainer);
     registry.addCapabilities(capabilities);
     forwardToActiveServer(REGISTRY, registry);
   }

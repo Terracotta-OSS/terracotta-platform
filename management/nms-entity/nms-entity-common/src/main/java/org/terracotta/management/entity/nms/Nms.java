@@ -32,7 +32,7 @@ import static org.terracotta.voltron.proxy.ExecutionStrategy.Location.ACTIVE;
  */
 public interface Nms {
 
-  @Async(Async.Ack.NONE)
+  @Async
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
   Future<Cluster> readTopology();
@@ -40,7 +40,7 @@ public interface Nms {
   /**
    * Execute a management call on the server and returns the results
    */
-  @Async(Async.Ack.NONE)
+  @Async
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
   Future<String> call(@ClientId Object callerDescriptor, Context context, String capabilityName, String methodName, Class<?> returnType, Parameter... parameters);

@@ -38,7 +38,7 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void testFailedConfigChangedDoesntFailPassiveSync() throws Exception {
-    int passiveId = findPassives(1)[0];
+    int passiveId = waitForNPassives(1, 1)[0];
     RawPath metadataDir = usingTopologyService(1, passiveId, topologyService -> topologyService.getUpcomingNodeContext().getNode().getMetadataDir().orDefault());
     assertThat(
         configTool("unset", "-s", "localhost:" + getNodePort(), "-c", "stripe.1.node." + passiveId + ".metadata-dir"),
@@ -60,20 +60,20 @@ public class SetCommand1x2IT extends DynamicConfigIT {
 
   @Test
   public void testTargetOfflineNode() {
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
     stopNode(1, passiveId);
 
     assertThat(
-        configTool("-t", "20s", "set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node." + passiveId + ".log-dir=foo"),
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.node." + passiveId + ".log-dir=foo"),
         containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
 
     assertThat(
-        configTool("-t", "20s", "set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.log-dir=foo"),
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "stripe.1.log-dir=foo"),
         containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
 
     assertThat(
-        configTool("-t", "20s", "set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "log-dir=foo"),
+        configTool("set", "-s", "localhost:" + getNodePort(1, activeId), "-c", "log-dir=foo"),
         containsOutput("Error: Some nodes that are targeted by the change are not reachable and thus cannot be validated"));
   }
 }

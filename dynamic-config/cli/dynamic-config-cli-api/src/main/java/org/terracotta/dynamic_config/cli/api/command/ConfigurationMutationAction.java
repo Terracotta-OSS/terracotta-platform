@@ -285,7 +285,7 @@ public abstract class ConfigurationMutationAction extends ConfigurationAction {
           // get the node state again (we are searching for actives)
           LogicalServerState state = UNREACHABLE;
           try {
-            state = getState(endpoint);
+            state = getLogicalServerState(endpoint);
           } catch (RuntimeException e) {
             LOGGER.warn("Node: {} in stripe '{}' is not reachable anymore: {}", endpoint, stripe.getName(), e.getMessage(), e);
             cannotRestart.add(endpoint);

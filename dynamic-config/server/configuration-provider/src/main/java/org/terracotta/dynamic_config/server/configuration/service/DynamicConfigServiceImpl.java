@@ -65,7 +65,6 @@ import java.util.Optional;
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.server.StopAction.RESTART;
-import static org.terracotta.server.StopAction.ZAP;
 
 public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigListener, StateDumpable {
 
@@ -79,8 +78,8 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, ObjectMapperFactory objectMapperFactory, Server server) {
     this.topologies = new Topologies(nodeContext);
-    this.licensing = new Licensing(licenseService, nomadServerManager.getConfigurationManager().getLicensePath());
     this.nomadServerManager = requireNonNull(nomadServerManager);
+    this.licensing = new Licensing(licenseService, nomadServerManager);
     this.objectMapper = objectMapperFactory.create();
     this.server = requireNonNull(server);
 
@@ -91,7 +90,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
 
   @Override
   public Optional<String> getLicenseContent() {
-    return licensing.read();
+    return licensing.getLicenseContent();
   }
 
   @Override
@@ -344,13 +343,17 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     LOGGER.info("Will stop node in {} seconds", delayInSeconds.getSeconds());
     runAfterDelay(delayInSeconds, () -> {
       LOGGER.info("Stopping node");
-      server.stop(ZAP);
+      server.stop();
     });
   }
 
   @Override
   public void upgradeLicense(String licenseContent) {
-    licensing.install(licenseContent, getUpcomingNodeContext().getCluster());
+    if (licenseContent == null) {
+      licensing.uninstall();
+    } else {
+      licensing.install(licenseContent, getUpcomingNodeContext().getCluster());
+    }
   }
 
   @Override

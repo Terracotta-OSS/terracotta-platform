@@ -31,7 +31,7 @@ import java.util.Collections;
  * @author Mathieu Carbou
  */
 @Named("CacheCalls")
-@RequiredContext({@Named("appName"), @Named("cacheName")})
+@RequiredContext({@Named("instanceId"), @Named("appName"), @Named("cacheName")})
 public class CacheCallManagementProvider extends AbstractActionManagementProvider<ClientCache> {
   private final Context parentContext;
 

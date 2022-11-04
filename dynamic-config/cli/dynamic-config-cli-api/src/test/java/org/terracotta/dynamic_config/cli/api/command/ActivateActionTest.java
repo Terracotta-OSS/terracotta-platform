@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.diagnostic.client.DiagnosticConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
@@ -260,7 +261,9 @@ public class ActivateActionTest extends BaseTest {
       doReturn(NomadTestHelper.discovery(COMMITTED, lastChangeUUID)).when(mock).discover();
       when(mock.prepare(any(PrepareMessage.class))).thenReturn(accept());
       when(mock.commit(any(CommitMessage.class))).thenReturn(accept());
-      when(diagnosticService.getLogicalServerState()).thenReturn(PASSIVE);
+      when(diagnosticService.getLogicalServerState()).thenReturn(PASSIVE)
+        .thenThrow(DiagnosticConnectionException.class)
+        .thenReturn(PASSIVE);
     }));
 
     command.run();

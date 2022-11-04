@@ -28,7 +28,6 @@ import org.junit.runner.Description;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.angela.client.config.ConfigurationContext;
-import org.terracotta.angela.client.filesystem.RemoteFolder;
 import org.terracotta.angela.client.support.junit.AngelaOrchestratorRule;
 import org.terracotta.angela.client.support.junit.AngelaRule;
 import org.terracotta.angela.common.TerracottaCommandLineEnvironment;
@@ -50,7 +49,6 @@ import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
-import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
 import org.terracotta.dynamic_config.cli.api.output.InMemoryOutputService;
@@ -62,8 +60,6 @@ import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.JavaTool;
 import org.terracotta.testing.TmpDir;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
@@ -76,26 +72,21 @@ import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.lang.System.lineSeparator;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.rangeClosed;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.config.custom.CustomConfigurationContext.customConfigurationContext;
@@ -103,8 +94,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 import static org.terracotta.angela.common.AngelaProperties.DISTRIBUTION;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_ACTIVE;
 import static org.terracotta.angela.common.TerracottaServerState.STARTED_AS_PASSIVE;
-import static org.terracotta.angela.common.TerracottaServerState.STARTED_IN_DIAGNOSTIC_MODE;
-import static org.terracotta.angela.common.TerracottaServerState.STOPPED;
 import static org.terracotta.angela.common.distribution.Distribution.distribution;
 import static org.terracotta.angela.common.dynamic_cluster.Stripe.stripe;
 import static org.terracotta.angela.common.provider.DynamicConfigManager.dynamicCluster;
@@ -112,39 +101,47 @@ import static org.terracotta.angela.common.tcconfig.TerracottaServer.server;
 import static org.terracotta.angela.common.topology.LicenseType.TERRACOTTA_OS;
 import static org.terracotta.angela.common.topology.PackageType.KIT;
 import static org.terracotta.angela.common.topology.Version.version;
-import static org.terracotta.common.struct.Tuple2.tuple2;
+import static org.terracotta.common.struct.Tuple3.tuple3;
 import static org.terracotta.utilities.io.Files.ExtendedOption.RECURSIVE;
-import static org.terracotta.utilities.test.matchers.Eventually.within;
 
 public class DynamicConfigIT {
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigIT.class);
-  private static final Duration DEFAULT_TEST_TIMEOUT = Duration.ofMinutes(2);
-  private static final Duration CONN_TIMEOUT = Duration.ofSeconds(30);
 
   protected static final String CLUSTER_NAME = "tc-cluster";
   protected static final AngelaOrchestratorRule angelaOrchestratorRule;
 
   protected final TmpDir tmpDir;
   protected final AngelaRule angela;
-  protected final long timeout;
   protected final ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
 
-  @ClassRule public static final RuleChain classRules = RuleChain.emptyRuleChain()
-      .around(angelaOrchestratorRule = new AngelaOrchestratorRule().local())
-      .around(new ExtendedTestRule() {
-        @Override
-        protected void before(Description description) {
-          System.setProperty("com.tc.server.entity.processor.threads", "4");
-          System.setProperty("com.tc.l2.tccom.workerthreads", "4");
-          System.setProperty("com.tc.l2.seda.stage.stall.warning", "1000");
-          System.setProperty("IGNITE_UPDATE_NOTIFIER", "false");
-        }
-      });
+  // can be modified by sub-classes to update the timeouts
 
-  @Rule public final RuleChain testRules;
+  // We intentionally set a huge timeout for connection
+  protected Duration connectionTimeout = Duration.ofDays(1);
+
+  // time given for a diagnostic operation to complete
+  protected Duration diagnosticOperationTimeout = Duration.ofDays(1);
+
+  // time given for an entity operation to complete (there could be a failover in the middle)
+  protected Duration entityOperationTimeout = Duration.ofDays(1);
+
+  // time given for the nodes to restart
+  protected Duration restartTimeout = Duration.ofDays(1);
+
+  // time given for the nodes to be stopped
+  protected Duration stopTimeout = Duration.ofDays(1);
+
+  protected boolean verbose;
+
+  @ClassRule
+  public static final RuleChain classRules = RuleChain.emptyRuleChain()
+      .around(angelaOrchestratorRule = new AngelaOrchestratorRule().igniteFree());
+
+  @Rule
+  public final RuleChain testRules;
 
   public DynamicConfigIT() {
-    this(DEFAULT_TEST_TIMEOUT);
+    this(Duration.ofMinutes(3));
   }
 
   public DynamicConfigIT(Duration testTimeout) {
@@ -153,7 +150,6 @@ public class DynamicConfigIT {
 
   public DynamicConfigIT(Duration testTimeout, Path parentTmpDir) {
     ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
-    this.timeout = testTimeout.toMillis();
     this.testRules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
         .around(angela = new AngelaRule(angelaOrchestratorRule::getAngelaOrchestrator, createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers()), false, false) {
@@ -166,7 +162,7 @@ public class DynamicConfigIT {
           }
 
           @Override
-          protected void before(Description description) throws Throwable {
+          protected void before(Description description) {
             InlineServers inline = description.getAnnotation(InlineServers.class);
             if (inline != null) {
               oldConfiguration = configure(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), inline.value()));
@@ -175,7 +171,7 @@ public class DynamicConfigIT {
           }
 
           @Override
-          protected void after(Description description) throws Throwable {
+          protected void after(Description description) {
             super.after(description);
             if (oldConfiguration != null) {
               configure(oldConfiguration);
@@ -190,43 +186,6 @@ public class DynamicConfigIT {
         .around(new ExtendedTestRule() {
           @Override
           protected void before(Description description) {
-            String baseLogging = "tc-logback.xml";
-            String extraLogging = "logback-ext-test.xml";
-            ExtraLogging extra = description.getAnnotation(ExtraLogging.class);
-            if (extra != null) {
-              extraLogging = extra.value();
-            }
-            // upload tc logging config, but ONLY IF EXISTS !
-            Stream.of(tuple2(baseLogging, "logback-test.xml"), tuple2(extraLogging, "logback-ext-test.xml"))
-                .map(loggingConfig -> tuple2(getClass().getResource("/" + loggingConfig.t1), loggingConfig.t2))
-                .filter(tuple -> tuple.t1 != null)
-                .forEach(loggingConfig -> {
-                  angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
-                    try {
-                      RemoteFolder folder = angela.tsa().browse(s, "");
-                      folder.upload(loggingConfig.t2, loggingConfig.t1);
-                    } catch (IOException exp) {
-                      LOGGER.warn("unable to upload logback configuration", exp);
-                    }
-                  });
-                });
-            angela.tsa().getTsaConfigurationContext().getTopology().getServers().forEach(s -> {
-              try {
-                RemoteFolder folder = angela.tsa().browse(s, "");
-                Properties props = new Properties();
-                props.setProperty("serverWorkingDir", folder.getAbsoluteName());
-                props.setProperty("serverId", s.getServerSymbolicName().getSymbolicName());
-                props.setProperty("test.displayName", description.getDisplayName());
-                props.setProperty("test.className", description.getClassName());
-                props.setProperty("test.methodName", description.getMethodName());
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                props.store(bos, "logging properties");
-                bos.close();
-                folder.upload("logbackVars.properties", new ByteArrayInputStream(bos.toByteArray()));
-              } catch (IOException exp) {
-                LOGGER.warn("unable to upload logback configuration", exp);
-              }
-            });
             // wait for server startup if auto-activated
             if (clusterDef.autoStart()) {
               int stripes = angela.getStripeCount();
@@ -239,12 +198,6 @@ public class DynamicConfigIT {
               if (clusterDef.autoActivate()) {
                 attachAll();
                 activateCluster();
-              }
-            }
-            if (clusterDef.autoStart() && clusterDef.autoActivate()) {
-              for (int stripeId = 1; stripeId <= clusterDef.stripes(); stripeId++) {
-                waitForActive(stripeId);
-                waitForPassives(stripeId);
               }
             }
           }
@@ -262,7 +215,9 @@ public class DynamicConfigIT {
             // to check if this is a timeout, use: if(throwable instanceof MultipleFailureException || throwable instanceof TestTimedOutException) {...}
             {
               // thread dumps
-              Path threadDumpOutput = parentTmpDir.resolve("thread-dumps").resolve(description.toString());
+              Path threadDumpOutput = parentTmpDir.resolve("thread-dumps")
+                  .resolve(description.getTestClass().getSimpleName())
+                  .resolve(description.getMethodName() == null ? "_class_" : description.getMethodName());
               LOGGER.info("Taking thread dumps after timeout of test: {} into: {}", description, threadDumpOutput);
               JavaTool.threadDumps(threadDumpOutput, Duration.ofSeconds(15));
             }
@@ -286,20 +241,38 @@ public class DynamicConfigIT {
         });
   }
 
+  // timeouts
+
+  protected Duration getConnectionTimeout() {
+    return connectionTimeout;
+  }
+
+  protected Duration getDiagnosticOperationTimeout() {
+    return diagnosticOperationTimeout;
+  }
+
+  public Duration getEntityOperationTimeout() {
+    return entityOperationTimeout;
+  }
+
+  public Duration getRestartTimeout() {
+    return restartTimeout;
+  }
+
+  public Duration getStopTimeout() {
+    return stopTimeout;
+  }
+
+  public boolean isVerbose() {
+    return verbose;
+  }
+
   // =========================================
   // tmp dir
   // =========================================
 
   protected final Path getBaseDir() {
     return tmpDir.getRoot();
-  }
-
-  protected final Path getServerHome() {
-    return getServerHome(getNode(1, 1));
-  }
-
-  protected final Path getServerHome(TerracottaServer server) {
-    return Paths.get(angela.tsa().browse(server, "").getAbsoluteName());
   }
 
   // =========================================
@@ -316,15 +289,15 @@ public class DynamicConfigIT {
   }
 
   protected final void startNode(TerracottaServer node, String... cli) {
-    startNode(node, Collections.emptyMap(), cli);
+    angela.startNode(node, cli);
   }
 
   protected final void startNode(TerracottaServer node, Map<String, String> env, String... cli) {
-    angela.tsa().start(node, env, cli);
+    angela.startNode(node, env, cli);
   }
 
   protected final void stopNode(int stripeId, int nodeId) {
-    angela.tsa().stop(getNode(stripeId, nodeId));
+    angela.stopNode(stripeId, nodeId);
   }
 
   protected final TerracottaServer getNode(int stripeId, int nodeId) {
@@ -339,20 +312,12 @@ public class DynamicConfigIT {
     return angela.getNodeGroupPort(stripeId, nodeId);
   }
 
-  protected final OptionalInt findActive(int stripeId) {
-    return angela.findActive(stripeId);
-  }
-
-  protected final int[] findPassives(int stripeId) {
-    return angela.findPassives(stripeId);
-  }
-
   protected final int getNodePort() {
     return getNodePort(1, 1);
   }
 
   protected final InetSocketAddress getNodeAddress(int stripeId, int nodeId) {
-    return InetSocketAddress.createUnresolved(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId));
+    return angela.getNodeAddress(stripeId, nodeId);
   }
 
   protected String getDefaultHostname(int stripeId, int nodeId) {
@@ -365,19 +330,19 @@ public class DynamicConfigIT {
 
   protected void attachAll() {
     int stripes = angela.getStripeCount();
-    for (int x = 1; x <= stripes; x++) {
-      List<TerracottaServer> stripe = angela.getStripe(x);
+    for (int stripeId = 1; stripeId <= stripes; stripeId++) {
+      List<TerracottaServer> stripe = angela.getStripe(stripeId);
       if (stripe.size() > 1) {
         // Attach all servers in a stripe to form individual stripes
-        for (int i = 1; i < stripe.size(); i++) {
+        for (int nodeId = 2; nodeId <= stripe.size(); nodeId++) {
           List<String> command = new ArrayList<>();
           command.add("attach");
           command.add("-t");
           command.add("node");
           command.add("-d");
-          command.add(stripe.get(0).getHostPort());
+          command.add(getNodeAddress(stripeId, 1).toString());
           command.add("-s");
-          command.add(stripe.get(i).getHostPort());
+          command.add(getNodeAddress(stripeId, nodeId).toString());
 
           ToolExecutionResult result = configTool(command.toArray(new String[0]));
           if (result.getExitStatus() != 0) {
@@ -419,56 +384,82 @@ public class DynamicConfigIT {
         configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name) :
         configTool("activate", "-s", "localhost:" + getNodePort(stripe, 1), "-n", name, "-l", licensePath.toString());
     assertThat(result, is(successful()));
-    waitForActive(stripe);
     return result;
   }
 
   protected ToolExecutionResult configTool(String... cli) {
-    return configTool(Collections.emptyMap(), cli);
-  }
+    String command = null;
+    List<String> globalOpts = new ArrayList<>(0);
+    List<String> commandOpts = new ArrayList<>(0);
+    boolean useDeprecatedCommands = false;
 
-  protected ToolExecutionResult configTool(Map<String, String> env, String... cli) {
-    List<String> enhancedCli = new ArrayList<>(cli.length);
-    List<String> configToolOptions = getConfigToolOptions(cli);
-
-    boolean addedOptions = false;
-    String timeout = Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString();
-    if (!configToolOptions.contains("-t") && !configToolOptions.contains("-connection-timeout")) {
-      // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
-      enhancedCli.add("-t");
-      enhancedCli.add(timeout);
-      addedOptions = true;
+    // parse the current command into parts
+    for (String opt : cli) {
+      useDeprecatedCommands |= opt.startsWith("--") || opt.startsWith("-") && opt.length() <= 3;
+      if (opt.startsWith("-")) {
+        if (command == null) {
+          globalOpts.add(opt);
+        } else {
+          commandOpts.add(opt);
+        }
+      } else if (command == null) {
+        command = opt;
+      }
     }
 
-    if (!configToolOptions.contains("-r") && !configToolOptions.contains("-request-timeout")) {
-      // Add the option if it wasn't already passed in the `cli` parameter as a config tool option
-      enhancedCli.add("-r");
-      enhancedCli.add(timeout);
-      addedOptions = true;
+    // prevent any timeouts to be set through the CLI - we wil add them
+    Stream.of(
+        tuple3(globalOpts, asList("-verbose", "-v", "--verbose"), "Verbose mode must be controlled by the field #verbose"),
+        tuple3(globalOpts, asList("-connect-timeout", "-connection-timeout", "-t", "--connection-timeout"), "Connection timeout must be controlled by the field #connectionTimeout"),
+        tuple3(globalOpts, asList("-request-timeout", "-r", "--request-timeout"), "Diagnostic operation timeout must be controlled by the field #diagnosticOperationTimeout"),
+        tuple3(globalOpts, asList("-entity-request-timeout", "-er", "--entity-request-timeout"), "Entity operation timeout must be controlled by the field #entityOperationTimeout"),
+        tuple3(commandOpts, asList("-restart-wait-time", "-W"), "Restart timeout must be controlled by the field #restartTimeout"),
+        tuple3(commandOpts, asList("-stop-wait-time", "-W"), "Stop timeout must be controlled by the field #stopTimeout")
+    ).forEach(tuple -> {
+      if (tuple.t1.stream().anyMatch(tuple.t2::contains)) {
+        throw new IllegalArgumentException(tuple.t3);
+      }
+    });
+
+    List<String> newCli = new ArrayList<>(cli.length + 8);
+
+    // verbose
+    if (isVerbose()) {
+      newCli.add(useDeprecatedCommands ? "-v" : "-verbose");
     }
 
-    String[] cmd;
-    if (addedOptions) {
-      enhancedCli.addAll(Arrays.asList(cli));
-      cmd = enhancedCli.toArray(new String[0]);
-    } else {
-      cmd = cli;
-    }
+    // conn. timeout
+    newCli.add(useDeprecatedCommands ? "-t" : "-connect-timeout");
+    newCli.add(Measure.of(getConnectionTimeout().getSeconds(), TimeUnit.SECONDS).toString());
 
-    // config-tool launched through angela from the kit in
-    // its own process. Slower and harder to debug.
-//    {
-//      return angela.configTool().executeCommand(env, cmd);
-//    }
+    // diag req. timeout
+    newCli.add(useDeprecatedCommands ? "-r" : "-request-timeout");
+    newCli.add(Measure.of(getDiagnosticOperationTimeout().getSeconds(), TimeUnit.SECONDS).toString());
+
+    // entity call timeout
+    newCli.add(useDeprecatedCommands ? "-er" : "-entity-request-timeout");
+    newCli.add(Measure.of(getEntityOperationTimeout().getSeconds(), TimeUnit.SECONDS).toString());
+
+    // user input
+    newCli.addAll(asList(cli));
+
+    if (asList("activate", "attach", "set", "unset").contains(command)) {
+      // restart timeout
+      newCli.add(useDeprecatedCommands ? "-W" : "-restart-wait-time");
+      newCli.add(Measure.of(getRestartTimeout().getSeconds(), TimeUnit.SECONDS).toString());
+    } else if ("detach".equals(command)) {
+      newCli.add(useDeprecatedCommands ? "-W" : "-stop-wait-time");
+      newCli.add(Measure.of(getStopTimeout().getSeconds(), TimeUnit.SECONDS).toString());
+    }
 
     // inline config-tool launched from within the test classpath.
     // faster and easier to debug, but does not test the kit packaging
     {
-      LOGGER.info("config-tool {}", String.join(" ", cmd));
+      LOGGER.info("config-tool {}", String.join(" ", newCli));
       InlineToolExecutionResult result = new InlineToolExecutionResult();
       OutputService out = new ConsoleOutputService().then(result);
       try {
-        new ConfigTool(out).run(cmd);
+        new ConfigTool(out).run(newCli.toArray(new String[0]));
         result.setExitStatus(0);
       } catch (Exception e) {
         result.setExitStatus(1);
@@ -476,20 +467,6 @@ public class DynamicConfigIT {
       }
       return result;
     }
-  }
-
-  private List<String> getConfigToolOptions(String[] cli) {
-    List<String> configToolOptions = new ArrayList<>(cli.length);
-    for (int i = 0; i < cli.length; i++) {
-      String opt = cli[i];
-      if (opt.startsWith("-")) {
-        configToolOptions.add(opt);
-        i++;
-      } else {
-        break;
-      }
-    }
-    return configToolOptions;
   }
 
   // =========================================
@@ -515,7 +492,7 @@ public class DynamicConfigIT {
             .distribution(getDistribution())
             .license(getLicenceUrl() == null ? null : new License(getLicenceUrl()))
             .commandLineEnv(TerracottaCommandLineEnvironment.DEFAULT.withJavaOpts("-Xms8m", "-Xmx128m"))
-            .configTool(TerracottaConfigTool.configTool("config-tool", "localhost")));
+            .configTool(TerracottaConfigTool.configTool("config-tool")));
   }
 
   protected TerracottaServer createNode(int stripeId, int nodeId) {
@@ -526,7 +503,7 @@ public class DynamicConfigIT {
         .offheap("main:512MB,foo:1GB")
         .metaData("metadata")
         .failoverPriority(Optional.ofNullable(getFailoverPriority()).map(Objects::toString).orElse(null))
-        .clientReconnectWindow("20s") // the default client reconnect window of 2min can cause some tests to timeout
+        .clientReconnectWindow("10s") // the default client reconnect window of 2min can cause some tests to timeout
         .clusterName(CLUSTER_NAME);
   }
 
@@ -555,10 +532,6 @@ public class DynamicConfigIT {
 
   protected String getNodeName(int stripeId, int nodeId) {
     return "node-" + stripeId + "-" + nodeId;
-  }
-
-  protected final RawPath getNodeConfigDir(int stripeId, int nodeId) {
-    return RawPath.valueOf("config");
   }
 
   protected Path getLicensePath() {
@@ -631,100 +604,68 @@ public class DynamicConfigIT {
   // assertions
   // =========================================
 
-  protected final void waitUntil(ToolExecutionResult result, Matcher<ToolExecutionResult> matcher) {
-    waitUntil(() -> result, matcher);
-  }
-
   protected final void waitUntilServerStdOut(TerracottaServer server, String matcher) {
-    assertThat(() -> serverStdOut(server), within(Duration.ofDays(1)).matches(hasItem(containsString(matcher))));
+    angela.waitUntilServerStdOut(server, matcher);
   }
 
   protected final void assertThatServerStdOut(TerracottaServer server, String matcher) {
-    assertThat(serverStdOut(server), hasItem(containsString(matcher)));
+    angela.assertThatServerStdOut(server, matcher);
   }
 
   protected final void assertThatServerStdOut(TerracottaServer server, Matcher<String> matcher) {
-    assertThat(serverStdOut(server), hasItem(matcher));
-  }
-
-  private List<String> serverStdOut(TerracottaServer server) {
-    try {
-      return Files.readAllLines(getServerHome(server).resolve("stdout.txt"));
-    } catch (IOException io) {
-      return Collections.emptyList();
-    }
+    angela.assertThatServerStdOut(server, matcher);
   }
 
   protected final void waitUntilServerLogs(TerracottaServer server, String matcher) {
-    assertThat(() -> serverLogs(server), within(Duration.ofDays(1)).matches(hasItem(containsString(matcher))));
-  }
-
-  protected final void assertThatServerLogs(TerracottaServer server, String matcher) {
-    assertThat(serverLogs(server), hasItem(containsString(matcher)));
-  }
-
-  protected final void assertThatServerLogs(TerracottaServer server, Matcher<String> matcher) {
-    assertThat(serverLogs(server), hasItem(matcher));
-  }
-
-  private List<String> serverLogs(TerracottaServer server) {
-    try {
-      return Files.readAllLines(getServerHome(server)
-          .resolve(server.getLogs())
-          .resolve(server.getServerSymbolicName().getSymbolicName())
-          .resolve("terracotta.server.log"));
-    } catch (IOException io) {
-      return Collections.emptyList();
-    }
+    angela.waitUntilServerLogs(server, matcher);
   }
 
   protected final <T> void waitUntil(Supplier<T> callable, Matcher<T> matcher) {
-    assertThat(callable, within(Duration.ofDays(1)).matches(matcher));
+    angela.waitUntil(callable, matcher);
   }
 
-  protected final void waitForActive(int stripeId) {
-    waitUntil(() -> findActive(stripeId).isPresent(), is(true));
+  protected final int waitForActive(int stripeId) {
+    return angela.waitForActive(stripeId);
   }
 
   protected final void waitForActive(int stripeId, int nodeId) {
-    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_ACTIVE)));
+    angela.waitForActive(stripeId, nodeId);
   }
 
   protected final void waitForPassive(int stripeId, int nodeId) {
-    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_AS_PASSIVE)));
+    angela.waitForPassive(stripeId, nodeId);
   }
 
   protected final void waitForDiagnostic(int stripeId, int nodeId) {
-    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STARTED_IN_DIAGNOSTIC_MODE)));
+    angela.waitForDiagnostic(stripeId, nodeId);
   }
 
   protected final void waitForStopped(int stripeId, int nodeId) {
-    waitUntil(() -> angela.tsa().getState(getNode(stripeId, nodeId)), is(equalTo(STOPPED)));
+    angela.waitForStopped(stripeId, nodeId);
   }
 
-  protected final void waitForPassives(int stripeId) {
-    int expectedPassiveCount = angela.getNodeCount(stripeId) - 1;
-    waitUntil(() -> findPassives(stripeId).length, is(equalTo(expectedPassiveCount)));
+  protected final int[] waitForPassives(int stripeId) {
+    return angela.waitForPassives(stripeId);
   }
 
-  protected final void waitForNPassives(int stripeId, int count) {
-    waitUntil(() -> findPassives(stripeId).length, is(equalTo(count)));
-  }
-
-  protected final Cluster getUpcomingCluster(int stripeId, int nodeId) {
-    return getUpcomingCluster(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId));
+  protected final int[] waitForNPassives(int stripeId, int count) {
+    return angela.waitForNPassives(stripeId, count);
   }
 
   // =========================================
   // information retrieval
   // =========================================
 
+  protected final Cluster getUpcomingCluster(int stripeId, int nodeId) {
+    return getUpcomingCluster(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId));
+  }
+
   protected final Cluster getUpcomingCluster(String host, int port) {
     return usingTopologyService(host, port, topologyService -> topologyService.getUpcomingNodeContext().getCluster());
   }
 
   protected final Cluster getRuntimeCluster(int stripeId, int nodeId) {
-    return getUpcomingCluster(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId));
+    return getUpcomingCluster(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId));
   }
 
   protected final Cluster getRuntimeCluster(String host, int port) {
@@ -732,7 +673,7 @@ public class DynamicConfigIT {
   }
 
   protected final void withTopologyService(int stripeId, int nodeId, Consumer<TopologyService> consumer) {
-    withTopologyService(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId), consumer);
+    withTopologyService(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId), consumer);
   }
 
   protected final void withTopologyService(String host, int port, Consumer<TopologyService> consumer) {
@@ -743,7 +684,7 @@ public class DynamicConfigIT {
   }
 
   protected final <T> T usingTopologyService(int stripeId, int nodeId, Function<TopologyService, T> fn) {
-    return usingTopologyService(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId), fn);
+    return usingTopologyService(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId), fn);
   }
 
   protected final <T> T usingTopologyService(String host, int port, Function<TopologyService, T> fn) {
@@ -751,30 +692,21 @@ public class DynamicConfigIT {
   }
 
   protected final <T> T usingDiagnosticService(int stripeId, int nodeId, Function<DiagnosticService, T> fn) {
-    return usingDiagnosticService(getDefaultHostname(stripeId, nodeId), getNodePort(stripeId, nodeId), fn);
+    return usingDiagnosticService(getNode(stripeId, nodeId).getHostName(), getNodePort(stripeId, nodeId), fn);
   }
 
   protected final <T> T usingDiagnosticService(String host, int port, Function<DiagnosticService, T> fn) {
-    // not expecting a connection exceptions here so retry a few times
-    int tc = 0;
-    for (tc = 0; tc < 3; tc++) {
-      try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
-          InetSocketAddress.createUnresolved(host, port),
-          getClass().getSimpleName(),
-          getConnectionTimeout(),
-          getConnectionTimeout(),
-          null,
-          objectMapperFactory)) {
-        return fn.apply(diagnosticService);
-      } catch (ConnectionException e) {
-        LOGGER.info("connection of diagnostics failed, retrying", e);
-      }
+    try (DiagnosticService diagnosticService = DiagnosticServiceFactory.fetch(
+        InetSocketAddress.createUnresolved(host, port),
+        getClass().getSimpleName(),
+        getConnectionTimeout(),
+        getDiagnosticOperationTimeout(),
+        null,
+        objectMapperFactory)) {
+      return fn.apply(diagnosticService);
+    } catch (ConnectionException e) {
+      throw new RuntimeException(e.getMessage(), e);
     }
-    throw new RuntimeException("connection failed " + tc + " times. Aborting");
-  }
-
-  protected Duration getConnectionTimeout() {
-    return CONN_TIMEOUT;
   }
 
   protected void setServerDisruptionLinks(Map<Integer, Integer> stripeServer) {
@@ -865,7 +797,7 @@ public class DynamicConfigIT {
         InetSocketAddress.createUnresolved(server.getHostName(), server.getTsaPort()),
         getClass().getSimpleName(),
         getConnectionTimeout(),
-        getConnectionTimeout(),
+        getDiagnosticOperationTimeout(),
         null,
         objectMapperFactory)) {
       return diagnosticService.isBlocked();
