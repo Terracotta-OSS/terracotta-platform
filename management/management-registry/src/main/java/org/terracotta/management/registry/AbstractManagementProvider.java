@@ -167,7 +167,7 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
   protected abstract ExposedObject<T> wrap(T managedObject);
 
   protected ExposedObject<T> findExposedObject(Context context) {
-    if (!contextValid(context)) {
+    if (!getCapabilityContext().isValid(context)) {
       return null;
     }
     for (ExposedObject<T> exposedObject : exposedObjects) {
@@ -187,17 +187,4 @@ public abstract class AbstractManagementProvider<T> implements ManagementProvide
     }
     return null;
   }
-
-  private boolean contextValid(Context context) {
-    if (context == null) {
-      return false;
-    }
-    for (CapabilityContext.Attribute attribute : getCapabilityContext().getAttributes()) {
-      if (context.get(attribute.getName()) == null) {
-        return false;
-      }
-    }
-    return true;
-  }
-
 }

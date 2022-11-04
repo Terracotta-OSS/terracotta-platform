@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
-import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 
@@ -29,7 +28,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -70,7 +68,7 @@ public class StopService {
     LOGGER.debug("Asking all nodes: {} to stop themselves", endpoints);
 
     // list of nodes that we asked for a stop
-    Collection<Node.Endpoint> stopRequested = new HashSet<>();
+    Map<Node.Endpoint, DiagnosticService> stopRequested = new HashMap<>();
 
     // list of nodes we failed to ask for a stop
     Map<Node.Endpoint, Exception> stopRequestFailed = new HashMap<>();
@@ -78,11 +76,13 @@ public class StopService {
     // trigger a stop request for all nodes
     for (Node.Endpoint addr : endpoints) {
       // this call should be pretty fast and should not timeout if stop delay is long enough
-      try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr.getAddress())) {
+      try {
+        // do not close DiagnosticService: connection is used after to detect when server is stopped
+        DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr.getHostPort().createInetSocketAddress());
+        stopRequested.put(addr, diagnosticService);
         diagnosticService.getProxy(DynamicConfigService.class).stop(stopDelay);
-        stopRequested.add(addr);
       } catch (Exception e) {
-        // timeout should not occur with a stop delay. Any error is recorded an we won't wait for this node to stop
+        // timeout should not occur with a stop delay. Any error is recorded and we won't wait for this node to stop
         stopRequestFailed.put(addr, e);
         LOGGER.debug("Failed asking node {} to stop: {}", addr, e.getMessage(), e);
       }
@@ -101,35 +101,25 @@ public class StopService {
     AtomicBoolean continuePolling = new AtomicBoolean(true);
 
     ExecutorService executorService = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(endpoints.size()), r -> new Thread(r, getClass().getName()));
-    stopRequested.forEach(endpoint -> executorService.submit(() -> {
-
-      // wait for the stop delay to end so that servers gets stopped
-      try {
-        Thread.sleep(stopDelay.toMillis() + 5_000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return;
-      }
-
-      boolean stopped = false;
-      while (!stopped && continuePolling.get() && !Thread.currentThread().isInterrupted()) {
+    stopRequested.forEach((endpoint, diagnosticService) -> executorService.submit(() -> {
+      while (continuePolling.get() && !Thread.currentThread().isInterrupted() && diagnosticService.isConnected()) {
         try {
-          stopped = isStopped(endpoint);
-          if (stopped) {
-            LOGGER.debug("Node: {} has stopped", endpoint);
-            stoppedNodes.add(endpoint);
-            Consumer<Node.Endpoint> cb = progressCallback.get();
-            if (cb != null) {
-              cb.accept(endpoint);
-            }
-            done.countDown();
-          } else {
-            // introduce a force sleep because otherwise this cn loop pretty fast
-            Thread.sleep(1_000);
-          }
+          LOGGER.debug("Waiting for node: {} to stop...", endpoint);
+          Thread.sleep(500);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
         }
+      }
+      if (!diagnosticService.isConnected()) {
+        LOGGER.debug("Node: {} has stopped", endpoint);
+        stoppedNodes.add(endpoint);
+        Consumer<Node.Endpoint> cb = progressCallback.get();
+        if (cb != null) {
+          cb.accept(endpoint);
+        }
+        done.countDown();
+      } else {
+        LOGGER.warn("Shutdown of node: {} has been interrupted", endpoint);
       }
     }));
 
@@ -178,23 +168,6 @@ public class StopService {
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-    }
-  }
-
-  /**
-   * Poll a node to see if it has stopped.
-   * We should specify ideally a connect timeout that is in relation with the stop delay.
-   * Also, the connect timeout must not be to low, otherwise the poll will return false in case of a slow network.
-   * Using the default connect timeout provided by user should be enough. If not, the user can increase it and it will apply to all connections.
-   */
-  private boolean isStopped(Node.Endpoint endpoint) {
-    LOGGER.debug("Checking if node: {} has stopped", endpoint);
-    try (DiagnosticService logicalServerState = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress(), Duration.ofSeconds(5))) {
-      LogicalServerState state = logicalServerState.getLogicalServerState();
-      return state == LogicalServerState.UNREACHABLE;
-    } catch (RuntimeException e) {
-      // DetailedConnectionException, DiagnosticServiceProviderException, DiagnosticException
-      return true;
     }
   }
 }

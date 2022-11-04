@@ -17,9 +17,8 @@ package org.terracotta.dynamic_config.api.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.dynamic_config.api.service.Props;
-import org.terracotta.inet.InetSocketAddressUtils;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -180,9 +179,9 @@ public class Node implements Cloneable, PropertyHolder {
     return this;
   }
 
-  public Node setPublicEndpoint(InetSocketAddress sa) {
-    setPublicHostname(sa.getHostString());
-    setPublicPort(sa.getPort());
+  public Node setPublicEndpoint(HostPort hostPort) {
+    setPublicHostname(hostPort.getHost());
+    setPublicPort(hostPort.getPort());
     return this;
   }
 
@@ -344,66 +343,66 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   public boolean isReachableWith(String hostname, int port) {
-    return isReachableWith(InetSocketAddress.createUnresolved(hostname, port));
+    return isReachableWith(HostPort.create(hostname, port));
   }
 
   /**
    * @return true if this node has this public or internal address
    */
-  public boolean isReachableWith(InetSocketAddress address) {
-    if (InetSocketAddressUtils.areEqual(address, getInternalSocketAddress())) {
+  public boolean isReachableWith(HostPort hostPort) {
+    if (getInternalHostPort().equals(hostPort)) {
       return true;
     }
-    if (getPublicSocketAddress().isPresent() && InetSocketAddressUtils.areEqual(address, getPublicSocketAddress().get())) {
+    if (getPublicHostPort().isPresent() && hostPort.equals(getPublicHostPort().get())) {
       return true;
     }
-    final InetSocketAddress bindSocketAddress = getBindSocketAddress();
-    if (!isWildcard(bindSocketAddress)) {
-      return InetSocketAddressUtils.areEqual(address, bindSocketAddress);
+    final HostPort bindSocketAddress = getBindHostPort();
+    if (!bindSocketAddress.isWildcard()) {
+      return bindSocketAddress.equals(hostPort);
     }
     return false;
   }
 
-  public InetSocketAddress getBindSocketAddress() {
+  public HostPort getBindHostPort() {
     final String addr = getBindAddress().orDefault();
     final Integer port = getPort().orDefault();
     if (addr == null || Substitutor.containsSubstitutionParams(addr)) {
       throw new AssertionError("Node " + name + " is not correctly defined with bind address: " + addr + ":" + port);
     }
-    return InetSocketAddress.createUnresolved(addr, port);
+    return HostPort.create(addr, port);
   }
 
-  public InetSocketAddress getInternalSocketAddress() {
+  public HostPort getInternalHostPort() {
     final String hostname = getHostname();
     final Integer port = getPort().orDefault();
     if (hostname == null || Substitutor.containsSubstitutionParams(hostname)) {
       throw new AssertionError("Node " + name + " is not correctly defined with internal address: " + hostname + ":" + port);
     }
-    return InetSocketAddress.createUnresolved(hostname, port);
+    return HostPort.create(hostname, port);
   }
 
-  public Optional<InetSocketAddress> getPublicSocketAddress() {
+  public Optional<HostPort> getPublicHostPort() {
     if (publicHostname == null || publicPort == null) {
       return Optional.empty();
     }
     if (Substitutor.containsSubstitutionParams(publicHostname)) {
       throw new AssertionError("Node " + name + " is not correctly defined with public address: " + publicHostname + ":" + publicPort);
     }
-    return Optional.of(InetSocketAddress.createUnresolved(publicHostname, publicPort));
+    return Optional.of(HostPort.create(publicHostname, publicPort));
   }
 
   public List<Endpoint> findEndpoints(String host, int port) {
-    return findEndpoints(InetSocketAddress.createUnresolved(host, port));
+    return findEndpoints(HostPort.create(host, port));
   }
 
   public Endpoint determineEndpoint(String host, int port) {
-    return determineEndpoint(InetSocketAddress.createUnresolved(host, port));
+    return determineEndpoint(HostPort.create(host, port));
   }
 
   /**
-   * See {@link #findEndpointTypes(InetSocketAddress)}
+   * See {@link #findEndpointTypes(HostPort)}
    */
-  public List<Endpoint> findEndpoints(InetSocketAddress initiator) {
+  public List<Endpoint> findEndpoints(HostPort initiator) {
     return findEndpointTypes(initiator)
         .stream()
         .map(endpointType -> findEndpoint(endpointType).orElse(null))
@@ -416,9 +415,9 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   /**
-   * See {@link #findEndpointTypes(InetSocketAddress)}
+   * See {@link #findEndpointTypes(HostPort)}
    */
-  public Endpoint determineEndpoint(InetSocketAddress initiator) {
+  public Endpoint determineEndpoint(HostPort initiator) {
     return findEndpoints(initiator).stream().findFirst().orElseGet(this::determineEndpoint);
   }
 
@@ -444,7 +443,7 @@ public class Node implements Cloneable, PropertyHolder {
     } else if (ADDR_GROUP_BIND.equals(endpointType)) {
       // if we want to use the bind endpoints, first check if it is set to wildcard
       Endpoint bind = getBindEndpoint();
-      return isWildcard(bind.getAddress()) ? Optional.empty() : Optional.of(bind);
+      return bind.getHostPort().isWildcard() ? Optional.empty() : Optional.of(bind);
     } else {
       return Optional.empty();
     }
@@ -457,40 +456,40 @@ public class Node implements Cloneable, PropertyHolder {
    * have the same address. In that case the list contains the other endpoint types
    * matching in order of priority to use.
    */
-  public List<EndpointType> findEndpointTypes(InetSocketAddress initiator) {
+  public List<EndpointType> findEndpointTypes(HostPort initiator) {
     if (initiator == null) {
       return Collections.emptyList();
     }
-    Optional<InetSocketAddress> publicAddress = getPublicSocketAddress();
-    InetSocketAddress internalAddress = getInternalSocketAddress();
-    InetSocketAddress bindAddress = getBindSocketAddress();
+    Optional<HostPort> publicAddress = getPublicHostPort();
+    HostPort internalAddress = getInternalHostPort();
+    HostPort bindAddress = getBindHostPort();
     List<EndpointType> found = new ArrayList<>(1);
     // IMPORTANT: ordering is important and matches the ordering of the determineEndpoint() method
     // 1. check against public address
-    if (publicAddress.isPresent() && InetSocketAddressUtils.areEqual(initiator, publicAddress.get())) {
+    if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
       found.add(ADDR_GROUP_PUBLIC);
     }
     // 2. check against internal address
-    if (InetSocketAddressUtils.areEqual(initiator, internalAddress)) {
+    if (internalAddress.equals(initiator)) {
       found.add(ADDR_GROUP_INTERNAL);
     }
     // 3. check against non wildcard bind address
-    if (!isWildcard(bindAddress) && InetSocketAddressUtils.areEqual(initiator, bindAddress)) {
+    if (!bindAddress.isWildcard() && bindAddress.equals(initiator)) {
       found.add(ADDR_GROUP_BIND);
     }
     return found;
   }
 
   public Endpoint getBindEndpoint() {
-    return new Endpoint(this, ADDR_GROUP_BIND, getBindSocketAddress());
+    return new Endpoint(this, ADDR_GROUP_BIND, getBindHostPort());
   }
 
   public Endpoint getInternalEndpoint() {
-    return new Endpoint(this, ADDR_GROUP_INTERNAL, getInternalSocketAddress());
+    return new Endpoint(this, ADDR_GROUP_INTERNAL, getInternalHostPort());
   }
 
   public Optional<Endpoint> getPublicEndpoint() {
-    return getPublicSocketAddress().map(addr -> new Endpoint(this, ADDR_GROUP_PUBLIC, addr));
+    return getPublicHostPort().map(addr -> new Endpoint(this, ADDR_GROUP_PUBLIC, addr));
   }
 
   /**
@@ -499,7 +498,7 @@ public class Node implements Cloneable, PropertyHolder {
   public Collection<Endpoint> getEndpoints() {
     return Stream.of(getInternalEndpoint(), getBindEndpoint(), getPublicEndpoint().orElse(null))
         .filter(Objects::nonNull)
-        .filter(e -> !isWildcard(e.getAddress()))
+        .filter(e -> !e.getHostPort().isWildcard())
         .collect(toList());
   }
 
@@ -576,9 +575,6 @@ public class Node implements Cloneable, PropertyHolder {
     return getInternalEndpoint().toString();
   }
 
-  private static boolean isWildcard(InetSocketAddress bindSocketAddress) {
-    return bindSocketAddress.getHostString().equals("0.0.0.0") || bindSocketAddress.getHostString().equals("::");
-  }
 
   /**
    * This class represents an endpoint to use when connecting to a node.
@@ -594,12 +590,12 @@ public class Node implements Cloneable, PropertyHolder {
 
     private final Node node;
     private final EndpointType endpointType;
-    private final InetSocketAddress address;
+    private final HostPort hostPort;
 
-    private Endpoint(Node node, EndpointType endpointType, InetSocketAddress address) {
+    private Endpoint(Node node, EndpointType endpointType, HostPort hostPort) {
       this.node = requireNonNull(node);
       this.endpointType = requireNonNull(endpointType);
-      this.address = requireNonNull(address);
+      this.hostPort = requireNonNull(hostPort);
     }
 
     // keep package local
@@ -615,13 +611,13 @@ public class Node implements Cloneable, PropertyHolder {
       return node.getUID();
     }
 
-    public InetSocketAddress getAddress() {
-      return address;
+    public HostPort getHostPort() {
+      return hostPort;
     }
 
     @Override
     public String toString() {
-      return getNodeName() + "@" + getAddress();
+      return getNodeName() + "@" + getHostPort();
     }
 
     @Override

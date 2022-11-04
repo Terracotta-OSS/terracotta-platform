@@ -35,7 +35,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   @Test
   public void testSingleNodeActivation() {
     assertThat(activateCluster(),
-        allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(is(successful()), containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForActive(1, 1);
   }
 
@@ -43,7 +43,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   public void testMultiNodeSingleStripeActivation() {
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
-    assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license installed"), containsOutput("came back up")));
+    assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForActive(1);
     waitForPassives(1);
   }
@@ -61,7 +61,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   public void testSingleNodeActivationWithConfigFile() throws Exception {
     assertThat(
         configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe.properties").toString(), "-n", "my-cluster"),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1, 1);
 
@@ -75,7 +75,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   public void testSingleNodeActivationWithConfigFileNoFailover() throws Exception {
     assertThat(
         configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe-no-fo.properties").toString(), "-n", "my-cluster"),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1, 1);
 
@@ -89,7 +89,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   public void testMultiNodeSingleStripeActivationWithConfigFile() {
     assertThat(
         configTool("activate", "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
     waitForPassives(1);
@@ -106,7 +106,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   public void testRestrictedActivationToActivateNodesAtDifferentTime() throws Exception {
     assertThat(
         configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 1), "-f", copyConfigProperty("/config-property-files/single-stripe_multi-node.properties").toString()),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForActive(1, 1);
 
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
@@ -120,7 +120,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
 
     assertThat(
         configTool("activate", "-R", "-s", "localhost:" + getNodePort(1, 2), "-f", exportPath),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForPassive(1, 2);
 
     withTopologyService(1, 1, topologyService -> assertTrue(topologyService.isActivated()));
@@ -140,7 +140,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     // restrict activation to only node 1
     assertThat(
         configTool("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 1)),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1, 1);
     waitForDiagnostic(1, 2);
@@ -151,7 +151,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     // restrict activation to only node 2, which will become passive as node 1
     assertThat(
         configTool("activate", "-R", "-n", "my-cluster", "-s", "localhost:" + getNodePort(1, 2)),
-        allOf(containsOutput("No license installed"), containsOutput("came back up")));
+        allOf(containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForPassive(1, 2);
 

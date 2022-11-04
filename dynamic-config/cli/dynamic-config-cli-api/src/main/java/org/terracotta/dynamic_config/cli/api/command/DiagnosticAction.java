@@ -19,10 +19,10 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyAnalyzer;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.server.NomadServerMode;
 
-import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -39,9 +39,9 @@ import static java.util.stream.Collectors.toSet;
  */
 public class DiagnosticAction extends RemoteAction {
 
-  private InetSocketAddress node;
+  private HostPort node;
 
-  public void setNode(InetSocketAddress node) {
+  public void setNode(HostPort node) {
     this.node = node;
   }
 
@@ -51,12 +51,12 @@ public class DiagnosticAction extends RemoteAction {
     Map<Node.Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
 
     ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = analyzeNomadConsistency(allNodes);
-    Collection<InetSocketAddress> onlineNodes = sort(configurationConsistencyAnalyzer.getOnlineNodes().keySet());
-    Collection<InetSocketAddress> onlineActivatedNodes = sort(configurationConsistencyAnalyzer.getOnlineNodesActivated().keySet());
-    Collection<InetSocketAddress> onlineInConfigurationNodes = sort(configurationConsistencyAnalyzer.getOnlineNodesInConfiguration().keySet());
-    Collection<InetSocketAddress> onlineInRepairNodes = sort(configurationConsistencyAnalyzer.getOnlineNodesInRepair().keySet());
-    Collection<InetSocketAddress> nodesPendingRestart = sort(allNodes.keySet().stream()
-        .map(Node.Endpoint::getAddress)
+    Collection<HostPort> onlineNodes = sort(configurationConsistencyAnalyzer.getOnlineNodes().keySet());
+    Collection<HostPort> onlineActivatedNodes = sort(configurationConsistencyAnalyzer.getOnlineNodesActivated().keySet());
+    Collection<HostPort> onlineInConfigurationNodes = sort(configurationConsistencyAnalyzer.getOnlineNodesInConfiguration().keySet());
+    Collection<HostPort> onlineInRepairNodes = sort(configurationConsistencyAnalyzer.getOnlineNodesInRepair().keySet());
+    Collection<HostPort> nodesPendingRestart = sort(allNodes.keySet().stream()
+        .map(Node.Endpoint::getHostPort)
         .filter(onlineNodes::contains)
         .filter(this::mustBeRestarted)
         .collect(toSet()));
@@ -109,38 +109,38 @@ public class DiagnosticAction extends RemoteAction {
 
       // node status
       sb.append(" - Node state: ")
-          .append(configurationConsistencyAnalyzer.getState(endpoint.getAddress()))
+          .append(configurationConsistencyAnalyzer.getState(endpoint.getHostPort()))
           .append(lineSeparator());
       sb.append(" - Node online, configured and activated: ")
-          .append(onlineActivatedNodes.contains(endpoint.getAddress()) ?
+          .append(onlineActivatedNodes.contains(endpoint.getHostPort()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
       sb.append(" - Node online, configured and in repair: ")
-          .append(onlineInRepairNodes.contains(endpoint.getAddress()) ?
+          .append(onlineInRepairNodes.contains(endpoint.getHostPort()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
       sb.append(" - Node online, new and being configured: ")
-          .append(onlineInConfigurationNodes.contains(endpoint.getAddress()) ?
+          .append(onlineInConfigurationNodes.contains(endpoint.getHostPort()) ?
               "YES" :
               "NO")
           .append(lineSeparator());
 
       // if node is online, display more information
-      if (onlineNodes.contains(endpoint.getAddress())) {
+      if (onlineNodes.contains(endpoint.getHostPort())) {
 
         sb.append(" - Node restart required: ")
-            .append(nodesPendingRestart.contains(endpoint.getAddress()) ?
+            .append(nodesPendingRestart.contains(endpoint.getHostPort()) ?
                 "YES" :
                 "NO")
             .append(lineSeparator());
         sb.append(" - Node configuration change in progress: ").append(hasIncompleteChange(endpoint) ?
-            "YES" :
-            "NO")
+                "YES" :
+                "NO")
             .append(lineSeparator());
 
-        configurationConsistencyAnalyzer.getDiscoveryResponse(endpoint.getAddress()).ifPresent(discoverResponse -> {
+        configurationConsistencyAnalyzer.getDiscoveryResponse(endpoint.getHostPort()).ifPresent(discoverResponse -> {
 
           sb.append(" - Node can accept new changes: ")
               .append(discoverResponse.getMode() == NomadServerMode.ACCEPTING ? "YES" : "NO")
@@ -194,8 +194,8 @@ public class DiagnosticAction extends RemoteAction {
     return items.isEmpty() ? "" : " (" + toString(items) + ")";
   }
 
-  private static Collection<InetSocketAddress> sort(Collection<InetSocketAddress> addrs) {
-    TreeSet<InetSocketAddress> sorted = new TreeSet<>(Comparator.comparing(InetSocketAddress::toString));
+  private static Collection<HostPort> sort(Collection<HostPort> addrs) {
+    TreeSet<HostPort> sorted = new TreeSet<>(Comparator.comparing(HostPort::toString));
     sorted.addAll(addrs);
     return sorted;
   }

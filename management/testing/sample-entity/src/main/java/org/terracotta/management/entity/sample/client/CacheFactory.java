@@ -25,6 +25,7 @@ import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.PermanentEntityException;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.management.Management;
+import org.terracotta.management.model.context.Context;
 import org.terracotta.management.model.context.ContextContainer;
 import org.terracotta.management.registry.CapabilityManagementSupport;
 
@@ -49,15 +50,17 @@ public class CacheFactory implements Closeable {
   private Connection connection;
   private CacheEntityFactory cacheEntityFactory;
 
-  public CacheFactory(URI u, String path) {
+  public CacheFactory(String instanceId, URI u, String path) {
     this.uri = u;
     this.path = path;
-    this.management = new Management(new ContextContainer("appName", path));
+    this.management = new Management(instanceId, new ContextContainer("appName", path));
   }
 
   public CapabilityManagementSupport getManagementRegistry() {
     return management.getManagementRegistry();
   }
+
+  public Context getRootContext() {return management.getRootContext();}
 
   public void init() throws ConnectionException {
     init(null);

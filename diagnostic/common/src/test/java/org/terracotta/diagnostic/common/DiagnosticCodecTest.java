@@ -27,8 +27,7 @@ import java.util.stream.Stream;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doCallRealMethod;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.when;
 
@@ -58,13 +57,12 @@ public class DiagnosticCodecTest {
 
     Stream.of(codec1, codec2, codec3).forEach(codec -> {
       when(codec.getEncodedType()).thenReturn(String.class);
-      doCallRealMethod().when(codec).around(any());
     });
   }
 
   @Test
   public void test_around() {
-    DiagnosticCodec<String> composition = codec3.around(codec2).around(codec1);
+    DiagnosticCodec<String> composition = DiagnosticCodec.around(codec2, codec3).around(codec1);
     assertThat(composition.serialize(1), is(equalTo("3")));
     assertThat(composition.deserialize("3", Integer.class), is(equalTo(1)));
 
@@ -82,7 +80,20 @@ public class DiagnosticCodecTest {
 
   @Test(expected = NullPointerException.class)
   public void test_around_npe() {
-    codec3.around(null);
+    DiagnosticCodec<String> codec = new DiagnosticCodecSkeleton<String>(String.class) {
+      @Override
+      public String serialize(Object o) throws DiagnosticCodecException {
+        fail();
+        return null;
+      }
+
+      @Override
+      public <T> T deserialize(String encoded, Class<T> target) throws DiagnosticCodecException {
+        fail();
+        return null;
+      }
+    };
+    codec.around(null);
   }
 
 }

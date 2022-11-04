@@ -17,8 +17,8 @@ package org.terracotta.dynamic_config.api.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -177,7 +177,7 @@ public class Stripe implements Cloneable, PropertyHolder {
     return Scope.STRIPE;
   }
 
-  public Optional<Node> findReachableNode(InetSocketAddress addr) {
-    return nodes.stream().filter(node -> node.isReachableWith(addr)).findFirst();
+  public Optional<Node> findReachableNode(HostPort hostPort) {
+    return nodes.stream().filter(node -> node.isReachableWith(hostPort)).findFirst();
   }
 }

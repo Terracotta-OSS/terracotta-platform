@@ -25,12 +25,11 @@ import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.IdentifierConverter;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.dynamic_config.cli.converter.TypeConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
 @Usage("[-t node|stripe] -d <hostname[:port]> -s [<hostname[:port]>|uid|name] [-f] [-W <stop-wait-time>] [-D <stop-delay>]")
@@ -39,8 +38,8 @@ public class DeprecatedDetachCommand extends Command {
   @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = TypeConverter.class)
   protected OperationType operationType = OperationType.NODE;
 
-  @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress destinationAddress;
+  @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = HostPortConverter.class)
+  protected HostPort destinationHostPort;
 
   @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
@@ -68,7 +67,7 @@ public class DeprecatedDetachCommand extends Command {
   @Override
   public void run() {
     action.setOperationType(operationType);
-    action.setDestinationAddress(destinationAddress);
+    action.setDestinationHostPort(destinationHostPort);
     action.setForce(force);
     action.setSourceIdentifier(sourceIdentifier);
     action.setStopWaitTime(stopWaitTime);

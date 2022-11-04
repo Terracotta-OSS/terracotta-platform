@@ -25,12 +25,12 @@ import org.terracotta.dynamic_config.api.service.ConfigPropertiesTranslator;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.output.FileOutputService;
+import org.terracotta.inet.HostPort;
 import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -40,7 +40,7 @@ public class ExportAction extends RemoteAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ExportAction.class);
 
-  private InetSocketAddress node;
+  private HostPort node;
   private Path outputFile;
   private boolean includeDefaultValues;
   private boolean wantsRuntimeConfig;
@@ -48,7 +48,7 @@ public class ExportAction extends RemoteAction {
 
   @Inject public ObjectMapperFactory objectMapperFactory;
 
-  public void setNode(InetSocketAddress node) {
+  public void setNode(HostPort node) {
     this.node = node;
   }
 

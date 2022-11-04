@@ -15,16 +15,19 @@
  */
 package org.terracotta.nomad.client.results;
 
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
 
 public interface CommitResultsReceiver {
   default void startCommit() {}
 
-  default void committed(InetSocketAddress server) {}
+  default void committed(HostPort server) {
+  }
 
-  default void commitFail(InetSocketAddress server, Throwable reason) {}
+  default void commitFail(HostPort server, Throwable reason) {
+  }
 
-  default void commitOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {}
+  default void commitOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
+  }
 
   default void endCommit() {}
 }

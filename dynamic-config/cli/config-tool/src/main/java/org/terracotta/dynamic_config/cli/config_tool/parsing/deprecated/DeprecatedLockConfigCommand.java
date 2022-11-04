@@ -21,15 +21,14 @@ import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.command.LockConfigAction;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Locks the config", hidden = true)
 @Usage("-s <hostname[:port]> --lock-context <context>")
 public class DeprecatedLockConfigCommand extends Command {
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
+  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
+  HostPort node;
 
   @Parameter(names = {"--lock-context"}, description = "Lock context", required = true)
   String lockContext;

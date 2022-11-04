@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,25 +59,15 @@ public class ConfigSyncIT extends DynamicConfigIT {
   private int activeNodeId;
   private int passiveNodeId;
 
-  public ConfigSyncIT() {
-    super(Duration.ofSeconds(180));
-  }
-
   @Before
   public void before() {
-    if (angela.tsa().getActive() == getNode(1, 1)) {
-      activeNodeId = 1;
-      passiveNodeId = 2;
-    } else {
-      activeNodeId = 2;
-      passiveNodeId = 1;
-    }
+    activeNodeId = waitForActive(1);
+    passiveNodeId = waitForNPassives(1, 1)[0];
   }
 
   @Test
   public void testPassiveSyncingAppendChangesFromActive() throws Exception {
     stopNode(1, passiveNodeId);
-    assertThat(angela.tsa().getStopped().size(), is(1));
 
     assertThat(configTool("set", "-s", "localhost:" + getNodePort(1, activeNodeId), "-c", "offheap-resources.main=1GB"), is(successful()));
 
@@ -89,7 +78,6 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertContentsAfterRestart(5, 3);
     angela.tsa().start(getNode(1, activeNodeId));
     waitForActive(1);
-    assertThat(angela.tsa().getActives().size(), is(1));
 
     angela.tsa().start(getNode(1, passiveNodeId));
     waitForPassive(1, passiveNodeId);
@@ -104,7 +92,6 @@ public class ConfigSyncIT extends DynamicConfigIT {
   @Test
   public void testPassiveSyncWhenActiveHasSomeUnCommittedChanges() throws Exception {
     stopNode(1, passiveNodeId);
-    assertThat(angela.tsa().getStopped().size(), is(1));
 
     // triggers a permanent failure during Nomad commit phase only on active node
     // active entity will return with the failure
@@ -120,7 +107,6 @@ public class ConfigSyncIT extends DynamicConfigIT {
     assertContentsAfterRestart(4, 3);
     angela.tsa().start(getNode(1, activeNodeId));
     waitForActive(1);
-    assertThat(angela.tsa().getActives().size(), is(1));
 
     angela.tsa().start(getNode(1, passiveNodeId));
     waitForPassive(1, passiveNodeId);
@@ -145,12 +131,11 @@ public class ConfigSyncIT extends DynamicConfigIT {
     Thread.sleep(5000);
     stopNode(1, activeNodeId);
     stopNode(1, passiveNodeId);
-    assertThat(angela.tsa().getStopped().size(), is(2));
+
     assertContentsAfterRestart(4, 5);
     // Start only the former active for now (the passive startup would be done later, and should fail)
     angela.tsa().start(getNode(1, activeNodeId));
     waitForActive(1);
-    assertThat(angela.tsa().getActives().size(), is(1));
 
     angela.tsa().start(getNode(1, passiveNodeId));
     waitForPassive(1, passiveNodeId);
@@ -186,7 +171,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     //TODO TDB-4842: The stop is needed to prevent IOException on Windows
     stopNode(1, passiveNodeId);
     stopNode(1, activeNodeId);
-    assertThat(angela.tsa().getStopped().size(), is(2));
+
     assertContentsAfterRestart(5, 5);
     angela.tsa().start(getNode(1, activeNodeId));
     angela.tsa().start(getNode(1, passiveNodeId));
@@ -237,7 +222,7 @@ public class ConfigSyncIT extends DynamicConfigIT {
     }
   }
 
-  private void verifyTopologies() throws Exception {
+  private void verifyTopologies() {
     // config repos written on disk should be the same
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)), is(equalTo(getUpcomingCluster("localhost", getNodePort(1, 2)))));
     // runtime topology should be the same

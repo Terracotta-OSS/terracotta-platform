@@ -27,8 +27,8 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,10 +43,10 @@ public class ImportAction extends RemoteAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ImportAction.class);
 
-  private InetSocketAddress node;
+  private HostPort node;
   private Path configFile;
 
-  public void setNode(InetSocketAddress node) {
+  public void setNode(HostPort node) {
     this.node = node;
   }
 

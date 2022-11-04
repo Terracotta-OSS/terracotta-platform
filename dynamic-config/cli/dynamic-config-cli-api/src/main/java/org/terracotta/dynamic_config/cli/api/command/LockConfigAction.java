@@ -19,17 +19,17 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class LockConfigAction extends RemoteAction {
 
-  private InetSocketAddress node;
+  private HostPort node;
   private String lockContext;
 
-  public void setNode(InetSocketAddress node) {
+  public void setNode(HostPort node) {
     this.node = node;
   }
 

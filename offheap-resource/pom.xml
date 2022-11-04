@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -101,7 +101,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>${slf4j.version}</version>
+      <version>${slf4j.range.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -143,6 +143,17 @@
               <version>${terracotta-configuration.version}</version>
             </episode>
           </episodes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
         </configuration>
       </plugin>
     </plugins>

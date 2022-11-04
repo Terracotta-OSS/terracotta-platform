@@ -15,10 +15,10 @@
  */
 package org.terracotta.nomad.client.change;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.NomadEndpoint;
 import org.terracotta.nomad.client.NomadMessageSender;
 
-import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.util.List;
 import java.util.UUID;
@@ -35,13 +35,13 @@ public class ChangeMessageSender<T> extends NomadMessageSender<T> {
   }
 
   @Override
-  public void prepared(InetSocketAddress server) {
+  public void prepared(HostPort server) {
     super.prepared(server);
     registerPreparedServer(server);
   }
 
   @Override
-  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
+  public void prepareChangeUnacceptable(HostPort server, String rejectionReason) {
     // See comment in NomadServerImpl
     // a node is prepared if its change has been written on disk but not yet committed,
     // regardless of the change was accepted or rejected

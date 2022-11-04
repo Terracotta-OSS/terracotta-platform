@@ -15,10 +15,10 @@
  */
 package org.terracotta.nomad.client.status;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.messages.DiscoverResponse;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -34,35 +34,35 @@ public class MultiDiscoveryResultReceiver<T> implements DiscoverResultsReceiver<
   }
 
   @Override
-  public void startDiscovery(Collection<InetSocketAddress> servers) {
+  public void startDiscovery(Collection<HostPort> servers) {
     for (DiscoverResultsReceiver<T> receiver : receivers) {
       receiver.startDiscovery(servers);
     }
   }
 
   @Override
-  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
+  public void discovered(HostPort server, DiscoverResponse<T> discovery) {
     for (DiscoverResultsReceiver<T> receiver : receivers) {
       receiver.discovered(server, discovery);
     }
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, Throwable reason) {
+  public void discoverFail(HostPort server, Throwable reason) {
     for (DiscoverResultsReceiver<T> receiver : receivers) {
       receiver.discoverFail(server, reason);
     }
   }
 
   @Override
-  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<HostPort> committedServers, Collection<HostPort> rolledBackServers) {
     for (DiscoverResultsReceiver<T> receiver : receivers) {
       receiver.discoverConfigInconsistent(changeUuid, committedServers, rolledBackServers);
     }
   }
 
   @Override
-  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+  public void discoverConfigPartitioned(Collection<Collection<HostPort>> partitions) {
     for (DiscoverResultsReceiver<T> receiver : receivers) {
       receiver.discoverConfigPartitioned(partitions);
     }
@@ -83,14 +83,14 @@ public class MultiDiscoveryResultReceiver<T> implements DiscoverResultsReceiver<
   }
 
   @Override
-  public void discoverRepeated(InetSocketAddress server) {
+  public void discoverRepeated(HostPort server) {
     for (DiscoverResultsReceiver<T> receiver : receivers) {
       receiver.discoverRepeated(server);
     }
   }
 
   @Override
-  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     for (DiscoverResultsReceiver<T> receiver : receivers) {
       receiver.discoverOtherClient(server, lastMutationHost, lastMutationUser);
     }

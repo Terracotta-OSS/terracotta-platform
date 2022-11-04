@@ -217,7 +217,7 @@ public class ClusterTest extends AbstractTest {
     Map actual = cluster1.toMap();
     ObjectMapper mapper = new ObjectMapper();
     mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    JSONAssert.assertEquals(expectedJson, mapper.writeValueAsString(actual), true);
+    JSONAssert.assertEquals(mapper.writeValueAsString(actual), expectedJson, mapper.writeValueAsString(actual), true);
   }
 
   @SuppressWarnings("unchecked")

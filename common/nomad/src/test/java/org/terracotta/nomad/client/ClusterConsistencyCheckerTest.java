@@ -20,9 +20,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 
-import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -44,11 +44,11 @@ public class ClusterConsistencyCheckerTest {
   private DiscoverResultsReceiver<String> results;
 
   private final ClusterConsistencyChecker<String> consistencyChecker = new ClusterConsistencyChecker<>();
-  private final InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
-  private final InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
-  private final InetSocketAddress address3 = InetSocketAddress.createUnresolved("localhost", 9412);
-  private final InetSocketAddress address4 = InetSocketAddress.createUnresolved("localhost", 9413);
-  private final InetSocketAddress address5 = InetSocketAddress.createUnresolved("localhost", 9414);
+  private final HostPort address1 = HostPort.create("localhost", 9410);
+  private final HostPort address2 = HostPort.create("localhost", 9411);
+  private final HostPort address3 = HostPort.create("localhost", 9412);
+  private final HostPort address4 = HostPort.create("localhost", 9413);
+  private final HostPort address5 = HostPort.create("localhost", 9414);
 
   @After
   public void after() {

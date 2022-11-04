@@ -19,8 +19,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import java.time.Duration;
-
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -31,10 +29,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
  */
 @ClusterDefinition(stripes = 2, nodesPerStripe = 2, failoverPriority = "")
 public class AttachCommand2x2IT extends DynamicConfigIT {
-
-  public AttachCommand2x2IT() {
-    super(Duration.ofSeconds(180));
-  }
 
   @Test
   public void test_attach_stripe() throws Exception {

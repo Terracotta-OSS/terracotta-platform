@@ -201,9 +201,13 @@ public abstract class AbstractTest {
   }
 
   protected void addWebappNode() throws Exception {
-    CacheFactory cacheFactory = new CacheFactory(URI.create("passthrough://stripe-1:9510"), "pet-clinic");
+    CacheFactory cacheFactory = new CacheFactory(nextInstanceId(), URI.create("passthrough://stripe-1:9510"), "pet-clinic");
     cacheFactory.init();
     webappNodes.add(cacheFactory);
+  }
+
+  protected final String nextInstanceId() {
+    return "instance-" + webappNodes.size();
   }
 
   public static abstract class CapabilityContextMixin {

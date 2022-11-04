@@ -56,7 +56,7 @@ public class MyObject implements ExposedObject<MyObject> {
 
   @Override
   public Context getContext() {
-    return Context.empty().with("cacheManagerName", cmName).with("cacheName", cName);
+    return Context.empty().with("instanceId", "instance-0").with("cacheManagerName", cmName).with("cacheName", cName);
   }
 
   @Override

@@ -24,12 +24,28 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../..</relativePath>
   </parent>
 
   <groupId>org.terracotta.entities</groupId>
   <artifactId>clustered-map-server</artifactId>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <dependencies>
     <dependency>

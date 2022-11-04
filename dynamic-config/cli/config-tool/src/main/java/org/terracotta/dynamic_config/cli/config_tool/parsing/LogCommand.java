@@ -21,15 +21,14 @@ import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.command.LogAction;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Log all the configuration changes of a node and their details")
 @Usage("-connect-to <hostname[:port]>")
 public class LogCommand extends Command {
-  @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  private InetSocketAddress node;
+  @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
+  private HostPort node;
 
   @Inject
   public final LogAction action;

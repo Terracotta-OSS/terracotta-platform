@@ -14,6 +14,7 @@
       "name": "PassiveTopologyIT",
       "consumerId": 6,
       "managementRegistry": {
+        "rootContext": {},
         "contextContainer": {
           "consumerId": "6",
           "subContexts": []
@@ -116,6 +117,7 @@
       "name": "dynamic-config-management-entity",
       "consumerId": 4,
       "managementRegistry": {
+        "rootContext": {},
         "contextContainer": {
           "consumerId": "4",
           "subContexts": []
@@ -129,6 +131,7 @@
       "name": "pet-clinic/clients",
       "consumerId": 8,
       "managementRegistry": {
+        "rootContext": {},
         "contextContainer": {
           "consumerId": "8",
           "subContexts": []
@@ -268,6 +271,7 @@
       "name": "pet-clinic/pets",
       "consumerId": 7,
       "managementRegistry": {
+        "rootContext": {},
         "contextContainer": {
           "consumerId": "7",
           "subContexts": []

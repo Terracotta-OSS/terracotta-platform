@@ -24,11 +24,10 @@ import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 import org.terracotta.dynamic_config.cli.converter.TypeConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
 @Usage("[-t node|stripe] -d <hostname[:port]> -s <hostname[:port]> [-f] [-W <restart-wait-time>] [-D <restart-delay>]")
@@ -37,8 +36,8 @@ public class DeprecatedAttachCommand extends Command {
   @Parameter(names = {"-t"}, description = "Determine if the sources are nodes or stripes. Default: node", converter = TypeConverter.class)
   protected OperationType operationType = OperationType.NODE;
 
-  @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress destinationAddress;
+  @Parameter(required = true, names = {"-d"}, description = "Destination stripe or cluster", converter = HostPortConverter.class)
+  protected HostPort destinationHostPort;
 
   @Parameter(names = {"-f"}, description = "Force the operation")
   protected boolean force;
@@ -49,8 +48,8 @@ public class DeprecatedAttachCommand extends Command {
   @Parameter(names = {"-D"}, description = "Delay before the server restarts itself. Default: 2s", converter = TimeUnitConverter.class)
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
 
-  @Parameter(required = true, names = {"-s"}, description = "Source node or stripe", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress sourceAddress;
+  @Parameter(required = true, names = {"-s"}, description = "Source node or stripe", converter = HostPortConverter.class)
+  protected HostPort sourceHostPort;
 
   @Inject
   public final AttachAction action;
@@ -66,9 +65,9 @@ public class DeprecatedAttachCommand extends Command {
   @Override
   public void run() {
     action.setOperationType(operationType);
-    action.setDestinationAddress(destinationAddress);
+    action.setDestinationHostPort(destinationHostPort);
     action.setForce(force);
-    action.setSourceAddress(sourceAddress);
+    action.setSourceHostPort(sourceHostPort);
     action.setRestartWaitTime(restartWaitTime);
     action.setRestartDelay(restartDelay);
 

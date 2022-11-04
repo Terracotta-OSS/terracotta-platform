@@ -21,8 +21,8 @@ import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.service.Props;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -496,9 +496,9 @@ public class Cluster implements Cloneable, PropertyHolder {
     return uuid;
   }
 
-  public Optional<Node> findReachableNode(InetSocketAddress addr) {
+  public Optional<Node> findReachableNode(HostPort hostPort) {
     return stripes.stream()
-        .map(stripe -> stripe.findReachableNode(addr).orElse(null))
+        .map(stripe -> stripe.findReachableNode(hostPort).orElse(null))
         .filter(Objects::nonNull)
         .findFirst();
   }
@@ -506,17 +506,17 @@ public class Cluster implements Cloneable, PropertyHolder {
   /**
    * Search all endpoints of all nodes matching this address. A result can contain several endpoints of the same node
    */
-  public Collection<? extends Endpoint> search(Collection<? extends InetSocketAddress> addresses) {
-    return addresses.stream()
+  public Collection<? extends Endpoint> search(Collection<? extends HostPort> hostPorts) {
+    return hostPorts.stream()
         .flatMap(addr -> getNodes().stream().flatMap(node -> node.findEndpoints(addr).stream()))
         .collect(toList());
   }
 
-  public EndpointType determineEndpointType(InetSocketAddress... initiators) {
+  public EndpointType determineEndpointType(HostPort... initiators) {
     return determineEndpointType(Arrays.asList(initiators));
   }
 
-  public EndpointType determineEndpointType(Collection<? extends InetSocketAddress> initiators) {
+  public EndpointType determineEndpointType(Collection<? extends HostPort> initiators) {
     // Search in the topology the endpoints matching exactly the initiators.
     //
     // Note: A node can be returned several times for 2 different endpoint types if its configuration has the same address and port
@@ -546,11 +546,11 @@ public class Cluster implements Cloneable, PropertyHolder {
    *
    * @param initiators Addresses used to load this class, can be null.
    */
-  public Collection<Endpoint> determineEndpoints(InetSocketAddress... initiators) {
+  public Collection<Endpoint> determineEndpoints(HostPort... initiators) {
     return determineEndpoints(Arrays.asList(initiators));
   }
 
-  public Collection<Endpoint> determineEndpoints(Collection<? extends InetSocketAddress> initiators) {
+  public Collection<Endpoint> determineEndpoints(Collection<? extends HostPort> initiators) {
     return determineEndpoints(determineEndpointType(initiators));
   }
 
@@ -558,11 +558,11 @@ public class Cluster implements Cloneable, PropertyHolder {
     return getNodes().stream().map(Node::determineEndpoint).collect(toList());
   }
 
-  public Optional<Endpoint> determineEndpoint(UID nodeUID, InetSocketAddress... initiators) {
+  public Optional<Endpoint> determineEndpoint(UID nodeUID, HostPort... initiators) {
     return determineEndpoint(nodeUID, Arrays.asList(initiators));
   }
 
-  public Optional<Endpoint> determineEndpoint(UID nodeUID, Collection<? extends InetSocketAddress> initiators) {
+  public Optional<Endpoint> determineEndpoint(UID nodeUID, Collection<? extends HostPort> initiators) {
     final EndpointType endpointType = determineEndpointType(initiators);
     return determineEndpoint(nodeUID, endpointType);
   }

@@ -15,12 +15,12 @@
  */
 package org.terracotta.nomad.client.status;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.Consistency;
 import org.terracotta.nomad.client.results.AllResultsReceiver;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.messages.DiscoverResponse;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -45,27 +45,27 @@ public class DiscoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver
   }
 
   @Override
-  public void startDiscovery(Collection<InetSocketAddress> servers) {
+  public void startDiscovery(Collection<HostPort> servers) {
     receiver.startDiscovery(servers);
   }
 
   @Override
-  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
+  public void discovered(HostPort server, DiscoverResponse<T> discovery) {
     receiver.discovered(server, discovery);
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, Throwable reason) {
+  public void discoverFail(HostPort server, Throwable reason) {
     receiver.discoverFail(server, reason);
   }
 
   @Override
-  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<HostPort> committedServers, Collection<HostPort> rolledBackServers) {
     receiver.discoverConfigInconsistent(changeUuid, committedServers, rolledBackServers);
   }
 
   @Override
-  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+  public void discoverConfigPartitioned(Collection<Collection<HostPort>> partitions) {
     receiver.discoverConfigPartitioned(partitions);
   }
 
@@ -80,12 +80,12 @@ public class DiscoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver
   }
 
   @Override
-  public void discoverRepeated(InetSocketAddress server) {
+  public void discoverRepeated(HostPort server) {
     receiver.discoverRepeated(server);
   }
 
   @Override
-  public void discoverOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     receiver.discoverOtherClient(server, lastMutationHost, lastMutationUser);
   }
 
@@ -95,7 +95,7 @@ public class DiscoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver
   }
 
   @Override
-  public void discoverAlreadyPrepared(InetSocketAddress server, UUID changeUuid, String creationHost, String creationUser) {
+  public void discoverAlreadyPrepared(HostPort server, UUID changeUuid, String creationHost, String creationUser) {
     throw new AssertionError("This should not be called during the recovery process");
   }
 
@@ -105,22 +105,22 @@ public class DiscoveryAllResultsReceiverAdapter<T> implements AllResultsReceiver
   }
 
   @Override
-  public void prepared(InetSocketAddress server) {
+  public void prepared(HostPort server) {
     throw new AssertionError("This should not be called during the recovery process");
   }
 
   @Override
-  public void prepareFail(InetSocketAddress server, Throwable reason) {
+  public void prepareFail(HostPort server, Throwable reason) {
     throw new AssertionError("This should not be called during the recovery process");
   }
 
   @Override
-  public void prepareOtherClient(InetSocketAddress server, String lastMutationHost, String lastMutationUser) {
+  public void prepareOtherClient(HostPort server, String lastMutationHost, String lastMutationUser) {
     throw new AssertionError("This should not be called during the recovery process");
   }
 
   @Override
-  public void prepareChangeUnacceptable(InetSocketAddress server, String rejectionReason) {
+  public void prepareChangeUnacceptable(HostPort server, String rejectionReason) {
     throw new AssertionError("This should not be called during the recovery process");
   }
 

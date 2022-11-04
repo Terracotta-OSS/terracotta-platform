@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -31,6 +31,13 @@
   <packaging>pom</packaging>
 
   <dependencies>
+
+    <dependency>
+      <groupId>org.terracotta.test</groupId>
+      <artifactId>test-common</artifactId>
+      <version>${terracotta-core.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <!--
       server/plugins/api
@@ -164,9 +171,19 @@
     </dependency>
 
     <!--
+      tools/voter/lib
+    -->
+
+    <dependency>
+      <groupId>org.terracotta</groupId>
+      <artifactId>voter</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!--
       KIT
     -->
-    
+
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>terracotta-kit</artifactId>

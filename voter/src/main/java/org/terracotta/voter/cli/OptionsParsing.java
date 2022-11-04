@@ -13,18 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terracotta.dynamic_config.test_support;
+package org.terracotta.voter.cli;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-/**
- * @author Mathieu Carbou
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
-public @interface ExtraLogging {
-  String value() default "logback-ext-test.xml";
+public interface OptionsParsing {
+  Options process();
 }

@@ -23,7 +23,6 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.voter.ActiveVoter;
 
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,10 +36,6 @@ import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.succe
 @ClusterDefinition(nodesPerStripe = 3)
 public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
 
-  public AttachCommandWithVoter1x3IT() {
-    super(Duration.ofSeconds(180));
-  }
-
   @Override
   protected FailoverPriority getFailoverPriority() {
     return FailoverPriority.consistency(1);
@@ -49,12 +44,10 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
   @Before
   public void setUp() throws Exception {
     startNode(1, 1);
-    waitForDiagnostic(1, 1);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 1)).getNodeCount(), is(equalTo(1)));
 
     // start the second node
     startNode(1, 2);
-    waitForDiagnostic(1, 2);
     assertThat(getUpcomingCluster("localhost", getNodePort(1, 2)).getNodeCount(), is(equalTo(1)));
 
     //attach the second node
@@ -62,20 +55,17 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
 
     //Activate cluster
     activateCluster();
-    waitForActive(1);
-    waitForNPassives(1, 1);
   }
 
   @Test
   public void testAttachAndVerifyWithVoter() throws Exception {
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
 
     try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
       activeVoter.start();
 
       startNode(1, 3);
-      waitForDiagnostic(1, 3);
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
       assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
@@ -90,6 +80,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
 
       // kill the old passive and detach it from cluster
       stopNode(1, passiveId);
+
       assertThat(configTool("detach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       nodes = new String[]{
@@ -106,14 +97,13 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
 
   @Test
   public void testAttachAfterKillingActive() throws Exception {
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
 
     try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
       activeVoter.start();
 
       startNode(1, 3);
-      waitForDiagnostic(1, 3);
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
       //Kill active so other passive becomes active by the vote of voter
@@ -134,15 +124,14 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
 
   @Test
   public void testStalePassivePortsRemovedFromVoterTopology() throws Exception {
-    int activeId = findActive(1).getAsInt();
-    int passiveId = findPassives(1)[0];
+    int activeId = waitForActive(1);
+    int passiveId = waitForNPassives(1, 1)[0];
 
     try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), "localhost:123", "locahost:235")) {
       // Addding some dummy passive hostPorts to simulate as stale passive hostPorts
       activeVoter.start();
 
       startNode(1, 3);
-      waitForDiagnostic(1, 3);
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(1)));
 
       assertThat(configTool("attach", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));

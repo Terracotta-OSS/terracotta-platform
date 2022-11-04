@@ -26,18 +26,18 @@ import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.ConfigFormatConverter;
 import org.terracotta.dynamic_config.cli.converter.ConfigurationInputConverter;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.List;
 
 @Parameters(commandDescription = "Read configuration properties")
 @Usage("-connect-to <hostname[:port]> [-runtime] [-output-format <cfg|properties>] -setting <[namespace:]setting> -setting <[namespace:]setting> ...")
 public class GetCommand extends Command {
 
-  @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
+  @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
+  HostPort node;
 
   @Parameter(names = {"-setting"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationInputConverter.class)
   List<ConfigurationInput> inputs;

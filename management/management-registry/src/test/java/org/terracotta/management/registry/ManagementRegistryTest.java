@@ -66,6 +66,7 @@ public class ManagementRegistryTest {
     ContextualReturn<?> cr = registry.withCapability("TheActionProvider")
         .call("incr", int.class, new Parameter(Integer.MAX_VALUE, "int"))
         .on(Context.empty()
+            .with("instanceId", "instance-0")
             .with("cacheManagerName", "myCacheManagerName")
             .with("cacheName", "myCacheName1"))
         .build()

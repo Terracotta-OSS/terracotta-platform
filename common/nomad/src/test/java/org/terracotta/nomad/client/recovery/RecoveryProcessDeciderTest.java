@@ -19,11 +19,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.Consistency;
 import org.terracotta.nomad.client.results.AllResultsReceiver;
 import org.terracotta.nomad.server.NomadException;
 
-import java.net.InetSocketAddress;
 import java.util.UUID;
 
 import static java.util.Arrays.asList;
@@ -40,8 +40,8 @@ public class RecoveryProcessDeciderTest {
   private AllResultsReceiver<String> results;
 
   RecoveryProcessDecider<String> decider = new RecoveryProcessDecider<>(2, null);
-  InetSocketAddress address1 = InetSocketAddress.createUnresolved("localhost", 9410);
-  InetSocketAddress address2 = InetSocketAddress.createUnresolved("localhost", 9411);
+  HostPort address1 = HostPort.create("localhost", 9410);
+  HostPort address2 = HostPort.create("localhost", 9411);
 
   @Test
   public void discoverSuccess() {

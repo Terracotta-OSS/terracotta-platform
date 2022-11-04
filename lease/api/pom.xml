@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>lease</artifactId>
-    <version>5.8-SNAPSHOT</version>
+    <version>5.9-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -32,7 +32,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -57,7 +56,7 @@
     </dependency>
     <dependency>
       <groupId>org.terracotta.internal</groupId>
-      <artifactId>common</artifactId>
+      <artifactId>common-spi</artifactId>
       <version>${terracotta-core.version}</version>
       <scope>provided</scope>
     </dependency>

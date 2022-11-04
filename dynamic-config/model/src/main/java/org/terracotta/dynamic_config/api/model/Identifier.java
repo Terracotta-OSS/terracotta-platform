@@ -15,9 +15,8 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import org.terracotta.inet.InetSocketAddressConverter;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
@@ -83,28 +82,28 @@ public class Identifier {
       uid = null;
     }
 
-    InetSocketAddress address;
+    HostPort hostPort;
     try {
-      address = InetSocketAddressConverter.getInetSocketAddress(identifier);
+      hostPort = HostPort.parse(identifier, 9410);
     } catch (RuntimeException e) {
-      address = null;
+      hostPort = null;
     }
 
     switch (type) {
 
       case NODE: {
-        return findNode(cluster.getNodes(), uid, address);
+        return findNode(cluster.getNodes(), uid, hostPort);
       }
 
       case STRIPE: {
-        return findStripe(cluster.getStripes(), uid, address);
+        return findStripe(cluster.getStripes(), uid, hostPort);
       }
 
       case CLUSTER: {
         // ensure this cluster contains the identifier
         return identifier.equals(cluster.getName())
             || cluster.getUID().equals(uid)
-            || findStripe(cluster.getStripes(), uid, address).isPresent() ?
+            || findStripe(cluster.getStripes(), uid, hostPort).isPresent() ?
             Optional.of(cluster) :
             Optional.empty();
       }
@@ -115,7 +114,7 @@ public class Identifier {
     }
   }
 
-  private Optional<Stripe> findStripe(Collection<Stripe> stripes, UID uid, InetSocketAddress address) {
+  private Optional<Stripe> findStripe(Collection<Stripe> stripes, UID uid, HostPort hostPort) {
     for (Stripe stripe : stripes) {
       if (stripe.getName().equals(identifier) || stripe.getUID().equals(uid)) {
         return Optional.of(stripe);
@@ -123,7 +122,7 @@ public class Identifier {
     }
     // not found ? try to search for a node within this stripe
     for (Stripe stripe : stripes) {
-      Optional<Node> node = findNode(stripe.getNodes(), uid, address);
+      Optional<Node> node = findNode(stripe.getNodes(), uid, hostPort);
       if (node.isPresent()) {
         return Optional.of(stripe);
       }
@@ -131,12 +130,12 @@ public class Identifier {
     return Optional.empty();
   }
 
-  private Optional<Node> findNode(Collection<Node> nodes, UID uid, InetSocketAddress address) {
+  private Optional<Node> findNode(Collection<Node> nodes, UID uid, HostPort hostPort) {
     for (Node node : nodes) {
       if (node.getName().equals(identifier)
           || node.getUID().equals(uid)
-          || node.getInternalSocketAddress().equals(address)
-          || node.getPublicSocketAddress().isPresent() && node.getPublicSocketAddress().get().equals(address)) {
+          || node.getInternalHostPort().equals(hostPort)
+          || node.getPublicHostPort().isPresent() && node.getPublicHostPort().get().equals(hostPort)) {
         return Optional.of(node);
       }
     }

@@ -28,8 +28,8 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -49,7 +49,7 @@ public class AttachAction extends TopologyAction {
 
   protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
-  protected InetSocketAddress sourceAddress;
+  protected HostPort sourceHostPort;
 
   // list of new nodes to add with their backup topology
   protected final Map<Endpoint, Cluster> newOnlineNodes = new LinkedHashMap<>();
@@ -59,8 +59,8 @@ public class AttachAction extends TopologyAction {
   protected Stripe addedStripe;
   protected Node addedNode;
 
-  public void setSourceAddress(InetSocketAddress sourceAddress) {
-    this.sourceAddress = sourceAddress;
+  public void setSourceHostPort(HostPort sourceHostPort) {
+    this.sourceHostPort = sourceHostPort;
   }
 
   public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
@@ -75,7 +75,7 @@ public class AttachAction extends TopologyAction {
   protected void validate() {
     super.validate();
 
-    source = getEndpoint(sourceAddress);
+    source = getEndpoint(sourceHostPort);
     sourceCluster = getUpcomingCluster(source);
 
     if (destination.getNodeUID().equals(source.getNodeUID())) {
@@ -112,14 +112,14 @@ public class AttachAction extends TopologyAction {
      update the topology of "cluster A" so that the detached nodes won't be there anymore and can be attached somewhere else.
      "cluster A" could then be activated without impacting the "cluster B" used in the attach command.
      */
+    Stripe destinationStripe = destinationCluster.getStripeByNode(destination.getNodeUID()).get();
     if (operationType == NODE) {
       validateLogOrFail(
           () -> sourceCluster.getNodeCount() == 1,
           "Source node: " + source + " is part of a stripe containing more than 1 nodes. " +
               "It must be detached first before being attached to a new stripe. " +
               "Please refer to the Troubleshooting Guide for more help.");
-
-      Stripe destinationStripe = destinationCluster.getStripeByNode(destination.getNodeUID()).get();
+      
       FailoverPriority failoverPriority = destinationCluster.getFailoverPriority().orElse(null);
       if (failoverPriority != null && failoverPriority.getType() == CONSISTENCY) {
         int voterCount = failoverPriority.getVoters();
@@ -163,7 +163,7 @@ public class AttachAction extends TopologyAction {
         addedNode.setUID(destinationCluster.newUID());
 
         if (destinationClusterActivated) {
-          NameGenerator.assignFriendlyNodeName(destinationCluster, addedNode);
+          NameGenerator.assignFriendlyNodeName(destinationCluster, destinationStripe, addedNode);
         }
         break;
       }

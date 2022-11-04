@@ -25,24 +25,23 @@ import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.IdentifierConverter;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Detach a node from a stripe, or a stripe from a cluster")
-@Usage("(-from-cluster <hostname[:port]> -stripe [<hostname[:port]>|uid|name] | -from-stripe <hostname[:port]> -node [<hostname[:port]>|uid|name]) [-stop-wait-time <stop-wait-time>] [-stop-delay <stop-delay>]")
+@Usage("(-stripe [<hostname[:port]>|uid|name] -from-cluster <hostname[:port]> | -node [<hostname[:port]>|uid|name] -from-stripe <hostname[:port]>) [-stop-wait-time <stop-wait-time>] [-stop-delay <stop-delay>]")
 public class DetachCommand extends Command {
 
-  @Parameter(names = {"-from-cluster"}, description = "Cluster to detach from", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress destinationClusterAddress;
+  @Parameter(names = {"-from-cluster"}, description = "Cluster to detach from", converter = HostPortConverter.class)
+  protected HostPort destinationCluster;
 
   @Parameter(names = {"-stripe"}, description = "Source node or stripe (address, name or UID)", converter = IdentifierConverter.class)
   protected Identifier sourceStripeIdentifier;
 
-  @Parameter(names = {"-from-stripe"}, description = "Stripe to detach from", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress destinationStripeAddress;
+  @Parameter(names = {"-from-stripe"}, description = "Stripe to detach from", converter = HostPortConverter.class)
+  protected HostPort destinationStripe;
 
   @Parameter(names = {"-node"}, description = "Node to be detached", converter = IdentifierConverter.class)
   protected Identifier sourceNodeIdentifier;
@@ -69,24 +68,24 @@ public class DetachCommand extends Command {
 
   @Override
   public void run() {
-    if ((destinationClusterAddress != null && sourceStripeIdentifier == null) ||
-        (destinationClusterAddress == null && sourceStripeIdentifier != null)) {
+    if ((destinationCluster != null && sourceStripeIdentifier == null) ||
+        (destinationCluster == null && sourceStripeIdentifier != null)) {
       throw new IllegalArgumentException("Both -from-cluster and -stripe must be provided for stripe detachment from cluster");
     }
-    if ((destinationStripeAddress != null && sourceNodeIdentifier == null) ||
-        (destinationStripeAddress == null && sourceNodeIdentifier != null)) {
+    if ((destinationStripe != null && sourceNodeIdentifier == null) ||
+        (destinationStripe == null && sourceNodeIdentifier != null)) {
       throw new IllegalArgumentException("Both -from-stripe and -node must be provided for node deletion from cluster");
     }
-    if (destinationClusterAddress != null && destinationStripeAddress != null) {
+    if (destinationCluster != null && destinationStripe != null) {
       throw new IllegalArgumentException("Either you can perform stripe deletion from the cluster or node deletion from the stripe");
     }
-    if (destinationClusterAddress != null) {
+    if (destinationCluster != null) {
       action.setOperationType(OperationType.STRIPE);
-      action.setDestinationAddress(destinationClusterAddress);
+      action.setDestinationHostPort(destinationCluster);
       action.setSourceIdentifier(sourceStripeIdentifier);
-    } else if (destinationStripeAddress != null) {
+    } else if (destinationStripe != null) {
       action.setOperationType(OperationType.NODE);
-      action.setDestinationAddress(destinationStripeAddress);
+      action.setDestinationHostPort(destinationStripe);
       action.setSourceIdentifier(sourceNodeIdentifier);
     }
     action.setForce(force);

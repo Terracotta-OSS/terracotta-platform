@@ -21,8 +21,8 @@ import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.Operation;
 import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Setting;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -35,7 +35,7 @@ import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 
 public abstract class ConfigurationAction extends RemoteAction {
 
-  protected InetSocketAddress node;
+  protected HostPort node;
   protected List<Configuration> configurations;
   protected List<ConfigurationInput> inputs;
 
@@ -50,7 +50,7 @@ public abstract class ConfigurationAction extends RemoteAction {
     this.operation = operation;
   }
 
-  public void setNode(InetSocketAddress node) {
+  public void setNode(HostPort node) {
     this.node = node;
   }
 
