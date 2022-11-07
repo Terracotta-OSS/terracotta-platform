@@ -28,12 +28,10 @@ import org.terracotta.dynamic_config.entity.topology.common.Response;
 import org.terracotta.dynamic_config.entity.topology.common.Type;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvokeFuture;
-import org.terracotta.entity.MessageCodecException;
-import org.terracotta.exception.EntityException;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -154,13 +152,12 @@ class DynamicTopologyEntityImpl implements DynamicTopologyEntity {
     LOGGER.trace("request({})", messageType);
     Duration requestTimeout = settings.getRequestTimeout();
     try {
-      InvokeFuture<Response> invoke = endpoint.beginInvoke()
-          .message(new Message(messageType))
+      Future<Response> invoke = endpoint.message(new Message(messageType))
           .invoke();
-      Response response = (requestTimeout == null ? invoke.get() : invoke.getWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS));
+      Response response = (requestTimeout == null ? invoke.get() : invoke.get(requestTimeout.toMillis(), TimeUnit.MILLISECONDS));
       LOGGER.trace("response({})", response);
       return type.cast(response.getPayload());
-    } catch (MessageCodecException | EntityException e) {
+    } catch (ExecutionException e) {
       throw new AssertionError(e); // programming error
     }
   }

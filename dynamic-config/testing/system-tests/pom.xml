@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta.dynamic-config.testing</groupId>
     <artifactId>dynamic-config-testing</artifactId>
-    <version>5.9-SNAPSHOT</version>
+    <version>5.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -101,6 +101,18 @@
             <configuration>
               <outputDirectory>${project.build.directory}/angela</outputDirectory>
               <artifactItems>
+                <artifactItem>
+                  <fileMappers>
+                    <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                      <pattern>^\Qterracotta-${terracotta-core.version}\E</pattern>
+                      <replacement>./platform-kit-${project.version}</replacement>
+                    </org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>
+                  </fileMappers>
+                  <groupId>org.terracotta.internal</groupId>
+                  <artifactId>terracotta-kit</artifactId>
+                  <version>${terracotta-core.version}</version>
+                  <type>tar.gz</type>
+                </artifactItem>
                 <artifactItem>
                   <groupId>org.terracotta</groupId>
                   <artifactId>platform-kit</artifactId>

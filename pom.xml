@@ -26,7 +26,7 @@
   </parent>
 
   <artifactId>platform-root</artifactId>
-  <version>5.9-SNAPSHOT</version>
+  <version>5.10-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -35,15 +35,15 @@
     <slf4j.range.version>[${slf4j.base.version},1.7.9999)</slf4j.range.version>
     <logback.base.version>1.2.11</logback.base.version>
     <logback.range.version>[${logback.base.version},1.2.9999)</logback.range.version>
-    <terracotta-apis.version>1.8.2</terracotta-apis.version>
-    <terracotta-configuration.version>10.7.3</terracotta-configuration.version>
-    <passthrough-testing.version>1.8.4</passthrough-testing.version>
-    <terracotta-core.version>5.9.5</terracotta-core.version>
+    <terracotta-apis.version>1.9.0</terracotta-apis.version>
+    <terracotta-configuration.version>10.7.4</terracotta-configuration.version>
+    <passthrough-testing.version>1.9.0</passthrough-testing.version>
+    <terracotta-core.version>5.10.4</terracotta-core.version>
     <tripwire.version>1.0.4</tripwire.version>
     <galvan.version>1.6.5</galvan.version>
-    <angela.version>3.3.25</angela.version>
+    <angela.version>3.3.26</angela.version>
     <statistics.version>2.1.2</statistics.version>
-    <jackson.version>2.13.2.20220328</jackson.version>
+    <jackson.version>2.13.4</jackson.version>
     <terracotta-utilities.base.version>0.0.14</terracotta-utilities.base.version>
     <terracotta-utilities.range.version>[${terracotta-utilities.base.version},)</terracotta-utilities.range.version>
     <test.parallel.forks>4</test.parallel.forks>
@@ -53,10 +53,6 @@
   <modules>
     <module>offheap-resource</module>
     <module>voltron-proxy</module>
-    <module>concurrent-map-entity/common</module>
-    <module>concurrent-map-entity/client</module>
-    <module>concurrent-map-entity/server</module>
-    <module>concurrent-map-entity/integration-tests</module>
     <module>communicator-support</module>
     <module>healthchecker-entity</module>
     <module>lease</module>
@@ -130,11 +126,6 @@
         <groupId>org.terracotta.internal</groupId>
         <artifactId>tc-config-parser</artifactId>
         <version>${terracotta-configuration.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.terracotta.internal</groupId>
-        <artifactId>common</artifactId>
-        <version>${terracotta-core.version}</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta.internal</groupId>
@@ -313,7 +304,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.3.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>

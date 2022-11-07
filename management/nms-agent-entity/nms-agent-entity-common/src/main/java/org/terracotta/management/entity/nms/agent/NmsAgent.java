@@ -43,7 +43,7 @@ public interface NmsAgent {
    * @param clientDescriptor must be null, used only for implementation
    * @deprecated Use instead: {@link #exposeManagementMetadata(Object, Context, ContextContainer, Capability...)}
    */
-  @Async(Async.Ack.NONE)
+  @Async
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
   @Deprecated
@@ -58,7 +58,7 @@ public interface NmsAgent {
    * @param capabilities     output from Management registry
    * @param clientDescriptor must be null, used only for implementation
    */
-  @Async(Async.Ack.NONE)
+  @Async
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
   Future<Void> exposeManagementMetadata(@ClientId Object clientDescriptor, Context root, ContextContainer contextContainer, Capability... capabilities);
@@ -69,7 +69,7 @@ public interface NmsAgent {
    * @param clientDescriptor must be null, used only for implementation
    * @param tags             the tags to expose for this client
    */
-  @Async(Async.Ack.NONE)
+  @Async
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
   Future<Void> exposeTags(@ClientId Object clientDescriptor, String... tags);
@@ -77,7 +77,7 @@ public interface NmsAgent {
   /**
    * Return a result from a received management call
    */
-  @Async(Async.Ack.NONE)
+  @Async
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
   Future<Void> answerManagementCall(@ClientId Object clientDescriptor, String managementCallId, ContextualReturn<?> contextualReturn);
@@ -88,7 +88,7 @@ public interface NmsAgent {
    * @param notification     the client's notification
    * @param clientDescriptor must be null, used only for implementation
    */
-  @Async(Async.Ack.NONE)
+  @Async
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
   Future<Void> pushNotification(@ClientId Object clientDescriptor, ContextualNotification notification);
@@ -99,7 +99,7 @@ public interface NmsAgent {
    * @param statistics       the client's stats
    * @param clientDescriptor must be null, used only for implementation
    */
-  @Async(Async.Ack.NONE)
+  @Async
   @ConcurrencyStrategy(key = ConcurrencyStrategy.UNIVERSAL_KEY)
   @ExecutionStrategy(location = ACTIVE)
   Future<Void> pushStatistics(@ClientId Object clientDescriptor, ContextualStatistics... statistics);

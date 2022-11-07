@@ -323,26 +323,32 @@ public class DefaultNmsAgentService implements EndpointListener, MessageListener
 
   protected void runOperation(Supplier<Future<?>> op) {
     if (!isClosed()) {
-      Future<?> future;
       try {
-        future = op.get();
-      } catch (ConnectionClosedException | ConnectionShutdownException e) {
-        flushEntity();
-        onOperationError.accept(() -> runOperation(op), e);
-        return;
-      }
-      try {
-        future.get(timeoutMs, TimeUnit.MILLISECONDS);
+        op.get().get(timeoutMs, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-        // do not flush entity: these exception do not mean that the connection is broken
+        if (containsCause(e, ConnectionClosedException.class) || containsCause(e, ConnectionShutdownException.class)) {
+            flushEntity();
+        }
         onOperationError.accept(() -> runOperation(op), e.getCause());
       } catch (TimeoutException | RuntimeException e) {
         // do not flush entity: these exception do not mean that the connection is broken
         onOperationError.accept(() -> runOperation(op), e);
       }
     }
+  }
+
+
+  private boolean containsCause(Throwable failure, Class<? extends Throwable> cause) {
+    Throwable intermediate = failure;
+    do {
+      if (cause.isInstance(intermediate)) {
+        return true;
+      }
+    } while ((intermediate = intermediate.getCause()) != null);
+
+    return false;
   }
 
   protected NmsAgentEntity getEntity() {

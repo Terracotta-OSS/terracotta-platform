@@ -18,8 +18,7 @@ package org.terracotta.nomad.entity.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.InvocationBuilder;
-import org.terracotta.entity.MessageCodecException;
+import org.terracotta.entity.Invocation;
 import org.terracotta.exception.EntityException;
 import org.terracotta.nomad.entity.common.NomadEntityMessage;
 import org.terracotta.nomad.entity.common.NomadEntityResponse;
@@ -28,6 +27,7 @@ import org.terracotta.nomad.messages.MutativeMessage;
 import org.terracotta.nomad.server.NomadException;
 
 import java.time.Duration;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -55,27 +55,28 @@ class NomadEntityImpl<T> implements NomadEntity<T> {
     LOGGER.trace("send({})", mutativeMessage);
     Duration requestTimeout = settings.getRequestTimeout();
     try {
-      InvocationBuilder<NomadEntityMessage, NomadEntityResponse> builder = endpoint.beginInvoke()
-          .message(new NomadEntityMessage(mutativeMessage))
-          .replicate(true)
-          .ackRetired()
-          .blockGetOnRetire(true);
+      Invocation<NomadEntityResponse> builder = endpoint.message(new NomadEntityMessage(mutativeMessage));
       AcceptRejectResponse response;
       if (requestTimeout == null) {
-        response = builder.invoke().get().getResponse();
+        response = builder.invokeAndRetire().get().getResponse();
       } else {
-        response = builder.invokeWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS).getWithTimeout(requestTimeout.toMillis(), TimeUnit.MILLISECONDS).getResponse();
+        response = builder.invokeAndRetire().get(requestTimeout.toMillis(), TimeUnit.MILLISECONDS).getResponse();
       }
       LOGGER.trace("response({})", response);
       return response;
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new NomadException(e);
-    } catch (EntityException e) {
+    } catch (ExecutionException e) {
       // unwrap the execution exception eventually thrown by nomad in the server entity
-      Throwable t = e.getCause() == null ? e : e.getCause();
-      throw new NomadException(t.getMessage(), t);
-    } catch (MessageCodecException | TimeoutException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof EntityException) {
+        Throwable t = cause.getCause() == null ? cause : cause.getCause();
+        throw new NomadException(t.getMessage(), t.getCause());
+      } else {
+        throw new NomadException(cause.getMessage(), cause);
+      }
+    } catch (TimeoutException e) {
       throw new NomadException(e);
     }
   }

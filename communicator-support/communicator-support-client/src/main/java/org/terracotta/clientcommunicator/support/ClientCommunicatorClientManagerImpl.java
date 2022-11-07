@@ -76,7 +76,7 @@ public class ClientCommunicatorClientManagerImpl<M extends EntityMessage, R exte
             case ACK:
                 clientCommunicatorMessageHandler.handleMessage(clientCommunicatorRequest.getMsgBytes());
                 try {
-                    entityClientEndpoint.beginInvoke().message(clientCommunicatorMessageFactory.createEntityMessage(ByteBuffer.allocate(4).putInt(clientCommunicatorRequest.getRequestSequenceNumber()).array())).invoke();
+                    entityClientEndpoint.message(clientCommunicatorMessageFactory.createEntityMessage(ByteBuffer.allocate(4).putInt(clientCommunicatorRequest.getRequestSequenceNumber()).array())).invoke();
                 } catch (MessageCodecException e) {
                     throw new RuntimeException(e);
                 }
