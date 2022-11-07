@@ -30,7 +30,7 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-vote-for", "-o"}, description = "Override vote to host:port")
   private String overrideHostPort;
 
-  @Parameter(names = {"-connect-to", "-s"}, description = "Comma separated host:port to connect to (one per stripe)", splitter = NoCommaSplitter.class)
+  @Parameter(names = {"-connect-to", "-s"}, description = "Comma separated host:port to connect to (one per stripe)")
   private List<String> serversHostPort;
 
   @Override

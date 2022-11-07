@@ -18,6 +18,11 @@ package org.terracotta.voter;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.Node;
+import org.terracotta.dynamic_config.api.model.Stripe;
+import org.terracotta.dynamic_config.api.model.UID;
+import org.terracotta.voter.cli.Options;
 import org.terracotta.voter.cli.TCVoterMain;
 
 import java.util.Optional;
@@ -27,6 +32,7 @@ import static org.hamcrest.Matchers.arrayContaining;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.terracotta.dynamic_config.api.model.UID.newUID;
 
 public class TCVoterMainTest {
 
@@ -58,6 +64,13 @@ public class TCVoterMainTest {
       protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
         assertThat(hostPorts, arrayContaining(hostPort));
       }
+
+      @Override
+      protected Cluster fetchTopology(Options options) {
+        return new Cluster(new Stripe().setUID(newUID())
+            .addNode(new Node().setUID(newUID()).setName("foo").setHostname("foo").setPort(1234))
+        );
+      }
     };
 
     String[] args = new String[]{"-s", hostPort};
@@ -73,6 +86,14 @@ public class TCVoterMainTest {
       protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
         assertThat(hostPorts, arrayContaining(hostPort1, hostPort2));
       }
+
+      @Override
+      protected Cluster fetchTopology(Options options) {
+        return new Cluster(new Stripe().setUID(newUID())
+            .addNode(new Node().setUID(newUID()).setName("foo").setHostname("foo").setPort(1234))
+            .addNode(new Node().setUID(newUID()).setName("bar").setHostname("bar").setPort(2345))
+        );
+      }
     };
 
     String[] args = new String[]{"-s", hostPort1 + "," + hostPort2};
@@ -81,12 +102,20 @@ public class TCVoterMainTest {
 
   @Test
   public void testMultipleServerOpts() {
-    TCVoterMain voterMain = new TCVoterMain();
+    TCVoterMain voterMain = new TCVoterMain() {
+      @Override
+      protected Cluster fetchTopology(Options options) {
+        return new Cluster(
+            new Stripe().setUID(newUID()).addNode(new Node().setUID(newUID()).setName("foo").setHostname("foo").setPort(1234)),
+            new Stripe().setUID(newUID()).addNode(new Node().setUID(newUID()).setName("bar").setHostname("bar").setPort(2345))
+        );
+      }
+    };
 
     String[] args = new String[]{"-s", "foo:1234", "-s", "bar:2345"};
 
     expectedException.expect(RuntimeException.class);
-    expectedException.expectMessage("Usage of multiple -connect-to options not supported");
+    expectedException.expectMessage("Usage of multiple stripes is not supported");
     voterMain.processArgs(args);
   }
 
