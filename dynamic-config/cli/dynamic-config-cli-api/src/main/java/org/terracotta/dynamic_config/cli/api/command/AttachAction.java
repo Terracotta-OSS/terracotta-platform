@@ -28,8 +28,8 @@ import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -49,7 +49,7 @@ public class AttachAction extends TopologyAction {
 
   protected Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
   protected Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
-  protected InetSocketAddress sourceAddress;
+  protected HostPort sourceHostPort;
 
   // list of new nodes to add with their backup topology
   protected final Map<Endpoint, Cluster> newOnlineNodes = new LinkedHashMap<>();
@@ -59,8 +59,8 @@ public class AttachAction extends TopologyAction {
   protected Stripe addedStripe;
   protected Node addedNode;
 
-  public void setSourceAddress(InetSocketAddress sourceAddress) {
-    this.sourceAddress = sourceAddress;
+  public void setSourceHostPort(HostPort sourceHostPort) {
+    this.sourceHostPort = sourceHostPort;
   }
 
   public void setRestartWaitTime(Measure<TimeUnit> restartWaitTime) {
@@ -75,7 +75,7 @@ public class AttachAction extends TopologyAction {
   protected void validate() {
     super.validate();
 
-    source = getEndpoint(sourceAddress);
+    source = getEndpoint(sourceHostPort);
     sourceCluster = getUpcomingCluster(source);
 
     if (destination.getNodeUID().equals(source.getNodeUID())) {

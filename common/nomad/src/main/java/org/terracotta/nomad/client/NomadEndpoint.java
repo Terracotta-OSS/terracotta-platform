@@ -15,6 +15,7 @@
  */
 package org.terracotta.nomad.client;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.CommitMessage;
 import org.terracotta.nomad.messages.DiscoverResponse;
@@ -25,23 +26,22 @@ import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
-import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 
 public class NomadEndpoint<T> implements NomadServer<T> {
-  private final InetSocketAddress address;
+  private final HostPort hostPort;
   private final NomadServer<T> server;
 
-  public NomadEndpoint(InetSocketAddress address, NomadServer<T> server) {
-    this.address = requireNonNull(address);
+  public NomadEndpoint(HostPort hostPort, NomadServer<T> server) {
+    this.hostPort = requireNonNull(hostPort);
     this.server = requireNonNull(server);
   }
 
-  public InetSocketAddress getAddress() {
-    return address;
+  public HostPort getHostPort() {
+    return hostPort;
   }
 
   @Override
@@ -88,9 +88,6 @@ public class NomadEndpoint<T> implements NomadServer<T> {
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("NomadEndpoint{");
-    sb.append("address=").append(address);
-    sb.append('}');
-    return sb.toString();
+    return hostPort.toString();
   }
 }

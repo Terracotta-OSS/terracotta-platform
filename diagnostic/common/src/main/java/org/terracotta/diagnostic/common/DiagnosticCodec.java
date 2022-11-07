@@ -39,8 +39,11 @@ public interface DiagnosticCodec<E> {
    * @return The codec composition
    */
   default <F> DiagnosticCodec<E> around(DiagnosticCodec<F> first) {
+    return around(first, this);
+  }
+
+  static <F, E> DiagnosticCodec<E> around(DiagnosticCodec<F> first, DiagnosticCodec<E> second) {
     requireNonNull(first);
-    DiagnosticCodec<E> second = this;
     return new DiagnosticCodecSkeleton<E>(second.getEncodedType()) {
       @Override
       public E serialize(Object o) throws DiagnosticCodecException {

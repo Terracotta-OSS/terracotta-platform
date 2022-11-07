@@ -43,7 +43,7 @@
     <galvan.version>1.6.5</galvan.version>
     <angela.version>3.3.25</angela.version>
     <statistics.version>2.1.2</statistics.version>
-    <jackson.version>2.13.2.20220328</jackson.version>
+    <jackson.version>2.13.4</jackson.version>
     <terracotta-utilities.base.version>0.0.14</terracotta-utilities.base.version>
     <terracotta-utilities.range.version>[${terracotta-utilities.base.version},)</terracotta-utilities.range.version>
     <test.parallel.forks>4</test.parallel.forks>

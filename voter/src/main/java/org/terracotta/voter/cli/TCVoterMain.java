@@ -28,7 +28,7 @@ import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.inet.InetSocketAddressConverter;
+import org.terracotta.inet.HostPort;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.voter.ActiveVoter;
 import org.terracotta.voter.TCVoter;
@@ -107,7 +107,7 @@ public class TCVoterMain {
 
     final Map<String, InetSocketAddress> addresses = options.getServersHostPort()
         .stream()
-        .collect(toMap(identity(), InetSocketAddressConverter::getInetSocketAddress, (value1, value2) -> value1));
+        .collect(toMap(identity(), hostPort -> HostPort.parse(hostPort, 9410).createInetSocketAddress(), (value1, value2) -> value1));
 
     try (final DiagnosticServices<String> diagnosticServices = multiDiagnosticServiceProvider.fetchAnyOnlineDiagnosticService(addresses)) {
       return diagnosticServices.getOnlineEndpoints()
@@ -134,12 +134,12 @@ public class TCVoterMain {
     validateCLuster(cluster);
 
     // The endpoints we should use (public or internal) based on the user-provided list
-    final List<InetSocketAddress> initiators = options.getServersHostPort().stream().map(InetSocketAddressConverter::getInetSocketAddress).collect(toList());
+    final List<HostPort> initiators = options.getServersHostPort().stream().map(hostPort -> HostPort.parse(hostPort, 9410)).collect(toList());
     cluster.determineEndpoints(initiators)
         .stream()
         .collect(groupingBy(
             endpoint -> cluster.getStripeByNode(endpoint.getNodeUID()).get().getUID(),
-            mapping(endpoint -> endpoint.getAddress().toString(), toList())))
+            mapping(endpoint -> endpoint.getHostPort().toString(), toList())))
         .forEach((uid, endpoints) -> startVoter(connectionProps, endpoints.toArray(new String[0])));
   }
 

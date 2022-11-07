@@ -19,13 +19,13 @@ import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.recovery.RecoveryProcessDecider;
 import org.terracotta.nomad.client.results.DiscoverResultsReceiver;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.NomadServerMode;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -60,8 +60,8 @@ import static org.terracotta.dynamic_config.api.service.ConfigurationConsistency
  */
 public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver<NodeContext> {
 
-  private final Map<InetSocketAddress, DiscoverResponse<NodeContext>> responses;
-  private final Map<InetSocketAddress, LogicalServerState> allNodes;
+  private final Map<HostPort, DiscoverResponse<NodeContext>> responses;
+  private final Map<HostPort, LogicalServerState> allNodes;
   private final RecoveryProcessDecider<NodeContext> recoveryProcessDecider;
 
   private volatile Throwable discoverFailure;
@@ -69,36 +69,36 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
   private volatile boolean discoveredOtherClient;
 
   private volatile UUID inconsistentChangeUuid;
-  private volatile Collection<InetSocketAddress> committedNodes;
-  private volatile Collection<InetSocketAddress> rolledBackNodes;
+  private volatile Collection<HostPort> committedNodes;
+  private volatile Collection<HostPort> rolledBackNodes;
 
   private volatile boolean discoveredConfigPartitioned;
-  private volatile Collection<Collection<InetSocketAddress>> partitions;
+  private volatile Collection<Collection<HostPort>> partitions;
 
-  private volatile InetSocketAddress nodeProcessingOtherClient;
+  private volatile HostPort nodeProcessingOtherClient;
   private volatile String otherClientHost;
   private volatile String otherClientUser;
 
-  public ConfigurationConsistencyAnalyzer(Map<InetSocketAddress, LogicalServerState> allNodes) {
+  public ConfigurationConsistencyAnalyzer(Map<HostPort, LogicalServerState> allNodes) {
     this.allNodes = allNodes;
     this.responses = new LinkedHashMap<>(allNodes.size());
     this.recoveryProcessDecider = new RecoveryProcessDecider<>(allNodes.size(), null);
   }
 
   @Override
-  public void discovered(InetSocketAddress nodeAddress, DiscoverResponse<NodeContext> discovery) {
+  public void discovered(HostPort nodeAddress, DiscoverResponse<NodeContext> discovery) {
     recoveryProcessDecider.discovered(nodeAddress, discovery);
     responses.put(nodeAddress, discovery);
   }
 
   @Override
-  public void discoverFail(InetSocketAddress server, Throwable reason) {
+  public void discoverFail(HostPort server, Throwable reason) {
     recoveryProcessDecider.discoverFail(server, reason);
     discoverFailure = reason;
   }
 
   @Override
-  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<HostPort> committedServers, Collection<HostPort> rolledBackServers) {
     recoveryProcessDecider.discoverConfigInconsistent(changeUuid, committedServers, rolledBackServers);
     this.inconsistentChangeUuid = changeUuid;
     this.committedNodes = committedServers;
@@ -107,14 +107,14 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
   }
 
   @Override
-  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+  public void discoverConfigPartitioned(Collection<Collection<HostPort>> partitions) {
     recoveryProcessDecider.discoverConfigPartitioned(partitions);
     this.discoveredConfigPartitioned = true;
     this.partitions = partitions;
   }
 
   @Override
-  public void discoverOtherClient(InetSocketAddress nodeAddress, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(HostPort nodeAddress, String lastMutationHost, String lastMutationUser) {
     recoveryProcessDecider.discoverOtherClient(nodeAddress, lastMutationHost, lastMutationUser);
     this.nodeProcessingOtherClient = nodeAddress;
     this.otherClientHost = lastMutationHost;
@@ -126,15 +126,15 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     return allNodes.size();
   }
 
-  public Map<InetSocketAddress, LogicalServerState> getAllNodes() {
+  public Map<HostPort, LogicalServerState> getAllNodes() {
     return allNodes;
   }
 
-  public LogicalServerState getState(InetSocketAddress endpoint) {
+  public LogicalServerState getState(HostPort endpoint) {
     return allNodes.get(endpoint);
   }
 
-  public Optional<DiscoverResponse<NodeContext>> getDiscoveryResponse(InetSocketAddress endpoint) {
+  public Optional<DiscoverResponse<NodeContext>> getDiscoveryResponse(HostPort endpoint) {
     return Optional.ofNullable(responses.get(endpoint));
   }
 
@@ -148,21 +148,21 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     return inconsistentChangeUuid;
   }
 
-  public Collection<InetSocketAddress> getCommittedNodes() {
+  public Collection<HostPort> getCommittedNodes() {
     return committedNodes;
   }
 
-  public Collection<InetSocketAddress> getRolledBackNodes() {
+  public Collection<HostPort> getRolledBackNodes() {
     return rolledBackNodes;
   }
 
-  public Collection<Collection<InetSocketAddress>> getPartitions() {
+  public Collection<Collection<HostPort>> getPartitions() {
     return partitions;
   }
 
   // discoverOtherClient
 
-  public InetSocketAddress getNodeProcessingOtherClient() {
+  public HostPort getNodeProcessingOtherClient() {
     return nodeProcessingOtherClient;
   }
 
@@ -180,13 +180,13 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     return responses.size();
   }
 
-  public Map<InetSocketAddress, LogicalServerState> getOnlineNodes() {
+  public Map<HostPort, LogicalServerState> getOnlineNodes() {
     return responses.entrySet()
         .stream()
         .collect(responseEntryToMap());
   }
 
-  public Map<InetSocketAddress, LogicalServerState> getOnlineNodesActivated() {
+  public Map<HostPort, LogicalServerState> getOnlineNodesActivated() {
     // activated nodes are passive / actives that have some nomad changes
     return responses.entrySet()
         .stream()
@@ -194,7 +194,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
         .collect(responseEntryToMap());
   }
 
-  public Map<InetSocketAddress, LogicalServerState> getOnlineNodesInRepair() {
+  public Map<HostPort, LogicalServerState> getOnlineNodesInRepair() {
     // nodes in repair are started in diagnostic mode and have nomad changes
     return responses.entrySet()
         .stream()
@@ -202,7 +202,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
         .collect(responseEntryToMap());
   }
 
-  public Map<InetSocketAddress, LogicalServerState> getOnlineNodesInConfiguration() {
+  public Map<HostPort, LogicalServerState> getOnlineNodesInConfiguration() {
     // new nodes in configuration are started in diagnostic mode and have no nomad change yet
     return responses.entrySet()
         .stream()
@@ -353,7 +353,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
         .orElse("New configuration changes are possible.");
   }
 
-  private Collector<Map.Entry<InetSocketAddress, DiscoverResponse<NodeContext>>, ?, LinkedHashMap<InetSocketAddress, LogicalServerState>> responseEntryToMap() {
+  private Collector<Map.Entry<HostPort, DiscoverResponse<NodeContext>>, ?, LinkedHashMap<HostPort, LogicalServerState>> responseEntryToMap() {
     return toMap(
         Map.Entry::getKey,
         e -> allNodes.getOrDefault(e.getKey(), LogicalServerState.UNKNOWN),

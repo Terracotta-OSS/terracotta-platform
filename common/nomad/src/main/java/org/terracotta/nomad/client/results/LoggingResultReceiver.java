@@ -17,13 +17,13 @@ package org.terracotta.nomad.client.results;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.Consistency;
 import org.terracotta.nomad.client.change.ChangeResultReceiver;
 import org.terracotta.nomad.client.recovery.RecoveryResultReceiver;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.ChangeRequestState;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.UUID;
 
@@ -37,17 +37,17 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void takeover(InetSocketAddress node) {
+  public void takeover(HostPort node) {
     log("Takeover: " + node);
   }
 
   @Override
-  public void takeoverOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+  public void takeoverOtherClient(HostPort node, String lastMutationHost, String lastMutationUser) {
     error("Takeover of other client: node=" + node + ", lastMutationHost=" + lastMutationHost + ", lastMutationUser=" + lastMutationUser);
   }
 
   @Override
-  public void takeoverFail(InetSocketAddress node, Throwable reason) {
+  public void takeoverFail(HostPort node, Throwable reason) {
     error("Takeover has failed: " + node, reason);
   }
 
@@ -57,32 +57,32 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void startDiscovery(Collection<InetSocketAddress> servers) {
+  public void startDiscovery(Collection<HostPort> servers) {
     log("Gathering state from servers: " + servers);
   }
 
   @Override
-  public void discovered(InetSocketAddress node, DiscoverResponse<T> discovery) {
+  public void discovered(HostPort node, DiscoverResponse<T> discovery) {
     log("Received node state for: " + node);
   }
 
   @Override
-  public void discoverFail(InetSocketAddress node, Throwable reason) {
+  public void discoverFail(HostPort node, Throwable reason) {
     error("Discover failed on node: " + node, reason);
   }
 
   @Override
-  public void discoverAlreadyPrepared(InetSocketAddress node, UUID changeUUID, String creationHost, String creationUser) {
+  public void discoverAlreadyPrepared(HostPort node, UUID changeUUID, String creationHost, String creationUser) {
     error("Another change (with UUID " + changeUUID + " is already underway on " + node + ". It was started by " + creationUser + " on " + creationHost);
   }
 
   @Override
-  public void discoverConfigInconsistent(UUID changeUuid, Collection<InetSocketAddress> committedServers, Collection<InetSocketAddress> rolledBackServers) {
+  public void discoverConfigInconsistent(UUID changeUuid, Collection<HostPort> committedServers, Collection<HostPort> rolledBackServers) {
     error("UNRECOVERABLE: Inconsistent config for change: " + changeUuid + ". Committed on: " + committedServers + "; rolled back on: " + rolledBackServers);
   }
 
   @Override
-  public void discoverConfigPartitioned(Collection<Collection<InetSocketAddress>> partitions) {
+  public void discoverConfigPartitioned(Collection<Collection<HostPort>> partitions) {
     error("UNRECOVERABLE: Partitioned configuration on cluster. Subsets: " + partitions);
   }
 
@@ -97,12 +97,12 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void discoverRepeated(InetSocketAddress node) {
+  public void discoverRepeated(HostPort node) {
     log("Received node state for: " + node);
   }
 
   @Override
-  public void discoverOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+  public void discoverOtherClient(HostPort node, String lastMutationHost, String lastMutationUser) {
     error("Another process running on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + node);
   }
 
@@ -117,22 +117,22 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void prepared(InetSocketAddress node) {
+  public void prepared(HostPort node) {
     log("Node: " + node + " is prepared to make the change");
   }
 
   @Override
-  public void prepareFail(InetSocketAddress node, Throwable reason) {
+  public void prepareFail(HostPort node, Throwable reason) {
     error("Node: " + node + " failed when asked to prepare to make the change", reason);
   }
 
   @Override
-  public void prepareOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+  public void prepareOtherClient(HostPort node, String lastMutationHost, String lastMutationUser) {
     error("Another process running on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + node);
   }
 
   @Override
-  public void prepareChangeUnacceptable(InetSocketAddress node, String rejectionReason) {
+  public void prepareChangeUnacceptable(HostPort node, String rejectionReason) {
     error("Prepare rejected for node " + node + ". Reason: " + rejectionReason);
   }
 
@@ -148,17 +148,17 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void committed(InetSocketAddress node) {
+  public void committed(HostPort node) {
     log("Node: " + node + " has committed the change");
   }
 
   @Override
-  public void commitFail(InetSocketAddress node, Throwable reason) {
+  public void commitFail(HostPort node, Throwable reason) {
     error("Commit failed for node " + node, reason);
   }
 
   @Override
-  public void commitOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+  public void commitOtherClient(HostPort node, String lastMutationHost, String lastMutationUser) {
     error("Another process running on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + node);
   }
 
@@ -174,17 +174,17 @@ public class LoggingResultReceiver<T> implements ChangeResultReceiver<T>, Recove
   }
 
   @Override
-  public void rolledBack(InetSocketAddress node) {
+  public void rolledBack(HostPort node) {
     log("Node: " + node + " has rolled back the change");
   }
 
   @Override
-  public void rollbackFail(InetSocketAddress node, Throwable reason) {
+  public void rollbackFail(HostPort node, Throwable reason) {
     error("Rollback failed for node: " + node, reason);
   }
 
   @Override
-  public void rollbackOtherClient(InetSocketAddress node, String lastMutationHost, String lastMutationUser) {
+  public void rollbackOtherClient(HostPort node, String lastMutationHost, String lastMutationUser) {
     error("Another process running on " + lastMutationHost + " by " + lastMutationUser + " changed the state on " + node);
   }
 

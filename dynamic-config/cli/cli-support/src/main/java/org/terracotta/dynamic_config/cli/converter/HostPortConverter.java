@@ -16,15 +16,14 @@
 package org.terracotta.dynamic_config.cli.converter;
 
 import com.beust.jcommander.IStringConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
 
 /**
  * @author Mathieu Carbou
  */
-public class InetSocketAddressConverter implements IStringConverter<InetSocketAddress> {
+public class HostPortConverter implements IStringConverter<HostPort> {
   @Override
-  public InetSocketAddress convert(String value) {
-    return org.terracotta.inet.InetSocketAddressConverter.getInetSocketAddress(value);
+  public HostPort convert(String value) {
+    return HostPort.parse(value, 9410);
   }
 }

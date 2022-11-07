@@ -25,19 +25,19 @@ import org.terracotta.dynamic_config.cli.api.command.SetAction;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.ConfigurationInputConverter;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
+import org.terracotta.inet.HostPort;
 
-import java.net.InetSocketAddress;
 import java.util.List;
 
 @Parameters(commandDescription = "Set configuration properties")
 @Usage("-s <hostname[:port]> -c <[namespace:]property=value> -c <[namespace:]property=value> ...")
 public class DeprecatedSetCommand extends Command {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
+  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
+  HostPort node;
 
   @Parameter(names = {"-c"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationInputConverter.class)
   List<ConfigurationInput> inputs;

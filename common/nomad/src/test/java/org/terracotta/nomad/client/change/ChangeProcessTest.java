@@ -18,6 +18,7 @@ package org.terracotta.nomad.client.change;
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.SimpleNomadChange;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadClientProcessTest;
@@ -27,7 +28,6 @@ import org.terracotta.nomad.messages.PrepareMessage;
 import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.NomadException;
 
-import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.util.UUID;
 
@@ -199,8 +199,8 @@ public class ChangeProcessTest extends NomadClientProcessTest {
     verify(results).discovered(eq(address1), any(DiscoverResponse.class));
     verify(results).discovered(eq(address2), any(DiscoverResponse.class));
     verify(results).endDiscovery();
-    verify(results).discoverAlreadyPrepared(InetSocketAddress.createUnresolved("localhost", 9410), uuid1, "testCreationHost", "testCreationUser");
-    verify(results).discoverAlreadyPrepared(InetSocketAddress.createUnresolved("localhost", 9411), uuid2, "testCreationHost", "testCreationUser");
+    verify(results).discoverAlreadyPrepared(HostPort.create("localhost", 9410), uuid1, "testCreationHost", "testCreationUser");
+    verify(results).discoverAlreadyPrepared(HostPort.create("localhost", 9411), uuid2, "testCreationHost", "testCreationUser");
     verify(results).done(UNKNOWN_BUT_NO_CHANGE);
   }
 

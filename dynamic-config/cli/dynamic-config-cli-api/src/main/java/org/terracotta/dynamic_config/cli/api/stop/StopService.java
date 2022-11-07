@@ -78,7 +78,7 @@ public class StopService {
       // this call should be pretty fast and should not timeout if stop delay is long enough
       try {
         // do not close DiagnosticService: connection is used after to detect when server is stopped
-        DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr.getAddress());
+        DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr.getHostPort().createInetSocketAddress());
         stopRequested.put(addr, diagnosticService);
         diagnosticService.getProxy(DynamicConfigService.class).stop(stopDelay);
       } catch (Exception e) {

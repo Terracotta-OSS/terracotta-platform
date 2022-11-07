@@ -92,7 +92,7 @@ public class RestartService {
       // this call should be pretty fast and should not timeout if restart delay is long enough
       try {
         // do not close DiagnosticService: connection is used after to detect when server is stopped
-        DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress());
+        DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getHostPort().createInetSocketAddress());
         restartRequested.put(endpoint, diagnosticService);
         restart.accept(diagnosticService.getProxy(DynamicConfigService.class), restartDelay);
       } catch (Exception e) {
@@ -208,7 +208,7 @@ public class RestartService {
    */
   private LogicalServerState isRestarted(Node.Endpoint endpoint, Collection<LogicalServerState> acceptedStates) {
     LOGGER.debug("Checking if node: {} has restarted", endpoint);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getAddress())) {
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(endpoint.getHostPort().createInetSocketAddress())) {
       LogicalServerState state = diagnosticService.getLogicalServerState();
       return state == null || !acceptedStates.contains(state) ? null : state;
     } catch (DiagnosticServiceProviderException | DiagnosticException e) {

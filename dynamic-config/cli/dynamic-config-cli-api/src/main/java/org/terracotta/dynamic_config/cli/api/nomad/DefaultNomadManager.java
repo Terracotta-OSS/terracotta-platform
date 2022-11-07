@@ -30,6 +30,7 @@ import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -48,7 +49,6 @@ import org.terracotta.nomad.server.ChangeRequestState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 
-import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -173,7 +173,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
       final List<Endpoint> addresses = entry.getValue();
       try {
         LOGGER.trace("Connecting to stripe UID: {} using nodes: {}", entry.getKey(), addresses);
-        nomadEntities.put(entry.getKey(), nomadEntityProvider.fetchNomadEntity(addresses.stream().map(Endpoint::getAddress).collect(toList())));
+        nomadEntities.put(entry.getKey(), nomadEntityProvider.fetchNomadEntity(addresses.stream().map(e -> e.getHostPort().createInetSocketAddress()).collect(toList())));
       } catch (ConnectionException e) {
         cleanup.run();
         throw new IllegalStateException("Unable to connect to stripe UID: " + entry.getKey() + " using endpoints: " + entry.getValue() + ". Server states: " + onlineNodes + ". Error:: " + e.getMessage(), e);
@@ -182,7 +182,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
 
     // create a nomad endpoint per stripe for the commit phase
     final Map<UID, NomadEndpoint<T>> stripeEndpoints = onlineNodesPerStripe.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> {
-      final InetSocketAddress firstAddress = e.getValue().get(0).getAddress();
+      final HostPort firstAddress = e.getValue().get(0).getHostPort();
       return new NomadEndpoint<T>(firstAddress, nomadEntities.get(e.getKey()));
     }));
 
@@ -201,7 +201,7 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
 
     // override the diagnostic endpoints to go over the entity channel for the nomad commit phase
     ConcurrentMap<UID, CompletableFuture<AcceptRejectResponse>> cache = new ConcurrentHashMap<>(stripeEndpoints.size());
-    nomadEndpoints = nomadEndpoints.stream().map(e -> new NomadEndpoint<T>(e.getAddress(), e) {
+    nomadEndpoints = nomadEndpoints.stream().map(e -> new NomadEndpoint<T>(e.getHostPort(), e) {
       @SuppressWarnings("OptionalGetWithoutIsPresent")
       @Override
       public AcceptRejectResponse commit(CommitMessage message) throws NomadException {
@@ -209,10 +209,10 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
         // But for a stripe, we only need to do 1 call, to the active, which will be replicated to the passive servers.
         // So we cache the first response we got from a stripe, to return it immediately after for the other calls.
         // We consider that the commit response on the passive servers will be the same on the active servers.
-        InetSocketAddress address = getAddress();
+        HostPort address = getHostPort();
         UID stripeUID = onlineNodesPerStripe.entrySet()
             .stream()
-            .filter(e -> e.getValue().stream().anyMatch(endpoint -> endpoint.getAddress().equals(address)))
+            .filter(e -> e.getValue().stream().anyMatch(endpoint -> endpoint.getHostPort().equals(address)))
             .findAny()
             .map(Map.Entry::getKey)
             .get();
@@ -276,14 +276,14 @@ public class DefaultNomadManager<T> implements NomadManager<T> {
     LOGGER.trace("createDiagnosticNomadEndpoints({})", expectedOnlineNodes);
 
     // connect and concurrently open a diagnostic connection
-    DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes.stream().collect(toMap(Endpoint::getNodeUID, Endpoint::getAddress)));
+    DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(expectedOnlineNodes.stream().collect(toMap(Endpoint::getNodeUID, a -> a.getHostPort().createInetSocketAddress())));
 
     // build a list of endpoints, keeping the same order wanted by user
     return expectedOnlineNodes.stream().map(endpoint -> {
       DiagnosticService diagnosticService = diagnosticServices.getDiagnosticService(endpoint.getNodeUID()).get();
       @SuppressWarnings("unchecked")
       NomadServer<T> nomadServer = diagnosticService.getProxy(NomadServer.class);
-      return new NomadEndpoint<T>(endpoint.getAddress(), nomadServer) {
+      return new NomadEndpoint<T>(endpoint.getHostPort(), nomadServer) {
         @Override
         public void close() {
           diagnosticService.close();

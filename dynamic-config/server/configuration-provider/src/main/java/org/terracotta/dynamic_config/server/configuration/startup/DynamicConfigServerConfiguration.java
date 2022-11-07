@@ -102,6 +102,6 @@ class DynamicConfigServerConfiguration implements ServerConfiguration {
 
   @Override
   public String toString() {
-    return node.getName() + "@" + node.getInternalSocketAddress();
+    return node.getName() + "@" + node.getInternalHostPort();
   }
 }

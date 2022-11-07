@@ -21,15 +21,14 @@ import org.terracotta.dynamic_config.cli.api.command.DiagnosticAction;
 import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Diagnose a cluster configuration")
 @Usage("-s <hostname[:port]>")
 public class DeprecatedDiagnosticCommand extends Command {
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  private InetSocketAddress node;
+  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
+  private HostPort node;
 
   @Inject
   public final DiagnosticAction action;

@@ -22,17 +22,16 @@ import org.terracotta.dynamic_config.cli.api.command.RepairAction;
 import org.terracotta.dynamic_config.cli.api.converter.RepairMethod;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.RepairActionConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Repair a cluster configuration")
 @Usage("-connect-to <hostname[:port]>")
 public class RepairCommand extends Command {
 
-  @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
+  @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
+  HostPort node;
 
   @Parameter(names = {"-force"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairActionConverter.class, hidden = true)
   RepairMethod forcedRepairMethod;

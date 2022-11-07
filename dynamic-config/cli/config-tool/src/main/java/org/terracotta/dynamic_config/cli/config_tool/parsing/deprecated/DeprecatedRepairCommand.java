@@ -22,17 +22,16 @@ import org.terracotta.dynamic_config.cli.api.command.RepairAction;
 import org.terracotta.dynamic_config.cli.api.converter.RepairMethod;
 import org.terracotta.dynamic_config.cli.command.Command;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.RepairActionConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Repair a cluster configuration")
 @Usage("-s <hostname[:port]> [-f commit|rollback|reset|unlock]")
 public class DeprecatedRepairCommand extends Command {
 
-  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = InetSocketAddressConverter.class)
-  InetSocketAddress node;
+  @Parameter(names = {"-s"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
+  HostPort node;
 
   @Parameter(names = {"-f"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairActionConverter.class)
   RepairMethod forcedRepairMethod;

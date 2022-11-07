@@ -15,12 +15,12 @@
  */
 package org.terracotta.nomad.client.recovery;
 
+import org.terracotta.inet.HostPort;
 import org.terracotta.nomad.client.NomadEndpoint;
 import org.terracotta.nomad.client.NomadMessageSender;
 import org.terracotta.nomad.messages.DiscoverResponse;
 import org.terracotta.nomad.server.NomadServerMode;
 
-import java.net.InetSocketAddress;
 import java.time.Clock;
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class RecoveryMessageSender<T> extends NomadMessageSender<T> {
   }
 
   @Override
-  public void discovered(InetSocketAddress server, DiscoverResponse<T> discovery) {
+  public void discovered(HostPort server, DiscoverResponse<T> discovery) {
     super.discovered(server, discovery);
 
     if (discovery.getMode() == NomadServerMode.PREPARED) {

@@ -22,25 +22,24 @@ import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
 import org.terracotta.dynamic_config.cli.command.RestartCommand;
 import org.terracotta.dynamic_config.cli.command.Usage;
-import org.terracotta.dynamic_config.cli.converter.InetSocketAddressConverter;
-
-import java.net.InetSocketAddress;
+import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
+import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Attach a node to a stripe, or a stripe to a cluster")
-@Usage("(-to-cluster <hostname[:port]> -stripe <hostname[:port]> | -to-stripe <hostname[:port]> -node <hostname[:port]>) [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
+@Usage("(-stripe <hostname[:port]> -to-cluster <hostname[:port]> | -node <hostname[:port]> -to-stripe <hostname[:port]>) [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class AttachCommand extends RestartCommand {
 
-  @Parameter(names = {"-to-cluster"}, description = "Cluster to attach to", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress destinationClusterAddress;
+  @Parameter(names = {"-to-cluster"}, description = "Cluster to attach to", converter = HostPortConverter.class)
+  protected HostPort destinationCluster;
 
-  @Parameter(names = {"-stripe"}, description = "Stripe to be attached", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress sourceStripeAddress;
+  @Parameter(names = {"-stripe"}, description = "Stripe to be attached", converter = HostPortConverter.class)
+  protected HostPort sourceStripe;
 
-  @Parameter(names = {"-to-stripe"}, description = "Stripe to attach to", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress destinationStripeAddress;
+  @Parameter(names = {"-to-stripe"}, description = "Stripe to attach to", converter = HostPortConverter.class)
+  protected HostPort destinationStripe;
 
-  @Parameter(names = {"-node"}, description = "Node to be attached", converter = InetSocketAddressConverter.class)
-  protected InetSocketAddress sourceNodeAddress;
+  @Parameter(names = {"-node"}, description = "Node to be attached", converter = HostPortConverter.class)
+  protected HostPort sourceNode;
 
   @Parameter(names = {"-force"}, description = "Force the operation", hidden = true)
   protected boolean force;
@@ -58,25 +57,25 @@ public class AttachCommand extends RestartCommand {
 
   @Override
   public void run() {
-    if ((destinationClusterAddress != null && sourceStripeAddress == null) ||
-        (destinationClusterAddress == null && sourceStripeAddress != null)) {
+    if ((destinationCluster != null && sourceStripe == null) ||
+        (destinationCluster == null && sourceStripe != null)) {
       throw new IllegalArgumentException("Both -to-cluster and -stripe must be provided for stripe addition to cluster");
     }
-    if ((destinationStripeAddress != null && sourceNodeAddress == null) ||
-        (destinationStripeAddress == null && sourceNodeAddress != null)) {
+    if ((destinationStripe != null && sourceNode == null) ||
+        (destinationStripe == null && sourceNode != null)) {
       throw new IllegalArgumentException("Both -to-stripe and -node must be provided for node addition to cluster");
     }
-    if (destinationClusterAddress != null && destinationStripeAddress != null) {
+    if (destinationCluster != null && destinationStripe != null) {
       throw new IllegalArgumentException("Either you can perform stripe addition to the cluster or node addition to the stripe");
     }
-    if (destinationClusterAddress != null) {
+    if (destinationCluster != null) {
       action.setOperationType(OperationType.STRIPE);
-      action.setDestinationAddress(destinationClusterAddress);
-      action.setSourceAddress(sourceStripeAddress);
-    } else if (destinationStripeAddress != null) {
+      action.setDestinationHostPort(destinationCluster);
+      action.setSourceHostPort(sourceStripe);
+    } else if (destinationStripe != null) {
       action.setOperationType(OperationType.NODE);
-      action.setDestinationAddress(destinationStripeAddress);
-      action.setSourceAddress(sourceNodeAddress);
+      action.setDestinationHostPort(destinationStripe);
+      action.setSourceHostPort(sourceNode);
     }
     action.setForce(force);
     action.setRestartWaitTime(getRestartWaitTime());

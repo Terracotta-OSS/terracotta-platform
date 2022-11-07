@@ -27,13 +27,19 @@ import static org.junit.Assert.assertNull;
 public class PhysicalMemoryTest {
   @Test
   public void invocations_do_not_fail() {
-    if (getVersion() < 9) {
+    int version = getVersion();
+    if (version < 9) {
       assertNotNull(PhysicalMemory.totalPhysicalMemory());
       assertNotNull(PhysicalMemory.freePhysicalMemory());
       assertNotNull(PhysicalMemory.totalSwapSpace());
       assertNotNull(PhysicalMemory.freeSwapSpace());
       assertNotNull(PhysicalMemory.ourCommittedVirtualMemory());
-
+    } else if (version == 17) {
+      assertNotNull(PhysicalMemory.totalPhysicalMemory());
+      assertNotNull(PhysicalMemory.freePhysicalMemory());
+      assertNull(PhysicalMemory.totalSwapSpace());
+      assertNull(PhysicalMemory.freeSwapSpace());
+      assertNull(PhysicalMemory.ourCommittedVirtualMemory());
     } else {
       assertNull(PhysicalMemory.totalPhysicalMemory());
       assertNull(PhysicalMemory.freePhysicalMemory());
