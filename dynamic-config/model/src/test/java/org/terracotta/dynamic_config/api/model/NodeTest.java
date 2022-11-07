@@ -20,6 +20,7 @@ import org.terracotta.inet.HostPort;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
@@ -131,17 +132,17 @@ public class NodeTest {
 
   @Test
   public void test_getEndpoint() {
-    assertThat(node.findEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
-    assertFalse(node.findEndpoint("127.0.0.1", 9410).isPresent()); // this is normal, DC never resolves, only matches with configured entries
+    assertThat(node.findEndpoints("localhost", 9410), hasItem(node.getInternalEndpoint()));
+    assertTrue(node.findEndpoints("127.0.0.1", 9410).isEmpty()); // this is normal, DC never resolves, only matches with configured entries
 
     node = node.clone().setBindAddress("127.0.0.1");
-    assertThat(node.findEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
-    assertThat(node.findEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.findEndpoints("localhost", 9410), hasItem(node.getInternalEndpoint()));
+    assertThat(node.findEndpoints("127.0.0.1", 9410), hasItem(node.getBindEndpoint()));
 
     node = node.clone().setBindAddress("127.0.0.1").setPublicEndpoint("foo", 9610);
-    assertThat(node.findEndpoint("localhost", 9410).get(), is(equalTo(node.getInternalEndpoint())));
-    assertThat(node.findEndpoint("127.0.0.1", 9410).get(), is(equalTo(node.getBindEndpoint())));
-    assertThat(node.findEndpoint("foo", 9610).get(), is(equalTo(node.getBindEndpoint())));
+    assertThat(node.findEndpoints("localhost", 9410), hasItem(node.getInternalEndpoint()));
+    assertThat(node.findEndpoints("127.0.0.1", 9410), hasItem(node.getBindEndpoint()));
+    assertThat(node.findEndpoints("foo", 9610), hasItem(node.getBindEndpoint()));
   }
 
   @Test

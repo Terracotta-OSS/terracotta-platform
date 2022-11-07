@@ -38,7 +38,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -46,6 +45,9 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Predicate.isEqual;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -501,15 +503,36 @@ public class Cluster implements Cloneable, PropertyHolder {
         .findFirst();
   }
 
-  public Collection<? extends Endpoint> search(Collection<? extends HostPort> addresses) {
-    return search(addresses, node -> null);
+  /**
+   * Search all endpoints of all nodes matching this address. A result can contain several endpoints of the same node
+   */
+  public Collection<? extends Endpoint> search(Collection<? extends HostPort> hostPorts) {
+    return hostPorts.stream()
+        .flatMap(addr -> getNodes().stream().flatMap(node -> node.findEndpoints(addr).stream()))
+        .collect(toList());
   }
 
-  public Collection<? extends Endpoint> search(Collection<? extends HostPort> addresses, Function<Node, Endpoint> noMatch) {
-    return addresses.stream()
-        .flatMap(addr -> getNodes().stream().map(node -> node.findEndpoint(addr).orElseGet(() -> noMatch.apply(node))))
-        .filter(Objects::nonNull)
-        .collect(toList());
+  public EndpointType determineEndpointType(HostPort... initiators) {
+    return determineEndpointType(Arrays.asList(initiators));
+  }
+
+  public EndpointType determineEndpointType(Collection<? extends HostPort> initiators) {
+    // Search in the topology the endpoints matching exactly the initiators.
+    //
+    // Note: A node can be returned several times for 2 different endpoint types if its configuration has the same address and port
+    // for example in both internal and public addresses.
+    //
+    // If no result, use "determineEndpoints()".
+    // If more than 1 result, group the endpoint type by counts and return the one having most of the matches
+    //
+    // Note: in case the same address and port would be set to all nodes on both internal and public addresses,
+    // then we return a random endpoint type since there is no way to know what the user wanted to do.
+    return search(initiators)
+        .stream()
+        .collect(collectingAndThen(groupingBy(Endpoint::getEndpointType, counting()), map -> map.entrySet().stream()))
+        .max(Map.Entry.comparingByValue())
+        .map(Map.Entry::getKey)
+        .orElseGet(() -> determineEndpoints().iterator().next().getEndpointType());
   }
 
   /**
@@ -528,12 +551,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Collection<Endpoint> determineEndpoints(Collection<? extends HostPort> initiators) {
-    final Collection<? extends Endpoint> results = search(initiators);
-    if (results.isEmpty()) {
-      return getNodes().stream().map(Node::determineEndpoint).collect(toList());
-    } else {
-      return determineEndpoints(results.iterator().next());
-    }
+    return determineEndpoints(determineEndpointType(initiators));
   }
 
   public Collection<Endpoint> determineEndpoints() {
@@ -545,16 +563,19 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public Optional<Endpoint> determineEndpoint(UID nodeUID, Collection<? extends HostPort> initiators) {
-    final Collection<? extends Endpoint> results = search(initiators);
-    if (results.isEmpty()) {
-      return getNode(nodeUID).map(Node::determineEndpoint);
-    } else {
-      final Endpoint endpoint = results.iterator().next();
-      return getNode(nodeUID).map(n -> n.determineEndpoint(endpoint));
-    }
+    final EndpointType endpointType = determineEndpointType(initiators);
+    return determineEndpoint(nodeUID, endpointType);
+  }
+
+  public Optional<Endpoint> determineEndpoint(UID nodeUID, EndpointType endpointType) {
+    return getNode(nodeUID).map(node -> node.determineEndpoint(endpointType));
   }
 
   public Collection<Endpoint> determineEndpoints(Endpoint initiator) {
-    return getNodes().stream().map(node -> node.determineEndpoint(initiator)).collect(toList());
+    return determineEndpoints(initiator.getEndpointType());
+  }
+
+  public Collection<Endpoint> determineEndpoints(EndpointType endpointType) {
+    return getNodes().stream().map(node -> node.determineEndpoint(endpointType)).collect(toList());
   }
 }

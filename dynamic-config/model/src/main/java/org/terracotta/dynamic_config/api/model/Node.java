@@ -19,7 +19,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.inet.HostPort;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -50,9 +53,9 @@ import static org.terracotta.dynamic_config.api.model.Setting.modelToProperties;
 
 public class Node implements Cloneable, PropertyHolder {
 
-  private static final String ADDR_GROUP_PUBLIC = "public";
-  private static final String ADDR_GROUP_INTERNAL = "internal";
-  private static final String ADDR_GROUP_BIND = "bind";
+  private static final EndpointType ADDR_GROUP_PUBLIC = new EndpointType("public");
+  private static final EndpointType ADDR_GROUP_INTERNAL = new EndpointType("internal");
+  private static final EndpointType ADDR_GROUP_BIND = new EndpointType("bind");
 
   private UID uid;
   private String name;
@@ -388,8 +391,8 @@ public class Node implements Cloneable, PropertyHolder {
     return Optional.of(HostPort.create(publicHostname, publicPort));
   }
 
-  public Optional<Endpoint> findEndpoint(String host, int port) {
-    return findEndpoint(HostPort.create(host, port));
+  public List<Endpoint> findEndpoints(String host, int port) {
+    return findEndpoints(HostPort.create(host, port));
   }
 
   public Endpoint determineEndpoint(String host, int port) {
@@ -397,74 +400,84 @@ public class Node implements Cloneable, PropertyHolder {
   }
 
   /**
-   * Get an endpoint to connect to this node based on the address used to initiate the connection.
-   * <p>
-   * If the address used to initiate the connection is the public address, then use it.
-   * <p>
-   * If the address used to initiate the connection is the internal address, then use it.
-   * <p>
-   * If the address used to initiate the connection is the bind address (if not wildcard), then use it.
-   * <p>
-   * Otherwise, use the public address and if not set, the internal one
+   * See {@link #findEndpointTypes(HostPort)}
    */
-  public Optional<Endpoint> findEndpoint(HostPort initiator) {
-    return findGroup(initiator).flatMap(this::findEndpoint);
+  public List<Endpoint> findEndpoints(HostPort initiator) {
+    return findEndpointTypes(initiator)
+        .stream()
+        .map(endpointType -> findEndpoint(endpointType).orElse(null))
+        .filter(Objects::nonNull)
+        .collect(toList());
   }
 
   public Endpoint determineEndpoint() {
     return getPublicEndpoint().orElseGet(this::getInternalEndpoint);
   }
 
+  /**
+   * See {@link #findEndpointTypes(HostPort)}
+   */
   public Endpoint determineEndpoint(HostPort initiator) {
-    return findGroup(initiator).flatMap(this::findEndpoint).orElseGet(this::determineEndpoint);
+    return findEndpoints(initiator).stream().findFirst().orElseGet(this::determineEndpoint);
   }
 
-  public Optional<Endpoint> findSimilarEndpoint(Endpoint initiator) {
-    return findEndpoint(initiator.getGroup());
+  public Optional<Endpoint> findEndpoint(Endpoint initiator) {
+    return findEndpoint(initiator.getEndpointType());
   }
 
   public Endpoint determineEndpoint(Endpoint initiator) {
-    return findSimilarEndpoint(initiator).orElseGet(this::determineEndpoint);
+    return determineEndpoint(initiator.getEndpointType());
   }
 
-  // keep methods related to groups package-local
-  private Optional<Endpoint> findEndpoint(String group) {
-    if (group == null) {
+  public Endpoint determineEndpoint(EndpointType endpointType) {
+    return findEndpoint(endpointType).orElseGet(this::determineEndpoint);
+  }
+
+  // Note: endpointType can be null
+  public Optional<Endpoint> findEndpoint(EndpointType endpointType) {
+    if (ADDR_GROUP_INTERNAL.equals(endpointType)) {
+      return Optional.of(getInternalEndpoint());
+    } else if (ADDR_GROUP_PUBLIC.equals(endpointType)) {
+      // returns the optional public endpoint
+      return getPublicEndpoint();
+    } else if (ADDR_GROUP_BIND.equals(endpointType)) {
+      // if we want to use the bind endpoints, first check if it is set to wildcard
+      Endpoint bind = getBindEndpoint();
+      return bind.getHostPort().isWildcard() ? Optional.empty() : Optional.of(bind);
+    } else {
       return Optional.empty();
     }
-    switch (group) {
-      case ADDR_GROUP_INTERNAL:
-        return Optional.of(getInternalEndpoint());
-      case ADDR_GROUP_PUBLIC:
-        // returns public endpoint first, if not found, internal one
-        return getPublicEndpoint();
-      case ADDR_GROUP_BIND:
-        // if we want to use the bind endpoints, first check if it is set to wildcard
-        Endpoint bind = getBindEndpoint();
-        return bind.getHostPort().isWildcard() ? Optional.empty() : Optional.of(bind);
-      default:
-        throw new AssertionError(group);
-    }
   }
 
-  // keep methods related to groups package-local
-  private Optional<String> findGroup(HostPort initiator) {
+  /**
+   * Returns a list of endpoint types matching the user-provided address.
+   * The order in this list is important: the first endpoint type has to be used.
+   * But it can happen in some specifically rare network setup that 2 endpoint types
+   * have the same address. In that case the list contains the other endpoint types
+   * matching in order of priority to use.
+   */
+  public List<EndpointType> findEndpointTypes(HostPort initiator) {
     if (initiator == null) {
-      return Optional.empty();
+      return Collections.emptyList();
     }
     Optional<HostPort> publicAddress = getPublicHostPort();
     HostPort internalAddress = getInternalHostPort();
     HostPort bindAddress = getBindHostPort();
-    if (internalAddress.equals(initiator)) {
-      return Optional.of(ADDR_GROUP_INTERNAL);
-    }
+    List<EndpointType> found = new ArrayList<>(1);
+    // IMPORTANT: ordering is important and matches the ordering of the determineEndpoint() method
+    // 1. check against public address
     if (publicAddress.isPresent() && publicAddress.get().equals(initiator)) {
-      return Optional.of(ADDR_GROUP_PUBLIC);
+      found.add(ADDR_GROUP_PUBLIC);
     }
+    // 2. check against internal address
+    if (internalAddress.equals(initiator)) {
+      found.add(ADDR_GROUP_INTERNAL);
+    }
+    // 3. check against non wildcard bind address
     if (!bindAddress.isWildcard() && bindAddress.equals(initiator)) {
-      return Optional.of(ADDR_GROUP_BIND);
+      found.add(ADDR_GROUP_BIND);
     }
-    return Optional.empty();
+    return found;
   }
 
   public Endpoint getBindEndpoint() {
@@ -576,18 +589,18 @@ public class Node implements Cloneable, PropertyHolder {
   public static class Endpoint {
 
     private final Node node;
-    private final String group;
+    private final EndpointType endpointType;
     private final HostPort hostPort;
 
-    private Endpoint(Node node, String group, HostPort hostPort) {
+    private Endpoint(Node node, EndpointType endpointType, HostPort hostPort) {
       this.node = requireNonNull(node);
-      this.group = requireNonNull(group);
+      this.endpointType = requireNonNull(endpointType);
       this.hostPort = requireNonNull(hostPort);
     }
 
     // keep package local
-    String getGroup() {
-      return group;
+    EndpointType getEndpointType() {
+      return endpointType;
     }
 
     public String getNodeName() {
