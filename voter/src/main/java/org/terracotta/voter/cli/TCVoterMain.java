@@ -131,7 +131,7 @@ public class TCVoterMain {
 
   protected void processServerArg(Optional<Properties> connectionProps, Options options) {
     Cluster cluster = fetchTopology(options);
-    validateCLuster(cluster);
+    validateCluster(cluster);
 
     // The endpoints we should use (public or internal) based on the user-provided list
     final List<HostPort> initiators = options.getServersHostPort().stream().map(hostPort -> HostPort.parse(hostPort, 9410)).collect(toList());
@@ -151,7 +151,7 @@ public class TCVoterMain {
     new ActiveVoter(ID, new CompletableFuture<>(), connectionProps, hostPorts).start();
   }
 
-  protected void validateCLuster(Cluster cluster) {
+  protected void validateCluster(Cluster cluster) {
     if (cluster.getStripeCount() > 1) {
       throw new RuntimeException("Usage of multiple stripes is not supported");
     }
