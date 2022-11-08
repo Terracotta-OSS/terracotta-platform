@@ -21,7 +21,6 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.inet.HostPort;
-import org.terracotta.inet.InetSocketAddressConverter;
 
 import java.net.InetSocketAddress;
 import java.util.Optional;
@@ -67,19 +66,7 @@ class DynamicConfigNetworkTranslator implements com.tc.spi.NetworkTranslator {
   @Override
   public String redirectTo(InetSocketAddress initiator, String serverHostPort) {
     final Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
-    InetSocketAddress proposedRedirect;
-    try {
-      proposedRedirect = InetSocketAddressConverter.parseInetSocketAddress(serverHostPort, 9410);
-    } catch (IllegalArgumentException e) {
-      // Workaround because core does not correctly support / adhere to the new Ipv6 format for InetSocketAddresses (https://bugs.openjdk.java.net/browse/JDK-8232002)
-      // In core, the same "hack" is used to extract the port when we know that a string contains a concatenation of ip:port
-      int column = serverHostPort.lastIndexOf(':');
-      if (column == -1) {
-        throw e;
-      }
-      proposedRedirect = InetSocketAddress.createUnresolved(serverHostPort.substring(0, column), Integer.parseInt(serverHostPort.substring(column + 1)));
-    }
-    Optional<Node.Endpoint> publicEndpoint = cluster.findReachableNode(HostPort.create(proposedRedirect)).flatMap(Node::getPublicEndpoint);
+    Optional<Node.Endpoint> publicEndpoint = cluster.findReachableNode(HostPort.parse(serverHostPort, 9410)).flatMap(Node::getPublicEndpoint);
     if (publicEndpoint.isPresent()) {
       LOGGER.trace("Redirecting client: {} to node: {} through public endpoint", initiator, publicEndpoint.get());
       return publicEndpoint.get().getHostPort().toString();
