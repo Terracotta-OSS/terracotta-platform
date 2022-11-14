@@ -575,6 +575,9 @@ public class Node implements Cloneable, PropertyHolder {
     return getInternalEndpoint().toString();
   }
 
+  public Node setHostPort(HostPort hostPort) {
+    return setHostname(hostPort.getHost()).setPort(hostPort.getPort());
+  }
 
   /**
    * This class represents an endpoint to use when connecting to a node.

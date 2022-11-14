@@ -19,17 +19,25 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
+import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
+import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.dynamic_config.api.service.NameGenerator;
+import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.inet.HostPort;
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 
 public class ActivateAction extends RemoteAction {
 
@@ -39,7 +47,8 @@ public class ActivateAction extends RemoteAction {
   private Path licenseFile;
   private Measure<TimeUnit> restartWaitTime = Measure.of(120, TimeUnit.SECONDS);
   private Measure<TimeUnit> restartDelay = Measure.of(2, TimeUnit.SECONDS);
-  protected boolean restrictedActivation;
+  private boolean restrictedActivation;
+  private List<Map.Entry<Collection<HostPort>, String>> shape = Collections.emptyList();
 
   public void setNode(HostPort node) {
     this.node = node;
@@ -75,9 +84,60 @@ public class ActivateAction extends RemoteAction {
   public final void run() {
     // loading cluster from available sources, then validating
 
-    cluster = loadTopologyFromConfig()
-        .orElseGet(() -> loadTopologyFromNode()
-            .orElseThrow(() -> new IllegalArgumentException("One of node or config properties file must be specified")));
+    if (shape.isEmpty()) {
+      // loads the cluster from the config or remotely
+      cluster = loadTopologyFromConfig()
+          .orElseGet(() -> loadTopologyFromNode()
+              .orElseThrow(() -> new IllegalArgumentException("One of node or config properties file must be specified")));
+
+    } else {
+      // create the cluster topology live by loading the node's settings and read the shape
+
+      // 1. load the topology from a node and only keep the cluster-wide settings
+      cluster = getRuntimeCluster(shape.get(0).getKey().iterator().next());
+      cluster.setName(null); // fast activation requires '-cluster-name'
+      cluster.removeStripes();
+      final Properties clusterProperties = cluster.toProperties(false, false, false);
+
+      // 2. reconstruct the cluster by fetching node's settings
+      cluster.setStripes(shape.stream()
+          .map(entry -> new Stripe()
+              .setUID(cluster.newUID())
+              .setName(entry.getValue()) // can be null
+              .setNodes(entry.getKey()
+                  .stream()
+                  .map(hostPort -> {
+                    final Cluster c = getRuntimeCluster(hostPort);
+                    c.setName(null); // fast activation requires '-cluster-name'
+
+                    // validate that no topology modifications were done on this done
+                    if (c.getNodeCount() != 1) {
+                      throw new IllegalArgumentException("Host: " + hostPort + " already contains a topology with 2 nodes or more so it cannot be used in a fast activation");
+                    }
+
+                    // extract the node and change its uid
+                    final Node node = c.getSingleNode().get().setUID(cluster.newUID());
+
+                    // validate that the node name does not exist
+                    cluster.getNodeByName(node.getName()).ifPresent(existing -> {
+                      throw new IllegalArgumentException("Host: " + hostPort + " points to a node having the same name of an other node: " + existing);
+                    });
+
+                    // validate that the cluster-wide settings are the same for this node
+                    c.removeStripes();
+                    final Properties props = c.toProperties(false, false, false);
+                    if (!clusterProperties.equals(props)) {
+                      throw new IllegalArgumentException("Host: " + hostPort + " has been started with cluster settings:\n" + Props.toString(props) + "\nBut we expected:\n" + Props.toString(clusterProperties));
+                    }
+
+                    // return it, it will be added to the stripe
+                    return node;
+                  })
+                  .collect(toList())))
+          .collect(toList()));
+      // ensure our objects have names
+      NameGenerator.assignFriendlyNames(cluster);
+    }
 
     if (clusterName != null) {
       cluster.setName(clusterName);
@@ -125,5 +185,9 @@ public class ActivateAction extends RemoteAction {
 
   Cluster getCluster() {
     return cluster;
+  }
+
+  public void setShape(List<Map.Entry<Collection<HostPort>, String>> shape) {
+    this.shape = shape;
   }
 }

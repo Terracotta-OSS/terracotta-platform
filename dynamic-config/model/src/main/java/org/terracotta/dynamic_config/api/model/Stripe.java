@@ -54,7 +54,7 @@ public class Stripe implements Cloneable, PropertyHolder {
   }
 
   public Stripe setName(String name) {
-    this.name = requireNonNull(name);
+    this.name = name;
     return this;
   }
 

@@ -50,8 +50,8 @@ import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.TopologyService;
-import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
 import org.terracotta.dynamic_config.cli.api.output.InMemoryOutputService;
+import org.terracotta.dynamic_config.cli.api.output.LoggingOutputService;
 import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
@@ -462,13 +462,13 @@ public class DynamicConfigIT {
     {
       LOGGER.info("config-tool {}", String.join(" ", newCli));
       InlineToolExecutionResult result = new InlineToolExecutionResult();
-      OutputService out = new ConsoleOutputService().then(result);
+      OutputService out = new LoggingOutputService().then(result);
       try {
         new ConfigTool(out).run(newCli.toArray(new String[0]));
         result.setExitStatus(0);
       } catch (Exception e) {
         result.setExitStatus(1);
-        out.warn("Error: {}", e.getMessage());
+        out.warn("Error: {}", e.getMessage(), e);
       }
       return result;
     }

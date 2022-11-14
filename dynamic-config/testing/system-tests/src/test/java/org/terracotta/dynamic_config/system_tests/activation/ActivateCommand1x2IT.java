@@ -16,6 +16,7 @@
 package org.terracotta.dynamic_config.system_tests.activation;
 
 import org.junit.Test;
+import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
@@ -23,6 +24,7 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -46,6 +48,88 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(activateCluster(), allOf(is(successful()), containsOutput("No license specified for activation"), containsOutput("came back up")));
     waitForActive(1);
     waitForPassives(1);
+  }
+
+  @Test
+  public void test_fast_activation_1x1() {
+    assertThat(
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe", getNodeHostPort(1, 1).toString()),
+        allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
+
+    waitForActive(1);
+
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+      assertThat(cluster.getName(), is(equalTo("my-cluster")));
+      assertThat(cluster.getNodeCount(), is(equalTo(1)));
+    });
+  }
+
+  @Test
+  public void test_fast_activation_1x1_with_stripe_name() {
+    assertThat(
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe", "foo/" + getNodeHostPort(1, 1)),
+        allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
+
+    waitForActive(1);
+
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+      assertThat(cluster.getName(), is(equalTo("my-cluster")));
+      assertThat(cluster.getNodeCount(), is(equalTo(1)));
+      assertTrue(cluster.getStripeByName("foo").isPresent());
+    });
+  }
+
+  @Test
+  public void test_fast_activation_1x2() {
+    assertThat(
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2)),
+        allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
+
+    waitForActive(1);
+    waitForPassives(1);
+
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+      assertThat(cluster.getName(), is(equalTo("my-cluster")));
+      assertThat(cluster.getNodeCount(), is(equalTo(2)));
+    });
+  }
+
+  @Test
+  public void test_fast_activation_1x2_with_stripe_name() {
+    assertThat(
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe", "foo/" + getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2)),
+        allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
+
+    waitForActive(1);
+    waitForPassives(1);
+
+    withTopologyService("localhost", getNodePort(), topologyService -> {
+      Cluster cluster = topologyService.getRuntimeNodeContext().getCluster();
+      assertThat(cluster.getName(), is(equalTo("my-cluster")));
+      assertThat(cluster.getNodeCount(), is(equalTo(2)));
+      assertTrue(cluster.getStripeByName("foo").isPresent());
+    });
+  }
+
+  @Test
+  public void test_fast_activation_1x1_wrong_topo() {
+    assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
+
+    assertThat(
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe", getNodeHostPort(1, 1).toString()),
+        allOf(not(successful()), containsOutput("already contains a topology with 2 nodes or more so it cannot be used in a fast activation")));
+  }
+
+  @Test
+  public void test_fast_activation_1x2_mismatch_cluster_settings() {
+    assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(1, 2), "-setting", "client-reconnect-window=1s"), is(successful()));
+
+    assertThat(
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2)),
+        allOf(not(successful()), containsOutput("Host: " + getNodeHostPort(1, 2) + " has been started with cluster settings:")));
   }
 
   @Test
