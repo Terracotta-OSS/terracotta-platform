@@ -69,6 +69,10 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
   }
 
   private <K> DiagnosticServices<K> _fetchOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, boolean firstAvailable, Duration connTimeout) {
+    if (addresses.isEmpty() && firstAvailable) {
+      throw new IllegalArgumentException("Unable to find any online node: no address provided");
+    }
+
     if (addresses.isEmpty()) {
       return new DiagnosticServices<>(emptyMap(), emptyMap());
     }
@@ -121,6 +125,10 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
       } catch (ExecutionException e) {
         // impossible since we catch Throwable in the submitted task
         throw new AssertionError(e);
+      }
+
+      if (online.isEmpty() && firstAvailable) {
+        throw new IllegalArgumentException("Unable to find any reachable node amongst: " + addresses);
       }
 
       return new DiagnosticServices<>(online, offline);
