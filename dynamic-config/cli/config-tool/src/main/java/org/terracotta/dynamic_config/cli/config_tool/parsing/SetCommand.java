@@ -27,6 +27,7 @@ import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.dynamic_config.cli.converter.MultiConfigCommaSplitter;
 import org.terracotta.inet.HostPort;
 
+import java.util.Collections;
 import java.util.List;
 
 @Parameters(commandDescription = "Set configuration properties")
@@ -34,7 +35,7 @@ import java.util.List;
 public class SetCommand extends RestartCommand {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
-  HostPort node;
+  List<HostPort> nodes = Collections.emptyList();
 
   @Parameter(names = {"-setting"}, description = "Configuration properties", splitter = MultiConfigCommaSplitter.class, required = true, converter = ConfigurationInputConverter.class)
   List<ConfigurationInput> inputs;
@@ -55,7 +56,7 @@ public class SetCommand extends RestartCommand {
 
   @Override
   public void run() {
-    action.setNode(node);
+    action.setNodes(nodes);
     action.setConfigurationInputs(inputs);
     action.setAutoRestart(autoRestart);
     action.setRestartWaitTime(getRestartWaitTime());

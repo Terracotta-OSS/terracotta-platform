@@ -24,6 +24,7 @@ import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.inet.HostPort;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 public abstract class ConfigurationAction extends RemoteAction {
 
   protected HostPort node;
+  protected List<HostPort> nodes = Collections.emptyList();
   protected List<Configuration> configurations;
   protected List<ConfigurationInput> inputs;
 
@@ -46,12 +48,13 @@ public abstract class ConfigurationAction extends RemoteAction {
   protected boolean isActivated;
   protected ClusterState clusterState;
 
+
   protected ConfigurationAction(Operation operation) {
     this.operation = operation;
   }
 
-  public void setNode(HostPort node) {
-    this.node = node;
+  public void setNodes(List<HostPort> nodes) {
+    this.nodes = nodes;
   }
 
   public void setConfigurationInputs(List<ConfigurationInput> inputs) {
@@ -59,6 +62,7 @@ public abstract class ConfigurationAction extends RemoteAction {
   }
 
   protected void validate() {
+    node = findAnyOnlineNode(nodes).getHostPort();
 
     Cluster cluster = getRuntimeCluster(node);
 

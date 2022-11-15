@@ -69,6 +69,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -371,11 +372,15 @@ public abstract class RemoteAction implements Runnable {
    * Try to connect to one of the nodes to get the cluster topology.
    * At least one node must be online.
    */
-  protected final Cluster getRuntimeCluster(Collection<HostPort> expectedOnlineNodes) {
-    LOGGER.trace("getRuntimeCluster({})", expectedOnlineNodes);
-    try (DiagnosticServices<HostPort> diagnosticServices = multiDiagnosticServiceProvider.fetchAnyOnlineDiagnosticService(toAddr(expectedOnlineNodes, identity(), HostPort::createInetSocketAddress), null)) {
+  protected final Cluster getRuntimeCluster(Collection<HostPort> nodes) {
+    LOGGER.trace("getRuntimeCluster({})", nodes);
+    return withAnyOnlineDiagnosticService(nodes, (hostPort, diagnosticService) -> diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster());
+  }
+
+  protected final <V> V withAnyOnlineDiagnosticService(Collection<HostPort> nodes, BiFunction<HostPort, DiagnosticService, V> fn) {
+    try (DiagnosticServices<HostPort> diagnosticServices = multiDiagnosticServiceProvider.fetchAnyOnlineDiagnosticService(toAddr(nodes, identity(), HostPort::createInetSocketAddress), null)) {
       final Map.Entry<HostPort, DiagnosticService> entry = diagnosticServices.getOnlineEndpoints().entrySet().iterator().next();
-      return entry.getValue().getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
+      return fn.apply(entry.getKey(), entry.getValue());
     }
   }
 
@@ -602,6 +607,13 @@ public abstract class RemoteAction implements Runnable {
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       return diagnosticService.getProxy(TopologyService.class).isActivated();
     }
+  }
+
+  protected final Endpoint findAnyOnlineNode(Collection<HostPort> nodes) {
+    LOGGER.trace("findAnyOnlineNode({})", nodes);
+    final NodeContext nodeContext = withAnyOnlineDiagnosticService(nodes, (hostPort, diagnosticService) -> diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext());
+    final Cluster cluster = nodeContext.getCluster();
+    return cluster.determineEndpoint(nodeContext.getNodeUID(), nodes).get(); // get() because node is not missing
   }
 
   protected final void resetAndStop(HostPort expectedOnlineNode) {
