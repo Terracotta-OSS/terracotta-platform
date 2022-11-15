@@ -27,6 +27,9 @@ import org.terracotta.inet.HostPort;
 
 import java.nio.file.Path;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
 @Parameters(commandDescription = "Import a cluster configuration")
 @Usage("-f <config.cfg|config.properties> [-s <hostname[:port]>]")
 public class DeprecatedImportCommand extends Command {
@@ -50,7 +53,7 @@ public class DeprecatedImportCommand extends Command {
 
   @Override
   public void run() {
-    action.setNode(node);
+    action.setNodes(node == null ? emptyList() : singletonList(node));
     action.setConfigFile(configFile);
 
     action.run();
