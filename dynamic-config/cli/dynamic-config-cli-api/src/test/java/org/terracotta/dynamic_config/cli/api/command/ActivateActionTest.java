@@ -280,7 +280,7 @@ public class ActivateActionTest extends BaseTest {
 
   private ActivateAction command() {
     ActivateAction command = new ActivateAction();
-    inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider, outputService));
+    inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider, outputService, objectMapperFactory));
     return command;
   }
 

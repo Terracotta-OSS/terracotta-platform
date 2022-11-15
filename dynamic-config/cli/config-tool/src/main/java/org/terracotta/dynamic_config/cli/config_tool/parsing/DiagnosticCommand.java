@@ -28,11 +28,14 @@ import java.util.Collections;
 import java.util.List;
 
 @Parameters(commandDescription = "Diagnose a cluster configuration")
-@Usage("-connect-to <hostname[:port]>")
+@Usage("-connect-to <hostname[:port]> [-output-format <text|json>]")
 public class DiagnosticCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
   private List<HostPort> nodes = Collections.emptyList();
+
+  @Parameter(names = {"-output-format"}, description = "Output format for the diagnostic")
+  private String outputFormat = "text";
 
   @Inject
   public final DiagnosticAction action;
@@ -48,6 +51,7 @@ public class DiagnosticCommand extends Command {
   @Override
   public void run() {
     action.setNodes(nodes);
+    action.setOutputFormat(outputFormat);
 
     action.run();
   }

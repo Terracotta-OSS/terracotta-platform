@@ -75,7 +75,7 @@ import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
 public class DefaultNomadManager<T> implements NomadManager<T> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadManager.class);
 
-  private static final EnumSet<LogicalServerState> ALLOWED = EnumSet.of(
+  public static final EnumSet<LogicalServerState> ALLOWED = EnumSet.of(
       ACTIVE,
       PASSIVE,
       ACTIVE_RECONNECTING,

@@ -16,6 +16,8 @@
 package org.terracotta.dynamic_config.cli.api.command;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.common.struct.Measure;
@@ -49,6 +51,7 @@ import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopProgress;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
 import org.terracotta.inet.HostPort;
+import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
 
@@ -110,6 +113,20 @@ public abstract class RemoteAction implements Runnable {
   public StopService stopService;
   @Inject
   public OutputService output;
+  @Inject
+  public ObjectMapperFactory objectMapperFactory;
+
+  protected String toJson(Object o) {
+    try {
+      return objectMapperFactory.pretty().create()
+          // shows optional values that are unset
+          .setSerializationInclusion(JsonInclude.Include.ALWAYS)
+          .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
+          .writeValueAsString(o);
+    } catch (JsonProcessingException e) {
+      throw new AssertionError(e);
+    }
+  }
 
   protected void licenseValidation(HostPort hostPort, Cluster cluster) {
     LOGGER.trace("licenseValidation({}, {})", hostPort, cluster);
@@ -346,6 +363,11 @@ public abstract class RemoteAction implements Runnable {
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
       return diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
     }
+  }
+
+  protected final Cluster getUpcomingCluster(Collection<HostPort> nodes) {
+    LOGGER.trace("getUpcomingCluster({})", nodes);
+    return withAnyOnlineDiagnosticService(nodes, (hostPort, diagnosticService) -> diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext().getCluster());
   }
 
   protected final void setUpcomingCluster(Collection<Endpoint> expectedOnlineNodes, Cluster cluster) {

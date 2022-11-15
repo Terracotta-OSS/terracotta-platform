@@ -15,18 +15,14 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ConfigFormat;
 import org.terracotta.dynamic_config.api.service.ConfigPropertiesTranslator;
 import org.terracotta.dynamic_config.api.service.Props;
-import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.output.FileOutputService;
 import org.terracotta.inet.HostPort;
-import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -45,8 +41,6 @@ public class ExportAction extends RemoteAction {
   private boolean includeDefaultValues;
   private boolean wantsRuntimeConfig;
   private ConfigFormat outputFormat = ConfigFormat.CONFIG;
-
-  @Inject public ObjectMapperFactory objectMapperFactory;
 
   public void setNode(HostPort node) {
     this.node = node;
@@ -108,15 +102,7 @@ public class ExportAction extends RemoteAction {
     ConfigFormat outputFormat = outputFile == null ? this.outputFormat : ConfigFormat.from(outputFile);
     switch (outputFormat) {
       case JSON:
-        try {
-          return objectMapperFactory.pretty().create()
-              // shows optional values that are unset
-              .setSerializationInclusion(JsonInclude.Include.ALWAYS)
-              .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
-              .writeValueAsString(cluster);
-        } catch (JsonProcessingException e) {
-          throw new AssertionError(e);
-        }
+        return toJson(cluster);
       case CONFIG:
       case PROPERTIES:
         // user-defined

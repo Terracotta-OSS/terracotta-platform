@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.api.command;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.model.LogicalServerState;
@@ -23,12 +22,9 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
-import org.terracotta.dynamic_config.cli.api.command.Injector.Inject;
 import org.terracotta.dynamic_config.cli.api.converter.OperationType;
 import org.terracotta.inet.HostPort;
-import org.terracotta.json.ObjectMapperFactory;
 
-import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -48,8 +44,6 @@ public abstract class TopologyAction extends RemoteAction {
   protected OperationType operationType = OperationType.NODE;
   protected HostPort destinationHostPort;
   protected boolean force;
-
-  @Inject public ObjectMapperFactory objectMapperFactory;
 
   protected Endpoint destination;
 
@@ -99,11 +93,7 @@ public abstract class TopologyAction extends RemoteAction {
     new ClusterValidator(result).validate(destinationClusterActivated ? ACTIVATED : CONFIGURING);
 
     if (LOGGER.isDebugEnabled()) {
-      try {
-        LOGGER.debug("Updated topology:{}{}.", lineSeparator(), objectMapperFactory.create().writerWithDefaultPrettyPrinter().writeValueAsString(result));
-      } catch (JsonProcessingException e) {
-        throw new UncheckedIOException(e);
-      }
+      LOGGER.debug("Updated topology:{}{}.", lineSeparator(), toJson(result));
     }
 
     // push the updated topology to all the addresses
