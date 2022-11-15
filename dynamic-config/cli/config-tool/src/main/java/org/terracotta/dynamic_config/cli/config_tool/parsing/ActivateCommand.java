@@ -38,7 +38,7 @@ import java.util.Map;
 public class ActivateCommand extends RestartCommand {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = HostPortConverter.class)
-  private HostPort node;
+  private List<HostPort> nodes = Collections.emptyList();
 
   @Parameter(names = {"-config-file"}, description = "Configuration properties file containing nodes to be activated", converter = PathConverter.class)
   private Path configPropertiesFile;
@@ -57,7 +57,7 @@ public class ActivateCommand extends RestartCommand {
   @Parameter(names = {"-license-file"}, description = "License file", converter = PathConverter.class)
   private Path licenseFile;
 
-  @Parameter(names = {"-restrict"}, description = "Restrict the activation process to the node only")
+  @Parameter(names = {"-restrict"}, description = "Restrict the activation process to the specified nodes only")
   protected boolean restrictedActivation = false;
 
   @Inject
@@ -75,25 +75,25 @@ public class ActivateCommand extends RestartCommand {
   public void run() {
     // basic validations first
 
-    if (!shape.isEmpty() && (node != null || configPropertiesFile != null)) {
+    if (!shape.isEmpty() && (!nodes.isEmpty() || configPropertiesFile != null)) {
       throw new IllegalArgumentException("Fast activation with '-stripe' cannot be used with '-config-file' and '-connect-to'");
     }
     if (!shape.isEmpty() && clusterName == null) {
       throw new IllegalArgumentException("Fast activation with '-stripe' requires '-cluster-name' to be used");
     }
 
-    if (!restrictedActivation && node != null && configPropertiesFile != null) {
+    if (!restrictedActivation && !nodes.isEmpty() && configPropertiesFile != null) {
       throw new IllegalArgumentException("Either node or config properties file should be specified, not both");
     }
 
-    if (restrictedActivation && node == null) {
+    if (restrictedActivation && nodes.isEmpty()) {
       throw new IllegalArgumentException("A node must be supplied for a restricted activation");
     }
 
     if (licenseFile != null && !licenseFile.toFile().exists()) {
       throw new ParameterException("License file not found: " + licenseFile);
     }
-    action.setNode(node);
+    action.setNodess(nodes);
     action.setConfigPropertiesFile(configPropertiesFile);
     action.setClusterName(clusterName);
     action.setLicenseFile(licenseFile);

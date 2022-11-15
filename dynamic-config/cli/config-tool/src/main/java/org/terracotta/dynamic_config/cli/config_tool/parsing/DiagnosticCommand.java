@@ -25,7 +25,7 @@ import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.inet.HostPort;
 
 @Parameters(commandDescription = "Diagnose a cluster configuration")
-@Usage("-connect-to <hostname[:port]>")
+@Usage("-connect-to <hostname[:port]> [-output-format <text|json>]")
 public class DiagnosticCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)

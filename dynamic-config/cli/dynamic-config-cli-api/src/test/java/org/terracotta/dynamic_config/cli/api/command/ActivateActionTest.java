@@ -244,7 +244,7 @@ public class ActivateActionTest extends BaseTest {
   @Test
   public void test_activate_from_node_and_cluster_name() {
     ActivateAction command = command();
-    command.setNode(HostPort.create("localhost", 9411));
+    command.setNodess(asList(HostPort.create("localhost", 9411)));
     command.setClusterName("foo");
     doRunAndVerify("foo", command);
   }
