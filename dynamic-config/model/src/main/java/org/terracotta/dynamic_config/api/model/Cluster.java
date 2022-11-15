@@ -507,7 +507,7 @@ public class Cluster implements Cloneable, PropertyHolder {
    * Search all endpoints of all nodes matching this address. A result can contain several endpoints of the same node
    */
   public Collection<? extends Endpoint> search(Collection<? extends HostPort> hostPorts) {
-    return hostPorts.stream()
+    return hostPorts == null ? Collections.emptyList() : hostPorts.stream()
         .flatMap(addr -> getNodes().stream().flatMap(node -> node.findEndpoints(addr).stream()))
         .collect(toList());
   }
