@@ -24,12 +24,15 @@ import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.inet.HostPort;
 
+import java.util.Collections;
+import java.util.List;
+
 @Parameters(commandDescription = "Diagnose a cluster configuration")
-@Usage("-connect-to <hostname[:port]> [-output-format <text|json>]")
+@Usage("-connect-to <hostname[:port]>")
 public class DiagnosticCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
-  private HostPort node;
+  private List<HostPort> nodes = Collections.emptyList();
 
   @Inject
   public final DiagnosticAction action;
@@ -44,7 +47,7 @@ public class DiagnosticCommand extends Command {
 
   @Override
   public void run() {
-    action.setNode(node);
+    action.setNodes(nodes);
 
     action.run();
   }

@@ -24,6 +24,9 @@ import org.terracotta.dynamic_config.cli.command.Usage;
 import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.inet.HostPort;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
 @Parameters(commandDescription = "Diagnose a cluster configuration")
 @Usage("-s <hostname[:port]>")
 public class DeprecatedDiagnosticCommand extends Command {
@@ -43,7 +46,7 @@ public class DeprecatedDiagnosticCommand extends Command {
 
   @Override
   public void run() {
-    action.setNode(node);
+    action.setNodes(node == null ? emptyList() : singletonList(node));
 
     action.run();
   }

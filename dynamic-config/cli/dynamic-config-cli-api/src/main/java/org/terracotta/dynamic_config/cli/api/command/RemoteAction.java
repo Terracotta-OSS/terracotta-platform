@@ -70,6 +70,7 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.UUID;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -367,6 +368,18 @@ public abstract class RemoteAction implements Runnable {
   }
 
   /**
+   * Try to connect to one of the nodes to get the cluster topology.
+   * At least one node must be online.
+   */
+  protected final Cluster getRuntimeCluster(Collection<HostPort> expectedOnlineNodes) {
+    LOGGER.trace("getRuntimeCluster({})", expectedOnlineNodes);
+    try (DiagnosticServices<HostPort> diagnosticServices = multiDiagnosticServiceProvider.fetchAnyOnlineDiagnosticService(toAddr(expectedOnlineNodes, identity(), HostPort::createInetSocketAddress), null)) {
+      final Map.Entry<HostPort, DiagnosticService> entry = diagnosticServices.getOnlineEndpoints().entrySet().iterator().next();
+      return entry.getValue().getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
+    }
+  }
+
+  /**
    * This method will connect to the node using the provided address from the user.
    * It will grab the topology on this node and compare the address used to connect to
    * with the node addresses to determine the endpoint and group we have to use to connect
@@ -466,6 +479,14 @@ public abstract class RemoteAction implements Runnable {
     LOGGER.trace("findRuntimePeersStatus({})", expectedOnlineNode);
     Cluster cluster = getRuntimeCluster(expectedOnlineNode);
     Collection<Endpoint> endpoints = cluster.determineEndpoints(expectedOnlineNode);
+    output.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(endpoints));
+    return getLogicalServerStates(endpoints);
+  }
+
+  protected final Map<Endpoint, LogicalServerState> findRuntimePeersStatus(Collection<HostPort> expectedOnlineNodes) {
+    LOGGER.trace("findRuntimePeersStatus({})", expectedOnlineNodes);
+    Cluster cluster = getRuntimeCluster(expectedOnlineNodes);
+    final Collection<Endpoint> endpoints = cluster.determineEndpoints(expectedOnlineNodes);
     output.info("Connecting to: {} (this can take time if some nodes are not reachable)", toString(endpoints));
     return getLogicalServerStates(endpoints);
   }
@@ -650,15 +671,23 @@ public abstract class RemoteAction implements Runnable {
     }
   }
 
-  protected static Map<UID, InetSocketAddress> endpointsToMap(Collection<Endpoint> newNodes) {
-    return newNodes.stream().collect(toMap(Endpoint::getNodeUID, e -> e.getHostPort().createInetSocketAddress()));
+  protected static Map<UID, InetSocketAddress> endpointsToMap(Collection<Endpoint> nodes) {
+    return toAddr(nodes, Endpoint::getNodeUID, endpoint -> endpoint.getHostPort().createInetSocketAddress());
   }
 
-  protected static Stream<Tuple2<UID, TopologyService>> topologyServices(DiagnosticServices<UID> diagnosticServices) {
+  protected static Map<HostPort, InetSocketAddress> hostPortsToMap(Collection<HostPort> nodes) {
+    return toAddr(nodes, identity(), HostPort::createInetSocketAddress);
+  }
+
+  protected static <K, E> Map<K, InetSocketAddress> toAddr(Collection<E> keys, Function<E, K> key, Function<E, InetSocketAddress> val) {
+    return keys.stream().collect(toMap(key, val, (res, el) -> el));
+  }
+
+  protected static <K> Stream<Tuple2<K, TopologyService>> topologyServices(DiagnosticServices<K> diagnosticServices) {
     return diagnosticServices.map((uid, diagnosticService) -> diagnosticService.getProxy(TopologyService.class));
   }
 
-  protected static Stream<Tuple2<UID, DynamicConfigService>> dynamicConfigServices(DiagnosticServices<UID> diagnosticServices) {
+  protected static <K> Stream<Tuple2<K, DynamicConfigService>> dynamicConfigServices(DiagnosticServices<K> diagnosticServices) {
     return diagnosticServices.map((uid, diagnosticService) -> diagnosticService.getProxy(DynamicConfigService.class));
   }
 

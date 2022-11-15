@@ -27,7 +27,9 @@ import java.time.Clock;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -39,16 +41,16 @@ import static java.util.stream.Collectors.toSet;
  */
 public class DiagnosticAction extends RemoteAction {
 
-  private HostPort node;
+  private List<HostPort> nodes = Collections.emptyList();
 
-  public void setNode(HostPort node) {
-    this.node = node;
+  public void setNodes(List<HostPort> nodes) {
+    this.nodes = nodes;
   }
 
   @Override
   public final void run() {
     // this call can take some time and we can have some timeout
-    Map<Node.Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
+    Map<Node.Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(nodes);
 
     ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer = analyzeNomadConsistency(allNodes);
     Collection<HostPort> onlineNodes = sort(configurationConsistencyAnalyzer.getOnlineNodes().keySet());
