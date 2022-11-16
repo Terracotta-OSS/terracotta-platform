@@ -36,12 +36,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
 public class ActivateAction extends RemoteAction {
 
-  private HostPort node;
+  private List<HostPort> nodes = Collections.emptyList();
   private Path configPropertiesFile;
   private String clusterName;
   private Path licenseFile;
@@ -50,8 +49,8 @@ public class ActivateAction extends RemoteAction {
   private boolean restrictedActivation;
   private List<Map.Entry<Collection<HostPort>, String>> shape = Collections.emptyList();
 
-  public void setNode(HostPort node) {
-    this.node = node;
+  public void setNodess(List<HostPort> nodes) {
+    this.nodes = nodes;
   }
 
   public void setConfigPropertiesFile(Path configPropertiesFile) {
@@ -152,8 +151,8 @@ public class ActivateAction extends RemoteAction {
     // getting the list of nodes where to push the same topology
 
     Collection<Endpoint> runtimePeers = restrictedActivation ?
-        singletonList(getEndpoint(node)) : // if restrictive activation, we only activate the node supplied
-        cluster.determineEndpoints(node); // if normal activation the nodes to activate are those found in the config file or in the topology loaded from the node
+        nodes.stream().map(this::getEndpoint).collect(toList()) : // if restrictive activation, we only activate the node supplied
+        cluster.determineEndpoints(nodes); // if normal activation the nodes to activate are those found in the config file or in the topology loaded from the node
 
     // verify the activated state of the nodes
     if (areAllNodesActivated(runtimePeers)) {
@@ -176,11 +175,11 @@ public class ActivateAction extends RemoteAction {
   }
 
   private Optional<Cluster> loadTopologyFromNode() {
-    return Optional.ofNullable(node).map(node -> {
-      Cluster cluster = getUpcomingCluster(node);
-      output.info("Cluster topology loaded from node: " + cluster.toShapeString());
+    return nodes.stream().map(hostPort -> {
+      Cluster cluster = getUpcomingCluster(hostPort);
+      output.info("Cluster topology loaded from: " + hostPort + ": " + cluster.toShapeString());
       return cluster;
-    });
+    }).findFirst();
   }
 
   Cluster getCluster() {

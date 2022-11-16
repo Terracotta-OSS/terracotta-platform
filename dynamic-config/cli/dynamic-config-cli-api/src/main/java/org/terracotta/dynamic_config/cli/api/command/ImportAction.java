@@ -24,16 +24,16 @@ import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
 import org.terracotta.inet.HostPort;
 
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import static java.lang.System.lineSeparator;
+import static java.util.stream.Collectors.toList;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;
 
 /**
@@ -43,11 +43,11 @@ public class ImportAction extends RemoteAction {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ImportAction.class);
 
-  private HostPort node;
+  private List<HostPort> nodes = Collections.emptyList();
   private Path configFile;
 
-  public void setNode(HostPort node) {
-    this.node = node;
+  public void setNodes(List<HostPort> nodes) {
+    this.nodes = nodes;
   }
 
   public void setConfigFile(Path configFile) {
@@ -74,26 +74,24 @@ public class ImportAction extends RemoteAction {
       }
     }
 
-    Collection<Node.Endpoint> runtimePeers = cluster.determineEndpoints(node);
-
     // validate the topology
     new ClusterValidator(cluster).validate(ClusterState.CONFIGURING);
 
-    if (node != null) {
-      // verify the activated state of the nodes
-      if (areAllNodesActivated(runtimePeers)) {
-        throw new IllegalStateException("Cluster is already activated");
+    if (nodes.isEmpty()) {
+      // import the cluster config to the nodes read from the config
+      nodes = cluster.determineEndpoints().stream().map(Node.Endpoint::getHostPort).collect(toList());
 
-      } else {
-        if (isActivated(node)) {
-          throw new IllegalStateException("Node is already activated");
-        }
-        runtimePeers = Collections.singletonList(getEndpoint(node));
+    }
+
+    for (HostPort node : nodes) {
+      if (isActivated(node)) {
+        throw new IllegalStateException("Node: " + node + " is already activated");
       }
     }
-    output.info("Importing cluster configuration from config file: {} to nodes: {}", configFile, toString(runtimePeers));
 
-    try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(endpointsToMap(runtimePeers))) {
+    output.info("Importing cluster configuration from config file: {} to nodes: {}", configFile, toString(nodes));
+
+    try (DiagnosticServices<HostPort> diagnosticServices = multiDiagnosticServiceProvider.fetchOnlineDiagnosticServices(hostPortsToMap(nodes))) {
       dynamicConfigServices(diagnosticServices)
           .map(Tuple2::getT2)
           .forEach(service -> service.setUpcomingCluster(cluster));

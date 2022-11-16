@@ -31,6 +31,8 @@ import org.terracotta.inet.HostPort;
 
 import java.nio.file.Path;
 
+import static java.util.Collections.singletonList;
+
 @Parameters(commandDescription = "Activate a cluster")
 @Usage("(-s <hostname[:port]> | -f <config.cfg|config.properties>) [-n <cluster-name>] [-R] [-l <license-file>] [-W <restart-wait-time>] [-D <restart-delay>]")
 public class DeprecatedActivateCommand extends Command {
@@ -80,7 +82,7 @@ public class DeprecatedActivateCommand extends Command {
     if (licenseFile != null && !licenseFile.toFile().exists()) {
       throw new ParameterException("License file not found: " + licenseFile);
     }
-    action.setNode(node);
+    action.setNodess(singletonList(node));
     action.setConfigPropertiesFile(configPropertiesFile);
     action.setClusterName(clusterName);
     action.setLicenseFile(licenseFile);

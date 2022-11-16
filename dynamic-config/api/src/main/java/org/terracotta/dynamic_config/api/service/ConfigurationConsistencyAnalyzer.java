@@ -17,6 +17,7 @@ package org.terracotta.dynamic_config.api.service;
 
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.OptionalConfig;
 import org.terracotta.inet.HostPort;
@@ -138,8 +139,8 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     return Optional.ofNullable(responses.get(endpoint));
   }
 
-  public Throwable getDiscoverFailure() {
-    return discoverFailure;
+  public Optional<Throwable> getDiscoverFailure() {
+    return Optional.ofNullable(discoverFailure);
   }
 
   // discoverClusterInconsistent
@@ -280,9 +281,10 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
         return "The cluster configuration seems healthy (some nodes are unreachable). " + getLockingInfo();
 
       case DISCOVERY_FAILURE:
-        return getDiscoverFailure().getMessage() == null ?
-            "Failed to analyze cluster configuration." :
-            ("Failed to analyze cluster configuration. Reason: " + getDiscoverFailure().getMessage());
+        return "Failed to analyze cluster configuration." + getDiscoverFailure()
+            .map(Throwable::getMessage)
+            .map(msg -> " Reason: " + msg)
+            .orElse("");
 
       case CHANGE_IN_PROGRESS:
         return "Failed to analyze cluster configuration. Reason: a change is in progress:"
@@ -339,7 +341,7 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
     }
   }
 
-  private String getLockingInfo() {
+  public Optional<LockContext> findLockContext() {
     return responses.values()
         .stream()
         .map(DiscoverResponse::getLatestChange)
@@ -348,9 +350,23 @@ public class ConfigurationConsistencyAnalyzer implements DiscoverResultsReceiver
         .findAny()
         .map(NodeContext::getCluster)
         .map(Cluster::getConfigurationLockContext)
-        .flatMap(OptionalConfig::asOptional)
+        .flatMap(OptionalConfig::asOptional);
+  }
+
+  private String getLockingInfo() {
+    return findLockContext()
         .map((c) -> format("No changes are possible as config is locked by '%s'.", c.ownerInfo()))
         .orElse("New configuration changes are possible.");
+  }
+
+  public Optional<Cluster> findCluster() {
+    return responses.values()
+        .stream()
+        .map(DiscoverResponse::getLatestChange)
+        .filter(Objects::nonNull)
+        .map(ChangeDetails::getResult)
+        .findAny()
+        .map(NodeContext::getCluster);
   }
 
   private Collector<Map.Entry<HostPort, DiscoverResponse<NodeContext>>, ?, LinkedHashMap<HostPort, LogicalServerState>> responseEntryToMap() {

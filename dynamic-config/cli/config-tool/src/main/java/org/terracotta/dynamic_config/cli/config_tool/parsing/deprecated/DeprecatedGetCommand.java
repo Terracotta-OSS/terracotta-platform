@@ -32,6 +32,9 @@ import org.terracotta.inet.HostPort;
 
 import java.util.List;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
 @Parameters(commandDescription = "Read configuration properties")
 @Usage("-s <hostname[:port]> [-r] [-t cfg|properties] -c <[namespace:]property> -c <[namespace:]property> ...")
 public class DeprecatedGetCommand extends Command {
@@ -61,7 +64,7 @@ public class DeprecatedGetCommand extends Command {
 
   @Override
   public void run() {
-    action.setNode(node);
+    action.setNodes(node == null ? emptyList() : singletonList(node));
     action.setConfigurationInputs(inputs);
     action.setRuntimeConfig(wantsRuntimeConfig);
     action.setOutputFormat(outputFormat);

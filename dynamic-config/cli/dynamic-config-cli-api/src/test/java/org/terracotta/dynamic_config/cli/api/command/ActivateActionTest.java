@@ -244,7 +244,7 @@ public class ActivateActionTest extends BaseTest {
   @Test
   public void test_activate_from_node_and_cluster_name() {
     ActivateAction command = command();
-    command.setNode(HostPort.create("localhost", 9411));
+    command.setNodess(asList(HostPort.create("localhost", 9411)));
     command.setClusterName("foo");
     doRunAndVerify("foo", command);
   }
@@ -280,7 +280,7 @@ public class ActivateActionTest extends BaseTest {
 
   private ActivateAction command() {
     ActivateAction command = new ActivateAction();
-    inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider, outputService));
+    inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider, outputService, objectMapperFactory));
     return command;
   }
 

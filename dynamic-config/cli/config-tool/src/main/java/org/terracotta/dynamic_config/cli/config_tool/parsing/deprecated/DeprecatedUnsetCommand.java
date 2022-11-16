@@ -32,6 +32,9 @@ import org.terracotta.inet.HostPort;
 
 import java.util.List;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
 @Parameters(commandDescription = "Unset configuration properties")
 @Usage("-s <hostname[:port]> -c <[namespace:]property> -c <[namespace:]property> ...")
 public class DeprecatedUnsetCommand extends Command {
@@ -61,7 +64,7 @@ public class DeprecatedUnsetCommand extends Command {
 
   @Override
   public void run() {
-    action.setNode(node);
+    action.setNodes(node == null ? emptyList() : singletonList(node));
     action.setConfigurationInputs(inputs);
     action.setRestartDelay(restartDelay);
     action.setRestartWaitTime(restartWaitTime);

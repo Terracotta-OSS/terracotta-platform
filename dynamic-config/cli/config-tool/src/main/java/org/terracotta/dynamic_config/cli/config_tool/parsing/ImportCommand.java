@@ -26,13 +26,15 @@ import org.terracotta.dynamic_config.cli.converter.HostPortConverter;
 import org.terracotta.inet.HostPort;
 
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
 
 @Parameters(commandDescription = "Import a cluster configuration")
 @Usage("-config-file <config.cfg|config.properties> [-connect-to <hostname[:port]>]")
 public class ImportCommand extends Command {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = HostPortConverter.class)
-  private HostPort node;
+  private List<HostPort> nodes = Collections.emptyList();
 
   @Parameter(names = {"-config-file"}, description = "Config file", required = true, converter = PathConverter.class)
   private Path configFile;
@@ -50,7 +52,7 @@ public class ImportCommand extends Command {
 
   @Override
   public void run() {
-    action.setNode(node);
+    action.setNodes(nodes);
     action.setConfigFile(configFile);
 
     action.run();

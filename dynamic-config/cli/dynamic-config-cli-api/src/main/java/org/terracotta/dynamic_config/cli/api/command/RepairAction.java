@@ -111,7 +111,7 @@ public class RepairAction extends RemoteAction {
         break;
 
       case DISCOVERY_FAILURE:
-        LOGGER.error(description, configurationConsistencyAnalyzer.getDiscoverFailure());
+        LOGGER.error(description, configurationConsistencyAnalyzer.getDiscoverFailure().get());
         break;
 
       case INCONSISTENT:
