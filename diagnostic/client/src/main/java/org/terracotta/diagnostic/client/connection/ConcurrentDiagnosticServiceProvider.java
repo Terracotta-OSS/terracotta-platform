@@ -16,24 +16,19 @@
 package org.terracotta.diagnostic.client.connection;
 
 import org.terracotta.common.struct.TimeBudget;
-import org.terracotta.common.struct.Tuple3;
 import org.terracotta.diagnostic.client.DiagnosticService;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.terracotta.common.struct.Tuple3.tuple3;
 
 public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServiceProvider {
 
@@ -49,104 +44,134 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
   }
 
   @Override
-  public <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses) {
-    return _fetchOnlineDiagnosticService(addresses, false, connectionTimeout);
+  public Duration getConnectionTimeout() {
+    return connectionTimeout;
   }
 
   @Override
   public <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses, Duration connectionTimeout) {
-    return _fetchOnlineDiagnosticService(addresses, false, connectionTimeout);
-  }
-
-  @Override
-  public <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses) {
-    return _fetchOnlineDiagnosticService(addresses, true, connectionTimeout);
-  }
-
-  @Override
-  public <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, Duration connectionTimeout) {
-    return _fetchOnlineDiagnosticService(addresses, true, connectionTimeout);
-  }
-
-  private <K> DiagnosticServices<K> _fetchOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, boolean firstAvailable, Duration connTimeout) {
-    if (addresses.isEmpty() && firstAvailable) {
-      throw new IllegalArgumentException("Unable to find any online node: no address provided");
-    }
-
     if (addresses.isEmpty()) {
       return new DiagnosticServices<>(emptyMap(), emptyMap());
     }
-
-    ExecutorService executor = Executors.newFixedThreadPool(
-        concurrencySizing.getThreadCount(addresses.size()),
-        r -> new Thread(r, "diagnostics-connect"));
-
-    try {
-      CompletionService<Tuple3<K, DiagnosticService, DiagnosticServiceProviderException>> completionService = new ExecutorCompletionService<>(executor);
-
-      // start all the fetches, record error if any
-      final TimeBudget timeBudget = connTimeout == null ? null : new TimeBudget(connTimeout.toMillis(), MILLISECONDS);
-      addresses.forEach((id, address) -> completionService.submit(() -> {
-        try {
-          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, timeBudget == null ? null : Duration.ofMillis(timeBudget.remaining()));
-          return tuple3(id, diagnosticService, null);
-        } catch (DiagnosticServiceProviderException e) {
-          return tuple3(id, null, e);
-        } catch (Exception e) {
-          return tuple3(id, null, new DiagnosticServiceProviderException("Failed to create diagnostic connection to " + address, e));
-        }
-      }));
-
-      Map<K, DiagnosticService> online = new HashMap<>(addresses.size());
-      Map<K, DiagnosticServiceProviderException> offline = new HashMap<>(addresses.size());
-
+    Map<K, DiagnosticService> online = new ConcurrentHashMap<>(addresses.size());
+    Map<K, DiagnosticServiceProviderException> failed = new ConcurrentHashMap<>(addresses.size());
+    try (Fetcher<K> fetcher = new Fetcher<>(addresses, connectionTimeout)) {
       try {
-        // capture the task output
-        int count = addresses.size();
-        while (count-- > 0) {
-          // we do not need to handle any timeout here during a take or get because they are handled in the submitted tasks
-          Future<Tuple3<K, DiagnosticService, DiagnosticServiceProviderException>> completed = completionService.take();
-          Tuple3<K, DiagnosticService, DiagnosticServiceProviderException> tuple = completed.get();
-          if (tuple.t3 == null) {
-            online.put(tuple.t1, tuple.t2);
-            if (firstAvailable) {
-              executor.shutdownNow();
-              break;
-            }
-          } else if (!firstAvailable) {
-            offline.put(tuple.t1, tuple.t3);
-          }
-        }
+        fetcher.fetch(online::put, failed::put);
       } catch (InterruptedException e) {
-        // take() has been interrupted.
-        // We need to cancel all the tasks and shutdown everything
-        shutdown(executor);
-        throw new RuntimeException(e);
-      } catch (ExecutionException e) {
-        // impossible since we catch Throwable in the submitted task
-        throw new AssertionError(e);
+        Thread.currentThread().interrupt();
       }
-
-      if (online.isEmpty() && firstAvailable) {
-        throw new IllegalArgumentException("Unable to find any reachable node amongst: " + addresses);
-      }
-
-      return new DiagnosticServices<>(online, offline);
-    } finally {
-      shutdown(executor);
+    }
+    if (online.size() + failed.size() != addresses.size()) { // in case Thread.currentThread().isInterrupted()
+      online.values().forEach(DiagnosticService::close); // no need to catch anything: DiagnosticService#close() does not throw
+      throw new DiagnosticServiceProviderException("Connection process interrupted");
+    } else {
+      return new DiagnosticServices<>(online, failed);
     }
   }
 
-  private void shutdown(ExecutorService executor) {
-    executor.shutdown();
-    try {
-      if (!executor.awaitTermination(30, SECONDS)) {
-        // timed out waiting for task closing
-        executor.shutdownNow();
-      }
+  @Override
+  public <K> DiagnosticServices<K> fetchOnlineDiagnosticServices(Map<K, InetSocketAddress> expectedOnlineNodes, Duration timeout) throws DiagnosticServiceProviderException {
+    if (expectedOnlineNodes.isEmpty()) {
+      throw new DiagnosticServiceProviderException("No node to connect to");
+    }
+    Map<K, DiagnosticService> online = new ConcurrentHashMap<>(expectedOnlineNodes.size());
+    Map<K, DiagnosticServiceProviderException> failed = new ConcurrentHashMap<>(expectedOnlineNodes.size());
+    try (Fetcher<K> fetcher = new Fetcher<>(expectedOnlineNodes, connectionTimeout)) {
+      fetcher.fetch(online::put, (k, failure) -> {
+        failed.put(k, failure);
+        fetcher.interrupt(); // we interrupt the fetch as soon as we see a node we cannot connect to
+      });
     } catch (InterruptedException e) {
-      executor.shutdownNow();
       Thread.currentThread().interrupt();
+    }
+    if (Thread.currentThread().isInterrupted()) {
+      online.values().forEach(DiagnosticService::close); // no need to catch anything: DiagnosticService#close() does not throw
+      throw new DiagnosticServiceProviderException("Connection process interrupted");
+    } else if (!failed.isEmpty()) {
+      // if fetch was interrupted because of a failure, we throw
+      online.values().forEach(DiagnosticService::close); // no need to catch anything: DiagnosticService#close() does not throw
+      throw failed.values().iterator().next();
+    } else {
+      return new DiagnosticServices<>(online, emptyMap());
+    }
+  }
+
+  @Override
+  public <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, Duration connectionTimeout) throws DiagnosticServiceProviderException {
+    if (addresses.isEmpty()) {
+      throw new DiagnosticServiceProviderException("No node to connect to");
+    }
+    Map<K, DiagnosticService> online = new ConcurrentHashMap<>(addresses.size());
+    Map<K, DiagnosticServiceProviderException> failed = new ConcurrentHashMap<>(addresses.size());
+    try (Fetcher<K> fetcher = new Fetcher<>(addresses, connectionTimeout)) {
+      fetcher.fetch((k, diagnosticService) -> {
+        online.put(k, diagnosticService);
+        fetcher.interrupt();
+      }, failed::put);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    if (Thread.currentThread().isInterrupted()) {
+      online.values().forEach(DiagnosticService::close); // no need to catch anything: DiagnosticService#close() does not throw
+      throw new DiagnosticServiceProviderException("No node to connect to: connection process interrupted");
+    } else if (online.isEmpty()) {
+      // online is empty , no need to close
+      throw failed.values().iterator().next();
+    } else {
+      return new DiagnosticServices<>(online, emptyMap());
+    }
+  }
+
+  private class Fetcher<K> implements AutoCloseable {
+    private final Map<K, InetSocketAddress> addresses;
+    private final TimeBudget timeBudget;
+    private final ExecutorService executor;
+
+    Fetcher(Map<K, InetSocketAddress> addresses, Duration overriddenConnectionTimeout) {
+      this.addresses = addresses;
+      this.timeBudget = overriddenConnectionTimeout == null ? null : new TimeBudget(overriddenConnectionTimeout.toMillis(), MILLISECONDS);
+      this.executor = Executors.newFixedThreadPool(concurrencySizing.getThreadCount(addresses.size()), r -> new Thread(r, "diagnostics-connect"));
+    }
+
+    Duration getRemainingTimeout() {
+      return timeBudget == null ? null : Duration.ofMillis(timeBudget.remaining());
+    }
+
+    void fetch(BiConsumer<K, DiagnosticService> onSuccess, BiConsumer<K, DiagnosticServiceProviderException> onFailure) throws InterruptedException {
+      // start all the fetches and record success and errors
+      addresses.forEach((k, address) -> executor.execute(() -> {
+        try {
+          DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(address, getRemainingTimeout());
+          onSuccess.accept(k, diagnosticService);
+        } catch (DiagnosticServiceProviderException e) {
+          onFailure.accept(k, e);
+        } catch (Exception e) {
+          onFailure.accept(k, new DiagnosticServiceProviderException("Failed to create diagnostic connection to: " + address + ": " + e.getMessage(), e));
+        }
+      }));
+      executor.shutdown();
+      // wait for all tasks to finish because they are linked to
+      // some connection timeout decisions from user:
+      // - either timeout (long or short)
+      // - either null => default core timeout is used
+      // - either interruption
+      try {
+        while (!executor.awaitTermination(5, SECONDS)) {
+        }
+      } catch (InterruptedException e) {
+        executor.shutdownNow(); // ensure that tasks will eventually be interrupted
+        throw e;
+      }
+    }
+
+    public void interrupt() {
+      executor.shutdownNow();
+    }
+
+    @Override
+    public void close() {
+      executor.shutdownNow();
     }
   }
 }
