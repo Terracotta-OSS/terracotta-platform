@@ -26,7 +26,6 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServices;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
-import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.inet.HostPort;
 import org.terracotta.json.ObjectMapperFactory;
@@ -110,14 +109,7 @@ public class TCVoterMain {
         .collect(toMap(identity(), hostPort -> HostPort.parse(hostPort, 9410).createInetSocketAddress(), (value1, value2) -> value1));
 
     try (final DiagnosticServices<String> diagnosticServices = multiDiagnosticServiceProvider.fetchAnyOnlineDiagnosticService(addresses)) {
-      return diagnosticServices.getOnlineEndpoints()
-          .values()
-          .stream()
-          .findFirst()
-          .map(ds -> ds.getProxy(TopologyService.class))
-          .map(TopologyService::getUpcomingNodeContext)
-          .map(NodeContext::getCluster)
-          .orElseThrow(() -> new IllegalStateException("All servers are unreachable"));
+      return diagnosticServices.findAnyOnlineDiagnosticService().get().getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
     }
   }
 

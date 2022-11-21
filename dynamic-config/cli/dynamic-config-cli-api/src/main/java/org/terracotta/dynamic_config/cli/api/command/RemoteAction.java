@@ -336,6 +336,7 @@ public abstract class RemoteAction implements Runnable {
 
   protected final Map<Endpoint, LogicalServerState> getLogicalServerStates(Collection<Endpoint> endpoints) {
     LOGGER.trace("getLogicalServerStates({})", endpoints);
+    // null parameter is important here because some servers can be down
     try (DiagnosticServices<UID> diagnosticServices = multiDiagnosticServiceProvider.fetchDiagnosticServices(endpointsToMap(endpoints), null)) {
       LinkedHashMap<Endpoint, LogicalServerState> status = endpoints.stream()
           .collect(toMap(
@@ -400,7 +401,7 @@ public abstract class RemoteAction implements Runnable {
   }
 
   protected final <V> V withAnyOnlineDiagnosticService(Collection<HostPort> nodes, BiFunction<HostPort, DiagnosticService, V> fn) {
-    try (DiagnosticServices<HostPort> diagnosticServices = multiDiagnosticServiceProvider.fetchAnyOnlineDiagnosticService(toAddr(nodes, identity(), HostPort::createInetSocketAddress), null)) {
+    try (DiagnosticServices<HostPort> diagnosticServices = multiDiagnosticServiceProvider.fetchAnyOnlineDiagnosticService(toAddr(nodes, identity(), HostPort::createInetSocketAddress))) {
       final Map.Entry<HostPort, DiagnosticService> entry = diagnosticServices.getOnlineEndpoints().entrySet().iterator().next();
       return fn.apply(entry.getKey(), entry.getValue());
     }

@@ -17,15 +17,15 @@ package org.terracotta.diagnostic.client.connection;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author Mathieu Carbou
  */
 public interface MultiDiagnosticServiceProvider {
+
+  Duration getConnectionTimeout();
+
   /**
    * Concurrently fetch the diagnostic service of all the nodes.
    * These nodes are expected to be online.
@@ -38,59 +38,57 @@ public interface MultiDiagnosticServiceProvider {
    *                                            or if all the nodes cannot be reached within a specific duration (timeout)
    */
   default <K> DiagnosticServices<K> fetchOnlineDiagnosticServices(Map<K, InetSocketAddress> expectedOnlineNodes) throws DiagnosticServiceProviderException {
-    DiagnosticServices<K> diagnosticServices = fetchDiagnosticServices(expectedOnlineNodes);
-    Collection<K> offlineEndpoints = diagnosticServices.getOfflineEndpoints().keySet();
-    if (!offlineEndpoints.isEmpty()) {
-      Collection<InetSocketAddress> failed = offlineEndpoints.stream().map(expectedOnlineNodes::get).collect(Collectors.toList());
-      DiagnosticServiceProviderException exception = new DiagnosticServiceProviderException("Diagnostic connection to: " + failed + " failed");
-      // add all errors
-      offlineEndpoints.stream()
-          .map(address -> diagnosticServices.getError(address).orElse(null))
-          .filter(Objects::nonNull)
-          .forEach(exception::addSuppressed);
-      try {
-        diagnosticServices.close();
-      } catch (RuntimeException e) {
-        exception.addSuppressed(e);
-      }
-      throw exception;
-    }
-    return diagnosticServices;
+    return fetchOnlineDiagnosticServices(expectedOnlineNodes, getConnectionTimeout());
   }
 
   /**
-   * Concurrently fetch the diagnostic service of all the provided nodes.
-   * The method will not fail, except if some connection timeout is reached.
-   * If some nodes are offline, they will be reported in {@link DiagnosticServices#getOfflineEndpoints()}.
+   * Concurrently fetch the diagnostic service of all the nodes.
+   * These nodes are expected to be online.
+   * If a node is unreachable, the method will fail.
    * <p>
-   * The returned {@link DiagnosticServices} will have a list of online nodes and a list of offline nodes.
+   * The returned {@link DiagnosticServices} will only have online nodes and no offline nodes.
+   *
+   * @param <K> a node identifier
+   * @throws DiagnosticServiceProviderException If one of the node is unreachable,
+   *                                            or if all the nodes cannot be reached within a specific duration (timeout)
+   */
+  <K> DiagnosticServices<K> fetchOnlineDiagnosticServices(Map<K, InetSocketAddress> expectedOnlineNodes, Duration timeout) throws DiagnosticServiceProviderException;
+
+  /**
+   * Concurrently fetch the diagnostic service of all the provided nodes.
+   * The method will not fail and record failures in {@link DiagnosticServices#getFailedEndpoints()}.
+   * <p>
+   * The returned {@link DiagnosticServices} will have a list of online nodes and a list of failed nodes.
    *
    * @param <K> a node identifier
    */
-  <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses);
+  default <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses) {
+    return fetchDiagnosticServices(addresses, getConnectionTimeout());
+  }
 
   /**
-   * Same as above but allows to override the connection timeout.
-   * If timeout is null, we will use a specific mode to ask TC client to connect once with its short hard-coded
-   * timeout of 5 seconds.
+   * Same as {@link #fetchDiagnosticServices(Map)} but allows to override the connection timeout.
+   * If timeout is null, we will use the default short hard-coded timeout of 5 seconds in core.
    */
   <K> DiagnosticServices<K> fetchDiagnosticServices(Map<K, InetSocketAddress> addresses, Duration connectionTimeout);
 
   /**
    * Concurrently fetch any single online diagnostic service of all the provided nodes.
-   * The method will not fail, except if some connection timeout is reached.
-   * Offline nodes are ignored.
+   * This method expects at least one node to be online.
+   * If all nodes have failed, an exception is thrown
    * <p>
-   * If successful, the returned {@link DiagnosticServices} will have a single online node.
+   * If successful, the returned {@link DiagnosticServices} will have at least one online node.
    *
    * @param <K> a node identifier
    */
-  <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses);
+  default <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses) throws DiagnosticServiceProviderException {
+    return fetchAnyOnlineDiagnosticService(addresses, getConnectionTimeout());
+  }
 
   /**
    * Same as above but allows to override the connection timeout.
    * If timeout is null, we will use a specific mode to ask TC client to connect once with its short hard-coded
    * timeout of 5 seconds.
    */
-  <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, Duration connectionTimeout);
+  <K> DiagnosticServices<K> fetchAnyOnlineDiagnosticService(Map<K, InetSocketAddress> addresses, Duration connectionTimeout) throws DiagnosticServiceProviderException;
 }

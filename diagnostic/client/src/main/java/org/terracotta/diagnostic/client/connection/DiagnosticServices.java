@@ -29,23 +29,27 @@ import static org.terracotta.common.struct.Tuple2.tuple2;
 
 public class DiagnosticServices<K> implements AutoCloseable {
   private final Map<K, DiagnosticService> onlineEndpoints;
-  private final Map<K, DiagnosticServiceProviderException> offlineEndpoints;
+  private final Map<K, DiagnosticServiceProviderException> failedEndpoints;
 
-  public DiagnosticServices(Map<K, DiagnosticService> onlineEndpoints, Map<K, DiagnosticServiceProviderException> offlineEndpoints) {
+  public DiagnosticServices(Map<K, DiagnosticService> onlineEndpoints, Map<K, DiagnosticServiceProviderException> failedEndpoints) {
     this.onlineEndpoints = requireNonNull(onlineEndpoints);
-    this.offlineEndpoints = requireNonNull(offlineEndpoints);
+    this.failedEndpoints = requireNonNull(failedEndpoints);
   }
 
   public Map<K, DiagnosticService> getOnlineEndpoints() {
     return Collections.unmodifiableMap(onlineEndpoints);
   }
 
-  public Map<K, DiagnosticServiceProviderException> getOfflineEndpoints() {
-    return Collections.unmodifiableMap(offlineEndpoints);
+  public Optional<DiagnosticService> findAnyOnlineDiagnosticService() {
+    return Optional.ofNullable(onlineEndpoints.isEmpty() ? null : onlineEndpoints.values().iterator().next());
   }
 
-  public Optional<DiagnosticServiceProviderException> getError(K id) {
-    return offlineEndpoints.entrySet().stream()
+  public Map<K, DiagnosticServiceProviderException> getFailedEndpoints() {
+    return Collections.unmodifiableMap(failedEndpoints);
+  }
+
+  public Optional<DiagnosticServiceProviderException> getFailure(K id) {
+    return failedEndpoints.entrySet().stream()
         .filter(e -> e.getKey().equals(id))
         .map(Map.Entry::getValue)
         .findAny();
