@@ -166,7 +166,7 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     when(topologyServiceMock("localhost", 9411).isActivated()).thenReturn(true);
 
     AttachAction command = newCommand();
-    command.setSourceHostPort(HostPort.create("localhost", 9411));
+    command.setStripeFromSource(HostPort.create("localhost", 9411));
     command.setOperationType(STRIPE);
     command.setDestinationHostPort(HostPort.create("localhost", 9410));
 
@@ -181,7 +181,7 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext);
 
     AttachAction command = newCommand();
-    command.setSourceHostPort(HostPort.create("localhost", 9411));
+    command.setStripeFromSource(HostPort.create("localhost", 9411));
     command.setOperationType(STRIPE);
     command.setDestinationHostPort(HostPort.create("localhost", 9410));
 
@@ -199,7 +199,7 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     DynamicConfigService mock11 = dynamicConfigServiceMock("localhost", 9411);
 
     AttachAction command = newCommand();
-    command.setSourceHostPort(HostPort.create("localhost", 9411));
+    command.setStripeFromSource(HostPort.create("localhost", 9411));
     command.setOperationType(STRIPE);
     command.setDestinationHostPort(HostPort.create("localhost", 9410));
     command.run();

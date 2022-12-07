@@ -19,6 +19,8 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
+import java.util.stream.Stream;
+
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -74,5 +76,26 @@ public class AttachCommand2x2IT extends DynamicConfigIT {
 
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getNodeCount(), is(equalTo(3)));
     assertThat(getUpcomingCluster("localhost", getNodePort(2, 1)).getStripeCount(), is(equalTo(2)));
+  }
+
+  @Test
+  public void test_attach_stripe_shape() {
+    assertThat(configTool("attach", "-to-cluster", getNodeHostPort(1, 1).toString(), "-stripe-shape", getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)), is(successful()));
+
+    Stream.of(getNodePort(1, 1), getNodePort(2, 1), getNodePort(2, 2)).forEach(port -> {
+      assertThat(getUpcomingCluster("localhost", port).getNodeCount(), is(equalTo(3)));
+      assertThat(getUpcomingCluster("localhost", port).getStripeCount(), is(equalTo(2)));
+    });
+  }
+
+  @Test
+  public void test_attach_stripe_shape_named() {
+    assertThat(configTool("attach", "-to-cluster", getNodeHostPort(1, 1).toString(), "-stripe-shape", "stripe2/" + getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)), is(successful()));
+
+    Stream.of(getNodePort(1, 1), getNodePort(2, 1), getNodePort(2, 2)).forEach(port -> {
+      assertThat(getUpcomingCluster("localhost", port).getNodeCount(), is(equalTo(3)));
+      assertThat(getUpcomingCluster("localhost", port).getStripeCount(), is(equalTo(2)));
+      assertThat(getUpcomingCluster("localhost", port).getStripes().get(1).getName(), is(equalTo("stripe2")));
+    });
   }
 }

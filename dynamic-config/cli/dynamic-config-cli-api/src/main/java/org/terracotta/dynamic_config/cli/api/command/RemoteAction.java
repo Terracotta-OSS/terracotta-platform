@@ -386,9 +386,7 @@ public abstract class RemoteAction implements Runnable {
 
   protected final Cluster getRuntimeCluster(HostPort expectedOnlineNode) {
     LOGGER.trace("getRuntimeCluster({})", expectedOnlineNode);
-    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
-      return diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getCluster();
-    }
+    return getRuntimeNodeContext(expectedOnlineNode).t2.getCluster();
   }
 
   /**
@@ -415,9 +413,22 @@ public abstract class RemoteAction implements Runnable {
    */
   protected final Endpoint getEndpoint(HostPort expectedOnlineNode) {
     LOGGER.trace("getEndpoint({})", expectedOnlineNode);
+    return getRuntimeNodeContext(expectedOnlineNode).t1;
+  }
+
+  protected final Tuple2<Endpoint, NodeContext> getRuntimeNodeContext(HostPort expectedOnlineNode) {
+    LOGGER.trace("NodeContext({})", expectedOnlineNode);
     try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
-      Node node = diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext().getNode();
-      return node.determineEndpoint(expectedOnlineNode);
+      final NodeContext nodeContext = diagnosticService.getProxy(TopologyService.class).getRuntimeNodeContext();
+      return Tuple2.tuple2(nodeContext.getNode().determineEndpoint(expectedOnlineNode), nodeContext);
+    }
+  }
+
+  protected final Tuple2<Endpoint, NodeContext> getUpcomingNodeContext(HostPort expectedOnlineNode) {
+    LOGGER.trace("NodeContext({})", expectedOnlineNode);
+    try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(expectedOnlineNode.createInetSocketAddress())) {
+      final NodeContext nodeContext = diagnosticService.getProxy(TopologyService.class).getUpcomingNodeContext();
+      return Tuple2.tuple2(nodeContext.getNode().determineEndpoint(expectedOnlineNode), nodeContext);
     }
   }
 

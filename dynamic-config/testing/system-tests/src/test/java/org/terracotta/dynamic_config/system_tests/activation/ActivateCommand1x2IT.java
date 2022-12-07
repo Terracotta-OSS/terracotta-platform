@@ -53,7 +53,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_fast_activation_1x1() {
     assertThat(
-        configTool("activate", "-cluster-name", "my-cluster", "-stripe", getNodeHostPort(1, 1).toString()),
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe-shape", getNodeHostPort(1, 1).toString()),
         allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
@@ -68,7 +68,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_fast_activation_1x1_with_stripe_name() {
     assertThat(
-        configTool("activate", "-cluster-name", "my-cluster", "-stripe", "foo/" + getNodeHostPort(1, 1)),
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe-shape", "foo/" + getNodeHostPort(1, 1)),
         allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
@@ -84,7 +84,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_fast_activation_1x2() {
     assertThat(
-        configTool("activate", "-cluster-name", "my-cluster", "-stripe", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2)),
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe-shape", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2)),
         allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
@@ -100,7 +100,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
   @Test
   public void test_fast_activation_1x2_with_stripe_name() {
     assertThat(
-        configTool("activate", "-cluster-name", "my-cluster", "-stripe", "foo/" + getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2)),
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe-shape", "foo/" + getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2)),
         allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
@@ -119,7 +119,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
 
     assertThat(
-        configTool("activate", "-cluster-name", "my-cluster", "-stripe", getNodeHostPort(1, 1).toString()),
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe-shape", getNodeHostPort(1, 1).toString()),
         allOf(not(successful()), containsOutput("already contains a topology with 2 nodes or more so it cannot be used in a fast activation")));
   }
 
@@ -128,7 +128,7 @@ public class ActivateCommand1x2IT extends DynamicConfigIT {
     assertThat(configTool("set", "-connect-to", "localhost:" + getNodePort(1, 2), "-setting", "client-reconnect-window=1s"), is(successful()));
 
     assertThat(
-        configTool("activate", "-cluster-name", "my-cluster", "-stripe", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2)),
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe-shape", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2)),
         allOf(not(successful()), containsOutput("Host: " + getNodeHostPort(1, 2) + " has been started with cluster settings:")));
   }
 

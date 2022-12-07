@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.inet.HostPort;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +31,7 @@ import java.util.stream.Stream;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 
 public class Stripe implements Cloneable, PropertyHolder {
@@ -179,5 +181,13 @@ public class Stripe implements Cloneable, PropertyHolder {
 
   public Optional<Node> findReachableNode(HostPort hostPort) {
     return nodes.stream().filter(node -> node.isReachableWith(hostPort)).findFirst();
+  }
+
+  public Collection<Node.Endpoint> determineEndpoints(Node.Endpoint initiator) {
+    return determineEndpoints(initiator.getEndpointType());
+  }
+
+  public Collection<Node.Endpoint> determineEndpoints(EndpointType endpointType) {
+    return getNodes().stream().map(node -> node.determineEndpoint(endpointType)).collect(toList());
   }
 }
