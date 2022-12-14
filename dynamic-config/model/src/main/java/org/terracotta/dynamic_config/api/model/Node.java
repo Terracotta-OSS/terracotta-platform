@@ -601,8 +601,7 @@ public class Node implements Cloneable, PropertyHolder {
       this.hostPort = requireNonNull(hostPort);
     }
 
-    // keep package local
-    EndpointType getEndpointType() {
+    public EndpointType getEndpointType() {
       return endpointType;
     }
 

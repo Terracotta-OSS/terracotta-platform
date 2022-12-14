@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 @Parameters(commandDescription = "Activate a cluster")
-@Usage("(-connect-to <hostname[:port]> | -config-file <config.cfg|config.properties> | -stripe <[name/]hostname[:port]|hostname[:port]|...>) [-cluster-name <cluster-name>] [-restrict] [-license-file <license-file>] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
+@Usage("(-connect-to <hostname[:port]> | -config-file <config.cfg|config.properties> | -stripe-shape <[name/]hostname[:port]|hostname[:port]|...>) [-cluster-name <cluster-name>] [-restrict] [-license-file <license-file>] [-restart-wait-time <restart-wait-time>] [-restart-delay <restart-delay>]")
 public class ActivateCommand extends RestartCommand {
 
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", converter = HostPortConverter.class)
@@ -51,7 +51,7 @@ public class ActivateCommand extends RestartCommand {
   // config-tool -cluster-name tc-cluster -stripe node-1-1:9410|node-1-2,node-2-1:9410|node-2-2
   // config-tool -cluster-name tc-cluster -stripe node-1-1:9410|node-1-2 -stripe node-2-1:9410|node-2-2
   // config-tool -cluster-name tc-cluster -stripe stripe1/node-1-1:9410|node-1-2,stripe2/node-2-1:9410|node-2-2
-  @Parameter(names = {"-stripe"}, description = "Stripe", converter = ShapeConverter.class)
+  @Parameter(names = {"-stripe-shape", "-stripe"}, description = "Stripe shape", converter = ShapeConverter.class)
   private List<Map.Entry<Collection<HostPort>, String>> shape = Collections.emptyList();
 
   @Parameter(names = {"-license-file"}, description = "License file", converter = PathConverter.class)

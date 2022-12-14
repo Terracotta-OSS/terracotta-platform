@@ -66,10 +66,21 @@ public class DeprecatedAttachCommand extends Command {
   public void run() {
     action.setOperationType(operationType);
     action.setDestinationHostPort(destinationHostPort);
+
     action.setForce(force);
-    action.setSourceHostPort(sourceHostPort);
     action.setRestartWaitTime(restartWaitTime);
     action.setRestartDelay(restartDelay);
+
+    switch (operationType) {
+      case NODE:
+        action.setSourceHostPort(sourceHostPort);
+        break;
+      case STRIPE:
+        action.setStripeFromSource(sourceHostPort);
+        break;
+      default:
+        throw new AssertionError();
+    }
 
     action.run();
   }

@@ -36,8 +36,8 @@ public class ActivateCommand2x2IT extends DynamicConfigIT {
   public void test_fast_activation_2x2() {
     assertThat(
         configTool("activate", "-cluster-name", "my-cluster",
-            "-stripe", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2),
-            "-stripe", getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)),
+            "-stripe-shape", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2),
+            "-stripe-shape", getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)),
         allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
@@ -56,7 +56,7 @@ public class ActivateCommand2x2IT extends DynamicConfigIT {
   @Test
   public void test_fast_activation_2x2_comma() {
     assertThat(
-        configTool("activate", "-cluster-name", "my-cluster", "-stripe", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2) + "," + getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)),
+        configTool("activate", "-cluster-name", "my-cluster", "-stripe-shape", getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2) + "," + getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)),
         allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
@@ -76,8 +76,8 @@ public class ActivateCommand2x2IT extends DynamicConfigIT {
   public void test_fast_activation_2x2_with_stripe_name() {
     assertThat(
         configTool("activate", "-cluster-name", "my-cluster",
-            "-stripe", "foo/" + getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2),
-            "-stripe", "bar/" + getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)),
+            "-stripe-shape", "foo/" + getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2),
+            "-stripe-shape", "bar/" + getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)),
         allOf(successful(), containsOutput("No license specified for activation"), containsOutput("came back up")));
 
     waitForActive(1);
@@ -99,8 +99,8 @@ public class ActivateCommand2x2IT extends DynamicConfigIT {
   public void test_fast_activation_2x2_with_duplicate_stripe_name() {
     assertThat(
         configTool("activate", "-cluster-name", "my-cluster",
-            "-stripe", "foo/" + getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2),
-            "-stripe", "foo/" + getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)),
+            "-stripe-shape", "foo/" + getNodeHostPort(1, 1) + "|" + getNodeHostPort(1, 2),
+            "-stripe-shape", "foo/" + getNodeHostPort(2, 1) + "|" + getNodeHostPort(2, 2)),
         allOf(not(successful()), containsOutput("Found duplicate stripe name: foo")));
   }
 }

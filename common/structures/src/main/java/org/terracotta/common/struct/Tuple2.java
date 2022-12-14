@@ -17,6 +17,7 @@ package org.terracotta.common.struct;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -61,6 +62,10 @@ public class Tuple2<T1, T2> {
       c.accept(this);
     }
     return this;
+  }
+
+  public void accept(BiConsumer<T1, T2> consumer) {
+    consumer.accept(t1, t2);
   }
 
   public boolean allNulls() {
