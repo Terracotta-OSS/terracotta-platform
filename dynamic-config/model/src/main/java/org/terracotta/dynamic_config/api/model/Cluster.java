@@ -532,7 +532,12 @@ public class Cluster implements Cloneable, PropertyHolder {
         .collect(collectingAndThen(groupingBy(Endpoint::getEndpointType, counting()), map -> map.entrySet().stream()))
         .max(Map.Entry.comparingByValue())
         .map(Map.Entry::getKey)
-        .orElseGet(() -> determineEndpoints().iterator().next().getEndpointType());
+        .orElseGet(this::determineEndpointType);
+  }
+
+  public EndpointType determineEndpointType() {
+    // nodes all have public addresses or not have them set
+    return getStripes().get(0).getNodes().get(0).determineEndpoint().getEndpointType();
   }
 
   /**
@@ -546,16 +551,16 @@ public class Cluster implements Cloneable, PropertyHolder {
    *
    * @param initiators Addresses used to load this class, can be null.
    */
-  public Collection<Endpoint> determineEndpoints(HostPort... initiators) {
+  public Endpoints determineEndpoints(HostPort... initiators) {
     return determineEndpoints(Arrays.asList(initiators));
   }
 
-  public Collection<Endpoint> determineEndpoints(Collection<? extends HostPort> initiators) {
-    return determineEndpoints(determineEndpointType(initiators));
+  public Endpoints determineEndpoints(Collection<? extends HostPort> initiators) {
+    return new Endpoints(this, determineEndpointType(initiators));
   }
 
-  public Collection<Endpoint> determineEndpoints() {
-    return getNodes().stream().map(Node::determineEndpoint).collect(toList());
+  public Endpoints determineEndpoints() {
+    return new Endpoints(this, determineEndpointType());
   }
 
   public Optional<Endpoint> determineEndpoint(UID nodeUID, HostPort... initiators) {
@@ -571,11 +576,11 @@ public class Cluster implements Cloneable, PropertyHolder {
     return getNode(nodeUID).map(node -> node.determineEndpoint(endpointType));
   }
 
-  public Collection<Endpoint> determineEndpoints(Endpoint initiator) {
+  public Endpoints determineEndpoints(Endpoint initiator) {
     return determineEndpoints(initiator.getEndpointType());
   }
 
-  public Collection<Endpoint> determineEndpoints(EndpointType endpointType) {
-    return getNodes().stream().map(node -> node.determineEndpoint(endpointType)).collect(toList());
+  public Endpoints determineEndpoints(EndpointType endpointType) {
+    return new Endpoints(this, endpointType);
   }
 }
