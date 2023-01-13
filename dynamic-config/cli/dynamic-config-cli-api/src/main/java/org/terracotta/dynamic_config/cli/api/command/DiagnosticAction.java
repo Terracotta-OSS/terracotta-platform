@@ -44,6 +44,7 @@ import static java.lang.System.lineSeparator;
 import static java.util.function.Predicate.isEqual;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.ACTIVE_RECONNECTING;
@@ -319,6 +320,26 @@ public class DiagnosticAction extends RemoteAction {
         || (EnumSet.of(INCONSISTENT, PARTITIONED, ALL_PREPARED, ONLINE_PREPARED, PARTIALLY_PREPARED, PARTIALLY_COMMITTED, PARTIALLY_ROLLED_BACK).contains(analyzer.getState())) // a change is in progress or needs to be repaired
         || (!onlineActivatedNodes.isEmpty() && states.getOrDefault(ACTIVE, 0L) + states.getOrDefault(ACTIVE_RECONNECTING, 0L) != cluster.getStripeCount()) // missing active ?
         || !Collections.disjoint(EnumSet.of(ACTIVE_SUSPENDED, PASSIVE_SUSPENDED, START_SUSPENDED), states.keySet())); // some nodes have disallowed states
+
+    Map<String, Object> topology = new LinkedHashMap<>();
+    map.put("cluster", topology);
+    topology.put("name", cluster.getName());
+    topology.put("stripes", cluster.getStripes().stream().map(stripe -> {
+      Map<String, Object> stripeMap = new LinkedHashMap<>();
+      stripeMap.put("name", stripe.getName());
+      stripeMap.put("nodes", stripe.getNodes().stream().map(node -> {
+        Map<String, Object> nodeMap = new LinkedHashMap<>();
+        nodeMap.put("name", node.getName());
+        nodeMap.put("status", allNodes.entrySet()
+            .stream()
+            .filter(e -> e.getKey().getNodeUID().equals(node.getUID()))
+            .map(Map.Entry::getValue)
+            .findFirst()
+            .orElseGet(() -> getLogicalServerState(node.determineEndpoint(allNodes.keySet().iterator().next().getEndpointType()))));
+        return nodeMap;
+      }).collect(toList()));
+      return stripeMap;
+    }).collect(toList()));
 
     return toJson(map);
   }
