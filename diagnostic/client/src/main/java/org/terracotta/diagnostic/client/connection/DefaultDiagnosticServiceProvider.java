@@ -54,7 +54,7 @@ public class DefaultDiagnosticServiceProvider implements DiagnosticServiceProvid
     try {
       return DiagnosticServiceFactory.fetch(address, connectionName, connectTimeout, diagnosticInvokeTimeout, securityRootDirectory, objectMapperFactory);
     } catch (ConnectionException e) {
-      throw new DiagnosticServiceProviderException(e);
+      throw new DiagnosticServiceProviderException("Failed to connect to: " + address + ": " + e.getMessage(), e);
     }
   }
 }

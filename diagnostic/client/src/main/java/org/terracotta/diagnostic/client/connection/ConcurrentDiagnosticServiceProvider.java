@@ -20,6 +20,7 @@ import org.terracotta.diagnostic.client.DiagnosticService;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -91,7 +92,7 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
     } else if (!failed.isEmpty()) {
       // if fetch was interrupted because of a failure, we throw
       online.values().forEach(DiagnosticService::close); // no need to catch anything: DiagnosticService#close() does not throw
-      throw failed.values().iterator().next();
+      throw regroup(failed.values());
     } else {
       return new DiagnosticServices<>(online, emptyMap());
     }
@@ -117,10 +118,19 @@ public class ConcurrentDiagnosticServiceProvider implements MultiDiagnosticServi
       throw new DiagnosticServiceProviderException("No node to connect to: connection process interrupted");
     } else if (online.isEmpty()) {
       // online is empty , no need to close
-      throw failed.values().iterator().next();
+      throw regroup(failed.values());
     } else {
       return new DiagnosticServices<>(online, emptyMap());
     }
+  }
+
+  private static DiagnosticServiceProviderException regroup(Collection<DiagnosticServiceProviderException> failed) {
+    return failed.size() == 1 ?
+        failed.iterator().next() :
+        failed.stream().reduce(new DiagnosticServiceProviderException("Failed to connect"), (ret, e) -> {
+          ret.addSuppressed(e);
+          return ret;
+        });
   }
 
   private class Fetcher<K> implements AutoCloseable {
