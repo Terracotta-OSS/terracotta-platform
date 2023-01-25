@@ -162,6 +162,8 @@ public class ActiveVoter implements AutoCloseable {
         }
       } catch (InterruptedException e) {
         LOGGER.warn("{} interrupted", this);
+      } catch (Exception e) {
+        LOGGER.warn("an error occurred", e);
       }
       active = false;
       cleanHeartBeatingAndPollingFutures();
@@ -334,8 +336,12 @@ public class ActiveVoter implements AutoCloseable {
           } catch (InterruptedException e) {
             LOGGER.warn("Heart-beating with {} stopped", voterManager.getTargetHostPort());
             voterManager.close();
-          } catch (RuntimeException run) {
-            LOGGER.warn("Heart-beating with {} not connected", voterManager.getTargetHostPort());
+          } catch (Exception run) {
+            LOGGER.warn("Heart-beating with {} not connected", voterManager.getTargetHostPort(), run);
+            voterManager.close();
+            sleepFor10();  // sleep for 10 here because the cause of the error is unknown
+          } catch (Throwable run) {
+            LOGGER.warn("Heart-beating with {} not connected", voterManager.getTargetHostPort(), run);
             voterManager.close();
             sleepFor10();  // sleep for 10 here because the cause of the error is unknown
           }
