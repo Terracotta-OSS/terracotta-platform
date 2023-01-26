@@ -21,11 +21,9 @@ import org.junit.rules.ExpectedException;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Stripe;
-import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.voter.cli.Options;
 import org.terracotta.voter.cli.TCVoterMain;
 
-import java.util.Optional;
 import java.util.Properties;
 
 import static org.hamcrest.Matchers.arrayContaining;
@@ -44,7 +42,7 @@ public class TCVoterMainTest {
     TCVoter voter = mock(TCVoter.class);
     TCVoterMain voterMain = new TCVoterMain() {
       @Override
-      protected TCVoter getVoter(Optional<Properties> connectionProps) {
+      protected TCVoter getVoter(Properties connectionProps) {
         return voter;
       }
     };
@@ -61,7 +59,7 @@ public class TCVoterMainTest {
     String hostPort = "foo:1234";
     TCVoterMain voterMain = new TCVoterMain() {
       @Override
-      protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
+      protected void startVoter(Properties connectionProps, String... hostPorts) {
         assertThat(hostPorts, arrayContaining(hostPort));
       }
 
@@ -83,7 +81,7 @@ public class TCVoterMainTest {
     String hostPort2 = "bar:2345";
     TCVoterMain voterMain = new TCVoterMain() {
       @Override
-      protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
+      protected void startVoter(Properties connectionProps, String... hostPorts) {
         assertThat(hostPorts, arrayContaining(hostPort1, hostPort2));
       }
 

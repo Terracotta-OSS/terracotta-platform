@@ -17,11 +17,15 @@ package org.terracotta.voter.cli;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import org.terracotta.common.struct.Measure;
+import org.terracotta.common.struct.TimeUnit;
+import org.terracotta.dynamic_config.cli.converter.TimeUnitConverter;
 
+import java.time.Duration;
 import java.util.List;
 
 @Parameters
-@Usage("(-connect-to <hostname:port>,<hostname:port>... -connect-to <hostname:port>,<hostname:port> ... | -vote-for <hostname:port>))")
+@Usage("(-connect-to <hostname:port>,<hostname:port>... -connect-to <hostname:port>,<hostname:port> ... | -vote-for <hostname:port>)) [-connect-timeout 30s] [-request-timeout 30s]")
 public class OptionsParsingImpl implements OptionsParsing {
 
   @Parameter(names = {"-help", "-h"}, description = "Help", help = true)
@@ -33,6 +37,12 @@ public class OptionsParsingImpl implements OptionsParsing {
   @Parameter(names = {"-connect-to", "-s"}, description = "Comma separated host:port to connect to (one per stripe)")
   private List<String> serversHostPort;
 
+  @Parameter(names = {"-request-timeout", "-r", "--request-timeout"}, description = "Request timeout. Default: 10s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> requestTimeout = Measure.of(10, TimeUnit.SECONDS);
+
+  @Parameter(names = {"-connect-timeout", "-connection-timeout", "-t", "--connection-timeout"}, description = "Connection timeout. Default: 10s", converter = TimeUnitConverter.class)
+  private Measure<TimeUnit> connectionTimeout = Measure.of(10, TimeUnit.SECONDS);
+
   @Override
   public Options process() {
     validateOptions();
@@ -40,6 +50,8 @@ public class OptionsParsingImpl implements OptionsParsing {
     options.setHelp(help);
     options.setOverrideHostPort(overrideHostPort);
     options.setServerHostPort(serversHostPort);
+    options.setRequestTimeout(Duration.ofMillis(requestTimeout.getQuantity(TimeUnit.MILLISECONDS)));
+    options.setConnectionTimeout(Duration.ofMillis(connectionTimeout.getQuantity(TimeUnit.MILLISECONDS)));
     return options;
   }
 

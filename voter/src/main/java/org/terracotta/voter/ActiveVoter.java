@@ -77,14 +77,14 @@ public class ActiveVoter implements AutoCloseable {
   private volatile Consumer<String> voteListener = s -> {};
 
   public ActiveVoter(String id, String... hostPorts) {
-    this(id, new CompletableFuture<>(), Optional.empty(), ClientVoterManagerImpl::new, hostPorts);
+    this(id, new CompletableFuture<>(), new Properties(), ClientVoterManagerImpl::new, hostPorts);
   }
 
-  public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps, String... hostPorts) {
+  public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, Properties connectionProps, String... hostPorts) {
     this(id, voterStatus, connectionProps, ClientVoterManagerImpl::new, hostPorts);
   }
 
-  public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps,
+  public ActiveVoter(String id, CompletableFuture<VoterStatus> voterStatus, Properties connectionProps,
                      Function<String, ClientVoterManager> clientVoterManagerFactory, String... hostPorts) {
     this.id = id;
     this.clientVoterManagerFactory = clientVoterManagerFactory;
@@ -115,7 +115,7 @@ public class ActiveVoter implements AutoCloseable {
     return this;
   }
 
-  private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, Optional<Properties> connectionProps, String... hostPorts) {
+  private Thread voterThread(CompletableFuture<VoterStatus> voterStatus, Properties connectionProps, String... hostPorts) {
     return new Thread(() -> {
       ExecutorService executorService = Executors.newCachedThreadPool();
       Stream.of(hostPorts).map(clientVoterManagerFactory).collect(toCollection(() -> voterManagers));
@@ -175,7 +175,7 @@ public class ActiveVoter implements AutoCloseable {
   }
 
   ClientVoterManager registerWithActive(String id,
-                                        List<ClientVoterManager> voterManagers, Optional<Properties> connectionProps) throws InterruptedException {
+                                        List<ClientVoterManager> voterManagers, Properties connectionProps) throws InterruptedException {
     CompletableFuture<ClientVoterManager> registrationLatch = new CompletableFuture<>();
     ScheduledExecutorService executorService = Executors.newScheduledThreadPool(voterManagers.size());
 
@@ -232,7 +232,7 @@ public class ActiveVoter implements AutoCloseable {
     }
   }
 
-  private Runnable heartbeat(ExecutorService executorService, ClientVoterManager voterManager, Optional<Properties> connectionProps, AtomicReference<ClientVoterManager> voteOwner) {
+  private Runnable heartbeat(ExecutorService executorService, ClientVoterManager voterManager, Properties connectionProps, AtomicReference<ClientVoterManager> voteOwner) {
     return () -> {
       try {
         ClientVoterManager owner = voteOwner.get();
@@ -349,7 +349,7 @@ public class ActiveVoter implements AutoCloseable {
   }
 
   public void registerAndHeartbeat(ExecutorService executorService, ClientVoterManager currentActive,
-                                   Optional<Properties> connectionProps) throws InterruptedException {
+                                   Properties connectionProps) throws InterruptedException {
     AtomicReference<ClientVoterManager> voteOwner = new AtomicReference<>();
     //Try to connect and register with all the servers
     voteOwner.set(currentActive);
@@ -431,7 +431,7 @@ public class ActiveVoter implements AutoCloseable {
     this.voter.interrupt();
   }
 
-  private void startTopologyPolling(ExecutorService executorService, Optional<Properties> connectionProps,
+  private void startTopologyPolling(ExecutorService executorService, Properties connectionProps,
                                     AtomicReference<ClientVoterManager> voteOwner) {
     topologyFetchingFuture = executorService.submit(() -> {
       ClientVoterManager activeVoter = voteOwner.get();
