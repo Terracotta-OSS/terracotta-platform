@@ -164,7 +164,7 @@ public class ActiveVoter implements AutoCloseable {
       } catch (InterruptedException e) {
         LOGGER.warn("{} interrupted", this);
       } catch (Exception e) {
-        LOGGER.warn("an error occurred", e);
+        LOGGER.error("An unexpected error occurred: {}", e.getMessage(), e);
       }
       active = false;
       cleanHeartBeatingAndPollingFutures();
@@ -214,6 +214,10 @@ public class ActiveVoter implements AutoCloseable {
             LOGGER.info("State of {}: {}. Continuing the search for an active server.", voterManager.getTargetHostPort(), serverState);
           }
         } catch (TimeoutException e) {
+          LOGGER.warn("Closing connection to {} due to timeout while registering. Connection will be re-created later.", voterManager.getTargetHostPort());
+          voterManager.close();
+        } catch (RuntimeException e) {
+          LOGGER.error("Closing connection to {} due to unexpected error while registering. Connection will be re-created later. Error: {}", voterManager.getTargetHostPort(), e.getMessage(), e);
           voterManager.close();
         }
       }
@@ -223,7 +227,7 @@ public class ActiveVoter implements AutoCloseable {
     try {
       return registrationLatch.get();
     } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      throw new AssertionError(e); // registrationLatch never completed exceptionally
     } finally {
       futures.forEach(f -> f.cancel(true));
       executorService.shutdownNow();
