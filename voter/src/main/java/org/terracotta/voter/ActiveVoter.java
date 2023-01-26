@@ -15,6 +15,7 @@
  */
 package org.terracotta.voter;
 
+import com.tc.util.concurrent.NamedThreadFactory;
 import com.tc.voter.VoterManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,13 +174,13 @@ public class ActiveVoter implements AutoCloseable {
       } catch (InterruptedException ie) {
         LOGGER.warn("{} interrupted", this);
       }
-    });
+    }, "VoterThread[" + String.join(",", hostPorts) + "]");
   }
 
   ClientVoterManager registerWithActive(String id,
                                         List<ClientVoterManager> voterManagers, Optional<Properties> connectionProps) throws InterruptedException {
     CompletableFuture<ClientVoterManager> registrationLatch = new CompletableFuture<>();
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(voterManagers.size());
+    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(voterManagers.size(), new NamedThreadFactory("Executor:registerWithActive"));
 
     List<ScheduledFuture<?>> futures = voterManagers.stream().map(voterManager -> executorService.scheduleAtFixedRate(() -> {
       if (!voterManager.isConnected()) {
