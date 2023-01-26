@@ -15,6 +15,7 @@
  */
 package org.terracotta.voter;
 
+import com.tc.util.concurrent.NamedThreadFactory;
 import com.tc.voter.VoterManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,6 +163,8 @@ public class ActiveVoter implements AutoCloseable {
         }
       } catch (InterruptedException e) {
         LOGGER.warn("{} interrupted", this);
+      } catch (Exception e) {
+        LOGGER.error("An unexpected error occurred: {}", e.getMessage(), e);
       }
       active = false;
       cleanHeartBeatingAndPollingFutures();
@@ -171,13 +174,13 @@ public class ActiveVoter implements AutoCloseable {
       } catch (InterruptedException ie) {
         LOGGER.warn("{} interrupted", this);
       }
-    });
+    }, "VoterThread[" + String.join(",", hostPorts) + "]");
   }
 
   ClientVoterManager registerWithActive(String id,
                                         List<ClientVoterManager> voterManagers, Optional<Properties> connectionProps) throws InterruptedException {
     CompletableFuture<ClientVoterManager> registrationLatch = new CompletableFuture<>();
-    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(voterManagers.size());
+    ScheduledExecutorService executorService = Executors.newScheduledThreadPool(voterManagers.size(), new NamedThreadFactory("Executor:registerWithActive"));
 
     List<ScheduledFuture<?>> futures = voterManagers.stream().map(voterManager -> executorService.scheduleAtFixedRate(() -> {
       if (!voterManager.isConnected()) {
@@ -211,6 +214,10 @@ public class ActiveVoter implements AutoCloseable {
             LOGGER.info("State of {}: {}. Continuing the search for an active server.", voterManager.getTargetHostPort(), serverState);
           }
         } catch (TimeoutException e) {
+          LOGGER.warn("Closing connection to {} due to timeout while registering. Connection will be re-created later.", voterManager.getTargetHostPort());
+          voterManager.close();
+        } catch (RuntimeException e) {
+          LOGGER.error("Closing connection to {} due to unexpected error while registering. Connection will be re-created later. Error: {}", voterManager.getTargetHostPort(), e.getMessage(), e);
           voterManager.close();
         }
       }
@@ -220,7 +227,7 @@ public class ActiveVoter implements AutoCloseable {
     try {
       return registrationLatch.get();
     } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      throw new AssertionError(e); // registrationLatch never completed exceptionally
     } finally {
       futures.forEach(f -> f.cancel(true));
       executorService.shutdownNow();
@@ -334,8 +341,12 @@ public class ActiveVoter implements AutoCloseable {
           } catch (InterruptedException e) {
             LOGGER.warn("Heart-beating with {} stopped", voterManager.getTargetHostPort());
             voterManager.close();
-          } catch (RuntimeException run) {
-            LOGGER.warn("Heart-beating with {} not connected", voterManager.getTargetHostPort());
+          } catch (Exception run) {
+            LOGGER.warn("Heart-beating with {} not connected", voterManager.getTargetHostPort(), run);
+            voterManager.close();
+            sleepFor10();  // sleep for 10 here because the cause of the error is unknown
+          } catch (Throwable run) {
+            LOGGER.warn("Heart-beating with {} not connected", voterManager.getTargetHostPort(), run);
             voterManager.close();
             sleepFor10();  // sleep for 10 here because the cause of the error is unknown
           }
