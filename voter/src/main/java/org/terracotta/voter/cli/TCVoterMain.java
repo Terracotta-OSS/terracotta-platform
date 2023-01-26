@@ -17,17 +17,16 @@ package org.terracotta.voter.cli;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.connection.CompatibleDiagnosticServiceProvider;
-import org.terracotta.diagnostic.client.connection.ConcurrencySizing;
-import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DefaultDiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
-import org.terracotta.diagnostic.client.connection.DiagnosticServices;
-import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
+import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.inet.HostPort;
+import org.terracotta.inet.InetSocketAddressConverter;
 import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.voter.ActiveVoter;
 import org.terracotta.voter.TCVoter;
@@ -36,18 +35,18 @@ import org.terracotta.voter.TCVoterImpl;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 public class TCVoterMain {
 
@@ -94,23 +93,45 @@ public class TCVoterMain {
     return new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
   }
 
-  private static ConcurrencySizing createConcurrencySizing() {
-    return new ConcurrencySizing();
-  }
-
   // concurrently connects to the user-provided servers to fetch the topology and returns as soon as we get one
   protected Cluster fetchTopology(Options options) {
     DiagnosticServiceProvider diagnosticServiceProvider = createDiagnosticServiceProvider(options);
-    ConcurrencySizing concurrencySizing = createConcurrencySizing();
-    MultiDiagnosticServiceProvider multiDiagnosticServiceProvider = new ConcurrentDiagnosticServiceProvider(diagnosticServiceProvider, null, concurrencySizing);
-
-    final Map<String, InetSocketAddress> addresses = options.getServersHostPort()
+    final Collection<InetSocketAddress> addresses = options.getServersHostPort()
         .stream()
-        .collect(toMap(identity(), hostPort -> HostPort.parse(hostPort, 9410).createInetSocketAddress(), (value1, value2) -> value1));
+        .map(input -> InetSocketAddressConverter.parseInetSocketAddress(input, 9410))
+        .collect(Collectors.toCollection(LinkedHashSet::new));
 
-    try (final DiagnosticServices<String> diagnosticServices = multiDiagnosticServiceProvider.fetchAnyOnlineDiagnosticService(addresses)) {
-      return diagnosticServices.findAnyOnlineDiagnosticService().get().getProxy(TopologyService.class).getUpcomingNodeContext().getCluster();
+    while (!Thread.currentThread().isInterrupted()) {
+      for (InetSocketAddress addr : addresses) {
+        LOGGER.info("Trying to fetch cluster topology from {}...", addr);
+        try (DiagnosticService diagnosticService = diagnosticServiceProvider.fetchDiagnosticService(addr)) {
+          final TopologyService topologyService = diagnosticService.getProxy(TopologyService.class);
+          if (topologyService.isActivated()) {
+            final Cluster cluster = topologyService.getUpcomingNodeContext().getCluster();
+            LOGGER.info("Found activated cluster:\n{}", cluster);
+            return cluster;
+          } else {
+            LogicalServerState state = diagnosticService.getLogicalServerState();
+            LOGGER.info("Node {} in state {} is not part of an activated cluster. Trying next one in 5s...", addr, state);
+            Thread.sleep(5_000);
+          }
+        } catch (Exception e) {
+          LOGGER.info("Error communicating with node {}. Trying next one in 5 s...", addr);
+          if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Error: {}", e.getMessage(), e);
+          } else {
+            LOGGER.info("Error: {}", e.getMessage());
+          }
+          try {
+            Thread.sleep(5_000);
+          } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+          }
+        }
+      }
     }
+
+    throw new RuntimeException("interrupted");
   }
 
   protected OptionsParsing getParsingObject() {
