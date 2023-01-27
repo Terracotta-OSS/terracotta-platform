@@ -34,7 +34,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -42,7 +41,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-import static java.util.Optional.empty;
 import static java.util.function.UnaryOperator.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -102,7 +100,7 @@ public class ActiveVoterTest {
         return mockClientVoterManager;
       }
     };
-    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), empty(), factory, HOST1, HOST2)) {
+    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), factory, HOST1, HOST2)) {
       activeVoter.start();
       Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
@@ -145,7 +143,7 @@ public class ActiveVoterTest {
         return mockClientVoterManager;
       }
     };
-    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), empty(), factory, HOST1)) {
+    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), factory, HOST1)) {
       activeVoter.start();
       Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
@@ -191,7 +189,7 @@ public class ActiveVoterTest {
         return mockClientVoterManager;
       }
     };
-    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), empty(), factory, HOST1, HOST2)) {
+    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), factory, HOST1, HOST2)) {
       activeVoter.start();
 
       Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
@@ -239,7 +237,7 @@ public class ActiveVoterTest {
         return mockClientVoterManager;
       }
     };
-    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), empty(), factory, HOST1, HOST2)) {
+    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), factory, HOST1, HOST2)) {
       activeVoter.start();
       Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
@@ -268,7 +266,7 @@ public class ActiveVoterTest {
     Logger logger = (Logger) LoggerFactory.getLogger(ActiveVoter.class);
     logger.addAppender(listAppender);
 
-    try (ActiveVoter voter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), empty(), managers::get, servers.get("ACTIVE-COORDINATOR"))) {
+    try (ActiveVoter voter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), managers::get, servers.get("ACTIVE-COORDINATOR"))) {
       voter.start();
       Thread.sleep(10000L);
       waitForLogMessage(listAppender, "New Topology detected");
@@ -333,7 +331,7 @@ public class ActiveVoterTest {
     }
 
     @Override
-    public void connect(Optional<Properties> connectionProps) {
+    public void connect(Properties connectionProps) {
     }
 
     @Override

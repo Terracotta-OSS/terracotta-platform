@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,13 +32,19 @@ public class TCVoterImpl implements TCVoter {
 
   protected final String id = UUID.getUUID().toString();
   private final Map<String, ActiveVoter> registeredClusters = new ConcurrentHashMap<>();
+  private final Properties connectionProperties;
 
   public TCVoterImpl() {
+    this(new Properties());
+  }
+
+  public TCVoterImpl(Properties connectionProperties) {
+    this.connectionProperties = connectionProperties;
     LOGGER.info("Voter ID: {}", id);
   }
 
-  protected Optional<Properties> getConnectionProperties() {
-    return Optional.empty();
+  protected Properties getConnectionProperties() {
+    return connectionProperties;
   }
 
   @Override

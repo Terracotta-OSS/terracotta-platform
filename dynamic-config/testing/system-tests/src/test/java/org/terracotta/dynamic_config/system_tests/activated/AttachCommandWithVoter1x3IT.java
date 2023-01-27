@@ -23,7 +23,7 @@ import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.voter.ActiveVoter;
 
-import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -62,7 +62,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
     int activeId = waitForActive(1);
     int passiveId = waitForNPassives(1, 1)[0];
 
-    try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
+    try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), new Properties(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
       activeVoter.start();
 
       startNode(1, 3);
@@ -100,7 +100,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
     int activeId = waitForActive(1);
     int passiveId = waitForNPassives(1, 1)[0];
 
-    try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
+    try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), new Properties(), getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
       activeVoter.start();
 
       startNode(1, 3);
@@ -127,7 +127,7 @@ public class AttachCommandWithVoter1x3IT extends DynamicConfigIT {
     int activeId = waitForActive(1);
     int passiveId = waitForNPassives(1, 1)[0];
 
-    try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), Optional.empty(), getNode(1, activeId).getHostPort(), "localhost:123", "locahost:235")) {
+    try (ActiveVoter activeVoter = new ActiveVoter("mvoter", new CompletableFuture<>(), new Properties(), getNode(1, activeId).getHostPort(), "localhost:123", "locahost:235")) {
       // Addding some dummy passive hostPorts to simulate as stale passive hostPorts
       activeVoter.start();
 

@@ -23,7 +23,6 @@ import org.terracotta.connection.DiagnosticsFactory;
 
 import java.net.InetSocketAddress;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
@@ -52,12 +51,11 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   }
 
   @Override
-  public void connect(Optional<Properties> connectionProps) {
+  public void connect(Properties connectionProps) {
     String[] split = this.hostPort.split(":");
     InetSocketAddress addr = InetSocketAddress.createUnresolved(split[0], Integer.parseInt(split[1]));
-    Properties properties = connectionProps.orElse(new Properties());
     try {
-      Diagnostics temp = DiagnosticsFactory.connect(addr, properties);
+      Diagnostics temp = DiagnosticsFactory.connect(addr, connectionProps);
       synchronized (this) {
         if (diagnostics != null) {
           diagnostics.close();
