@@ -15,6 +15,7 @@
  */
 package org.terracotta.voter.cli;
 
+import java.time.Duration;
 import java.util.List;
 
 public class Options {
@@ -22,6 +23,9 @@ public class Options {
   private boolean help;
   private String overrideHostPort;
   private List<String> serversHostPort;
+  private Duration requestTimeout;
+  private Duration connectionTimeout;
+  private String connectionName = "Voter";
 
   public void setHelp(boolean help) {
     this.help = help;
@@ -47,4 +51,27 @@ public class Options {
     return serversHostPort;
   }
 
+  public Duration getRequestTimeout() {
+    return requestTimeout;
+  }
+
+  public void setRequestTimeout(Duration requestTimeout) {
+    this.requestTimeout = requestTimeout;
+  }
+
+  public Duration getConnectionTimeout() {
+    return connectionTimeout;
+  }
+
+  public void setConnectionTimeout(Duration connectionTimeout) {
+    this.connectionTimeout = connectionTimeout;
+  }
+
+  public String getConnectionName() {
+    return connectionName;
+  }
+
+  public void setConnectionName(String connectionName) {
+    this.connectionName = connectionName;
+  }
 }

@@ -38,7 +38,6 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -47,6 +46,9 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
+import static org.terracotta.connection.ConnectionPropertyNames.CONNECTION_NAME;
+import static org.terracotta.connection.ConnectionPropertyNames.CONNECTION_TIMEOUT;
+import static org.terracotta.connection.DiagnosticsFactory.REQUEST_TIMEOUT;
 
 public class TCVoterMain {
 
@@ -71,7 +73,7 @@ public class TCVoterMain {
       return;
     }
 
-    Optional<Properties> connectionProps = getConnectionProperties(options);
+    Properties connectionProps = getConnectionProperties(options);
     if (options.getServersHostPort() != null) {
       options.getServersHostPort().forEach(this::validateHostPort);
       processServerArg(connectionProps, options);
@@ -86,7 +88,7 @@ public class TCVoterMain {
 
   protected DiagnosticServiceProvider createDiagnosticServiceProvider(Options options) {
     ObjectMapperFactory objectMapperFactory = createObjectMapperFactory();
-    return new CompatibleDiagnosticServiceProvider(new DefaultDiagnosticServiceProvider("Voter", null, null, null, objectMapperFactory));
+    return new CompatibleDiagnosticServiceProvider(new DefaultDiagnosticServiceProvider(options.getConnectionName(), options.getConnectionTimeout(), options.getRequestTimeout(), null, objectMapperFactory));
   }
 
   protected ObjectMapperFactory createObjectMapperFactory() {
@@ -138,11 +140,15 @@ public class TCVoterMain {
     return new OptionsParsingImpl();
   }
 
-  protected Optional<Properties> getConnectionProperties(Options option) {
-    return Optional.empty();
+  protected Properties getConnectionProperties(Options option) {
+    Properties props = new Properties();
+    props.setProperty(CONNECTION_NAME, option.getConnectionName());
+    props.setProperty(CONNECTION_TIMEOUT, String.valueOf(option.getConnectionTimeout().toMillis()));
+    props.setProperty(REQUEST_TIMEOUT, String.valueOf(option.getRequestTimeout().toMillis()));
+    return props;
   }
 
-  protected void processServerArg(Optional<Properties> connectionProps, Options options) {
+  protected void processServerArg(Properties connectionProps, Options options) {
     Cluster cluster = fetchTopology(options);
     validateCluster(cluster);
 
@@ -156,11 +162,11 @@ public class TCVoterMain {
         .forEach((uid, endpoints) -> startVoter(connectionProps, endpoints.toArray(new String[0])));
   }
 
-  protected TCVoter getVoter(Optional<Properties> connectionProps) {
-    return new TCVoterImpl();
+  protected TCVoter getVoter(Properties connectionProps) {
+    return new TCVoterImpl(connectionProps);
   }
 
-  protected void startVoter(Optional<Properties> connectionProps, String... hostPorts) {
+  protected void startVoter(Properties connectionProps, String... hostPorts) {
     new ActiveVoter(ID, new CompletableFuture<>(), connectionProps, hostPorts).start();
   }
 
