@@ -22,9 +22,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.terracotta.entity.EndpointDelegate;
 import org.terracotta.entity.EntityClientEndpoint;
-import org.terracotta.entity.EntityResponse;
-import org.terracotta.entity.InvokeFuture;
-import org.terracotta.entity.MessageCodecException;
 
 /**
  *
@@ -42,24 +39,20 @@ public class HealthCheckerClient implements HealthCheck {
 
   @Override
   public Future<String> ping(String message) {
-    try {
-//  don't add any extra acks here.  This is pure ping-pong
-      return wrapFuture(endpoint.beginInvoke().message(new HealthCheckReq(message)).replicate(false).invoke());
-    } catch (MessageCodecException codec) {
-      throw new RuntimeException(codec);
-    }
+    //  don't add any extra acks here.  This is pure ping-pong
+    return wrapFuture(endpoint.message(new HealthCheckReq(message)).invoke());
   }
   
-  private Future<String> wrapFuture(final InvokeFuture<HealthCheckRsp> invoke) {
+  private Future<String> wrapFuture(final Future<HealthCheckRsp> invoke) {
     return new Future<String>() {
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
-        return  false;
+        return  invoke.cancel(mayInterruptIfRunning);
       }
 
       @Override
       public boolean isCancelled() {
-        return false;
+        return invoke.isCancelled();
       }
 
       @Override
@@ -69,26 +62,13 @@ public class HealthCheckerClient implements HealthCheck {
 
       @Override
       public String get() throws InterruptedException, ExecutionException {
-        try {
-//  not intended for use but implemented in case a future use arises
-          return invoke.get().toString();
-        } catch (InterruptedException interrupt) {
-          throw interrupt;
-        } catch (Throwable t) {
-          throw new ExecutionException(t);
-        }
+        return invoke.get().toString();
       }
 
       @Override
       public String get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        try {
-          return invoke.getWithTimeout(timeout, unit).toString();
-        } catch (InterruptedException interrupt) {
-          throw interrupt;
-        } catch (Throwable t) {
-          throw new ExecutionException(t);
-        }
-      } 
+        return invoke.get(timeout, unit).toString();
+      }
     };
   }
 

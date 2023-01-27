@@ -22,7 +22,7 @@
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>platform-root</artifactId>
-    <version>5.9-SNAPSHOT</version>
+    <version>5.10-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -31,13 +31,6 @@
   <packaging>pom</packaging>
 
   <dependencies>
-
-    <dependency>
-      <groupId>org.terracotta.test</groupId>
-      <artifactId>test-common</artifactId>
-      <version>${terracotta-core.version}</version>
-      <scope>test</scope>
-    </dependency>
 
     <!--
       server/plugins/api
@@ -180,24 +173,6 @@
       <version>${project.version}</version>
     </dependency>
 
-    <!--
-      KIT
-    -->
-
-    <dependency>
-      <groupId>org.terracotta.internal</groupId>
-      <artifactId>terracotta-kit</artifactId>
-      <version>${terracotta-core.version}</version>
-      <type>tar.gz</type>
-      <!-- Just comment out this section if u need to debug some core classes-->
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
   </dependencies>
 
   <build>
@@ -208,31 +183,6 @@
           <execution>
             <id>default-jar</id>
             <phase>none</phase>
-          </execution>
-        </executions>
-      </plugin>
-      <!-- open the KIT -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>unpack-kit</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/terracotta-kit-${terracotta-core.version}</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.terracotta.internal</groupId>
-                  <artifactId>terracotta-kit</artifactId>
-                  <version>${terracotta-core.version}</version>
-                  <type>tar.gz</type>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
           </execution>
         </executions>
       </plugin>
