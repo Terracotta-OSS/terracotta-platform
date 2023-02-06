@@ -21,7 +21,12 @@ public enum RepairMethod {
   COMMIT,
   ROLLBACK,
   RESET,
-  UNLOCK;
+  UNLOCK,
+
+  // allow to perform again a scale out operation when previous one was rolled back
+  ALLOW_SCALE_OUT,
+
+  NONE;
 
   @Override
   public String toString() {

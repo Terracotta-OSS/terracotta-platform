@@ -28,7 +28,9 @@ import org.terracotta.inet.HostPort;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -41,26 +43,46 @@ public class RepairAction extends RemoteAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(RepairAction.class);
 
   private HostPort node;
-  private RepairMethod forcedRepairMethod;
+  private RepairMethod forcedRepairMethod = RepairMethod.NONE;
 
   public void setNode(HostPort node) {
     this.node = node;
   }
 
   public void setForcedRepairAction(RepairMethod forcedRepairMethod) {
-    this.forcedRepairMethod = forcedRepairMethod;
+    this.forcedRepairMethod = requireNonNull(forcedRepairMethod);
   }
 
   @Override
   public final void run() {
-    if (forcedRepairMethod == RepairMethod.RESET) {
-      resetAndStop(node);
-    } else if (forcedRepairMethod == RepairMethod.UNLOCK) {
-      forceUnlock();
-    } else {
-      nomadRepair();
+    switch (forcedRepairMethod) {
+      case RESET:
+        resetAndStop(node);
+        break;
+      case UNLOCK:
+        forceUnlock();
+        break;
+      case ALLOW_SCALE_OUT:
+        allowRetryAttach();
+        break;
+      default:
+        nomadRepair();
     }
     output.info("Command successful!");
+  }
+
+  private void allowRetryAttach() {
+    Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
+    Map<Endpoint, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
+
+    if (onlineNodes.size() != allNodes.size()) {
+      Collection<Endpoint> offlines = new ArrayList<>(allNodes.keySet());
+      offlines.removeAll(onlineNodes.keySet());
+      LOGGER.warn("Some nodes are not reachable: {}", toString(offlines));
+    }
+    Cluster cluster = getUpcomingCluster(node);
+
+    allowRetryAttach(cluster, onlineNodes);
   }
 
   private void forceUnlock() {

@@ -307,19 +307,24 @@ public class DiagnosticAction extends RemoteAction {
 
     // some aggregated states (i.e. useful for tools like Kube operator)
 
+    // manual intervention required
+    final boolean manualInterventionRequired = !nodesPendingRestart.isEmpty() // restart required
+        || (EnumSet.of(INCONSISTENT, PARTITIONED, ALL_PREPARED, ONLINE_PREPARED, PARTIALLY_PREPARED, PARTIALLY_COMMITTED, PARTIALLY_ROLLED_BACK).contains(analyzer.getState())) // a change is in progress or needs to be repaired
+        || (!onlineActivatedNodes.isEmpty() && states.getOrDefault(ACTIVE, 0L) + states.getOrDefault(ACTIVE_RECONNECTING, 0L) != cluster.getStripeCount()) // missing active ?
+        || !Collections.disjoint(EnumSet.of(ACTIVE_SUSPENDED, PASSIVE_SUSPENDED, START_SUSPENDED), states.keySet());
+    map.put("manualInterventionRequired", manualInterventionRequired); // some nodes have disallowed states
+
     // ready for a topology change ?
-    map.put("readyForTopologyChange", !lockContext.isPresent() // config not locked
+    final boolean readyForTopologyChange = !manualInterventionRequired
+        && !lockContext.isPresent() // config not locked
         && (EnumSet.of(ALL_ACCEPTING, ONLINE_ACCEPTING).contains(analyzer.getState())) // nomad is accepting changes, with or without some offline nodes
         && nodesPendingRestart.isEmpty() // no pending restart
         && onlineActivatedNodes.size() == onlineNodes.size() // all online nodes are activated
         && (states.getOrDefault(ACTIVE, 0L) + states.getOrDefault(ACTIVE_RECONNECTING, 0L) == cluster.getStripeCount()) // 1 active per stripe
-        && DefaultNomadManager.ALLOWED.containsAll(states.keySet())); // all nodes have allowed states
+        && DefaultNomadManager.ALLOWED.containsAll(states.keySet());
+    map.put("readyForTopologyChange", readyForTopologyChange); // all nodes have allowed states
 
-    // manual intervention required
-    map.put("manualInterventionRequired", !nodesPendingRestart.isEmpty() // restart required
-        || (EnumSet.of(INCONSISTENT, PARTITIONED, ALL_PREPARED, ONLINE_PREPARED, PARTIALLY_PREPARED, PARTIALLY_COMMITTED, PARTIALLY_ROLLED_BACK).contains(analyzer.getState())) // a change is in progress or needs to be repaired
-        || (!onlineActivatedNodes.isEmpty() && states.getOrDefault(ACTIVE, 0L) + states.getOrDefault(ACTIVE_RECONNECTING, 0L) != cluster.getStripeCount()) // missing active ?
-        || !Collections.disjoint(EnumSet.of(ACTIVE_SUSPENDED, PASSIVE_SUSPENDED, START_SUSPENDED), states.keySet())); // some nodes have disallowed states
+    map.put("scaleOutAllowed", readyForTopologyChange && isScaleOutAllowed(onlineNodes));
 
     Map<String, Object> topology = new LinkedHashMap<>();
     map.put("cluster", topology);

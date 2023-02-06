@@ -33,8 +33,8 @@ public class RepairCommand extends Command {
   @Parameter(names = {"-connect-to"}, description = "Node to connect to", required = true, converter = HostPortConverter.class)
   HostPort node;
 
-  @Parameter(names = {"-force"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairActionConverter.class, hidden = true)
-  RepairMethod forcedRepairMethod;
+  @Parameter(names = {"-force"}, description = "Repair action to force: commit, rollback, reset, unlock, allow_scale_out", converter = RepairActionConverter.class, hidden = true)
+  RepairMethod forcedRepairMethod = RepairMethod.NONE;
 
   @Inject
   public final RepairAction action;

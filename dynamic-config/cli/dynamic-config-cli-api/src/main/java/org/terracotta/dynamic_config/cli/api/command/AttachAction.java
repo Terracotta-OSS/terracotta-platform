@@ -206,6 +206,12 @@ public class AttachAction extends TopologyAction {
           throw new IllegalArgumentException("Source node: " + entry.getKey() + " points to a stripe with more than one node and the following nodes were not marked to be attached: " + toString(nodesInStripe));
         }
       }
+
+      validateLogOrFail(
+          () -> isScaleOutAllowed(destinationOnlineNodes),
+          "A previous scale out operation has failed and the stripe was detached. " +
+              "Before executing another scale out operation, please inspect the issue and run: " +
+              "'config-tool repair -force allow_scale_out' to allow further scale out operations.");
     }
 
     switch (operationType) {

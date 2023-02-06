@@ -34,7 +34,7 @@ public class DeprecatedRepairCommand extends Command {
   HostPort node;
 
   @Parameter(names = {"-f"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairActionConverter.class)
-  RepairMethod forcedRepairMethod;
+  RepairMethod forcedRepairMethod = RepairMethod.NONE;
 
   @Inject
   public final RepairAction action;

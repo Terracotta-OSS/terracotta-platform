@@ -36,6 +36,9 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeAdditionNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.ConfigurationConsistencyAnalyzer;
@@ -93,6 +96,7 @@ import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE;
 import static org.terracotta.diagnostic.model.LogicalServerState.PASSIVE_SUSPENDED;
 import static org.terracotta.diagnostic.model.LogicalServerState.SYNCHRONIZING;
 import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
+import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 
 /**
  * @author Mathieu Carbou
@@ -100,6 +104,11 @@ import static org.terracotta.diagnostic.model.LogicalServerState.UNREACHABLE;
 public abstract class RemoteAction implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RemoteAction.class);
+
+  protected static final String TAG_ALLOW_SCALE_OUT = "dynamic-scale:adding:allow";
+  protected static final String TAG_SCALE_OUT = "dynamic-scale:adding:";
+  protected static final String TAG_SCALE_IN = "dynamic-scale:removing:";
+  protected static final String OWNER_PLATFORM = "platform";
 
   @Inject
   public MultiDiagnosticServiceProvider multiDiagnosticServiceProvider;
@@ -271,6 +280,114 @@ public abstract class RemoteAction implements Runnable {
     NomadFailureReceiver<NodeContext> failures = new NomadFailureReceiver<>();
     nomadManager.runConfigurationChange(destinationCluster, onlineNodes, change, failures);
     failures.reThrowReasons();
+  }
+
+  protected final boolean isScaleOutAllowed(Map<Endpoint, LogicalServerState> endpoints) {
+    return isScaleOutAllowed(endpoints.keySet().stream().map(Endpoint::getHostPort).collect(toList()));
+  }
+
+  protected final boolean isScaleOutAllowed(Collection<HostPort> onlineNodes) {
+    // We iterate over all hosts to ge their logs.
+    // We have to consider all online hosts because nomad logs are different per server and newly added nodes might not have a full history
+
+    final NomadChangeInfo[] history = onlineNodes.stream()
+        .map(this::getChangeHistory)
+        .flatMap(Stream::of)
+        .filter(nomadChangeInfo -> nomadChangeInfo.getChangeRequestState() == COMMITTED)
+        .filter(nomadChangeInfo -> nomadChangeInfo.getNomadChange() instanceof StripeNomadChange
+            || nomadChangeInfo.getNomadChange() instanceof LockConfigNomadChange
+            || nomadChangeInfo.getNomadChange() instanceof UnlockConfigNomadChange)
+        .sorted(Comparator.comparing(NomadChangeInfo::getCreationTimestamp))
+        .toArray(NomadChangeInfo[]::new);
+
+    // A failed re-balancing triggers a rollback of the stripe attachment that was done.
+    //
+    // So we should see in the Nomad append logs:
+    // - LockConfigNomadChange with: owner=platform and tag=dynamic-scale:adding:<stripe-uid>
+    // - StripeAdditionNomadChange fully committed for <stripe-uid>
+    // - StripeRemovalNomadChange fully committed for <stripe-uid>
+    // - UnlockConfigNomadChange
+    //
+    // If further scale out is allowed, we should also see after:
+    // - LockConfigNomadChange with: owner=platform and tag=dynamic-scale:adding:allow
+    //
+    // IMPORTANT: even if this order is true, there could be some repair actions in between them.
+
+    String addedStripeUid = null;
+    int idx = history.length - 1;
+
+    // first try to find the last LockConfigNomadChange matching a stripe addition or allow-retry
+    for (; idx > 0 && addedStripeUid == null; idx--) {
+      if (history[idx].getNomadChange() instanceof LockConfigNomadChange) {
+        final LockContext lockContext = ((LockConfigNomadChange) history[idx].getNomadChange()).getLockContext();
+        if (OWNER_PLATFORM.equals(lockContext.ownerInfo()) && lockContext.getOwnerTags() != null) {
+          if (TAG_ALLOW_SCALE_OUT.equals(lockContext.getOwnerTags())) {
+            // we have found a marker allowing scale out
+            return true;
+          } else if (lockContext.getOwnerTags().startsWith(TAG_SCALE_OUT)) {
+            // we have found a lock for a scale out operation
+            addedStripeUid = lockContext.getOwnerTags().substring(TAG_SCALE_OUT.length());
+          }
+        }
+      }
+    }
+
+    if (addedStripeUid == null) {
+      // we didn't find lock for a scale out or any marker
+      return true;
+    }
+
+    // Here, we have found a lock for an attach, and we must find the right sequence to make sure it was rolled-back
+
+    // then find the next expected item: StripeAdditionNomadChange matching the stripe UID
+    while (idx < history.length
+        && (!(history[idx].getNomadChange() instanceof StripeAdditionNomadChange)
+        || !Objects.equals(addedStripeUid, ((StripeNomadChange) history[idx].getNomadChange()).getStripe().getUID().toString()))) {
+      idx++;
+    }
+    final int attachIdx = idx; // or history.length
+
+    // then find the next expected item: StripeRemovalNomadChange matching the stripe UID
+    while (idx < history.length
+        && (!(history[idx].getNomadChange() instanceof StripeRemovalNomadChange)
+        || !Objects.equals(addedStripeUid, ((StripeNomadChange) history[idx].getNomadChange()).getStripe().getUID().toString()))) {
+      idx++;
+    }
+    final int detachIdx = idx; // or history.length
+
+    // then find the next expected item: UnlockConfigNomadChange
+    while (idx < history.length && !(history[idx].getNomadChange() instanceof UnlockConfigNomadChange)) {
+      idx++;
+    }
+
+    // verify that in between the 2 attach and detach there is no lock operation for the detached stripe, to avoid any sequence of:
+    // lock-attach-unlock then lock-detach-unlock (which is not a rolled-back re-balancing)
+    for (int i = attachIdx + 1; i < detachIdx; i++) {
+      NomadChangeInfo nomadChangeInfo = history[i];
+      if (nomadChangeInfo.getNomadChange() instanceof LockConfigNomadChange
+          && Objects.equals(TAG_SCALE_IN + addedStripeUid, ((LockConfigNomadChange) nomadChangeInfo.getNomadChange()).getLockContext().getOwnerTags())) {
+        return true;
+      }
+    }
+
+    // if true, we didn't find the sequence lock-attach-detach-unlock for a stripe
+    return idx == history.length;
+  }
+
+  protected final void allowRetryAttach(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
+    try {
+      lock(cluster, onlineNodes, OWNER_PLATFORM, TAG_ALLOW_SCALE_OUT);
+    } finally {
+      forceUnlock(cluster, onlineNodes);
+    }
+  }
+
+  protected final String lockForStripeAttach(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, UID addedStripeUID) {
+    return lock(destinationCluster, onlineNodes, OWNER_PLATFORM, TAG_SCALE_OUT + addedStripeUID);
+  }
+
+  protected final String lockForStripeDetach(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes, UID detachedStripeUID) {
+    return lock(destinationCluster, onlineNodes, OWNER_PLATFORM, TAG_SCALE_IN + detachedStripeUID);
   }
 
   protected final String lock(Cluster destinationCluster, Map<Endpoint, LogicalServerState> onlineNodes,
