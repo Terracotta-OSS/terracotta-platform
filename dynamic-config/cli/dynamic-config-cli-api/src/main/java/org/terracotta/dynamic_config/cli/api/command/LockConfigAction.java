@@ -42,6 +42,7 @@ public class LockConfigAction extends RemoteAction {
     Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
     LinkedHashMap<Endpoint, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
     Cluster cluster = getRuntimeCluster(node);
-    lock(cluster, onlineNodes, LockContext.from(lockContext));
+    String token = lock(cluster, onlineNodes, LockContext.from(lockContext));
+    output.out("Config lock with token: " + token);
   }
 }

@@ -61,4 +61,8 @@ public class LockAwareNomadManager<T> implements NomadManager<T> {
   public NomadManager<T> getUnderlying() {
     return underlying;
   }
+
+  public String getLockToken() {
+    return lockToken;
+  }
 }

@@ -22,6 +22,7 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
+import org.terracotta.dynamic_config.api.model.LockTag;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -37,6 +38,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Collections.singleton;
@@ -206,6 +208,10 @@ public class AttachAction extends TopologyAction {
           throw new IllegalArgumentException("Source node: " + entry.getKey() + " points to a stripe with more than one node and the following nodes were not marked to be attached: " + toString(nodesInStripe));
         }
       }
+
+      validateLogOrFail(
+          () -> !destinationClusterActivated || !findScalingVetoer(destinationOnlineNodes).isPresent(),
+          "Scaling operation cannot be performed. Please refer to the Troubleshooting Guide for more help.");
     }
 
     switch (operationType) {
@@ -237,6 +243,18 @@ public class AttachAction extends TopologyAction {
         break;
       }
     }
+  }
+
+  @Override
+  protected Consumer<RuntimeException> onExecuteError() {
+    return isScaleInOrOut() ? e -> denyScaleOut(destinationCluster, destinationOnlineNodes) : e -> {};
+  }
+
+  @Override
+  protected String buildLockTag() {
+    return operationType == STRIPE ?
+        LockTag.SCALE_OUT_PREFIX + addedStripe.getUID() :
+        LockTag.NODE_ADD_PREFIX + addedNode.getUID();
   }
 
   @Override
@@ -287,6 +305,16 @@ public class AttachAction extends TopologyAction {
 
   @Override
   protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
+    tryFinally(() -> {
+      activate(nomadChange);
+    }, () -> {
+      if (isUnlockRequired()) {
+        unlock(nomadChange);
+      }
+    });
+  }
+
+  protected final void activate(TopologyNomadChange nomadChange) {
     Cluster result = nomadChange.getCluster();
     switch (operationType) {
       case NODE:

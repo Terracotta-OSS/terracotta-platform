@@ -69,6 +69,11 @@ public interface TopologyService {
    */
   boolean hasIncompleteChange();
 
+  boolean isScalingDenied();
+
+
+  boolean isLocked();
+
   /**
    * Get the current installed license information if any
    */
