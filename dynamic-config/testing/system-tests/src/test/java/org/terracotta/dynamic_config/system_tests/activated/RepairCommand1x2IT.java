@@ -64,7 +64,7 @@ public class RepairCommand1x2IT extends DynamicConfigIT {
     waitForPassive(1, passiveId);
 
     // wait until we can really connect to the passive and see it has an incomplete change
-    // this is because he passive will restart after sync
+    // this is because the passive will restart after sync
     waitUntil(() -> usingTopologyService(1, activeId, TopologyService::hasIncompleteChange), is(true));
     waitUntil(() -> usingTopologyService(1, passiveId, TopologyService::hasIncompleteChange), is(true));
 

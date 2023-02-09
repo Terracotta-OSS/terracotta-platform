@@ -55,6 +55,12 @@ public class DetachCommand extends Command {
   @Parameter(names = {"-force"}, description = "Force the operation", hidden = true)
   protected boolean force;
 
+  @Parameter(names = {"-lock"}, description = "Create a lock before executing the Nomad operation", hidden = true)
+  protected boolean lock;
+
+  @Parameter(names = {"-unlock"}, description = "Unlock after executing the Nomad operation", hidden = true)
+  protected boolean unlock;
+
   @Inject
   public final DetachAction action;
 
@@ -89,6 +95,8 @@ public class DetachCommand extends Command {
       action.setSourceIdentifier(sourceNodeIdentifier);
     }
     action.setForce(force);
+    action.setUnlock(unlock);
+    action.setLock(lock);
     action.setStopWaitTime(stopWaitTime);
     action.setStopDelay(stopDelay);
 

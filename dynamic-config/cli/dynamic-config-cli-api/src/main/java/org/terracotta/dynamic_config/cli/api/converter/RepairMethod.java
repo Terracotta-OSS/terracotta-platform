@@ -21,7 +21,9 @@ public enum RepairMethod {
   COMMIT,
   ROLLBACK,
   RESET,
-  UNLOCK;
+  UNLOCK,
+  ALLOW_SCALING,
+  AUTO;
 
   @Override
   public String toString() {

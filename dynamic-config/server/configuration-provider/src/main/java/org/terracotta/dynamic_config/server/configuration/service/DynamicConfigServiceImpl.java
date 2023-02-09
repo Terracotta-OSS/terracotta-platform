@@ -24,11 +24,14 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.License;
+import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
+import org.terracotta.dynamic_config.api.model.nomad.LockConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.MultiSettingNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.SettingNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -44,6 +47,7 @@ import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigNoma
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
 import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -58,12 +62,18 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.System.lineSeparator;
 import static java.util.Objects.requireNonNull;
+import static java.util.function.Predicate.isEqual;
+import static org.terracotta.dynamic_config.api.model.LockTag.ALLOW_SCALING;
+import static org.terracotta.dynamic_config.api.model.LockTag.DENY_SCALE_IN;
+import static org.terracotta.dynamic_config.api.model.LockTag.DENY_SCALE_OUT;
+import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.server.StopAction.RESTART;
 
 public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigService, DynamicConfigListener, StateDumpable {
@@ -375,6 +385,17 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     return licensing.validate(cluster);
   }
 
+  private static NomadChange getChange(NomadChangeInfo nomadChangeInfo) {
+    return nomadChangeInfo.getNomadChange() instanceof LockAwareDynamicConfigNomadChange ?
+        ((LockAwareDynamicConfigNomadChange) nomadChangeInfo.getNomadChange()).unwrap() :
+        nomadChangeInfo.getNomadChange();
+  }
+
+  @Override
+  public boolean isLocked() {
+    return getRuntimeNodeContext().getCluster().getConfigurationLockContext().isConfigured();
+  }
+
   private Map<String, ?> toMap(Object o) {
     try {
       JsonNode node = objectMapper.valueToTree(o);
@@ -410,4 +431,24 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
     }.start();
   }
 
+  @Override
+  public boolean isScalingDenied() {
+    try {
+      return !isActivated() || mustBeRestarted() || hasIncompleteChange() || nomadServerManager.getNomadServer().getChangeHistory()
+          .stream()
+          .filter(nomadChangeInfo -> nomadChangeInfo.getChangeRequestState() == COMMITTED)
+          .filter(nomadChangeInfo -> getChange(nomadChangeInfo) instanceof LockConfigNomadChange && ((LockConfigNomadChange) getChange(nomadChangeInfo)).getLockContext().getOwnerTags() != null)
+          .sorted(Comparator.comparing(NomadChangeInfo::getVersion).reversed()) // most recent first
+          .map(DynamicConfigServiceImpl::getChange)
+          .map(LockConfigNomadChange.class::cast)
+          .map(LockConfigNomadChange::getLockContext)
+          .map(LockContext::getOwnerTags)
+          .filter(isEqual(DENY_SCALE_IN).or(isEqual(DENY_SCALE_OUT)).or(isEqual(ALLOW_SCALING)))
+          .findFirst() // get the most recently committed marker: either deny or allow or nothing
+          .filter(isEqual(DENY_SCALE_IN).or(isEqual(DENY_SCALE_OUT))) // check if the last one is a deny
+          .isPresent(); // true if last one is deny, false if last one is allow or no marker
+    } catch (NomadException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 }
