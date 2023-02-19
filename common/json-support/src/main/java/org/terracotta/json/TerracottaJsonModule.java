@@ -17,12 +17,12 @@ package org.terracotta.json;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.deser.impl.NullsConstantProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
@@ -57,7 +57,7 @@ public class TerracottaJsonModule extends SimpleModule {
       private static final long serialVersionUID = 1L;
 
       @Override
-      public Path deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+      public Path deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         Deque<String> segments = new ArrayDeque<>();
         try {
           if (p.getCurrentToken() == JsonToken.VALUE_STRING) {
@@ -73,7 +73,7 @@ public class TerracottaJsonModule extends SimpleModule {
               } else if (p.getCurrentToken() == JsonToken.END_ARRAY) {
                 break;
               } else {
-                value = _parseString(p, ctxt);
+                value = _parseString(p, ctxt, NullsConstantProvider.nuller());
                 segments.add(value);
               }
             }
