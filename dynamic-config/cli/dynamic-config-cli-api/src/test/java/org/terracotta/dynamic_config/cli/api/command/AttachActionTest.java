@@ -26,6 +26,7 @@ import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
+import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.inet.HostPort;
 
 import java.io.IOException;
@@ -82,6 +83,12 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
   @Before
   public void setUp() throws Exception {
     super.setUp();
+
+    when(topologyServiceMock("localhost", 9410).isScalingDenied()).thenReturn(false);
+    when(topologyServiceMock("localhost", 9411).isScalingDenied()).thenReturn(false);
+
+    when(topologyServiceMock("localhost", 9410).getChangeHistory()).thenReturn(new NomadChangeInfo[0]);
+    when(topologyServiceMock("localhost", 9411).getChangeHistory()).thenReturn(new NomadChangeInfo[0]);
 
     when(topologyServiceMock("localhost", 9410).getUpcomingNodeContext()).thenReturn(nodeContext0);
     when(topologyServiceMock("localhost", 9411).getUpcomingNodeContext()).thenReturn(nodeContext1);

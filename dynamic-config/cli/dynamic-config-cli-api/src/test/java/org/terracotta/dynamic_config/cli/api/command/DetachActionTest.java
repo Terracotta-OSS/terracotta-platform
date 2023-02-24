@@ -92,6 +92,11 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
   public void setUp() throws Exception {
     super.setUp();
 
+    when(topologyServiceMock(node1_1.getInternalHostPort()).isScalingDenied()).thenReturn(false);
+    when(topologyServiceMock(node1_2.getInternalHostPort()).isScalingDenied()).thenReturn(false);
+    when(topologyServiceMock(node2_1.getInternalHostPort()).isScalingDenied()).thenReturn(false);
+    when(topologyServiceMock(node2_2.getInternalHostPort()).isScalingDenied()).thenReturn(false);
+
     when(topologyServiceMock(node1_1.getInternalHostPort()).getUpcomingNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getUID()));
     when(topologyServiceMock(node1_1.getInternalHostPort()).getRuntimeNodeContext()).thenReturn(new NodeContext(cluster, node1_1.getUID()));
     when(topologyServiceMock(node1_1.getInternalHostPort()).isActivated()).thenReturn(false);

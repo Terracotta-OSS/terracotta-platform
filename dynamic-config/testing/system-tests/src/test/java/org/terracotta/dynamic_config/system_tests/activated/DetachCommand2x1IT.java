@@ -19,10 +19,8 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 
-import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.containsOutput;
-import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
 
 /**
  * @author Mathieu Carbou
@@ -58,6 +56,6 @@ public class DetachCommand2x1IT extends DynamicConfigIT {
 
     assertThat(
         configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(1, 1), "-s", "localhost:" + getNodePort(2, 1)),
-        is(successful()));
+        containsOutput("Scaling operation cannot be performed. Please refer to the Troubleshooting Guide for more help."));
   }
 }

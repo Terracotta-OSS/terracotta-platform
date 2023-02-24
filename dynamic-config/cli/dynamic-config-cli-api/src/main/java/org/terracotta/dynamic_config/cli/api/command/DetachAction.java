@@ -22,6 +22,7 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.Identifier;
+import org.terracotta.dynamic_config.api.model.LockTag;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.PropertyHolder;
@@ -35,6 +36,8 @@ import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static java.lang.System.lineSeparator;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.Type.CONSISTENCY;
@@ -151,6 +154,10 @@ public class DetachAction extends TopologyAction {
         }
       }
 
+      validateLogOrFail(
+          () -> !destinationClusterActivated || !findScalingVetoer(destinationOnlineNodes).isPresent(),
+          "Scaling operation cannot be performed. Please refer to the Troubleshooting Guide for more help.");
+
       // when we want to detach a stripe, we detach all the nodes of the stripe
       stripeToDetach.getNodes().stream().map(Node::getUID).forEach(this::markNodeForRemoval);
     }
@@ -163,6 +170,18 @@ public class DetachAction extends TopologyAction {
             "Nodes must be safely shutdown first. Please refer to the Troubleshooting Guide for more help.");
       }
     }
+  }
+
+  @Override
+  protected Consumer<RuntimeException> onExecuteError() {
+    return isScaleInOrOut() ? e -> denyScaleIn(destinationCluster, destinationOnlineNodes) : e -> {};
+  }
+
+  @Override
+  protected String buildLockTag() {
+    return operationType == STRIPE ?
+        (LockTag.SCALE_IN_PREFIX + stripeToDetach.getUID()) :
+        (LockTag.NODE_DEL_PREFIX + onlineNodesToRemove.stream().map(Endpoint::getNodeUID).map(UID::toString).collect(Collectors.joining(":")));
   }
 
   @Override
@@ -226,11 +245,17 @@ public class DetachAction extends TopologyAction {
 
   @Override
   protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
-    // When the operation type is node, the nodes being detached should be stopped first manually
-    // But if the operation type is stripe, the stripes being detached are stopped automatically after they're removed
-    if (operationType == STRIPE) {
-      resetAndStopNodesToRemove();
-    }
+    tryFinally(() -> {
+      if (isUnlockRequired()) {
+        unlock(nomadChange);
+      }
+    }, () -> {
+      // When the operation type is node, the nodes being detached should be stopped first manually
+      // But if the operation type is stripe, the stripes being detached are stopped automatically after they're removed
+      if (operationType == STRIPE) {
+        resetAndStopNodesToRemove();
+      }
+    });
   }
 
   @Override

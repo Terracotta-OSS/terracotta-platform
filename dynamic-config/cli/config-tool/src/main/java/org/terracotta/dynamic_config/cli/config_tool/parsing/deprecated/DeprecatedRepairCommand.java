@@ -34,7 +34,7 @@ public class DeprecatedRepairCommand extends Command {
   HostPort node;
 
   @Parameter(names = {"-f"}, description = "Repair action to force: commit, rollback, reset, unlock", converter = RepairActionConverter.class)
-  RepairMethod forcedRepairMethod;
+  RepairMethod forcedRepairMethod = RepairMethod.AUTO;
 
   @Inject
   public final RepairAction action;
@@ -50,7 +50,7 @@ public class DeprecatedRepairCommand extends Command {
   @Override
   public void run() {
     action.setNode(node);
-    action.setForcedRepairAction(forcedRepairMethod);
+    action.repairMethod(forcedRepairMethod);
 
     action.run();
   }
