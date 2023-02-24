@@ -55,6 +55,12 @@ public class AttachCommand extends RestartCommand {
   @Parameter(names = {"-force"}, description = "Force the operation", hidden = true)
   protected boolean force;
 
+  @Parameter(names = {"-lock"}, description = "Create a lock before executing the Nomad operation", hidden = true)
+  protected boolean lock;
+
+  @Parameter(names = {"-unlock"}, description = "Unlock after executing the Nomad operation", hidden = true)
+  protected boolean unlock;
+
   @Inject
   public final AttachAction action;
 
@@ -110,6 +116,8 @@ public class AttachCommand extends RestartCommand {
     }
 
     action.setForce(force);
+    action.setLock(lock);
+    action.setUnlock(unlock);
     action.setRestartWaitTime(getRestartWaitTime());
     action.setRestartDelay(getRestartDelay());
 

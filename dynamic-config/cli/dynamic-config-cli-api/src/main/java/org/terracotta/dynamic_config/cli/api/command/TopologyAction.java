@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.model.LogicalServerState;
 import org.terracotta.dynamic_config.api.model.Cluster;
+import org.terracotta.dynamic_config.api.model.LockTag;
 import org.terracotta.dynamic_config.api.model.Node.Endpoint;
 import org.terracotta.dynamic_config.api.model.nomad.TopologyNomadChange;
 import org.terracotta.dynamic_config.api.service.ClusterValidator;
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static java.lang.System.lineSeparator;
@@ -41,6 +43,9 @@ import static org.terracotta.dynamic_config.api.model.ClusterState.CONFIGURING;
 public abstract class TopologyAction extends RemoteAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(TopologyAction.class);
 
+  @Injector.Inject
+  public final UnlockConfigAction unlockAction = new UnlockConfigAction();
+
   protected OperationType operationType = OperationType.NODE;
   protected HostPort destinationHostPort;
   protected boolean force;
@@ -50,6 +55,26 @@ public abstract class TopologyAction extends RemoteAction {
   protected Map<Endpoint, LogicalServerState> destinationOnlineNodes;
   protected boolean destinationClusterActivated;
   protected Cluster destinationCluster;
+
+  protected boolean useLock; // if set, a lock will try to be created before the operation and unlocked after
+  protected String createdLockToken;
+  private boolean unlock;
+
+  public void setLock(boolean lock) {
+    this.useLock = lock;
+  }
+
+  public boolean isLockRequired() {
+    return useLock;
+  }
+
+  public boolean isUnlockRequired() {
+    return unlock;
+  }
+
+  public void setUnlock(boolean unlock) {
+    this.unlock = unlock;
+  }
 
   public void setOperationType(OperationType operationType) {
     this.operationType = operationType;
@@ -79,10 +104,29 @@ public abstract class TopologyAction extends RemoteAction {
     }
   }
 
+  protected final boolean isScaleInOrOut() {
+    return destinationClusterActivated && operationType == OperationType.STRIPE;
+  }
+
   @Override
-  public void run() {
+  public final void run() {
     validate();
-    execute();
+    final Runnable scaleTask = () -> tryCatch(this::execute, onExecuteError());
+    final boolean mustLock = isLockRequired() && destinationClusterActivated && !isLockAwareNomadManager();
+    if (mustLock) {
+      // if we need to lock the operation, lock it first
+      createdLockToken = lock(destinationCluster, destinationOnlineNodes, LockTag.OWNER_PLATFORM, buildLockTag());
+      output.out("Config lock with token: " + createdLockToken);
+      destinationCluster = getUpcomingCluster(destination);
+    }
+    // then we run the scale task. In case of error, we unlock, but only if we placed a lock
+    tryCatch(scaleTask, mustLock ? e -> unlock(destinationCluster, destinationOnlineNodes) : e -> {});
+  }
+
+  protected abstract String buildLockTag();
+
+  protected Consumer<RuntimeException> onExecuteError() {
+    return e -> {};
   }
 
   protected void execute() {
@@ -138,10 +182,17 @@ public abstract class TopologyAction extends RemoteAction {
     }
   }
 
-  protected void onNomadChangeReady(TopologyNomadChange nomadChange) {
-  }
+  protected void onNomadChangeReady(TopologyNomadChange nomadChange) {}
 
-  protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {
+  protected void onNomadChangeSuccess(TopologyNomadChange nomadChange) {}
+
+  protected final void unlock(TopologyNomadChange nomadChange) {
+    Cluster newCluster = nomadChange.apply(destinationCluster);
+    newCluster.getNodes().stream().findAny().ifPresent(remaining -> {
+      unlockAction.nomadManager = nomadManager; // because the initial nomad manager might have been wrapped by a locked aware one
+      unlockAction.setNode(remaining.determineEndpoint(destination).getHostPort());
+      unlockAction.run();
+    });
   }
 
   protected void onNomadChangeFailure(TopologyNomadChange nomadChange, RuntimeException error) {

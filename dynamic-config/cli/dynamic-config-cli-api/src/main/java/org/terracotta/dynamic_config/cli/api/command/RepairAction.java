@@ -28,7 +28,9 @@ import org.terracotta.inet.HostPort;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toMap;
 import static org.terracotta.nomad.server.ChangeRequestState.COMMITTED;
 import static org.terracotta.nomad.server.ChangeRequestState.ROLLED_BACK;
@@ -41,52 +43,54 @@ public class RepairAction extends RemoteAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(RepairAction.class);
 
   private HostPort node;
-  private RepairMethod forcedRepairMethod;
+  private RepairMethod repairMethod = RepairMethod.AUTO;
+
+  // cached values
+  private Map<Endpoint, LogicalServerState> allNodes;
+  private Map<Endpoint, LogicalServerState> onlineNodes;
+  private Collection<Endpoint> offlineNodes;
 
   public void setNode(HostPort node) {
     this.node = node;
   }
 
-  public void setForcedRepairAction(RepairMethod forcedRepairMethod) {
-    this.forcedRepairMethod = forcedRepairMethod;
+  public void repairMethod(RepairMethod repairMethod) {
+    this.repairMethod = requireNonNull(repairMethod);
   }
 
   @Override
   public final void run() {
-    if (forcedRepairMethod == RepairMethod.RESET) {
-      resetAndStop(node);
-    } else if (forcedRepairMethod == RepairMethod.UNLOCK) {
-      forceUnlock();
-    } else {
-      nomadRepair();
+    switch (repairMethod) {
+      case RESET:
+        resetAndStop(node);
+        break;
+      case UNLOCK:
+        execute(this::forceUnlock);
+        break;
+      case ALLOW_SCALING:
+        execute(this::allowScaling);
+        break;
+      default:
+        execute(this::nomadRepair);
     }
     output.info("Command successful!");
   }
 
-  private void forceUnlock() {
-    Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
-    Map<Endpoint, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
+  private void execute(BiConsumer<Cluster, Map<Endpoint, LogicalServerState>> task) {
+    allNodes = findRuntimePeersStatus(node);
+    onlineNodes = filterOnlineNodes(allNodes);
 
     if (onlineNodes.size() != allNodes.size()) {
-      Collection<Endpoint> offlines = new ArrayList<>(allNodes.keySet());
-      offlines.removeAll(onlineNodes.keySet());
-      LOGGER.warn("Some nodes are not reachable: {}", toString(offlines));
+      offlineNodes = new ArrayList<>(allNodes.keySet());
+      offlineNodes.removeAll(onlineNodes.keySet());
+      LOGGER.warn("Some nodes are not reachable: {}", toString(offlineNodes));
     }
     Cluster cluster = getUpcomingCluster(node);
 
-    forceUnlock(cluster, onlineNodes);
+    task.accept(cluster, onlineNodes);
   }
 
-  private void nomadRepair() {
-    Map<Endpoint, LogicalServerState> allNodes = findRuntimePeersStatus(node);
-    Map<Endpoint, LogicalServerState> onlineNodes = filterOnlineNodes(allNodes);
-
-    if (onlineNodes.size() != allNodes.size()) {
-      Collection<Endpoint> offlines = new ArrayList<>(allNodes.keySet());
-      offlines.removeAll(onlineNodes.keySet());
-      LOGGER.warn("Some nodes are not reachable: {}", toString(offlines));
-    }
-
+  private void nomadRepair(Cluster cluster, Map<Endpoint, LogicalServerState> onlineNodes) {
     // the automatic repair command can only work on activated nodes
     Map<Endpoint, LogicalServerState> activatedNodes = filter(onlineNodes, (endpoint, state) -> isActivated(endpoint));
 
@@ -133,24 +137,24 @@ public class RepairAction extends RemoteAction {
         break;
 
       case PARTIALLY_PREPARED:
-        if (forcedRepairMethod != RepairMethod.ROLLBACK) {
-          throw new IllegalArgumentException("The configuration is partially prepared. A rollback is needed. A " + forcedRepairMethod + " cannot be executed.");
+        if (repairMethod != RepairMethod.ROLLBACK) {
+          throw new IllegalArgumentException("The configuration is partially prepared. A rollback is needed. A " + repairMethod + " cannot be executed.");
         }
         // run a repair that will do a rollback
         repair(allNodes, configurationConsistencyAnalyzer, RepairMethod.ROLLBACK);
         break;
 
       case PARTIALLY_COMMITTED:
-        if (forcedRepairMethod != RepairMethod.COMMIT) {
-          throw new IllegalArgumentException("The configuration is partially committed. A commit is needed. A " + forcedRepairMethod + " cannot be executed.");
+        if (repairMethod != RepairMethod.COMMIT) {
+          throw new IllegalArgumentException("The configuration is partially committed. A commit is needed. A " + repairMethod + " cannot be executed.");
         }
         // run a repair that will do a commit
         repair(allNodes, configurationConsistencyAnalyzer, RepairMethod.COMMIT);
         break;
 
       case PARTIALLY_ROLLED_BACK:
-        if (forcedRepairMethod != RepairMethod.ROLLBACK) {
-          throw new IllegalArgumentException("The configuration is partially rolled back. A rollback is needed. A " + forcedRepairMethod + " cannot be executed.");
+        if (repairMethod != RepairMethod.ROLLBACK) {
+          throw new IllegalArgumentException("The configuration is partially rolled back. A rollback is needed. A " + repairMethod + " cannot be executed.");
         }
         // run a repair that will do a rollback
         repair(allNodes, configurationConsistencyAnalyzer, RepairMethod.ROLLBACK);
@@ -161,12 +165,12 @@ public class RepairAction extends RemoteAction {
     }
   }
 
-  private void repair(Map<Endpoint, LogicalServerState> allNodes, ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer, RepairMethod fallbackRepairMethod) {
+  private void repair(Map<Endpoint, LogicalServerState> allNodes, ConfigurationConsistencyAnalyzer configurationConsistencyAnalyzer, RepairMethod detectedRepairMethod) {
     Collection<HostPort> onlineActivatedAddresses = configurationConsistencyAnalyzer.getOnlineNodesActivated().keySet();
     Map<Endpoint, LogicalServerState> onlineActivatedEndpoints = allNodes.entrySet().stream()
         .filter(e -> onlineActivatedAddresses.contains(e.getKey().getHostPort()))
         .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
-    RepairMethod wanted = forcedRepairMethod == null ? fallbackRepairMethod : forcedRepairMethod;
+    RepairMethod wanted = repairMethod == RepairMethod.AUTO ? detectedRepairMethod : repairMethod;
     if (wanted == null) {
       throw new IllegalArgumentException("Some nodes are offline. Unable to determine what kind of repair to run. Please refer to the Troubleshooting Guide.");
     } else {
