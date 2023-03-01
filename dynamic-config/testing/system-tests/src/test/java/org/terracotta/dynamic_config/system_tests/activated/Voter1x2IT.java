@@ -21,7 +21,6 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.voter.ActiveVoter;
 import org.terracotta.voter.TCVoter;
 import org.terracotta.voter.TCVoterImpl;
 import org.terracotta.voter.VoterStatus;
@@ -31,12 +30,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+import org.terracotta.voter.VotingGroup;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class Voter1x2IT extends DynamicConfigIT {
@@ -52,8 +51,7 @@ public class Voter1x2IT extends DynamicConfigIT {
     int passiveId = waitForNPassives(1, 1)[0];
 
     TCVoter voter = new TCVoterImpl();
-    Future<VoterStatus> voterStatusFuture = voter.register("MyCluster", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
-    VoterStatus voterStatus = voterStatusFuture.get();
+    VoterStatus voterStatus = voter.register("MyCluster", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
     voterStatus.awaitRegistrationWithAll(10, TimeUnit.SECONDS);
 
     stopNode(1, activeId);
@@ -74,17 +72,17 @@ public class Voter1x2IT extends DynamicConfigIT {
     String active = getNode(1, activeId).getHostPort();
     String passive = getNode(1, passiveId).getHostPort();
 
-    try (ActiveVoter activeVoter = new ActiveVoter("voter1", active, passive)) {
-      activeVoter.startAndAwaitRegistrationWithAll();
+    try (VotingGroup activeVoter = new VotingGroup("voter1", active, passive)) {
+      activeVoter.start().awaitRegistrationWithAll();
 
       String[] hostPorts = {getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort()};
       Set<String> expectedTopology = new HashSet<>(Arrays.asList(hostPorts));
 
       assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
-      assertThat(activeVoter.getKnownHosts(), CoreMatchers.is(hostPorts.length));
+      assertThat(activeVoter.countConnectedServers(), CoreMatchers.is(hostPorts.length));
 
       CountDownLatch voted = new CountDownLatch(1);
-      activeVoter.setVoteListener(s -> {
+      activeVoter.addVotingListener(s -> {
         if (s.equals(active)) {
           voted.countDown();
         }
@@ -96,7 +94,7 @@ public class Voter1x2IT extends DynamicConfigIT {
 
       expectedTopology.remove(hostPorts[1]);
       waitUntil(activeVoter::getExistingTopology, is(expectedTopology));
-      waitUntil(activeVoter::getKnownHosts, is(1));
+      waitUntil(activeVoter::countConnectedServers, is(1));
     }
   }
 }
