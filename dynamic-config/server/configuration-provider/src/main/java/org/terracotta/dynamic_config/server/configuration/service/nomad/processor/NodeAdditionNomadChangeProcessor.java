@@ -41,14 +41,11 @@ import static java.util.Objects.requireNonNull;
  */
 public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<NodeAdditionNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NodeAdditionNomadChangeProcessor.class);
-  private static final String PLATFORM_MBEAN_OPERATION_NAME = "addPassive";
 
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
-  private final MBeanServer mbeanServer;
 
-  public NodeAdditionNomadChangeProcessor(MBeanServer mbeanServer, TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
-    this.mbeanServer = mbeanServer;
+  public NodeAdditionNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
   }
@@ -60,7 +57,6 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
       throw new NomadException("Existing config must not be null");
     }
     try {
-      checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
       new ClusterValidator(updated).validate(ClusterState.ACTIVATED);
     } catch (RuntimeException e) {
@@ -74,37 +70,6 @@ public class NodeAdditionNomadChangeProcessor implements NomadChangeProcessor<No
     if (runtime.containsNode(change.getNode().getUID())) {
       return;
     }
-
-    try {
-      ObjectName objectName = ServerMBean.createMBeanName("TopologyMBean");
-      Node node = change.getNode();
-      LOGGER.info("Adding node: {} to stripe: {}", node.getName(), runtime.getStripe(change.getStripeUID()).get().getName());
-      LOGGER.debug("Calling mBean {}#{}", objectName, PLATFORM_MBEAN_OPERATION_NAME);
-      mbeanServer.invoke(
-          objectName,
-          PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{node.getHostname(), node.getPort().orDefault(), node.getGroupPort().orDefault()},
-          new String[]{String.class.getName(), int.class.getName(), int.class.getName()}
-      );
-
-      dynamicConfigEventFiring.onNodeAddition(change.getStripeUID(), node);
-    } catch (RuntimeException | JMException e) {
-      throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
-    }
-  }
-
-  private void checkMBeanOperation() {
-    boolean canCall;
-    try {
-      canCall = Stream
-          .of(mbeanServer.getMBeanInfo(ServerMBean.createMBeanName("TopologyMBean")).getOperations())
-          .anyMatch(attr -> PLATFORM_MBEAN_OPERATION_NAME.equals(attr.getName()));
-    } catch (JMException e) {
-      LOGGER.error("MBeanServer::getMBeanInfo resulted in:", e);
-      canCall = false;
-    }
-    if (!canCall) {
-      throw new IllegalStateException("Unable to invoke MBean operation to attach a node");
-    }
+    dynamicConfigEventFiring.onNodeAddition(change.getStripeUID(), change.getNode());
   }
 }
