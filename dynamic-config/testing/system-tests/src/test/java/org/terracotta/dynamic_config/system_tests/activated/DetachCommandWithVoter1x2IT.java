@@ -20,13 +20,13 @@ import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.voter.ActiveVoter;
 
 import java.util.concurrent.CountDownLatch;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertTrue;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+import org.terracotta.voter.VotingGroup;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
@@ -44,17 +44,17 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
     String active = getNode(1, activeId).getHostPort();
     String passive = getNode(1, passiveId).getHostPort();
 
-    try (ActiveVoter activeVoter = new ActiveVoter("voter1", active, passive)) {
+    try (VotingGroup activeVoter = new VotingGroup("voter1", active, passive)) {
 
       CountDownLatch voted = new CountDownLatch(1);
-      activeVoter.setVoteListener(s -> {
+      activeVoter.addVotingListener(s -> {
         if (s.equals(active)) {
           voted.countDown();
         }
       });
 
-      activeVoter.startAndAwaitRegistrationWithAll();
-
+      activeVoter.start().awaitRegistrationWithAll();
+      
       stopNode(1, passiveId);
       voted.await();
 
@@ -65,25 +65,25 @@ public class DetachCommandWithVoter1x2IT extends DynamicConfigIT {
   }
 
   @Test
-  public void testDetachAndAttachVerifyWithVoter() {
+  public void testDetachAndAttachVerifyWithVoter() throws InterruptedException {
     int activeId = waitForActive(1);
     int passiveId = waitForNPassives(1, 1)[0];
 
     String active = getNode(1, activeId).getHostPort();
     String passive = getNode(1, passiveId).getHostPort();
 
-    try (ActiveVoter activeVoter1 = new ActiveVoter("voter1", active, passive)) {
-      activeVoter1.startAndAwaitRegistrationWithAll();
+    try (VotingGroup activeVoter1 = new VotingGroup("voter1", active, passive)) {
+      activeVoter1.start().awaitRegistrationWithAll();
 
       waitUntil(() -> configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
-      waitUntil(activeVoter1::getKnownHosts, is(1));
+      waitUntil(activeVoter1::countConnectedServers, is(1));
 
       startNode(1, passiveId);
 
       waitUntil(()->configTool("attach", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
-      waitUntil(activeVoter1::getKnownHosts, is(2));
+      waitUntil(activeVoter1::countConnectedServers, is(2));
 
       withTopologyService(1, activeId, topologyService -> assertTrue(topologyService.isActivated()));
       withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));

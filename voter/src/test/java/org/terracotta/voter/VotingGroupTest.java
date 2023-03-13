@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
@@ -53,7 +52,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.terracotta.utilities.test.matchers.Eventually.within;
 
-public class ActiveVoterTest {
+public class VotingGroupTest {
 
   private static final String VOTER_ID = UUID.randomUUID().toString();
   private static final long TOPOLOGY_FETCH_INTERVAL = 10000L;
@@ -80,8 +79,8 @@ public class ActiveVoterTest {
     when(otherClientVoterManager.isConnected()).thenReturn(true);
     when(firstClientVoterManager.getServerState()).thenReturn("ACTIVE-COORDINATOR");
     when(otherClientVoterManager.getServerState()).thenReturn("PASSIVE-STANDBY");
-    when(firstClientVoterManager.registerVoter(VOTER_ID)).thenReturn(0L);
-    when(otherClientVoterManager.registerVoter(VOTER_ID)).thenReturn(0L);
+    when(firstClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
+    when(otherClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
     when(firstClientVoterManager.getTopology()).thenReturn(expectedTopology);
     when(firstClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
     when(otherClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
@@ -97,26 +96,33 @@ public class ActiveVoterTest {
         ClientVoterManager mockClientVoterManager = mock(ClientVoterManager.class);
         when(mockClientVoterManager.getTargetHostPort()).thenReturn(hostPort);
         when(mockClientVoterManager.isConnected()).thenReturn(true);
+        try {
+          when(mockClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
+          when(mockClientVoterManager.getTopology()).thenReturn(expectedTopology);
+          when(mockClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
+        } catch (TimeoutException to) {
+          
+        }
         return mockClientVoterManager;
       }
     };
-    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), factory, HOST1, HOST2)) {
-      activeVoter.start();
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
+    try (VotingGroup activeVoter = new VotingGroup(VOTER_ID, new Properties(), factory, HOST1, HOST2)) {
+      activeVoter.start().awaitRegistrationWithAll();
+
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
-      MatcherAssert.assertThat(activeVoter.getHeartbeatFutures().size(), CoreMatchers.is(2));
+      MatcherAssert.assertThat(activeVoter.countConnectedServers(), CoreMatchers.is(2));
 
       // Update Topology To Add Passive
       expectedTopology.add(HOST3);
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
+      activeVoter.forceTopologyUpdate().join();
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
-      MatcherAssert.assertThat(activeVoter.getHeartbeatFutures().size(), CoreMatchers.is(3));
+      MatcherAssert.assertThat(activeVoter.countConnectedServers(), CoreMatchers.is(3));
 
       //Update Topology To Remove Passive
       expectedTopology.remove(HOST2);
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
+      activeVoter.forceTopologyUpdate().join();
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
-      MatcherAssert.assertThat(activeVoter.getHeartbeatFutures().size(), CoreMatchers.is(2));
+      MatcherAssert.assertThat(activeVoter.countConnectedServers(), CoreMatchers.is(2));
     }
   }
 
@@ -128,7 +134,7 @@ public class ActiveVoterTest {
     ClientVoterManager firstClientVoterManager = mock(ClientVoterManager.class);
     when(firstClientVoterManager.isConnected()).thenReturn(true);
     when(firstClientVoterManager.getServerState()).thenReturn("ACTIVE-COORDINATOR");
-    when(firstClientVoterManager.registerVoter(VOTER_ID)).thenReturn(0L);
+    when(firstClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
     when(firstClientVoterManager.getTopology()).thenReturn(expectedTopology);
     when(firstClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
     when(firstClientVoterManager.getTargetHostPort()).thenReturn(HOST1);
@@ -140,20 +146,27 @@ public class ActiveVoterTest {
         ClientVoterManager mockClientVoterManager = mock(ClientVoterManager.class);
         when(mockClientVoterManager.getTargetHostPort()).thenReturn(hostPort);
         when(mockClientVoterManager.isConnected()).thenReturn(true);
+        try {
+          when(mockClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
+          when(mockClientVoterManager.getTopology()).thenReturn(expectedTopology);
+          when(mockClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
+        } catch (TimeoutException to) {
+          
+        }
         return mockClientVoterManager;
       }
     };
-    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), factory, HOST1)) {
-      activeVoter.start();
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
+    try (VotingGroup activeVoter = new VotingGroup(VOTER_ID, new Properties(), factory, HOST1)) {
+      activeVoter.start().awaitRegistrationWithAll();
+
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
-      MatcherAssert.assertThat(activeVoter.getHeartbeatFutures().size(), CoreMatchers.is(1));
+      MatcherAssert.assertThat(activeVoter.countConnectedServers(), CoreMatchers.is(1));
 
       // Update Topology To Add Passive
       expectedTopology.add(HOST2);
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
+      activeVoter.forceTopologyUpdate().join();
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
-      MatcherAssert.assertThat(activeVoter.getHeartbeatFutures().size(), CoreMatchers.is(2));
+      MatcherAssert.assertThat(activeVoter.countConnectedServers(), CoreMatchers.is(2));
     }
   }
 
@@ -169,8 +182,8 @@ public class ActiveVoterTest {
     when(otherClientVoterManager.isConnected()).thenReturn(true);
     when(firstClientVoterManager.getServerState()).thenReturn("ACTIVE-COORDINATOR");
     when(otherClientVoterManager.getServerState()).thenReturn("PASSIVE-STANDBY");
-    when(firstClientVoterManager.registerVoter(VOTER_ID)).thenReturn(0L);
-    when(otherClientVoterManager.registerVoter(VOTER_ID)).thenReturn(0L);
+    when(firstClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
+    when(otherClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
     when(firstClientVoterManager.getTopology()).thenReturn(expectedTopology);
     when(firstClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
     when(otherClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
@@ -186,21 +199,27 @@ public class ActiveVoterTest {
         ClientVoterManager mockClientVoterManager = mock(ClientVoterManager.class);
         when(mockClientVoterManager.getTargetHostPort()).thenReturn(hostPort);
         when(mockClientVoterManager.isConnected()).thenReturn(true);
+        try {
+          when(mockClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
+          when(mockClientVoterManager.getTopology()).thenReturn(expectedTopology);
+          when(mockClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
+        } catch (TimeoutException to) {
+          
+        }
         return mockClientVoterManager;
       }
     };
-    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), factory, HOST1, HOST2)) {
-      activeVoter.start();
+    try (VotingGroup activeVoter = new VotingGroup(VOTER_ID, new Properties(), factory, HOST1, HOST2)) {
+      activeVoter.start().awaitRegistrationWithAll();
 
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
-      MatcherAssert.assertThat(activeVoter.getHeartbeatFutures().size(), CoreMatchers.is(2));
+      MatcherAssert.assertThat(activeVoter.countConnectedServers(), CoreMatchers.is(2));
 
       // Update Topology To Remove Passive
       expectedTopology.remove(HOST2);
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
+      activeVoter.forceTopologyUpdate().join();
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
-      MatcherAssert.assertThat(activeVoter.getHeartbeatFutures().size(), CoreMatchers.is(1));
+      MatcherAssert.assertThat(activeVoter.countConnectedServers(), CoreMatchers.is(1));
     }
   }
 
@@ -217,8 +236,8 @@ public class ActiveVoterTest {
     when(otherClientVoterManager.isConnected()).thenReturn(true);
     when(firstClientVoterManager.getServerState()).thenReturn("ACTIVE-COORDINATOR");
     when(otherClientVoterManager.getServerState()).thenReturn("PASSIVE-STANDBY");
-    when(firstClientVoterManager.registerVoter(VOTER_ID)).thenReturn(0L);
-    when(otherClientVoterManager.registerVoter(VOTER_ID)).thenReturn(0L);
+    when(firstClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
+    when(otherClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
     when(firstClientVoterManager.getTopology()).thenReturn(expectedTopology);
     when(firstClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
     when(otherClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
@@ -234,20 +253,27 @@ public class ActiveVoterTest {
         ClientVoterManager mockClientVoterManager = mock(ClientVoterManager.class);
         when(mockClientVoterManager.getTargetHostPort()).thenReturn(hostPort);
         when(mockClientVoterManager.isConnected()).thenReturn(true);
+        try {
+          when(mockClientVoterManager.register(VOTER_ID)).thenReturn(Boolean.TRUE);
+          when(mockClientVoterManager.getTopology()).thenReturn(expectedTopology);
+          when(mockClientVoterManager.heartbeat(VOTER_ID)).thenReturn(0L);
+        } catch (TimeoutException to) {
+          
+        }
         return mockClientVoterManager;
       }
     };
-    try (ActiveVoter activeVoter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), factory, HOST1, HOST2)) {
+    try (VotingGroup activeVoter = new VotingGroup(VOTER_ID, new Properties(), factory, HOST1, HOST2)) {
       activeVoter.start();
-      Thread.sleep(TOPOLOGY_FETCH_INTERVAL);
+      activeVoter.forceTopologyUpdate().join();
       MatcherAssert.assertThat(activeVoter.getExistingTopology(), CoreMatchers.is(expectedTopology));
-      MatcherAssert.assertThat(activeVoter.getHeartbeatFutures().size(), CoreMatchers.is(3));
+      MatcherAssert.assertThat(activeVoter.countConnectedServers(), CoreMatchers.is(3));
     }
   }
 
   @Test
   @SuppressWarnings("serial")
-  public void testReregistrationWhenAllStaticHostPortsNotAvailable() throws InterruptedException, NoSuchFieldException {
+  public void testReregistrationWhenAllStaticHostPortsNotAvailable() throws InterruptedException, NoSuchFieldException, TimeoutException {
     Map<String, String> servers = new HashMap<String, String>() {
       {
         put("ACTIVE-COORDINATOR", HOST1);
@@ -263,23 +289,24 @@ public class ActiveVoterTest {
     ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
     listAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
     listAppender.start();
-    Logger logger = (Logger) LoggerFactory.getLogger(ActiveVoter.class);
+    Logger logger = (Logger) LoggerFactory.getLogger(VotingGroup.class);
     logger.addAppender(listAppender);
 
-    try (ActiveVoter voter = new ActiveVoter(VOTER_ID, new CompletableFuture<>(), new Properties(), managers::get, servers.get("ACTIVE-COORDINATOR"))) {
+    try (VotingGroup voter = new VotingGroup(VOTER_ID, new Properties(), managers::get, servers.get("ACTIVE-COORDINATOR"))) {
       voter.start();
-      Thread.sleep(10000L);
-      waitForLogMessage(listAppender, "New Topology detected");
+      voter.forceTopologyUpdate().join();
+      waitForLogMessage(listAppender, "New topology detected");
       disconnectManagers(managers.values());
-      waitForLogMessage(listAppender, "Attempting to re-register");
       synchronized (listAppender) {
         listAppender.list.clear();
       }
+      waitForLogMessage(listAppender, "Attempting to register");
+
       MockedClientVoterManager passiveManager = managers.get(servers.get("PASSIVE-STANDBY"));
       passiveManager.promote();
       waitForLogMessage(listAppender, "Vote owner state: ACTIVE-COORDINATOR");
-      Thread.sleep(5000L); // wait for reg retry
-      verify(passiveManager, atLeastOnce()).registerVoter(eq(VOTER_ID));
+      voter.forceTopologyUpdate().join();
+      verify(passiveManager, atLeastOnce()).register(eq(VOTER_ID));
     } finally {
       logger.detachAppender(listAppender);
       listAppender.stop();
@@ -370,18 +397,28 @@ public class ActiveVoterTest {
     }
 
     @Override
-    public long registerVoter(String id) {
-      return connected ? HEARTBEAT_RESPONSE : INVALID_VOTER_RESPONSE;
-    }
-
-    @Override
     public long heartbeat(String id) {
       return connected ? HEARTBEAT_RESPONSE : INVALID_VOTER_RESPONSE;
     }
 
     @Override
-    public long vote(String id, long electionTerm) {
+    public long vote(String id) {
       return connected ? HEARTBEAT_RESPONSE : INVALID_VOTER_RESPONSE;
+    }
+
+    @Override
+    public boolean isRegistered() {
+      return connected;
+    }
+
+    @Override
+    public long generation() {
+      return 0L;
+    }
+
+    @Override
+    public boolean register(String id) throws TimeoutException {
+      return connected;
     }
 
     @Override

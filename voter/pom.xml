@@ -50,7 +50,6 @@
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <version>${terracotta-core.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

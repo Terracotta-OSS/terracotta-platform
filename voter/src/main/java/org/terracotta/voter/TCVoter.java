@@ -27,7 +27,7 @@ public interface TCVoter {
    * @return A Future that holds the registration status of the voter.
    * This Future will complete once the registration succeeds.
    */
-  Future<VoterStatus> register(String clusterName, String... hostPorts);
+  VoterStatus register(String clusterName, String... hostPorts);
 
   /**
    * Send an override vote to the server at the given host:port to force promote it to be an active.

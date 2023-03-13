@@ -214,6 +214,7 @@ println(new File(project.build.directory, "angela/platform-kit-${project.version
             <org.terracotta.voter.topology.fetch.interval>9000</org.terracotta.voter.topology.fetch.interval>
             <jdk.net.hosts.file>${project.build.directory}/fake-hosts.txt</jdk.net.hosts.file>
             <IGNITE_UPDATE_NOTIFIER>false</IGNITE_UPDATE_NOTIFIER>
+            <org.terracotta.voter.topology.fetch.interval>5000</org.terracotta.voter.topology.fetch.interval>
           </systemPropertyVariables>
           <argLine>-XX:+UseG1GC -Xmx1g -Dorg.terracotta.disablePortReleaseCheck=true</argLine>
         </configuration>

@@ -15,6 +15,7 @@
  */
 package org.terracotta.voter;
 
+import com.tc.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionException;
@@ -22,24 +23,24 @@ import org.terracotta.connection.Diagnostics;
 import org.terracotta.connection.DiagnosticsFactory;
 
 import java.net.InetSocketAddress;
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
-import static com.tc.voter.VoterManagerMBean.MBEAN_NAME;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ClientVoterManagerImpl implements ClientVoterManager {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ClientVoterManagerImpl.class);
 
   public static final String REQUEST_TIMEOUT = "Request Timeout";
+  public static final String MBEAN_NAME = "VoterManager";
 
   private final String hostPort;
   public Diagnostics diagnostics;
 
   private volatile boolean voting = false;
-  private volatile long generation = 0;
+  private volatile long generation = INVALID_VOTER_RESPONSE;
 
   public ClientVoterManagerImpl(String hostPort) {
     this.hostPort = hostPort;
@@ -51,32 +52,24 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   }
 
   @Override
-  public void connect(Properties connectionProps) {
+  public void connect(Properties connectionProps) throws ConnectionException {
     String[] split = this.hostPort.split(":");
     InetSocketAddress addr = InetSocketAddress.createUnresolved(split[0], Integer.parseInt(split[1]));
-    try {
-      Diagnostics temp = DiagnosticsFactory.connect(addr, connectionProps);
-      synchronized (this) {
-        if (diagnostics != null) {
-          diagnostics.close();
-        }
-        diagnostics = temp;
+    Diagnostics temp = DiagnosticsFactory.connect(addr, connectionProps);
+    synchronized (this) {
+      if (diagnostics != null) {
+        diagnostics.close();
       }
-      LOGGER.info("Connected to {}", hostPort);
-    } catch (ConnectionException e) {
-      throw new RuntimeException("Unable to connect to " + hostPort, e);
+      diagnostics = temp;
     }
+    LOGGER.info("Connected to {}", hostPort);
   }
 
   @Override
-  public long registerVoter(String id) throws TimeoutException {
+  public boolean register(String id) throws TimeoutException {
     String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "registerVoter", id));
-    try {
-      return Long.parseLong(result);
-    } catch (NumberFormatException ne) {
-      LOGGER.info("unexpected value returned for register voter: {}", result);
-      throw new RuntimeException("register voter error");
-    }
+    generation = parseResponse(result);
+    return isRegistered();
   }
 
   @Override
@@ -84,28 +77,51 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
     long time = System.currentTimeMillis();
     String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "heartbeat", id));
     LOGGER.debug("voting result {} time {} id {} host {} thread {}", result, System.currentTimeMillis() - time, id, hostPort, Thread.currentThread().getName());
-    long nr = Long.parseLong(result);
-    if (nr <= 0) {
+    long response = parseResponse(result);
+    Assert.assertTrue(response >= 0); // any negative should have thrown an exception
+    if (response == 0) {
       voting = false;
-      generation = 0;
-    } else {
-      if (!voting && generation == nr) {
+      generation = HEARTBEAT_RESPONSE;
+    } else if (!voting && generation == response) {
         //  already zombied for this generation, cannot vote, just heartbeat
         return 0;
-      } else {
-        voting = true;
-        generation = nr;
-      }
+    } else {
+      voting = true;
+      generation = response;
     }
-    return nr;
+    return response;
+  }
+  
+  /**
+   * Parse the response from the server.  
+   * 
+   * The server should return a long based on current state
+   * -1 if the voter that is trying to heartbeat is not registered
+   * 0 for a valid heartbeat with no voting occuring
+   * any positive long means the server is requesting a vote in the 
+   * generation returned in the long.
+   * @param result
+   * @return 
+   */
+  private long parseResponse(String result) {
+    try {
+      long value = Long.parseLong(result);
+      if (value < 0) {
+        throw new RuntimeException("invalid voter response");
+      }
+      return value;
+    } catch (NumberFormatException ne) {
+      generation = INVALID_VOTER_RESPONSE;
+      throw new RuntimeException("invalid response from server", ne);
+    }
   }
 
   @Override
-  public long vote(String id, long term) throws TimeoutException {
+  public long vote(String id) throws TimeoutException {
     if (!voting) {
-      return -1;
+      throw new RuntimeException("not currently voting");
     }
-    String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "vote", id + ":" + term));
+    String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "vote", id + ":" + generation));
     return Long.parseLong(result);
   }
 
@@ -174,6 +190,16 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   @Override
   public boolean isVoting() {
     return voting;
+  }
+  
+  @Override
+  public boolean isRegistered() {
+    return generation >= 0;
+  }
+  
+  @Override
+  public long generation() {
+    return generation;
   }
 
   @Override

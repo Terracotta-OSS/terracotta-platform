@@ -28,7 +28,6 @@ import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.inet.HostPort;
 import org.terracotta.inet.InetSocketAddressConverter;
 import org.terracotta.json.ObjectMapperFactory;
-import org.terracotta.voter.ActiveVoter;
 import org.terracotta.voter.TCVoter;
 import org.terracotta.voter.TCVoterImpl;
 
@@ -40,7 +39,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -49,6 +47,7 @@ import static java.util.stream.Collectors.toList;
 import static org.terracotta.connection.ConnectionPropertyNames.CONNECTION_NAME;
 import static org.terracotta.connection.ConnectionPropertyNames.CONNECTION_TIMEOUT;
 import static org.terracotta.connection.DiagnosticsFactory.REQUEST_TIMEOUT;
+import org.terracotta.voter.VotingGroup;
 
 public class TCVoterMain {
 
@@ -167,7 +166,7 @@ public class TCVoterMain {
   }
 
   protected void startVoter(Properties connectionProps, String... hostPorts) {
-    new ActiveVoter(ID, new CompletableFuture<>(), connectionProps, hostPorts).start();
+    new VotingGroup(ID, connectionProps, hostPorts).start();
   }
 
   protected void validateCluster(Cluster cluster) {

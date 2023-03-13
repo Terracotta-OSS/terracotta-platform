@@ -21,16 +21,20 @@ import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.dynamic_config.test_support.InlineServers;
-import org.terracotta.voter.ActiveVoter;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import org.junit.Assert;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import org.slf4j.Logger;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
+import org.terracotta.voter.VotingGroup;
 
 @ClusterDefinition(nodesPerStripe = 3)
 public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
+  
+  private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(AttachCommandWithMultipleVoter1x3IT.class);
 
   @Override
   protected FailoverPriority getFailoverPriority() {
@@ -55,14 +59,17 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
 
   @Test
   @InlineServers(false)
-  public void testFailoverWhileAttachingAndVerifyWithVoter() {
+  public void testFailoverWhileAttachingAndVerifyWithVoter() throws InterruptedException {
     int activeId = waitForActive(1);
     int passiveId = waitForNPassives(1, 1)[0];
 
-    try (ActiveVoter activeVoter = new ActiveVoter("fvoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
-         ActiveVoter secondVoter = new ActiveVoter("svoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
-      activeVoter.startAndAwaitRegistrationWithAll();
-      secondVoter.startAndAwaitRegistrationWithAll();
+    try (VotingGroup activeVoter = new VotingGroup("fvoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort());
+         VotingGroup secondVoter = new VotingGroup("svoter", getNode(1, activeId).getHostPort(), getNode(1, passiveId).getHostPort())) {
+      activeVoter.start().awaitRegistrationWithAll();
+      secondVoter.start().awaitRegistrationWithAll();
+      
+      Assert.assertEquals(2, activeVoter.countConnectedServers());
+      Assert.assertEquals(2, secondVoter.countConnectedServers());
 
       String propertySettingString = "stripe.1.node." + activeId + ".tc-properties.failoverAddition=killAddition-commit";
       startNode(1, 3);
@@ -76,15 +83,20 @@ public class AttachCommandWithMultipleVoter1x3IT extends DynamicConfigIT {
       // Once the failover is done and voter voted, we should be able to retry the command
       waitUntil(() -> configTool("attach", "-f", "-d", "localhost:" + getNodePort(1, passiveId), "-s", "localhost:" + getNodePort(1, 3)), is(successful()));
       waitForPassive(1, 3);
+      activeVoter.forceTopologyUpdate().join();
+      secondVoter.forceTopologyUpdate().join();
 
-      waitUntil(activeVoter::getKnownHosts, is(3));
-      waitUntil(secondVoter::getKnownHosts, is(3));
+      waitUntil(activeVoter::countConnectedServers, is(2));
+      waitUntil(secondVoter::countConnectedServers, is(2));
 
       assertThat(getUpcomingCluster("localhost", getNodePort(1, passiveId)).getNodeCount(), is(equalTo(3)));
       assertThat(getUpcomingCluster("localhost", getNodePort(1, 3)).getNodeCount(), is(equalTo(3)));
 
       withTopologyService(1, passiveId, topologyService -> assertTrue(topologyService.isActivated()));
       withTopologyService(1, 3, topologyService -> assertTrue(topologyService.isActivated()));
+    } catch (InterruptedException ie) {
+      LOGGER.warn("test failed by interrupt", ie);
+      throw ie;
     }
   }
 }
