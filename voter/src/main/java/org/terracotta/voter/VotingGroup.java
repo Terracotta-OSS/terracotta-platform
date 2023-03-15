@@ -371,7 +371,7 @@ public class VotingGroup implements AutoCloseable {
   
   private synchronized CompletableFuture<?> refreshPollingFuture() {
     pollingFuture = new CompletableFuture<>();
-    notify();
+    notifyAll();
     return pollingFuture;
   }
   
