@@ -15,12 +15,12 @@
  */
 package org.terracotta.voter;
 
-import com.tc.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import org.terracotta.connection.ConnectionException;
@@ -29,7 +29,7 @@ public class TCVoterImpl implements TCVoter {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TCVoterImpl.class);
 
-  protected final String id = UUID.getUUID().toString();
+  protected final String id = UUID.randomUUID().toString();
   private final Map<String, VotingGroup> registeredClusters = new ConcurrentHashMap<>();
   private final Properties connectionProperties;
 

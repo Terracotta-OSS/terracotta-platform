@@ -15,7 +15,6 @@
  */
 package org.terracotta.voter;
 
-import com.tc.util.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.ConnectionException;
@@ -78,7 +77,10 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
     String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "heartbeat", id));
     LOGGER.debug("voting result {} time {} id {} host {} thread {}", result, System.currentTimeMillis() - time, id, hostPort, Thread.currentThread().getName());
     long response = parseResponse(result);
-    Assert.assertTrue(response >= 0); // any negative should have thrown an exception
+    if (response < 0) {
+// any negative should have thrown an exception
+      throw new AssertionError();
+    }
     if (response == 0) {
       voting = false;
       generation = HEARTBEAT_RESPONSE;

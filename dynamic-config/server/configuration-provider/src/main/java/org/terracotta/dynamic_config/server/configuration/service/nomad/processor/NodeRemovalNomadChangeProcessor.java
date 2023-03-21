@@ -41,14 +41,11 @@ import static java.util.Objects.requireNonNull;
  */
 public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<NodeRemovalNomadChange> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NodeRemovalNomadChangeProcessor.class);
-  private static final String PLATFORM_MBEAN_OPERATION_NAME = "removePassive";
 
   private final TopologyService topologyService;
   private final DynamicConfigEventFiring dynamicConfigEventFiring;
-  private final MBeanServer mbeanServer;
 
-  public NodeRemovalNomadChangeProcessor(MBeanServer mbeanServer, TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
-    this.mbeanServer = mbeanServer;
+  public NodeRemovalNomadChangeProcessor(TopologyService topologyService, DynamicConfigEventFiring dynamicConfigEventFiring) {
     this.topologyService = requireNonNull(topologyService);
     this.dynamicConfigEventFiring = requireNonNull(dynamicConfigEventFiring);
   }
@@ -56,7 +53,6 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
   @Override
   public void validate(NodeContext baseConfig, NodeRemovalNomadChange change) throws NomadException {
     try {
-      checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
       new ClusterValidator(updated).validate(ClusterState.ACTIVATED);
     } catch (RuntimeException e) {
@@ -72,35 +68,6 @@ public class NodeRemovalNomadChangeProcessor implements NomadChangeProcessor<Nod
       return;
     }
 
-    try {
-      ObjectName objectName = ServerMBean.createMBeanName("TopologyMBean");
-      LOGGER.info("Removing node: {} from stripe ID: {}", node.getName(), runtime.getStripe(change.getStripeUID()).get().getName());
-      LOGGER.debug("Calling mBean {}#{}", objectName, PLATFORM_MBEAN_OPERATION_NAME);
-      mbeanServer.invoke(
-          objectName,
-          PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{node.getHostname(), node.getPort().orDefault(), node.getGroupPort().orDefault()},
-          new String[]{String.class.getName(), int.class.getName(), int.class.getName()}
-      );
-
-      dynamicConfigEventFiring.onNodeRemoval(change.getStripeUID(), node);
-    } catch (RuntimeException | JMException e) {
-      throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
-    }
-  }
-
-  private void checkMBeanOperation() {
-    boolean canCall;
-    try {
-      canCall = Stream
-          .of(mbeanServer.getMBeanInfo(ServerMBean.createMBeanName("TopologyMBean")).getOperations())
-          .anyMatch(attr -> PLATFORM_MBEAN_OPERATION_NAME.equals(attr.getName()));
-    } catch (JMException e) {
-      LOGGER.error("MBeanServer::getMBeanInfo resulted in:", e);
-      canCall = false;
-    }
-    if (!canCall) {
-      throw new IllegalStateException("Unable to invoke MBean operation to detach a node");
-    }
+    dynamicConfigEventFiring.onNodeRemoval(change.getStripeUID(), node);
   }
 }

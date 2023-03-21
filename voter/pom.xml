@@ -37,20 +37,14 @@
     </dependency>
 
     <dependency>
-      <groupId>org.terracotta.diagnostic</groupId>
-      <artifactId>diagnostic-client</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.terracotta</groupId>
+      <artifactId>connection-api</artifactId>
+      <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>org.terracotta.internal</groupId>
       <artifactId>client-runtime</artifactId>
-      <scope>provided</scope>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.beust</groupId>
