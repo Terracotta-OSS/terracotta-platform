@@ -18,7 +18,7 @@ package org.terracotta.diagnostic.client.connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.Json;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -34,14 +34,14 @@ public class DefaultDiagnosticServiceProvider implements DiagnosticServiceProvid
   private final Duration diagnosticInvokeTimeout;
   private final Duration connectTimeout;
   private final String securityRootDirectory;
-  private final ObjectMapperFactory objectMapperFactory;
+  private final Json.Factory jsonFactory;
 
-  public DefaultDiagnosticServiceProvider(String connectionName, Duration connectTimeout, Duration diagnosticInvokeTimeout, String securityRootDirectory, ObjectMapperFactory objectMapperFactory) {
+  public DefaultDiagnosticServiceProvider(String connectionName, Duration connectTimeout, Duration diagnosticInvokeTimeout, String securityRootDirectory, Json.Factory jsonFactory) {
     this.connectionName = requireNonNull(connectionName);
     this.diagnosticInvokeTimeout = diagnosticInvokeTimeout;
     this.connectTimeout = connectTimeout;
     this.securityRootDirectory = securityRootDirectory;
-    this.objectMapperFactory = objectMapperFactory;
+    this.jsonFactory = jsonFactory;
   }
 
   @Override
@@ -52,7 +52,7 @@ public class DefaultDiagnosticServiceProvider implements DiagnosticServiceProvid
   @Override
   public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration connectTimeout) throws DiagnosticServiceProviderException {
     try {
-      return DiagnosticServiceFactory.fetch(address, connectionName, connectTimeout, diagnosticInvokeTimeout, securityRootDirectory, objectMapperFactory);
+      return DiagnosticServiceFactory.fetch(address, connectionName, connectTimeout, diagnosticInvokeTimeout, securityRootDirectory, jsonFactory);
     } catch (ConnectionException e) {
       throw new DiagnosticServiceProviderException("Failed to connect to: " + address + ": " + e.getMessage(), e);
     }

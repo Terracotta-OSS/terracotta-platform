@@ -21,7 +21,7 @@ import org.terracotta.diagnostic.common.DiagnosticCodec;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodec;
 import org.terracotta.diagnostic.server.api.DiagnosticServices;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.Json;
 import org.terracotta.server.ServerJMX;
 import org.terracotta.server.ServerMBean;
 
@@ -57,8 +57,8 @@ public class DefaultDiagnosticServices implements DiagnosticServices, Closeable 
   private final DiagnosticRequestHandler handler;
   private final ServerJMX serverJMX;
 
-  public DefaultDiagnosticServices(ServerJMX serverJMX, ObjectMapperFactory objectMapperFactory) {
-    this(serverJMX, new JsonDiagnosticCodec(objectMapperFactory));
+  public DefaultDiagnosticServices(ServerJMX serverJMX, Json.Factory jsonFactory) {
+    this(serverJMX, new JsonDiagnosticCodec(jsonFactory));
   }
 
   public DefaultDiagnosticServices(ServerJMX serverJMX, DiagnosticCodec<String> codec) {

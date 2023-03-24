@@ -15,13 +15,10 @@
  */
 package org.terracotta.common.struct;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.junit.Test;
 import org.terracotta.common.struct.json.StructJsonModule;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 
 import java.util.stream.Stream;
 
@@ -36,11 +33,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class VersionTest {
 
-  private final ObjectMapper json = JsonMapper.builder()
-      .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
-      .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-      .addModule(new StructJsonModule())
-      .build();
+  private final Json json = new DefaultJsonFactory().withModule(new StructJsonModule()).create();
 
   @Test
   public void test_bad_versions() {
@@ -77,12 +70,12 @@ public class VersionTest {
   }
 
   @Test
-  public void test_json() throws JsonProcessingException {
+  public void test_json() {
     for (String v : new String[]{"5.8.6-pre7", "0.0.9", "3.9.5-internal5", "10.7.0.3", "10.7.0.3-SNAPSHOT", "10.7.0.3-foo-SNAPSHOT", "10.7.0.3.foo-SNAPSHOT"}) {
       assertThat(Version.valueOf(v).toString(), is(equalTo(v)));
-      String json = this.json.writeValueAsString(Version.valueOf(v));
+      String json = this.json.toString(Version.valueOf(v));
       assertThat(json, is(equalTo("\"" + v + "\"")));
-      assertThat(this.json.readValue(json, Version.class), is(equalTo(Version.valueOf(v))));
+      assertThat(this.json.parse(json, Version.class), is(equalTo(Version.valueOf(v))));
     }
   }
 }

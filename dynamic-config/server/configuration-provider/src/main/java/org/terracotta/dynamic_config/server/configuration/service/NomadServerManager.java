@@ -55,7 +55,7 @@ import org.terracotta.dynamic_config.server.configuration.service.nomad.processo
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.StripeAdditionNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.StripeRemovalNomadChangeProcessor;
 import org.terracotta.dynamic_config.server.configuration.service.nomad.processor.UnlockConfigNomadChangeProcessor;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerMode;
 import org.terracotta.nomad.server.UncheckedNomadException;
@@ -74,7 +74,7 @@ import static java.util.Objects.requireNonNull;
 public class NomadServerManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerManager.class);
 
-  private final ObjectMapperFactory objectMapperFactory;
+  private final Json.Factory jsonFactory;
   private final NomadServerFactory nomadServerFactory;
   private final IParameterSubstitutor parameterSubstitutor;
   private final ConfigChangeHandlerManager configChangeHandlerManager;
@@ -93,10 +93,10 @@ public class NomadServerManager {
   public NomadServerManager(IParameterSubstitutor parameterSubstitutor,
                             ConfigChangeHandlerManager configChangeHandlerManager,
                             LicenseService licenseService,
-                            ObjectMapperFactory objectMapperFactory,
+                            Json.Factory jsonFactory,
                             Server server) {
-    this.objectMapperFactory = requireNonNull(objectMapperFactory);
-    this.nomadServerFactory = new NomadServerFactory(objectMapperFactory);
+    this.jsonFactory = requireNonNull(jsonFactory);
+    this.nomadServerFactory = new NomadServerFactory(jsonFactory);
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.configChangeHandlerManager = requireNonNull(configChangeHandlerManager);
     this.licenseService = requireNonNull(licenseService);
@@ -186,7 +186,7 @@ public class NomadServerManager {
       throw new UncheckedNomadException("Exception initializing Nomad Server: " + e.getMessage(), e);
     }
 
-    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(startingConfig, licenseService, this, objectMapperFactory, server);
+    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(startingConfig, licenseService, this, jsonFactory, server);
     this.dynamicConfigService = new AuditService(dynamicConfigService, server);
     this.topologyService = dynamicConfigService;
 
@@ -214,7 +214,7 @@ public class NomadServerManager {
 
     this.configurationManager = new NomadConfigurationManager(configPath, parameterSubstitutor);
 
-    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, licenseService, this, objectMapperFactory, server);
+    DynamicConfigServiceImpl dynamicConfigService = new DynamicConfigServiceImpl(nodeContext, licenseService, this, jsonFactory, server);
     this.dynamicConfigService = new AuditService(dynamicConfigService, server);
     this.topologyService = dynamicConfigService;
 

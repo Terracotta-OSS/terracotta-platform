@@ -33,6 +33,7 @@ import org.terracotta.dynamic_config.api.model.nomad.DefaultApplicability;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.FormatUpgrade;
+import org.terracotta.json.Json;
 
 import java.util.List;
 
@@ -45,7 +46,7 @@ import static java.util.Collections.singletonList;
  * @deprecated old V1 format. Do not use anymore. Here for reference and backward compatibility.
  */
 @Deprecated
-public class DynamicConfigApiJsonModuleV1 extends SimpleModule {
+public class DynamicConfigApiJsonModuleV1 extends SimpleModule implements Json.Module {
   private static final long serialVersionUID = 1L;
 
   public DynamicConfigApiJsonModuleV1() {

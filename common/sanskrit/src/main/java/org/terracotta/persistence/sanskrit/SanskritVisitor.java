@@ -16,11 +16,11 @@
 package org.terracotta.persistence.sanskrit;
 
 public interface SanskritVisitor {
-  default void setString(String key, String value) {}
+  void setString(String key, String value) throws SanskritException;
 
-  default void setLong(String key, long value) {}
+  void setLong(String key, long value) throws SanskritException;
 
-  default void setObject(String key, SanskritObject value) {}
+  void setObject(String key, SanskritObject value) throws SanskritException;
 
-  default <T> void setExternal(String key, T value, String version) {}
+  void set(String key, Object value, String version) throws SanskritException;
 }

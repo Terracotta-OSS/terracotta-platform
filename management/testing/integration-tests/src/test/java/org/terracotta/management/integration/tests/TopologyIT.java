@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.integration.tests;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.notification.ContextualNotification;
@@ -32,9 +31,9 @@ public class TopologyIT extends AbstractSingleTest {
   @Test
   public void can_read_topology() throws Exception {
     Cluster cluster = nmsService.readTopology();
-    JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
-    JsonNode expected = readJson("topology.json");
-    assertEquals(actual.toPrettyString(), expected, actual);
+    Object actual = toJson(cluster.toMap());
+    Object expected = readJson("topology.json");
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -62,8 +61,8 @@ public class TopologyIT extends AbstractSingleTest {
         "CLIENT_CACHE_CREATED", "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "SERVER_CACHE_CREATED", "SERVER_ENTITY_FETCHED",
         "CLIENT_ATTACHED", "CLIENT_CACHE_CREATED", "SERVER_ENTITY_FETCHED", "CLIENT_ATTACHED", "CLIENT_CACHE_CREATED");
 
-    JsonNode actual = removeRandomValues(toJson(notifs));
-    JsonNode expected = readJson("notifications.json");
+    Object actual = toJson(notifs);
+    Object expected = readJson("notifications.json");
 
     assertEquals(expected, actual);
   }

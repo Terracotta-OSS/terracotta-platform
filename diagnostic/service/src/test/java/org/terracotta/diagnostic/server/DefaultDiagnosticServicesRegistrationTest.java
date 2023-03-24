@@ -20,7 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 import org.terracotta.diagnostic.server.api.Expose;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
 import org.terracotta.server.ServerJMX;
 import org.terracotta.server.ServerMBean;
 
@@ -57,7 +57,7 @@ public class DefaultDiagnosticServicesRegistrationTest {
       mbean.registerMBean(a.getArgument(1), on);
       return null;
     }).when(jmx).registerMBean(anyString(), any());
-    diagnosticServices = new DefaultDiagnosticServices(jmx, new ObjectMapperFactory());
+    diagnosticServices = new DefaultDiagnosticServices(jmx, new DefaultJsonFactory());
     diagnosticServices.init();
   }
 

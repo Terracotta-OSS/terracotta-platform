@@ -30,7 +30,7 @@ import java.nio.file.Paths;
  * @deprecated DO NOT USE THIS MAPPER. It is kept as reference about what was used in Fix 1.
  */
 @Deprecated
-public class TerracottaJsonModuleV1 extends SimpleModule {
+public class TerracottaJsonModuleV1 extends SimpleModule implements Json.Module {
   private static final long serialVersionUID = 1L;
 
   public TerracottaJsonModuleV1() {

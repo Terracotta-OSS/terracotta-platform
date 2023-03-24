@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.integration.tests;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -85,17 +84,17 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
       cluster = nmsService.readTopology();
     } while (cluster.getClientCount() != 2);
 
-    JsonNode actual = removeRandomValues(toJson(cluster.toMap()));
-    JsonNode expected = readJson("topology-before-reconfigure.json");
-    assertEquals(actual.toPrettyString(), expected, actual);
+    Object actual = toJson(cluster.toMap());
+    Object expected = readJson("topology-before-reconfigure.json");
+    assertEquals(expected, actual);
 
     CacheEntityFactory factory0 = new CacheEntityFactory(webappNodes.get(0).getConnection());
     factory0.reconfigure("pet-clinic/pets", "pet-clinic/clients");
 
     cluster = nmsService.readTopology();
-    actual = removeRandomValues(toJson(cluster.toMap()));
+    actual = toJson(cluster.toMap());
     expected = readJson("topology-reconfigured.json");
-    assertEquals(actual.toPrettyString(), expected, actual);
+    assertEquals(expected, actual);
   }
 
   @Test
@@ -110,10 +109,10 @@ public class ReconfigureEntityIT extends AbstractSingleTest {
     notifs.removeIf(notif -> !Arrays.asList(latestReceivedNotifs).contains(notif.getType()));
     notifs = notifs.subList(notifs.size() - latestReceivedNotifs.length, notifs.size());
 
-    JsonNode actual = removeRandomValues(toJson(notifs));
-    JsonNode expected = readJson("notifications-after-reconfigure.json");
+    Object actual = toJson(notifs);
+    Object expected = readJson("notifications-after-reconfigure.json");
 
-    assertEquals(actual.toPrettyString(), expected, actual);
+    assertEquals(expected, actual);
   }
 
 }

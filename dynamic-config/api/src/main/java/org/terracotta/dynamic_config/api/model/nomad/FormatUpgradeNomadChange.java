@@ -38,6 +38,11 @@ public class FormatUpgradeNomadChange extends ClusterActivationNomadChange {
   }
 
   @Override
+  public final String getType() {
+    return "FormatUpgradeNomadChange";
+  }
+
+  @Override
   public String getSummary() {
     return "Upgrading configuration format from version " + from + " to version " + to;
   }

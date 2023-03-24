@@ -15,6 +15,8 @@
  */
 package org.terracotta.persistence.sanskrit.change;
 
+import org.terracotta.persistence.sanskrit.SanskritException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +31,7 @@ public class MuxSanskritChange implements SanskritChange {
   }
 
   @Override
-  public void accept(SanskritChangeVisitor visitor) {
+  public void accept(SanskritChangeVisitor visitor) throws SanskritException {
     for (SanskritChange change : changes) {
       change.accept(visitor);
     }

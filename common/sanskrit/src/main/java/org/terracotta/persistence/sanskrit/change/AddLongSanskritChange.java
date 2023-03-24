@@ -15,6 +15,8 @@
  */
 package org.terracotta.persistence.sanskrit.change;
 
+import org.terracotta.persistence.sanskrit.SanskritException;
+
 /**
  * A data change corresponding to adding a mapping between a (String) key and a long value.
  */
@@ -28,7 +30,7 @@ public class AddLongSanskritChange implements SanskritChange {
   }
 
   @Override
-  public void accept(SanskritChangeVisitor visitor) {
+  public void accept(SanskritChangeVisitor visitor) throws SanskritException {
     visitor.setLong(key, value);
   }
 }

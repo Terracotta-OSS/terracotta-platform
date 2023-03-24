@@ -29,7 +29,7 @@ import org.terracotta.exception.EntityException;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.Json;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -49,11 +49,11 @@ public class DiagnosticServiceFactory {
                                         Duration connectTimeout,
                                         Duration diagnosticInvokeTimeout,
                                         String securityRootDirectory,
-                                        ObjectMapperFactory objectMapperFactory) throws ConnectionException {
+                                        Json.Factory jsonFactory) throws ConnectionException {
     Properties properties = buildProperties(connectionName, connectTimeout, securityRootDirectory);
     Connection connection = ConnectionFactory.connect(Collections.singletonList(nodeAddress), properties);
     try {
-      return fetch(connection, diagnosticInvokeTimeout, objectMapperFactory);
+      return fetch(connection, diagnosticInvokeTimeout, jsonFactory);
     } catch (EntityException e) {
       try {
         connection.close();
@@ -71,11 +71,11 @@ public class DiagnosticServiceFactory {
                                         Duration connectionTimeout,
                                         Duration diagnosticInvokeTimeout,
                                         String securityRootDirectory,
-                                        ObjectMapperFactory objectMapperFactory) throws ConnectionException {
+                                        Json.Factory jsonFactory) throws ConnectionException {
     Properties properties = buildProperties(connectionName, connectionTimeout, securityRootDirectory);
     Connection connection = connectionService.connect(Collections.singletonList(nodeAddress), properties);
     try {
-      return fetch(connection, diagnosticInvokeTimeout, objectMapperFactory);
+      return fetch(connection, diagnosticInvokeTimeout, jsonFactory);
     } catch (EntityException e) {
       try {
         connection.close();
@@ -88,17 +88,17 @@ public class DiagnosticServiceFactory {
 
   }
 
-  public static DiagnosticService getDiagnosticService(Connection connection, Diagnostics delegate, ObjectMapperFactory objectMapperFactory) {
+  public static DiagnosticService getDiagnosticService(Connection connection, Diagnostics delegate, Json.Factory jsonFactory) {
     // We could default to the JavaDiagnosticCodec also, or a runnel codec if we want to get rid of Json and only do serialization.
     // The codec needs to be the same on client-side and server-side of course.
-    return getDiagnosticService(connection, delegate, new JsonDiagnosticCodec(objectMapperFactory));
+    return getDiagnosticService(connection, delegate, new JsonDiagnosticCodec(jsonFactory));
   }
 
   public static DiagnosticService getDiagnosticService(Connection connection, Diagnostics delegate, DiagnosticCodec<?> codec) {
     return new DiagnosticServiceImpl(connection, delegate, codec);
   }
 
-  private static DiagnosticService fetch(Connection connection, Duration diagnosticInvokeTimeout, ObjectMapperFactory objectMapperFactory)
+  private static DiagnosticService fetch(Connection connection, Duration diagnosticInvokeTimeout, Json.Factory jsonFactory)
       throws EntityNotProvidedException, EntityVersionMismatchException, EntityNotFoundException {
     EntityRef<Diagnostics, Object, Properties> ref = connection.getEntityRef(Diagnostics.class, 1, "root");
     Properties properties = new Properties();
@@ -106,7 +106,7 @@ public class DiagnosticServiceFactory {
       properties.setProperty(DiagnosticsFactory.REQUEST_TIMEOUT, String.valueOf(diagnosticInvokeTimeout.toMillis()));
     }
     Diagnostics delegate = ref.fetchEntity(properties);
-    return getDiagnosticService(connection, delegate, objectMapperFactory);
+    return getDiagnosticService(connection, delegate, jsonFactory);
   }
 
   private static Properties buildProperties(String connectionName, Duration connectionTimeout, String securityRootDirectory) {

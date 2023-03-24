@@ -15,13 +15,6 @@
  */
 package org.terracotta.management.integration.tests;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
 import org.slf4j.Logger;
@@ -29,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.client.DefaultNmsService;
 import org.terracotta.management.entity.nms.client.NmsEntity;
@@ -36,28 +31,23 @@ import org.terracotta.management.entity.nms.client.NmsEntityFactory;
 import org.terracotta.management.entity.nms.client.NmsService;
 import org.terracotta.management.entity.sample.Cache;
 import org.terracotta.management.entity.sample.client.CacheFactory;
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
+import org.terracotta.management.integration.tests.json.TestModule;
 import org.terracotta.management.model.cluster.AbstractManageableNode;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.notification.ContextualNotification;
 import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.statistics.ConstantValueStatistic;
-import org.terracotta.statistics.Sample;
-import org.terracotta.statistics.StatisticType;
-import org.terracotta.statistics.registry.Statistic;
 import org.terracotta.testing.rules.Cluster;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -65,6 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -75,7 +66,7 @@ public abstract class AbstractTest {
 
   protected Logger logger = LoggerFactory.getLogger(getClass());
 
-  private final ObjectMapper mapper = JsonMapper.builder().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true).build();
+  protected final Json json = new DefaultJsonFactory().withModule(new TestModule()).create();
 
   private Connection managementConnection;
   protected Cluster cluster;
@@ -89,13 +80,6 @@ public abstract class AbstractTest {
 
   protected final void commonSetUp(Cluster cluster) throws Exception {
     this.cluster = cluster;
-
-    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-    mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
-    mapper.addMixIn(Statistic.class, StatisticMixin.class);
-    mapper.addMixIn(ContextualStatistics.class, ContextualStatisticsMixin.class);
-    mapper.addMixIn(ConstantValueStatistic.class, ConstantValueStatisticMixin.class);
 
     connectManagementClient(cluster.getConnectionURI());
 
@@ -116,28 +100,17 @@ public abstract class AbstractTest {
     }
   }
 
-  protected JsonNode readJson(String file) {
+  protected Object readJson(String file) {
     try {
-      return mapper.readTree(new File(AbstractTest.class.getResource("/" + file).toURI()));
-    } catch (Exception e) {
+      String json = new String(Files.readAllBytes(Paths.get(AbstractTest.class.getResource("/" + file).toURI())), UTF_8);
+      return toJson(this.json.parse(json));
+    } catch (URISyntaxException | IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected JsonNode readJsonStr(String json) {
-    try {
-      return mapper.readTree(json);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  protected JsonNode toJson(Object o) {
-    try {
-      return mapper.readTree(mapper.writeValueAsString(o));
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  protected Object toJson(Object o) {
+    return json.parse(removeRandomValues(json.toString(o)));
   }
 
   protected int size(int nodeIdx, String cacheName) {
@@ -219,10 +192,6 @@ public abstract class AbstractTest {
     assertTrue(test.test(statistics));
   }
 
-  protected JsonNode removeRandomValues(JsonNode currentTopo) {
-    return readJsonStr(removeRandomValues(currentTopo.toString()));
-  }
-
   protected String removeRandomValues(String currentTopo) {
     // removes all random values
     return currentTopo
@@ -235,16 +204,18 @@ public abstract class AbstractTest {
         .replaceAll("\"availableAtTime\":[0-9]+", "\"availableAtTime\":0")
         .replaceAll("\"OffHeapResource:AllocatedMemory\":[0-9]+", "\"OffHeapResource:AllocatedMemory\":0")
         .replaceAll("\"time\":[0-9]+", "\"time\":0")
+        .replaceAll("\"pid\":[0-9]+", "\"pid\":0")
         .replaceAll("\"startTime\":[0-9]+", "\"startTime\":0")
         .replaceAll("\"timestamp\":[0-9]+", "\"timestamp\":0")
+        .replaceAll("\"startTime\":[0-9]+", "\"startTime\":0")
         .replaceAll("\"upTimeSec\":[0-9]+", "\"upTimeSec\":0")
-        .replaceAll("\"id\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\",\"pid\":[0-9]+", "\"id\":\"0@127.0.0.1:$1:<uuid>\",\"pid\":0")
+        .replaceAll("\"id\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\",", "\"id\":\"0@127.0.0.1:$1:<uuid>\",")
         .replaceAll("\"alias\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\",", "\"alias\":\"0@127.0.0.1:$1:<uuid>\",")
         .replaceAll("\"buildId\":\"[^\"]*\"", "\"buildId\":\"Build ID\"")
         .replaceAll("\"version\":\"[^\"]*\"", "\"version\":\"<version>\"")
         .replaceAll("\"clientId\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\"", "\"clientId\":\"0@127.0.0.1:$1:<uuid>\"")
         .replaceAll("\"logicalConnectionUid\":\"[^\"]*\"", "\"logicalConnectionUid\":\"<uuid>\"")
-        .replaceAll("\"id\":\"[^\"]+:([\\w\\[\\]]+):[^\"]+:[^\"]+:[^\"]+\",\"logicalConnectionUid\":\"[^\"]*\"", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",\"logicalConnectionUid\":\"<uuid>\"")
+        .replaceAll("\"id\":\"[^\"]+:([\\w\\[\\]]+):[^\"]+:[^\"]+:[^\"]+\",", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",")
         .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
         .replaceAll("-2", "")
         .replaceAll("instance-0", "instance-?")
@@ -329,46 +300,4 @@ public abstract class AbstractTest {
       throw e;
     }
   }
-
-  public static abstract class CapabilityContextMixin {
-    @JsonIgnore
-    public abstract Collection<String> getRequiredAttributeNames();
-
-    @JsonIgnore
-    public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
-  }
-
-  public static abstract class StatisticMixin<T extends Serializable> {
-    @JsonIgnore
-    public abstract boolean isEmpty();
-
-    @JsonIgnore
-    public abstract Optional<T> getLatestSampleValue();
-
-    @JsonIgnore
-    public abstract Optional<Sample<T>> getLatestSample();
-  }
-
-  public static abstract class ContextualStatisticsMixin {
-    @JsonIgnore
-    public abstract int size();
-
-    @JsonIgnore
-    public abstract boolean isEmpty();
-
-    @JsonIgnore
-    public abstract Map<String, ? extends Serializable> getLatestSampleValues();
-
-    @JsonIgnore
-    public abstract Map<String, Sample<? extends Serializable>> getLatestSamples();
-  }
-
-  public static abstract class ConstantValueStatisticMixin<T> {
-    @JsonProperty
-    public abstract T value();
-
-    @JsonProperty
-    public abstract StatisticType type();
-  }
-
 }

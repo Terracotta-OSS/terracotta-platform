@@ -30,7 +30,7 @@ import org.terracotta.dynamic_config.server.api.PathResolver;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.service.NomadServerManager;
 import org.terracotta.inet.HostPort;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -63,7 +63,7 @@ public class ConfigurationGeneratorVisitor {
   private final NomadServerManager nomadServerManager;
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
-  private final ObjectMapperFactory objectMapperFactory;
+  private final Json.Factory jsonFactory;
   private final Server server;
 
   private NodeContext nodeContext;
@@ -74,13 +74,13 @@ public class ConfigurationGeneratorVisitor {
                                        NomadServerManager nomadServerManager,
                                        ClassLoader classLoader,
                                        PathResolver pathResolver,
-                                       ObjectMapperFactory objectMapperFactory,
+                                       Json.Factory jsonFactory,
                                        Server server) {
     this.parameterSubstitutor = requireNonNull(parameterSubstitutor);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
-    this.objectMapperFactory = requireNonNull(objectMapperFactory);
+    this.jsonFactory = requireNonNull(jsonFactory);
     this.server = server;
   }
 
@@ -97,13 +97,13 @@ public class ConfigurationGeneratorVisitor {
       // - the node won't be activated (Nomad 2 phase commit system won't be available)
       // - the diagnostic port will be available for the repair command to be able to rewrite the append log
       // - the config created will be stripped to make platform think this node is alone;
-      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory, server);
+      return new StartupConfiguration(() -> nodeContext.alone(), unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
     } else {
       // configured mode
       return new StartupConfiguration(
           () -> nomadServerManager.getConfiguration()
               .orElseThrow(() -> new IllegalStateException("Node has not been activated or migrated properly: unable find any committed configuration to use at startup. Please delete the configuration directory and try again.")),
-          unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, objectMapperFactory, server);
+          unConfiguredMode, repairMode, classLoader, pathResolver, parameterSubstitutor, jsonFactory, server);
     }
   }
 

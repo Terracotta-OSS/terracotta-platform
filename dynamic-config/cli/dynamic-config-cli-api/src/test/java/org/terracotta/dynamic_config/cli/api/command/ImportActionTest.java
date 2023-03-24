@@ -37,7 +37,7 @@ public class ImportActionTest extends BaseTest {
   public void test_import() throws Exception {
 
     ImportAction command = new ImportAction();
-    inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider, outputService, objectMapperFactory));
+    inject(command, asList(diagnosticServiceProvider, multiDiagnosticServiceProvider, nomadManager, restartService, stopService, nomadEntityProvider, outputService, jsonFactory, json));
     command.setConfigFile(Paths.get(getClass().getResource("/my-cluster.cfg").toURI()));
     command.run();
 

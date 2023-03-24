@@ -37,7 +37,8 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.testing.TmpDir;
@@ -459,8 +460,8 @@ public class ConfigConversionIT {
 
     NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(config, IParameterSubstitutor.identity());
     nomadConfigurationManager.createDirectories();
-    ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
-    NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
+    Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
+    NomadServerFactory nomadServerFactory = new NomadServerFactory(jsonFactory);
 
     try (DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, "testServer0", null)) {
       nomadServer.discover().getLatestChange().getResult();

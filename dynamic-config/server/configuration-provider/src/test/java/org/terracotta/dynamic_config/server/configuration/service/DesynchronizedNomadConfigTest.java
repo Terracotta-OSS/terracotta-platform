@@ -51,7 +51,8 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Noma
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
 import org.terracotta.inet.HostPort;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -439,13 +440,13 @@ public class DesynchronizedNomadConfigTest {
       // initialize services
       IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
       ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
-      ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+      Json.Factory jsonFactory = new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule());
       LicenseService licenseService = new LicenseParserDiscovery(FakeNode.class.getClassLoader()).find().orElseGet(LicenseService::unsupported);
       Server server = mock(Server.class);
       ServerJMX serverJMX = mock(ServerJMX.class);
       when(serverJMX.getMBeanServer()).thenReturn(MBeanServerFactory.newMBeanServer());
       when(server.getManagement()).thenReturn(serverJMX);
-      NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, server);
+      NomadServerManager nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, jsonFactory, server);
 
       // add an off-heap change handler
       configChangeHandlerManager.set(Setting.OFFHEAP_RESOURCES, new ConfigChangeHandler() {

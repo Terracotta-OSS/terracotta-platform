@@ -15,8 +15,6 @@
  */
 package org.terracotta.nomad.entity.common;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.entity.EntityMessage;
 import org.terracotta.nomad.messages.MutativeMessage;
 
@@ -29,8 +27,7 @@ public class NomadEntityMessage implements EntityMessage {
 
   private final MutativeMessage nomadMessage;
 
-  @JsonCreator
-  public NomadEntityMessage(@JsonProperty(value = "nomadMessage", required = true) MutativeMessage nomadMessage) {
+  public NomadEntityMessage(MutativeMessage nomadMessage) {
     this.nomadMessage = requireNonNull(nomadMessage);
   }
 

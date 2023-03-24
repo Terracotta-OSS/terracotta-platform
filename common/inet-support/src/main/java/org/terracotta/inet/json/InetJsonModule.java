@@ -23,13 +23,14 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializerBase;
 import org.terracotta.inet.HostPort;
 import org.terracotta.inet.InetSocketAddressConverter;
+import org.terracotta.json.Json;
 
 import java.net.InetSocketAddress;
 
 /**
  * @author Mathieu Carbou
  */
-public class InetJsonModule extends SimpleModule {
+public class InetJsonModule extends SimpleModule implements Json.Module {
   private static final long serialVersionUID = 1L;
 
   public InetJsonModule() {

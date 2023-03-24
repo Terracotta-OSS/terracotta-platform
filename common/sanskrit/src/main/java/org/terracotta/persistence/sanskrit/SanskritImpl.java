@@ -50,15 +50,15 @@ public class SanskritImpl implements Sanskrit {
   private static final String FORMAT_VERSION = "format version: ";
 
   private final FilesystemDirectory filesystemDirectory;
-  private final ObjectMapperSupplier objectMapperSupplier;
+  private final SanskritMapper mapper;
 
   private volatile MutableSanskritObject data;
   private volatile String lastHash;
   private volatile String nextHashFile;
 
-  public SanskritImpl(FilesystemDirectory filesystemDirectory, ObjectMapperSupplier objectMapperSupplier) throws SanskritException {
+  public SanskritImpl(FilesystemDirectory filesystemDirectory, SanskritMapper mapper) throws SanskritException {
     this.filesystemDirectory = filesystemDirectory;
-    this.objectMapperSupplier = objectMapperSupplier;
+    this.mapper = mapper;
     init();
   }
 
@@ -106,11 +106,11 @@ public class SanskritImpl implements Sanskrit {
                   version = "";
                 }
                 String hash = record.removeLast();
-                String json = String.join(LS, record);
+                String data = String.join(LS, record);
 
-                LOGGER.trace("init(): record {}: timestamp={}, version={}, hash={}, json={}", idx, timestamp, version, hash, json);
+                LOGGER.trace("init(): record {}: timestamp={}, version={}, hash={}, data={}", idx, timestamp, version, hash, data);
 
-                hash = checkHash(timestamp, json, hash);
+                hash = checkHash(timestamp, data, hash);
                 String hashedHash = HashUtils.generateHash(hash);
                 boolean acceptRecord = hashChecker.check(hashedHash);
 
@@ -118,8 +118,8 @@ public class SanskritImpl implements Sanskrit {
 
                 if (acceptRecord) {
                   parser.mark();
-                  JsonUtils.parse(objectMapperSupplier, version, json, result);
-                  onNewRecord(timestamp, json);
+                  mapper.fromString(data, version, result);
+                  onNewRecord(timestamp, data);
                   lastHash = hash;
                 }
               } catch (SanskritException e) {
@@ -171,7 +171,7 @@ public class SanskritImpl implements Sanskrit {
     return hashChecker.done();
   }
 
-  protected void onNewRecord(String timestamp, String json) throws SanskritException {
+  protected void onNewRecord(String timestamp, String data) throws SanskritException {
   }
 
   private String getHashFromFile(String hashFile, List<String> filesToDelete) throws SanskritException {
@@ -211,21 +211,21 @@ public class SanskritImpl implements Sanskrit {
     return hash;
   }
 
-  String checkHash(String timestamp, String json, String hash) throws SanskritException {
-    String expectedHash = calculateHash(timestamp, json);
+  String checkHash(String timestamp, String data, String hash) throws SanskritException {
+    String expectedHash = calculateHash(timestamp, data);
     if (!hash.equals(expectedHash)) {
       throw new SanskritException("Hash mismatch. Got: " + hash + ". Computed: " + expectedHash);
     }
     return hash;
   }
 
-  String calculateHash(String timestamp, String json) {
-    LOGGER.trace("calculateHash({}, {})", timestamp, json);
+  String calculateHash(String timestamp, String data) {
+    LOGGER.trace("calculateHash({}, {})", timestamp, data);
     if (lastHash == null) {
       return HashUtils.generateHash(
           timestamp,
           LS,
-          json
+          data
       );
     } else {
       return HashUtils.generateHash(
@@ -234,7 +234,7 @@ public class SanskritImpl implements Sanskrit {
           LS,
           timestamp,
           LS,
-          json
+          data
       );
     }
   }
@@ -248,18 +248,24 @@ public class SanskritImpl implements Sanskrit {
   }
 
   @Override
-  public String getString(String key) {
+  public String getString(String key) throws SanskritException {
     return data.getString(key);
   }
 
   @Override
-  public Long getLong(String key) {
+  public Long getLong(String key) throws SanskritException {
     return data.getLong(key);
   }
 
   @Override
-  public SanskritObject getObject(String key) {
-    return CopyUtils.makeCopy(objectMapperSupplier, data.getObject(key));
+  public SanskritObject getObject(String key) throws SanskritException {
+    final SanskritObject found = data.getObject(key);
+    if (found == null) {
+      return null;
+    }
+    SanskritObjectImpl copy = new SanskritObjectImpl(mapper);
+    found.accept(copy);
+    return copy;
   }
 
   @Override
@@ -270,7 +276,7 @@ public class SanskritImpl implements Sanskrit {
 
   @Override
   public MutableSanskritObject newMutableSanskritObject() {
-    return new SanskritObjectImpl(objectMapperSupplier);
+    return new SanskritObjectImpl(mapper);
   }
 
   @Override
@@ -286,26 +292,20 @@ public class SanskritImpl implements Sanskrit {
   }
 
   private void appendChange(SanskritChange change) throws SanskritException {
-    String json = changeAsJson(change);
-    LOGGER.trace("appendChange(): {}", json);
-    appendChange(json);
+    String data = mapper.toString(change);
+    LOGGER.trace("appendChange(): {}", data);
+    appendChange(data);
   }
 
-  private String changeAsJson(SanskritChange change) throws SanskritException {
-    JsonSanskritChangeVisitor visitor = new JsonSanskritChangeVisitor(objectMapperSupplier);
-    change.accept(visitor);
-    return visitor.getJson(null);// latest current serializer will be used
-  }
-
-  private void appendChange(String json) throws SanskritException {
+  private void appendChange(String data) throws SanskritException {
     String timestamp = getTimestamp();
-    appendRecord(timestamp, json);
+    appendRecord(timestamp, data);
   }
 
-  void appendRecord(String timestamp, String json) throws SanskritException {
-    LOGGER.trace("appendRecord({}, {})", timestamp, json);
-    String hash = calculateHash(timestamp, json);
-    appendEntry((FORMAT_VERSION + objectMapperSupplier.getCurrentVersion()) + LS + timestamp + LS + json + LS + hash + LS + LS, hash);
+  void appendRecord(String timestamp, String data) throws SanskritException {
+    LOGGER.trace("appendRecord({}, {})", timestamp, data);
+    String hash = calculateHash(timestamp, data);
+    appendEntry((FORMAT_VERSION + mapper.getCurrentFormatVersion()) + LS + timestamp + LS + data + LS + hash + LS + LS, hash);
   }
 
   private String getTimestamp() {

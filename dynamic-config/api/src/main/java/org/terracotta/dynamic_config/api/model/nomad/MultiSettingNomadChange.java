@@ -56,6 +56,11 @@ public class MultiSettingNomadChange implements DynamicConfigNomadChange {
   }
 
   @Override
+  public final String getType() {
+    return "MultiSettingNomadChange";
+  }
+
+  @Override
   public Cluster apply(Cluster original) {
     for (DynamicConfigNomadChange change : changes) {
       original = change.apply(original);

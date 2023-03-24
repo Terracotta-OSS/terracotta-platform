@@ -15,16 +15,14 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
-import org.terracotta.json.ObjectMapperFactory;
-
-import java.io.IOException;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -34,16 +32,16 @@ import static org.junit.Assert.assertThat;
  */
 public class DefaultHashComputerTest {
   @Test
-  public void computeHash() throws IOException {
-    ObjectMapper om = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
+  public void computeHash() {
+    Json om = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule()).create();
     HashComputer hashComputer = new DefaultHashComputer();
 
     Node node = Testing.newTestNode("foo", "localhost");
     NodeContext nodeContext = new NodeContext(Testing.newTestCluster(Testing.newTestStripe("stripe-1").addNodes(node)), Testing.N_UIDS[1]);
 
     String hash = hashComputer.computeHash(new Config(nodeContext, Version.CURRENT));
-    String json = om.writeValueAsString(nodeContext);
-    NodeContext reloaded = om.readValue(json, NodeContext.class);
+    String json = om.toString(nodeContext);
+    NodeContext reloaded = om.parse(json, NodeContext.class);
     String reloadedHash = hashComputer.computeHash(new Config(reloaded, Version.CURRENT));
 
     assertThat(reloaded, is(nodeContext));

@@ -15,10 +15,6 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import java.util.Objects;
 
 /**
@@ -29,7 +25,6 @@ public class TestData {
   public static abstract class Vegie<T extends CookingManual> {
 
     private final String color;
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
     private final T cookingManual;
 
     public Vegie(T cookingManual, String color) {
@@ -64,9 +59,7 @@ public class TestData {
 
     private final String from;
 
-    @JsonCreator
-    public Tomato(@JsonProperty("cookingManual") TomatoCooking cookingManual,
-                  @JsonProperty("color") String color) {
+    public Tomato(TomatoCooking cookingManual, String color) {
       super(cookingManual, color);
       from = "Canada";
     }
@@ -94,9 +87,7 @@ public class TestData {
 
     private final String from;
 
-    @JsonCreator
-    public Pepper(@JsonProperty("cookingManual") TomatoCooking cookingManual,
-                  @JsonProperty("color") String color) {
+    public Pepper(TomatoCooking cookingManual, String color) {
       super(cookingManual, color);
       from = "Canada";
     }

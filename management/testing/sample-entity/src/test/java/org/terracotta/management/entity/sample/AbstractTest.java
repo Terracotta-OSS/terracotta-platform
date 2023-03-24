@@ -15,10 +15,6 @@
  */
 package org.terracotta.management.entity.sample;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,6 +31,8 @@ import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceConfiguration;
 import org.terracotta.entity.ServiceProvider;
 import org.terracotta.entity.ServiceProviderConfiguration;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.entity.nms.agent.client.NmsAgentEntityClientService;
 import org.terracotta.management.entity.nms.agent.server.NmsAgentEntityServerService;
@@ -46,8 +44,8 @@ import org.terracotta.management.entity.nms.client.NmsService;
 import org.terracotta.management.entity.nms.server.NmsEntityServerService;
 import org.terracotta.management.entity.sample.client.CacheEntityClientService;
 import org.terracotta.management.entity.sample.client.CacheFactory;
+import org.terracotta.management.entity.sample.json.TestModule;
 import org.terracotta.management.entity.sample.server.CacheEntityServerService;
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.offheapresource.OffHeapResourcesProvider;
 import org.terracotta.offheapresource.config.MemoryUnit;
 import org.terracotta.offheapresource.config.OffheapResourcesType;
@@ -55,7 +53,6 @@ import org.terracotta.offheapresource.config.ResourceType;
 import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughTestHelpers;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
@@ -79,7 +76,7 @@ import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
  */
 public abstract class AbstractTest {
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final Json json = new DefaultJsonFactory().withModule(new TestModule()).create();
   protected final PassthroughClusterControl stripeControl;
 
   private Connection managementConnection;
@@ -96,9 +93,6 @@ public abstract class AbstractTest {
   }
 
   protected AbstractTest(int nPassives) {
-    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
-
     TopologyServiceServiceProvider topologyServiceServiceProvider = new TopologyServiceServiceProvider();
 
     stripeControl = PassthroughTestHelpers.createMultiServerStripe("stripe-1", nPassives + 1, server -> {
@@ -155,20 +149,12 @@ public abstract class AbstractTest {
     stripeControl.tearDown();
   }
 
-  protected JsonNode readJson(String file) {
-    try {
-      return mapper.readTree(new File(AbstractTest.class.getResource("/" + file).toURI()));
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  protected Object readJson(String file) {
+    return json.parse(AbstractTest.class.getResource("/" + file));
   }
 
-  protected JsonNode toJson(Object o) {
-    try {
-      return mapper.readTree(mapper.writeValueAsString(o));
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+  protected Object toJson(Object o) {
+    return json.map(o);
   }
 
   protected int size(int nodeIdx, String cacheName) {
@@ -208,14 +194,6 @@ public abstract class AbstractTest {
 
   protected final String nextInstanceId() {
     return "instance-" + webappNodes.size();
-  }
-
-  public static abstract class CapabilityContextMixin {
-    @JsonIgnore
-    public abstract Collection<String> getRequiredAttributeNames();
-
-    @JsonIgnore
-    public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
   }
 
   private void connectManagementClients() throws Exception {

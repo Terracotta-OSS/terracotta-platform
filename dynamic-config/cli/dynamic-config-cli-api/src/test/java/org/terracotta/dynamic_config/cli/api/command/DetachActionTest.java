@@ -165,11 +165,9 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
-    System.out.println(objectMapper.writeValueAsString(allValues.get(0)));
     assertThat(
-        objectMapper.writeValueAsString(allValues.get(0)),
         allValues.get(0),
-        is(equalTo(objectMapper.readValue(getClass().getResource("/cluster3.json"), Cluster.class))));
+        is(equalTo(json.parse(getClass().getResource("/cluster3.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(2));
@@ -257,11 +255,9 @@ public class DetachActionTest extends TopologyActionTest<DetachAction> {
 
     List<Cluster> allValues = newCluster.getAllValues();
     assertThat(allValues, hasSize(1));
-    System.out.println(objectMapper.writeValueAsString(allValues.get(0)));
     assertThat(
-        objectMapper.writeValueAsString(allValues.get(0)),
         allValues.get(0),
-        is(equalTo(objectMapper.readValue(getClass().getResource("/cluster4.json"), Cluster.class))));
+        is(equalTo(json.parse(getClass().getResource("/cluster4.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));

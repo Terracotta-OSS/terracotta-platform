@@ -50,7 +50,7 @@ public class DiagnosticIT extends DynamicConfigIT {
         Duration.ofSeconds(5),
         Duration.ofSeconds(5),
         null,
-        objectMapperFactory)
+        jsonFactory)
     ) {
       assertThat(diagnosticService.getLogicalServerState(), is(equalTo(LogicalServerState.DIAGNOSTIC)));
     }
@@ -64,7 +64,7 @@ public class DiagnosticIT extends DynamicConfigIT {
         Duration.ofSeconds(5),
         Duration.ofSeconds(5),
         null,
-        objectMapperFactory)
+        jsonFactory)
     ) {
       System.out.println(diagnosticService.getVersion()); // previously existing call, returns something like "Terracotta 5.8.2-pre6"
       System.out.println(diagnosticService.getBuildID()); // previously existing call, returns something like "2021-06-29 at 20:54:46 UTC (Revision 4450fe6fc2c174abd3528b8636b3296a6a79df00 from UNKNOWN)"

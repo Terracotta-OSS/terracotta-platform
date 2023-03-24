@@ -15,12 +15,9 @@
  */
 package org.terracotta.diagnostic.server;
 
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.server.api.Expose;
-import org.terracotta.json.ObjectMapperFactory;
 
 import java.io.Closeable;
 import java.io.Serializable;
@@ -41,25 +38,25 @@ public class DiagnosticServiceDescriptorTest {
   private final Runnable noop = () -> {
   };
 
-  ObjectMapper objectMapper = new ObjectMapperFactory().create();
+  StringBuilder instance = new StringBuilder();
 
   @Test
   public void test_ctor_params_validation() {
     // param validation
     assertThat(
-        () -> new DiagnosticServiceDescriptor<>(null, objectMapper, noop),
+        () -> new DiagnosticServiceDescriptor<>(null, instance, noop),
         is(throwing(instanceOf(NullPointerException.class))));
     assertThat(
         () -> new DiagnosticServiceDescriptor<>(Serializable.class, null, noop),
         is(throwing(instanceOf(NullPointerException.class))));
     assertThat(
-        () -> new DiagnosticServiceDescriptor<>(ObjectCodec.class, objectMapper, noop),
-        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Not an interface: " + ObjectCodec.class.getName())))));
+        () -> new DiagnosticServiceDescriptor<>(Object.class, instance, noop),
+        is(throwing(instanceOf(IllegalArgumentException.class)).andMessage(is(equalTo("Not an interface: " + Object.class.getName())))));
   }
 
   @Test
   public void test_matches() {
-    DiagnosticServiceDescriptor<Serializable> descriptor = new DiagnosticServiceDescriptor<>(Serializable.class, objectMapper, noop);
+    DiagnosticServiceDescriptor<Serializable> descriptor = new DiagnosticServiceDescriptor<>(Serializable.class, instance, noop);
     assertThat(() -> descriptor.matches(null), is(throwing(instanceOf(NullPointerException.class))));
     assertThat(descriptor.matches(Serializable.class), is(true));
     assertThat(descriptor.matches(Closeable.class), is(false));
@@ -67,7 +64,7 @@ public class DiagnosticServiceDescriptorTest {
 
   @Test
   public void test_mustBeExposed() {
-    DiagnosticServiceDescriptor<Serializable> descriptor1 = new DiagnosticServiceDescriptor<>(Serializable.class, objectMapper, noop);
+    DiagnosticServiceDescriptor<Serializable> descriptor1 = new DiagnosticServiceDescriptor<>(Serializable.class, instance, noop);
     assertThat(descriptor1.discoverMBeanName().isPresent(), is(false));
 
     DiagnosticServiceDescriptor<MyService> descriptor2 = new DiagnosticServiceDescriptor<>(MyService.class, new MyServiceImpl(), noop);

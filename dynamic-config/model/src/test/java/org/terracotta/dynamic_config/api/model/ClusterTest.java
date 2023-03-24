@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -23,6 +22,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 
 import java.util.function.BiConsumer;
 
@@ -47,8 +48,7 @@ public class ClusterTest {
 
   @Mock BiConsumer<Integer, Node> consumer;
 
-  ObjectMapper json = new ObjectMapper()
-      .registerModule(new DynamicConfigModelJsonModule());
+  Json json = new DefaultJsonFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9410)
       .putDataDir("data", RawPath.valueOf("data"))
@@ -88,7 +88,7 @@ public class ClusterTest {
   @Test
   public void test_clone() {
     assertThat(cluster.clone(), is(equalTo(cluster)));
-    assertThat(json.valueToTree(cluster.clone()), is(equalTo(json.valueToTree(cluster))));
+    assertThat(json.map(cluster.clone()), is(equalTo(json.map(cluster))));
   }
 
   @Test

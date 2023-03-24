@@ -16,21 +16,21 @@
 package org.terracotta.persistence.sanskrit;
 
 import org.junit.Test;
-import org.terracotta.json.ObjectMapperFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.terracotta.persistence.sanskrit.MarkableLineParser.LS;
 
 public class SanskritObjectImplTest {
 
-  private final ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.notVersioned(new ObjectMapperFactory().create());
+  private final SanskritMapper mapper = new JsonSanskritMapper();
 
   @Test
-  public void setAndGet() {
-    SanskritObjectImpl child = new SanskritObjectImpl(objectMapperSupplier);
+  public void setAndGet() throws SanskritException {
+    SanskritObjectImpl child = new SanskritObjectImpl(mapper);
     child.setString("A", "a");
 
-    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
+    SanskritObjectImpl object = new SanskritObjectImpl(mapper);
     object.setString("A", "a");
     object.setLong("B", 1L);
     object.setObject("C", child);
@@ -43,7 +43,7 @@ public class SanskritObjectImplTest {
 
   @Test(expected = ClassCastException.class)
   public void getLongWithStringMethod() {
-    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
+    SanskritObjectImpl object = new SanskritObjectImpl(mapper);
     object.setLong("A", 1L);
 
     object.getString("A");
@@ -51,15 +51,15 @@ public class SanskritObjectImplTest {
 
   @Test(expected = ClassCastException.class)
   public void getStringWithLongMethod() {
-    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
+    SanskritObjectImpl object = new SanskritObjectImpl(mapper);
     object.setString("A", "a");
 
     object.getLong("A");
   }
 
   @Test
-  public void getMissingKeys() {
-    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
+  public void getMissingKeys() throws SanskritException {
+    SanskritObjectImpl object = new SanskritObjectImpl(mapper);
     assertNull(object.getString("A"));
     assertNull(object.getLong("A"));
     assertNull(object.getObject("A"));
@@ -67,9 +67,41 @@ public class SanskritObjectImplTest {
 
   @Test
   public void changeType() {
-    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
+    SanskritObjectImpl object = new SanskritObjectImpl(mapper);
     object.setString("A", "a");
     object.setLong("A", 1L);
     assertEquals(1L, (long) object.getLong("A"));
+  }
+
+  @Test
+  public void parseEmpty() throws Exception {
+    String input = "{}";
+
+    SanskritObjectImpl result = new SanskritObjectImpl(new JsonSanskritMapper());
+    new JsonSanskritMapper().fromString(input, null, result);
+
+    assertNull(result.getString("A"));
+  }
+
+  @Test
+  public void parseData() throws Exception {
+    String input = "{" + LS +
+        "  \"A\" : \"a\"," + LS +
+        "  \"B\" : 1," + LS +
+        "  \"C\" : {" + LS +
+        "    \"E\" : \"e\"" + LS +
+        "  }," + LS +
+        "  \"D\" : null" + LS +
+        "}";
+
+    SanskritObjectImpl result = new SanskritObjectImpl(new JsonSanskritMapper());
+    new JsonSanskritMapper().fromString(input, null, result);
+
+    assertEquals("a", result.getString("A"));
+    assertEquals(1L, (long) result.getLong("B"));
+    assertNull(result.getObject("D"));
+
+    SanskritObject child = result.getObject("C");
+    assertEquals("e", child.getString("E"));
   }
 }

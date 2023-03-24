@@ -15,9 +15,6 @@
  */
 package org.terracotta.diagnostic.client;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,13 +27,15 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.Diagnostics;
+import org.terracotta.diagnostic.client.json.TestModule;
 import org.terracotta.diagnostic.common.Base64DiagnosticCodec;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.EmptyParameterDiagnosticCodec;
 import org.terracotta.diagnostic.common.JavaDiagnosticCodec;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodec;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -81,14 +80,14 @@ public class DiagnosticServiceImplTest {
   @Mock
   public Connection connection;
   @Spy
-  public JsonDiagnosticCodec jsonCodec = new JsonDiagnosticCodec(new ObjectMapperFactory());
+  public JsonDiagnosticCodec jsonCodec = new JsonDiagnosticCodec(new DefaultJsonFactory().withModule(new TestModule()));
   @Spy
   public JavaDiagnosticCodec javaCodec;
   @Captor
   public ArgumentCaptor<String> request;
 
   DiagnosticService service;
-  ObjectMapper objectMapper = new ObjectMapperFactory().create();
+  Json json = new DefaultJsonFactory().withModule(new TestModule()).create();
 
   @Before
   public void setUp() {
@@ -242,7 +241,7 @@ public class DiagnosticServiceImplTest {
       Food out = foodService.cook(in);
       verify(jsonCodec).serialize(new DiagnosticRequest(FoodService.class, "cook", in));
       verify(jsonCodec).deserialize(json, DiagnosticResponse.class);
-      assertThat(objectMapper.valueToTree(out), is(equalTo(objectMapper.valueToTree(diagnosticResponse.getBody()))));
+      assertThat(this.json.map(out), is(equalTo(this.json.map(diagnosticResponse.getBody()))));
     }
 
     // test encoded request and error success answer
@@ -345,10 +344,7 @@ public class DiagnosticServiceImplTest {
     private static final long serialVersionUID = 1L;
     final String quality;
 
-    @JsonCreator
-    public Beef(@JsonProperty("time") int time,
-                @JsonProperty("raw") boolean raw,
-                @JsonProperty("quality") String quality) {
+    public Beef(int time, boolean raw, String quality) {
       super(time, raw);
       this.quality = quality;
     }

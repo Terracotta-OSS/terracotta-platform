@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -34,9 +33,10 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Conf
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.DefaultHashComputer;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.FileConfigStorage;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.InitialConfigStorage;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.JsonSanskritMapper;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.SanskritNomadServerState;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -48,10 +48,11 @@ import org.terracotta.nomad.messages.RollbackMessage;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
-import org.terracotta.persistence.sanskrit.ObjectMapperSupplier;
 import org.terracotta.persistence.sanskrit.Sanskrit;
 import org.terracotta.persistence.sanskrit.SanskritException;
+import org.terracotta.persistence.sanskrit.SanskritMapper;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
+import org.terracotta.persistence.sanskrit.json.SanskritJsonModule;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -62,10 +63,10 @@ import static java.util.Collections.singletonList;
 public class NomadServerFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadServerFactory.class);
 
-  private final ObjectMapperFactory objectMapperFactory;
+  private final Json.Factory jsonFactory;
 
-  public NomadServerFactory(ObjectMapperFactory objectMapperFactory) {
-    this.objectMapperFactory = objectMapperFactory;
+  public NomadServerFactory(Json.Factory jsonFactory) {
+    this.jsonFactory = jsonFactory.withModule(new SanskritJsonModule());
   }
 
   public DynamicConfigNomadServer createServer(NomadConfigurationManager configurationManager,
@@ -74,18 +75,9 @@ public class NomadServerFactory {
 
     FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(configurationManager.getChangesPath());
 
-    // Creates a json mapper with indentation for human readability, but forcing all EOL to be LF like Sanskrit
-    // The sanskrit files should be portable from Lin to Win and still work.
-    // do not use pretty() or it will mess up the EOL and sanskrit hashes. It is also harder to keep backward compat with that
-    ObjectMapper objectMapper = objectMapperFactory.create();
+    SanskritMapper mapper = new JsonSanskritMapper(jsonFactory);
 
-    ObjectMapper objectMapperV1 = createDeprecatedV1Mapper();
-
-    ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.versioned(objectMapper, Version.CURRENT.getValue())
-        .withVersions(objectMapperV1, "", Version.V1.getValue())
-        .withVersions(objectMapper, Version.V2.getValue());
-
-    Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapperSupplier);
+    Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, mapper);
 
     Path clusterDir = configurationManager.getClusterPath();
     InitialConfigStorage configStorage = new InitialConfigStorage(new ConfigStorageAdapter(new FileConfigStorage(clusterDir, nodeName)) {
@@ -152,13 +144,6 @@ public class NomadServerFactory {
     }
 
     return nomadServer;
-  }
-
-  @SuppressWarnings("deprecation")
-  private ObjectMapper createDeprecatedV1Mapper() {
-    return objectMapperFactory.withModules(
-        new org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1(),
-        new org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1()).create();
   }
 
   private void upgrade(InitialConfigStorage configStorage, DynamicConfigNomadServer nomadServer, long currentVersion) throws ConfigStorageException {

@@ -15,27 +15,16 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NumericNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class SanskritObjectImpl implements MutableSanskritObject {
-  private final ObjectNode mappings;
-  private final ObjectMapperSupplier objectMapperSupplier;
+  private final LinkedHashMap<String, Object> mappings;
+  private final SanskritMapper mapper;
 
-  public SanskritObjectImpl(ObjectMapperSupplier objectMapperSupplier) {
-    this(objectMapperSupplier, objectMapperSupplier.getObjectMapper().createObjectNode());
-  }
-
-  SanskritObjectImpl(ObjectMapperSupplier objectMapperSupplier, ObjectNode node) {
-    this.objectMapperSupplier = objectMapperSupplier;
-    this.mappings = node;
+  public SanskritObjectImpl(SanskritMapper mapper) {
+    this.mapper = mapper;
+    this.mappings = new LinkedHashMap<>();
   }
 
   @Override
@@ -49,83 +38,96 @@ public class SanskritObjectImpl implements MutableSanskritObject {
   }
 
   @Override
-  public void setObject(String key, SanskritObject object) {
-    mappings.set(key, CopyUtils.makeCopy(objectMapperSupplier, object).mappings);
+  public void setObject(String key, SanskritObject value) throws SanskritException {
+    if (value == null) {
+      mappings.put(key, null);
+    } else {
+      SanskritObjectImpl copy = new SanskritObjectImpl(mapper);
+      value.accept(copy);
+      mappings.put(key, copy);
+    }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public <T> void setExternal(String key, T o, String version) {
-    if (o instanceof SanskritObject) {
-      setObject(key, (SanskritObject) o);
+  public void set(String key, Object value, String version) throws SanskritException {
+    if (value instanceof String) {
+      setString(key, (String) value);
+    } else if (value instanceof Long) {
+      setLong(key, (Long) value);
+    } else if (value instanceof SanskritObject) {
+      setObject(key, (SanskritObject) value);
+    } else if (value instanceof Map) {
+      SanskritObjectImpl o = new SanskritObjectImpl(mapper);
+      for (Map.Entry<String, Object> entry : ((Map<String, Object>) value).entrySet()) {
+        o.set(entry.getKey(), entry.getValue(), version);
+      }
+      mappings.put(key, o);
     } else {
-      mappings.set(key, o instanceof JsonNode ? (JsonNode) o : objectMapperSupplier.getObjectMapper(version).valueToTree(o));
+      // anything else (incl. value == null || value instanceof Number)
+      mappings.put(key, value);
     }
   }
 
   @Override
-  public void accept(SanskritVisitor visitor) {
-    Iterator<Map.Entry<String, JsonNode>> fields = mappings.fields();
-    while (fields.hasNext()) {
-      Map.Entry<String, JsonNode> entry = fields.next();
-      String key = entry.getKey();
-      JsonNode value = entry.getValue();
-      if (value.isTextual()) {
-        visitor.setString(key, value.textValue());
-      } else if (value.isLong()) {
-        visitor.setLong(key, value.longValue());
-      } else if (value.isObject()) {
-        visitor.setObject(key, new SanskritObjectImpl(objectMapperSupplier, (ObjectNode) value));
+  public void accept(SanskritVisitor visitor) throws SanskritException {
+    for (Map.Entry<String, Object> entry : mappings.entrySet()) {
+      visitor.set(entry.getKey(), entry.getValue(), mapper.getCurrentFormatVersion());
+    }
+  }
+
+  @Override
+  public <T> T get(String key, Class<T> type, String version) throws SanskritException {
+    if (type == Long.class) {
+      return type.cast(getLong(key));
+    } else if (type == String.class) {
+      return type.cast(getString(key));
+    } else if (type == SanskritObject.class) {
+      return type.cast(getObject(key));
+    } else {
+      // type == complex type ?
+      final Object o = mappings.get(key);
+      if (o == null) {
+        return null;
+      } else if (type.isInstance(o)) {
+        return type.cast(o);
+      } else if (o instanceof SanskritObject) {
+        return mapper.map((SanskritObject) o, type, version);
       } else {
-        // value IS always a JsonNode, so we do not care about the versioning for the mapping
-        visitor.setExternal(key, value, null);
+        throw new AssertionError("Unsupported: Cannot convert to: " + type + " key: " + key + " with value: " + o + " of type: " + o.getClass());
       }
     }
   }
 
   @Override
-  public <T> T getObject(String key, Class<T> type, String version) {
-    JsonNode jsonNode = mappings.get(key);
-    if (jsonNode == null) {
-      return null;
-    }
-    if (type.isInstance(jsonNode)) {
-      return type.cast(jsonNode);
-    }
-    try {
-      return type.cast(objectMapperSupplier.getObjectMapper(version).treeToValue(jsonNode, type));
-    } catch (JsonProcessingException e) {
-      // should never happen because the json in the append log
-      // has already been serialized by sanskrit and cannot be updated by a user
-      throw new IllegalStateException(e);
-    }
-  }
-
-  @Override
   public String getString(String key) {
-    return Optional.ofNullable(mappings.get(key))
-        .map(TextNode.class::cast)
-        .map(TextNode::textValue)
-        .orElse(null);
+    return (String) mappings.get(key);
   }
 
   @Override
   public Long getLong(String key) {
-    return Optional.ofNullable(mappings.get(key))
-        .map(NumericNode.class::cast)
-        .map(NumericNode::longValue)
-        .orElse(null);
+    final Number o = (Number) mappings.get(key);
+    return o == null ? null : o.longValue();
   }
 
   @Override
-  public SanskritObject getObject(String key) {
-    return Optional.ofNullable(mappings.get(key))
-        .map(ObjectNode.class::cast)
-        .map(node -> new SanskritObjectImpl(objectMapperSupplier, node))
-        .orElse(null);
+  public SanskritObject getObject(String key) throws SanskritException {
+    final SanskritObject o = (SanskritObject) mappings.get(key);
+    if (o == null) {
+      return null;
+    }
+    SanskritObjectImpl copy = new SanskritObjectImpl(mapper);
+    o.accept(copy);
+    return copy;
   }
 
   @Override
   public void removeKey(String key) {
     mappings.remove(key);
+  }
+
+  @Override
+  public String toString() {
+    return mappings.toString();
   }
 }

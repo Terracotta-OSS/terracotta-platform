@@ -15,20 +15,14 @@
  */
 package org.terracotta.management.doc;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.management.entity.nms.client.NmsService;
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.Cluster;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,18 +41,15 @@ public class ReadTopology {
     NmsService service = Utils.createNmsService(connection, className);
 
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    mapper.addMixIn(CapabilityContext.class, CapabilityContextMixin.class);
 
     ScheduledFuture<?> task = executorService.scheduleWithFixedDelay(() -> {
       try {
 
         // READ TOPOLOGY
         Cluster cluster = service.readTopology();
-        System.out.println(mapper.writeValueAsString(cluster.toMap()));
+        System.out.println(cluster.toMap());
 
-      } catch (InterruptedException | ExecutionException | TimeoutException | JsonProcessingException e) {
+      } catch (InterruptedException | ExecutionException | TimeoutException e) {
         LoggerFactory.getLogger(className).error("ERR: " + e.getMessage(), e);
       }
     }, 0, 5, TimeUnit.SECONDS);
@@ -69,13 +60,4 @@ public class ReadTopology {
     executorService.shutdown();
     connection.close();
   }
-
-  public static abstract class CapabilityContextMixin {
-    @JsonIgnore
-    public abstract Collection<String> getRequiredAttributeNames();
-
-    @JsonIgnore
-    public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
-  }
-
 }

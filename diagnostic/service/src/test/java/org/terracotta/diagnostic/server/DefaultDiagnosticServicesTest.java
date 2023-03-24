@@ -23,7 +23,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesRegistration;
 import org.terracotta.diagnostic.server.api.Expose;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
 import org.terracotta.server.ServerJMX;
 
 import javax.management.MBeanServerFactory;
@@ -49,7 +49,7 @@ public class DefaultDiagnosticServicesTest {
   @Spy MyServiceImpl service2;
 
   ServerJMX jmx = mock(ServerJMX.class);
-  DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices(jmx, new ObjectMapperFactory());
+  DefaultDiagnosticServices diagnosticServices = new DefaultDiagnosticServices(jmx, new DefaultJsonFactory());
 
   @Before
   public void setUp() {

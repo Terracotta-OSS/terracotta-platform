@@ -15,19 +15,15 @@
  */
 package org.terracotta.diagnostic.common;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
 import org.terracotta.common.struct.json.StructJsonModule;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.diagnostic.common.json.TestModule;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -42,8 +38,10 @@ import static org.terracotta.common.struct.Tuple2.tuple2;
  */
 public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
 
+  Json json = new DefaultJsonFactory().withModules(new StructJsonModule(), new TestModule()).create();
+
   public JsonDiagnosticCodecTest() {
-    super("Json", new JsonDiagnosticCodec(new ObjectMapperFactory().withModule(new StructJsonModule())));
+    super("Json", new JsonDiagnosticCodec(new DefaultJsonFactory().withModules(new StructJsonModule(), new TestModule())));
   }
 
   @Test
@@ -89,8 +87,7 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
 
   @Test
   public void test_deserialize_to_json_obj() {
-    assertThat(codec.deserialize(jsonFile("/output1.json"), JsonNode.class).toString(), is(equalTo("{\"arguments\":[],\"methodName\":\"prepareDiner()\",\"serviceInterface\":\"java.io.Closeable\"}")));
-    assertThat(codec.deserialize(jsonFile("/output1.json"), ObjectNode.class).toString(), is(equalTo("{\"arguments\":[],\"methodName\":\"prepareDiner()\",\"serviceInterface\":\"java.io.Closeable\"}")));
+    assertThat(json.toString(codec.deserialize(jsonFile("/output1.json"), Object.class)), is(equalTo("{\"arguments\":[],\"methodName\":\"prepareDiner()\",\"serviceInterface\":\"java.io.Closeable\"}")));
   }
 
   @Test
@@ -133,16 +130,15 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
 
   private String jsonFile(String filename) {
     try {
-      return new ObjectMapper().readTree(getClass().getResource(filename)).toString();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      return json.toString(json.parse(Paths.get(getClass().getResource(filename).toURI())));
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
     }
   }
 
   public static abstract class Vegie<T extends CookingManual> {
 
     private final String color;
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
     private final T cookingManual;
 
     public Vegie(T cookingManual, String color) {
@@ -177,9 +173,7 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
 
     private final String from;
 
-    @JsonCreator
-    public Tomato(@JsonProperty("cookingManual") TomatoCooking cookingManual,
-                  @JsonProperty("color") String color) {
+    public Tomato(TomatoCooking cookingManual, String color) {
       super(cookingManual, color);
       from = "Canada";
     }
@@ -207,9 +201,7 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
 
     private final String from;
 
-    @JsonCreator
-    public Pepper(@JsonProperty("cookingManual") TomatoCooking cookingManual,
-                  @JsonProperty("color") String color) {
+    public Pepper(TomatoCooking cookingManual, String color) {
       super(cookingManual, color);
       from = "Canada";
     }

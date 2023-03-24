@@ -1,57 +1,65 @@
 {
-  "stripes" : [ {
-    "id" : "stripe[0]",
-    "name" : "stripe[0]",
-    "servers" : [ {
-      "id" : "server-1",
-      "serverEntities" : [ {
-        "id" : "entityName-1:entityType",
-        "type" : "entityType",
-        "name" : "entityName-1",
-        "consumerId" : 1,
-        "managementRegistry" : null
-      } ],
-      "serverName" : "server-1",
-      "hostName" : "localhost",
-      "hostAddress" : "127.0.0.1",
-      "bindAddress" : "0.0.0.0",
-      "bindPort" : 9510,
-      "groupPort" : 9610,
-      "state" : "ACTIVE",
-      "version" : "v1",
-      "buildId" : "b1",
-      "startTime" : 1476304913984,
-      "upTimeSec" : 0,
-      "activateTime" : 1615832230246
-    } ]
-  } ],
-  "clients" : [ {
-    "id" : "111@127.0.0.1:name:uuid-1",
-    "pid" : 111,
-    "hostAddress" : "127.0.0.1",
-    "name" : "name",
-    "logicalConnectionUid" : "uuid-1",
-    "vmId" : "111@127.0.0.1",
-    "clientId" : "111@127.0.0.1:name:uuid-1",
-    "hostName" : "localhost",
-    "tags" : [ ],
-    "properties" : {
-        "clientReportedAddress" : "localhost:65432",
-        "version" : "1.2.0"
-    },
-    "connections" : [ {
-      "id" : "uuid-1:stripe[0]:server-1:127.0.0.1:5678",
-      "logicalConnectionUid" : "uuid-1",
-      "clientEndpoint" : {
-        "address" : "127.0.0.1",
-        "port" : 5678
+  "clients": [
+    {
+      "clientId": "111@127.0.0.1:name:uuid-1",
+      "connections": [
+        {
+          "clientEndpoint": {
+            "address": "127.0.0.1",
+            "port": 5678
+          },
+          "id": "uuid-1:stripe[0]:server-1:127.0.0.1:5678",
+          "logicalConnectionUid": "uuid-1",
+          "serverEntityIds": {
+            "entityName-1:entityType": 2
+          },
+          "serverId": "server-1",
+          "stripeId": "stripe[0]"
+        }
+      ],
+      "hostAddress": "127.0.0.1",
+      "hostName": "localhost",
+      "id": "111@127.0.0.1:name:uuid-1",
+      "logicalConnectionUid": "uuid-1",
+      "name": "name",
+      "pid": 111,
+      "properties": {
+        "clientReportedAddress": "localhost:65432",
+        "version": "1.2.0"
       },
-      "stripeId" : "stripe[0]",
-      "serverId" : "server-1",
-      "serverEntityIds" : {
-        "entityName-1:entityType" : 2
-      }
-    } ],
-    "managementRegistry" : null
-  } ]
+      "tags": [],
+      "vmId": "111@127.0.0.1"
+    }
+  ],
+  "stripes": [
+    {
+      "id": "stripe[0]",
+      "name": "stripe[0]",
+      "servers": [
+        {
+          "activateTime": 1615832230246,
+          "bindAddress": "0.0.0.0",
+          "bindPort": 9510,
+          "buildId": "b1",
+          "groupPort": 9610,
+          "hostAddress": "127.0.0.1",
+          "hostName": "localhost",
+          "id": "server-1",
+          "serverEntities": [
+            {
+              "consumerId": 1,
+              "id": "entityName-1:entityType",
+              "name": "entityName-1",
+              "type": "entityType"
+            }
+          ],
+          "serverName": "server-1",
+          "startTime": 1476304913984,
+          "state": "ACTIVE",
+          "upTimeSec": 0,
+          "version": "v1"
+        }
+      ]
+    }
+  ]
 }

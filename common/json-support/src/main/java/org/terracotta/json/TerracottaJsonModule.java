@@ -21,11 +21,14 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.impl.NullsConstantProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -33,11 +36,18 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import static java.util.Arrays.asList;
+
 /**
  * @author Mathieu Carbou
  */
-public class TerracottaJsonModule extends SimpleModule {
+public class TerracottaJsonModule extends SimpleModule implements Json.Module {
   private static final long serialVersionUID = 1L;
+
+  @Override
+  public Iterable<? extends Module> getDependencies() {
+    return asList(new Jdk8Module(), new JavaTimeModule());
+  }
 
   public TerracottaJsonModule() {
     super(TerracottaJsonModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));

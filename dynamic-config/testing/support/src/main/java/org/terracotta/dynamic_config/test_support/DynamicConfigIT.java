@@ -56,7 +56,8 @@ import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.config_tool.ConfigTool;
 import org.terracotta.dynamic_config.test_support.util.ConfigurationGenerator;
 import org.terracotta.inet.HostPort;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.testing.ExtendedTestRule;
 import org.terracotta.testing.JavaTool;
 import org.terracotta.testing.TmpDir;
@@ -113,7 +114,8 @@ public class DynamicConfigIT {
 
   protected final TmpDir tmpDir;
   protected final AngelaRule angela;
-  protected final ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+  protected final Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
+  protected final Json json = jsonFactory.create();
 
   // can be modified by sub-classes to update the timeouts
 
@@ -707,7 +709,7 @@ public class DynamicConfigIT {
         getConnectionTimeout(),
         getDiagnosticOperationTimeout(),
         null,
-        objectMapperFactory)) {
+        jsonFactory)) {
       return fn.apply(diagnosticService);
     } catch (ConnectionException e) {
       throw new RuntimeException(e.getMessage(), e);
@@ -804,7 +806,7 @@ public class DynamicConfigIT {
         getConnectionTimeout(),
         getDiagnosticOperationTimeout(),
         null,
-        objectMapperFactory)) {
+        jsonFactory)) {
       return diagnosticService.isBlocked();
     } catch (Exception e) {
       return false;

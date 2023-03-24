@@ -15,10 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration.service;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.terracotta.dynamic_config.api.model.Cluster;
@@ -46,7 +42,7 @@ import org.terracotta.dynamic_config.server.api.LicenseService;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigNomadSynchronizer;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.ChangeDetails;
@@ -58,8 +54,6 @@ import org.terracotta.nomad.server.ChangeState;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.server.Server;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -81,16 +75,16 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   private static final Logger LOGGER = LoggerFactory.getLogger(DynamicConfigServiceImpl.class);
 
   private final NomadServerManager nomadServerManager;
-  private final ObjectMapper objectMapper;
+  private final Json json;
   private final Server server;
   private final Topologies topologies;
   private final Licensing licensing;
 
-  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, ObjectMapperFactory objectMapperFactory, Server server) {
+  public DynamicConfigServiceImpl(NodeContext nodeContext, LicenseService licenseService, NomadServerManager nomadServerManager, Json.Factory jsonFactory, Server server) {
     this.topologies = new Topologies(nodeContext);
     this.nomadServerManager = requireNonNull(nomadServerManager);
     this.licensing = new Licensing(licenseService, nomadServerManager);
-    this.objectMapper = objectMapperFactory.create();
+    this.json = jsonFactory.create();
     this.server = requireNonNull(server);
 
     // ensure we start with a minimally valid configuration
@@ -397,13 +391,7 @@ public class DynamicConfigServiceImpl implements TopologyService, DynamicConfigS
   }
 
   private Map<String, ?> toMap(Object o) {
-    try {
-      JsonNode node = objectMapper.valueToTree(o);
-      JsonParser jsonParser = objectMapper.treeAsTokens(node);
-      return jsonParser.readValueAs(new TypeReference<Map<String, ?>>() {});
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    return json.mapToObject(o);
   }
 
   private void runAfterDelay(Duration delayInSeconds, Runnable runnable) {

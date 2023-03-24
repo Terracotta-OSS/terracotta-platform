@@ -29,6 +29,7 @@ import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.inet.HostPort;
+import org.terracotta.json.Json;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -44,7 +45,7 @@ import java.util.Optional;
  * @deprecated old V1 format. Do not use anymore. Here for reference and backward compatibility.
  */
 @Deprecated
-public class DynamicConfigModelJsonModuleV1 extends SimpleModule {
+public class DynamicConfigModelJsonModuleV1 extends SimpleModule implements Json.Module {
   private static final long serialVersionUID = 1L;
 
   public DynamicConfigModelJsonModuleV1() {

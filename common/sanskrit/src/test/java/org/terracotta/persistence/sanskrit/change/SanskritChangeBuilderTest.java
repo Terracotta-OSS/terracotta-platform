@@ -20,8 +20,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.terracotta.json.ObjectMapperFactory;
-import org.terracotta.persistence.sanskrit.ObjectMapperSupplier;
+import org.terracotta.persistence.sanskrit.JsonSanskritMapper;
+import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.SanskritObject;
 import org.terracotta.persistence.sanskrit.SanskritObjectImpl;
 
@@ -34,8 +34,8 @@ public class SanskritChangeBuilderTest {
   private SanskritChangeVisitor visitor;
 
   @Test
-  public void buildChange() {
-    SanskritObject object = new SanskritObjectImpl(ObjectMapperSupplier.notVersioned(new ObjectMapperFactory().create()));
+  public void buildChange() throws SanskritException {
+    SanskritObject object = new SanskritObjectImpl(new JsonSanskritMapper());
 
     SanskritChange change = SanskritChangeBuilder.newChange()
         .setString("1", "a")
@@ -57,7 +57,7 @@ public class SanskritChangeBuilderTest {
   }
 
   @Test
-  public void duplicateKey() {
+  public void duplicateKey() throws SanskritException {
     SanskritChange change = SanskritChangeBuilder.newChange()
         .setString("1", "a")
         .setString("1", "b")

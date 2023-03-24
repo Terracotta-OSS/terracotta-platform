@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.api;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.util.Objects;
@@ -27,9 +25,7 @@ public class SimpleNomadChange implements NomadChange {
   private final String change;
   private final String summary;
 
-  @JsonCreator
-  public SimpleNomadChange(@JsonProperty(value = "change", required = true) String change,
-                           @JsonProperty(value = "summary", required = true) String summary) {
+  public SimpleNomadChange(String change, String summary) {
     this.change = requireNonNull(change);
     this.summary = requireNonNull(summary);
   }
@@ -41,6 +37,11 @@ public class SimpleNomadChange implements NomadChange {
   @Override
   public String getSummary() {
     return summary;
+  }
+
+  @Override
+  public final String getType() {
+    return "SimpleNomadChange";
   }
 
   @Override

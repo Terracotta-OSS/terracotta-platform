@@ -15,15 +15,8 @@
  */
 package org.terracotta.diagnostic.common;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.terracotta.json.ObjectMapperFactory;
-import org.terracotta.json.TerracottaJsonModule;
-
-import java.io.IOException;
+import org.terracotta.diagnostic.common.json.DiagnosticJsonModule;
+import org.terracotta.json.Json;
 
 import static java.util.Objects.requireNonNull;
 
@@ -32,12 +25,12 @@ import static java.util.Objects.requireNonNull;
  */
 public class JsonDiagnosticCodec extends DiagnosticCodecSkeleton<String> {
 
-  private final ObjectMapper objectMapper;
+  private final Json json;
 
-  public JsonDiagnosticCodec(ObjectMapperFactory objectMapperFactory) {
+  public JsonDiagnosticCodec(Json.Factory jsonFactory) {
     super(String.class);
-    this.objectMapper = objectMapperFactory
-        .withModules(new Jdk8Module(), new JavaTimeModule(), new TerracottaJsonModule())
+    this.json = jsonFactory
+        .withModule(new DiagnosticJsonModule())
         .create();
   }
 
@@ -45,8 +38,8 @@ public class JsonDiagnosticCodec extends DiagnosticCodecSkeleton<String> {
   public String serialize(Object o) throws DiagnosticCodecException {
     requireNonNull(o);
     try {
-      return objectMapper.writeValueAsString(o);
-    } catch (JsonProcessingException | RuntimeException e) {
+      return json.toString(o);
+    } catch (RuntimeException e) {
       throw new DiagnosticCodecException(e);
     }
   }
@@ -56,10 +49,8 @@ public class JsonDiagnosticCodec extends DiagnosticCodecSkeleton<String> {
     requireNonNull(json);
     requireNonNull(target);
     try {
-      return JsonNode.class.isAssignableFrom(target) ?
-          target.cast(objectMapper.readTree(json)) :
-          objectMapper.readValue(json, target);
-    } catch (IOException | RuntimeException e) {
+      return target.cast(this.json.parse(json, target));
+    } catch (RuntimeException e) {
       throw new DiagnosticCodecException(e);
     }
   }
