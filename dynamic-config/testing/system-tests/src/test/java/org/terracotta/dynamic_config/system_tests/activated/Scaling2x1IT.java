@@ -16,7 +16,6 @@
 package org.terracotta.dynamic_config.system_tests.activated;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.terracotta.angela.common.ToolExecutionResult;
 import org.terracotta.dynamic_config.api.model.LockContext;
@@ -39,7 +38,6 @@ import static org.terracotta.dynamic_config.api.model.LockTag.SCALE_IN_PREFIX;
  * @author Mathieu Carbou
  */
 @ClusterDefinition(stripes = 2, nodesPerStripe = 1)
-@Ignore
 public class Scaling2x1IT extends DynamicConfigIT {
 
   @Before
