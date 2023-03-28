@@ -22,7 +22,7 @@
   <parent>
     <artifactId>terracotta-management</artifactId>
     <groupId>org.terracotta.management</groupId>
-    <version>5.10-SNAPSHOT</version>
+    <version>5.10.10</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
