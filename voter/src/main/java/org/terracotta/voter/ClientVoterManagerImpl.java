@@ -40,6 +40,7 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
 
   private volatile boolean voting = false;
   private volatile long generation = INVALID_VOTER_RESPONSE;
+  private volatile long lastVotedGeneration = INVALID_VOTER_RESPONSE;
 
   public ClientVoterManagerImpl(String hostPort) {
     this.hostPort = hostPort;
@@ -124,7 +125,11 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
       throw new RuntimeException("not currently voting");
     }
     String result = processInvocation(diagnostics.invokeWithArg(MBEAN_NAME, "vote", id + ":" + generation));
-    return Long.parseLong(result);
+    long value = Long.parseLong(result);
+    if (value == HEARTBEAT_RESPONSE) {
+      lastVotedGeneration = generation;
+    }
+    return value;
   }
 
   @Override
@@ -203,6 +208,11 @@ public class ClientVoterManagerImpl implements ClientVoterManager {
   public long generation() {
     return generation;
   }
+  
+  @Override
+  public long lastVotedGeneration() {
+    return lastVotedGeneration;
+  }  
 
   @Override
   public void zombie() {

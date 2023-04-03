@@ -58,6 +58,8 @@ public interface ClientVoterManager {
   
   long generation();
   
+  long lastVotedGeneration();
+  
   void zombie();
 
   boolean isConnected();

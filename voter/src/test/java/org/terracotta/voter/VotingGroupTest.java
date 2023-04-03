@@ -417,6 +417,11 @@ public class VotingGroupTest {
     }
 
     @Override
+    public long lastVotedGeneration() {
+      return 0L;
+    }
+
+    @Override
     public boolean register(String id) throws TimeoutException {
       return connected;
     }
