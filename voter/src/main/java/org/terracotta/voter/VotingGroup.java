@@ -228,7 +228,7 @@ public class VotingGroup implements AutoCloseable {
           // if the owner is voting, this voter must zombie, cannot vote in this generation
           mgr.zombie();
         }
-      } else if (mgr.generation() > voteOwner.generation()) {
+      } else if (mgr.generation() > voteOwner.lastVotedGeneration()) {
         voteOwner.zombie();
         long result = mgr.vote(id);
         setVoteOwner(mgr);
