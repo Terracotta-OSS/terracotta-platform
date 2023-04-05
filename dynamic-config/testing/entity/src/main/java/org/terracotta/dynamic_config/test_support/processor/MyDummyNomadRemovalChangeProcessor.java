@@ -38,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import static com.tc.management.beans.L2MBeanNames.TOPOLOGY_MBEAN;
 import static java.util.Objects.requireNonNull;
 import static org.terracotta.dynamic_config.test_support.processor.ServerCrasher.crash;
 
@@ -74,7 +73,6 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
       throw new NomadException("Existing config must not be null");
     }
     try {
-      checkMBeanOperation();
       Cluster updated = change.apply(baseConfig.getCluster());
       new ClusterValidator(updated).validate(ClusterState.ACTIVATED);
     } catch (RuntimeException e) {
@@ -120,16 +118,8 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
 
     try {
       LOGGER.info("Removing node: {} from stripe UID: {}", node.getName(), change.getStripeUID());
-      LOGGER.debug("Calling mBean {}#{}", TOPOLOGY_MBEAN, PLATFORM_MBEAN_OPERATION_NAME);
-      mbeanServer.invoke(
-          TOPOLOGY_MBEAN,
-          PLATFORM_MBEAN_OPERATION_NAME,
-          new Object[]{node.getHostname(), node.getPort().orDefault(), node.getGroupPort().orDefault()},
-          new String[]{String.class.getName(), int.class.getName(), int.class.getName()}
-      );
-
       dynamicConfigEventFiring.onNodeRemoval(change.getStripeUID(), node);
-    } catch (RuntimeException | JMException e) {
+    } catch (RuntimeException e) {
       throw new NomadException("Error when applying: '" + change.getSummary() + "': " + e.getMessage(), e);
     }
   }
@@ -144,20 +134,5 @@ public class MyDummyNomadRemovalChangeProcessor implements NomadChangeProcessor<
       }
     }
     return directory;
-  }
-
-  private void checkMBeanOperation() {
-    boolean canCall;
-    try {
-      canCall = Stream
-          .of(mbeanServer.getMBeanInfo(TOPOLOGY_MBEAN).getOperations())
-          .anyMatch(attr -> PLATFORM_MBEAN_OPERATION_NAME.equals(attr.getName()));
-    } catch (JMException e) {
-      LOGGER.error("MBeanServer::getMBeanInfo resulted in:", e);
-      canCall = false;
-    }
-    if (!canCall) {
-      throw new IllegalStateException("Unable to invoke MBean operation to detach a node");
-    }
   }
 }
