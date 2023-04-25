@@ -15,8 +15,6 @@
  */
 package org.terracotta.json;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -35,60 +33,60 @@ import static org.junit.Assert.assertThat;
 public class PathTest {
 
   @Test
-  public void test_new_path_mapping() throws JsonProcessingException {
-    ObjectMapper objectMapper = new ObjectMapper().registerModule(new TerracottaJsonModule());
+  public void test_new_path_mapping()  {
+    Json json = new DefaultJsonFactory().withModule(new TerracottaJsonModule()).create();
 
-    assertThat(objectMapper.writeValueAsString(new Foo()), is(equalTo("{\"path\":null}")));
-    assertThat(objectMapper.writeValueAsString(new Foo().setPath(Paths.get(""))), is(equalTo("{\"path\":[\"\"]}")));
-    assertThat(objectMapper.writeValueAsString(new Foo().setPath(Paths.get("foo"))), is(equalTo("{\"path\":[\"foo\"]}")));
-    assertThat(objectMapper.writeValueAsString(new Foo().setPath(Paths.get("foo", "bar"))), is(equalTo("{\"path\":[\"foo\",\"bar\"]}")));
+    assertThat(json.toString(new Foo()), is(equalTo("{}")));
+    assertThat(json.toString(new Foo().setPath(Paths.get(""))), is(equalTo("{\"path\":[\"\"]}")));
+    assertThat(json.toString(new Foo().setPath(Paths.get("foo"))), is(equalTo("{\"path\":[\"foo\"]}")));
+    assertThat(json.toString(new Foo().setPath(Paths.get("foo", "bar"))), is(equalTo("{\"path\":[\"foo\",\"bar\"]}")));
 
-    assertThat(objectMapper.readValue("{\"path\":null}", Foo.class), is(equalTo(new Foo())));
-    assertThat(objectMapper.readValue("{\"path\":[\"\"]}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("")))));
-    assertThat(objectMapper.readValue("{\"path\":[\"foo\"]}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo")))));
-    assertThat(objectMapper.readValue("{\"path\":[\"foo\",\"bar\"]}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
+    assertThat(json.parse("{\"path\":null}", Foo.class), is(equalTo(new Foo())));
+    assertThat(json.parse("{\"path\":[\"\"]}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("")))));
+    assertThat(json.parse("{\"path\":[\"foo\"]}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo")))));
+    assertThat(json.parse("{\"path\":[\"foo\",\"bar\"]}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
   }
 
   @Test
-  public void test_new_path_mapping_backward_compatible() throws JsonProcessingException {
-    ObjectMapper objectMapper = new ObjectMapper().registerModule(new TerracottaJsonModule());
+  public void test_new_path_mapping_backward_compatible() {
+    Json json = new DefaultJsonFactory().withModule(new TerracottaJsonModule()).create();
 
-    assertThat(objectMapper.readValue("{\"path\":null}", Foo.class), is(equalTo(new Foo())));
-    assertThat(objectMapper.readValue("{\"path\":\"\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("")))));
-    assertThat(objectMapper.readValue("{\"path\":\"foo\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo")))));
-    assertThat(objectMapper.readValue("{\"path\":\"foo/bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
+    assertThat(json.parse("{\"path\":null}", Foo.class), is(equalTo(new Foo())));
+    assertThat(json.parse("{\"path\":\"\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("")))));
+    assertThat(json.parse("{\"path\":\"foo\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo")))));
+    assertThat(json.parse("{\"path\":\"foo/bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
     if (isWindows()) {
-      assertThat(objectMapper.readValue("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
+      assertThat(json.parse("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
     } else {
-      assertThat(objectMapper.readValue("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo\\bar")))));
+      assertThat(json.parse("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo\\bar")))));
     }
   }
 
   @Test
   @SuppressWarnings("deprecation")
-  public void test_buggy_path_mapping_v1() throws JsonProcessingException {
-    ObjectMapper objectMapper = new ObjectMapper().registerModule(new TerracottaJsonModuleV1());
+  public void test_buggy_path_mapping_v1() {
+    Json json = new DefaultJsonFactory().withModule(new TerracottaJsonModuleV1()).create();
 
-    assertThat(objectMapper.writeValueAsString(new Foo()), is(equalTo("{\"path\":null}")));
-    assertThat(objectMapper.writeValueAsString(new Foo().setPath(Paths.get(""))), is(equalTo("{\"path\":\"\"}")));
-    assertThat(objectMapper.writeValueAsString(new Foo().setPath(Paths.get("foo"))), is(equalTo("{\"path\":\"foo\"}")));
+    assertThat(json.toString(new Foo()), is(equalTo("{}")));
+    assertThat(json.toString(new Foo().setPath(Paths.get(""))), is(equalTo("{\"path\":\"\"}")));
+    assertThat(json.toString(new Foo().setPath(Paths.get("foo"))), is(equalTo("{\"path\":\"foo\"}")));
     if (isWindows()) {
-      assertThat(objectMapper.writeValueAsString(new Foo().setPath(Paths.get("foo", "bar"))), is(equalTo("{\"path\":\"foo\\\\bar\"}")));
+      assertThat(json.toString(new Foo().setPath(Paths.get("foo", "bar"))), is(equalTo("{\"path\":\"foo\\\\bar\"}")));
     } else {
-      assertThat(objectMapper.writeValueAsString(new Foo().setPath(Paths.get("foo", "bar"))), is(equalTo("{\"path\":\"foo/bar\"}")));
+      assertThat(json.toString(new Foo().setPath(Paths.get("foo", "bar"))), is(equalTo("{\"path\":\"foo/bar\"}")));
     }
 
-    assertThat(objectMapper.readValue("{\"path\":null}", Foo.class), is(equalTo(new Foo())));
-    assertThat(objectMapper.readValue("{\"path\":\"\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("")))));
-    assertThat(objectMapper.readValue("{\"path\":\"foo\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo")))));
-    assertThat(objectMapper.readValue("{\"path\":\"foo/bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
+    assertThat(json.parse("{\"path\":null}", Foo.class), is(equalTo(new Foo())));
+    assertThat(json.parse("{\"path\":\"\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("")))));
+    assertThat(json.parse("{\"path\":\"foo\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo")))));
+    assertThat(json.parse("{\"path\":\"foo/bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
     if (isWindows()) {
-      assertThat(objectMapper.readValue("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
+      assertThat(json.parse("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo", "bar")))));
     } else {
       // ⚠️ The V1 way of mapping the Path was not able to keep the correct segments
       // ⚠️ when a windows path was serialized and then deserialized on linux
       // ⚠️ The result should be: Paths.get("foo", "bar")
-      assertThat(objectMapper.readValue("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo\\bar")))));
+      assertThat(json.parse("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("foo\\bar")))));
     }
   }
 

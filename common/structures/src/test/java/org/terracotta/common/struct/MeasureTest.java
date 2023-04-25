@@ -15,13 +15,10 @@
  */
 package org.terracotta.common.struct;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.junit.Test;
 import org.terracotta.common.struct.json.StructJsonModule;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -46,11 +43,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class MeasureTest {
 
-  private final ObjectMapper json = JsonMapper.builder()
-      .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
-      .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-      .addModule(new StructJsonModule())
-      .build();
+  private final Json json = new DefaultJsonFactory().withModule(new StructJsonModule()).create();
 
   @Test
   public void test_of() {
@@ -168,11 +161,11 @@ public class MeasureTest {
   }
 
   @Test
-  public void test_json() throws JsonProcessingException {
+  public void test_json() {
     Config config = new Config();
-    String json = this.json.writeValueAsString(config);
+    String json = this.json.toString(config);
     assertThat(json, is(equalTo("{\"leaseTime\":{\"quantity\":3,\"unit\":\"SECONDS\",\"type\":\"TIME\"},\"offheap\":{\"quantity\":1,\"unit\":\"GB\",\"type\":\"MEMORY\"}}")));
-    assertThat(this.json.readValue(json, Config.class), is(equalTo(config)));
+    assertThat(this.json.parse(json, Config.class), is(equalTo(config)));
   }
 
   @Test

@@ -19,13 +19,13 @@ package org.terracotta.persistence.sanskrit;
  * An interface representing complex data to be held against a key.
  */
 public interface SanskritObject {
-  void accept(SanskritVisitor visitor);
+  void accept(SanskritVisitor visitor) throws SanskritException;
 
-  <T> T getObject(String key, Class<T> type, String version);
+  <T> T get(String key, Class<T> type, String version) throws SanskritException;
 
-  String getString(String key);
+  String getString(String key) throws SanskritException;
 
-  Long getLong(String key);
+  Long getLong(String key) throws SanskritException;
 
-  SanskritObject getObject(String key);
+  SanskritObject getObject(String key) throws SanskritException;
 }

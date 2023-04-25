@@ -21,9 +21,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 import org.terracotta.nomad.messages.ChangeDetails;
@@ -42,12 +41,10 @@ import org.terracotta.nomad.server.NomadServerMode;
 import java.time.Instant;
 import java.util.UUID;
 
-import static java.util.Collections.singletonList;
-
 /**
  * @author Mathieu Carbou
  */
-public class NomadJsonModule extends SimpleModule {
+public class NomadJsonModule extends SimpleModule implements Json.Module {
   private static final long serialVersionUID = 1L;
 
   public NomadJsonModule() {
@@ -73,11 +70,11 @@ public class NomadJsonModule extends SimpleModule {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @Override
     String getSummary();
-  }
 
-  @Override
-  public Iterable<? extends Module> getDependencies() {
-    return singletonList(new JavaTimeModule());
+    // This is to fix a bug in Jackson with polymorphism serialisation...
+    // You can look in the NomadChangeMixin class that all impls should be serialized with a discriminant type property which tells Jackson the class to deserialize to. The problem is that if an object is included in a map, this property is not written. So forcing it here.
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    String getType();
   }
 
   public static class AcceptRejectResponseMixin extends AcceptRejectResponse {

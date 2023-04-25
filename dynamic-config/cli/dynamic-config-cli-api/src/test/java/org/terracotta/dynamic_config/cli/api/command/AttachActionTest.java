@@ -159,9 +159,8 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     assertThat(allValues.get(0), is(equalTo(allValues.get(1))));
     Testing.replaceUIDs(allValues.get(0));
     assertThat(
-        objectMapper.writeValueAsString(allValues.get(0)),
         allValues.get(0),
-        is(equalTo(objectMapper.readValue(getClass().getResource("/cluster1.json"), Cluster.class))));
+        is(equalTo(json.parse(getClass().getResource("/cluster1.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(1));
@@ -220,9 +219,8 @@ public class AttachActionTest extends TopologyActionTest<AttachAction> {
     assertThat(allValues.get(0), is(equalTo(allValues.get(1))));
     Testing.replaceUIDs(allValues.get(0));
     assertThat(
-        objectMapper.writeValueAsString(allValues.get(0)),
         allValues.get(0),
-        is(equalTo(objectMapper.readValue(getClass().getResource("/cluster2.json"), Cluster.class))));
+        is(equalTo(json.parse(getClass().getResource("/cluster2.json"), Cluster.class))));
 
     Cluster cluster = allValues.get(0);
     assertThat(cluster.getStripes(), hasSize(2));

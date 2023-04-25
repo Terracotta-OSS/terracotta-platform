@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.persistence.sanskrit.SanskritException;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -29,7 +30,7 @@ public class AddStringSanskritChangeTest {
   private SanskritChangeVisitor visitor;
 
   @Test
-  public void callsSetString() {
+  public void callsSetString() throws SanskritException {
     AddStringSanskritChange change = new AddStringSanskritChange("key", "abc");
     change.accept(visitor);
 

@@ -38,8 +38,6 @@ import com.fasterxml.jackson.databind.type.TypeBindings;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.databind.type.TypeModifier;
 import com.fasterxml.jackson.databind.util.NameTransformer;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.terracotta.common.struct.json.StructJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
@@ -55,6 +53,7 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.inet.HostPort;
 import org.terracotta.inet.json.InetJsonModule;
+import org.terracotta.json.Json;
 import org.terracotta.json.TerracottaJsonModule;
 
 import java.lang.reflect.Type;
@@ -69,7 +68,7 @@ import static java.util.Arrays.asList;
 /**
  * @author Mathieu Carbou
  */
-public class DynamicConfigModelJsonModule extends SimpleModule {
+public class DynamicConfigModelJsonModule extends SimpleModule implements Json.Module {
   private static final long serialVersionUID = 1L;
 
   public DynamicConfigModelJsonModule() {
@@ -119,9 +118,7 @@ public class DynamicConfigModelJsonModule extends SimpleModule {
     return asList(
         new TerracottaJsonModule(),
         new StructJsonModule(),
-        new InetJsonModule(),
-        new Jdk8Module(),
-        new JavaTimeModule());
+        new InetJsonModule());
   }
 
   @Override

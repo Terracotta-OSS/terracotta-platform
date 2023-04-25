@@ -15,7 +15,6 @@
  */
 package org.terracotta.management.integration.tests;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Test;
 import org.terracotta.management.entity.nms.NmsConfig;
 import org.terracotta.management.model.call.Parameter;
@@ -58,8 +57,8 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     Settings serverCacheSettings = new ArrayList<>(registry.getCapability("ServerCacheSettings").get().getDescriptors(Settings.class)).get(1);
     serverCacheSettings.set("time", 0L);
 
-    JsonNode actual = removeRandomValues(toJson(registry.getCapabilities()));
-    JsonNode expected = readJson("server-descriptors.json");
+    Object actual = toJson(registry.getCapabilities());
+    Object expected = readJson("server-descriptors.json");
     assertEquals(expected, actual);
 
     registry = nmsService.readTopology()
@@ -124,12 +123,8 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
         .map(o -> o.<Long>getLatestSampleValue("Cluster:HitCount"))
         .anyMatch(counter -> counter.get() == 1L));
 
-    JsonNode expected = readJson("stats.json");
-    queryAllRemoteStatsUntil(stats -> {
-      JsonNode actual = removeRandomValues(toJson(stats));
-      System.out.println(actual.toPrettyString());
-      return actual.equals(expected);
-    });
+    Object expected = readJson("stats.json");
+    queryAllRemoteStatsUntil(stats -> toJson(stats).equals(expected));
 
     get(1, "pets", "pet2"); // miss
 

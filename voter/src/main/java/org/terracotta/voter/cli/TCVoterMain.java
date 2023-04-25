@@ -27,9 +27,11 @@ import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.inet.HostPort;
 import org.terracotta.inet.InetSocketAddressConverter;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.voter.TCVoter;
 import org.terracotta.voter.TCVoterImpl;
+import org.terracotta.voter.VotingGroup;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -47,7 +49,6 @@ import static java.util.stream.Collectors.toList;
 import static org.terracotta.connection.ConnectionPropertyNames.CONNECTION_NAME;
 import static org.terracotta.connection.ConnectionPropertyNames.CONNECTION_TIMEOUT;
 import static org.terracotta.connection.DiagnosticsFactory.REQUEST_TIMEOUT;
-import org.terracotta.voter.VotingGroup;
 
 public class TCVoterMain {
 
@@ -86,12 +87,12 @@ public class TCVoterMain {
   }
 
   protected DiagnosticServiceProvider createDiagnosticServiceProvider(Options options) {
-    ObjectMapperFactory objectMapperFactory = createObjectMapperFactory();
-    return new CompatibleDiagnosticServiceProvider(new DefaultDiagnosticServiceProvider(options.getConnectionName(), options.getConnectionTimeout(), options.getRequestTimeout(), null, objectMapperFactory));
+    Json.Factory factory = createJsonFactory();
+    return new CompatibleDiagnosticServiceProvider(new DefaultDiagnosticServiceProvider(options.getConnectionName(), options.getConnectionTimeout(), options.getRequestTimeout(), null, factory));
   }
 
-  protected ObjectMapperFactory createObjectMapperFactory() {
-    return new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+  protected Json.Factory createJsonFactory() {
+    return new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
   }
 
   // concurrently connects to the user-provided servers to fetch the topology and returns as soon as we get one

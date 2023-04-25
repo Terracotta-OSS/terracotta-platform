@@ -27,10 +27,10 @@ import static org.terracotta.persistence.sanskrit.Owner.own;
 
 public interface Sanskrit extends AutoCloseable {
 
-  static Sanskrit init(FilesystemDirectory filesystemDirectory, ObjectMapperSupplier objectMapperSupplier) throws SanskritException {
+  static Sanskrit init(FilesystemDirectory filesystemDirectory, SanskritMapper mapper) throws SanskritException {
     try (
         Owner<DirectoryLock, IOException> lockOwner = own(filesystemDirectory.lock(), IOException.class);
-        Owner<SanskritImpl, SanskritException> sanskritOwner = own(new SanskritImpl(filesystemDirectory, objectMapperSupplier), SanskritException.class)
+        Owner<SanskritImpl, SanskritException> sanskritOwner = own(new SanskritImpl(filesystemDirectory, mapper), SanskritException.class)
     ) {
       return new LockReleasingSanskrit(
           new PersistentFailSanskrit(

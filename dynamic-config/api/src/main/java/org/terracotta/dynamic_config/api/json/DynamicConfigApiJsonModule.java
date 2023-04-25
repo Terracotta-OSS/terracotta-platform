@@ -20,8 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.terracotta.common.struct.json.StructJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockContext;
@@ -48,6 +46,7 @@ import org.terracotta.dynamic_config.api.model.nomad.StripeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.inet.json.InetJsonModule;
+import org.terracotta.json.Json;
 import org.terracotta.json.TerracottaJsonModule;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.json.NomadJsonModule;
@@ -62,7 +61,7 @@ import static java.util.Arrays.asList;
 /**
  * @author Mathieu Carbou
  */
-public class DynamicConfigApiJsonModule extends SimpleModule {
+public class DynamicConfigApiJsonModule extends SimpleModule implements Json.Module {
   private static final long serialVersionUID = 1L;
 
   public DynamicConfigApiJsonModule() {
@@ -107,8 +106,6 @@ public class DynamicConfigApiJsonModule extends SimpleModule {
         new StructJsonModule(),
         new InetJsonModule(),
         new NomadJsonModule(),
-        new Jdk8Module(),
-        new JavaTimeModule(),
         new DynamicConfigModelJsonModule());
   }
 

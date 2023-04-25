@@ -15,9 +15,11 @@
  */
 package org.terracotta.persistence.sanskrit.change;
 
+import org.terracotta.persistence.sanskrit.SanskritException;
+
 /**
  * An interface representing a data change to be applied atomically to the append log.
  */
 public interface SanskritChange {
-  void accept(SanskritChangeVisitor visitor);
+  void accept(SanskritChangeVisitor visitor) throws SanskritException;
 }

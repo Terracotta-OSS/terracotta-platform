@@ -17,6 +17,7 @@ package org.terracotta.nomad.server.state;
 
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
+import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerMode;
 import org.terracotta.nomad.server.NomadServerRequest;
 
@@ -24,25 +25,25 @@ import java.time.Instant;
 import java.util.UUID;
 
 public interface NomadStateChange<T> {
-  NomadStateChange<T> setInitialized();
+  NomadStateChange<T> setInitialized() throws NomadException;
 
-  NomadStateChange<T> setMode(NomadServerMode mode);
+  NomadStateChange<T> setMode(NomadServerMode mode) throws NomadException;
 
-  NomadStateChange<T> setRequest(NomadServerRequest request);
+  NomadStateChange<T> setRequest(NomadServerRequest request) throws NomadException;
 
-  NomadStateChange<T> setLatestChangeUuid(UUID changeUuid);
+  NomadStateChange<T> setLatestChangeUuid(UUID changeUuid) throws NomadException;
 
-  NomadStateChange<T> setCurrentVersion(long versionNumber);
+  NomadStateChange<T> setCurrentVersion(long versionNumber) throws NomadException;
 
-  NomadStateChange<T> setHighestVersion(long versionNumber);
+  NomadStateChange<T> setHighestVersion(long versionNumber) throws NomadException;
 
-  NomadStateChange<T> setLastMutationHost(String lastMutationHost);
+  NomadStateChange<T> setLastMutationHost(String lastMutationHost) throws NomadException;
 
-  NomadStateChange<T> setLastMutationUser(String lastMutationUser);
+  NomadStateChange<T> setLastMutationUser(String lastMutationUser) throws NomadException;
 
-  NomadStateChange<T> setLastMutationTimestamp(Instant timestamp);
+  NomadStateChange<T> setLastMutationTimestamp(Instant timestamp) throws NomadException;
 
-  NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest);
+  NomadStateChange<T> createChange(UUID changeUuid, ChangeRequest<T> changeRequest) throws NomadException;
 
-  NomadStateChange<T> updateChangeRequestState(UUID changeUuid, ChangeRequestState newState);
+  NomadStateChange<T> updateChangeRequestState(UUID changeUuid, ChangeRequestState newState) throws NomadException;
 }

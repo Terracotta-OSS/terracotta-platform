@@ -32,14 +32,15 @@ public class PassiveTopologyIT extends AbstractHATest {
   public void topology_includes_passives() throws Exception {
     Cluster cluster = nmsService.readTopology();
     Server passive = cluster.serverStream().filter(server -> !server.isActive()).findAny().get();
-    final String[] currentPassive = {toJson(passive.toMap()).toString()};
+    final String[] currentPassive = {json.toString(passive.toMap())};
+
     cluster.clientStream().forEach(client -> currentPassive[0] = currentPassive[0]
         .replace(passive.getServerName(), "stripe-PASSIVE"));
 
-    String actual = removeRandomValues(currentPassive[0]);
+    Object actual = json.parse(removeRandomValues(currentPassive[0]));
 
     // and compare
-    assertEquals(readJsonStr(actual).toPrettyString(), readJson("passive.json"), readJsonStr(actual));
+    assertEquals(json.toPrettyString(actual), readJson("passive.json"), actual);
   }
 
   @Test

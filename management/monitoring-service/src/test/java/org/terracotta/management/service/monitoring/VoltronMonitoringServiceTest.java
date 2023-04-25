@@ -15,8 +15,6 @@
  */
 package org.terracotta.management.service.monitoring;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +26,8 @@ import org.terracotta.entity.ClientDescriptor;
 import org.terracotta.entity.ClientSourceId;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.entity.ServiceRegistry;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.management.model.call.ContextualReturn;
 import org.terracotta.management.model.capabilities.DefaultCapability;
 import org.terracotta.management.model.capabilities.context.CapabilityContext;
@@ -51,16 +51,17 @@ import org.terracotta.monitoring.ServerState;
 import java.io.File;
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -68,7 +69,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import org.skyscreamer.jsonassert.JSONAssert;
 import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.RELIABLE_CHANNEL_KEY;
 import static org.terracotta.management.service.monitoring.DefaultEntityMonitoringService.UNRELIABLE_CHANNEL_KEY;
 import static org.terracotta.management.service.monitoring.ManagementMessage.Type.NOTIFICATION;
@@ -89,7 +89,7 @@ import static org.terracotta.monitoring.PlatformMonitoringConstants.STATE_NODE_N
 @RunWith(JUnit4.class)
 public class VoltronMonitoringServiceTest {
 
-  ObjectMapper mapper = new ObjectMapper();
+  Json mapper = new DefaultJsonFactory().create();
   MonitoringServiceProvider activeServiceProvider = new MonitoringServiceProvider();
   MonitoringServiceProvider passiveServiceProvider = new MonitoringServiceProvider();
   ClientCommunicator clientCommunicator;
@@ -119,8 +119,6 @@ public class VoltronMonitoringServiceTest {
 
   @Before
   public void setUp() throws Exception {
-    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-
     active = new PlatformServer("server-1", "localhost", "127.0.0.1", "0.0.0.0", 9510, 9610, "v1", "b1", startTime);
     passive = new PlatformServer("server-2", "localhost", "127.0.0.1", "0.0.0.0", 9511, 9611, "v1", "b1", startTime);
 
@@ -431,7 +429,7 @@ public class VoltronMonitoringServiceTest {
     verifyNoMoreInteractions(managementExecutor);
   }
 
-  private void assertTopologyEquals(String file) throws Exception {
+  private void assertTopologyEquals(String file) {
     Cluster cluster = managementService.readTopology();
     cluster.serverStream().forEach(server -> {
       server.setUpTimeSec(0);
@@ -439,9 +437,9 @@ public class VoltronMonitoringServiceTest {
         server.setActivateTime(activateTime);
       }
     });
-    String expected = new String(Files.readAllBytes(new File("src/test/resources/" + file).toPath()), "UTF-8");
-    String sampled = mapper.writeValueAsString(cluster.toMap());
-    JSONAssert.assertEquals(sampled, expected, sampled, true);
+    Map<String, Object> expected = mapper.parseObject(new File("src/test/resources/" + file));
+    Map<String, Object> sampled = mapper.mapToObject(cluster.toMap());
+    assertEquals(expected, sampled);
   }
 
   private List<Message> messages() {

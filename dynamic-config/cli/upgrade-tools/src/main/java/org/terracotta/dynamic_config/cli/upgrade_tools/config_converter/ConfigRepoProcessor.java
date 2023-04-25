@@ -28,7 +28,7 @@ import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.ConfigStorageException;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
 import org.terracotta.nomad.client.NomadEndpoint;
@@ -49,7 +49,7 @@ public class ConfigRepoProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigRepoProcessor.class);
 
   private final Path outputFolderPath;
-  private final NomadServerFactory nomadServerFactory = new NomadServerFactory(new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()));
+  private final NomadServerFactory nomadServerFactory = new NomadServerFactory(new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule()));
 
   public ConfigRepoProcessor(Path outputFolderPath) {
     this.outputFolderPath = outputFolderPath;

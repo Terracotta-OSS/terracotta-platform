@@ -33,7 +33,7 @@ import org.terracotta.connection.entity.EntityRef;
 import org.terracotta.exception.EntityNotFoundException;
 import org.terracotta.exception.EntityNotProvidedException;
 import org.terracotta.exception.EntityVersionMismatchException;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -84,7 +84,7 @@ public class DiagnosticServiceFactoryTest {
         Duration.ofSeconds(2),
         Duration.ofSeconds(3),
         null,
-        new ObjectMapperFactory());
+        new DefaultJsonFactory());
 
     assertThat(diagnosticService, is(not(nullValue())));
     assertThat(address.getValue().iterator().next(), is(equalTo(addr)));
@@ -106,7 +106,7 @@ public class DiagnosticServiceFactoryTest {
         Duration.ofSeconds(2),
         Duration.ofSeconds(3),
         null,
-        new ObjectMapperFactory());
+        new DefaultJsonFactory());
 
     verify(connection, times(1)).close();
   }
@@ -125,7 +125,7 @@ public class DiagnosticServiceFactoryTest {
         Duration.ofSeconds(2),
         Duration.ofSeconds(3),
         null,
-        new ObjectMapperFactory());
+        new DefaultJsonFactory());
 
     verify(connection, times(1)).close();
   }

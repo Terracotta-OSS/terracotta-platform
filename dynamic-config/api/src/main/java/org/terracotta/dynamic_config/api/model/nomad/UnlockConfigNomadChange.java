@@ -46,6 +46,11 @@ public class UnlockConfigNomadChange extends FilteredNomadChange {
     return format("Unlocking the config (forced=%b)", forced);
   }
 
+  @Override
+  public final String getType() {
+    return "UnlockConfigNomadChange";
+  }
+
   public boolean isForced() {
     return forced;
   }

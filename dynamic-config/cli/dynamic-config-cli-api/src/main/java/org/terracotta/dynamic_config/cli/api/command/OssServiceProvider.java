@@ -25,13 +25,15 @@ import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.KitInformation;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
+import org.terracotta.dynamic_config.cli.api.json.CliJsonModule;
 import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.LockAwareNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.entity.client.NomadEntity;
 import org.terracotta.nomad.entity.client.NomadEntityProvider;
@@ -53,7 +55,8 @@ public class OssServiceProvider implements ServiceProvider {
         createNomadManager(config),
         createRestartService(config),
         createStopService(config),
-        createObjectMapperFactory(config),
+        createJsonFactory(config),
+        createJson(config),
         createNomadEntityProvider(config),
         createOutputService(config));
   }
@@ -102,7 +105,7 @@ public class OssServiceProvider implements ServiceProvider {
         getConnectionTimeout(config),
         getRequestTimeout(config),
         config.getSecurityRootDirectory(),
-        createObjectMapperFactory(config));
+        createJsonFactory(config));
     return new CompatibleDiagnosticServiceProvider(diagnosticServiceProvider) {
       @Override
       protected boolean isCompatible(KitInformation kitInformation) {
@@ -111,8 +114,12 @@ public class OssServiceProvider implements ServiceProvider {
     };
   }
 
-  protected ObjectMapperFactory createObjectMapperFactory(Configuration config) {
-    return new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+  protected Json.Factory createJsonFactory(Configuration config) {
+    return new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule(), new CliJsonModule());
+  }
+
+  protected Json createJson(Configuration config) {
+    return createJsonFactory(config).create();
   }
 
   protected Duration getEntityOperationTimeout(Configuration config) {

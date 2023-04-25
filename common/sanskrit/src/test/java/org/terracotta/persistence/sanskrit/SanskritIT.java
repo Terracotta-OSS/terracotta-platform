@@ -18,7 +18,6 @@ package org.terracotta.persistence.sanskrit;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.terracotta.json.ObjectMapperFactory;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
 import java.nio.file.Path;
@@ -26,7 +25,7 @@ import java.nio.file.Path;
 import static org.junit.Assert.assertEquals;
 
 public class SanskritIT {
-  private final ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.notVersioned(new ObjectMapperFactory().create());
+  private final SanskritMapper mapper = new JsonSanskritMapper();
 
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
@@ -36,21 +35,21 @@ public class SanskritIT {
     Path root = folder.newFolder().toPath();
     FilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(root);
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapperSupplier)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, mapper)) {
       sanskrit.setString("configHash", "49e1ceea34a674b42cd70b1764a5477227d1ffcd");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapperSupplier)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, mapper)) {
       assertEquals("49e1ceea34a674b42cd70b1764a5477227d1ffcd", sanskrit.getString("configHash"));
       sanskrit.setString("configHash", "019eddbd529da0184ba78422db59539454ddc55f");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapperSupplier)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, mapper)) {
       assertEquals("019eddbd529da0184ba78422db59539454ddc55f", sanskrit.getString("configHash"));
       sanskrit.setString("configHash", "b5da3b7595c55a5d241e567d576c5b59711dc95a");
     }
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapperSupplier)) {
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, mapper)) {
       assertEquals("b5da3b7595c55a5d241e567d576c5b59711dc95a", sanskrit.getString("configHash"));
     }
   }
@@ -61,8 +60,8 @@ public class SanskritIT {
     Path root = folder.newFolder().toPath();
     FilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(root);
 
-    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, objectMapperSupplier)) {
-      Sanskrit.init(filesystemDirectory, objectMapperSupplier);
+    try (Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, mapper)) {
+      Sanskrit.init(filesystemDirectory, mapper);
     }
   }
 }

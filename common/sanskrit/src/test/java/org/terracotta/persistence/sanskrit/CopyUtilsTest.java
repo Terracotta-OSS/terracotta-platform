@@ -19,7 +19,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.terracotta.json.ObjectMapperFactory;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -30,33 +29,35 @@ public class CopyUtilsTest {
   private SanskritVisitor visitor1;
   @Mock
   private SanskritVisitor visitor2;
-  private ObjectMapperSupplier objectMapperSupplier = ObjectMapperSupplier.notVersioned(new ObjectMapperFactory().create());
+  private final SanskritMapper mapper = new JsonSanskritMapper();
 
   @Test
-  public void copyEmpty() {
-    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
-    SanskritObject sanskritObject = CopyUtils.makeCopy(objectMapperSupplier, object);
+  public void copyEmpty() throws SanskritException {
+    SanskritObjectImpl object = new SanskritObjectImpl(mapper);
+    SanskritObjectImpl sanskritObject = new SanskritObjectImpl(mapper);
+    object.accept(sanskritObject);
     sanskritObject.accept(visitor1);
 
     verifyNoMoreInteractions(visitor1);
   }
 
   @Test
-  public void copyData() {
-    SanskritObjectImpl subObject = new SanskritObjectImpl(objectMapperSupplier);
+  public void copyData() throws SanskritException {
+    SanskritObjectImpl subObject = new SanskritObjectImpl(mapper);
     subObject.setString("1", "b");
 
-    SanskritObjectImpl object = new SanskritObjectImpl(objectMapperSupplier);
+    SanskritObjectImpl object = new SanskritObjectImpl(mapper);
     object.setString("1", "a");
     object.setLong("2", 1L);
     object.setObject("3", subObject);
 
-    SanskritObject sanskritObject = CopyUtils.makeCopy(objectMapperSupplier, object);
+    SanskritObjectImpl sanskritObject = new SanskritObjectImpl(mapper);
+    object.accept(sanskritObject);
     sanskritObject.accept(visitor1);
     sanskritObject.getObject("3").accept(visitor2);
 
-    verify(visitor1).setString("1", "a");
-    verify(visitor1).setLong("2", 1L);
-    verify(visitor2).setString("1", "b");
+    verify(visitor1).set("1", "a", "1");
+    verify(visitor1).set("2", 1L, "1");
+    verify(visitor2).set("1", "b", "1");
   }
 }

@@ -136,7 +136,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
         // null value means latest version.
         changeFormatVersion = Version.V1.getValue();
       }
-      NomadChange change = child.getObject(CHANGE_OPERATION, NomadChange.class, changeFormatVersion);
+      NomadChange change = child.get(CHANGE_OPERATION, NomadChange.class, changeFormatVersion);
       UUID prevChangeUuid = child.getString(PREV_CHANGE_UUID) == null ? null : UUID.fromString(child.getString(PREV_CHANGE_UUID));
       String expectedHash = child.getString(CHANGE_RESULT_HASH);
       String creationHost = child.getString(CHANGE_CREATION_HOST);
@@ -152,7 +152,7 @@ public class SanskritNomadServerState implements NomadServerState<NodeContext> {
       }
 
       return new ChangeState<>(state, version, prevChangeUuid, change, config.getTopology(), creationHost, creationUser, creationTimestamp, expectedHash);
-    } catch (ConfigStorageException e) {
+    } catch (ConfigStorageException | SanskritException e) {
       throw new NomadException("Failed to read configuration: " + changeUuid, e);
     }
   }

@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.common.struct.Tuple2;
@@ -26,14 +25,12 @@ import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
 import org.terracotta.dynamic_config.api.service.Props;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
 import org.terracotta.dynamic_config.server.configuration.nomad.NomadServerFactory;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.server.ChangeApplicator;
 import org.terracotta.testing.TmpDir;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,22 +53,20 @@ public class BackwardCompatibilityTest {
 
   @Test
   public void test_automatic_upgrade_of_config_repository() throws Exception {
-    Tuple2<NodeContext, ObjectMapperFactory> res = upgradedTopology("config-v1", "default-node1", 1);
-    ObjectMapper objectMapper = res.getT2().create();
+    Tuple2<NodeContext, Json.Factory> res = upgradedTopology("config-v1", "default-node1", 1);
+    Json json = res.getT2().create();
     assertThat(
-        objectMapper.writeValueAsString(res.getT1()),
-        objectMapper.valueToTree(res.getT1()).toString(),
-        is(equalTo(objectMapper.readTree(read("/topology.json")).toString())));
+        json.map(res.getT1()),
+        is(equalTo(json.parse(read("/topology.json")))));
   }
 
   @Test
   public void test_automatic_upgrade_of_config_repository_with_setting_change() throws Exception {
-    Tuple2<NodeContext, ObjectMapperFactory> res = upgradedTopology("config-v1_with_setting", "node-1", 2);
-    ObjectMapper objectMapper = res.getT2().create();
+    Tuple2<NodeContext, Json.Factory> res = upgradedTopology("config-v1_with_setting", "node-1", 2);
+    Json json = res.getT2().create();
     assertThat(
-        objectMapper.writeValueAsString(res.getT1()),
-        objectMapper.valueToTree(res.getT1()).toString(),
-        is(equalTo(objectMapper.readTree(read("/topology_with_setting.json")).toString())));
+        json.map(res.getT1()),
+        is(equalTo(json.parse(read("/topology_with_setting.json")))));
   }
 
   @Test
@@ -90,16 +85,15 @@ public class BackwardCompatibilityTest {
     assertThatConfigDirIsCompatible("config-v2-10.7.0.0.315", "node1", 2);
   }
 
-  private String read(String resource) throws URISyntaxException, IOException {
+  private URL read(String resource)  {
     URL url = getClass().getResource(resource);
     if (url == null) {
       throw new AssertionError(resource);
     }
-    Path path = Paths.get(url.toURI());
-    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    return url;
   }
 
-  private Tuple2<NodeContext, ObjectMapperFactory> upgradedTopology(String name, String nodeName, int lastCommittedVersion) throws Exception {
+  private Tuple2<NodeContext, Json.Factory> upgradedTopology(String name, String nodeName, int lastCommittedVersion) throws Exception {
     Path resourcesRoot = Paths.get(getClass().getResource("/" + name).toURI());
 
     // copy config folder in a temporary location
@@ -114,8 +108,8 @@ public class BackwardCompatibilityTest {
     // create nomad server
     NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(config, IParameterSubstitutor.identity());
     nomadConfigurationManager.createDirectories();
-    ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
-    NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
+    Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
+    NomadServerFactory nomadServerFactory = new NomadServerFactory(jsonFactory);
 
     try (DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, nodeName, null)) {
       nomadServer.setChangeApplicator(ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()));
@@ -138,11 +132,11 @@ public class BackwardCompatibilityTest {
       // subsequent calls are outputting the same result always after an upgrade
       assertThat(nomadServer.discover().getLatestChange().getResult(), is(equalTo(topology)));
 
-      return Tuple2.tuple2(topology, objectMapperFactory);
+      return Tuple2.tuple2(topology, jsonFactory);
     }
   }
 
-  private Tuple2<NodeContext, ObjectMapperFactory> assertThatConfigDirIsCompatible(String name, String nodeName, int lastCommittedVersion) throws Exception {
+  private Tuple2<NodeContext, Json.Factory> assertThatConfigDirIsCompatible(String name, String nodeName, int lastCommittedVersion) throws Exception {
     Path resourcesRoot = Paths.get(getClass().getResource("/" + name).toURI());
 
     // copy config folder in a temporary location
@@ -156,8 +150,8 @@ public class BackwardCompatibilityTest {
     // create nomad server
     NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(config, IParameterSubstitutor.identity());
     nomadConfigurationManager.createDirectories();
-    ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
-    NomadServerFactory nomadServerFactory = new NomadServerFactory(objectMapperFactory);
+    Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
+    NomadServerFactory nomadServerFactory = new NomadServerFactory(jsonFactory);
 
     try (DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, nodeName, null)) {
       nomadServer.setChangeApplicator(ChangeApplicator.allow((nodeContext, change) -> nodeContext.withCluster(((DynamicConfigNomadChange) change).apply(nodeContext.getCluster())).get()));
@@ -173,7 +167,7 @@ public class BackwardCompatibilityTest {
       // subsequent calls are outputting the same result always after an upgrade
       assertThat(nomadServer.discover().getLatestChange().getResult(), is(equalTo(topology)));
 
-      return Tuple2.tuple2(topology, objectMapperFactory);
+      return Tuple2.tuple2(topology, jsonFactory);
     }
   }
 }

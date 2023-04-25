@@ -15,20 +15,18 @@
  */
 package org.terracotta.dynamic_config.system_tests.activated;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.JsonSanskritMapper;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
-import org.terracotta.persistence.sanskrit.JsonUtils;
 import org.terracotta.persistence.sanskrit.MutableSanskritObject;
-import org.terracotta.persistence.sanskrit.ObjectMapperSupplier;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.SanskritImpl;
+import org.terracotta.persistence.sanskrit.SanskritMapper;
 import org.terracotta.persistence.sanskrit.SanskritObject;
-import org.terracotta.persistence.sanskrit.SanskritObjectImpl;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
 
 import java.io.IOException;
@@ -232,14 +230,14 @@ public class ConfigSyncIT extends DynamicConfigIT {
   }
 
   private List<SanskritObject> getChanges(Path pathToAppendLog) throws SanskritException {
-    ObjectMapper objectMapper = objectMapperFactory.create();
     List<SanskritObject> res = new ArrayList<>();
-    new SanskritImpl(new FileBasedFilesystemDirectory(pathToAppendLog), ObjectMapperSupplier.notVersioned(objectMapper)) {
+    SanskritMapper mapper = new JsonSanskritMapper(jsonFactory);
+    new SanskritImpl(new FileBasedFilesystemDirectory(pathToAppendLog), mapper) {
       @Override
-      public void onNewRecord(String timeStamp, String json) throws SanskritException {
-        MutableSanskritObject mutableSanskritObject = new SanskritObjectImpl(ObjectMapperSupplier.notVersioned(objectMapper));
-        JsonUtils.parse(ObjectMapperSupplier.notVersioned(objectMapper), null, json, mutableSanskritObject);
-        res.add(mutableSanskritObject);
+      public void onNewRecord(String timeStamp, String data) throws SanskritException {
+        MutableSanskritObject visitor = newMutableSanskritObject();
+        mapper.fromString(data, null, visitor);
+        res.add(visitor);
       }
     };
     return res;

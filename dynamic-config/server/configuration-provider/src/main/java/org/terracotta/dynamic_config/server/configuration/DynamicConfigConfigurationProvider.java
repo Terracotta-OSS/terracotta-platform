@@ -18,8 +18,8 @@ package org.terracotta.dynamic_config.server.configuration;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.configuration.ConfigurationException;
+import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesHolder;
 import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
@@ -51,7 +51,8 @@ import org.terracotta.dynamic_config.server.configuration.startup.parsing.deprec
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigSyncData;
 import org.terracotta.dynamic_config.server.configuration.sync.DynamicConfigurationPassiveSync;
 import org.terracotta.dynamic_config.server.configuration.sync.Require;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServer;
 import org.terracotta.server.Server;
@@ -96,11 +97,11 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       LicenseService licenseService = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseService::unsupported);
 
       // initialize the json system
-      ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
+      Json.Factory jsonFactory = new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule());
 
       // Service used to manage and initialize the Nomad 2PC system
-      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, objectMapperFactory, server);
-      synCodec = new DynamicConfigSyncData.Codec(objectMapperFactory);
+      nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, jsonFactory, server);
+      synCodec = new DynamicConfigSyncData.Codec(jsonFactory);
 
       // CLI parsing
       Options options = null;
@@ -131,7 +132,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
       // Configuration generator class
       // Initialized when processing the CLI depending oin the user input, and called to generate a configuration
-      ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver, objectMapperFactory, server);
+      ConfigurationGeneratorVisitor configurationGeneratorVisitor = new ConfigurationGeneratorVisitor(parameterSubstitutor, nomadServerManager, serviceClassLoader, userDirResolver, jsonFactory, server);
 
       // processors for the CLI
       CommandLineProcessor commandLineProcessor = new MainCommandLineProcessor(options, clusterFactory, configurationGeneratorVisitor, parameterSubstitutor, server);
@@ -157,7 +158,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
 
       //  exposes services through org.terracotta.entity.PlatformConfiguration
       configuration.registerExtendedConfiguration(Server.class, server);
-      configuration.registerExtendedConfiguration(ObjectMapperFactory.class, objectMapperFactory);
+      configuration.registerExtendedConfiguration(Json.Factory.class, jsonFactory);
       configuration.registerExtendedConfiguration(IParameterSubstitutor.class, parameterSubstitutor);
       configuration.registerExtendedConfiguration(ConfigChangeHandlerManager.class, configChangeHandlerManager);
       configuration.registerExtendedConfiguration(DynamicConfigEventService.class, eventService);

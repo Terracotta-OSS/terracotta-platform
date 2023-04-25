@@ -15,12 +15,11 @@
  */
 package org.terracotta.management.model.cluster;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.skyscreamer.jsonassert.JSONAssert;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,7 +28,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -211,13 +209,13 @@ public class ClusterTest extends AbstractTest {
   }
 
   @Test
-  @SuppressWarnings("rawtypes")
-  public void test_toMap() throws Exception {
-    String expectedJson = new String(Files.readAllBytes(new File("src/test/resources/cluster.json").toPath()), "UTF-8");
-    Map actual = cluster1.toMap();
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-    JSONAssert.assertEquals(mapper.writeValueAsString(actual), expectedJson, mapper.writeValueAsString(actual), true);
+  public void test_toMap() {
+    final Json json = new DefaultJsonFactory().create();
+
+    Map<String, Object> actual = json.mapToObject(cluster1.toMap());
+    Map<String, Object> expected = json.parseObject(new File("src/test/resources/cluster.json"));
+
+    assertEquals(expected, actual);
   }
 
   @SuppressWarnings("unchecked")

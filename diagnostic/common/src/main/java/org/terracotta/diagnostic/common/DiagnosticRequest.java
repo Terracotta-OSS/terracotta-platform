@@ -15,9 +15,6 @@
  */
 package org.terracotta.diagnostic.common;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.Serializable;
@@ -37,18 +34,13 @@ public class DiagnosticRequest implements Serializable {
 
   private final String methodName;
 
-  // Note: using "@class" here is fine since we control both end of input and output json plus the communication channel
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
   private final Object[] arguments;
 
   public DiagnosticRequest(Class<?> serviceInterface, String methodName) {
     this(serviceInterface, methodName, new Object[0]);
   }
 
-  @JsonCreator
-  public DiagnosticRequest(@JsonProperty(value = "serviceInterface", required = true) Class<?> serviceInterface,
-                           @JsonProperty(value = "methodName", required = true) String methodName,
-                           @JsonProperty(value = "arguments") Object... arguments) {
+  public DiagnosticRequest(Class<?> serviceInterface, String methodName, Object... arguments) {
     this.serviceInterface = requireNonNull(serviceInterface);
     this.methodName = requireNonNull(methodName);
     this.arguments = arguments == null ? new Object[0] : arguments;

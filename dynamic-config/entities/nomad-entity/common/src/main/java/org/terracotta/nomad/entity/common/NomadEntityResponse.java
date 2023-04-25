@@ -15,8 +15,6 @@
  */
 package org.terracotta.nomad.entity.common;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.terracotta.entity.EntityResponse;
 import org.terracotta.nomad.messages.AcceptRejectResponse;
 
@@ -29,8 +27,7 @@ public class NomadEntityResponse implements EntityResponse {
 
   private final AcceptRejectResponse response;
 
-  @JsonCreator
-  public NomadEntityResponse(@JsonProperty(value = "response", required = true) AcceptRejectResponse response) {
+  public NomadEntityResponse(AcceptRejectResponse response) {
     this.response = requireNonNull(response);
   }
 

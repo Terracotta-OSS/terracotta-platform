@@ -15,8 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration.sync;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,7 +29,8 @@ import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.dynamic_config.server.api.DynamicConfigNomadServer;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.messages.ChangeDetails;
 import org.terracotta.nomad.messages.CommitMessage;
@@ -50,8 +49,8 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -95,7 +94,7 @@ public class DynamicConfigurationPassiveSyncTest {
 
   private NomadChangeInfo activeActivation = committed(randomUUID(), new ClusterActivationNomadChange(activeTopology.getCluster().clone()), 1L);
   private NomadChangeInfo passiveActivation = activeActivation; // joint activation
-  private final DynamicConfigSyncData.Codec codec = new DynamicConfigSyncData.Codec(new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()));
+  private final DynamicConfigSyncData.Codec codec = new DynamicConfigSyncData.Codec(new DefaultJsonFactory());
 
   private final TopologyService activeTopologyService = mock(TopologyService.class);
   private final TopologyService passiveTopologyService = mock(TopologyService.class);
@@ -124,15 +123,15 @@ public class DynamicConfigurationPassiveSyncTest {
   }
 
   @Test
-  public void testCodec() throws JsonProcessingException {
+  public void testCodec() {
     List<NomadChangeInfo> nomadChanges = asList(
         committed(randomUUID(), change("a", "100MB"), 1),
         committed(randomUUID(), change("a", "200MB"), 2)
     );
 
     List<NomadChangeInfo> decodedChanges = codec.decode(codec.encode(new DynamicConfigSyncData(nomadChanges, activeTopology.getCluster(), null))).getNomadChanges();
-    ObjectMapper mapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
-    assertThat(mapper.writeValueAsString(decodedChanges), mapper.writeValueAsString(decodedChanges), is(equalTo(mapper.writeValueAsString(nomadChanges))));
+    Json json = new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule()).create();
+    assertThat(json.map(decodedChanges), is(equalTo(json.map(nomadChanges))));
   }
 
   @Test

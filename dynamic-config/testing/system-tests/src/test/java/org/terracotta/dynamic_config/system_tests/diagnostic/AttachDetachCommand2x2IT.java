@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.system_tests.diagnostic;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
@@ -41,9 +40,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
 
     assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", file.toString(), "-t", "json"), is(successful()));
 
-    ObjectMapper objectMapper = objectMapperFactory.create();
-
-    Cluster cluster = objectMapper.readValue(file.toFile(), Cluster.class);
+    Cluster cluster = json.parse(file.toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodes(), hasSize(1));
 
@@ -51,7 +48,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(configTool("attach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", file.toString(), "-t", "json"), is(successful()));
 
-    cluster = objectMapper.readValue(file.toFile(), Cluster.class);
+    cluster = json.parse(file.toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodes(), hasSize(2));
 
@@ -59,7 +56,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(configTool("attach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
     assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", file.toString(), "-t", "json"), is(successful()));
 
-    cluster = objectMapper.readValue(file.toFile(), Cluster.class);
+    cluster = json.parse(file.toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(2));
     assertThat(cluster.getNodes(), hasSize(3));
 
@@ -67,7 +64,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(configTool("detach", "-t", "stripe", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(2, 1)), is(successful()));
     assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", file.toString(), "-t", "json"), is(successful()));
 
-    cluster = objectMapper.readValue(file.toFile(), Cluster.class);
+    cluster = json.parse(file.toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodes(), hasSize(2));
 
@@ -75,7 +72,7 @@ public class AttachDetachCommand2x2IT extends DynamicConfigIT {
     assertThat(configTool("detach", "-d", "localhost:" + getNodePort(), "-s", "localhost:" + getNodePort(1, 2)), is(successful()));
     assertThat(configTool("export", "-s", "localhost:" + getNodePort(), "-f", file.toString(), "-t", "json"), is(successful()));
 
-    cluster = objectMapper.readValue(file.toFile(), Cluster.class);
+    cluster = json.parse(file.toFile(), Cluster.class);
     assertThat(cluster.getStripes(), hasSize(1));
     assertThat(cluster.getNodes(), hasSize(1));
   }

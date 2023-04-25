@@ -15,8 +15,9 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,9 +36,9 @@ public class LogUtil {
 
     for (Map<String, Object> record : records) {
       String timestamp = Instant.now().toString();
-      String json = new ObjectMapperFactory().create().writeValueAsString(record);
+      String data = new DefaultJsonFactory().create().toString(record);
 
-      String entryString = timestamp + LS + json;
+      String entryString = timestamp + LS + data;
 
       String hashString = "";
       if (lastHash != null) {
@@ -46,7 +47,7 @@ public class LogUtil {
 
       hashString += entryString;
 
-      lastHash = HashUtils.generateHash(hashString.getBytes("UTF-8"));
+      lastHash = HashUtils.generateHash(hashString.getBytes(StandardCharsets.UTF_8));
 
       log.append(entryString);
       log.append(LS);

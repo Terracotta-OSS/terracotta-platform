@@ -15,6 +15,7 @@
  */
 package org.terracotta.persistence.sanskrit.change;
 
+import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.SanskritObject;
 
 /**
@@ -30,7 +31,7 @@ public class AddObjectSanskritChange implements SanskritChange {
   }
 
   @Override
-  public void accept(SanskritChangeVisitor visitor) {
+  public void accept(SanskritChangeVisitor visitor) throws SanskritException {
     visitor.setObject(key, value);
   }
 }

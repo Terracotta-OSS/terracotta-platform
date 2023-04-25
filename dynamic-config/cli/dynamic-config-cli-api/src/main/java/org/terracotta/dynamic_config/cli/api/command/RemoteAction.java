@@ -16,8 +16,6 @@
 package org.terracotta.dynamic_config.cli.api.command;
 
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +51,7 @@ import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopProgress;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
 import org.terracotta.inet.HostPort;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.client.results.NomadFailureReceiver;
 import org.terracotta.nomad.server.ChangeRequestState;
 
@@ -117,18 +115,10 @@ public abstract class RemoteAction implements Runnable {
   @Inject
   public OutputService output;
   @Inject
-  public ObjectMapperFactory objectMapperFactory;
+  public Json json;
 
   protected String toJson(Object o) {
-    try {
-      return objectMapperFactory.pretty().create()
-          // shows optional values that are unset
-          .setSerializationInclusion(JsonInclude.Include.ALWAYS)
-          .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
-          .writeValueAsString(o);
-    } catch (JsonProcessingException e) {
-      throw new AssertionError(e);
-    }
+    return json.toPrettyString(o);
   }
 
   protected final void licenseValidation(HostPort expectedOnlineNode, Cluster cluster) {

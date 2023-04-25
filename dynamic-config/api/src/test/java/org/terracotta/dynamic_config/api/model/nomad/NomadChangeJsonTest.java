@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
@@ -27,7 +26,8 @@ import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Testing;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.service.FormatUpgrade;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.client.change.NomadChange;
 
 import java.io.IOException;
@@ -66,7 +66,7 @@ public class NomadChangeJsonTest {
   @Test
   public void test_ser_deser() throws IOException, URISyntaxException {
     Testing.replaceUIDs(cluster);
-    ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
+    Json mapper = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule()).create();
 
     cluster2.getSingleStripe().get().addNode(newTestNode("bar", "localhost2", 9411, N_UIDS[2]));
 
@@ -87,8 +87,8 @@ public class NomadChangeJsonTest {
       URL jsonFile = getClass().getResource("/nomad/v2/change" + i + ".json");
       byte[] bytes = Files.readAllBytes(Paths.get(jsonFile.toURI()));
       String json = new String(bytes, StandardCharsets.UTF_8);
-      assertThat(jsonFile.getPath() + "\n" + objectMapper.writeValueAsString(change), objectMapper.valueToTree(change).toString(), is(equalTo(objectMapper.readTree(json).toString())));
-      assertThat(jsonFile.getPath(), objectMapper.readValue(json, NomadChange.class), is(equalTo(change)));
+      assertThat(jsonFile.getPath() + "\n" + mapper.toString(change), mapper.map(change).toString(), is(equalTo(mapper.parse(json).toString())));
+      assertThat(jsonFile.getPath(), mapper.parse(json, NomadChange.class), is(equalTo(change)));
     }
   }
 
@@ -96,7 +96,8 @@ public class NomadChangeJsonTest {
   @Test
   public void test_ser_deser_v1() throws IOException, URISyntaxException {
     Testing.replaceUIDs(cluster);
-    ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule())
+    Json mapper = new DefaultJsonFactory()
+        .withModule(new DynamicConfigApiJsonModule())
         .withModules(new org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1(), new org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1())
         .create();
 
@@ -116,15 +117,16 @@ public class NomadChangeJsonTest {
       URL jsonFile = getClass().getResource("/nomad/v1/change" + i + ".json");
       byte[] bytes = Files.readAllBytes(Paths.get(jsonFile.toURI()));
       String json = new String(bytes, StandardCharsets.UTF_8);
-      assertThat(jsonFile.getPath() + "\n" + objectMapper.writeValueAsString(change), objectMapper.valueToTree(change).toString(), is(equalTo(objectMapper.readTree(json).toString())));
-      assertThat(jsonFile.getPath(), objectMapper.readValue(json, NomadChange.class), is(equalTo(change)));
+      assertThat(jsonFile.getPath() + "\n" + mapper.toString(change), mapper.map(change).toString(), is(equalTo(mapper.parse(json).toString())));
+      assertThat(jsonFile.getPath(), mapper.parse(json, NomadChange.class), is(equalTo(change)));
     }
   }
 
   @SuppressWarnings("deprecation")
   @Test
   public void test_deser_v1() throws IOException, URISyntaxException {
-    ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule())
+    Json mapper = new DefaultJsonFactory()
+        .withModule(new DynamicConfigApiJsonModule())
         .withModules(new org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1(), new org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1())
         .create();
 
@@ -139,15 +141,15 @@ public class NomadChangeJsonTest {
       byte[] bytes = Files.readAllBytes(Paths.get(jsonFile.toURI()));
       String json = new String(bytes, StandardCharsets.UTF_8);
 
-      Object o = objectMapper.readValue(json, tuple.t1);
+      Object o = mapper.parse(json, tuple.t1);
 
-      assertThat(tuple.t2 + "\n" + objectMapper.valueToTree(o).toString(), objectMapper.valueToTree(o).toString(), is(equalTo(objectMapper.readTree(json).toString())));
+      assertThat(tuple.t2 + "\n" + mapper.map(o).toString(), mapper.map(o).toString(), is(equalTo(mapper.parse(json).toString())));
     }
   }
 
   @Test
   public void test_deser_v2() throws IOException, URISyntaxException {
-    ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
+    Json mapper = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule()).create();
 
     for (Tuple2<Class<?>, String> tuple : Arrays.<Tuple2<Class<?>, String>>asList(
         tuple2(NomadChange.class, "/nomad/v2/node-addition.json"),
@@ -157,15 +159,15 @@ public class NomadChangeJsonTest {
       byte[] bytes = Files.readAllBytes(Paths.get(jsonFile.toURI()));
       String json = new String(bytes, StandardCharsets.UTF_8);
 
-      Object o = objectMapper.readValue(json, tuple.t1);
+      Object o = mapper.parse(json, tuple.t1);
 
-      assertThat(tuple.t2 + "\n" + objectMapper.valueToTree(o).toString(), objectMapper.valueToTree(o).toString(), is(equalTo(objectMapper.readTree(json).toString())));
+      assertThat(tuple.t2 + "\n" + mapper.map(o).toString(), mapper.map(o).toString(), is(equalTo(mapper.parse(json).toString())));
     }
   }
 
   @Test
   public void test_deser_with_unexpected_fields() throws IOException, URISyntaxException {
-    ObjectMapper objectMapper = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule()).create();
+    Json mapper = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule()).create();
     Tuple2<Class<ClusterActivationNomadChange>, String> tuple = tuple2(ClusterActivationNomadChange.class, "/nomad/v2/unexpected-fields.json");
     URL jsonFile = getClass().getResource(tuple.t2);
     byte[] bytes = Files.readAllBytes(Paths.get(jsonFile.toURI()));
@@ -173,7 +175,7 @@ public class NomadChangeJsonTest {
 
     // this call below should not fail with
     // UnrecognizedPropertyException: Unrecognized field "foo" [...], not marked as ignorable
-    ClusterActivationNomadChange o = objectMapper.readValue(json, tuple.t1);
+    ClusterActivationNomadChange o = mapper.parse(json, tuple.t1);
     assertNotNull(o);
   }
 }

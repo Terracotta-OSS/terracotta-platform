@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.common.struct.MemoryUnit;
@@ -27,7 +26,8 @@ import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Version;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -56,7 +56,7 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  */
 public class CompatibilityTest {
 
-  private final ObjectMapper mapper = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
+  private final Json json = new DefaultJsonFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
   private final Cluster clusterV1 = new Cluster().setName("my-cluster").setFailoverPriority(availability()).addStripe(new Stripe().addNodes(
       new Node()
@@ -121,8 +121,8 @@ public class CompatibilityTest {
     {
       Cluster parsed = new ClusterFactory(V2).create(Props.load(read("/V2.properties")));
       replaceUIDs(parsed);
-      Cluster expected = mapper.readValue(getClass().getResource("/V2.json"), Cluster.class);
-      assertThat(mapper.writeValueAsString(parsed), parsed, is(equalTo(expected)));
+      Cluster expected = json.parse(getClass().getResource("/V2.json"), Cluster.class);
+      assertThat(json.toString(parsed), parsed, is(equalTo(expected)));
     }
     // - config file format is V2
     // - config has V1 settings only
@@ -134,15 +134,15 @@ public class CompatibilityTest {
       parsed.getSingleStripe().get().setName("stripe-XYZ");
       replaceUIDs(parsed);
 
-      Cluster expected = mapper.readValue(getClass().getResource("/V1_and_V2_defaults.json"), Cluster.class);
-      assertThat(mapper.writeValueAsString(parsed), parsed, is(equalTo(expected)));
+      Cluster expected = json.parse(getClass().getResource("/V1_and_V2_defaults.json"), Cluster.class);
+      assertThat(json.toString(parsed), parsed, is(equalTo(expected)));
     }
     // - config file format is V1
     // - config has V1 settings only
     // - output is V1 only
     {
       Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/V1.properties")));
-      Cluster expected = mapper.readValue(getClass().getResource("/V1.json"), Cluster.class);
+      Cluster expected = json.parse(getClass().getResource("/V1.json"), Cluster.class);
       assertThat(parsed, is(equalTo(expected)));
     }
     // - config file format has some unsupported settings
@@ -150,16 +150,16 @@ public class CompatibilityTest {
     // example of older client that only knows about V1 config and are getting a V2 config
     {
       Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/V2.properties")));
-      Cluster expected = mapper.readValue(getClass().getResource("/V1.json"), Cluster.class);
+      Cluster expected = json.parse(getClass().getResource("/V1.json"), Cluster.class);
       assertThat(parsed, is(equalTo(expected)));
     }
     // json and properties checks
     {
       Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/default-node1.1.properties")));
-      Cluster expected = mapper.readValue(getClass().getResource("/default-node1.1.json"), Cluster.class);
-      assertThat(mapper.writeValueAsString(parsed),
-          mapper.valueToTree(parsed),
-          is(equalTo(mapper.readTree(read("/default-node1.1.json")))));
+      Cluster expected = json.parse(getClass().getResource("/default-node1.1.json"), Cluster.class);
+      assertThat(json.toString(parsed),
+          json.map(parsed),
+          is(equalTo(json.parse(getClass().getResource("/default-node1.1.json")))));
       assertThat(parsed, is(equalTo(expected)));
       assertThat(Props.toString(parsed.toProperties(false, false, true, CURRENT)),
           parsed.toProperties(false, false, true, CURRENT),

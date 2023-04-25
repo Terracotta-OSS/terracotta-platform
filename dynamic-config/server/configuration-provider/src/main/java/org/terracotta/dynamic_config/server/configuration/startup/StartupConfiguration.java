@@ -15,10 +15,6 @@
  */
 package org.terracotta.dynamic_config.server.configuration.startup;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tc.text.PrettyPrintable;
 import org.terracotta.common.struct.Tuple2;
 import org.terracotta.configuration.Configuration;
@@ -36,11 +32,9 @@ import org.terracotta.entity.PlatformConfiguration;
 import org.terracotta.entity.ServiceProviderConfiguration;
 import org.terracotta.entity.StateDumpCollector;
 import org.terracotta.entity.StateDumpable;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.Json;
 import org.terracotta.server.Server;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -66,17 +60,17 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   private final ClassLoader classLoader;
   private final PathResolver pathResolver;
   private final IParameterSubstitutor substitutor;
-  private final ObjectMapper objectMapper;
+  private final Json json;
   private final GroupPortMapper groupPortMapper;
 
-  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, ObjectMapperFactory objectMapperFactory, Server server) {
+  StartupConfiguration(Supplier<NodeContext> nodeContextSupplier, boolean unConfigured, boolean repairMode, ClassLoader classLoader, PathResolver pathResolver, IParameterSubstitutor substitutor, Json.Factory jsonFactory, Server server) {
     this.nodeContextSupplier = requireNonNull(nodeContextSupplier);
     this.unConfigured = unConfigured;
     this.repairMode = repairMode;
     this.classLoader = requireNonNull(classLoader);
     this.pathResolver = requireNonNull(pathResolver);
     this.substitutor = requireNonNull(substitutor);
-    this.objectMapper = objectMapperFactory.create();
+    this.json = jsonFactory.create();
     Collection<Class<? extends GroupPortMapper>> mappers = server.getImplementations(GroupPortMapper.class);
     Class<? extends GroupPortMapper> gi = mappers.iterator().next();
     GroupPortMapper mapper = null;
@@ -190,13 +184,7 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   }
 
   private Map<String, ?> toMap(Object o) {
-    try {
-      JsonNode node = objectMapper.valueToTree(o);
-      JsonParser jsonParser = objectMapper.treeAsTokens(node);
-      return jsonParser.readValueAs(new TypeReference<Map<String, ?>>() {});
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    return json.mapToObject(o);
   }
 
   private StateDumpCollector createCollector(String name, Map<String, Object> map) {

@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.cli.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
@@ -32,6 +31,7 @@ import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
+import org.terracotta.dynamic_config.cli.api.json.TestModule;
 import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
 import org.terracotta.dynamic_config.cli.api.nomad.NomadManager;
 import org.terracotta.dynamic_config.cli.api.output.ConsoleOutputService;
@@ -39,7 +39,8 @@ import org.terracotta.dynamic_config.cli.api.output.OutputService;
 import org.terracotta.dynamic_config.cli.api.restart.RestartService;
 import org.terracotta.dynamic_config.cli.api.stop.StopService;
 import org.terracotta.inet.HostPort;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.entity.client.NomadEntity;
 import org.terracotta.nomad.entity.client.NomadEntityProvider;
@@ -74,8 +75,8 @@ public abstract class BaseTest {
   protected RestartService restartService;
   protected StopService stopService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
-  protected ObjectMapperFactory objectMapperFactory = new ObjectMapperFactory().withModule(new DynamicConfigApiJsonModule());
-  protected ObjectMapper objectMapper = objectMapperFactory.create();
+  protected Json.Factory jsonFactory = new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule(), new TestModule());
+  protected Json json = jsonFactory.create();
   protected OutputService outputService;
 
   private final Cache<HostPort, TopologyService> topologyServices = new Cache<>(addr -> mock(TopologyService.class, addr.toString()));
@@ -109,7 +110,7 @@ public abstract class BaseTest {
   @Before
   public void setUp() throws Exception {
     Duration timeout = Duration.ofSeconds(2);
-    diagnosticServiceProvider = new DefaultDiagnosticServiceProvider(getClass().getSimpleName(), timeout, timeout, null, new ObjectMapperFactory()) {
+    diagnosticServiceProvider = new DefaultDiagnosticServiceProvider(getClass().getSimpleName(), timeout, timeout, null, jsonFactory) {
       @Override
       public DiagnosticService fetchDiagnosticService(InetSocketAddress address, Duration timeout) {
         return diagnosticServices.get(HostPort.create(address));

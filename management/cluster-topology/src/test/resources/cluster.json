@@ -1,162 +1,42 @@
 {
-  "stripes": [
-    {
-      "id": "stripe-1",
-      "name": "stripe-1",
-      "servers": [
-        {
-          "id": "server-1",
-          "serverEntities": [
-            {
-              "id": "ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
-              "type": "org.ehcache.clustered.client.internal.EhcacheClientEntity",
-              "name": "ehcache-entity-name-1",
-              "consumerId": 0,
-              "managementRegistry": {
-                "rootContext": {},
-                "contextContainer": {
-                  "entityName": "ehcache-entity-name-1",
-                  "subContexts": []
-                },
-                "capabilities": [
-                  {
-                    "name": "ActionCapability",
-                    "context": [],
-                    "descriptors": []
-                  }
-                ]
-              }
-            }
-          ],
-          "serverName": "server-1",
-          "hostName": "hostname-1",
-          "hostAddress": null,
-          "bindAddress": "0.0.0.0",
-          "bindPort": 8881,
-          "groupPort": 0,
-          "state": "ACTIVE",
-          "version": null,
-          "buildId": null,
-          "startTime": 0,
-          "upTimeSec": 0,
-          "activateTime": 0
-        },
-        {
-          "id": "server-2",
-          "serverEntities": [],
-          "serverName": "server-2",
-          "hostName": "hostname-2",
-          "hostAddress": null,
-          "bindAddress": "0.0.0.0",
-          "bindPort": 8881,
-          "groupPort": 0,
-          "state": "PASSIVE",
-          "version": null,
-          "buildId": null,
-          "startTime": 0,
-          "upTimeSec": 0,
-          "activateTime": 0
-        }
-      ]
-    },
-    {
-      "id": "stripe-2",
-      "name": "stripe-2",
-      "servers": [
-        {
-          "id": "server-1",
-          "serverEntities": [
-            {
-              "id": "ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
-              "type": "org.ehcache.clustered.client.internal.EhcacheClientEntity",
-              "name": "ehcache-entity-name-1",
-              "consumerId": 0,
-              "managementRegistry": {
-                "rootContext": {},
-                "contextContainer": {
-                  "entityName": "ehcache-entity-name-1",
-                  "subContexts": []
-                },
-                "capabilities": [
-                  {
-                    "name": "ActionCapability",
-                    "context": [],
-                    "descriptors": []
-                  }
-                ]
-              }
-            }
-          ],
-          "serverName": "server-1",
-          "hostName": "hostname-3",
-          "hostAddress": null,
-          "bindAddress": "0.0.0.0",
-          "bindPort": 8881,
-          "groupPort": 0,
-          "state": "ACTIVE",
-          "version": null,
-          "buildId": null,
-          "startTime": 0,
-          "upTimeSec": 0,
-          "activateTime": 0
-        },
-        {
-          "id": "server-2",
-          "serverEntities": [],
-          "serverName": "server-2",
-          "hostName": "hostname-4",
-          "hostAddress": null,
-          "bindAddress": "0.0.0.0",
-          "bindPort": 8881,
-          "groupPort": 0,
-          "state": "PASSIVE",
-          "version": null,
-          "buildId": null,
-          "startTime": 0,
-          "upTimeSec": 0,
-          "activateTime": 0
-        }
-      ]
-    }
-  ],
   "clients": [
     {
-      "id": "12345@127.0.0.1:ehcache:uid",
-      "pid": 12345,
-      "hostAddress": "127.0.0.1",
-      "name": "ehcache",
-      "logicalConnectionUid": "uid",
-      "vmId": "12345@127.0.0.1",
       "clientId": "12345@127.0.0.1:ehcache:uid",
-      "hostName": null,
-      "tags": [],
-      "properties": {},
       "connections": [
         {
-          "id": "uid:stripe-1:server-1:10.10.10.10:3456",
-          "logicalConnectionUid": "uid",
           "clientEndpoint": {
             "address": "10.10.10.10",
             "port": 3456
           },
-          "stripeId": "stripe-1",
+          "id": "uid:stripe-1:server-1:10.10.10.10:3456",
+          "logicalConnectionUid": "uid",
+          "serverEntityIds": {},
           "serverId": "server-1",
-          "serverEntityIds": {}
+          "stripeId": "stripe-1"
         },
         {
-          "id": "uid:stripe-2:server-1:10.10.10.10:3457",
-          "logicalConnectionUid": "uid",
           "clientEndpoint": {
             "address": "10.10.10.10",
             "port": 3457
           },
-          "stripeId": "stripe-2",
+          "id": "uid:stripe-2:server-1:10.10.10.10:3457",
+          "logicalConnectionUid": "uid",
+          "serverEntityIds": {},
           "serverId": "server-1",
-          "serverEntityIds": {}
+          "stripeId": "stripe-2"
         }
       ],
+      "hostAddress": "127.0.0.1",
+      "id": "12345@127.0.0.1:ehcache:uid",
+      "logicalConnectionUid": "uid",
       "managementRegistry": {
-        "rootContext": {},
+        "capabilities": [
+          {
+            "context": [],
+            "descriptors": [],
+            "name": "ActionCapability"
+          }
+        ],
         "contextContainer": {
           "cacheManagerName": "cache-manager-1",
           "subContexts": [
@@ -166,14 +46,121 @@
             }
           ]
         },
-        "capabilities": [
-          {
-            "name": "ActionCapability",
-            "context": [],
-            "descriptors": []
-          }
-        ]
-      }
+        "rootContext": {}
+      },
+      "name": "ehcache",
+      "pid": 12345,
+      "properties": {},
+      "tags": [],
+      "vmId": "12345@127.0.0.1"
+    }
+  ],
+  "stripes": [
+    {
+      "id": "stripe-1",
+      "name": "stripe-1",
+      "servers": [
+        {
+          "activateTime": 0,
+          "bindAddress": "0.0.0.0",
+          "bindPort": 8881,
+          "groupPort": 0,
+          "hostName": "hostname-1",
+          "id": "server-1",
+          "serverEntities": [
+            {
+              "consumerId": 0,
+              "id": "ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
+              "managementRegistry": {
+                "capabilities": [
+                  {
+                    "context": [],
+                    "descriptors": [],
+                    "name": "ActionCapability"
+                  }
+                ],
+                "contextContainer": {
+                  "entityName": "ehcache-entity-name-1",
+                  "subContexts": []
+                },
+                "rootContext": {}
+              },
+              "name": "ehcache-entity-name-1",
+              "type": "org.ehcache.clustered.client.internal.EhcacheClientEntity"
+            }
+          ],
+          "serverName": "server-1",
+          "startTime": 0,
+          "state": "ACTIVE",
+          "upTimeSec": 0
+        },
+        {
+          "activateTime": 0,
+          "bindAddress": "0.0.0.0",
+          "bindPort": 8881,
+          "groupPort": 0,
+          "hostName": "hostname-2",
+          "id": "server-2",
+          "serverEntities": [],
+          "serverName": "server-2",
+          "startTime": 0,
+          "state": "PASSIVE",
+          "upTimeSec": 0
+        }
+      ]
+    },
+    {
+      "id": "stripe-2",
+      "name": "stripe-2",
+      "servers": [
+        {
+          "activateTime": 0,
+          "bindAddress": "0.0.0.0",
+          "bindPort": 8881,
+          "groupPort": 0,
+          "hostName": "hostname-3",
+          "id": "server-1",
+          "serverEntities": [
+            {
+              "consumerId": 0,
+              "id": "ehcache-entity-name-1:org.ehcache.clustered.client.internal.EhcacheClientEntity",
+              "managementRegistry": {
+                "capabilities": [
+                  {
+                    "context": [],
+                    "descriptors": [],
+                    "name": "ActionCapability"
+                  }
+                ],
+                "contextContainer": {
+                  "entityName": "ehcache-entity-name-1",
+                  "subContexts": []
+                },
+                "rootContext": {}
+              },
+              "name": "ehcache-entity-name-1",
+              "type": "org.ehcache.clustered.client.internal.EhcacheClientEntity"
+            }
+          ],
+          "serverName": "server-1",
+          "startTime": 0,
+          "state": "ACTIVE",
+          "upTimeSec": 0
+        },
+        {
+          "activateTime": 0,
+          "bindAddress": "0.0.0.0",
+          "bindPort": 8881,
+          "groupPort": 0,
+          "hostName": "hostname-4",
+          "id": "server-2",
+          "serverEntities": [],
+          "serverName": "server-2",
+          "startTime": 0,
+          "state": "PASSIVE",
+          "upTimeSec": 0
+        }
+      ]
     }
   ]
 }

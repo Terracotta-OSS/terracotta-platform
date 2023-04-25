@@ -15,11 +15,10 @@
  */
 package org.terracotta.dynamic_config.api.model;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
-import org.terracotta.json.ObjectMapperFactory;
+import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.Json;
 
 import java.util.Objects;
 import java.util.Properties;
@@ -36,29 +35,29 @@ import static org.terracotta.dynamic_config.api.model.Testing.newTestStripe;
  */
 public class RawPathTest {
 
-  ObjectMapper om = new ObjectMapperFactory().withModule(new DynamicConfigModelJsonModule()).create();
+  Json om = new DefaultJsonFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
   @Test
-  public void test_new_path_mapping() throws JsonProcessingException {
+  public void test_new_path_mapping() {
 
 
-    assertThat(om.writeValueAsString(new Foo()), is(equalTo("{}")));
-    assertThat(om.writeValueAsString(new Foo().setPath(RawPath.valueOf(""))), is(equalTo("{\"path\":\"\"}")));
-    assertThat(om.writeValueAsString(new Foo().setPath(RawPath.valueOf("foo"))), is(equalTo("{\"path\":\"foo\"}")));
-    assertThat(om.writeValueAsString(new Foo().setPath(RawPath.valueOf("foo/bar"))), is(equalTo("{\"path\":\"foo/bar\"}")));
-    assertThat(om.writeValueAsString(new Foo().setPath(RawPath.valueOf("foo\\bar"))), is(equalTo("{\"path\":\"foo\\\\bar\"}")));
+    assertThat(om.toString(new Foo()), is(equalTo("{}")));
+    assertThat(om.toString(new Foo().setPath(RawPath.valueOf(""))), is(equalTo("{\"path\":\"\"}")));
+    assertThat(om.toString(new Foo().setPath(RawPath.valueOf("foo"))), is(equalTo("{\"path\":\"foo\"}")));
+    assertThat(om.toString(new Foo().setPath(RawPath.valueOf("foo/bar"))), is(equalTo("{\"path\":\"foo/bar\"}")));
+    assertThat(om.toString(new Foo().setPath(RawPath.valueOf("foo\\bar"))), is(equalTo("{\"path\":\"foo\\\\bar\"}")));
 
-    assertThat(om.readValue("{\"path\":null}", Foo.class), is(equalTo(new Foo())));
-    assertThat(om.readValue("{\"path\":\"\"}", Foo.class), is(equalTo(new Foo().setPath(RawPath.valueOf("")))));
-    assertThat(om.readValue("{\"path\":\"foo\"}", Foo.class), is(equalTo(new Foo().setPath(RawPath.valueOf("foo")))));
+    assertThat(om.parse("{\"path\":null}", Foo.class), is(equalTo(new Foo())));
+    assertThat(om.parse("{\"path\":\"\"}", Foo.class), is(equalTo(new Foo().setPath(RawPath.valueOf("")))));
+    assertThat(om.parse("{\"path\":\"foo\"}", Foo.class), is(equalTo(new Foo().setPath(RawPath.valueOf("foo")))));
 
     // keeps both win and lin
-    assertThat(om.readValue("{\"path\":\"foo/bar\"}", Foo.class), is(equalTo(new Foo().setPath(RawPath.valueOf("foo/bar")))));
-    assertThat(om.readValue("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(RawPath.valueOf("foo\\bar")))));
+    assertThat(om.parse("{\"path\":\"foo/bar\"}", Foo.class), is(equalTo(new Foo().setPath(RawPath.valueOf("foo/bar")))));
+    assertThat(om.parse("{\"path\":\"foo\\\\bar\"}", Foo.class), is(equalTo(new Foo().setPath(RawPath.valueOf("foo\\bar")))));
   }
 
   @Test
-  public void test_props_and_json() throws JsonProcessingException {
+  public void test_props_and_json() {
     Node node = Testing.newTestNode("foo", "localhost").setLogDir(RawPath.valueOf("a\\b"));
     Cluster cluster = newTestCluster("c", newTestStripe("s").addNode(node));
 
@@ -67,9 +66,9 @@ public class RawPathTest {
     assertThat(properties.getProperty("stripe.1.node.1.log-dir"), is(equalTo("a\\b")));
 
     String expectedJson = "{\"stripes\":[{\"name\":\"s\",\"nodes\":[{\"hostname\":\"localhost\",\"logDir\":\"a\\\\b\",\"name\":\"foo\",\"uid\":\"jUhhu1kRQd-x6iNgpo9Xyw\"}],\"uid\":\"5Zv3uphiRLavoGZthy7JNg\"}],\"failoverPriority\":\"availability\",\"name\":\"c\",\"uid\":\"YLQguzhRSdS6y5M9vnA5mw\"}";
-    assertThat(om.writeValueAsString(cluster), om.writeValueAsString(cluster), is(equalTo(expectedJson)));
-    assertThat(om.readValue(expectedJson, Cluster.class), is(equalTo(cluster)));
-    assertThat(om.readValue(expectedJson, Cluster.class).toProperties(false, false, true), is(equalTo(properties)));
+    assertThat(om.toString(cluster), om.toString(cluster), is(equalTo(expectedJson)));
+    assertThat(om.parse(expectedJson, Cluster.class), is(equalTo(cluster)));
+    assertThat(om.parse(expectedJson, Cluster.class).toProperties(false, false, true), is(equalTo(properties)));
   }
 
   public static class Foo {

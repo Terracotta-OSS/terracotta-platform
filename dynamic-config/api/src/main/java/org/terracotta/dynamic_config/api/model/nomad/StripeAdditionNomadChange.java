@@ -55,6 +55,11 @@ public class StripeAdditionNomadChange extends StripeNomadChange {
   }
 
   @Override
+  public final String getType() {
+    return "StripeAdditionNomadChange";
+  }
+
+  @Override
   public String toString() {
     return "StripeAdditionChange{" +
         "stripe=" + getStripe().toShapeString() +

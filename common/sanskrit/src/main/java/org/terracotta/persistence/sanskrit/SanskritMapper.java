@@ -15,14 +15,18 @@
  */
 package org.terracotta.persistence.sanskrit;
 
-public class CopyUtils {
-  static SanskritObjectImpl makeCopy(ObjectMapperSupplier objectMapperSupplier, SanskritObject object) {
-    if (object == null) {
-      return null;
-    }
+import org.terracotta.persistence.sanskrit.change.SanskritChange;
+import org.terracotta.persistence.sanskrit.change.SanskritChangeVisitor;
 
-    SanskritObjectImpl copy = new SanskritObjectImpl(objectMapperSupplier);
-    object.accept(copy);
-    return copy;
-  }
+/**
+ * @author Mathieu Carbou
+ */
+public interface SanskritMapper {
+  String toString(SanskritChange change) throws SanskritException;
+
+  void fromString(String src, String version, SanskritChangeVisitor dest) throws SanskritException;
+
+  String getCurrentFormatVersion();
+
+  <T> T map(SanskritObject src, Class<T> dest, String version) throws SanskritException;
 }

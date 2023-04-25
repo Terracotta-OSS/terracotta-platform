@@ -15,19 +15,16 @@
  */
 package org.terracotta.management.doc;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.exception.EntityConfigurationException;
 import org.terracotta.management.entity.nms.client.IllegalManagementCallException;
 import org.terracotta.management.entity.nms.client.NmsService;
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
 import org.terracotta.management.model.cluster.Cluster;
 import org.terracotta.management.model.cluster.ServerEntity;
 import org.terracotta.management.model.context.Context;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -74,13 +71,4 @@ public class DoManagementCall {
 
     connection.close();
   }
-
-  public static abstract class CapabilityContextMixin {
-    @JsonIgnore
-    public abstract Collection<String> getRequiredAttributeNames();
-
-    @JsonIgnore
-    public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
-  }
-
 }

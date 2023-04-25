@@ -15,11 +15,6 @@
  */
 package org.terracotta.diagnostic.common;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -33,8 +28,6 @@ public class DiagnosticResponse<T> implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  // Note: using "@class" here is fine since we control both end of input and output json plus the communication channel
-  @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
   private final T body;
 
   private final String errorType;
@@ -49,11 +42,7 @@ public class DiagnosticResponse<T> implements Serializable {
     this(body, error == null ? null : error.getClass().getName(), error == null ? null : error.getMessage(), error == null ? null : stackTrace(error));
   }
 
-  @JsonCreator
-  DiagnosticResponse(@JsonProperty("body") T body,
-                     @JsonProperty("errorType") String errorType,
-                     @JsonProperty("errorMessage") String errorMessage,
-                     @JsonProperty("errorStack") String errorStack) {
+  protected DiagnosticResponse(T body, String errorType, String errorMessage, String errorStack) {
     this.body = body;
     this.errorType = errorType;
     this.errorMessage = errorMessage;
@@ -72,12 +61,10 @@ public class DiagnosticResponse<T> implements Serializable {
     return Optional.ofNullable(errorStack);
   }
 
-  @JsonIgnore
   public Optional<String> getError() {
     return getErrorType().map(type -> type + getErrorMessage().map(msg -> ": " + msg).orElse(""));
   }
 
-  @JsonIgnore
   public boolean hasError() {
     return getErrorType().isPresent();
   }

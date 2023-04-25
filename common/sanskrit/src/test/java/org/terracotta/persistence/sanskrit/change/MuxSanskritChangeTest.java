@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.terracotta.persistence.sanskrit.SanskritException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,14 +39,14 @@ public class MuxSanskritChangeTest {
   private SanskritChange change2;
 
   @Test
-  public void noChanges() {
+  public void noChanges() throws SanskritException {
     MuxSanskritChange change = new MuxSanskritChange(Collections.emptyList());
     change.accept(visitor);
     verifyNoMoreInteractions(visitor);
   }
 
   @Test
-  public void multipleChanges() {
+  public void multipleChanges() throws SanskritException {
     MuxSanskritChange change = new MuxSanskritChange(Arrays.asList(change1, change2));
     change.accept(visitor);
     verify(change1).accept(visitor);

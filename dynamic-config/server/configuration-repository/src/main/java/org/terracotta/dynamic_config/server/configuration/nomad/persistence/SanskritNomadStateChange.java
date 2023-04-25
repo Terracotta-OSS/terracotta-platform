@@ -19,6 +19,7 @@ import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.nomad.server.ChangeRequest;
 import org.terracotta.nomad.server.ChangeRequestState;
+import org.terracotta.nomad.server.NomadException;
 import org.terracotta.nomad.server.NomadServerMode;
 import org.terracotta.nomad.server.NomadServerRequest;
 import org.terracotta.nomad.server.state.NomadStateChange;
@@ -118,23 +119,28 @@ public class SanskritNomadStateChange implements NomadStateChange<NodeContext> {
   }
 
   @Override
-  public NomadStateChange<NodeContext> createChange(UUID changeUuid, ChangeRequest<NodeContext> changeRequest) {
+  public NomadStateChange<NodeContext> createChange(UUID changeUuid, ChangeRequest<NodeContext> changeRequest) throws NomadException {
     changeVersion = changeRequest.getVersion();
     changeResult = changeRequest.getChangeResult();
     String resultHash = hashComputer.computeHash(new Config(changeResult, Version.CURRENT));
 
     MutableSanskritObject child = sanskrit.newMutableSanskritObject();
-    child.setString(CHANGE_STATE, changeRequest.getState().name());
-    child.setLong(CHANGE_VERSION, changeRequest.getVersion());
-    if (changeRequest.getPrevChangeId() != null) {
-      child.setString(PREV_CHANGE_UUID, changeRequest.getPrevChangeId().toString());
+
+    try {
+      child.setString(CHANGE_STATE, changeRequest.getState().name());
+      child.setLong(CHANGE_VERSION, changeRequest.getVersion());
+      if (changeRequest.getPrevChangeId() != null) {
+        child.setString(PREV_CHANGE_UUID, changeRequest.getPrevChangeId().toString());
+      }
+      child.set(CHANGE_OPERATION, changeRequest.getChange(), Version.CURRENT.getValue());
+      child.setString(CHANGE_FORMAT_VERSION, Version.CURRENT.getValue());
+      child.setString(CHANGE_RESULT_HASH, resultHash);
+      child.setString(CHANGE_CREATION_HOST, changeRequest.getCreationHost());
+      child.setString(CHANGE_CREATION_USER, changeRequest.getCreationUser());
+      child.setString(CHANGE_CREATION_TIMESTAMP, changeRequest.getCreationTimestamp().toString());
+    } catch (SanskritException e) {
+      throw new NomadException(e);
     }
-    child.setExternal(CHANGE_OPERATION, changeRequest.getChange(), Version.CURRENT.getValue());
-    child.setString(CHANGE_FORMAT_VERSION, Version.CURRENT.getValue());
-    child.setString(CHANGE_RESULT_HASH, resultHash);
-    child.setString(CHANGE_CREATION_HOST, changeRequest.getCreationHost());
-    child.setString(CHANGE_CREATION_USER, changeRequest.getCreationUser());
-    child.setString(CHANGE_CREATION_TIMESTAMP, changeRequest.getCreationTimestamp().toString());
 
     changeBuilder.setObject(changeUuid.toString(), child);
 
@@ -142,13 +148,16 @@ public class SanskritNomadStateChange implements NomadStateChange<NodeContext> {
   }
 
   @Override
-  public NomadStateChange<NodeContext> updateChangeRequestState(UUID changeUuid, ChangeRequestState newState) {
+  public NomadStateChange<NodeContext> updateChangeRequestState(UUID changeUuid, ChangeRequestState newState) throws NomadException {
     String uuidString = changeUuid.toString();
-    SanskritObject existing = getObject(uuidString);
     MutableSanskritObject updated = sanskrit.newMutableSanskritObject();
-    existing.accept(updated);
-
-    updated.setString(CHANGE_STATE, newState.name());
+    try {
+      SanskritObject existing = sanskrit.getObject(uuidString);
+      existing.accept(updated);
+      updated.setString(CHANGE_STATE, newState.name());
+    } catch (SanskritException e) {
+      throw new NomadException(e);
+    }
     changeBuilder.setObject(uuidString, updated);
     return this;
   }
@@ -163,13 +172,5 @@ public class SanskritNomadStateChange implements NomadStateChange<NodeContext> {
 
   public NodeContext getChangeResult() {
     return changeResult;
-  }
-
-  private SanskritObject getObject(String key) {
-    try {
-      return sanskrit.getObject(key);
-    } catch (SanskritException e) {
-      throw new RuntimeException(e);
-    }
   }
 }

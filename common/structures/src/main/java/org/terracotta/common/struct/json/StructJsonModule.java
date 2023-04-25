@@ -27,13 +27,14 @@ import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.common.struct.Unit;
+import org.terracotta.json.Json;
 
 import java.math.BigInteger;
 
 /**
  * @author Mathieu Carbou
  */
-public class StructJsonModule extends SimpleModule {
+public class StructJsonModule extends SimpleModule implements Json.Module {
   private static final long serialVersionUID = 1L;
 
   public StructJsonModule() {

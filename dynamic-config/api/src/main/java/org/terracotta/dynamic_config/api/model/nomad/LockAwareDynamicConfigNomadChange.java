@@ -15,7 +15,6 @@
  */
 package org.terracotta.dynamic_config.api.model.nomad;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 
@@ -40,10 +39,14 @@ public class LockAwareDynamicConfigNomadChange implements DynamicConfigNomadChan
     throw new UnsupportedOperationException();
   }
 
-  @JsonIgnore
   @Override
   public String getSummary() {
     return change.getSummary();
+  }
+
+  @Override
+  public final String getType() {
+    return "LockAwareDynamicConfigNomadChange";
   }
 
   public String getLockToken() {
