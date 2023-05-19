@@ -15,18 +15,23 @@
  */
 package org.terracotta.json;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.impl.NullsConstantProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -41,8 +46,25 @@ import static java.util.Arrays.asList;
 /**
  * @author Mathieu Carbou
  */
-public class TerracottaJsonModule extends SimpleModule implements Json.Module {
+public class TerracottaJsonModule extends SimpleModule implements Json.Module, DefaultJsonFactory.JacksonModule {
   private static final long serialVersionUID = 1L;
+
+  @Override
+  public void configure(ObjectMapper objectMapper) {
+    objectMapper.setTypeFactory(TypeFactory.defaultInstance().withClassLoader(getClass().getClassLoader()))
+        .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
+        .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_ABSENT, JsonInclude.Include.NON_ABSENT))
+        .enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
+        .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+        .enable(SerializationFeature.CLOSE_CLOSEABLE)
+        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+        // setting FAIL_ON_UNKNOWN_PROPERTIES to false will help backward compatibility to ignore
+        // some json fields that are present in the input message if they are not needed when deserializing
+        // and mapping to an object. This does not mean that it will achieve complete backward compat, but
+        // it will prevent Jackson from failing when it sees a json input that cannot be mapped to a field in
+        // a target object
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+  }
 
   @Override
   public Iterable<? extends Module> getDependencies() {
@@ -51,6 +73,16 @@ public class TerracottaJsonModule extends SimpleModule implements Json.Module {
 
   public TerracottaJsonModule() {
     super(TerracottaJsonModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
+
+    addSerializer(Json.Null.class, new StdSerializer<Json.Null>(Json.Null.class) {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void serialize(Json.Null value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        gen.writeNull();
+      }
+    });
+
     addSerializer(Path.class, new StdSerializer<Path>(Path.class) {
       private static final long serialVersionUID = 1L;
 
@@ -63,6 +95,7 @@ public class TerracottaJsonModule extends SimpleModule implements Json.Module {
         gen.writeEndArray();
       }
     });
+
     addDeserializer(Path.class, new StdDeserializer<Path>(Path.class) {
       private static final long serialVersionUID = 1L;
 

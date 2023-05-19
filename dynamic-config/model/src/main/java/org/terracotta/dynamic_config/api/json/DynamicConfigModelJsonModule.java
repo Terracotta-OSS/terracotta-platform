@@ -54,7 +54,6 @@ import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.inet.HostPort;
 import org.terracotta.inet.json.InetJsonModule;
 import org.terracotta.json.Json;
-import org.terracotta.json.TerracottaJsonModule;
 
 import java.lang.reflect.Type;
 import java.time.LocalDate;
@@ -116,7 +115,6 @@ public class DynamicConfigModelJsonModule extends SimpleModule implements Json.M
   @Override
   public Iterable<? extends Module> getDependencies() {
     return asList(
-        new TerracottaJsonModule(),
         new StructJsonModule(),
         new InetJsonModule());
   }

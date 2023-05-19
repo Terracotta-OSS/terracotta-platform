@@ -15,18 +15,14 @@
  */
 package org.terracotta.json;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -100,41 +96,38 @@ public class DefaultJsonFactory implements Json.Factory {
 
   public ObjectMapper createObjectMapper() {
     ObjectMapper mapper = JsonMapper.builder()
-        .typeFactory(TypeFactory.defaultInstance().withClassLoader(getClass().getClassLoader()))
-        .serializationInclusion(JsonInclude.Include.NON_ABSENT)
-        .defaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_ABSENT, JsonInclude.Include.NON_ABSENT))
-        .enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
         .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
         .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
-        .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
-        .enable(SerializationFeature.CLOSE_CLOSEABLE)
-        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-        .configure(SerializationFeature.INDENT_OUTPUT, pretty)
-        // setting FAIL_ON_UNKNOWN_PROPERTIES to false will help backward compatibility to ignore
-        // some json fields that are present in the input message if they are not needed when deserializing
-        // and mapping to an object. This does not mean that it will achieve complete backward compat, but
-        // it will prevent Jackson from failing when it sees a json input that cannot be mapped to a field in
-        // a target object
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .build();
-    if (pretty) {
-      DefaultIndenter indent = new DefaultIndenter("  ", eol);
-      mapper.writer(new DefaultPrettyPrinter()
-          .withObjectIndenter(indent)
-          .withArrayIndenter(indent));
-    }
-    // modules need to be registered first for dependency resolution
-    for (Json.Module module : modules) {
-      if (module instanceof Module) {
-        mapper.registerModule((Module) module);
-      }
-    }
-    // then they can be configured
+
+    // always add default module first
+    List<Json.Module> modules = new ArrayList<>(this.modules.size() + 1);
+    modules.add(new TerracottaJsonModule());
+    modules.addAll(this.modules);
+
+    // 1. object mapper configuration (this step has to be executed BEFORE modules are registered)
     for (Json.Module module : modules) {
       if (module instanceof JacksonModule) {
         ((JacksonModule) module).configure(mapper);
       }
     }
+
+    // 2. enforce pretty configuration to behave exactly the same way if required
+    if (pretty) {
+      mapper.configure(SerializationFeature.INDENT_OUTPUT, pretty);
+      DefaultIndenter indent = new DefaultIndenter("  ", eol);
+      mapper.writer(new DefaultPrettyPrinter()
+          .withObjectIndenter(indent)
+          .withArrayIndenter(indent));
+    }
+
+    // 3. register modules for dependency resolution
+    for (Json.Module module : modules) {
+      if (module instanceof Module) {
+        mapper.registerModule((Module) module);
+      }
+    }
+
     return mapper;
   }
 

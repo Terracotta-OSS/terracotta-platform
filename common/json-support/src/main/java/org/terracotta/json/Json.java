@@ -40,6 +40,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public interface Json {
 
+  // forces a serialization to null
+  Null NULL = new Null();
+
+  final class Null {
+  }
+
   /**
    * Serialize the object and then parses back the serialized json.
    * This is a way to map a complex Java object into Map, List, Number, String, etc
