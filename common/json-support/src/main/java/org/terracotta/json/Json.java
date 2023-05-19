@@ -24,6 +24,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,6 +53,10 @@ public interface Json {
    * This is a way to map a complex Java object into another.
    */
   default <T> T map(Object o, Class<T> type) {
+    return parse(toString(o), type);
+  }
+
+  default Object map(Object o, Type type) {
     return parse(toString(o), type);
   }
 
@@ -195,10 +200,16 @@ public interface Json {
    */
   <T> T parse(String json, Class<T> type);
 
+  Object parse(String json, Type type);
+
   /**
    * Parses a json content in a file into a Java model
    */
   default <T> T parse(File file, Class<T> type) {
+    return parse(file.toPath(), type);
+  }
+
+  default Object parse(File file, Type type) {
     return parse(file.toPath(), type);
   }
 
@@ -207,10 +218,16 @@ public interface Json {
    */
   <T> T parse(Path path, Class<T> type);
 
+  Object parse(Path path, Type type);
+
   /**
    * Parses a json content from a stream into a Java model
    */
   default <T> T parse(InputStream is, Class<T> type) {
+    return parse(new InputStreamReader(is, UTF_8), type);
+  }
+
+  default Object parse(InputStream is, Type type) {
     return parse(new InputStreamReader(is, UTF_8), type);
   }
 
@@ -225,10 +242,20 @@ public interface Json {
     }
   }
 
+  default Object parse(URL url, Type type) {
+    try (InputStream is = url.openStream()) {
+      return parse(is, type);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
   /**
    * Parses a json content from a stream into a Java model
    */
   <T> T parse(Reader r, Class<T> type);
+
+  Object parse(Reader r, Type type);
 
   String toString(Object o, boolean pretty);
 

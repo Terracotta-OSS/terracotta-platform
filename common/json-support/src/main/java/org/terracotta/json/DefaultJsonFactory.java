@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -217,6 +218,15 @@ public class DefaultJsonFactory implements Json.Factory {
     }
 
     @Override
+    public Object parse(String json, Type type) {
+      try {
+        return mapper.readValue(json, mapper.constructType(type));
+      } catch (JsonProcessingException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
+
+    @Override
     public <T> T parse(Path path, Class<T> type) {
       try {
         return mapper.readValue(path.toFile(), type);
@@ -226,9 +236,27 @@ public class DefaultJsonFactory implements Json.Factory {
     }
 
     @Override
+    public Object parse(Path path, Type type) {
+      try {
+        return mapper.readValue(path.toFile(), mapper.constructType(type));
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
+
+    @Override
     public <T> T parse(Reader r, Class<T> type) {
       try {
         return mapper.readValue(r, type);
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
+
+    @Override
+    public Object parse(Reader r, Type type) {
+      try {
+        return mapper.readValue(r, mapper.constructType(type));
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
