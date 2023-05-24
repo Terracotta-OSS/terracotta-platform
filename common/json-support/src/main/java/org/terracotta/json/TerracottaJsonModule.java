@@ -55,6 +55,8 @@ public class TerracottaJsonModule extends SimpleModule implements Json.Module, D
         .setSerializationInclusion(JsonInclude.Include.NON_ABSENT)
         .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_ABSENT, JsonInclude.Include.NON_ABSENT))
         .enable(JsonGenerator.Feature.WRITE_BIGDECIMAL_AS_PLAIN)
+        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .disable(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS)
         .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
         .enable(SerializationFeature.CLOSE_CLOSEABLE)
         .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)

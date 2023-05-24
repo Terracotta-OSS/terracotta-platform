@@ -98,6 +98,7 @@ public class DefaultJsonFactory implements Json.Factory {
     ObjectMapper mapper = JsonMapper.builder()
         .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
         .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
+        .configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
         .build();
 
     // always add default module first
