@@ -144,7 +144,7 @@ public class DefaultJsonFactory implements Json.Factory {
     void configure(ObjectMapper objectMapper);
   }
 
-  protected static class JacksonJson implements Json {
+  static class JacksonJson implements Json {
     private final ObjectMapper mapper;
 
     protected JacksonJson(ObjectMapper mapper) {
@@ -253,6 +253,11 @@ public class DefaultJsonFactory implements Json.Factory {
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
+    }
+
+    @Override
+    public boolean isPretty() {
+      return mapper.isEnabled(SerializationFeature.INDENT_OUTPUT);
     }
 
     @SuppressWarnings("unchecked")

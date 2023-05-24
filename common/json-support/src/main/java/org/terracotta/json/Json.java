@@ -46,6 +46,8 @@ public interface Json {
   final class Null {
   }
 
+  boolean isPretty();
+
   /**
    * Serialize the object and then parses back the serialized json.
    * This is a way to map a complex Java object into Map, List, Number, String, etc
@@ -269,7 +271,7 @@ public interface Json {
    * Serialize an object into a Json string
    */
   default String toString(Object o) {
-    return toString(o, false);
+    return toString(o, isPretty());
   }
 
   /**
@@ -286,6 +288,10 @@ public interface Json {
     write(o, out.toPath(), pretty);
   }
 
+  default void write(Object o, File out) {
+    write(o, out, isPretty());
+  }
+
   /**
    * Serialize an object into Json in a file
    */
@@ -297,11 +303,19 @@ public interface Json {
     }
   }
 
+  default void write(Object o, Path out) {
+    write(o, out, isPretty());
+  }
+
   /**
    * Serialize an object into Json in a stream
    */
   default void write(Object o, OutputStream out, boolean pretty) {
     write(o, new OutputStreamWriter(out, UTF_8), pretty);
+  }
+
+  default void write(Object o, OutputStream out) {
+    write(o, out, isPretty());
   }
 
   /**
@@ -313,6 +327,10 @@ public interface Json {
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  default void write(Object o, Writer out) {
+    write(o, out, isPretty());
   }
 
   /**
