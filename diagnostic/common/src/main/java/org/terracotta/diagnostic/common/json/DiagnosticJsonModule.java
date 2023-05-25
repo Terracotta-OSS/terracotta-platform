@@ -20,17 +20,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.json.Json;
-import org.terracotta.json.TerracottaJsonModule;
 
 import java.util.Optional;
-
-import static java.util.Collections.singleton;
 
 /**
  * @author Mathieu Carbou
@@ -43,11 +39,6 @@ public class DiagnosticJsonModule extends SimpleModule implements Json.Module {
 
     setMixInAnnotation(DiagnosticRequest.class, DiagnosticRequestMixin.class);
     setMixInAnnotation(DiagnosticResponse.class, DiagnosticResponseMixin.class);
-  }
-
-  @Override
-  public Iterable<? extends Module> getDependencies() {
-    return singleton(new TerracottaJsonModule());
   }
 
   @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")

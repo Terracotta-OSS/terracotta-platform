@@ -47,7 +47,6 @@ import org.terracotta.dynamic_config.api.model.nomad.UnlockConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
 import org.terracotta.inet.json.InetJsonModule;
 import org.terracotta.json.Json;
-import org.terracotta.json.TerracottaJsonModule;
 import org.terracotta.nomad.client.change.NomadChange;
 import org.terracotta.nomad.json.NomadJsonModule;
 import org.terracotta.nomad.server.ChangeRequestState;
@@ -102,7 +101,6 @@ public class DynamicConfigApiJsonModule extends SimpleModule implements Json.Mod
   @Override
   public Iterable<? extends Module> getDependencies() {
     return asList(
-        new TerracottaJsonModule(),
         new StructJsonModule(),
         new InetJsonModule(),
         new NomadJsonModule(),

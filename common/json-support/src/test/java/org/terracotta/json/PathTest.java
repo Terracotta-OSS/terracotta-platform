@@ -34,7 +34,7 @@ public class PathTest {
 
   @Test
   public void test_new_path_mapping()  {
-    Json json = new DefaultJsonFactory().withModule(new TerracottaJsonModule()).create();
+    Json json = new DefaultJsonFactory().create();
 
     assertThat(json.toString(new Foo()), is(equalTo("{}")));
     assertThat(json.toString(new Foo().setPath(Paths.get(""))), is(equalTo("{\"path\":[\"\"]}")));
@@ -49,7 +49,7 @@ public class PathTest {
 
   @Test
   public void test_new_path_mapping_backward_compatible() {
-    Json json = new DefaultJsonFactory().withModule(new TerracottaJsonModule()).create();
+    Json json = new DefaultJsonFactory().create();
 
     assertThat(json.parse("{\"path\":null}", Foo.class), is(equalTo(new Foo())));
     assertThat(json.parse("{\"path\":\"\"}", Foo.class), is(equalTo(new Foo().setPath(Paths.get("")))));
