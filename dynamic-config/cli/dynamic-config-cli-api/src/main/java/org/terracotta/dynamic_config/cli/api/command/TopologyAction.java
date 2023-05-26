@@ -137,7 +137,7 @@ public abstract class TopologyAction extends RemoteAction {
     new ClusterValidator(result).validate(destinationClusterActivated ? ACTIVATED : CONFIGURING);
 
     if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Updated topology:{}{}.", lineSeparator(), toJson(result));
+      LOGGER.debug("Updated topology:{}{}.", lineSeparator(), toPrettyJson(result));
     }
 
     // push the updated topology to all the addresses

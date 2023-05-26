@@ -353,7 +353,7 @@ public class DiagnosticAction extends RemoteAction {
       return stripeMap;
     }).collect(toList()));
 
-    return toJson(map);
+    return toPrettyJson(map);
   }
 
   private static String details(Collection<?> items) {

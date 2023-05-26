@@ -26,6 +26,7 @@ import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -45,8 +46,6 @@ public interface Json {
 
   final class Null {
   }
-
-  boolean isPretty();
 
   /**
    * Serialize the object and then parses back the serialized json.
@@ -265,72 +264,54 @@ public interface Json {
 
   Object parse(Reader r, Type type);
 
-  String toString(Object o, boolean pretty);
-
   /**
    * Serialize an object into a Json string
    */
-  default String toString(Object o) {
-    return toString(o, isPretty());
-  }
-
-  /**
-   * Serialize an object into a pretty Json string
-   */
-  default String toPrettyString(Object o) {
-    return toString(o, true);
-  }
-
-  /**
-   * Serialize an object into Json in a file
-   */
-  default void write(Object o, File out, boolean pretty) {
-    write(o, out.toPath(), pretty);
-  }
+  String toString(Object o);
 
   default void write(Object o, File out) {
-    write(o, out, isPretty());
+    write(o, out, UTF_8);
+  }
+
+  default void write(Object o, File out, Charset charset) {
+    write(o, out.toPath(), charset);
   }
 
   /**
    * Serialize an object into Json in a file
    */
-  default void write(Object o, Path out, boolean pretty) {
+  default void write(Object o, Path out, Charset charset) {
     try {
-      Files.write(out, toString(o, pretty).getBytes(UTF_8));
+      Files.write(out, toString(o).getBytes(charset));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
   default void write(Object o, Path out) {
-    write(o, out, isPretty());
+    write(o, out, UTF_8);
   }
 
   /**
    * Serialize an object into Json in a stream
    */
-  default void write(Object o, OutputStream out, boolean pretty) {
-    write(o, new OutputStreamWriter(out, UTF_8), pretty);
+  default void write(Object o, OutputStream out, Charset charset) {
+    write(o, new OutputStreamWriter(out, charset));
   }
 
   default void write(Object o, OutputStream out) {
-    write(o, out, isPretty());
+    write(o, out, UTF_8);
   }
 
   /**
    * Serialize an object into Json in a stream
    */
-  default void write(Object o, Writer out, boolean pretty) {
+  default void write(Object o, Writer out) {
     try {
-      out.write(toString(o, pretty));
+      out.write(toString(o));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-  }
-
-  default void write(Object o, Writer out) {
-    write(o, out, isPretty());
   }
 
   /**

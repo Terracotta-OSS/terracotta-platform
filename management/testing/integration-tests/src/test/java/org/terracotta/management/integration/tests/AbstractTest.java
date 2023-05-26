@@ -67,6 +67,7 @@ public abstract class AbstractTest {
   protected Logger logger = LoggerFactory.getLogger(getClass());
 
   protected final Json json = new DefaultJsonFactory().withModule(new TestModule()).create();
+  protected final Json prettyJson = new DefaultJsonFactory().withModule(new TestModule()).pretty().create();
 
   private Connection managementConnection;
   protected Cluster cluster;

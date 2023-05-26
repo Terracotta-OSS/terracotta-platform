@@ -24,9 +24,11 @@ import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.voter.TCVoter;
 import org.terracotta.voter.TCVoterImpl;
 import org.terracotta.voter.VoterStatus;
+import org.terracotta.voter.VotingGroup;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +37,6 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.angela.client.support.hamcrest.AngelaMatchers.successful;
-import org.terracotta.voter.VotingGroup;
 
 @ClusterDefinition(nodesPerStripe = 2, autoActivate = true)
 public class Voter1x2IT extends DynamicConfigIT {
@@ -71,6 +72,9 @@ public class Voter1x2IT extends DynamicConfigIT {
     int passiveId = waitForNPassives(1, 1)[0];
     String active = getNode(1, activeId).getHostPort();
     String passive = getNode(1, passiveId).getHostPort();
+
+    final Properties props = new Properties();
+    props.setProperty("request.timeout", "10000");
 
     try (VotingGroup activeVoter = new VotingGroup("voter1", active, passive)) {
       activeVoter.start().awaitRegistrationWithAll();

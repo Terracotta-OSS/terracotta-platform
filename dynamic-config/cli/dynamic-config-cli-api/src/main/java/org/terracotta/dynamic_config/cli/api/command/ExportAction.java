@@ -102,7 +102,7 @@ public class ExportAction extends RemoteAction {
     ConfigFormat outputFormat = outputFile == null ? this.outputFormat : ConfigFormat.from(outputFile);
     switch (outputFormat) {
       case JSON:
-        return toJson(cluster);
+        return toPrettyJson(cluster);
       case CONFIG:
       case PROPERTIES:
         // user-defined
