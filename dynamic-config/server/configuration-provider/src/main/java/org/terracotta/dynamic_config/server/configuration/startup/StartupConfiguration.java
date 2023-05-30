@@ -47,10 +47,14 @@ import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import static org.terracotta.common.struct.Tuple2.tuple2;
 
 public class StartupConfiguration implements Configuration, PrettyPrintable, StateDumpable, PlatformConfiguration, DynamicConfigExtension.Registrar {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(StartupConfiguration.class);
+  
   private final Collection<Tuple2<Class<?>, Supplier<?>>> extendedConfigurations = new CopyOnWriteArrayList<>();
   private final Collection<ServiceProviderConfiguration> serviceProviderConfigurations = new CopyOnWriteArrayList<>();
 
@@ -244,6 +248,19 @@ public class StartupConfiguration implements Configuration, PrettyPrintable, Sta
   @Override
   public void registerServiceProviderConfiguration(ServiceProviderConfiguration serviceProviderConfiguration) {
     serviceProviderConfigurations.add(serviceProviderConfiguration);
+  }
+  
+  public void close() {
+    extendedConfigurations.forEach(action->{
+      Object o = action.getT2().get();
+      if (o instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) o).close();
+        } catch (Exception e) {
+          LOGGER.info("failed to close extended configuration of type {}", action.getT1(), e);
+        }
+      }
+    });
   }
 
   public void discoverExtensions() {

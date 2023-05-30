@@ -239,6 +239,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
   @Override
   public void close() {
     nomadServerManager.getNomadServer().close();
+    configuration.close();
   }
 
   private <T> T withMyClassLoader(Callable<T> runnable) throws ConfigurationException {
