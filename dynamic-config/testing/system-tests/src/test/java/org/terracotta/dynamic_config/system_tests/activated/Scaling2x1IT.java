@@ -57,11 +57,11 @@ public class Scaling2x1IT extends DynamicConfigIT {
     assertThat(configTool("diagnostic", "-connect-to", getNodeHostPort(1, 1).toString(), "-output-format", "json"),
         allOf(
             successful(),
-            containsOutput("\"stripes\" : 2"),
-            containsOutput("\"configLocked\" : false"),
-            containsOutput("\"manualInterventionRequired\" : false"),
-            containsOutput("\"readyForTopologyChange\" : true"),
-            containsOutput(" \"scalingDenied\" : false")
+            containsOutput("\"stripes\":2"),
+            containsOutput("\"configLocked\":false"),
+            containsOutput("\"manualInterventionRequired\":false"),
+            containsOutput("\"readyForTopologyChange\":true"),
+            containsOutput(" \"scalingDenied\":false")
         ));
 
     assertThat(configTool("detach", "-lock", "-unlock", "-from-cluster", getNodeHostPort(1, 1).toString(), "-stripe", getNodeHostPort(2, 1).toString()), is(successful()));
@@ -69,11 +69,11 @@ public class Scaling2x1IT extends DynamicConfigIT {
     assertThat(configTool("diagnostic", "-connect-to", getNodeHostPort(1, 1).toString(), "-output-format", "json"),
         allOf(
             successful(),
-            containsOutput("\"stripes\" : 1"),
-            containsOutput("\"configLocked\" : false"),
-            containsOutput("\"manualInterventionRequired\" : false"),
-            containsOutput("\"readyForTopologyChange\" : true"),
-            containsOutput(" \"scalingDenied\" : false")
+            containsOutput("\"stripes\":1"),
+            containsOutput("\"configLocked\":false"),
+            containsOutput("\"manualInterventionRequired\":false"),
+            containsOutput("\"readyForTopologyChange\":true"),
+            containsOutput(" \"scalingDenied\":false")
         ));
   }
 
@@ -100,11 +100,11 @@ public class Scaling2x1IT extends DynamicConfigIT {
     assertThat(configTool("diagnostic", "-connect-to", getNodeHostPort(1, 1).toString(), "-output-format", "json"),
         allOf(
             successful(),
-            containsOutput("\"stripes\" : 1"),
-            containsOutput("\"configLocked\" : false"),
-            containsOutput("\"manualInterventionRequired\" : false"),
-            containsOutput("\"readyForTopologyChange\" : true"),
-            containsOutput(" \"scalingDenied\" : true")
+            containsOutput("\"stripes\":1"),
+            containsOutput("\"configLocked\":false"),
+            containsOutput("\"manualInterventionRequired\":false"),
+            containsOutput("\"readyForTopologyChange\":true"),
+            containsOutput(" \"scalingDenied\":true")
         ));
 
     // allow scale out
@@ -114,11 +114,11 @@ public class Scaling2x1IT extends DynamicConfigIT {
     assertThat(configTool("diagnostic", "-connect-to", getNodeHostPort(1, 1).toString(), "-output-format", "json"),
         allOf(
             successful(),
-            containsOutput("\"stripes\" : 1"),
-            containsOutput("\"configLocked\" : false"),
-            containsOutput("\"manualInterventionRequired\" : false"),
-            containsOutput("\"readyForTopologyChange\" : true"),
-            containsOutput(" \"scalingDenied\" : false")
+            containsOutput("\"stripes\":1"),
+            containsOutput("\"configLocked\":false"),
+            containsOutput("\"manualInterventionRequired\":false"),
+            containsOutput("\"readyForTopologyChange\":true"),
+            containsOutput(" \"scalingDenied\":false")
         ));
   }
 
@@ -129,11 +129,11 @@ public class Scaling2x1IT extends DynamicConfigIT {
     assertThat(configTool("diagnostic", "-connect-to", getNodeHostPort(1, 1).toString(), "-output-format", "json"),
         allOf(
             successful(),
-            containsOutput("\"stripes\" : 2"),
-            containsOutput("\"configLocked\" : false"),
-            containsOutput("\"manualInterventionRequired\" : false"),
-            containsOutput("\"readyForTopologyChange\" : true"),
-            containsOutput(" \"scalingDenied\" : false")
+            containsOutput("\"stripes\":2"),
+            containsOutput("\"configLocked\":false"),
+            containsOutput("\"manualInterventionRequired\":false"),
+            containsOutput("\"readyForTopologyChange\":true"),
+            containsOutput(" \"scalingDenied\":false")
         ));
 
     // we simulate a failed detach: lock-marker-unlock
@@ -149,11 +149,11 @@ public class Scaling2x1IT extends DynamicConfigIT {
     assertThat(configTool("diagnostic", "-connect-to", getNodeHostPort(1, 1).toString(), "-output-format", "json"),
         allOf(
             successful(),
-            containsOutput("\"stripes\" : 2"),
-            containsOutput("\"configLocked\" : false"),
-            containsOutput("\"manualInterventionRequired\" : false"),
-            containsOutput("\"readyForTopologyChange\" : true"),
-            containsOutput(" \"scalingDenied\" : true")
+            containsOutput("\"stripes\":2"),
+            containsOutput("\"configLocked\":false"),
+            containsOutput("\"manualInterventionRequired\":false"),
+            containsOutput("\"readyForTopologyChange\":true"),
+            containsOutput(" \"scalingDenied\":true")
         ));
 
     // allow scale in
@@ -163,11 +163,11 @@ public class Scaling2x1IT extends DynamicConfigIT {
     assertThat(configTool("diagnostic", "-connect-to", getNodeHostPort(1, 1).toString(), "-output-format", "json"),
         allOf(
             successful(),
-            containsOutput("\"stripes\" : 2"),
-            containsOutput("\"configLocked\" : false"),
-            containsOutput("\"manualInterventionRequired\" : false"),
-            containsOutput("\"readyForTopologyChange\" : true"),
-            containsOutput(" \"scalingDenied\" : false")
+            containsOutput("\"stripes\":2"),
+            containsOutput("\"configLocked\":false"),
+            containsOutput("\"manualInterventionRequired\":false"),
+            containsOutput("\"readyForTopologyChange\":true"),
+            containsOutput(" \"scalingDenied\":false")
         ));
   }
 

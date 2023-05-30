@@ -115,10 +115,10 @@ public abstract class RemoteAction implements Runnable {
   @Inject
   public OutputService output;
   @Inject
-  public Json json;
+  public Json.Factory jsonFactory;
 
-  protected String toJson(Object o) {
-    return json.toPrettyString(o);
+  protected String toPrettyJson(Object o) {
+    return jsonFactory.pretty().create().toString(o);
   }
 
   protected final void licenseValidation(HostPort expectedOnlineNode, Cluster cluster) {

@@ -114,12 +114,12 @@ public class DefaultJsonFactory implements Json.Factory {
     }
 
     // 2. enforce pretty configuration to behave exactly the same way if required
+    mapper.configure(SerializationFeature.INDENT_OUTPUT, pretty);
     if (pretty) {
-      mapper.configure(SerializationFeature.INDENT_OUTPUT, pretty);
       DefaultIndenter indent = new DefaultIndenter("  ", eol);
-      mapper.writer(new DefaultPrettyPrinter()
-          .withObjectIndenter(indent)
-          .withArrayIndenter(indent));
+      mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter()
+          .withoutSpacesInObjectEntries()
+          .withObjectIndenter(indent));
     }
 
     // 3. register modules for dependency resolution
@@ -256,11 +256,6 @@ public class DefaultJsonFactory implements Json.Factory {
       }
     }
 
-    @Override
-    public boolean isPretty() {
-      return mapper.isEnabled(SerializationFeature.INDENT_OUTPUT);
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     public Map<String, Object> parseObject(Path path) {
@@ -272,9 +267,9 @@ public class DefaultJsonFactory implements Json.Factory {
     }
 
     @Override
-    public String toString(Object o, boolean pretty) {
+    public String toString(Object o) {
       try {
-        return pretty ? mapper.writerWithDefaultPrettyPrinter().writeValueAsString(o) : mapper.writeValueAsString(o);
+        return mapper.writeValueAsString(o);
       } catch (JsonProcessingException e) {
         throw new UncheckedIOException(e);
       }
