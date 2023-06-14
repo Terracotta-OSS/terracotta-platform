@@ -36,6 +36,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.terracotta.dynamic-config</groupId>
+      <artifactId>dynamic-config-api-json</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.terracotta.common</groupId>
       <artifactId>common-sanskrit</artifactId>
       <version>${project.version}</version>
@@ -48,13 +53,6 @@
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>terracotta-utilities-tools</artifactId>
-    </dependency>
-
-    <!-- config repository uses json for nomad sanskrit -->
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-json-support</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <dependency>

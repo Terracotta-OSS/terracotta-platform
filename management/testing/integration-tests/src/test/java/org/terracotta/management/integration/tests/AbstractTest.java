@@ -37,6 +37,7 @@ import org.terracotta.management.model.stats.ContextualStatistics;
 import org.terracotta.testing.rules.Cluster;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -61,14 +62,13 @@ import static org.junit.Assert.assertTrue;
  * @author Mathieu Carbou
  */
 public abstract class AbstractTest {
-  protected final Json json = new DefaultJsonFactory().withModule(new TestModule()).create();
-  protected final Json prettyJson = new DefaultJsonFactory().withModule(new TestModule()).pretty().create();
-
-  private Connection managementConnection;
-  protected Cluster cluster;
-
+  protected final Json json = new DefaultJsonFactory().withModule(new TestModule()).pretty().create();
   protected final List<CacheFactory> webappNodes = new ArrayList<>();
   protected final Map<String, List<Cache>> caches = new HashMap<>();
+
+  private Connection managementConnection;
+
+  protected Cluster cluster;
   protected NmsService nmsService;
 
   @Rule
@@ -96,17 +96,21 @@ public abstract class AbstractTest {
     }
   }
 
-  protected Object readJson(String file) {
+  protected String read(String file) {
+    if (!file.startsWith("/")) {
+      file = "/" + file;
+    }
     try {
-      String json = new String(Files.readAllBytes(Paths.get(AbstractTest.class.getResource("/" + file).toURI())), UTF_8);
-      return toJson(this.json.parse(json));
-    } catch (URISyntaxException | IOException e) {
+      return new String(Files.readAllBytes(Paths.get(getClass().getResource(file).toURI())), UTF_8).replace("\r", "");
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    } catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected Object toJson(Object o) {
-    return json.parse(removeRandomValues(json.toString(o)));
+  protected String toJson(Object o) {
+    return removeRandomValues(json.toString(o));
   }
 
   protected int size(int nodeIdx, String cacheName) {
@@ -191,34 +195,34 @@ public abstract class AbstractTest {
   protected String removeRandomValues(String currentTopo) {
     // removes all random values
     return currentTopo
-        .replaceAll("\"(hostName)\":\"[^\"]*\"", "\"$1\":\"<hostname>\"")
-        .replaceAll("\"hostAddress\":[^,]*", "\"hostAddress\":\"127\\.0\\.0\\.1\"")
-        .replaceAll("\"bindPort\":[0-9]+", "\"bindPort\":0")
-        .replaceAll("\"groupPort\":[0-9]+", "\"groupPort\":0")
-        .replaceAll("\"port\":[0-9]+", "\"port\":0")
-        .replaceAll("\"activateTime\":[0-9]+", "\"activateTime\":0")
-        .replaceAll("\"availableAtTime\":[0-9]+", "\"availableAtTime\":0")
-        .replaceAll("\"OffHeapResource:AllocatedMemory\":[0-9]+", "\"OffHeapResource:AllocatedMemory\":0")
-        .replaceAll("\"time\":[0-9]+", "\"time\":0")
-        .replaceAll("\"pid\":[0-9]+", "\"pid\":0")
-        .replaceAll("\"startTime\":[0-9]+", "\"startTime\":0")
-        .replaceAll("\"timestamp\":[0-9]+", "\"timestamp\":0")
-        .replaceAll("\"startTime\":[0-9]+", "\"startTime\":0")
-        .replaceAll("\"upTimeSec\":[0-9]+", "\"upTimeSec\":0")
-        .replaceAll("\"id\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\",", "\"id\":\"0@127.0.0.1:$1:<uuid>\",")
-        .replaceAll("\"alias\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\",", "\"alias\":\"0@127.0.0.1:$1:<uuid>\",")
-        .replaceAll("\"buildId\":\"[^\"]*\"", "\"buildId\":\"Build ID\"")
-        .replaceAll("\"version\":\"[^\"]*\"", "\"version\":\"<version>\"")
-        .replaceAll("\"clientId\":\"[0-9]+@[^:]*:([^:]*):[^\"]*\"", "\"clientId\":\"0@127.0.0.1:$1:<uuid>\"")
-        .replaceAll("\"logicalConnectionUid\":\"[^\"]*\"", "\"logicalConnectionUid\":\"<uuid>\"")
-        .replaceAll("\"id\":\"[^\"]+:([\\w\\[\\]]+):[^\"]+:[^\"]+:[^\"]+\",", "\"id\":\"<uuid>:$1:testServer0:127.0.0.1:0\",")
-        .replaceAll("\"vmId\":\"[^\"]*\"", "\"vmId\":\"0@127.0.0.1\"")
+        .replaceAll("\"(hostName)\": \"[^\"]*\"", "\"$1\": \"<hostname>\"")
+        .replaceAll("\"hostAddress\": [^,]*", "\"hostAddress\": \"127\\.0\\.0\\.1\"")
+        .replaceAll("\"bindPort\": [0-9]+", "\"bindPort\": 0")
+        .replaceAll("\"groupPort\": [0-9]+", "\"groupPort\": 0")
+        .replaceAll("\"port\": [0-9]+", "\"port\": 0")
+        .replaceAll("\"activateTime\": [0-9]+", "\"activateTime\": 0")
+        .replaceAll("\"availableAtTime\": [0-9]+", "\"availableAtTime\": 0")
+        .replaceAll("\"OffHeapResource:AllocatedMemory\": [0-9]+", "\"OffHeapResource:AllocatedMemory\": 0")
+        .replaceAll("\"time\": [0-9]+", "\"time\": 0")
+        .replaceAll("\"pid\": [0-9]+", "\"pid\": 0")
+        .replaceAll("\"startTime\": [0-9]+", "\"startTime\": 0")
+        .replaceAll("\"timestamp\": [0-9]+", "\"timestamp\": 0")
+        .replaceAll("\"startTime\": [0-9]+", "\"startTime\": 0")
+        .replaceAll("\"upTimeSec\": [0-9]+", "\"upTimeSec\": 0")
+        .replaceAll("\"id\": \"[0-9]+@[^:]*:([^:]*):[^\"]*\",", "\"id\": \"0@127.0.0.1:$1:<uuid>\",")
+        .replaceAll("\"alias\": \"[0-9]+@[^:]*:([^:]*):[^\"]*\",", "\"alias\": \"0@127.0.0.1:$1:<uuid>\",")
+        .replaceAll("\"buildId\": \"[^\"]*\"", "\"buildId\": \"Build ID\"")
+        .replaceAll("\"version\": \"[^\"]*\"", "\"version\": \"<version>\"")
+        .replaceAll("\"clientId\": \"[0-9]+@[^:]*:([^:]*):[^\"]*\"", "\"clientId\": \"0@127.0.0.1:$1:<uuid>\"")
+        .replaceAll("\"logicalConnectionUid\": \"[^\"]*\"", "\"logicalConnectionUid\": \"<uuid>\"")
+        .replaceAll("\"id\": \"[^\"]+:([\\w\\[\\]]+):[^\"]+:[^\"]+:[^\"]+\",", "\"id\": \"<uuid>:$1:testServer0:127.0.0.1:0\",")
+        .replaceAll("\"vmId\": \"[^\"]*\"", "\"vmId\": \"0@127.0.0.1\"")
         .replaceAll("-2", "")
         .replaceAll("instance-0", "instance-?")
         .replaceAll("instance-1", "instance-?")
         .replaceAll("testServer1", "testServer0")
-        .replaceAll("\"(clientReportedAddress)\":\"[^\"]*\"", "\"$1\":\"<$1>\"")
-        .replaceAll("\"clientRevision\":\"[^\"]*\"", "\"clientRevision\":\"<uuid>\"");
+        .replaceAll("\"(clientReportedAddress)\": \"[^\"]*\"", "\"$1\": \"<$1>\"")
+        .replaceAll("\"clientRevision\": \"[^\"]*\"", "\"clientRevision\": \"<uuid>\"");
   }
 
   protected void triggerServerStatComputation() throws Exception {

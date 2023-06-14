@@ -24,7 +24,7 @@
         </dependency>
         <dependency>
             <groupId>org.terracotta.dynamic-config</groupId>
-            <artifactId>dynamic-config-api</artifactId>
+            <artifactId>dynamic-config-api-json</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

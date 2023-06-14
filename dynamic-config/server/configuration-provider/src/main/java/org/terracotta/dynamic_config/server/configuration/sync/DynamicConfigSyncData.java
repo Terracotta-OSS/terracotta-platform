@@ -17,7 +17,6 @@ package org.terracotta.dynamic_config.server.configuration.sync;
 
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.NomadChangeInfo;
-import org.terracotta.dynamic_config.server.configuration.sync.json.SyncJsonModule;
 import org.terracotta.json.Json;
 
 import java.util.List;
@@ -62,7 +61,7 @@ public class DynamicConfigSyncData {
     private final Json json;
 
     public Codec(Json.Factory jsonFactory) {
-      this.json = jsonFactory.withModule(new SyncJsonModule()).create();
+      this.json = jsonFactory.create();
     }
 
     public byte[] encode(DynamicConfigSyncData o) {

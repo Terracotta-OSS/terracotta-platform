@@ -50,11 +50,6 @@ public class LockAwareDynamicConfigNomadChange implements DynamicConfigNomadChan
     return change.getSummary();
   }
 
-  @Override
-  public final String getType() {
-    return "LockAwareDynamicConfigNomadChange";
-  }
-
   public String getLockToken() {
     return lockToken;
   }

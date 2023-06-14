@@ -1,0 +1,29 @@
+{
+  "changes": [
+    {
+      "applicability": {
+        "nodeName": "node1",
+        "scope": "NODE",
+        "stripeId": 1
+      },
+      "operation": "SET",
+      "setting": "NODE_BACKUP_DIR",
+      "summary": "set backup-dir=backup (on stripe ID: 1, node: node1)",
+      "type": "SettingNomadChange",
+      "value": "backup"
+    },
+    {
+      "applicability": {
+        "scope": "CLUSTER"
+      },
+      "name": "bar",
+      "operation": "SET",
+      "setting": "OFFHEAP_RESOURCES",
+      "summary": "set offheap-resources.bar=512MB",
+      "type": "SettingNomadChange",
+      "value": "512MB"
+    }
+  ],
+  "summary": "set backup-dir=backup (on stripe ID: 1, node: node1) then set offheap-resources.bar=512MB",
+  "type": "MultiSettingNomadChange"
+}

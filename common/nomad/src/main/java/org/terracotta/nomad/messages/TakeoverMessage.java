@@ -18,6 +18,12 @@ package org.terracotta.nomad.messages;
 import java.time.Instant;
 
 public class TakeoverMessage extends MutativeMessage {
+
+  // For Json
+  TakeoverMessage() {
+  }
+
+
   public TakeoverMessage(long expectedMutativeMessageCount,
                          String mutationHost,
                          String mutationUser,

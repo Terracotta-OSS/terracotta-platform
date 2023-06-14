@@ -24,7 +24,7 @@ import org.junit.runners.Parameterized.Parameters;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Configuration;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
@@ -440,7 +440,7 @@ public class DesynchronizedNomadConfigTest {
       // initialize services
       IParameterSubstitutor parameterSubstitutor = new ParameterSubstitutor();
       ConfigChangeHandlerManager configChangeHandlerManager = new ConfigChangeHandlerManagerImpl();
-      Json.Factory jsonFactory = new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule());
+      Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule());
       LicenseService licenseService = new LicenseParserDiscovery(FakeNode.class.getClassLoader()).find().orElseGet(LicenseService::unsupported);
       Server server = mock(Server.class);
       ServerJMX serverJMX = mock(ServerJMX.class);

@@ -19,15 +19,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.LockContext;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Version;
-import org.terracotta.json.DefaultJsonFactory;
-import org.terracotta.json.Json;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -42,12 +39,9 @@ import java.util.Properties;
 import static java.util.Collections.emptyMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.availability;
 import static org.terracotta.dynamic_config.api.model.FailoverPriority.consistency;
-import static org.terracotta.dynamic_config.api.model.Testing.replaceUIDs;
-import static org.terracotta.dynamic_config.api.model.Version.CURRENT;
 import static org.terracotta.dynamic_config.api.model.Version.V1;
 import static org.terracotta.dynamic_config.api.model.Version.V2;
 
@@ -56,7 +50,6 @@ import static org.terracotta.dynamic_config.api.model.Version.V2;
  */
 public class CompatibilityTest {
 
-  private final Json json = new DefaultJsonFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
   private final Cluster clusterV1 = new Cluster().setName("my-cluster").setFailoverPriority(availability()).addStripe(new Stripe().addNodes(
       new Node()
@@ -111,62 +104,6 @@ public class CompatibilityTest {
       Properties expected = Props.load(read("/" + version.name() + ".properties"));
       Properties props = clusterV2.toProperties(false, false, true, version);
       assertThat(Props.toString(props), props, is(equalTo(expected)));
-    }
-  }
-
-  @Test
-  public void test_versioned_parsing() throws URISyntaxException, IOException {
-    // - config file format is V2
-    // - config has V2 settings
-    {
-      Cluster parsed = new ClusterFactory(V2).create(Props.load(read("/V2.properties")));
-      replaceUIDs(parsed);
-      Cluster expected = json.parse(getClass().getResource("/V2.json"), Cluster.class);
-      assertThat(json.toString(parsed), parsed, is(equalTo(expected)));
-    }
-    // - config file format is V2
-    // - config has V1 settings only
-    // defaults will be applied
-    {
-      Cluster parsed = new ClusterFactory(V2).create(Props.load(read("/V1.properties")));
-
-      assertThat(parsed.getSingleStripe().get().getName(), startsWith("stripe-"));
-      parsed.getSingleStripe().get().setName("stripe-XYZ");
-      replaceUIDs(parsed);
-
-      Cluster expected = json.parse(getClass().getResource("/V1_and_V2_defaults.json"), Cluster.class);
-      assertThat(json.toString(parsed), parsed, is(equalTo(expected)));
-    }
-    // - config file format is V1
-    // - config has V1 settings only
-    // - output is V1 only
-    {
-      Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/V1.properties")));
-      Cluster expected = json.parse(getClass().getResource("/V1.json"), Cluster.class);
-      assertThat(parsed, is(equalTo(expected)));
-    }
-    // - config file format has some unsupported settings
-    // - output is V1 only
-    // example of older client that only knows about V1 config and are getting a V2 config
-    {
-      Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/V2.properties")));
-      Cluster expected = json.parse(getClass().getResource("/V1.json"), Cluster.class);
-      assertThat(parsed, is(equalTo(expected)));
-    }
-    // json and properties checks
-    {
-      Cluster parsed = new ClusterFactory(V1).create(Props.load(read("/default-node1.1.properties")));
-      Cluster expected = json.parse(getClass().getResource("/default-node1.1.json"), Cluster.class);
-      assertThat(json.toString(parsed),
-          json.map(parsed),
-          is(equalTo(json.parse(getClass().getResource("/default-node1.1.json")))));
-      assertThat(parsed, is(equalTo(expected)));
-      assertThat(Props.toString(parsed.toProperties(false, false, true, CURRENT)),
-          parsed.toProperties(false, false, true, CURRENT),
-          is(equalTo(Props.load(read("/default-node1.1-v2.properties")))));
-      assertThat(Props.toString(parsed.toProperties(false, false, true, V1)),
-          parsed.toProperties(false, false, true, V1),
-          is(equalTo(Props.load(read("/default-node1.1-v2.properties")))));
     }
   }
 

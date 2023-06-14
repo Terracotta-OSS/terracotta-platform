@@ -40,7 +40,7 @@ public class PassiveTopologyIT extends AbstractHATest {
     Object actual = json.parse(removeRandomValues(currentPassive[0]));
 
     // and compare
-    assertEquals(prettyJson.toString(actual), readJson("passive.json"), actual);
+    assertEquals(read("passive.json"), toJson(actual));
   }
 
   @Test

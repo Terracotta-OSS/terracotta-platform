@@ -39,11 +39,8 @@ public class DefaultHashComputer implements HashComputer {
   @Override
   public void checkHash(Config config, String expectedHash) throws NomadException {
     if (config.getVersion() == Version.V1) {
-      // we cannot check the hash of a V1 config because the V1 hash was computed based on the json output.
-      // Sadly this is not possible to keep backward compat' with that because json field ordering is hard
-      // to control: SORT_PROPERTIES_ALPHABETICALLY and ORDER_MAP_ENTRIES_BY_KEYS are often subject to bugs
-      // and are not reliable: https://www.stubbornjava.com/posts/creating-a-somewhat-deterministic-jackson-objectmapper
-      // The json output is non deterministic.
+      // we cannot check the hash of a V1 config because the V1 hash was computed based on the a json output
+      // that was not controlled (field ordering, etc) and non deterministic.
       return;
     }
 

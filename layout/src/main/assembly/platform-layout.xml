@@ -78,11 +78,8 @@
         <include>org.terracotta.dynamic-config.server:dynamic-config-server-api</include>
         <include>org.terracotta.dynamic-config:dynamic-config-model</include>
         <include>org.terracotta.dynamic-config:dynamic-config-api</include>
-        <include>com.fasterxml.jackson.core:jackson-annotations</include>
-        <include>com.fasterxml.jackson.core:jackson-core</include>
-        <include>com.fasterxml.jackson.core:jackson-databind</include>
-        <include>com.fasterxml.jackson.datatype:jackson-datatype-jdk8</include>
-        <include>com.fasterxml.jackson.datatype:jackson-datatype-jsr310</include>
+        <include>org.terracotta.dynamic-config:dynamic-config-api-json</include>
+        <include>com.google.code.gson:gson</include>
         <include>org.terracotta:terracotta-utilities-tools</include>
       </includes>
     </dependencySet>
@@ -128,11 +125,7 @@
         <include>org.terracotta.common:common-json-support</include>
         <include>org.terracotta.common:common-nomad</include>
         <include>org.terracotta.common:output-service</include>
-        <include>com.fasterxml.jackson.core:jackson-annotations</include>
-        <include>com.fasterxml.jackson.core:jackson-core</include>
-        <include>com.fasterxml.jackson.core:jackson-databind</include>
-        <include>com.fasterxml.jackson.datatype:jackson-datatype-jdk8</include>
-        <include>com.fasterxml.jackson.datatype:jackson-datatype-jsr310</include>
+        <include>com.google.code.gson:gson</include>
         <include>com.beust:jcommander</include>
         <include>ch.qos.logback:logback-classic</include>
         <include>ch.qos.logback:logback-core</include>
@@ -177,6 +170,7 @@
         <include>org.terracotta.dynamic-config.cli:dynamic-config-cli-support</include>
         <include>org.terracotta.dynamic-config:dynamic-config-model</include>
         <include>org.terracotta.dynamic-config:dynamic-config-api</include>
+        <include>org.terracotta.dynamic-config:dynamic-config-json</include>
         <include>org.terracotta.dynamic-config.entities:dynamic-config-nomad-entity-common</include>
         <include>org.terracotta.dynamic-config.entities:dynamic-config-nomad-entity-client</include>
         <include>org.terracotta.diagnostic:diagnostic-client</include>

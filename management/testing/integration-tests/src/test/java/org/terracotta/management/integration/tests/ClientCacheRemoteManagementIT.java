@@ -51,7 +51,7 @@ public class ClientCacheRemoteManagementIT extends AbstractSingleTest {
     assertThat(registry.getCapability("StatisticCollectorCapability"), is(notNullValue()));
     assertThat(registry.getCapability("NmsAgentService"), is(notNullValue()));
 
-    assertEquals(readJson("client-descriptors.json"), toJson(registry.getCapabilities()));
+    assertEquals(read("client-descriptors.json"), toJson(registry.getCapabilities()));
   }
 
   @Test

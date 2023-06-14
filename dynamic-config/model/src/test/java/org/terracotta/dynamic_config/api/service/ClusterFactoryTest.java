@@ -20,7 +20,6 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.MemoryUnit;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.ClusterState;
 import org.terracotta.dynamic_config.api.model.LockContext;
@@ -28,15 +27,8 @@ import org.terracotta.dynamic_config.api.model.RawPath;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.Testing;
-import org.terracotta.json.DefaultJsonFactory;
-import org.terracotta.json.Json;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.Map;
@@ -88,8 +80,6 @@ public class ClusterFactoryTest {
         return source;
     }
   };
-
-  Json json = new DefaultJsonFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
   Cluster cluster = Testing.newTestCluster("my-cluster", newTestStripe("stripe1").setUID(Testing.S_UIDS[1]).addNodes(
       Testing.newTestNode("node-1", "localhost1")
@@ -350,57 +340,6 @@ public class ClusterFactoryTest {
     }));
   }
 
-  @Test
-  public void test_parsing_expanded_values_does_not_add_defaults() throws URISyntaxException, IOException {
-    Properties expectedProps = Props.load(Paths.get(getClass().getResource("/config-property-files/config_expanded_default.properties").toURI()));
-    Cluster expectedCluster = new ClusterFactory().create(expectedProps);
-    assertThat(
-        "\nclusterWithDefaults: " + json.toString(clusterWithDefaults) + "\nexpectedCluster:     " + json.toString(expectedCluster),
-        expectedCluster, is(equalTo(clusterWithDefaults)));
-  }
-
-  @Test
-  public void test_mapping_props_json_without_defaults() throws URISyntaxException, IOException {
-    Properties props = Props.load(read("/config1_without_defaults.properties"));
-    Cluster fromJson = json.parse(read("/config2.json"), Cluster.class);
-    Cluster fromProps = new ClusterFactory().create(props);
-
-    assertThat(json.toString(fromProps), fromProps, is(equalTo(fromJson)));
-    assertThat(
-        Props.toString(fromJson.toProperties(false, false, true)),
-        fromJson.toProperties(false, false, true),
-        is(equalTo(props)));
-    assertThat(
-        Props.toString(fromJson.toProperties(false, false, true)),
-        fromJson.toProperties(false, false, true),
-        is(equalTo(fromProps.toProperties(false, false, true))));
-    assertThat(
-        json.toString(fromProps),
-        fromProps,
-        is(equalTo(fromJson)));
-  }
-
-  @Test
-  public void test_mapping_props_json_with_defaults() throws URISyntaxException, IOException {
-    Properties props = Props.load(read("/config1_with_defaults.properties"));
-    Cluster fromProps = new ClusterFactory().create(props);
-    Cluster fromJson = json.parse(read("/config1.json"), Cluster.class);
-
-    assertThat(json.toString(fromProps), fromProps, is(equalTo(fromJson)));
-    assertThat(
-        Props.toString(fromJson.toProperties(false, true, true)),
-        fromJson.toProperties(false, true, true),
-        is(equalTo(props)));
-    assertThat(
-        Props.toString(fromJson.toProperties(false, true, true)),
-        fromJson.toProperties(false, true, true),
-        is(equalTo(fromProps.toProperties(false, true, true))));
-    assertThat(
-        json.toString(fromProps),
-        fromProps,
-        is(equalTo(fromJson)));
-  }
-
   public static <T> Consumer<T> rethrow(EConsumer<T> c) {
     return t -> {
       try {
@@ -417,11 +356,6 @@ public class ClusterFactoryTest {
   @FunctionalInterface
   public interface EConsumer<T> {
     void accept(T t) throws Exception;
-  }
-
-  private String read(String resource) throws URISyntaxException, IOException {
-    Path path = Paths.get(getClass().getResource(resource).toURI());
-    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
   }
 
   private Properties fixPaths(Properties props) {

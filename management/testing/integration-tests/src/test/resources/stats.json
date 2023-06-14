@@ -2,16 +2,16 @@
   {
     "capability": "OffHeapResourceStatistics",
     "context": {
-      "consumerId": "6",
       "alias": "primary-server-resource",
-      "type": "OffHeapResource",
       "collectorId": "6",
-      "stripeId": "stripe[0]",
-      "serverId": "testServer0",
-      "serverName": "testServer0",
+      "consumerId": "6",
       "entityId": "ServerCacheManagementIT:org.terracotta.management.entity.nms.client.NmsEntity",
       "entityName": "ServerCacheManagementIT",
-      "entityType": "org.terracotta.management.entity.nms.client.NmsEntity"
+      "entityType": "org.terracotta.management.entity.nms.client.NmsEntity",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
+      "stripeId": "stripe[0]",
+      "type": "OffHeapResource"
     },
     "statistics": {
       "OffHeapResource:AllocatedMemory": {
@@ -28,65 +28,23 @@
   {
     "capability": "ServerCacheStatistics",
     "context": {
-      "consumerId": "7",
       "alias": "pet-clinic/pets",
-      "type": "ServerCache",
       "collectorId": "6",
-      "stripeId": "stripe[0]",
-      "serverId": "testServer0",
-      "serverName": "testServer0",
+      "consumerId": "7",
       "entityId": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/pets",
-      "entityType": "org.terracotta.management.entity.sample.client.CacheEntity"
+      "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
+      "stripeId": "stripe[0]",
+      "type": "ServerCache"
     },
     "statistics": {
-      "Cluster:PutCount": {
-        "samples": [
-          {
-            "sample": 1,
-            "timestamp": 0
-          }
-        ],
-        "type": "COUNTER"
-      },
-      "Cluster:HitCount": {
-        "samples": [
-          {
-            "sample": 1,
-            "timestamp": 0
-          }
-        ],
-        "type": "COUNTER"
-      },
-      "Cluster:MissCount": {
-        "samples": [
-          {
-            "sample": 0,
-            "timestamp": 0
-          }
-        ],
-        "type": "COUNTER"
-      },
-      "Cluster:ClearCount": {
-        "samples": [
-          {
-            "sample": 0,
-            "timestamp": 0
-          }
-        ],
-        "type": "COUNTER"
-      },
       "Cluster:CacheEntryLength": {
         "samples": [
           {
             "sample": {
-              "empty": false,
-              "rowCount": 1,
-              "rowLabels": [
-                "pet1"
-              ],
-              "statisticCount": 2,
-              "statisticNames": [
+              "innerStatisticNames": [
                 "KeyLength",
                 "ValueLength"
               ],
@@ -108,6 +66,42 @@
         ],
         "type": "TABLE"
       },
+      "Cluster:ClearCount": {
+        "samples": [
+          {
+            "sample": 0,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:HitCount": {
+        "samples": [
+          {
+            "sample": 1,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:MissCount": {
+        "samples": [
+          {
+            "sample": 0,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
+      "Cluster:PutCount": {
+        "samples": [
+          {
+            "sample": 1,
+            "timestamp": 0
+          }
+        ],
+        "type": "COUNTER"
+      },
       "ServerCache:Size": {
         "samples": [
           {
@@ -122,19 +116,19 @@
   {
     "capability": "ServerCacheStatistics",
     "context": {
-      "consumerId": "8",
       "alias": "pet-clinic/clients",
-      "type": "ServerCache",
       "collectorId": "6",
-      "stripeId": "stripe[0]",
-      "serverId": "testServer0",
-      "serverName": "testServer0",
+      "consumerId": "8",
       "entityId": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
       "entityName": "pet-clinic/clients",
-      "entityType": "org.terracotta.management.entity.sample.client.CacheEntity"
+      "entityType": "org.terracotta.management.entity.sample.client.CacheEntity",
+      "serverId": "testServer0",
+      "serverName": "testServer0",
+      "stripeId": "stripe[0]",
+      "type": "ServerCache"
     },
     "statistics": {
-      "Cluster:PutCount": {
+      "Cluster:ClearCount": {
         "samples": [
           {
             "sample": 0,
@@ -161,7 +155,7 @@
         ],
         "type": "COUNTER"
       },
-      "Cluster:ClearCount": {
+      "Cluster:PutCount": {
         "samples": [
           {
             "sample": 0,

@@ -1,26 +1,502 @@
 {
+  "clients": [
+    {
+      "clientId": "0@127.0.0.1:FailoverIT:<uuid>",
+      "connections": [
+        {
+          "clientEndpoint": {
+            "address": "127.0.0.1",
+            "port": 0
+          },
+          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
+          "logicalConnectionUid": "<uuid>",
+          "serverEntityIds": {
+            "FailoverIT:org.terracotta.management.entity.nms.client.NmsEntity": 1
+          },
+          "serverId": "testServer0",
+          "stripeId": "stripe[0]"
+        }
+      ],
+      "hostAddress": "127.0.0.1",
+      "hostName": "<hostname>",
+      "id": "0@127.0.0.1:FailoverIT:<uuid>",
+      "logicalConnectionUid": "<uuid>",
+      "name": "FailoverIT",
+      "pid": 0,
+      "properties": {
+        "clientReportedAddress": "<clientReportedAddress>",
+        "clientRevision": "<uuid>",
+        "version": "<version>"
+      },
+      "tags": [],
+      "vmId": "0@127.0.0.1"
+    },
+    {
+      "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
+      "connections": [
+        {
+          "clientEndpoint": {
+            "address": "127.0.0.1",
+            "port": 0
+          },
+          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
+          "logicalConnectionUid": "<uuid>",
+          "serverEntityIds": {
+            "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
+            "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
+            "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
+          },
+          "serverId": "testServer0",
+          "stripeId": "stripe[0]"
+        }
+      ],
+      "hostAddress": "127.0.0.1",
+      "hostName": "<hostname>",
+      "id": "0@127.0.0.1:pet-clinic:<uuid>",
+      "logicalConnectionUid": "<uuid>",
+      "managementRegistry": {
+        "capabilities": [
+          {
+            "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "clear",
+                "parameters": [],
+                "returnType": "void"
+              },
+              {
+                "name": "get",
+                "parameters": [
+                  {
+                    "name": "key",
+                    "type": "java.lang.String"
+                  }
+                ],
+                "returnType": "java.lang.String"
+              },
+              {
+                "name": "put",
+                "parameters": [
+                  {
+                    "name": "key",
+                    "type": "java.lang.String"
+                  },
+                  {
+                    "name": "value",
+                    "type": "java.lang.String"
+                  }
+                ],
+                "returnType": "void"
+              },
+              {
+                "name": "size",
+                "parameters": [],
+                "returnType": "int"
+              }
+            ],
+            "name": "CacheCalls"
+          },
+          {
+            "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "appName": "pet-clinic",
+                "cacheName": "pets",
+                "instanceId": "instance-?",
+                "size": 0
+              },
+              {
+                "appName": "pet-clinic",
+                "cacheName": "clients",
+                "instanceId": "instance-?",
+                "size": 0
+              }
+            ],
+            "name": "CacheSettings"
+          },
+          {
+            "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "Cache:ClearCount",
+                "type": "COUNTER"
+              },
+              {
+                "name": "Cache:HitCount",
+                "type": "COUNTER"
+              },
+              {
+                "name": "Cache:MissCount",
+                "type": "COUNTER"
+              },
+              {
+                "name": "ClientCache:Size",
+                "type": "GAUGE"
+              }
+            ],
+            "name": "CacheStatistics"
+          },
+          {
+            "context": [],
+            "descriptors": [
+              {
+                "name": "getThreadDump",
+                "parameters": [],
+                "returnType": "java.lang.String"
+              }
+            ],
+            "name": "DiagnosticCalls"
+          },
+          {
+            "context": [],
+            "descriptors": [],
+            "name": "NmsAgentService"
+          },
+          {
+            "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
+              {
+                "name": "appName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "isRunning",
+                "parameters": [],
+                "returnType": "boolean"
+              },
+              {
+                "name": "startStatisticCollector",
+                "parameters": [
+                  {
+                    "name": "interval",
+                    "type": "long"
+                  },
+                  {
+                    "name": "unit",
+                    "type": "java.util.concurrent.TimeUnit"
+                  }
+                ],
+                "returnType": "void"
+              },
+              {
+                "name": "stopStatisticCollector",
+                "parameters": [],
+                "returnType": "void"
+              }
+            ],
+            "name": "StatisticCollectorCapability"
+          }
+        ],
+        "contextContainer": {
+          "appName": "pet-clinic",
+          "subContexts": []
+        },
+        "rootContext": {
+          "appName": "pet-clinic",
+          "instanceId": "instance-?"
+        }
+      },
+      "name": "pet-clinic",
+      "pid": 0,
+      "properties": {
+        "clientReportedAddress": "<clientReportedAddress>",
+        "clientRevision": "<uuid>",
+        "version": "<version>"
+      },
+      "tags": [
+        "caches",
+        "pet-clinic"
+      ],
+      "vmId": "0@127.0.0.1"
+    },
+    {
+      "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
+      "connections": [
+        {
+          "clientEndpoint": {
+            "address": "127.0.0.1",
+            "port": 0
+          },
+          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
+          "logicalConnectionUid": "<uuid>",
+          "serverEntityIds": {
+            "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
+            "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
+            "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
+          },
+          "serverId": "testServer0",
+          "stripeId": "stripe[0]"
+        }
+      ],
+      "hostAddress": "127.0.0.1",
+      "hostName": "<hostname>",
+      "id": "0@127.0.0.1:pet-clinic:<uuid>",
+      "logicalConnectionUid": "<uuid>",
+      "managementRegistry": {
+        "capabilities": [
+          {
+            "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "clear",
+                "parameters": [],
+                "returnType": "void"
+              },
+              {
+                "name": "get",
+                "parameters": [
+                  {
+                    "name": "key",
+                    "type": "java.lang.String"
+                  }
+                ],
+                "returnType": "java.lang.String"
+              },
+              {
+                "name": "put",
+                "parameters": [
+                  {
+                    "name": "key",
+                    "type": "java.lang.String"
+                  },
+                  {
+                    "name": "value",
+                    "type": "java.lang.String"
+                  }
+                ],
+                "returnType": "void"
+              },
+              {
+                "name": "size",
+                "parameters": [],
+                "returnType": "int"
+              }
+            ],
+            "name": "CacheCalls"
+          },
+          {
+            "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "appName": "pet-clinic",
+                "cacheName": "pets",
+                "instanceId": "instance-?",
+                "size": 0
+              },
+              {
+                "appName": "pet-clinic",
+                "cacheName": "clients",
+                "instanceId": "instance-?",
+                "size": 0
+              }
+            ],
+            "name": "CacheSettings"
+          },
+          {
+            "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
+              {
+                "name": "appName",
+                "required": true
+              },
+              {
+                "name": "cacheName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "Cache:ClearCount",
+                "type": "COUNTER"
+              },
+              {
+                "name": "Cache:HitCount",
+                "type": "COUNTER"
+              },
+              {
+                "name": "Cache:MissCount",
+                "type": "COUNTER"
+              },
+              {
+                "name": "ClientCache:Size",
+                "type": "GAUGE"
+              }
+            ],
+            "name": "CacheStatistics"
+          },
+          {
+            "context": [],
+            "descriptors": [
+              {
+                "name": "getThreadDump",
+                "parameters": [],
+                "returnType": "java.lang.String"
+              }
+            ],
+            "name": "DiagnosticCalls"
+          },
+          {
+            "context": [],
+            "descriptors": [],
+            "name": "NmsAgentService"
+          },
+          {
+            "context": [
+              {
+                "name": "instanceId",
+                "required": true
+              },
+              {
+                "name": "appName",
+                "required": true
+              }
+            ],
+            "descriptors": [
+              {
+                "name": "isRunning",
+                "parameters": [],
+                "returnType": "boolean"
+              },
+              {
+                "name": "startStatisticCollector",
+                "parameters": [
+                  {
+                    "name": "interval",
+                    "type": "long"
+                  },
+                  {
+                    "name": "unit",
+                    "type": "java.util.concurrent.TimeUnit"
+                  }
+                ],
+                "returnType": "void"
+              },
+              {
+                "name": "stopStatisticCollector",
+                "parameters": [],
+                "returnType": "void"
+              }
+            ],
+            "name": "StatisticCollectorCapability"
+          }
+        ],
+        "contextContainer": {
+          "appName": "pet-clinic",
+          "subContexts": []
+        },
+        "rootContext": {
+          "appName": "pet-clinic",
+          "instanceId": "instance-?"
+        }
+      },
+      "name": "pet-clinic",
+      "pid": 0,
+      "properties": {
+        "clientReportedAddress": "<clientReportedAddress>",
+        "clientRevision": "<uuid>",
+        "version": "<version>"
+      },
+      "tags": [
+        "caches",
+        "pet-clinic"
+      ],
+      "vmId": "0@127.0.0.1"
+    }
+  ],
   "stripes": [
     {
       "id": "stripe[0]",
       "name": "stripe[0]",
       "servers": [
         {
+          "activateTime": 0,
+          "bindAddress": "0.0.0.0",
+          "bindPort": 0,
+          "buildId": "Build ID",
+          "groupPort": 0,
+          "hostAddress": "127.0.0.1",
+          "hostName": "<hostname>",
           "id": "testServer0",
           "serverEntities": [
             {
-              "id": "FailoverIT:org.terracotta.management.entity.nms.client.NmsEntity",
-              "type": "org.terracotta.management.entity.nms.client.NmsEntity",
-              "name": "FailoverIT",
               "consumerId": 6,
+              "id": "FailoverIT:org.terracotta.management.entity.nms.client.NmsEntity",
               "managementRegistry": {
-                "rootContext": {},
-                "contextContainer": {
-                  "consumerId": "6",
-                  "subContexts": []
-                },
                 "capabilities": [
                   {
-                    "name": "OffHeapResourceSettings",
                     "context": [
                       {
                         "name": "consumerId",
@@ -37,20 +513,20 @@
                     ],
                     "descriptors": [
                       {
-                        "consumerId": "6",
                         "alias": "primary-server-resource",
-                        "type": "OffHeapResource",
+                        "availableAtTime": 0,
                         "capacity": 67108864,
-                        "availableAtTime": 0
+                        "consumerId": "6",
+                        "type": "OffHeapResource"
                       },
                       {
-                        "type": "OffHeapResourceSettingsManagementProvider",
-                        "time": 0
+                        "time": 0,
+                        "type": "OffHeapResourceSettingsManagementProvider"
                       }
-                    ]
+                    ],
+                    "name": "OffHeapResourceSettings"
                   },
                   {
-                    "name": "OffHeapResourceStatistics",
                     "context": [
                       {
                         "name": "consumerId",
@@ -70,10 +546,10 @@
                         "name": "OffHeapResource:AllocatedMemory",
                         "type": "GAUGE"
                       }
-                    ]
+                    ],
+                    "name": "OffHeapResourceStatistics"
                   },
                   {
-                    "name": "StatisticCollectorCapability",
                     "context": [
                       {
                         "name": "consumerId",
@@ -83,12 +559,11 @@
                     "descriptors": [
                       {
                         "name": "isRunning",
-                        "returnType": "boolean",
-                        "parameters": []
+                        "parameters": [],
+                        "returnType": "boolean"
                       },
                       {
                         "name": "startStatisticCollector",
-                        "returnType": "void",
                         "parameters": [
                           {
                             "name": "interval",
@@ -98,53 +573,224 @@
                             "name": "unit",
                             "type": "java.util.concurrent.TimeUnit"
                           }
-                        ]
+                        ],
+                        "returnType": "void"
                       },
                       {
                         "name": "stopStatisticCollector",
-                        "returnType": "void",
-                        "parameters": []
+                        "parameters": [],
+                        "returnType": "void"
                       }
-                    ]
+                    ],
+                    "name": "StatisticCollectorCapability"
                   }
-                ]
-              }
+                ],
+                "contextContainer": {
+                  "consumerId": "6",
+                  "subContexts": []
+                },
+                "rootContext": {}
+              },
+              "name": "FailoverIT",
+              "type": "org.terracotta.management.entity.nms.client.NmsEntity"
             },
             {
-              "id": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
-              "type": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
-              "name": "NmsAgent",
               "consumerId": 3,
-              "managementRegistry": null
+              "id": "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity",
+              "name": "NmsAgent",
+              "type": "org.terracotta.management.entity.nms.agent.client.NmsAgentEntity"
             },
             {
-              "id": "dynamic-config-management-entity:org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
-              "type": "org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
-              "name": "dynamic-config-management-entity",
               "consumerId": 4,
+              "id": "dynamic-config-management-entity:org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService",
               "managementRegistry": {
-                "rootContext": {},
+                "capabilities": [],
                 "contextContainer": {
                   "consumerId": "4",
                   "subContexts": []
                 },
-                "capabilities": []
-              }
+                "rootContext": {}
+              },
+              "name": "dynamic-config-management-entity",
+              "type": "org.terracotta.dynamic_config.entity.management.server.ManagementEntityServerService"
             },
             {
-              "id": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
-              "type": "org.terracotta.management.entity.sample.client.CacheEntity",
-              "name": "pet-clinic/clients",
               "consumerId": 8,
+              "id": "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity",
               "managementRegistry": {
-                "rootContext": {},
+                "capabilities": [
+                  {
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
+                        "attached": true,
+                        "consumerId": "8",
+                        "type": "ClientState"
+                      },
+                      {
+                        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
+                        "attached": true,
+                        "consumerId": "8",
+                        "type": "ClientState"
+                      }
+                    ],
+                    "name": "ClientStateSettings"
+                  },
+                  {
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "cacheName",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "name": "clear",
+                        "parameters": [],
+                        "returnType": "void"
+                      },
+                      {
+                        "name": "get",
+                        "parameters": [
+                          {
+                            "name": "key",
+                            "type": "java.lang.String"
+                          }
+                        ],
+                        "returnType": "java.lang.String"
+                      },
+                      {
+                        "name": "put",
+                        "parameters": [
+                          {
+                            "name": "key",
+                            "type": "java.lang.String"
+                          },
+                          {
+                            "name": "value",
+                            "type": "java.lang.String"
+                          }
+                        ],
+                        "returnType": "void"
+                      },
+                      {
+                        "name": "size",
+                        "parameters": [],
+                        "returnType": "int"
+                      }
+                    ],
+                    "name": "ServerCacheCalls"
+                  },
+                  {
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "alias": "pet-clinic/clients",
+                        "consumerId": "8",
+                        "size": 1,
+                        "type": "ServerCache"
+                      },
+                      {
+                        "time": 0,
+                        "type": "ServerCacheSettings"
+                      }
+                    ],
+                    "name": "ServerCacheSettings"
+                  },
+                  {
+                    "context": [
+                      {
+                        "name": "consumerId",
+                        "required": true
+                      },
+                      {
+                        "name": "type",
+                        "required": true
+                      },
+                      {
+                        "name": "alias",
+                        "required": true
+                      }
+                    ],
+                    "descriptors": [
+                      {
+                        "name": "Cluster:CacheEntryLength",
+                        "type": "TABLE"
+                      },
+                      {
+                        "name": "Cluster:ClearCount",
+                        "type": "COUNTER"
+                      },
+                      {
+                        "name": "Cluster:GetLatency",
+                        "type": "GAUGE"
+                      },
+                      {
+                        "name": "Cluster:HitCount",
+                        "type": "COUNTER"
+                      },
+                      {
+                        "name": "Cluster:MissCount",
+                        "type": "COUNTER"
+                      },
+                      {
+                        "name": "Cluster:PutCount",
+                        "type": "COUNTER"
+                      },
+                      {
+                        "name": "ServerCache:Size",
+                        "type": "GAUGE"
+                      }
+                    ],
+                    "name": "ServerCacheStatistics"
+                  }
+                ],
                 "contextContainer": {
                   "consumerId": "8",
                   "subContexts": []
                 },
+                "rootContext": {}
+              },
+              "name": "pet-clinic/clients",
+              "type": "org.terracotta.management.entity.sample.client.CacheEntity"
+            },
+            {
+              "consumerId": 7,
+              "id": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
+              "managementRegistry": {
                 "capabilities": [
                   {
-                    "name": "ClientStateSettings",
                     "context": [
                       {
                         "name": "consumerId",
@@ -161,21 +807,21 @@
                     ],
                     "descriptors": [
                       {
-                        "consumerId": "8",
                         "alias": "0@127.0.0.1:pet-clinic:<uuid>",
-                        "type": "ClientState",
-                        "attached": true
+                        "attached": true,
+                        "consumerId": "7",
+                        "type": "ClientState"
                       },
                       {
-                        "consumerId": "8",
                         "alias": "0@127.0.0.1:pet-clinic:<uuid>",
-                        "type": "ClientState",
-                        "attached": true
+                        "attached": true,
+                        "consumerId": "7",
+                        "type": "ClientState"
                       }
-                    ]
+                    ],
+                    "name": "ClientStateSettings"
                   },
                   {
-                    "name": "ServerCacheCalls",
                     "context": [
                       {
                         "name": "consumerId",
@@ -189,22 +835,21 @@
                     "descriptors": [
                       {
                         "name": "clear",
-                        "returnType": "void",
-                        "parameters": []
+                        "parameters": [],
+                        "returnType": "void"
                       },
                       {
                         "name": "get",
-                        "returnType": "java.lang.String",
                         "parameters": [
                           {
                             "name": "key",
                             "type": "java.lang.String"
                           }
-                        ]
+                        ],
+                        "returnType": "java.lang.String"
                       },
                       {
                         "name": "put",
-                        "returnType": "void",
                         "parameters": [
                           {
                             "name": "key",
@@ -214,17 +859,18 @@
                             "name": "value",
                             "type": "java.lang.String"
                           }
-                        ]
+                        ],
+                        "returnType": "void"
                       },
                       {
                         "name": "size",
-                        "returnType": "int",
-                        "parameters": []
+                        "parameters": [],
+                        "returnType": "int"
                       }
-                    ]
+                    ],
+                    "name": "ServerCacheCalls"
                   },
                   {
-                    "name": "ServerCacheSettings",
                     "context": [
                       {
                         "name": "consumerId",
@@ -241,19 +887,19 @@
                     ],
                     "descriptors": [
                       {
-                        "consumerId": "8",
-                        "alias": "pet-clinic/clients",
-                        "type": "ServerCache",
-                        "size": 1
+                        "alias": "pet-clinic/pets",
+                        "consumerId": "7",
+                        "size": 0,
+                        "type": "ServerCache"
                       },
                       {
-                        "type": "ServerCacheSettings",
-                        "time": 0
+                        "time": 0,
+                        "type": "ServerCacheSettings"
                       }
-                    ]
+                    ],
+                    "name": "ServerCacheSettings"
                   },
                   {
-                    "name": "ServerCacheStatistics",
                     "context": [
                       {
                         "name": "consumerId",
@@ -297,675 +943,27 @@
                         "name": "ServerCache:Size",
                         "type": "GAUGE"
                       }
-                    ]
+                    ],
+                    "name": "ServerCacheStatistics"
                   }
-                ]
-              }
-            },
-            {
-              "id": "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity",
-              "type": "org.terracotta.management.entity.sample.client.CacheEntity",
-              "name": "pet-clinic/pets",
-              "consumerId": 7,
-              "managementRegistry": {
-                "rootContext": {},
+                ],
                 "contextContainer": {
                   "consumerId": "7",
                   "subContexts": []
                 },
-                "capabilities": [
-                  {
-                    "name": "ClientStateSettings",
-                    "context": [
-                      {
-                        "name": "consumerId",
-                        "required": true
-                      },
-                      {
-                        "name": "type",
-                        "required": true
-                      },
-                      {
-                        "name": "alias",
-                        "required": true
-                      }
-                    ],
-                    "descriptors": [
-                      {
-                        "consumerId": "7",
-                        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
-                        "type": "ClientState",
-                        "attached": true
-                      },
-                      {
-                        "consumerId": "7",
-                        "alias": "0@127.0.0.1:pet-clinic:<uuid>",
-                        "type": "ClientState",
-                        "attached": true
-                      }
-                    ]
-                  },
-                  {
-                    "name": "ServerCacheCalls",
-                    "context": [
-                      {
-                        "name": "consumerId",
-                        "required": true
-                      },
-                      {
-                        "name": "cacheName",
-                        "required": true
-                      }
-                    ],
-                    "descriptors": [
-                      {
-                        "name": "clear",
-                        "returnType": "void",
-                        "parameters": []
-                      },
-                      {
-                        "name": "get",
-                        "returnType": "java.lang.String",
-                        "parameters": [
-                          {
-                            "name": "key",
-                            "type": "java.lang.String"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "put",
-                        "returnType": "void",
-                        "parameters": [
-                          {
-                            "name": "key",
-                            "type": "java.lang.String"
-                          },
-                          {
-                            "name": "value",
-                            "type": "java.lang.String"
-                          }
-                        ]
-                      },
-                      {
-                        "name": "size",
-                        "returnType": "int",
-                        "parameters": []
-                      }
-                    ]
-                  },
-                  {
-                    "name": "ServerCacheSettings",
-                    "context": [
-                      {
-                        "name": "consumerId",
-                        "required": true
-                      },
-                      {
-                        "name": "type",
-                        "required": true
-                      },
-                      {
-                        "name": "alias",
-                        "required": true
-                      }
-                    ],
-                    "descriptors": [
-                      {
-                        "consumerId": "7",
-                        "alias": "pet-clinic/pets",
-                        "type": "ServerCache",
-                        "size": 0
-                      },
-                      {
-                        "type": "ServerCacheSettings",
-                        "time": 0
-                      }
-                    ]
-                  },
-                  {
-                    "name": "ServerCacheStatistics",
-                    "context": [
-                      {
-                        "name": "consumerId",
-                        "required": true
-                      },
-                      {
-                        "name": "type",
-                        "required": true
-                      },
-                      {
-                        "name": "alias",
-                        "required": true
-                      }
-                    ],
-                    "descriptors": [
-                      {
-                        "name": "Cluster:CacheEntryLength",
-                        "type": "TABLE"
-                      },
-                      {
-                        "name": "Cluster:ClearCount",
-                        "type": "COUNTER"
-                      },
-                      {
-                        "name": "Cluster:GetLatency",
-                        "type": "GAUGE"
-                      },
-                      {
-                        "name": "Cluster:HitCount",
-                        "type": "COUNTER"
-                      },
-                      {
-                        "name": "Cluster:MissCount",
-                        "type": "COUNTER"
-                      },
-                      {
-                        "name": "Cluster:PutCount",
-                        "type": "COUNTER"
-                      },
-                      {
-                        "name": "ServerCache:Size",
-                        "type": "GAUGE"
-                      }
-                    ]
-                  }
-                ]
-              }
+                "rootContext": {}
+              },
+              "name": "pet-clinic/pets",
+              "type": "org.terracotta.management.entity.sample.client.CacheEntity"
             }
           ],
           "serverName": "testServer0",
-          "hostName": "<hostname>",
-          "hostAddress": "127.0.0.1",
-          "bindAddress": "0.0.0.0",
-          "bindPort": 0,
-          "groupPort": 0,
-          "state": "ACTIVE",
-          "version": "<version>",
-          "buildId": "Build ID",
           "startTime": 0,
+          "state": "ACTIVE",
           "upTimeSec": 0,
-          "activateTime": 0
+          "version": "<version>"
         }
       ]
-    }
-  ],
-  "clients": [
-    {
-      "id": "0@127.0.0.1:FailoverIT:<uuid>",
-      "pid": 0,
-      "hostAddress": "127.0.0.1",
-      "name": "FailoverIT",
-      "logicalConnectionUid": "<uuid>",
-      "vmId": "0@127.0.0.1",
-      "clientId": "0@127.0.0.1:FailoverIT:<uuid>",
-      "hostName": "<hostname>",
-      "tags": [],
-      "properties": {
-        "version": "<version>",
-        "clientReportedAddress": "<clientReportedAddress>",
-        "clientRevision": "<uuid>"
-      },
-      "connections": [
-        {
-          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
-          "logicalConnectionUid": "<uuid>",
-          "clientEndpoint": {
-            "address": "127.0.0.1",
-            "port": 0
-          },
-          "stripeId": "stripe[0]",
-          "serverId": "testServer0",
-          "serverEntityIds": {
-            "FailoverIT:org.terracotta.management.entity.nms.client.NmsEntity": 1
-          }
-        }
-      ],
-      "managementRegistry": null
-    },
-    {
-      "id": "0@127.0.0.1:pet-clinic:<uuid>",
-      "pid": 0,
-      "hostAddress": "127.0.0.1",
-      "name": "pet-clinic",
-      "logicalConnectionUid": "<uuid>",
-      "vmId": "0@127.0.0.1",
-      "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
-      "hostName": "<hostname>",
-      "tags": [
-        "caches",
-        "pet-clinic"
-      ],
-      "properties": {
-        "version": "<version>",
-        "clientReportedAddress": "<clientReportedAddress>",
-        "clientRevision": "<uuid>"
-      },
-      "connections": [
-        {
-          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
-          "logicalConnectionUid": "<uuid>",
-          "clientEndpoint": {
-            "address": "127.0.0.1",
-            "port": 0
-          },
-          "stripeId": "stripe[0]",
-          "serverId": "testServer0",
-          "serverEntityIds": {
-            "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
-            "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
-            "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
-          }
-        }
-      ],
-      "managementRegistry": {
-        "rootContext": {
-          "appName": "pet-clinic",
-          "instanceId": "instance-?"
-        },
-        "contextContainer": {
-          "appName": "pet-clinic",
-          "subContexts": []
-        },
-        "capabilities": [
-          {
-            "name": "CacheCalls",
-            "context": [
-              {
-                "name": "instanceId",
-                "required": true
-              },
-              {
-                "name": "appName",
-                "required": true
-              },
-              {
-                "name": "cacheName",
-                "required": true
-              }
-            ],
-            "descriptors": [
-              {
-                "name": "clear",
-                "returnType": "void",
-                "parameters": []
-              },
-              {
-                "name": "get",
-                "returnType": "java.lang.String",
-                "parameters": [
-                  {
-                    "name": "key",
-                    "type": "java.lang.String"
-                  }
-                ]
-              },
-              {
-                "name": "put",
-                "returnType": "void",
-                "parameters": [
-                  {
-                    "name": "key",
-                    "type": "java.lang.String"
-                  },
-                  {
-                    "name": "value",
-                    "type": "java.lang.String"
-                  }
-                ]
-              },
-              {
-                "name": "size",
-                "returnType": "int",
-                "parameters": []
-              }
-            ]
-          },
-          {
-            "name": "CacheSettings",
-            "context": [
-              {
-                "name": "instanceId",
-                "required": true
-              },
-              {
-                "name": "appName",
-                "required": true
-              },
-              {
-                "name": "cacheName",
-                "required": true
-              }
-            ],
-            "descriptors": [
-              {
-                "appName": "pet-clinic",
-                "instanceId": "instance-?",
-                "cacheName": "pets",
-                "size": 0
-              },
-              {
-                "appName": "pet-clinic",
-                "instanceId": "instance-?",
-                "cacheName": "clients",
-                "size": 0
-              }
-            ]
-          },
-          {
-            "name": "CacheStatistics",
-            "context": [
-              {
-                "name": "instanceId",
-                "required": true
-              },
-              {
-                "name": "appName",
-                "required": true
-              },
-              {
-                "name": "cacheName",
-                "required": true
-              }
-            ],
-            "descriptors": [
-              {
-                "name": "Cache:ClearCount",
-                "type": "COUNTER"
-              },
-              {
-                "name": "Cache:HitCount",
-                "type": "COUNTER"
-              },
-              {
-                "name": "Cache:MissCount",
-                "type": "COUNTER"
-              },
-              {
-                "name": "ClientCache:Size",
-                "type": "GAUGE"
-              }
-            ]
-          },
-          {
-            "name": "DiagnosticCalls",
-            "context": [],
-            "descriptors": [
-              {
-                "name": "getThreadDump",
-                "returnType": "java.lang.String",
-                "parameters": []
-              }
-            ]
-          },
-          {
-            "name": "NmsAgentService",
-            "context": [],
-            "descriptors": []
-          },
-          {
-            "name": "StatisticCollectorCapability",
-            "context": [
-              {
-                "name": "instanceId",
-                "required": true
-              },
-              {
-                "name": "appName",
-                "required": true
-              }
-            ],
-            "descriptors": [
-              {
-                "name": "isRunning",
-                "returnType": "boolean",
-                "parameters": []
-              },
-              {
-                "name": "startStatisticCollector",
-                "returnType": "void",
-                "parameters": [
-                  {
-                    "name": "interval",
-                    "type": "long"
-                  },
-                  {
-                    "name": "unit",
-                    "type": "java.util.concurrent.TimeUnit"
-                  }
-                ]
-              },
-              {
-                "name": "stopStatisticCollector",
-                "returnType": "void",
-                "parameters": []
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "id": "0@127.0.0.1:pet-clinic:<uuid>",
-      "pid": 0,
-      "hostAddress": "127.0.0.1",
-      "name": "pet-clinic",
-      "logicalConnectionUid": "<uuid>",
-      "vmId": "0@127.0.0.1",
-      "clientId": "0@127.0.0.1:pet-clinic:<uuid>",
-      "hostName": "<hostname>",
-      "tags": [
-        "caches",
-        "pet-clinic"
-      ],
-      "properties": {
-        "version": "<version>",
-        "clientReportedAddress": "<clientReportedAddress>",
-        "clientRevision": "<uuid>"
-      },
-      "connections": [
-        {
-          "id": "<uuid>:stripe[0]:testServer0:127.0.0.1:0",
-          "logicalConnectionUid": "<uuid>",
-          "clientEndpoint": {
-            "address": "127.0.0.1",
-            "port": 0
-          },
-          "stripeId": "stripe[0]",
-          "serverId": "testServer0",
-          "serverEntityIds": {
-            "NmsAgent:org.terracotta.management.entity.nms.agent.client.NmsAgentEntity": 1,
-            "pet-clinic/clients:org.terracotta.management.entity.sample.client.CacheEntity": 1,
-            "pet-clinic/pets:org.terracotta.management.entity.sample.client.CacheEntity": 1
-          }
-        }
-      ],
-      "managementRegistry": {
-        "rootContext": {
-          "appName": "pet-clinic",
-          "instanceId": "instance-?"
-        },
-        "contextContainer": {
-          "appName": "pet-clinic",
-          "subContexts": []
-        },
-        "capabilities": [
-          {
-            "name": "CacheCalls",
-            "context": [
-              {
-                "name": "instanceId",
-                "required": true
-              },
-              {
-                "name": "appName",
-                "required": true
-              },
-              {
-                "name": "cacheName",
-                "required": true
-              }
-            ],
-            "descriptors": [
-              {
-                "name": "clear",
-                "returnType": "void",
-                "parameters": []
-              },
-              {
-                "name": "get",
-                "returnType": "java.lang.String",
-                "parameters": [
-                  {
-                    "name": "key",
-                    "type": "java.lang.String"
-                  }
-                ]
-              },
-              {
-                "name": "put",
-                "returnType": "void",
-                "parameters": [
-                  {
-                    "name": "key",
-                    "type": "java.lang.String"
-                  },
-                  {
-                    "name": "value",
-                    "type": "java.lang.String"
-                  }
-                ]
-              },
-              {
-                "name": "size",
-                "returnType": "int",
-                "parameters": []
-              }
-            ]
-          },
-          {
-            "name": "CacheSettings",
-            "context": [
-              {
-                "name": "instanceId",
-                "required": true
-              },
-              {
-                "name": "appName",
-                "required": true
-              },
-              {
-                "name": "cacheName",
-                "required": true
-              }
-            ],
-            "descriptors": [
-              {
-                "appName": "pet-clinic",
-                "instanceId": "instance-?",
-                "cacheName": "pets",
-                "size": 0
-              },
-              {
-                "appName": "pet-clinic",
-                "instanceId": "instance-?",
-                "cacheName": "clients",
-                "size": 0
-              }
-            ]
-          },
-          {
-            "name": "CacheStatistics",
-            "context": [
-              {
-                "name": "instanceId",
-                "required": true
-              },
-              {
-                "name": "appName",
-                "required": true
-              },
-              {
-                "name": "cacheName",
-                "required": true
-              }
-            ],
-            "descriptors": [
-              {
-                "name": "Cache:ClearCount",
-                "type": "COUNTER"
-              },
-              {
-                "name": "Cache:HitCount",
-                "type": "COUNTER"
-              },
-              {
-                "name": "Cache:MissCount",
-                "type": "COUNTER"
-              },
-              {
-                "name": "ClientCache:Size",
-                "type": "GAUGE"
-              }
-            ]
-          },
-          {
-            "name": "DiagnosticCalls",
-            "context": [],
-            "descriptors": [
-              {
-                "name": "getThreadDump",
-                "returnType": "java.lang.String",
-                "parameters": []
-              }
-            ]
-          },
-          {
-            "name": "NmsAgentService",
-            "context": [],
-            "descriptors": []
-          },
-          {
-            "name": "StatisticCollectorCapability",
-            "context": [
-              {
-                "name": "instanceId",
-                "required": true
-              },
-              {
-                "name": "appName",
-                "required": true
-              }
-            ],
-            "descriptors": [
-              {
-                "name": "isRunning",
-                "returnType": "boolean",
-                "parameters": []
-              },
-              {
-                "name": "startStatisticCollector",
-                "returnType": "void",
-                "parameters": [
-                  {
-                    "name": "interval",
-                    "type": "long"
-                  },
-                  {
-                    "name": "unit",
-                    "type": "java.util.concurrent.TimeUnit"
-                  }
-                ]
-              },
-              {
-                "name": "stopStatisticCollector",
-                "returnType": "void",
-                "parameters": []
-              }
-            ]
-          }
-        ]
-      }
     }
   ]
 }

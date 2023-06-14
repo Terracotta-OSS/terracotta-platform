@@ -54,11 +54,6 @@ public class StripeRemovalNomadChange extends StripeNomadChange {
   }
 
   @Override
-  public final String getType() {
-    return "StripeRemovalNomadChange";
-  }
-
-  @Override
   public String toString() {
     return "StripeRemovalChange{" +
         "stripe=" + getStripe().toShapeString() +

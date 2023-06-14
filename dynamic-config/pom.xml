@@ -38,6 +38,7 @@
   <modules>
     <module>model</module>
     <module>api</module>
+    <module>json</module>
     <module>server</module>
     <module>entities</module>
     <module>cli</module>

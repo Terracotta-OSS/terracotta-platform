@@ -52,11 +52,6 @@ public class LockConfigNomadChange extends FilteredNomadChange {
     return format("Locking the config by '%s'", lockContext.ownerInfo());
   }
 
-  @Override
-  public final String getType() {
-    return "LockConfigNomadChange";
-  }
-
   public LockContext getLockContext() {
     return lockContext;
   }

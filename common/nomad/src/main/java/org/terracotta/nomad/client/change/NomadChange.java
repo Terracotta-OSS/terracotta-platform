@@ -17,7 +17,4 @@ package org.terracotta.nomad.client.change;
 
 public interface NomadChange {
   String getSummary();
-
-  // this is to help with polymorphism deserialization
-  String getType();
 }

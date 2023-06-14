@@ -43,7 +43,6 @@
     <galvan.version>1.6.6</galvan.version>
     <angela.version>3.3.33</angela.version>
     <statistics.version>2.1.2</statistics.version>
-    <jackson.version>2.14.2</jackson.version>
     <terracotta-utilities.base.version>0.0.14</terracotta-utilities.base.version>
     <terracotta-utilities.range.version>[${terracotta-utilities.base.version},)</terracotta-utilities.range.version>
     <test.parallel.forks>4</test.parallel.forks>
@@ -235,11 +234,9 @@
         <version>${angela.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.fasterxml.jackson</groupId>
-        <artifactId>jackson-bom</artifactId>
-        <version>${jackson.version}</version>
-        <scope>import</scope>
-        <type>pom</type>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.10.1</version>
       </dependency>
       <dependency>
         <groupId>org.terracotta</groupId>
@@ -369,6 +366,33 @@
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>com.mycila</groupId>
+          <artifactId>license-maven-plugin</artifactId>
+          <configuration>
+            <excludes>
+              <exclude>src/main/java/org/terracotta/json/gson/internal/HierarchyTypeAdapterFactory.java</exclude>
+              <exclude>src/main/java/org/terracotta/json/gson/internal/MixinTypeAdapterFactory.java</exclude>
+              <exclude>src/main/java/org/terracotta/json/gson/internal/RuntimeTypeAdapter.java</exclude>
+              <exclude>**/README</exclude>
+              <exclude>**/src/test/resources/**</exclude>
+              <exclude>**/src/main/resources/**</exclude>
+              <exclude>**/.idea/**</exclude>
+              <exclude>**/nbproject/**</exclude>
+              <exclude>**/*.adoc</exclude>
+              <exclude>**/pom.xml</exclude>
+              <exclude>**/*.txt</exclude>
+              <exclude>.mvn/**</exclude>
+              <exclude>mvnw</exclude>
+              <exclude>mvnw.cmd</exclude>
+              <exclude>Jenkinsfile*</exclude>
+              <exclude>azure-pipelines.yml</exclude>
+              <exclude>LICENSE</exclude>
+              <exclude>.git*</exclude>
+              <exclude>.git/**</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -442,6 +466,8 @@
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>3.1.1</version>
             <configuration>
+              <failOnWarnings>false</failOnWarnings>
+              <failOnError>false</failOnError>
               <quiet>true</quiet>
             </configuration>
             <executions>

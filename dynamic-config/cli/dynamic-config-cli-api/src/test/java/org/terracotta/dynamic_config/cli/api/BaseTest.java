@@ -27,7 +27,7 @@ import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServicePr
 import org.terracotta.diagnostic.client.connection.DefaultDiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.MultiDiagnosticServiceProvider;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -75,7 +75,9 @@ public abstract class BaseTest {
   protected RestartService restartService;
   protected StopService stopService;
   protected ConcurrencySizing concurrencySizing = new ConcurrencySizing();
-  protected Json.Factory jsonFactory = new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule(), new TestModule());
+  protected Json.Factory jsonFactory = new DefaultJsonFactory()
+      .withModule(new DynamicConfigJsonModule())
+      .withModule(new TestModule());
   protected Json json = jsonFactory.create();
   protected OutputService outputService;
 

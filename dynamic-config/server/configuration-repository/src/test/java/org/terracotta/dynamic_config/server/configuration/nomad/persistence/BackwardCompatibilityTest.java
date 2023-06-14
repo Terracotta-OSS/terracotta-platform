@@ -18,7 +18,7 @@ package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 import org.junit.Rule;
 import org.junit.Test;
 import org.terracotta.common.struct.Tuple2;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
@@ -108,7 +108,7 @@ public class BackwardCompatibilityTest {
     // create nomad server
     NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(config, IParameterSubstitutor.identity());
     nomadConfigurationManager.createDirectories();
-    Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
+    Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule());
     NomadServerFactory nomadServerFactory = new NomadServerFactory(jsonFactory);
 
     try (DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, nodeName, null)) {
@@ -150,7 +150,7 @@ public class BackwardCompatibilityTest {
     // create nomad server
     NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(config, IParameterSubstitutor.identity());
     nomadConfigurationManager.createDirectories();
-    Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
+    Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule());
     NomadServerFactory nomadServerFactory = new NomadServerFactory(jsonFactory);
 
     try (DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, nodeName, null)) {

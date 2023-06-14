@@ -19,7 +19,6 @@ import org.terracotta.json.DefaultJsonFactory;
 import org.terracotta.json.Json;
 import org.terracotta.persistence.sanskrit.change.SanskritChange;
 import org.terracotta.persistence.sanskrit.change.SanskritChangeVisitor;
-import org.terracotta.persistence.sanskrit.json.SanskritJsonModule;
 import org.terracotta.persistence.sanskrit.json.TestModule;
 
 import java.util.Map;
@@ -27,7 +26,7 @@ import java.util.Map;
 public class JsonSanskritMapper implements SanskritMapper {
 
   private final Json json = new DefaultJsonFactory()
-      .withModules(new SanskritJsonModule(), new TestModule())
+      .withModule(new TestModule())
       .create();
 
   @Override

@@ -1,0 +1,28 @@
+{
+  "changes": [
+    {
+      "applicability": {
+        "level": "NODE",
+        "nodeUID": "jUhhu1kRQd-x6iNgpo9Xyw"
+      },
+      "operation": "SET",
+      "setting": "NODE_BACKUP_DIR",
+      "summary": "set backup-dir=backup (on node UID: jUhhu1kRQd-x6iNgpo9Xyw)",
+      "type": "SettingNomadChange",
+      "value": "backup"
+    },
+    {
+      "applicability": {
+        "level": "CLUSTER"
+      },
+      "name": "bar",
+      "operation": "SET",
+      "setting": "OFFHEAP_RESOURCES",
+      "summary": "set offheap-resources.bar=512MB",
+      "type": "SettingNomadChange",
+      "value": "512MB"
+    }
+  ],
+  "summary": "set backup-dir=backup (on node UID: jUhhu1kRQd-x6iNgpo9Xyw) then set offheap-resources.bar=512MB",
+  "type": "MultiSettingNomadChange"
+}

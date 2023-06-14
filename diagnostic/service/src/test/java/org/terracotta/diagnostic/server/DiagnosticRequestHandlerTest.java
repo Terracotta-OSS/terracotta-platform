@@ -20,6 +20,7 @@ import org.terracotta.diagnostic.common.DiagnosticRequest;
 import org.terracotta.diagnostic.common.DiagnosticResponse;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodec;
 import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.gson.GsonModule;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -36,7 +37,7 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 public class DiagnosticRequestHandlerTest {
 
-  private final JsonDiagnosticCodec codec = new JsonDiagnosticCodec(new DefaultJsonFactory());
+  private final JsonDiagnosticCodec codec = new JsonDiagnosticCodec(new DefaultJsonFactory().withModule((GsonModule) builder -> builder.allowClassLoading(MyService.class)));
   private final DiagnosticRequestHandler handler = DiagnosticRequestHandler.withCodec(codec);
 
   private final Runnable noop = () -> {

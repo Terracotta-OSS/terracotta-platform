@@ -1,0 +1,70 @@
+{
+  "applicability": {
+    "level": "STRIPE",
+    "stripeUID": "Z5Le2HReSjmytM5t4DTPCw"
+  },
+  "cluster": {
+    "failoverPriority": "availability",
+    "name": "tc-cluster",
+    "offheapResources": {
+      "foo": {
+        "quantity": 1,
+        "type": "MEMORY",
+        "unit": "GB"
+      },
+      "main": {
+        "quantity": 512,
+        "type": "MEMORY",
+        "unit": "MB"
+      }
+    },
+    "stripes": [
+      {
+        "name": "Germany",
+        "nodes": [
+          {
+            "dataDirs": {
+              "main": "node-1-1/data-dir"
+            },
+            "groupPort": 15293,
+            "hostname": "localhost",
+            "logDir": "node-1-1/logs",
+            "metadataDir": "node-1-1/metadata",
+            "name": "node-1-1",
+            "port": 26637,
+            "uid": "fqoFdUWuQYqPtZNX6py7QQ"
+          },
+          {
+            "dataDirs": {
+              "main": "node-1-2/data-dir"
+            },
+            "groupPort": 6388,
+            "hostname": "localhost",
+            "logDir": "node-1-2/logs",
+            "metadataDir": "node-1-2/metadata",
+            "name": "node-1-2",
+            "port": 30354,
+            "uid": "vK13jHNCTaG17-YEvg2R5A"
+          }
+        ],
+        "uid": "Z5Le2HReSjmytM5t4DTPCw"
+      }
+    ],
+    "uid": "xBmd2K8KR3etQWlUy3HZcw"
+  },
+  "node": {
+    "dataDirs": {
+      "main": "node-1-2/data-dir"
+    },
+    "groupPort": 6388,
+    "hostname": "localhost",
+    "logDir": "node-1-2/logs",
+    "metadataDir": "node-1-2/metadata",
+    "name": "node-1-2",
+    "port": 30354,
+    "uid": "vK13jHNCTaG17-YEvg2R5A"
+  },
+  "stripeUID": "Z5Le2HReSjmytM5t4DTPCw",
+  "summary": "Attaching node: node-1-2@localhost:30354 to stripe: Germany",
+  "type": "NodeAdditionNomadChange"
+}

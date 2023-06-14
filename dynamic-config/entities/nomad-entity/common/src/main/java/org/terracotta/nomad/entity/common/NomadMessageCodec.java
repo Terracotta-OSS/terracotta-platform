@@ -17,11 +17,11 @@ package org.terracotta.nomad.entity.common;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.json.DefaultJsonFactory;
 import org.terracotta.json.Json;
-import org.terracotta.nomad.entity.common.json.NomadEntityJsonModule;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -30,7 +30,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class NomadMessageCodec implements MessageCodec<NomadEntityMessage, NomadEntityResponse> {
   private static final Logger LOGGER = LoggerFactory.getLogger(NomadMessageCodec.class);
-  private final Json json = new DefaultJsonFactory().withModule(new NomadEntityJsonModule()).create();
+  private final Json json = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule()).create();
 
   @Override
   public byte[] encodeMessage(NomadEntityMessage message) throws MessageCodecException {

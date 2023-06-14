@@ -1,0 +1,12 @@
+{
+  "applicability": {
+    "nodeName": "node1",
+    "scope": "NODE",
+    "stripeId": 1
+  },
+  "operation": "SET",
+  "setting": "NODE_BACKUP_DIR",
+  "summary": "set backup-dir=backup (on stripe ID: 1, node: node1)",
+  "type": "SettingNomadChange",
+  "value": "backup"
+}

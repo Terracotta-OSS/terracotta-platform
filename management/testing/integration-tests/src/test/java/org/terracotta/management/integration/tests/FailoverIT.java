@@ -77,10 +77,7 @@ public class FailoverIT extends AbstractHATest {
 
     Cluster cluster = nmsService.readTopology();
 
-    // removes all random values
-    Object actual = toJson(cluster.toMap());
-    Object expected = readJson("topology-after-failover.json");
-    assertEquals(expected, actual);
+    assertEquals(read("topology-after-failover.json"), toJson(cluster.toMap()));
   }
 
   @Test

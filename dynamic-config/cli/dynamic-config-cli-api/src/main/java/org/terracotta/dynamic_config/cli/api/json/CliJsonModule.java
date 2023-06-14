@@ -15,26 +15,15 @@
  */
 package org.terracotta.dynamic_config.cli.api.json;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.terracotta.json.DefaultJsonFactory;
+import org.terracotta.json.gson.GsonConfig;
+import org.terracotta.json.gson.GsonModule;
 
 /**
  * @author Mathieu Carbou
  */
-public class CliJsonModule extends SimpleModule implements DefaultJsonFactory.JacksonModule {
-  private static final long serialVersionUID = 1L;
-
-  public CliJsonModule() {
-    super(CliJsonModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
-  }
-
+public class CliJsonModule implements GsonModule {
   @Override
-  public void configure(ObjectMapper objectMapper) {
-    objectMapper
-        .setSerializationInclusion(JsonInclude.Include.ALWAYS)
-        .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS);
+  public void configure(GsonConfig config) {
+    config.getBuilder().serializeNulls();
   }
 }

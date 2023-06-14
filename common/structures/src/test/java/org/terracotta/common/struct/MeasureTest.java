@@ -16,9 +16,6 @@
 package org.terracotta.common.struct;
 
 import org.junit.Test;
-import org.terracotta.common.struct.json.StructJsonModule;
-import org.terracotta.json.DefaultJsonFactory;
-import org.terracotta.json.Json;
 
 import java.util.EnumSet;
 import java.util.Objects;
@@ -42,8 +39,6 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  * @author Mathieu Carbou
  */
 public class MeasureTest {
-
-  private final Json json = new DefaultJsonFactory().withModule(new StructJsonModule()).create();
 
   @Test
   public void test_of() {
@@ -158,14 +153,6 @@ public class MeasureTest {
     assertThat(Measure.of(60, SECONDS).compareTo(Measure.of(1, MINUTES)), is(equalTo(0)));
     assertThat(Measure.of(60, SECONDS).compareTo(Measure.of(2, MINUTES)), is(lessThan(0)));
     assertThat(Measure.of(120, SECONDS).compareTo(Measure.of(1, MINUTES)), is(greaterThan(0)));
-  }
-
-  @Test
-  public void test_json() {
-    Config config = new Config();
-    String json = this.json.toString(config);
-    assertThat(json, is(equalTo("{\"leaseTime\":{\"quantity\":3,\"unit\":\"SECONDS\",\"type\":\"TIME\"},\"offheap\":{\"quantity\":1,\"unit\":\"GB\",\"type\":\"MEMORY\"}}")));
-    assertThat(this.json.parse(json, Config.class), is(equalTo(config)));
   }
 
   @Test

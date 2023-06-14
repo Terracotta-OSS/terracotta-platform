@@ -31,9 +31,7 @@ public class TopologyIT extends AbstractSingleTest {
   @Test
   public void can_read_topology() throws Exception {
     Cluster cluster = nmsService.readTopology();
-    Object actual = toJson(cluster.toMap());
-    Object expected = readJson("topology.json");
-    assertEquals(expected, actual);
+    assertEquals(read("topology.json"), toJson(cluster.toMap()));
   }
 
   @Test
@@ -61,10 +59,7 @@ public class TopologyIT extends AbstractSingleTest {
         "CLIENT_CACHE_CREATED", "SERVER_ENTITY_CREATED", "ENTITY_REGISTRY_AVAILABLE", "SERVER_CACHE_CREATED", "SERVER_ENTITY_FETCHED",
         "CLIENT_ATTACHED", "CLIENT_CACHE_CREATED", "SERVER_ENTITY_FETCHED", "CLIENT_ATTACHED", "CLIENT_CACHE_CREATED");
 
-    Object actual = toJson(notifs);
-    Object expected = readJson("notifications.json");
-
-    assertEquals(expected, actual);
+    assertEquals(read("notifications.json"), toJson(notifs));
   }
 
 }

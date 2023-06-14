@@ -23,7 +23,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.model.RawPath;
@@ -460,7 +460,7 @@ public class ConfigConversionIT {
 
     NomadConfigurationManager nomadConfigurationManager = new NomadConfigurationManager(config, IParameterSubstitutor.identity());
     nomadConfigurationManager.createDirectories();
-    Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
+    Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule());
     NomadServerFactory nomadServerFactory = new NomadServerFactory(jsonFactory);
 
     try (DynamicConfigNomadServer nomadServer = nomadServerFactory.createServer(nomadConfigurationManager, "testServer0", null)) {
