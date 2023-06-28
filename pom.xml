@@ -65,6 +65,7 @@
     <module>diagnostic</module>
     <module>dynamic-config</module>
     <module>galvan-platform-support</module>
+    <module>layout</module>
     <module>kit</module>
     <module>docs</module>
     <module>voter</module>
