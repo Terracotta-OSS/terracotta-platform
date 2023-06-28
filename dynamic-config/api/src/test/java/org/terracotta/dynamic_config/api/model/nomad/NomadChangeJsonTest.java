@@ -98,15 +98,15 @@ public class NomadChangeJsonTest {
     Testing.replaceUIDs(cluster);
     Json mapper = new DefaultJsonFactory()
         .withModule(new DynamicConfigApiJsonModule())
-        .withModules(new org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1(), new org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1())
+        .withModule(new org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1())
         .create();
 
     NomadChange[] changes = {
         new ClusterActivationNomadChange(cluster),
-        SettingNomadChange.set(new org.terracotta.dynamic_config.api.json.ApplicabilityV1(Scope.NODE, 1, "node1"), NODE_BACKUP_DIR, "backup"),
+        SettingNomadChange.set(new Applicability.V1(Scope.NODE, 1, "node1"), NODE_BACKUP_DIR, "backup"),
         new MultiSettingNomadChange(
-            SettingNomadChange.set(new org.terracotta.dynamic_config.api.json.ApplicabilityV1(Scope.NODE, 1, "node1"), NODE_BACKUP_DIR, "backup"),
-            SettingNomadChange.set(new org.terracotta.dynamic_config.api.json.ApplicabilityV1(Scope.CLUSTER, null, null), OFFHEAP_RESOURCES, "bar", "512MB")
+            SettingNomadChange.set(new Applicability.V1(Scope.NODE, 1, "node1"), NODE_BACKUP_DIR, "backup"),
+            SettingNomadChange.set(new Applicability.V1(Scope.CLUSTER, null, null), OFFHEAP_RESOURCES, "bar", "512MB")
         ),
         new FormatUpgradeNomadChange(Version.V1, Version.V2, new FormatUpgrade().upgrade(cluster, Version.V1))
     };

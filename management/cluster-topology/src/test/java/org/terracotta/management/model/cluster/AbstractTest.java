@@ -60,7 +60,7 @@ public abstract class AbstractTest {
       return c;
     };
 
-    cluster1 = Cluster.create();
+    cluster1 = new Cluster();
     Stripe stripe11 = Stripe.create("stripe-1");
     cluster1.addStripe(stripe11);
     Server server111 = Server.create("server-1")
@@ -101,7 +101,7 @@ public abstract class AbstractTest {
         cluster1.getStripe("stripe-2").get().getServerByName("server-1").get(),
         Endpoint.create("10.10.10.10", 3457)));
 
-    cluster2 = Cluster.create();
+    cluster2 = new Cluster();
     Stripe stripe21 = Stripe.create("stripe-1");
     cluster2.addStripe(stripe21);
     Server server211 = Server.create("server-1")

@@ -27,6 +27,9 @@ import static java.util.Objects.requireNonNull;
  */
 public class NodeRemovalNomadChange extends NodeNomadChange {
 
+  // For json
+  private NodeRemovalNomadChange() {}
+
   public NodeRemovalNomadChange(Cluster cluster, UID stripeUID, Node node) {
     super(cluster, stripeUID, node);
   }

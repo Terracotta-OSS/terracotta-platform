@@ -63,7 +63,6 @@ public class DiagnosticRequestHandler extends StandardMBean implements Diagnosti
     return findService(serviceName).isPresent();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public String request(String payload) {
     requireNonNull(payload);

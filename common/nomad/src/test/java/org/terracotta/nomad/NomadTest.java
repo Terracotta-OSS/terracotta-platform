@@ -58,7 +58,7 @@ import static org.terracotta.nomad.server.PotentialApplicationResult.allow;
 import static org.terracotta.nomad.server.PotentialApplicationResult.reject;
 
 @RunWith(MockitoJUnitRunner.class)
-public class NomadIT {
+public class NomadTest {
   @Mock
   private ChangeResultReceiver<String> changeResults;
 

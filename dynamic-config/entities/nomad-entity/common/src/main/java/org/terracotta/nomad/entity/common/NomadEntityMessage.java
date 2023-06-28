@@ -27,6 +27,11 @@ public class NomadEntityMessage implements EntityMessage {
 
   private final MutativeMessage nomadMessage;
 
+  // For Json
+  NomadEntityMessage() {
+    nomadMessage = null;
+  }
+
   public NomadEntityMessage(MutativeMessage nomadMessage) {
     this.nomadMessage = requireNonNull(nomadMessage);
   }
@@ -37,6 +42,6 @@ public class NomadEntityMessage implements EntityMessage {
 
   @Override
   public String toString() {
-    return nomadMessage.toString();
+    return String.valueOf(nomadMessage);
   }
 }

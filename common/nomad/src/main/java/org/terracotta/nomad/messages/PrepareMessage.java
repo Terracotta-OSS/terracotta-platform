@@ -27,6 +27,13 @@ public class PrepareMessage extends MutativeMessage {
   private final long versionNumber;
   private final NomadChange change;
 
+  // For Json
+  PrepareMessage() {
+    changeUuid = null;
+    versionNumber = 0;
+    change = null;
+  }
+
   public PrepareMessage(long expectedMutativeMessageCount,
                         String mutationHost,
                         String mutationUser,

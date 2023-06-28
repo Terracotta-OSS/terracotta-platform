@@ -1,0 +1,10 @@
+{
+  "arguments": [
+    [
+      "java.time.Duration",
+      "PT2S"
+    ]
+  ],
+  "methodName": "restart",
+  "serviceInterface": "org.terracotta.dynamic_config.api.service.DynamicConfigService"
+}

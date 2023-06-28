@@ -23,6 +23,11 @@ import static java.util.Objects.requireNonNull;
 public class CommitMessage extends MutativeMessage {
   private final UUID changeUuid;
 
+  // For Json
+  CommitMessage() {
+    changeUuid = null;
+  }
+
   public CommitMessage(long expectedMutativeMessageCount,
                        String mutationHost,
                        String mutationUser,

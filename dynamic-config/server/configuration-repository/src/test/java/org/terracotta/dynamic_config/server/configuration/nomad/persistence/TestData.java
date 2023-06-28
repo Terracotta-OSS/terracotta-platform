@@ -59,6 +59,12 @@ public class TestData {
 
     private final String from;
 
+    // For Json
+    private Tomato() {
+      super(null, null);
+      from = null;
+    }
+
     public Tomato(TomatoCooking cookingManual, String color) {
       super(cookingManual, color);
       from = "Canada";
@@ -86,6 +92,12 @@ public class TestData {
   public static class Pepper extends Vegie<TomatoCooking> {
 
     private final String from;
+
+    // For Json
+    private Pepper() {
+      super(null, null);
+      from = null;
+    }
 
     public Pepper(TomatoCooking cookingManual, String color) {
       super(cookingManual, color);

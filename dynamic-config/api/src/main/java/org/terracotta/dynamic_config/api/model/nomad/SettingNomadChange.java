@@ -50,6 +50,14 @@ public class SettingNomadChange extends FilteredNomadChange {
   private final String name;
   private final String value;
 
+  // For Json
+  SettingNomadChange() {
+    operation = null;
+    setting = null;
+    name = null;
+    value = null;
+  }
+
   protected SettingNomadChange(Applicability applicability,
                                Operation operation,
                                Setting setting,

@@ -28,6 +28,9 @@ import static java.util.Objects.requireNonNull;
  */
 public class NodeAdditionNomadChange extends NodeNomadChange {
 
+  // For json
+  private NodeAdditionNomadChange() {}
+
   public NodeAdditionNomadChange(Cluster cluster, UID stripeUID, Node node) {
     super(cluster, stripeUID, node);
 

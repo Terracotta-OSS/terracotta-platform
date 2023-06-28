@@ -32,6 +32,19 @@ public class DiscoverResponse<T> {
   private final ChangeDetails<T> latestChange;
   private final ChangeDetails<T> latestCommittedChange;
 
+  // For Json
+  DiscoverResponse() {
+    mode = null;
+    mutativeMessageCount = 0;
+    lastMutationHost = null;
+    lastMutationUser = null;
+    lastMutationTimestamp = null;
+    currentVersion = 0;
+    highestVersion = 0;
+    latestChange = null;
+    latestCommittedChange = null;
+  }
+
   public DiscoverResponse(NomadServerMode mode,
                           long mutativeMessageCount,
                           String lastMutationHost,

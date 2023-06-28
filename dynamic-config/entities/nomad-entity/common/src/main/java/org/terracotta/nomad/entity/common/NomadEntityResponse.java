@@ -27,6 +27,11 @@ public class NomadEntityResponse implements EntityResponse {
 
   private final AcceptRejectResponse response;
 
+  // For Json
+  NomadEntityResponse() {
+    response = null;
+  }
+
   public NomadEntityResponse(AcceptRejectResponse response) {
     this.response = requireNonNull(response);
   }
@@ -37,6 +42,6 @@ public class NomadEntityResponse implements EntityResponse {
 
   @Override
   public String toString() {
-    return response.toString();
+    return String.valueOf(response);
   }
 }

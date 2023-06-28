@@ -24,6 +24,11 @@ public class UnlockConfigNomadChange extends FilteredNomadChange {
 
   private final boolean forced;
 
+  // For Json
+  UnlockConfigNomadChange() {
+    forced = false;
+  }
+
   public UnlockConfigNomadChange(boolean forced) {
     super(Applicability.cluster());
     this.forced = forced;

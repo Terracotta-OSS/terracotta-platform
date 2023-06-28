@@ -41,6 +41,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static java.util.Objects.requireNonNull;
@@ -68,7 +69,7 @@ public class Cluster implements Cloneable, PropertyHolder {
 
   private UID uid;
   private String name;
-  private LockContext lockContext;
+  private LockContext configurationLockContext;
   private Measure<TimeUnit> clientReconnectWindow;
   private Measure<TimeUnit> clientLeaseDuration;
   private String securityAuthc;
@@ -76,6 +77,10 @@ public class Cluster implements Cloneable, PropertyHolder {
   private Boolean securityWhitelist;
   private FailoverPriority failoverPriority;
   private Map<String, Measure<MemoryUnit>> offheapResources;
+
+  public Cluster() {
+    this(emptyList());
+  }
 
   public Cluster(List<Stripe> stripes) {
     this.stripes = new CopyOnWriteArrayList<>(requireNonNull(stripes));
@@ -269,7 +274,7 @@ public class Cluster implements Cloneable, PropertyHolder {
     return Objects.equals(stripes, that.stripes) &&
         Objects.equals(name, that.name) &&
         Objects.equals(uid, that.uid) &&
-        Objects.equals(lockContext, that.lockContext) &&
+        Objects.equals(configurationLockContext, that.configurationLockContext) &&
         Objects.equals(securitySslTls, that.securitySslTls) &&
         Objects.equals(securityWhitelist, that.securityWhitelist) &&
         Objects.equals(securityAuthc, that.securityAuthc) &&
@@ -283,7 +288,7 @@ public class Cluster implements Cloneable, PropertyHolder {
   public int hashCode() {
     return Objects.hash(
         stripes, name, securityAuthc, securitySslTls, securityWhitelist, uid,
-        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, lockContext
+        failoverPriority, clientReconnectWindow, clientLeaseDuration, offheapResources, configurationLockContext
     );
   }
 
@@ -316,7 +321,7 @@ public class Cluster implements Cloneable, PropertyHolder {
     clone.clientLeaseDuration = this.clientLeaseDuration;
     clone.clientReconnectWindow = this.clientReconnectWindow;
     clone.failoverPriority = this.failoverPriority;
-    clone.lockContext = this.lockContext;
+    clone.configurationLockContext = this.configurationLockContext;
     clone.name = this.name;
     clone.uid = this.uid;
     clone.offheapResources = this.offheapResources == null ? null : new ConcurrentHashMap<>(this.offheapResources);
@@ -455,11 +460,11 @@ public class Cluster implements Cloneable, PropertyHolder {
   }
 
   public OptionalConfig<LockContext> getConfigurationLockContext() {
-    return OptionalConfig.of(LOCK_CONTEXT, lockContext);
+    return OptionalConfig.of(LOCK_CONTEXT, configurationLockContext);
   }
 
   public Cluster setConfigurationLockContext(LockContext lockContext) {
-    this.lockContext = lockContext;
+    this.configurationLockContext = lockContext;
     return this;
   }
 

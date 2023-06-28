@@ -17,8 +17,6 @@ package org.terracotta.management.integration.tests;
 
 import org.junit.Rule;
 import org.junit.rules.Timeout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.terracotta.connection.Connection;
 import org.terracotta.connection.ConnectionFactory;
 import org.terracotta.connection.ConnectionPropertyNames;
@@ -63,9 +61,6 @@ import static org.junit.Assert.assertTrue;
  * @author Mathieu Carbou
  */
 public abstract class AbstractTest {
-
-  protected Logger logger = LoggerFactory.getLogger(getClass());
-
   protected final Json json = new DefaultJsonFactory().withModule(new TestModule()).create();
   protected final Json prettyJson = new DefaultJsonFactory().withModule(new TestModule()).pretty().create();
 
@@ -236,10 +231,8 @@ public abstract class AbstractTest {
 
   @SuppressWarnings("rawtypes")
   protected void triggerServerStatComputation(NmsService nmsService, String entityName, long interval, TimeUnit unit) throws Exception {
-    logger.info("triggerServerStatComputation({}, {}, {})", entityName, interval, unit);
     // trigger stats computation and wait for all stats to have been computed at least once
     org.terracotta.management.model.cluster.Cluster topology = nmsService.readTopology();
-    logger.trace("topology:\n{}", toJson(topology.toMap()));
     CompletableFuture.allOf(topology
         .serverEntityStream()
         .filter(e -> e.getType().equals(NmsConfig.ENTITY_TYPE) && e.getName().equals(entityName))
@@ -262,10 +255,8 @@ public abstract class AbstractTest {
 
   @SuppressWarnings("rawtypes")
   protected void triggerClientStatComputation(long interval, TimeUnit unit) throws Exception {
-    logger.info("triggerClientStatComputation({}, {})", interval, unit);
     // trigger stats computation and wait for all stats to have been computed at least once
     org.terracotta.management.model.cluster.Cluster topology = nmsService.readTopology();
-    logger.trace("topology:\n{}", toJson(topology.toMap()));
     CompletableFuture.allOf(topology
         .clientStream()
         .filter(client -> client.getName().equals("pet-clinic"))

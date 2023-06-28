@@ -115,7 +115,11 @@ public class OssServiceProvider implements ServiceProvider {
   }
 
   protected Json.Factory createJsonFactory(Configuration config) {
-    return new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule(), new CliJsonModule());
+    return new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule(), createCliJsonModule(config));
+  }
+
+  protected Json.Module createCliJsonModule(Configuration config) {
+    return new CliJsonModule();
   }
 
   protected Json createJson(Configuration config) {

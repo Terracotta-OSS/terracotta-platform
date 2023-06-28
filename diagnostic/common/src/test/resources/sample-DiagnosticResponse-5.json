@@ -1,0 +1,209 @@
+{
+  "body": [
+    "[Lorg.terracotta.dynamic_config.api.service.NomadChangeInfo;",
+    [
+      {
+        "changeRequestState": "COMMITTED",
+        "changeResultHash": "d600bc4d59be7fcb74cfb5bae3975d0bf6c148e7",
+        "changeUuid": "e41f8218-0882-4037-81ea-2c33184d9872",
+        "creationHost": "SAG-V30XG0X27G",
+        "creationTimestamp": "2023-06-28T16:47:06.086Z",
+        "creationUser": "matc",
+        "nomadChange": {
+          "type": "ClusterActivationNomadChange",
+          "cluster": {
+            "stripes": [
+              {
+                "name": "Golf",
+                "nodes": [
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 27672,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-1-1",
+                    "port": 46229,
+                    "uid": "uKOZ4I-hSUuMWJi55EbsCg"
+                  },
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 37783,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-1-2",
+                    "port": 6782,
+                    "uid": "M_nTIVueTPWkzgelgoYg0g"
+                  }
+                ],
+                "uid": "XapgC_4MQTK9Zl-PSJy-ow"
+              }
+            ],
+            "clientReconnectWindow": {
+              "quantity": 10,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "failoverPriority": "availability",
+            "name": "my-cluster",
+            "offheapResources": {
+              "foo": {
+                "quantity": 1,
+                "unit": "GB",
+                "type": "MEMORY"
+              },
+              "main": {
+                "quantity": 512,
+                "unit": "MB",
+                "type": "MEMORY"
+              }
+            },
+            "uid": "UazOO9QySlWLYlnxtygWnQ"
+          },
+          "applicability": {
+            "level": "CLUSTER"
+          },
+          "summary": "Activating cluster: my-cluster",
+          "type": "ClusterActivationNomadChange"
+        },
+        "version": 1
+      },
+      {
+        "changeRequestState": "COMMITTED",
+        "changeResultHash": "7b455b26c1d465bc62fb858a36bece0b9b17d7c3",
+        "changeUuid": "197bbdec-8b97-46fa-9f7d-642380aceaa6",
+        "creationHost": "SAG-V30XG0X27G",
+        "creationTimestamp": "2023-06-28T16:47:09.803Z",
+        "creationUser": "matc",
+        "nomadChange": {
+          "type": "StripeAdditionNomadChange",
+          "cluster": {
+            "stripes": [
+              {
+                "name": "Golf",
+                "nodes": [
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 27672,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-1-1",
+                    "port": 46229,
+                    "uid": "uKOZ4I-hSUuMWJi55EbsCg"
+                  },
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 37783,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-1-2",
+                    "port": 6782,
+                    "uid": "M_nTIVueTPWkzgelgoYg0g"
+                  }
+                ],
+                "uid": "XapgC_4MQTK9Zl-PSJy-ow"
+              },
+              {
+                "name": "Dodgeball",
+                "nodes": [
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 20024,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-2-1",
+                    "port": 27749,
+                    "uid": "gRHKqOBUS_eu1EmDnGfkVA"
+                  },
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 35182,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-2-2",
+                    "port": 22502,
+                    "uid": "0E2U5KbxT3quKL29GlKHdQ"
+                  }
+                ],
+                "uid": "MTUGhrURSHqMRHmGUaPIGg"
+              }
+            ],
+            "clientReconnectWindow": {
+              "quantity": 10,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "failoverPriority": "availability",
+            "name": "my-cluster",
+            "offheapResources": {
+              "foo": {
+                "quantity": 1,
+                "unit": "GB",
+                "type": "MEMORY"
+              },
+              "main": {
+                "quantity": 512,
+                "unit": "MB",
+                "type": "MEMORY"
+              }
+            },
+            "uid": "UazOO9QySlWLYlnxtygWnQ"
+          },
+          "stripe": {
+            "name": "Dodgeball",
+            "nodes": [
+              {
+                "dataDirs": {
+                  "main": "data-dir"
+                },
+                "groupPort": 20024,
+                "hostname": "localhost",
+                "logDir": "logs",
+                "metadataDir": "metadata",
+                "name": "node-2-1",
+                "port": 27749,
+                "uid": "gRHKqOBUS_eu1EmDnGfkVA"
+              },
+              {
+                "dataDirs": {
+                  "main": "data-dir"
+                },
+                "groupPort": 35182,
+                "hostname": "localhost",
+                "logDir": "logs",
+                "metadataDir": "metadata",
+                "name": "node-2-2",
+                "port": 22502,
+                "uid": "0E2U5KbxT3quKL29GlKHdQ"
+              }
+            ],
+            "uid": "MTUGhrURSHqMRHmGUaPIGg"
+          },
+          "applicability": {
+            "level": "CLUSTER"
+          },
+          "summary": "Attaching stripe: Dodgeball:MTUGhrURSHqMRHmGUaPIGg ( node-2-1@localhost:27749, node-2-2@localhost:22502 ) to cluster: my-cluster",
+          "type": "StripeAdditionNomadChange"
+        },
+        "version": 2
+      }
+    ]
+  ]
+}

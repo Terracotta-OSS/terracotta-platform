@@ -344,6 +344,11 @@ public class DiagnosticServiceImplTest {
     private static final long serialVersionUID = 1L;
     final String quality;
 
+    // For Json
+    private Beef() {
+      this(0, true, "");
+    }
+
     public Beef(int time, boolean raw, String quality) {
       super(time, raw);
       this.quality = quality;

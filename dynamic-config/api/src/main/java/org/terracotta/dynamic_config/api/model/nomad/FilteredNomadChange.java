@@ -26,6 +26,11 @@ public abstract class FilteredNomadChange implements DynamicConfigNomadChange {
 
   private final Applicability applicability;
 
+  // For Json
+  FilteredNomadChange() {
+    applicability = null;
+  }
+
   protected FilteredNomadChange(Applicability applicability) {
     this.applicability = requireNonNull(applicability);
   }

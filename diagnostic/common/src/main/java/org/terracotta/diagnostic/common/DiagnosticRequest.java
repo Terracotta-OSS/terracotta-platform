@@ -36,6 +36,11 @@ public class DiagnosticRequest implements Serializable {
 
   private final Object[] arguments;
 
+  // For Json
+  private DiagnosticRequest() {
+    this(Object.class, "");
+  }
+
   public DiagnosticRequest(Class<?> serviceInterface, String methodName) {
     this(serviceInterface, methodName, new Object[0]);
   }

@@ -28,6 +28,11 @@ public abstract class TopologyNomadChange extends FilteredNomadChange {
 
   private final Cluster cluster;
 
+  // For Json
+  TopologyNomadChange() {
+    cluster = null;
+  }
+
   protected TopologyNomadChange(Cluster cluster, Applicability applicability) {
     super(applicability);
     this.cluster = requireNonNull(cluster);

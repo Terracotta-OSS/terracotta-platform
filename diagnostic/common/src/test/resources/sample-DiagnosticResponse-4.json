@@ -1,0 +1,6 @@
+{
+  "body": {
+    "@class": "org.terracotta.nomad.messages.AcceptRejectResponse",
+    "accepted": true
+  }
+}

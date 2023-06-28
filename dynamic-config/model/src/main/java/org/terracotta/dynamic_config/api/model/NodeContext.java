@@ -30,16 +30,21 @@ public class NodeContext implements Cloneable {
 
   private final Cluster cluster;
   private final UID nodeUID;
-  private final Node node;
-  private final Stripe stripe;
+
+  // for Json
+  private NodeContext() {
+    cluster = null;
+    nodeUID = null;
+  }
 
   public NodeContext(Cluster cluster, UID nodeUID) {
+    requireNonNull(cluster);
     requireNonNull(nodeUID);
-    this.nodeUID = requireNonNull(nodeUID);
-    this.cluster = requireNonNull(cluster);
-    this.node = cluster.getNode(nodeUID)
-        .orElseThrow(() -> new IllegalArgumentException("Node UID: " + nodeUID + " not found in cluster: " + cluster.toShapeString()));
-    this.stripe = cluster.getStripeByNode(nodeUID).get();
+    if (!cluster.getNode(nodeUID).isPresent()) {
+      throw new IllegalArgumentException("Node UID: " + nodeUID + " not found in cluster: " + cluster.toShapeString());
+    }
+    this.nodeUID = nodeUID;
+    this.cluster = cluster;
   }
 
   public Cluster getCluster() {
@@ -50,16 +55,18 @@ public class NodeContext implements Cloneable {
     return nodeUID;
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   public Node getNode() {
-    return node;
+    return cluster.getNode(nodeUID).get(); // validated in ctor
   }
 
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   public Stripe getStripe() {
-    return stripe;
+    return cluster.getStripeByNode(nodeUID).get(); // validated in ctor
   }
 
   public UID getStripeUID() {
-    return stripe.getUID();
+    return getStripe().getUID();
   }
 
   public Optional<String> getProperty(Setting setting) {
@@ -118,6 +125,7 @@ public class NodeContext implements Cloneable {
    * <p>
    * Otherwise, an empty optional is returned
    */
+  @SuppressWarnings("OptionalGetWithoutIsPresent")
   public Optional<NodeContext> withCluster(Cluster updated) {
     requireNonNull(updated);
 
@@ -129,6 +137,7 @@ public class NodeContext implements Cloneable {
     // then we isolate the node in its own cluster
 
     // find by UID
+    final Node node = getNode();
     return updated.containsNode(nodeUID) ?
         Optional.of(new NodeContext(updated, nodeUID)) :
         // find by name

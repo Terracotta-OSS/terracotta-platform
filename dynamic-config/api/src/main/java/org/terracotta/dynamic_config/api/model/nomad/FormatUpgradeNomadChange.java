@@ -31,6 +31,12 @@ public class FormatUpgradeNomadChange extends ClusterActivationNomadChange {
   private final Version from;
   private final Version to;
 
+  // For Json
+  FormatUpgradeNomadChange() {
+    from = null;
+    to = null;
+  }
+
   public FormatUpgradeNomadChange(Version from, Version to, Cluster cluster) {
     super(cluster);
     this.from = from;
