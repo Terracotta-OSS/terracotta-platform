@@ -94,6 +94,7 @@ public class Voter1x2IT extends DynamicConfigIT {
 
       stopNode(1, passiveId);
       voted.await();
+      waitForActive(1);
       assertThat(configTool("detach", "-f", "-d", "localhost:" + getNodePort(1, activeId), "-s", "localhost:" + getNodePort(1, passiveId)), is(successful()));
 
       expectedTopology.remove(hostPorts[1]);
