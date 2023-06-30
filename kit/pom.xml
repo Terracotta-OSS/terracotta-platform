@@ -31,148 +31,33 @@
   <packaging>pom</packaging>
 
   <dependencies>
-
-    <!--
-      server/plugins/api
-    -->
-
     <dependency>
       <groupId>org.terracotta</groupId>
-      <artifactId>statistics</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service-api</artifactId>
+      <artifactId>platform-layout</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.server</groupId>
-      <artifactId>dynamic-config-server-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.diagnostic</groupId>
-      <artifactId>diagnostic-service-api</artifactId>
-      <version>${project.version}</version>
+      <type>tar.gz</type>
+      <!-- Just comment out this section if u need to debug some core classes-->
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
-    <!--
-      server/plugins/lib
-    -->
-
     <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>data-root-resource</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.terracotta.internal</groupId>
+      <artifactId>terracotta-kit</artifactId>
+      <version>${terracotta-core.version}</version>
+      <type>tar.gz</type>
+      <!-- Just comment out this section if u need to debug some core classes-->
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>offheap-resource</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>lease-entity-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>client-message-tracker</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>platform-base</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.diagnostic</groupId>
-      <artifactId>diagnostic-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <!-- management -->
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>monitoring-service</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>nms-agent-entity-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.management</groupId>
-      <artifactId>nms-entity-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <!-- dynamic config -->
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.server</groupId>
-      <artifactId>dynamic-config-configuration-provider</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.server</groupId>
-      <artifactId>dynamic-config-services</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.entities</groupId>
-      <artifactId>dynamic-config-management-entity-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.entities</groupId>
-      <artifactId>dynamic-config-topology-entity-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.entities</groupId>
-      <artifactId>dynamic-config-nomad-entity-server</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!--
-      tools/config-tool/lib
-    -->
-
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>dynamic-config-cli-config-tool</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!--
-      tools/upgrade/lib
-    -->
-
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>dynamic-config-cli-upgrade-tools</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.terracotta.dynamic-config.cli</groupId>
-      <artifactId>upgrade-tools-oss</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!--
-      tools/voter/lib
-    -->
-
-    <dependency>
-      <groupId>org.terracotta</groupId>
-      <artifactId>voter</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
   </dependencies>
 
   <build>
@@ -183,6 +68,49 @@
           <execution>
             <id>default-jar</id>
             <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- open the KIT -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-core-kit</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/terracotta-kit-${terracotta-core.version}</outputDirectory>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.terracotta.internal</groupId>
+                  <artifactId>terracotta-kit</artifactId>
+                  <version>${terracotta-core.version}</version>
+                  <type>tar.gz</type>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+          <execution>
+            <id>unpack-platform-layout</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/platform-layout-${project.version}</outputDirectory>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.terracotta</groupId>
+                  <artifactId>platform-layout</artifactId>
+                  <version>${project.version}</version>
+                  <type>tar.gz</type>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
           </execution>
         </executions>
       </plugin>
