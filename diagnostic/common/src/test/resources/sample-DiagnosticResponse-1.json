@@ -1,0 +1,48 @@
+{
+  "body": {
+    "@class": "org.terracotta.dynamic_config.api.model.NodeContext",
+    "cluster": {
+      "stripes": [
+        {
+          "name": "stripe--nxUnA5IRSmRdZRWFQwpRg",
+          "nodes": [
+            {
+              "dataDirs": {
+                "main": "data-dir"
+              },
+              "groupPort": 25313,
+              "hostname": "localhost",
+              "logDir": "logs",
+              "metadataDir": "metadata",
+              "name": "node-1-3",
+              "port": 43161,
+              "uid": "seeX7Xn0RWSDqkOPRqhFhw"
+            }
+          ],
+          "uid": "_dxBi9pyTWaG7WTEru3k-A"
+        }
+      ],
+      "clientReconnectWindow": {
+        "quantity": 10,
+        "unit": "SECONDS",
+        "type": "TIME"
+      },
+      "failoverPriority": "availability",
+      "name": "tc-cluster",
+      "offheapResources": {
+        "foo": {
+          "quantity": 1,
+          "unit": "GB",
+          "type": "MEMORY"
+        },
+        "main": {
+          "quantity": 512,
+          "unit": "MB",
+          "type": "MEMORY"
+        }
+      },
+      "uid": "jue0lcoZToi4iMmWPu4rCA"
+    },
+    "nodeUID": "seeX7Xn0RWSDqkOPRqhFhw"
+  }
+}

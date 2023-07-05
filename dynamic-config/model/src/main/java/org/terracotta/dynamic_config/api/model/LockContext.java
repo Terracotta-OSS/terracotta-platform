@@ -26,6 +26,11 @@ public class LockContext {
   private final String ownerName;
   private final String ownerTags;
 
+  // For Json
+  private LockContext() {
+    this(null, null, null);
+  }
+
   public LockContext(String token, String ownerName, String ownerTags) {
     this.token = token;
     this.ownerName = ownerName;

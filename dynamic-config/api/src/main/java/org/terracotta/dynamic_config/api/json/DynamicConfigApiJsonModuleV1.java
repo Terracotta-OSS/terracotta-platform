@@ -29,7 +29,6 @@ import org.terracotta.dynamic_config.api.model.Scope;
 import org.terracotta.dynamic_config.api.model.Stripe;
 import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
-import org.terracotta.dynamic_config.api.model.nomad.DefaultApplicability;
 import org.terracotta.dynamic_config.api.model.nomad.NodeAdditionNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.NodeRemovalNomadChange;
 import org.terracotta.dynamic_config.api.service.FormatUpgrade;
@@ -52,7 +51,7 @@ public class DynamicConfigApiJsonModuleV1 extends SimpleModule implements Json.M
   public DynamicConfigApiJsonModuleV1() {
     super(DynamicConfigApiJsonModuleV1.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
 
-    addAbstractTypeMapping(Applicability.class, ApplicabilityV1.class);
+    addAbstractTypeMapping(Applicability.class, Applicability.V1.class);
 
     registerSubtypes(
         new NamedType(NodeAdditionNomadChangeV1.class, "NodeAdditionNomadChange"),
@@ -60,8 +59,8 @@ public class DynamicConfigApiJsonModuleV1 extends SimpleModule implements Json.M
     );
 
     setMixInAnnotation(Cluster.class, ClusterMixin.class);
-    setMixInAnnotation(ApplicabilityV1.class, ApplicabilityMixin.class);
-    setMixInAnnotation(DefaultApplicability.class, DefaultApplicabilityMixin.class);
+    setMixInAnnotation(Applicability.V1.class, ApplicabilityV1Mixin.class);
+    setMixInAnnotation(Applicability.V2.class, ApplicabilityV2Mixin.class);
   }
 
   @Override
@@ -77,10 +76,10 @@ public class DynamicConfigApiJsonModuleV1 extends SimpleModule implements Json.M
     }
   }
 
-  public static class DefaultApplicabilityMixin extends DefaultApplicability {
-    public DefaultApplicabilityMixin(@JsonProperty(value = "level", required = true) Scope level,
-                                     @JsonProperty("stripeUID") UID stripeUID,
-                                     @JsonProperty("nodeUID") UID nodeUID) {
+  public static class ApplicabilityV2Mixin extends Applicability.V2 {
+    public ApplicabilityV2Mixin(@JsonProperty(value = "level", required = true) Scope level,
+                                @JsonProperty("stripeUID") UID stripeUID,
+                                @JsonProperty("nodeUID") UID nodeUID) {
       super(level, stripeUID, nodeUID);
     }
 
@@ -91,10 +90,10 @@ public class DynamicConfigApiJsonModuleV1 extends SimpleModule implements Json.M
     }
   }
 
-  public static abstract class ApplicabilityMixin extends ApplicabilityV1 {
-    public ApplicabilityMixin(@JsonProperty(value = "scope", required = true) Scope scope,
-                              @JsonProperty("stripeId") Integer stripeId,
-                              @JsonProperty("nodeName") String nodeName) {
+  public static abstract class ApplicabilityV1Mixin extends Applicability.V1 {
+    public ApplicabilityV1Mixin(@JsonProperty(value = "scope", required = true) Scope scope,
+                                @JsonProperty("stripeId") Integer stripeId,
+                                @JsonProperty("nodeName") String nodeName) {
       super(scope, stripeId, nodeName);
     }
 

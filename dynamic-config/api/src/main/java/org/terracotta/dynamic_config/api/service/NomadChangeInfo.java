@@ -35,6 +35,18 @@ public class NomadChangeInfo {
   private final Instant creationTimestamp;
   private final String changeResultHash;
 
+  // For json
+  private NomadChangeInfo() {
+    changeUuid = null;
+    nomadChange = null;
+    changeRequestState = null;
+    version = 0;
+    creationHost = null;
+    creationUser = null;
+    creationTimestamp = null;
+    changeResultHash = null;
+  }
+
   public NomadChangeInfo(UUID changeUuid,
                          NomadChange nomadChange,
                          ChangeRequestState changeRequestState,

@@ -32,7 +32,6 @@ import org.terracotta.dynamic_config.api.model.UID;
 import org.terracotta.dynamic_config.api.model.Version;
 import org.terracotta.dynamic_config.api.model.nomad.Applicability;
 import org.terracotta.dynamic_config.api.model.nomad.ClusterActivationNomadChange;
-import org.terracotta.dynamic_config.api.model.nomad.DefaultApplicability;
 import org.terracotta.dynamic_config.api.model.nomad.DynamicConfigNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.FormatUpgradeNomadChange;
 import org.terracotta.dynamic_config.api.model.nomad.LockAwareDynamicConfigNomadChange;
@@ -81,9 +80,9 @@ public class DynamicConfigApiJsonModule extends SimpleModule implements Json.Mod
         new NamedType(UnlockConfigNomadChange.class, "UnlockConfigNomadChange")
     );
 
-    addAbstractTypeMapping(Applicability.class, DefaultApplicability.class);
+    addAbstractTypeMapping(Applicability.class, Applicability.V2.class);
 
-    setMixInAnnotation(DefaultApplicability.class, DefaultApplicabilityMixin.class);
+    setMixInAnnotation(Applicability.V2.class, ApplicabilitV2Mixin.class);
     setMixInAnnotation(ClusterActivationNomadChange.class, ClusterActivationNomadChangeMixin.class);
     setMixInAnnotation(MultiSettingNomadChange.class, MultiSettingNomadChangeMixin.class);
     setMixInAnnotation(NodeAdditionNomadChange.class, NodeAdditionNomadChangeMixin.class);
@@ -107,10 +106,10 @@ public class DynamicConfigApiJsonModule extends SimpleModule implements Json.Mod
         new DynamicConfigModelJsonModule());
   }
 
-  public static class DefaultApplicabilityMixin extends DefaultApplicability {
-    public DefaultApplicabilityMixin(@JsonProperty(value = "level", required = true) Scope level,
-                                     @JsonProperty("stripeUID") UID stripeUID,
-                                     @JsonProperty("nodeUID") UID nodeUID) {
+  public static class ApplicabilitV2Mixin extends Applicability.V2 {
+    public ApplicabilitV2Mixin(@JsonProperty(value = "level", required = true) Scope level,
+                               @JsonProperty("stripeUID") UID stripeUID,
+                               @JsonProperty("nodeUID") UID nodeUID) {
       super(level, stripeUID, nodeUID);
     }
   }

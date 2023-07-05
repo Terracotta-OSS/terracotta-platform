@@ -25,6 +25,14 @@ public abstract class MutativeMessage {
   private final String mutationUser;
   private final Instant mutationTimestamp;
 
+  // For Json
+  MutativeMessage() {
+    expectedMutativeMessageCount = 0;
+    mutationHost = null;
+    mutationUser = null;
+    mutationTimestamp = null;
+  }
+
   protected MutativeMessage(long expectedMutativeMessageCount,
                             String mutationHost,
                             String mutationUser,

@@ -23,6 +23,9 @@ import static java.util.Objects.requireNonNull;
 
 public class StripeRemovalNomadChange extends StripeNomadChange {
 
+  // For json
+  private StripeRemovalNomadChange() {}
+
   public StripeRemovalNomadChange(Cluster cluster, Stripe stripe) {
     super(cluster, stripe);
   }

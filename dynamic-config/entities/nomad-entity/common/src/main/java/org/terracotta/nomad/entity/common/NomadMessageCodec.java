@@ -15,6 +15,8 @@
  */
 package org.terracotta.nomad.entity.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.entity.MessageCodec;
 import org.terracotta.entity.MessageCodecException;
 import org.terracotta.json.DefaultJsonFactory;
@@ -27,23 +29,30 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author Mathieu Carbou
  */
 public class NomadMessageCodec implements MessageCodec<NomadEntityMessage, NomadEntityResponse> {
-
+  private static final Logger LOGGER = LoggerFactory.getLogger(NomadMessageCodec.class);
   private final Json json = new DefaultJsonFactory().withModule(new NomadEntityJsonModule()).create();
 
   @Override
   public byte[] encodeMessage(NomadEntityMessage message) throws MessageCodecException {
     try {
-      return json.toString(message).getBytes(UTF_8);
+      final String json = this.json.toString(message);
+      LOGGER.trace("encodeMessage({}): {}", message, json);
+      return json.getBytes(UTF_8);
     } catch (RuntimeException e) {
+      LOGGER.trace("encodeMessage({}): {}", message, e.getMessage(), e);
       throw new MessageCodecException(e.getMessage(), e);
     }
   }
 
   @Override
   public NomadEntityMessage decodeMessage(byte[] payload) throws MessageCodecException {
+    final String json = new String(payload, UTF_8);
     try {
-      return json.parse(new String(payload, UTF_8), NomadEntityMessage.class);
+      final NomadEntityMessage parsed = this.json.parse(json, NomadEntityMessage.class);
+      LOGGER.trace("decodeMessage({}): {}", json, parsed);
+      return parsed;
     } catch (RuntimeException e) {
+      LOGGER.trace("decodeMessage({}): {}", json, e.getMessage(), e);
       throw new MessageCodecException(e.getMessage(), e);
     }
   }
@@ -51,17 +60,24 @@ public class NomadMessageCodec implements MessageCodec<NomadEntityMessage, Nomad
   @Override
   public byte[] encodeResponse(NomadEntityResponse response) throws MessageCodecException {
     try {
-      return json.toString(response).getBytes(UTF_8);
+      final String json = this.json.toString(response);
+      LOGGER.trace("encodeResponse({}): {}", response, json);
+      return json.getBytes(UTF_8);
     } catch (RuntimeException e) {
+      LOGGER.trace("encodeResponse({}): {}", response, e.getMessage(), e);
       throw new MessageCodecException(e.getMessage(), e);
     }
   }
 
   @Override
   public NomadEntityResponse decodeResponse(byte[] payload) throws MessageCodecException {
+    final String json = new String(payload, UTF_8);
     try {
-      return json.parse(new String(payload, UTF_8), NomadEntityResponse.class);
+      final NomadEntityResponse parsed = this.json.parse(json, NomadEntityResponse.class);
+      LOGGER.trace("decodeResponse({}): {}", json, parsed);
+      return parsed;
     } catch (RuntimeException e) {
+      LOGGER.trace("decodeResponse({}): {}", json, e.getMessage(), e);
       throw new MessageCodecException(e.getMessage(), e);
     }
   }

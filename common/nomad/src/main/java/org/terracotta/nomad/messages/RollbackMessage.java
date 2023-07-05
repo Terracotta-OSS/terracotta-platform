@@ -23,6 +23,11 @@ import static java.util.Objects.requireNonNull;
 public class RollbackMessage extends MutativeMessage {
   private final UUID changeUuid;
 
+  // For Json
+  RollbackMessage() {
+    changeUuid = null;
+  }
+
   public RollbackMessage(long expectedMutativeMessageCount,
                          String mutationHost,
                          String mutationUser,

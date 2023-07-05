@@ -157,10 +157,10 @@ public class Codec implements MessageCodec<Message, Response> {
           if (license != null) {
             encoder.struct(type.name())
                 .string("date", license.getExpiryDate().format(DT_FORMATTER))
-                .structs("limits", license.getCapabilityLimitMap().entrySet(), (entryEncoder, entry) -> entryEncoder
+                .structs("limits", license.getCapabilities().entrySet(), (entryEncoder, entry) -> entryEncoder
                     .string("name", entry.getKey())
                     .int64("value", entry.getValue()))
-                .structs("flags", license.getFlagsMap().entrySet(), (entryEncoder, entry) -> entryEncoder
+                .structs("flags", license.getFlags().entrySet(), (entryEncoder, entry) -> entryEncoder
                     .string("name", entry.getKey())
                     .bool("value", entry.getValue()));
           }

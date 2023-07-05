@@ -22,6 +22,11 @@ public abstract class StripeNomadChange extends TopologyNomadChange {
 
   private final Stripe stripe;
 
+  // For Json
+  StripeNomadChange() {
+    stripe = null;
+  }
+
   public StripeNomadChange(Cluster cluster, Stripe stripe) {
     super(cluster, Applicability.cluster());
     this.stripe = stripe;

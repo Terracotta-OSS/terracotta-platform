@@ -39,9 +39,6 @@ public final class Cluster implements Contextual {
   private final Map<String, Client> clients = new TreeMap<>();
   private final Map<String, Stripe> stripes = new TreeMap<>();
 
-  private Cluster() {
-  }
-
   public boolean isEmpty() {
     return stripes.isEmpty();
   }
@@ -227,9 +224,4 @@ public final class Cluster implements Contextual {
     map.put("clients", clientStream().sorted(Comparator.comparing(AbstractNode::getId)).map(Client::toMap).collect(Collectors.toList()));
     return map;
   }
-
-  public static Cluster create() {
-    return new Cluster();
-  }
-
 }

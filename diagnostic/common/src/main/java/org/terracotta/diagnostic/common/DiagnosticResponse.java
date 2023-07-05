@@ -34,6 +34,11 @@ public class DiagnosticResponse<T> implements Serializable {
   private final String errorMessage;
   private final String errorStack;
 
+  // For Json
+  private DiagnosticResponse() {
+    this(null);
+  }
+
   public DiagnosticResponse(T body) {
     this(body, null);
   }

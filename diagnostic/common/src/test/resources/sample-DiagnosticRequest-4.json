@@ -1,0 +1,14 @@
+{
+  "arguments": [
+    {
+      "@class": "org.terracotta.nomad.messages.CommitMessage",
+      "changeUuid": "043a2259-2146-43a3-98b3-c22159997df6",
+      "expectedMutativeMessageCount": 2,
+      "mutationHost": "SAG-V30XG0X27G",
+      "mutationTimestamp": "2023-06-28T12:25:38.192Z",
+      "mutationUser": "matc"
+    }
+  ],
+  "methodName": "commit",
+  "serviceInterface": "org.terracotta.nomad.server.NomadServer"
+}

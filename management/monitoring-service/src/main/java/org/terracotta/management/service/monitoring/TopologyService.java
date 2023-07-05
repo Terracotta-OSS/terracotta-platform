@@ -92,7 +92,7 @@ class TopologyService implements PlatformListener {
   TopologyService(FiringService firingService, PlatformConfiguration platformConfiguration) {
     this.firingService = Objects.requireNonNull(firingService);
     this.platformConfiguration = platformConfiguration;
-    this.cluster = Cluster.create();
+    this.cluster = new Cluster();
     org.terracotta.dynamic_config.api.service.TopologyService dcTopologyService =
       platformConfiguration.getExtendedConfiguration(org.terracotta.dynamic_config.api.service.TopologyService.class)
         .iterator().next();

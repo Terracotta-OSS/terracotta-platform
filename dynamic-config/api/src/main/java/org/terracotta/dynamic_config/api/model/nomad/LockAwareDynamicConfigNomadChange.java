@@ -24,6 +24,12 @@ public class LockAwareDynamicConfigNomadChange implements DynamicConfigNomadChan
   private final String lockToken;
   private final DynamicConfigNomadChange change;
 
+  // For Json
+  LockAwareDynamicConfigNomadChange() {
+    lockToken = null;
+    change = null;
+  }
+
   public LockAwareDynamicConfigNomadChange(String lockToken, DynamicConfigNomadChange change) {
     this.lockToken = lockToken;
     this.change = change;

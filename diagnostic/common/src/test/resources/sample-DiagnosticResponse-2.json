@@ -1,0 +1,209 @@
+{
+  "body": [
+    "[Lorg.terracotta.dynamic_config.api.service.NomadChangeInfo;",
+    [
+      {
+        "changeRequestState": "COMMITTED",
+        "changeResultHash": "e3cbf5211f0bcfe27339d2bc7cb50064fbf50b0b",
+        "changeUuid": "33635c89-48f8-470a-9533-ea538c19a5bd",
+        "creationHost": "SAG-V30XG0X27G",
+        "creationTimestamp": "2023-06-27T17:35:09.290Z",
+        "creationUser": "matc",
+        "nomadChange": {
+          "type": "ClusterActivationNomadChange",
+          "cluster": {
+            "stripes": [
+              {
+                "name": "Swift",
+                "nodes": [
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 23302,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-1-1",
+                    "port": 1323,
+                    "uid": "MLCVOBo4QV2mhv9pH96kDA"
+                  },
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 16348,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-1-2",
+                    "port": 41533,
+                    "uid": "DM0X975QQ1uWXh2JWA3g9Q"
+                  }
+                ],
+                "uid": "xGE2pmWFTliXiM2IWq22ow"
+              }
+            ],
+            "clientReconnectWindow": {
+              "quantity": 10,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "failoverPriority": "availability",
+            "name": "my-cluster",
+            "offheapResources": {
+              "foo": {
+                "quantity": 1,
+                "unit": "GB",
+                "type": "MEMORY"
+              },
+              "main": {
+                "quantity": 512,
+                "unit": "MB",
+                "type": "MEMORY"
+              }
+            },
+            "uid": "xOaqGbD5RdmX22RKFkNo0A"
+          },
+          "applicability": {
+            "level": "CLUSTER"
+          },
+          "summary": "Activating cluster: my-cluster",
+          "type": "ClusterActivationNomadChange"
+        },
+        "version": 1
+      },
+      {
+        "changeRequestState": "COMMITTED",
+        "changeResultHash": "467c464118afb320f73d400dcb8924dd6c1a7c08",
+        "changeUuid": "0d7d411d-b66c-4166-932d-640c3a36296b",
+        "creationHost": "SAG-V30XG0X27G",
+        "creationTimestamp": "2023-06-27T17:35:13.546Z",
+        "creationUser": "matc",
+        "nomadChange": {
+          "type": "StripeAdditionNomadChange",
+          "cluster": {
+            "stripes": [
+              {
+                "name": "Swift",
+                "nodes": [
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 23302,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-1-1",
+                    "port": 1323,
+                    "uid": "MLCVOBo4QV2mhv9pH96kDA"
+                  },
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 16348,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-1-2",
+                    "port": 41533,
+                    "uid": "DM0X975QQ1uWXh2JWA3g9Q"
+                  }
+                ],
+                "uid": "xGE2pmWFTliXiM2IWq22ow"
+              },
+              {
+                "name": "Pig",
+                "nodes": [
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 32810,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-2-1",
+                    "port": 28555,
+                    "uid": "vDzJTXDeTQG-CFZwOqyb7A"
+                  },
+                  {
+                    "dataDirs": {
+                      "main": "data-dir"
+                    },
+                    "groupPort": 26544,
+                    "hostname": "localhost",
+                    "logDir": "logs",
+                    "metadataDir": "metadata",
+                    "name": "node-2-2",
+                    "port": 26000,
+                    "uid": "t4hL_nTTSjOd-1X7CJ_cLw"
+                  }
+                ],
+                "uid": "RL8MxCL5Sx-1giGSqJ7AMA"
+              }
+            ],
+            "clientReconnectWindow": {
+              "quantity": 10,
+              "unit": "SECONDS",
+              "type": "TIME"
+            },
+            "failoverPriority": "availability",
+            "name": "my-cluster",
+            "offheapResources": {
+              "foo": {
+                "quantity": 1,
+                "unit": "GB",
+                "type": "MEMORY"
+              },
+              "main": {
+                "quantity": 512,
+                "unit": "MB",
+                "type": "MEMORY"
+              }
+            },
+            "uid": "xOaqGbD5RdmX22RKFkNo0A"
+          },
+          "stripe": {
+            "name": "Pig",
+            "nodes": [
+              {
+                "dataDirs": {
+                  "main": "data-dir"
+                },
+                "groupPort": 32810,
+                "hostname": "localhost",
+                "logDir": "logs",
+                "metadataDir": "metadata",
+                "name": "node-2-1",
+                "port": 28555,
+                "uid": "vDzJTXDeTQG-CFZwOqyb7A"
+              },
+              {
+                "dataDirs": {
+                  "main": "data-dir"
+                },
+                "groupPort": 26544,
+                "hostname": "localhost",
+                "logDir": "logs",
+                "metadataDir": "metadata",
+                "name": "node-2-2",
+                "port": 26000,
+                "uid": "t4hL_nTTSjOd-1X7CJ_cLw"
+              }
+            ],
+            "uid": "RL8MxCL5Sx-1giGSqJ7AMA"
+          },
+          "applicability": {
+            "level": "CLUSTER"
+          },
+          "summary": "Attaching stripe: Pig:RL8MxCL5Sx-1giGSqJ7AMA ( node-2-1@localhost:28555, node-2-2@localhost:26000 ) to cluster: my-cluster",
+          "type": "StripeAdditionNomadChange"
+        },
+        "version": 2
+      }
+    ]
+  ]
+}

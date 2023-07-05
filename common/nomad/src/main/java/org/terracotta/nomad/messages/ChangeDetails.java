@@ -34,6 +34,19 @@ public class ChangeDetails<T> {
   private final Instant creationTimestamp;
   private final String changeResultHash;
 
+  // For Json
+  ChangeDetails() {
+    changeUuid = null;
+    state = null;
+    version = 0;
+    operation = null;
+    result = null;
+    creationHost = null;
+    creationUser = null;
+    creationTimestamp = null;
+    changeResultHash = null;
+  }
+
   public ChangeDetails(UUID changeUuid,
                        ChangeRequestState state,
                        long version,

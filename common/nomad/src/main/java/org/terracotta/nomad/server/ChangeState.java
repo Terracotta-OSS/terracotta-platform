@@ -31,6 +31,19 @@ public class ChangeState<T> {
   private final Instant creationTimestamp;
   private final String changeResultHash;
 
+  // For Json
+  ChangeState() {
+    state = null;
+    version = 0;
+    prevChangeId = null;
+    change = null;
+    changeResult = null;
+    creationHost = null;
+    creationUser = null;
+    creationTimestamp = null;
+    changeResultHash = null;
+  }
+
   public ChangeState(ChangeRequestState state, long version, UUID prevChangeId, NomadChange change, T changeResult, String creationHost, String creationUser, Instant creationTimestamp, String changeResultHash) {
     this.state = state;
     this.version = version;

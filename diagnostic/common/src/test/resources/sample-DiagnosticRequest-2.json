@@ -1,0 +1,153 @@
+{
+  "arguments": [
+    {
+      "@class": "org.terracotta.dynamic_config.api.model.Cluster",
+      "stripes": [
+        {
+          "name": "stripe-1",
+          "nodes": [
+            {
+              "backupDir": null,
+              "bindAddress": null,
+              "dataDirs": {
+                "main": "data-dir"
+              },
+              "groupBindAddress": null,
+              "groupPort": 36815,
+              "hostname": "localhost",
+              "logDir": "logs",
+              "loggerOverrides": null,
+              "metadataDir": "metadata",
+              "name": "node-1-1",
+              "port": 7389,
+              "publicHostname": null,
+              "publicPort": null,
+              "securityAuditLogDir": null,
+              "securityDir": null,
+              "tcProperties": null,
+              "uid": "ETKDoCOrSlSdcMdd6tSdUA"
+            },
+            {
+              "backupDir": null,
+              "bindAddress": null,
+              "dataDirs": {
+                "main": "data-dir"
+              },
+              "groupBindAddress": null,
+              "groupPort": 42751,
+              "hostname": "localhost",
+              "logDir": "logs",
+              "loggerOverrides": null,
+              "metadataDir": "metadata",
+              "name": "node-1-2",
+              "port": 24623,
+              "publicHostname": null,
+              "publicPort": null,
+              "securityAuditLogDir": null,
+              "securityDir": null,
+              "tcProperties": null,
+              "uid": "HdRNH3G2SIOY0Tlm2QoMPw"
+            }
+          ],
+          "uid": "2U7KsWNESvapDvFZ5V66ig"
+        },
+        {
+          "name": "stripe-2",
+          "nodes": [
+            {
+              "backupDir": null,
+              "bindAddress": null,
+              "dataDirs": {
+                "main": "data-dir"
+              },
+              "groupBindAddress": null,
+              "groupPort": 32971,
+              "hostname": "localhost",
+              "logDir": "logs",
+              "loggerOverrides": null,
+              "metadataDir": "metadata",
+              "name": "node-2-1",
+              "port": 8796,
+              "publicHostname": null,
+              "publicPort": null,
+              "securityAuditLogDir": null,
+              "securityDir": null,
+              "tcProperties": null,
+              "uid": "bpEkcrGSRXWIKwpEA9QJGA"
+            },
+            {
+              "backupDir": null,
+              "bindAddress": null,
+              "dataDirs": {
+                "main": "data-dir"
+              },
+              "groupBindAddress": null,
+              "groupPort": 9327,
+              "hostname": "localhost",
+              "logDir": "logs",
+              "loggerOverrides": null,
+              "metadataDir": "metadata",
+              "name": "node-2-2",
+              "port": 18641,
+              "publicHostname": null,
+              "publicPort": null,
+              "securityAuditLogDir": null,
+              "securityDir": null,
+              "tcProperties": null,
+              "uid": "whajdPIfR7aWnFyxeJE9OQ"
+            },
+            {
+              "backupDir": null,
+              "bindAddress": null,
+              "dataDirs": {
+                "main": "data-dir"
+              },
+              "groupBindAddress": null,
+              "groupPort": 14295,
+              "hostname": "localhost",
+              "logDir": "logs",
+              "loggerOverrides": null,
+              "metadataDir": "metadata",
+              "name": "node-2-3",
+              "port": 28672,
+              "publicHostname": null,
+              "publicPort": null,
+              "securityAuditLogDir": null,
+              "securityDir": null,
+              "tcProperties": null,
+              "uid": "i7kpOAV7RT2tVSibd_YukQ"
+            }
+          ],
+          "uid": "XQ2V039ATy6ixNSJ112MGA"
+        }
+      ],
+      "clientLeaseDuration": null,
+      "clientReconnectWindow": {
+        "quantity": 20,
+        "unit": "SECONDS",
+        "type": "TIME"
+      },
+      "configurationLockContext": null,
+      "failoverPriority": "consistency",
+      "name": "tc-cluster",
+      "offheapResources": {
+        "foo": {
+          "quantity": 1,
+          "unit": "GB",
+          "type": "MEMORY"
+        },
+        "main": {
+          "quantity": 512,
+          "unit": "MB",
+          "type": "MEMORY"
+        }
+      },
+      "securityAuthc": null,
+      "securitySslTls": null,
+      "securityWhitelist": null,
+      "uid": "DtCCT-QsSWehbDeTRlQ6UA"
+    }
+  ],
+  "methodName": "validateAgainstLicense",
+  "serviceInterface": "org.terracotta.dynamic_config.api.service.TopologyService"
+}

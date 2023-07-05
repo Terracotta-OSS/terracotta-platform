@@ -25,6 +25,11 @@ public class SimpleNomadChange implements NomadChange {
   private final String change;
   private final String summary;
 
+  private SimpleNomadChange() {
+    change = null;
+    summary = null;
+  }
+
   public SimpleNomadChange(String change, String summary) {
     this.change = requireNonNull(change);
     this.summary = requireNonNull(summary);

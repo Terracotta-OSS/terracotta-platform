@@ -27,6 +27,12 @@ public abstract class NodeNomadChange extends TopologyNomadChange {
   private final UID stripeUID;
   private final Node node;
 
+  // For Json
+  NodeNomadChange() {
+    stripeUID = null;
+    node = null;
+  }
+
   public NodeNomadChange(Cluster updated, UID stripeUID, Node node) {
     super(updated, Applicability.stripe(stripeUID));
     this.stripeUID = stripeUID;

@@ -27,6 +27,10 @@ import static java.util.Objects.requireNonNull;
  */
 public class ClusterActivationNomadChange extends TopologyNomadChange {
 
+  // For Json
+  ClusterActivationNomadChange() {
+  }
+
   public ClusterActivationNomadChange(Cluster cluster) {
     super(cluster, Applicability.cluster());
     requireNonNull(cluster.getName());

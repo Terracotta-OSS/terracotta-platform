@@ -1,0 +1,9 @@
+{
+  "body": {
+    "@class": "org.terracotta.nomad.messages.DiscoverResponse",
+    "currentVersion": 0,
+    "highestVersion": 0,
+    "mode": "ACCEPTING",
+    "mutativeMessageCount": 1
+  }
+}

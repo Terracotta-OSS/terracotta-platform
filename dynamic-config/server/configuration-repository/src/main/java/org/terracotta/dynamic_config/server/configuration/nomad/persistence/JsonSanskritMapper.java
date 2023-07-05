@@ -32,10 +32,7 @@ public class JsonSanskritMapper implements SanskritMapper {
   private final Map<String, Json> mappers = new HashMap<>();
 
   public JsonSanskritMapper(Json.Factory jsonFactory) {
-    // Creates a json mapper with indentation for human readability, but forcing all EOL to be LF like Sanskrit
-    // The sanskrit files should be portable from Lin to Win and still work.
-    // do not use pretty() or it will mess up the EOL and sanskrit hashes. It is also harder to keep backward compat with that
-    Json json = jsonFactory.eol("\n").pretty(false).create();
+    Json json = jsonFactory.pretty(false).create();
     Json jsonV1 = createDeprecatedV1Mapper(jsonFactory);
     mappers.put("", jsonV1);
     mappers.put(Version.V1.getValue(), jsonV1);
@@ -96,8 +93,8 @@ public class JsonSanskritMapper implements SanskritMapper {
 
   @SuppressWarnings("deprecation")
   private static Json createDeprecatedV1Mapper(Json.Factory jsonFactory) {
-    return jsonFactory.withModules(
-        new org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1(),
-        new org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModuleV1()).create();
+    return jsonFactory
+        .withModule(new org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModuleV1())
+        .create();
   }
 }

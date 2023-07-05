@@ -22,29 +22,37 @@ import java.util.Map;
 import java.util.Objects;
 
 import static java.lang.System.lineSeparator;
+import static java.util.Collections.emptyMap;
 
 public class License {
 
   // Mapping between capability name and corresponding limit value
   // Value as 0 means absent and > 0 means present and represents its limit.
-  private final Map<String, Long> capabilityLimitMap;
+  private final Map<String, Long> capabilities;
 
   // Expiry date of the license in UTC.
   private final LocalDate expiryDate;
 
   // Flag, for each type of license, to indicates if it's active.
-  private final Map<String, Boolean> flagsMap;
+  private final Map<String, Boolean> flags;
+
+  // For Json
+  private License() {
+    capabilities = emptyMap();
+    expiryDate = null;
+    flags = emptyMap();
+  }
 
   public License(Map<String, Long> capabilityLimitMap,
                  LocalDate expiryDate) {
-    this(capabilityLimitMap, Collections.emptyMap(), expiryDate);
+    this(capabilityLimitMap, emptyMap(), expiryDate);
   }
 
   public License(Map<String, Long> capabilityLimitMap,
                  Map<String, Boolean> flagsMap,
                  LocalDate expiryDate) {
-    this.capabilityLimitMap = Collections.unmodifiableMap(new HashMap<>(capabilityLimitMap));
-    this.flagsMap = Collections.unmodifiableMap(new HashMap<>(flagsMap));
+    this.capabilities = Collections.unmodifiableMap(new HashMap<>(capabilityLimitMap));
+    this.flags = Collections.unmodifiableMap(new HashMap<>(flagsMap));
     this.expiryDate = expiryDate;
   }
 
@@ -52,12 +60,12 @@ public class License {
     return expiryDate;
   }
 
-  public Map<String, Long> getCapabilityLimitMap() {
-    return capabilityLimitMap;
+  public Map<String, Long> getCapabilities() {
+    return capabilities;
   }
 
-  public Map<String, Boolean> getFlagsMap() {
-    return flagsMap;
+  public Map<String, Boolean> getFlags() {
+    return flags;
   }
 
   public boolean hasCapability(String capability) {
@@ -66,22 +74,22 @@ public class License {
   }
 
   public Long getLimit(String capability) {
-    return capabilityLimitMap.get(capability);
+    return capabilities.get(capability);
   }
 
   /***
    * Returns first 'true' value of SubscriptionLicense, PerpetualLicense or DatahubLicense
    */
   public String getType() {
-    return flagsMap.entrySet().stream().filter(Map.Entry::getValue).findFirst().get().getKey();
+    return flags.entrySet().stream().filter(Map.Entry::getValue).findFirst().get().getKey();
   }
 
   @Override
   public String toString() {
     return "License{" +
-        "capabilityLimitMap=" + capabilityLimitMap +
+        "capabilities=" + capabilities +
         ", expiryDate=" + expiryDate +
-        ", flagsMap=" + flagsMap +
+        ", flagsMap=" + flags +
         "}";
   }
 
@@ -90,9 +98,9 @@ public class License {
     sb.append("Type: ").append(getType()).append(lineSeparator());
     sb.append("Expiration: ").append(expiryDate == LocalDate.MAX ? "Never" : expiryDate).append(lineSeparator());
     sb.append("Capabilities:").append(lineSeparator());
-    Map<String, Long> capabilities = new HashMap<>(capabilityLimitMap);
+    Map<String, Long> capabilities = new HashMap<>(this.capabilities);
     capabilities.remove("OffHeap"); // handle this separately
-    capabilities.forEach((k,v) -> sb.append(k + ": ").append(hasCapability(k)).append(lineSeparator()));
+    capabilities.forEach((k, v) -> sb.append(k + ": ").append(hasCapability(k)).append(lineSeparator()));
     sb.append("OffHeap: ").append(getLimit("OffHeap"));
     return sb.toString();
   }
@@ -103,13 +111,13 @@ public class License {
     if (o == null || getClass() != o.getClass()) return false;
 
     License license = (License) o;
-    return capabilityLimitMap.equals(license.capabilityLimitMap) &&
+    return capabilities.equals(license.capabilities) &&
         expiryDate.equals(license.expiryDate) &&
-        flagsMap.equals(license.flagsMap);
+        flags.equals(license.flags);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(capabilityLimitMap, expiryDate, flagsMap);
+    return Objects.hash(capabilities, expiryDate, flags);
   }
 }

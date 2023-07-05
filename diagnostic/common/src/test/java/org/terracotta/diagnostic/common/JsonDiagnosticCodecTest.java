@@ -141,6 +141,11 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
     private final String color;
     private final T cookingManual;
 
+    // For Json
+    private Vegie() {
+      this(null, null);
+    }
+
     public Vegie(T cookingManual, String color) {
       this.cookingManual = cookingManual;
       this.color = color;
@@ -173,6 +178,11 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
 
     private final String from;
 
+    // For Json
+    private Tomato() {
+      this(null, null);
+    }
+
     public Tomato(TomatoCooking cookingManual, String color) {
       super(cookingManual, color);
       from = "Canada";
@@ -200,6 +210,10 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
   public static class Pepper extends Vegie<TomatoCooking> {
 
     private final String from;
+
+    private Pepper() {
+      this(null, null);
+    }
 
     public Pepper(TomatoCooking cookingManual, String color) {
       super(cookingManual, color);

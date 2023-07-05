@@ -33,6 +33,13 @@ public class DynamicConfigSyncData {
   private final String license;
   private final Cluster cluster;
 
+  // For Json
+  private DynamicConfigSyncData() {
+    nomadChanges = null;
+    license = null;
+    cluster = null;
+  }
+
   public DynamicConfigSyncData(List<NomadChangeInfo> nomadChanges, Cluster cluster, String license) {
     this.nomadChanges = nomadChanges;
     this.cluster = cluster;

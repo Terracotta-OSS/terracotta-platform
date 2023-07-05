@@ -38,6 +38,11 @@ public class MultiSettingNomadChange implements DynamicConfigNomadChange {
   // keep this as a list, because the ordering to apply the changes might be important
   private final List<SettingNomadChange> changes;
 
+  // For Json
+  private MultiSettingNomadChange() {
+    changes = null;
+  }
+
   public MultiSettingNomadChange(List<SettingNomadChange> changes) {
     this.changes = new ArrayList<>(requireNonNull(changes));
   }

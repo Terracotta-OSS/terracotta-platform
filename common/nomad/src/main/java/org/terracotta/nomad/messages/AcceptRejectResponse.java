@@ -22,6 +22,15 @@ public class AcceptRejectResponse {
   private final String lastMutationHost;
   private final String lastMutationUser;
 
+  // For Json
+  AcceptRejectResponse() {
+    accepted = false;
+    rejectionReason = null;
+    rejectionMessage = null;
+    lastMutationHost = null;
+    lastMutationUser = null;
+  }
+
   public static AcceptRejectResponse accept() {
     return new AcceptRejectResponse(true, null, null, null, null);
   }

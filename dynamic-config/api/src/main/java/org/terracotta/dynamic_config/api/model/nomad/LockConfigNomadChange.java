@@ -25,6 +25,11 @@ public class LockConfigNomadChange extends FilteredNomadChange {
 
   private final LockContext lockContext;
 
+  // For Json
+  LockConfigNomadChange() {
+    lockContext = null;
+  }
+
   public LockConfigNomadChange(LockContext lockContext) {
     super(Applicability.cluster());
     this.lockContext = lockContext;

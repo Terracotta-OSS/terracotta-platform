@@ -15,6 +15,8 @@
  */
 package org.terracotta.diagnostic.common;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.terracotta.diagnostic.common.json.DiagnosticJsonModule;
 import org.terracotta.json.Json;
 
@@ -24,6 +26,7 @@ import static java.util.Objects.requireNonNull;
  * @author Mathieu Carbou
  */
 public class JsonDiagnosticCodec extends DiagnosticCodecSkeleton<String> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(JsonDiagnosticCodec.class);
 
   private final Json json;
 
@@ -38,8 +41,11 @@ public class JsonDiagnosticCodec extends DiagnosticCodecSkeleton<String> {
   public String serialize(Object o) throws DiagnosticCodecException {
     requireNonNull(o);
     try {
-      return json.toString(o);
+      final String json = this.json.toString(o);
+      LOGGER.trace("serialize({}): {}", o, json);
+      return json;
     } catch (RuntimeException e) {
+      LOGGER.trace("serialize({}): {}", o, e.getMessage(), e);
       throw new DiagnosticCodecException(e);
     }
   }
@@ -49,8 +55,11 @@ public class JsonDiagnosticCodec extends DiagnosticCodecSkeleton<String> {
     requireNonNull(json);
     requireNonNull(target);
     try {
-      return target.cast(this.json.parse(json, target));
+      final T parsed = this.json.parse(json, target);
+      LOGGER.trace("deserialize({}, {}): {}", json, target, parsed);
+      return target.cast(parsed);
     } catch (RuntimeException e) {
+      LOGGER.trace("deserialize({}, {}): {}", json, target, e.getMessage(), e);
       throw new DiagnosticCodecException(e);
     }
   }
