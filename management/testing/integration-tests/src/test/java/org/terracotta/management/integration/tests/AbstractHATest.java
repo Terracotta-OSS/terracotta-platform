@@ -15,18 +15,16 @@
  */
 package org.terracotta.management.integration.tests;
 
-import java.nio.file.Path;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.terracotta.management.model.cluster.AbstractManageableNode;
 import org.terracotta.management.model.cluster.Server;
+import org.terracotta.testing.config.ConfigRepoStartupBuilder;
 import org.terracotta.testing.rules.Cluster;
 
 import java.nio.file.Paths;
-import static org.terracotta.testing.config.ConfigConstants.DEFAULT_CLUSTER_NAME;
-import org.terracotta.testing.config.ConfigRepoStartupBuilder;
 
 import static org.terracotta.testing.rules.BasicExternalClusterBuilder.newCluster;
 
@@ -65,12 +63,12 @@ public abstract class AbstractHATest extends AbstractTest {
     nmsService.readMessages();
 
     // this is to wait for all passives to have exposed their management registry through the non-reliable communication channel (passive -> active)
-    while (!Thread.currentThread().isInterrupted() && nmsService.readTopology()
+    while (nmsService.readTopology()
         .serverStream()
         .filter(server -> !server.isActive())
         .flatMap(Server::serverEntityStream)
         .filter(AbstractManageableNode::isManageable)
-        .count() != 4) {
+        .count() < 4) {
       Thread.sleep(1_000);
     }
   }

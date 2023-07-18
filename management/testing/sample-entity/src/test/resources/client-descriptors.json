@@ -1,25 +1,39 @@
 [
   {
-    "name": "CacheCalls",
+    "capabilityContext": {
+      "attributes": [
+        {
+          "name": "instanceId",
+          "required": true
+        },
+        {
+          "name": "appName",
+          "required": true
+        },
+        {
+          "name": "cacheName",
+          "required": true
+        }
+      ]
+    },
     "descriptors": [
       {
         "name": "clear",
-        "returnType": "void",
-        "parameters": []
+        "parameters": [],
+        "returnType": "void"
       },
       {
         "name": "get",
-        "returnType": "java.lang.String",
         "parameters": [
           {
             "name": "key",
             "type": "java.lang.String"
           }
-        ]
+        ],
+        "returnType": "java.lang.String"
       },
       {
         "name": "put",
-        "returnType": "void",
         "parameters": [
           {
             "name": "key",
@@ -29,14 +43,18 @@
             "name": "value",
             "type": "java.lang.String"
           }
-        ]
+        ],
+        "returnType": "void"
       },
       {
         "name": "size",
-        "returnType": "int",
-        "parameters": []
+        "parameters": [],
+        "returnType": "int"
       }
     ],
+    "name": "CacheCalls"
+  },
+  {
     "capabilityContext": {
       "attributes": [
         {
@@ -52,24 +70,24 @@
           "required": true
         }
       ]
-    }
-  },
-  {
-    "name": "CacheSettings",
+    },
     "descriptors": [
       {
         "appName": "pet-clinic",
-        "instanceId": "instance-0",
         "cacheName": "pets",
+        "instanceId": "instance-0",
         "size": 0
       },
       {
         "appName": "pet-clinic",
-        "instanceId": "instance-0",
         "cacheName": "clients",
+        "instanceId": "instance-0",
         "size": 0
       }
     ],
+    "name": "CacheSettings"
+  },
+  {
     "capabilityContext": {
       "attributes": [
         {
@@ -85,10 +103,7 @@
           "required": true
         }
       ]
-    }
-  },
-  {
-    "name": "CacheStatistics",
+    },
     "descriptors": [
       {
         "name": "Cache:ClearCount",
@@ -107,6 +122,29 @@
         "type": "GAUGE"
       }
     ],
+    "name": "CacheStatistics"
+  },
+  {
+    "capabilityContext": {
+      "attributes": []
+    },
+    "descriptors": [
+      {
+        "name": "getThreadDump",
+        "parameters": [],
+        "returnType": "java.lang.String"
+      }
+    ],
+    "name": "DiagnosticCalls"
+  },
+  {
+    "capabilityContext": {
+      "attributes": []
+    },
+    "descriptors": [],
+    "name": "NmsAgentService"
+  },
+  {
     "capabilityContext": {
       "attributes": [
         {
@@ -116,45 +154,17 @@
         {
           "name": "appName",
           "required": true
-        },
-        {
-          "name": "cacheName",
-          "required": true
         }
       ]
-    }
-  },
-  {
-    "name": "DiagnosticCalls",
-    "descriptors": [
-      {
-        "name": "getThreadDump",
-        "returnType": "java.lang.String",
-        "parameters": []
-      }
-    ],
-    "capabilityContext": {
-      "attributes": []
-    }
-  },
-  {
-    "name": "NmsAgentService",
-    "descriptors": [],
-    "capabilityContext": {
-      "attributes": []
-    }
-  },
-  {
-    "name": "StatisticCollectorCapability",
+    },
     "descriptors": [
       {
         "name": "isRunning",
-        "returnType": "boolean",
-        "parameters": []
+        "parameters": [],
+        "returnType": "boolean"
       },
       {
         "name": "startStatisticCollector",
-        "returnType": "void",
         "parameters": [
           {
             "name": "interval",
@@ -164,25 +174,15 @@
             "name": "unit",
             "type": "java.util.concurrent.TimeUnit"
           }
-        ]
+        ],
+        "returnType": "void"
       },
       {
         "name": "stopStatisticCollector",
-        "returnType": "void",
-        "parameters": []
+        "parameters": [],
+        "returnType": "void"
       }
     ],
-    "capabilityContext": {
-      "attributes": [
-        {
-          "name": "instanceId",
-          "required": true
-        },
-        {
-          "name": "appName",
-          "required": true
-        }
-      ]
-    }
+    "name": "StatisticCollectorCapability"
   }
 ]

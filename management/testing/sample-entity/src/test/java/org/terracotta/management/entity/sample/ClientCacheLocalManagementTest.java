@@ -54,7 +54,7 @@ public class ClientCacheLocalManagementTest extends AbstractTest {
     assertThat(registry.getManagementProvidersByCapability("StatisticCollectorCapability").size(), equalTo(1));
     assertThat(registry.getManagementProvidersByCapability("NmsAgentService").size(), equalTo(1));
 
-    assertEquals(readJson("client-descriptors.json"), toJson(registry.getCapabilities()));
+    assertEquals(read("client-descriptors.json"), toJson(registry.getCapabilities()));
   }
 
   @Test

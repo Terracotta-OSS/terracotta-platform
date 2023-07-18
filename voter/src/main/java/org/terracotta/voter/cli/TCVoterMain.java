@@ -22,7 +22,7 @@ import org.terracotta.diagnostic.client.connection.CompatibleDiagnosticServicePr
 import org.terracotta.diagnostic.client.connection.DefaultDiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.LogicalServerState;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.service.TopologyService;
 import org.terracotta.inet.HostPort;
@@ -92,7 +92,7 @@ public class TCVoterMain {
   }
 
   protected Json.Factory createJsonFactory() {
-    return new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
+    return new DefaultJsonFactory().withModule(new DynamicConfigJsonModule());
   }
 
   // concurrently connects to the user-provided servers to fetch the topology and returns as soon as we get one

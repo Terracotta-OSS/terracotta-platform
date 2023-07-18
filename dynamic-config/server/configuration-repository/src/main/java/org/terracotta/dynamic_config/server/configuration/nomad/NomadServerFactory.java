@@ -33,9 +33,10 @@ import org.terracotta.dynamic_config.server.configuration.nomad.persistence.Conf
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.DefaultHashComputer;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.FileConfigStorage;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.InitialConfigStorage;
-import org.terracotta.dynamic_config.server.configuration.nomad.persistence.JsonSanskritMapper;
 import org.terracotta.dynamic_config.server.configuration.nomad.persistence.NomadConfigurationManager;
-import org.terracotta.dynamic_config.server.configuration.nomad.persistence.SanskritNomadServerState;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.json.SanskritJsonModule;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.sanskrit.SanskritJsonMapper;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.sanskrit.SanskritNomadServerState;
 import org.terracotta.json.Json;
 import org.terracotta.nomad.NomadEnvironment;
 import org.terracotta.nomad.client.NomadClient;
@@ -52,7 +53,6 @@ import org.terracotta.persistence.sanskrit.Sanskrit;
 import org.terracotta.persistence.sanskrit.SanskritException;
 import org.terracotta.persistence.sanskrit.SanskritMapper;
 import org.terracotta.persistence.sanskrit.file.FileBasedFilesystemDirectory;
-import org.terracotta.persistence.sanskrit.json.SanskritJsonModule;
 
 import java.nio.file.Path;
 import java.time.Clock;
@@ -75,7 +75,7 @@ public class NomadServerFactory {
 
     FileBasedFilesystemDirectory filesystemDirectory = new FileBasedFilesystemDirectory(configurationManager.getChangesPath());
 
-    SanskritMapper mapper = new JsonSanskritMapper(jsonFactory);
+    SanskritMapper mapper = new SanskritJsonMapper(jsonFactory);
 
     Sanskrit sanskrit = Sanskrit.init(filesystemDirectory, mapper);
 

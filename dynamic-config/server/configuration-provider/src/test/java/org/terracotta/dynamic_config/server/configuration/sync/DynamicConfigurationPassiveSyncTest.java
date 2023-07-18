@@ -19,7 +19,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Setting;
 import org.terracotta.dynamic_config.api.model.Testing;
@@ -94,7 +94,7 @@ public class DynamicConfigurationPassiveSyncTest {
 
   private NomadChangeInfo activeActivation = committed(randomUUID(), new ClusterActivationNomadChange(activeTopology.getCluster().clone()), 1L);
   private NomadChangeInfo passiveActivation = activeActivation; // joint activation
-  private final DynamicConfigSyncData.Codec codec = new DynamicConfigSyncData.Codec(new DefaultJsonFactory());
+  private final DynamicConfigSyncData.Codec codec = new DynamicConfigSyncData.Codec(new DefaultJsonFactory().withModule(new DynamicConfigJsonModule()));
 
   private final TopologyService activeTopologyService = mock(TopologyService.class);
   private final TopologyService passiveTopologyService = mock(TopologyService.class);
@@ -130,7 +130,7 @@ public class DynamicConfigurationPassiveSyncTest {
     );
 
     List<NomadChangeInfo> decodedChanges = codec.decode(codec.encode(new DynamicConfigSyncData(nomadChanges, activeTopology.getCluster(), null))).getNomadChanges();
-    Json json = new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule()).create();
+    Json json = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule()).create();
     assertThat(json.map(decodedChanges), is(equalTo(json.map(nomadChanges))));
   }
 

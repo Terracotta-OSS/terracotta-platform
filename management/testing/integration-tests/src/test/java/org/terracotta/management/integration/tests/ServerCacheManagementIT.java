@@ -57,9 +57,7 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
     Settings serverCacheSettings = new ArrayList<>(registry.getCapability("ServerCacheSettings").get().getDescriptors(Settings.class)).get(1);
     serverCacheSettings.set("time", 0L);
 
-    Object actual = toJson(registry.getCapabilities());
-    Object expected = readJson("server-descriptors.json");
-    assertEquals(expected, actual);
+    assertEquals(read("server-descriptors.json"), toJson(registry.getCapabilities()));
 
     registry = nmsService.readTopology()
         .activeServerEntityStream()
@@ -123,8 +121,10 @@ public class ServerCacheManagementIT extends AbstractSingleTest {
         .map(o -> o.<Long>getLatestSampleValue("Cluster:HitCount"))
         .anyMatch(counter -> counter.get() == 1L));
 
-    Object expected = readJson("stats.json");
-    queryAllRemoteStatsUntil(stats -> toJson(stats).equals(expected));
+    queryAllRemoteStatsUntil(stats -> {
+      stats.get(0);
+      return read("stats.json").equals(toJson(stats));
+    });
 
     get(1, "pets", "pet2"); // miss
 

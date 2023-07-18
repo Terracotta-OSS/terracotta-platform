@@ -1,0 +1,11 @@
+{
+  "applicability": {
+    "level": "NODE",
+    "nodeUID": "jUhhu1kRQd-x6iNgpo9Xyw"
+  },
+  "operation": "SET",
+  "setting": "NODE_BACKUP_DIR",
+  "summary": "set backup-dir=backup (on node UID: jUhhu1kRQd-x6iNgpo9Xyw)",
+  "type": "SettingNomadChange",
+  "value": "backup"
+}

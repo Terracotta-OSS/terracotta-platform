@@ -59,11 +59,6 @@ public class NodeRemovalNomadChange extends NodeNomadChange {
   }
 
   @Override
-  public final String getType() {
-    return "NodeRemovalNomadChange";
-  }
-
-  @Override
   public String toString() {
     return "NodeRemovalNomadChange{" + "" +
         "removedNode=" + getNode().getName() +

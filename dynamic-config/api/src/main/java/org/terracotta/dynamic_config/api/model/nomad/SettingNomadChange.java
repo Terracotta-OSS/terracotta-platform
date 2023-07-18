@@ -85,11 +85,6 @@ public class SettingNomadChange extends FilteredNomadChange {
   }
 
   @Override
-  public final String getType() {
-    return "SettingNomadChange";
-  }
-
-  @Override
   public Cluster apply(Cluster original) {
     Configuration configuration = toConfiguration(original);
     configuration.validate(ACTIVATED, getOperation());

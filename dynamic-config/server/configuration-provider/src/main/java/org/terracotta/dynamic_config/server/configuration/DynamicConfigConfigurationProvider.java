@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.terracotta.configuration.ConfigurationException;
 import org.terracotta.configuration.ConfigurationProvider;
 import org.terracotta.diagnostic.server.api.DiagnosticServicesHolder;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.service.ClusterFactory;
 import org.terracotta.dynamic_config.api.service.DynamicConfigService;
 import org.terracotta.dynamic_config.api.service.IParameterSubstitutor;
@@ -97,7 +97,7 @@ public class DynamicConfigConfigurationProvider implements ConfigurationProvider
       LicenseService licenseService = new LicenseParserDiscovery(serviceClassLoader).find().orElseGet(LicenseService::unsupported);
 
       // initialize the json system
-      Json.Factory jsonFactory = new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule());
+      Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule());
 
       // Service used to manage and initialize the Nomad 2PC system
       nomadServerManager = new NomadServerManager(parameterSubstitutor, configChangeHandlerManager, licenseService, jsonFactory, server);

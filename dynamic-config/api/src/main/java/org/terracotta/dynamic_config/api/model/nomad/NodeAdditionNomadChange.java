@@ -68,11 +68,6 @@ public class NodeAdditionNomadChange extends NodeNomadChange {
   }
 
   @Override
-  public final String getType() {
-    return "NodeAdditionNomadChange";
-  }
-
-  @Override
   public String toString() {
     return "NodeAdditionNomadChange{" +
         "stripeUID=" + getStripeUID() +

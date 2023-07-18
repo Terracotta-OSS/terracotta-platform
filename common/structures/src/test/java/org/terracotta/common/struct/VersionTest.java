@@ -16,9 +16,6 @@
 package org.terracotta.common.struct;
 
 import org.junit.Test;
-import org.terracotta.common.struct.json.StructJsonModule;
-import org.terracotta.json.DefaultJsonFactory;
-import org.terracotta.json.Json;
 
 import java.util.stream.Stream;
 
@@ -32,9 +29,6 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  * @author Mathieu Carbou
  */
 public class VersionTest {
-
-  private final Json json = new DefaultJsonFactory().withModule(new StructJsonModule()).create();
-
   @Test
   public void test_bad_versions() {
     Stream.of("", " ", ".", "-", "&", " . ", "1..", "1.-", "-SNAPSHOT")
@@ -67,15 +61,5 @@ public class VersionTest {
     assertThat(Version.valueOf("10.0.foo").compareTo(Version.valueOf("10.0.foo-SNAPSHOT")), is(equalTo(1)));
     assertThat(Version.valueOf("10.0.foo-SNAPSHOT").compareTo(Version.valueOf("10.0.foo")), is(equalTo(-1)));
     assertThat(Version.valueOf("11-SNAPSHOT").compareTo(Version.valueOf("11")), is(equalTo(-1)));
-  }
-
-  @Test
-  public void test_json() {
-    for (String v : new String[]{"5.8.6-pre7", "0.0.9", "3.9.5-internal5", "10.7.0.3", "10.7.0.3-SNAPSHOT", "10.7.0.3-foo-SNAPSHOT", "10.7.0.3.foo-SNAPSHOT"}) {
-      assertThat(Version.valueOf(v).toString(), is(equalTo(v)));
-      String json = this.json.toString(Version.valueOf(v));
-      assertThat(json, is(equalTo("\"" + v + "\"")));
-      assertThat(this.json.parse(json, Version.class), is(equalTo(Version.valueOf(v))));
-    }
   }
 }

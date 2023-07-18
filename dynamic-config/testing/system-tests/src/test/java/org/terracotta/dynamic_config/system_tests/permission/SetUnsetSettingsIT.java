@@ -17,7 +17,7 @@ package org.terracotta.dynamic_config.system_tests.permission;
 
 import org.junit.Test;
 import org.terracotta.angela.common.tcconfig.TerracottaServer;
-import org.terracotta.dynamic_config.server.configuration.nomad.persistence.JsonSanskritMapper;
+import org.terracotta.dynamic_config.server.configuration.nomad.persistence.sanskrit.SanskritJsonMapper;
 import org.terracotta.dynamic_config.test_support.ClusterDefinition;
 import org.terracotta.dynamic_config.test_support.DynamicConfigIT;
 import org.terracotta.persistence.sanskrit.MutableSanskritObject;
@@ -135,7 +135,7 @@ public class SetUnsetSettingsIT extends DynamicConfigIT {
 
   private List<SanskritObject> getChanges(Path pathToAppendLog) throws SanskritException {
     List<SanskritObject> res = new ArrayList<>();
-    SanskritMapper mapper = new JsonSanskritMapper(jsonFactory);
+    SanskritMapper mapper = new SanskritJsonMapper(jsonFactory);
     new SanskritImpl(new FileBasedFilesystemDirectory(pathToAppendLog), mapper) {
       @Override
       public void onNewRecord(String timeStamp, String data) throws SanskritException {

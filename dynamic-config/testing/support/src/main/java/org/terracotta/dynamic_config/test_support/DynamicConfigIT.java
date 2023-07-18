@@ -46,7 +46,7 @@ import org.terracotta.common.struct.TimeUnit;
 import org.terracotta.connection.ConnectionException;
 import org.terracotta.diagnostic.client.DiagnosticService;
 import org.terracotta.diagnostic.client.DiagnosticServiceFactory;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.FailoverPriority;
 import org.terracotta.dynamic_config.api.service.TopologyService;
@@ -114,7 +114,7 @@ public class DynamicConfigIT {
 
   protected final TmpDir tmpDir;
   protected final AngelaRule angela;
-  protected final Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule());
+  protected final Json.Factory jsonFactory = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule());
   protected final Json json = jsonFactory.create();
 
   // can be modified by sub-classes to update the timeouts

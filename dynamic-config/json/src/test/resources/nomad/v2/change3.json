@@ -1,0 +1,45 @@
+{
+  "applicability": {
+    "level": "CLUSTER"
+  },
+  "cluster": {
+    "clientReconnectWindow": {
+      "quantity": 60,
+      "type": "TIME",
+      "unit": "SECONDS"
+    },
+    "failoverPriority": "availability",
+    "name": "myClusterName",
+    "offheapResources": {
+      "foo": {
+        "quantity": 1,
+        "type": "MEMORY",
+        "unit": "GB"
+      },
+      "main": {
+        "quantity": 512,
+        "type": "MEMORY",
+        "unit": "MB"
+      }
+    },
+    "stripes": [
+      {
+        "name": "stripe-1",
+        "nodes": [
+          {
+            "hostname": "localhost",
+            "name": "foo",
+            "port": 9410,
+            "uid": "qigu0DVZQ9uV2U3me4FLjg"
+          }
+        ],
+        "uid": "DQKxD6DSQN2juJNWAmOFDg"
+      }
+    ],
+    "uid": "KA-qLyHMSnG6PL3PbH2_Pw"
+  },
+  "from": "1",
+  "summary": "Upgrading configuration format from version 1 to version 2",
+  "to": "2",
+  "type": "FormatUpgradeNomadChange"
+}

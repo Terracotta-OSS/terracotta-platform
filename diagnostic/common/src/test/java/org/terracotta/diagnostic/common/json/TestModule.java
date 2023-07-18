@@ -15,52 +15,22 @@
  */
 package org.terracotta.diagnostic.common.json;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.terracotta.diagnostic.common.JsonDiagnosticCodecTest;
-import org.terracotta.json.Json;
+import org.terracotta.json.gson.GsonConfig;
+import org.terracotta.json.gson.GsonModule;
+
+import java.io.Closeable;
+import java.time.Duration;
 
 /**
  * @author Mathieu Carbou
  */
-public class TestModule extends SimpleModule implements Json.Module {
-  private static final long serialVersionUID = 1L;
+public class TestModule implements GsonModule {
+  @Override
+  public void configure(GsonConfig config) {
+    config.registerSuperType(JsonDiagnosticCodecTest.Vegie.class, "@class", Class::getName).withSubtypes(JsonDiagnosticCodecTest.Tomato.class, JsonDiagnosticCodecTest.Pepper.class);
+    config.registerSuperType(JsonDiagnosticCodecTest.CookingManual.class, "@class", Class::getName).withSubtypes(JsonDiagnosticCodecTest.CookingManual.class, JsonDiagnosticCodecTest.TomatoCooking.class);
 
-  public TestModule() {
-    super(TestModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
-
-    setMixInAnnotation(JsonDiagnosticCodecTest.Vegie.class, VegieMixin.class);
-    setMixInAnnotation(JsonDiagnosticCodecTest.Tomato.class, TomatoMixin.class);
-    setMixInAnnotation(JsonDiagnosticCodecTest.Pepper.class, PepperMixin.class);
-  }
-
-  public static abstract class VegieMixin<T extends JsonDiagnosticCodecTest.CookingManual> extends JsonDiagnosticCodecTest.Vegie<T> {
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
-    private final T cookingManual;
-
-    public VegieMixin(T cookingManual, String color) {
-      super(cookingManual, color);
-      this.cookingManual = cookingManual;
-    }
-  }
-
-  public static class TomatoMixin extends JsonDiagnosticCodecTest.Tomato {
-    @JsonCreator
-    public TomatoMixin(@JsonProperty("cookingManual") JsonDiagnosticCodecTest.TomatoCooking cookingManual,
-                       @JsonProperty("color") String color) {
-      super(cookingManual, color);
-    }
-  }
-
-  public static class PepperMixin extends JsonDiagnosticCodecTest.Pepper {
-
-    @JsonCreator
-    public PepperMixin(@JsonProperty("cookingManual") JsonDiagnosticCodecTest.TomatoCooking cookingManual,
-                       @JsonProperty("color") String color) {
-      super(cookingManual, color);
-    }
+    config.allowClassLoading(Closeable.class, JsonDiagnosticCodecTest.Tomato.class, JsonDiagnosticCodecTest.Pepper.class, Duration.class);
   }
 }

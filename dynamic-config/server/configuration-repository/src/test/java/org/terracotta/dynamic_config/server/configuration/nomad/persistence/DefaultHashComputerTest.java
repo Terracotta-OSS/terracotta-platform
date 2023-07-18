@@ -16,7 +16,7 @@
 package org.terracotta.dynamic_config.server.configuration.nomad.persistence;
 
 import org.junit.Test;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.api.model.Testing;
@@ -33,7 +33,7 @@ import static org.junit.Assert.assertThat;
 public class DefaultHashComputerTest {
   @Test
   public void computeHash() {
-    Json om = new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule()).create();
+    Json om = new DefaultJsonFactory().withModule(new DynamicConfigJsonModule()).create();
     HashComputer hashComputer = new DefaultHashComputer();
 
     Node node = Testing.newTestNode("foo", "localhost");

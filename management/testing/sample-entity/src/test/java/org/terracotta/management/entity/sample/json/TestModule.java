@@ -15,32 +15,18 @@
  */
 package org.terracotta.management.entity.sample.json;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.terracotta.json.Json;
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
-
-import java.util.Collection;
+import org.terracotta.json.gson.GsonConfig;
+import org.terracotta.json.gson.GsonModule;
+import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
 
 /**
  * @author Mathieu Carbou
  */
-public class TestModule extends SimpleModule implements Json.Module {
-  private static final long serialVersionUID = 1L;
-
-  public TestModule() {
-    super(TestModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
-
-    setMixInAnnotation(CapabilityContext.class, CapabilityContextMixin.class);
+public class TestModule implements GsonModule {
+  @Override
+  public void configure(GsonConfig config) {
+    config.serializeSubtypes(Capability.class);
+    config.serializeSubtypes(Descriptor.class);
   }
-
-  public static abstract class CapabilityContextMixin {
-    @JsonIgnore
-    public abstract Collection<String> getRequiredAttributeNames();
-
-    @JsonIgnore
-    public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
-  }
-
 }

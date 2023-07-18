@@ -54,8 +54,12 @@ import org.terracotta.passthrough.PassthroughClusterControl;
 import org.terracotta.passthrough.PassthroughTestHelpers;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -65,6 +69,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -76,7 +81,7 @@ import static org.terracotta.dynamic_config.api.model.Testing.newTestCluster;
  */
 public abstract class AbstractTest {
 
-  private final Json json = new DefaultJsonFactory().withModule(new TestModule()).create();
+  private final Json json = new DefaultJsonFactory().withModule(new TestModule()).pretty().create();
   protected final PassthroughClusterControl stripeControl;
 
   private Connection managementConnection;
@@ -149,12 +154,20 @@ public abstract class AbstractTest {
     stripeControl.tearDown();
   }
 
-  protected Object readJson(String file) {
-    return json.parse(AbstractTest.class.getResource("/" + file));
+  protected String read(String file) {
+    try {
+      if (!file.startsWith("/")) {
+        file = "/" + file;
+      }
+      return new String(Files.readAllBytes(Paths.get(getClass().getResource(file).toURI())), UTF_8).replace("\r", "");
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
-
-  protected Object toJson(Object o) {
-    return json.map(o);
+  protected String toJson(Object o) {
+    return json.toString(o);
   }
 
   protected int size(int nodeIdx, String cacheName) {

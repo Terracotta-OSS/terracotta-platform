@@ -48,7 +48,6 @@ import org.terracotta.monitoring.PlatformEntity;
 import org.terracotta.monitoring.PlatformServer;
 import org.terracotta.monitoring.ServerState;
 
-import java.io.File;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -191,8 +190,8 @@ public class VoltronMonitoringServiceTest {
     assertTopologyEquals("cluster-2.json");
 
     List<Message> messages = messages();
-    assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION","NOTIFICATION","NOTIFICATION")));
-    assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_CONNECTED","CLIENT_PROPERTY_ADDED","CLIENT_PROPERTY_ADDED")));
+    assertThat(messageTypes(messages), equalTo(Arrays.asList("NOTIFICATION", "NOTIFICATION", "NOTIFICATION")));
+    assertThat(notificationTypes(messages), equalTo(Arrays.asList("CLIENT_CONNECTED", "CLIENT_PROPERTY_ADDED", "CLIENT_PROPERTY_ADDED")));
   }
 
   @Test
@@ -430,6 +429,9 @@ public class VoltronMonitoringServiceTest {
   }
 
   private void assertTopologyEquals(String file) {
+    if (!file.startsWith("/")) {
+      file = "/" + file;
+    }
     Cluster cluster = managementService.readTopology();
     cluster.serverStream().forEach(server -> {
       server.setUpTimeSec(0);
@@ -437,7 +439,7 @@ public class VoltronMonitoringServiceTest {
         server.setActivateTime(activateTime);
       }
     });
-    Map<String, Object> expected = mapper.parseObject(new File("src/test/resources/" + file));
+    Map<String, Object> expected = mapper.parseObject(getClass().getResource(file));
     Map<String, Object> sampled = mapper.mapToObject(cluster.toMap());
     assertEquals(expected, sampled);
   }

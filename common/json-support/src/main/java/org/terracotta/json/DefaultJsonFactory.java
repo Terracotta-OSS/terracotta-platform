@@ -15,51 +15,66 @@
  */
 package org.terracotta.json;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.terracotta.json.Json.Module;
+import org.terracotta.json.gson.GsonFactory;
+import org.terracotta.json.gson.GsonModule;
+import org.terracotta.json.util.DirectedGraph;
 
-import java.io.IOException;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
+import static java.lang.System.lineSeparator;
+import static java.util.Collections.singletonList;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.empty;
+import static java.util.stream.Stream.of;
 
 /**
- * Used to build an ObjectMapper in a consistent way
+ * Used to build a Json mapper
  *
  * @author Mathieu Carbou
  */
 public class DefaultJsonFactory implements Json.Factory {
+  private static final Logger LOGGER = LoggerFactory.getLogger(DefaultJsonFactory.class);
 
   private final boolean pretty;
-  private final List<Json.Module> modules;
-  private final String eol;
+  private final Collection<Module> modules;
+  private final ClassLoader classLoader;
 
   public DefaultJsonFactory() {
-    this(emptyList(), false, "\n");
+    this(Arrays.asList(new TerracottaJsonModule(), new JdkJsonModule(), new Jsr310JsonModule()), false, Json.class.getClassLoader());
   }
 
-  private DefaultJsonFactory(List<Json.Module> modules, boolean pretty, String eol) {
+  private DefaultJsonFactory(Collection<Module> modules, boolean pretty, ClassLoader classLoader) {
+    LOGGER.trace("DefaultJsonFactory({}, {}, {})", modules, pretty, classLoader);
     this.pretty = pretty;
-    this.modules = new ArrayList<>(modules);
-    this.eol = eol;
+    this.modules = new LinkedHashSet<>(modules);
+    this.classLoader = classLoader;
   }
 
   @Override
   public Json create() {
-    return new JacksonJson(createObjectMapper());
+    return new GsonJson(createMapper());
   }
 
   @Override
@@ -68,211 +83,169 @@ public class DefaultJsonFactory implements Json.Factory {
   }
 
   @Override
-  public DefaultJsonFactory eol(String eol) {
-    return new DefaultJsonFactory(this.modules, this.pretty, eol);
-  }
-
-  @Override
-  public DefaultJsonFactory systemEOL() {
-    return eol(System.lineSeparator());
-  }
-
-  @Override
   public DefaultJsonFactory pretty(boolean pretty) {
-    return new DefaultJsonFactory(this.modules, pretty, this.eol);
+    return new DefaultJsonFactory(modules, pretty, classLoader);
   }
 
   @Override
-  public DefaultJsonFactory withModule(Json.Module module) {
-    return withModules(module);
+  public DefaultJsonFactory withClassLoader(ClassLoader classLoader) {
+    return new DefaultJsonFactory(modules, pretty, classLoader);
   }
 
   @Override
-  public DefaultJsonFactory withModules(Json.Module... modules) {
-    DefaultJsonFactory factory = new DefaultJsonFactory(this.modules, this.pretty, this.eol);
-    factory.modules.addAll(asList(modules));
-    return factory;
+  public DefaultJsonFactory withModule(Module module) {
+    return withModules(singletonList(module));
   }
 
-  public ObjectMapper createObjectMapper() {
-    ObjectMapper mapper = JsonMapper.builder()
-        .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-        .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
-        .configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false)
-        .build();
-
-    // always add default module first
-    List<Json.Module> modules = new ArrayList<>(this.modules.size() + 1);
-    modules.add(new TerracottaJsonModule());
-    modules.addAll(this.modules);
-
-    // 1. object mapper configuration (this step has to be executed BEFORE modules are registered)
-    for (Json.Module module : modules) {
-      if (module instanceof JacksonModule) {
-        ((JacksonModule) module).configure(mapper);
+  @Override
+  public DefaultJsonFactory withModules(Collection<Module> modules) {
+    LOGGER.trace("withModules({})", modules);
+    final List<Module> newList = new ArrayList<>(this.modules);
+    final Collection<Class<? extends Module>> classes = newList.stream().map(Module::getClass).collect(toSet());
+    for (Module module : modules) {
+      final Class<? extends Module> type = module.getClass();
+      if (classes.stream().anyMatch(Predicate.isEqual(type))) {
+        throw new IllegalArgumentException("Module with type: " + type + " already added");
+      } else {
+        classes.add(type);
+        newList.add(module);
       }
     }
+    return new DefaultJsonFactory(newList, pretty, classLoader);
+  }
 
-    // 2. enforce pretty configuration to behave exactly the same way if required
-    mapper.configure(SerializationFeature.INDENT_OUTPUT, pretty);
-    if (pretty) {
-      DefaultIndenter indent = new DefaultIndenter("  ", eol);
-      mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter()
-          .withoutSpacesInObjectEntries()
-          .withObjectIndenter(indent));
-    }
+  public Gson createMapper() {
+    LOGGER.trace("createMapper()");
 
-    // 3. register modules for dependency resolution
-    for (Json.Module module : modules) {
-      if (module instanceof Module) {
-        mapper.registerModule((Module) module);
-      }
-    }
+    // resolve module dependencies and override
+    final List<GsonModule> gsonModules = resolveModules().stream()
+        .filter(GsonModule.class::isInstance)
+        .map(GsonModule.class::cast)
+        .collect(toList());
+    LOGGER.trace("resolveModules(): {}", gsonModules);
 
-    return mapper;
+    final GsonFactory gsonFactory = new GsonFactory(classLoader, pretty, gsonModules);
+
+    return gsonFactory.create();
   }
 
   @Override
   public String toString() {
-    return "ObjectMapperFactory{" +
-        ", eol=" + eol.replace("\n", "\\n").replace("\r", "\\r") +
+    return getClass().getSimpleName() + "{" +
         ", pretty=" + pretty +
         ", modules=" + modules +
         '}';
   }
 
-  public interface JacksonModule extends Json.Module {
-    void configure(ObjectMapper objectMapper);
+  private List<Module> resolveModules() {
+    // modules and classes
+    final Map<Class<? extends Module>, Module> resolvedModules = this.modules.stream().collect(toMap(
+        Module::getClass,
+        identity(),
+        (module, module2) -> {
+          throw new AssertionError(); // bug here, this should not happen if we correctly handle duplicates
+        },
+        LinkedHashMap::new));
+
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Configured modules:" + lineSeparator() + " - " + resolvedModules.keySet().stream().map(Object::toString).collect(joining(lineSeparator() + " - ")));
+    }
+
+    // load and add module dependencies
+    new ArrayList<>(resolvedModules.values())
+        .stream()
+        .map(Module::getClass)
+        .flatMap(DefaultJsonFactory::withDependencies) // recursive
+        .filter(type -> !resolvedModules.containsKey(type)) // avoid duplicates
+        .map(type -> {
+          try {
+            return type.newInstance();
+          } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .forEach(module -> {
+          if (resolvedModules.put(module.getClass(), module) != null) {
+            throw new AssertionError(); // bug here, this should not happen if we correctly handle duplicates
+          }
+        });
+
+    if (LOGGER.isTraceEnabled()) {
+      LOGGER.trace("Resolved modules and dependencies:" + lineSeparator() + " - " + resolvedModules.keySet().stream().map(Object::toString).collect(joining(lineSeparator() + " - ")));
+    }
+
+    // create graph
+    final DirectedGraph<Class<? extends Module>> graph = new DirectedGraph<>();
+    graph.addVertex(RootModule.class);
+    resolvedModules.keySet().forEach(type -> {
+      graph.addEdge(RootModule.class, type);
+      // we only override if the module to override has to be loaded.
+      getOverrides(type).filter(resolvedModules::containsKey).forEach(overridden -> graph.addEdge(type, overridden));
+      getDependencies(type).forEach(dependency -> graph.addEdge(dependency, type));
+    });
+
+    LOGGER.trace("Graph:{}{}", lineSeparator(), graph);
+
+    final List<Module> modules = graph.depthFirstTraversal(RootModule.class).map(resolvedModules::get).collect(toList());
+    Collections.reverse(modules);
+    return modules;
+
   }
 
-  static class JacksonJson implements Json {
-    private final ObjectMapper mapper;
+  private static Stream<Class<? extends Module>> getDependencies(Class<? extends Module> moduleType) {
+    return concat(
+        moduleType == RootModule.class ? empty() : of(RootModule.class), // always first
+        Optional.ofNullable(moduleType.getAnnotation(Module.Dependencies.class))
+            .map(Module.Dependencies::value)
+            .map(Stream::of)
+            .orElse(Stream.empty()));
+  }
 
-    protected JacksonJson(ObjectMapper mapper) {
+  private static Stream<Class<? extends Module>> getOverrides(Class<? extends Module> moduleType) {
+    return Optional.ofNullable(moduleType.getAnnotation(Module.Overrides.class))
+        .map(Module.Overrides::value)
+        .map(Stream::of)
+        .orElse(Stream.empty());
+  }
+
+  private static Stream<Class<? extends Module>> withDependencies(Class<? extends Module> moduleType) {
+    return concat(of(moduleType), getDependencies(moduleType).flatMap(DefaultJsonFactory::withDependencies));
+  }
+
+  private static class GsonJson implements Json {
+    private final Gson mapper;
+
+    protected GsonJson(Gson mapper) {
       this.mapper = mapper;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map<String, Object> parseObject(String json) {
-      try {
-        return mapper.readValue(json, Map.class);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @SuppressWarnings("unchecked")
     @Override
     public Map<String, Object> parseObject(Reader r) {
-      try {
-        return mapper.readValue(r, Map.class);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public List<Object> parseList(Path path) {
-      try {
-        return mapper.readValue(path.toFile(), List.class);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public List<Object> parseList(String json) {
-      try {
-        return mapper.readValue(json, List.class);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public List<Object> parseList(Reader json) {
-      try {
-        return mapper.readValue(json, List.class);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
+      return mapper.fromJson(r, new TypeToken<Map<String, Object>>() {});
     }
 
     @Override
-    public <T> T parse(String json, Class<T> type) {
-      try {
-        return mapper.readValue(json, type);
-      } catch (JsonProcessingException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @Override
-    public Object parse(String json, Type type) {
-      try {
-        return mapper.readValue(json, mapper.constructType(type));
-      } catch (JsonProcessingException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @Override
-    public <T> T parse(Path path, Class<T> type) {
-      try {
-        return mapper.readValue(path.toFile(), type);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @Override
-    public Object parse(Path path, Type type) {
-      try {
-        return mapper.readValue(path.toFile(), mapper.constructType(type));
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
+    public List<Object> parseList(Reader r) {
+      return mapper.fromJson(r, new TypeToken<List<Object>>() {});
     }
 
     @Override
     public <T> T parse(Reader r, Class<T> type) {
-      try {
-        return mapper.readValue(r, type);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
+      return mapper.fromJson(r, type);
     }
 
     @Override
     public Object parse(Reader r, Type type) {
-      try {
-        return mapper.readValue(r, mapper.constructType(type));
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Map<String, Object> parseObject(Path path) {
-      try {
-        return mapper.readValue(path.toFile(), Map.class);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
+      return mapper.fromJson(r, type);
     }
 
     @Override
     public String toString(Object o) {
-      try {
-        return mapper.writeValueAsString(o);
-      } catch (JsonProcessingException e) {
-        throw new UncheckedIOException(e);
-      }
+      return mapper.toJson(o);
     }
+  }
+
+  // Root module is a placeholder used to resolve the graph and ordering
+  static final class RootModule implements Json.Module {
   }
 }

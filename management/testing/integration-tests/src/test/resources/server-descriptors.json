@@ -18,16 +18,16 @@
     },
     "descriptors": [
       {
-        "consumerId": "8",
         "alias": "0@127.0.0.1:pet-clinic:<uuid>",
-        "type": "ClientState",
-        "attached": true
+        "attached": true,
+        "consumerId": "8",
+        "type": "ClientState"
       },
       {
-        "consumerId": "8",
         "alias": "0@127.0.0.1:pet-clinic:<uuid>",
-        "type": "ClientState",
-        "attached": true
+        "attached": true,
+        "consumerId": "8",
+        "type": "ClientState"
       }
     ],
     "name": "ClientStateSettings"
@@ -102,14 +102,14 @@
     },
     "descriptors": [
       {
-        "consumerId": "8",
         "alias": "pet-clinic/clients",
-        "type": "ServerCache",
-        "size": 0
+        "consumerId": "8",
+        "size": 0,
+        "type": "ServerCache"
       },
       {
-        "type": "ServerCacheSettings",
-        "time": 0
+        "time": 0,
+        "type": "ServerCacheSettings"
       }
     ],
     "name": "ServerCacheSettings"

@@ -15,76 +15,33 @@
  */
 package org.terracotta.management.integration.tests.json;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.terracotta.json.Json;
-import org.terracotta.management.model.capabilities.context.CapabilityContext;
-import org.terracotta.management.model.stats.ContextualStatistics;
-import org.terracotta.statistics.ConstantValueStatistic;
+import com.google.gson.annotations.JsonAdapter;
+import org.terracotta.json.gson.GsonConfig;
+import org.terracotta.json.gson.GsonModule;
+import org.terracotta.json.gson.RuntimeTypeAdapterFactory;
+import org.terracotta.management.model.capabilities.Capability;
+import org.terracotta.management.model.capabilities.descriptors.Descriptor;
+import org.terracotta.management.model.context.Contextual;
 import org.terracotta.statistics.Sample;
-import org.terracotta.statistics.StatisticType;
-import org.terracotta.statistics.registry.Statistic;
+import org.terracotta.statistics.ValueStatistic;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author Mathieu Carbou
  */
-public class TestModule extends SimpleModule implements Json.Module {
-  private static final long serialVersionUID = 1L;
-
-  public TestModule() {
-    super(TestModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
-
-    setMixInAnnotation(CapabilityContext.class, TestModule.CapabilityContextMixin.class);
-    setMixInAnnotation(Statistic.class, TestModule.StatisticMixin.class);
-    setMixInAnnotation(ContextualStatistics.class, TestModule.ContextualStatisticsMixin.class);
-    setMixInAnnotation(ConstantValueStatistic.class, TestModule.ConstantValueStatisticMixin.class);
+public class TestModule implements GsonModule {
+  @Override
+  public void configure(GsonConfig config) {
+    config.registerMixin(Sample.class, SampleMixin.class);
+    config.serializeSubtypes(Capability.class);
+    config.serializeSubtypes(Descriptor.class);
+    config.serializeSubtypes(Contextual.class);
+    config.serializeSubtypes(ValueStatistic.class);
   }
 
-  public static abstract class CapabilityContextMixin {
-    @JsonIgnore
-    public abstract Collection<String> getRequiredAttributeNames();
-
-    @JsonIgnore
-    public abstract Collection<CapabilityContext.Attribute> getRequiredAttributes();
-  }
-
-  public static abstract class StatisticMixin<T extends Serializable> {
-    @JsonIgnore
-    public abstract boolean isEmpty();
-
-    @JsonIgnore
-    public abstract Optional<T> getLatestSampleValue();
-
-    @JsonIgnore
-    public abstract Optional<Sample<T>> getLatestSample();
-  }
-
-  public static abstract class ContextualStatisticsMixin {
-    @JsonIgnore
-    public abstract int size();
-
-    @JsonIgnore
-    public abstract boolean isEmpty();
-
-    @JsonIgnore
-    public abstract Map<String, ? extends Serializable> getLatestSampleValues();
-
-    @JsonIgnore
-    public abstract Map<String, Sample<? extends Serializable>> getLatestSamples();
-  }
-
-  public static abstract class ConstantValueStatisticMixin<T> {
-    @JsonProperty
-    public abstract T value();
-
-    @JsonProperty
-    public abstract StatisticType type();
+  static class SampleMixin<T extends Serializable> {
+    @JsonAdapter(RuntimeTypeAdapterFactory.class)
+    private T sample;
   }
 }

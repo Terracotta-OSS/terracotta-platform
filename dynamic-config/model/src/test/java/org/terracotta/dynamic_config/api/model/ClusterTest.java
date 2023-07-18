@@ -17,15 +17,9 @@ package org.terracotta.dynamic_config.api.model;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.terracotta.common.struct.Measure;
 import org.terracotta.common.struct.TimeUnit;
-import org.terracotta.dynamic_config.api.json.DynamicConfigModelJsonModule;
-import org.terracotta.json.DefaultJsonFactory;
-import org.terracotta.json.Json;
-
-import java.util.function.BiConsumer;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -45,10 +39,6 @@ import static org.terracotta.testing.ExceptionMatcher.throwing;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterTest {
-
-  @Mock BiConsumer<Integer, Node> consumer;
-
-  Json json = new DefaultJsonFactory().withModule(new DynamicConfigModelJsonModule()).create();
 
   Node node1 = Testing.newTestNode("node1", "localhost", 9410)
       .putDataDir("data", RawPath.valueOf("data"))
@@ -83,12 +73,6 @@ public class ClusterTest {
   public void test_containsNode() {
     assertTrue(cluster.containsNode(node1.getUID()));
     assertFalse(cluster.containsNode(node2.getUID()));
-  }
-
-  @Test
-  public void test_clone() {
-    assertThat(cluster.clone(), is(equalTo(cluster)));
-    assertThat(json.map(cluster.clone()), is(equalTo(json.map(cluster))));
   }
 
   @Test

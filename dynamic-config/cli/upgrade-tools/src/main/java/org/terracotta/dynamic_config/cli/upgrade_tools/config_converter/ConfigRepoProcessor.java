@@ -17,7 +17,7 @@ package org.terracotta.dynamic_config.cli.upgrade_tools.config_converter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.Cluster;
 import org.terracotta.dynamic_config.api.model.Node;
 import org.terracotta.dynamic_config.api.model.NodeContext;
@@ -49,7 +49,7 @@ public class ConfigRepoProcessor {
   private static final Logger LOGGER = LoggerFactory.getLogger(ConfigRepoProcessor.class);
 
   private final Path outputFolderPath;
-  private final NomadServerFactory nomadServerFactory = new NomadServerFactory(new DefaultJsonFactory().withModule(new DynamicConfigApiJsonModule()));
+  private final NomadServerFactory nomadServerFactory = new NomadServerFactory(new DefaultJsonFactory().withModule(new DynamicConfigJsonModule()));
 
   public ConfigRepoProcessor(Path outputFolderPath) {
     this.outputFolderPath = outputFolderPath;

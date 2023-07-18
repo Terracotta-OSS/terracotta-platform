@@ -22,13 +22,20 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Type;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -42,10 +49,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public interface Json {
 
   // forces a serialization to null
-  Null NULL = new Null();
+  Null NULL = new Null() {};
 
-  final class Null {
-  }
+  interface Null {}
+
+  // map
 
   /**
    * Serialize the object and then parses back the serialized json.
@@ -83,70 +91,43 @@ public interface Json {
     return parseList(toString(o));
   }
 
-  /**
-   * Parses a json content into an unknown structure (Map, List, Number, String)
-   */
-  default Object parse(String json) {
-    return parse(json, Object.class);
-  }
-
-  /**
-   * Parses a json content in a file into an unknown structure (Map, List, Number, String)
-   */
-  default Object parse(File file) {
-    return parse(file, Object.class);
-  }
-
-  /**
-   * Parses a json content in a file into an unknown structure (Map, List, Number, String)
-   */
-  default Object parse(Path path) {
-    return parse(path, Object.class);
-  }
-
-  /**
-   * Parses a json content into an unknown structure (Map, List, Number, String)
-   */
-  default Object parse(InputStream json) {
-    return parse(json, Object.class);
-  }
-
-  /**
-   * Parses a json content into an unknown structure (Map, List, Number, String)
-   */
-  default Object parse(Reader json) {
-    return parse(json, Object.class);
-  }
-
-  /**
-   * Parses a json content into an unknown structure (Map, List, Number, String)
-   */
-  default Object parse(URL url) {
-    return parse(url, Object.class);
-  }
+  // parseObject
 
   /**
    * Parses a json content (object expected) in a file into a Map structure
    */
   default Map<String, Object> parseObject(File file) {
-    return parseObject(file.toPath());
+    return parseObject(file, UTF_8);
+  }
+
+  default Map<String, Object> parseObject(File file, Charset charset) {
+    return parseObject(file.toPath(), charset);
   }
 
   /**
    * Parses a json content (object expected) in a file into a Map structure
    */
-  Map<String, Object> parseObject(Path path);
+  default Map<String, Object> parseObject(Path path) {
+    return parseObject(path, UTF_8);
+  }
 
-  /**
-   * Parses a json content (object expected) into a Map structure
-   */
-  Map<String, Object> parseObject(String json);
+  default Map<String, Object> parseObject(Path path, Charset charset) {
+    try (Reader r = Files.newBufferedReader(path, charset)) {
+      return parseObject(r);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
 
   /**
    * Parses a json content (object expected) into a Map structure
    */
   default Map<String, Object> parseObject(InputStream json) {
-    return parseObject(new InputStreamReader(json, UTF_8));
+    return parseObject(json, UTF_8);
+  }
+
+  default Map<String, Object> parseObject(InputStream json, Charset charset) {
+    return parseObject(new InputStreamReader(json, charset));
   }
 
   /**
@@ -163,27 +144,49 @@ public interface Json {
   /**
    * Parses a json content (object expected) into a Map structure
    */
+  default Map<String, Object> parseObject(String json) {
+    return parseObject(new StringReader(json));
+  }
+
+  /**
+   * Parses a json content (object expected) into a Map structure
+   */
   Map<String, Object> parseObject(Reader r);
+
+  // parseList
 
   /**
    * Parses a json content (list expected) in a file into a List structure
    */
   default List<Object> parseList(File file) {
-    return parseList(file.toPath());
+    return parseList(file, UTF_8);
   }
 
-  List<Object> parseList(Path path);
+  default List<Object> parseList(File file, Charset charset) {
+    return parseList(file.toPath(), charset);
+  }
 
-  /**
-   * Parses a json content (list expected) into a List structure
-   */
-  List<Object> parseList(String json);
+  default List<Object> parseList(Path path) {
+    return parseList(path, UTF_8);
+  }
+
+  default List<Object> parseList(Path path, Charset charset) {
+    try (Reader r = Files.newBufferedReader(path, charset)) {
+      return parseList(r);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
 
   /**
    * Parses a json content (list expected) into a List structure
    */
   default List<Object> parseList(InputStream json) {
-    return parseList(new InputStreamReader(json, UTF_8));
+    return parseList(json, UTF_8);
+  }
+
+  default List<Object> parseList(InputStream json, Charset charset) {
+    return parseList(new InputStreamReader(json, charset));
   }
 
   /**
@@ -200,42 +203,120 @@ public interface Json {
   /**
    * Parses a json content (list expected) into a List structure
    */
-  List<Object> parseList(Reader json);
+  default List<Object> parseList(String json) {
+    return parseList(new StringReader(json));
+  }
 
   /**
-   * Parses a json content into a Java model
+   * Parses a json content (list expected) into a List structure
    */
-  <T> T parse(String json, Class<T> type);
+  List<Object> parseList(Reader r);
 
-  Object parse(String json, Type type);
+  // parse
+
+  /**
+   * Parses a json content in a file into an unknown structure (Map, List, Number, String)
+   */
+  default Object parse(File file) {
+    return parse(file.toPath(), UTF_8, Object.class);
+  }
+
+  default Object parse(File file, Charset charset) {
+    return parse(file.toPath(), charset, Object.class);
+  }
 
   /**
    * Parses a json content in a file into a Java model
    */
   default <T> T parse(File file, Class<T> type) {
-    return parse(file.toPath(), type);
+    return parse(file.toPath(), UTF_8, type);
   }
 
   default Object parse(File file, Type type) {
-    return parse(file.toPath(), type);
+    return parse(file.toPath(), UTF_8, type);
+  }
+
+  default <T> T parse(File file, Charset charset, Class<T> type) {
+    return parse(file.toPath(), charset, type);
+  }
+
+  default Object parse(File file, Charset charset, Type type) {
+    return parse(file.toPath(), charset, type);
+  }
+
+  /**
+   * Parses a json content in a file into an unknown structure (Map, List, Number, String)
+   */
+  default Object parse(Path path) {
+    return parse(path, UTF_8, Object.class);
+  }
+
+  default Object parse(Path path, Charset charset) {
+    return parse(path, charset, Object.class);
   }
 
   /**
    * Parses a json content in a file into a Java model
    */
-  <T> T parse(Path path, Class<T> type);
+  default <T> T parse(Path path, Class<T> type) {
+    return parse(path, UTF_8, type);
+  }
 
-  Object parse(Path path, Type type);
+  default Object parse(Path path, Type type) {
+    return parse(path, UTF_8, type);
+  }
+
+  default <T> T parse(Path path, Charset charset, Class<T> type) {
+    try (Reader r = Files.newBufferedReader(path, charset)) {
+      return parse(r, type);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  default Object parse(Path path, Charset charset, Type type) {
+    try (Reader r = Files.newBufferedReader(path, charset)) {
+      return parse(r, type);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  /**
+   * Parses a json content into an unknown structure (Map, List, Number, String)
+   */
+  default Object parse(InputStream json) {
+    return parse(json, UTF_8, Object.class);
+  }
+
+  default Object parse(InputStream json, Charset charset) {
+    return parse(json, charset, Object.class);
+  }
 
   /**
    * Parses a json content from a stream into a Java model
    */
   default <T> T parse(InputStream is, Class<T> type) {
-    return parse(new InputStreamReader(is, UTF_8), type);
+    return parse(is, UTF_8, type);
   }
 
   default Object parse(InputStream is, Type type) {
-    return parse(new InputStreamReader(is, UTF_8), type);
+    return parse(is, UTF_8, type);
+  }
+
+  default <T> T parse(InputStream is, Charset charset, Class<T> type) {
+    return parse(new InputStreamReader(is, charset), type);
+  }
+
+  default Object parse(InputStream is, Charset charset, Type type) {
+    return parse(new InputStreamReader(is, charset), type);
+  }
+
+  /**
+   * Parses a json content into an unknown structure (Map, List, Number, String)
+   */
+  default Object parse(URL url) {
+    return parse(url, Object.class);
   }
 
   /**
@@ -258,23 +339,56 @@ public interface Json {
   }
 
   /**
+   * Parses a json content into an unknown structure (Map, List, Number, String)
+   */
+  default Object parse(String json) {
+    return parse(json, Object.class);
+  }
+
+  /**
+   * Parses a json content into a Java model
+   */
+  default <T> T parse(String json, Class<T> type) {
+    return parse(new StringReader(json), type);
+  }
+
+  default Object parse(String json, Type type) {
+    return parse(new StringReader(json), type);
+  }
+
+  /**
+   * Parses a json content into an unknown structure (Map, List, Number, String)
+   */
+  default Object parse(Reader r) {
+    return parse(r, Object.class);
+  }
+
+  /**
    * Parses a json content from a stream into a Java model
    */
   <T> T parse(Reader r, Class<T> type);
 
   Object parse(Reader r, Type type);
 
+  // toString
+
   /**
    * Serialize an object into a Json string
    */
   String toString(Object o);
 
+  // write
+
   default void write(Object o, File out) {
-    write(o, out, UTF_8);
+    write(o, out.toPath(), UTF_8);
   }
 
   default void write(Object o, File out, Charset charset) {
     write(o, out.toPath(), charset);
+  }
+
+  default void write(Object o, Path out) {
+    write(o, out, UTF_8);
   }
 
   /**
@@ -288,7 +402,7 @@ public interface Json {
     }
   }
 
-  default void write(Object o, Path out) {
+  default void write(Object o, OutputStream out) {
     write(o, out, UTF_8);
   }
 
@@ -297,10 +411,6 @@ public interface Json {
    */
   default void write(Object o, OutputStream out, Charset charset) {
     write(o, new OutputStreamWriter(out, charset));
-  }
-
-  default void write(Object o, OutputStream out) {
-    write(o, out, UTF_8);
   }
 
   /**
@@ -322,18 +432,28 @@ public interface Json {
 
     Factory pretty();
 
-    Factory eol(String eol);
-
-    Factory systemEOL();
-
     Factory pretty(boolean pretty);
+
+    Factory withClassLoader(ClassLoader classLoader);
 
     Factory withModule(Module module);
 
-    Factory withModules(Module... modules);
+    Factory withModules(Collection<Module> modules);
   }
 
   interface Module {
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    @Inherited
+    @interface Dependencies {
+      Class<? extends Module>[] value();
+    }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    @Inherited
+    @interface Overrides {
+      Class<? extends Module>[] value();
+    }
   }
 }

@@ -16,7 +16,6 @@
 package org.terracotta.diagnostic.common;
 
 import org.junit.Test;
-import org.terracotta.common.struct.json.StructJsonModule;
 import org.terracotta.diagnostic.common.json.TestModule;
 import org.terracotta.json.DefaultJsonFactory;
 import org.terracotta.json.Json;
@@ -24,6 +23,7 @@ import org.terracotta.json.Json;
 import java.io.Closeable;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -38,10 +38,10 @@ import static org.terracotta.common.struct.Tuple2.tuple2;
  */
 public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
 
-  Json json = new DefaultJsonFactory().withModules(new StructJsonModule(), new TestModule()).create();
+  Json json = new DefaultJsonFactory().withModule(new TestModule()).create();
 
   public JsonDiagnosticCodecTest() {
-    super("Json", new JsonDiagnosticCodec(new DefaultJsonFactory().withModules(new StructJsonModule(), new TestModule())));
+    super("Json", new JsonDiagnosticCodec(new DefaultJsonFactory().withModule(new TestModule())));
   }
 
   @Test
@@ -126,6 +126,18 @@ public class JsonDiagnosticCodecTest extends CommonCodecTest<String> {
     DiagnosticResponse<Tomato> response = new DiagnosticResponse<>(tomato);
     DiagnosticResponse<?> deserialized = codec.deserialize(jsonFile("/output3.json"), DiagnosticResponse.class);
     assertThat(deserialized, is(equalTo(response)));
+  }
+
+  @Test
+  public void test_serialize_request_with_duration() {
+    DiagnosticRequest request = new DiagnosticRequest(Closeable.class, "foo", Duration.ofSeconds(2));
+    assertThat(codec.serialize(request), is(equalTo("{\"arguments\":[[\"java.time.Duration\",\"PT2S\"]],\"methodName\":\"foo\",\"serviceInterface\":\"java.io.Closeable\"}")));
+  }
+
+  @Test
+  public void test_deserialize_request_with_duration() {
+    assertThat(codec.deserialize("{\"arguments\":[[\"java.time.Duration\",\"PT2S\"]],\"methodName\":\"foo\",\"serviceInterface\":\"java.io.Closeable\"}", DiagnosticRequest.class),
+        is(equalTo(new DiagnosticRequest(Closeable.class, "foo", Duration.ofSeconds(2)))));
   }
 
   private String jsonFile(String filename) {

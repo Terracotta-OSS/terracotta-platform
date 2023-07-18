@@ -74,14 +74,14 @@
     "descriptors": [
       {
         "appName": "pet-clinic",
-        "instanceId": "instance-0",
         "cacheName": "pets",
+        "instanceId": "instance-?",
         "size": 0
       },
       {
         "appName": "pet-clinic",
-        "instanceId": "instance-0",
         "cacheName": "clients",
+        "instanceId": "instance-?",
         "size": 0
       }
     ],

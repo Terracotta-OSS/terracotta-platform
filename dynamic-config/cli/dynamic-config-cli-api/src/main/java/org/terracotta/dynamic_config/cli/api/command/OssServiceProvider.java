@@ -23,7 +23,7 @@ import org.terracotta.diagnostic.client.connection.ConcurrentDiagnosticServicePr
 import org.terracotta.diagnostic.client.connection.DefaultDiagnosticServiceProvider;
 import org.terracotta.diagnostic.client.connection.DiagnosticServiceProvider;
 import org.terracotta.diagnostic.model.KitInformation;
-import org.terracotta.dynamic_config.api.json.DynamicConfigApiJsonModule;
+import org.terracotta.dynamic_config.api.json.DynamicConfigJsonModule;
 import org.terracotta.dynamic_config.api.model.NodeContext;
 import org.terracotta.dynamic_config.cli.api.json.CliJsonModule;
 import org.terracotta.dynamic_config.cli.api.nomad.DefaultNomadManager;
@@ -115,7 +115,9 @@ public class OssServiceProvider implements ServiceProvider {
   }
 
   protected Json.Factory createJsonFactory(Configuration config) {
-    return new DefaultJsonFactory().withModules(new DynamicConfigApiJsonModule(), createCliJsonModule(config));
+    return new DefaultJsonFactory()
+        .withModule(new DynamicConfigJsonModule())
+        .withModule(createCliJsonModule(config));
   }
 
   protected Json.Module createCliJsonModule(Configuration config) {

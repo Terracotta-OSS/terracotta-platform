@@ -23,7 +23,6 @@ import org.terracotta.json.Json;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -213,7 +212,7 @@ public class ClusterTest extends AbstractTest {
     final Json json = new DefaultJsonFactory().create();
 
     Map<String, Object> actual = json.mapToObject(cluster1.toMap());
-    Map<String, Object> expected = json.parseObject(new File("src/test/resources/cluster.json"));
+    Map<String, Object> expected = json.parseObject(getClass().getResource("/cluster.json"));
 
     assertEquals(expected, actual);
   }

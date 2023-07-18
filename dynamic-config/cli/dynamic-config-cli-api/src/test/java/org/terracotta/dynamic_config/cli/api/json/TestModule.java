@@ -15,30 +15,17 @@
  */
 package org.terracotta.dynamic_config.cli.api.json;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.terracotta.dynamic_config.cli.api.SimpleNomadChange;
-import org.terracotta.json.Json;
+import org.terracotta.json.gson.GsonConfig;
+import org.terracotta.json.gson.GsonModule;
+import org.terracotta.nomad.client.change.NomadChange;
 
 /**
  * @author Mathieu Carbou
  */
-public class TestModule extends SimpleModule implements Json.Module {
-  private static final long serialVersionUID = 1L;
-
-  public TestModule() {
-    super(TestModule.class.getSimpleName(), new Version(1, 0, 0, null, null, null));
-
-    setMixInAnnotation(SimpleNomadChange.class, SimpleNomadChangeMixin.class);
-  }
-
-  public static class SimpleNomadChangeMixin extends SimpleNomadChange {
-    @JsonCreator
-    public SimpleNomadChangeMixin(@JsonProperty(value = "change", required = true) String change,
-                             @JsonProperty(value = "summary", required = true) String summary) {
-      super(change, summary);
-    }
+public class TestModule implements GsonModule {
+  @Override
+  public void configure(GsonConfig config) {
+    config.registerSubtype(NomadChange.class, SimpleNomadChange.class);
   }
 }

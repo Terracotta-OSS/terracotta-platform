@@ -39,14 +39,7 @@
     <!-- required to access all the json modules for dynamic config -->
     <dependency>
       <groupId>org.terracotta.dynamic-config</groupId>
-      <artifactId>dynamic-config-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <!-- for json mapping of request / response over the entity -->
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-json-support</artifactId>
+      <artifactId>dynamic-config-api-json</artifactId>
       <version>${project.version}</version>
     </dependency>
 

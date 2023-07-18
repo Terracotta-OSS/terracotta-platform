@@ -45,15 +45,5 @@
       <artifactId>common-nomad</artifactId>
       <version>${project.version}</version>
     </dependency>
-
-    <!-- for json mapping module -->
-    <!-- optional required by felix to correctly create the optional attribute in Import-Package manifest entry -->
-    <dependency>
-      <groupId>org.terracotta.common</groupId>
-      <artifactId>common-json-support</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-      <optional>true</optional>
-    </dependency>
   </dependencies>
 </project>

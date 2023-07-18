@@ -1,11 +1,11 @@
 {
   "activateTime": 0,
   "bindAddress": "0.0.0.0",
-  "bindPort": 26915,
-  "buildId": "2022-07-12 at 18:45:48 UTC (Revision 375e574fda12dca7df4cab9ec1d1ba55a2793f9d from UNKNOWN)",
-  "groupPort": 43635,
+  "bindPort": 0,
+  "buildId": "Build ID",
+  "groupPort": 0,
   "hostAddress": "127.0.0.1",
-  "hostName": "localhost",
+  "hostName": "<hostname>",
   "id": "stripe-PASSIVE",
   "serverEntities": [
     {
@@ -37,13 +37,13 @@
             "descriptors": [
               {
                 "alias": "primary-server-resource",
-                "availableAtTime": 67108864,
+                "availableAtTime": 0,
                 "capacity": 67108864,
                 "consumerId": "6",
                 "type": "OffHeapResource"
               },
               {
-                "time": 1669204915294,
+                "time": 0,
                 "type": "OffHeapResourceSettingsManagementProvider"
               }
             ],
@@ -208,7 +208,7 @@
                 "type": "ServerCache"
               },
               {
-                "time": 1669204915577,
+                "time": 0,
                 "type": "ServerCacheSettings"
               }
             ],
@@ -348,7 +348,7 @@
                 "type": "ServerCache"
               },
               {
-                "time": 1669204915515,
+                "time": 0,
                 "type": "ServerCacheSettings"
               }
             ],
@@ -413,8 +413,8 @@
     }
   ],
   "serverName": "stripe-PASSIVE",
-  "startTime": 1669204913737,
+  "startTime": 0,
   "state": "PASSIVE",
   "upTimeSec": 0,
-  "version": "5.9.5"
+  "version": "<version>"
 }
