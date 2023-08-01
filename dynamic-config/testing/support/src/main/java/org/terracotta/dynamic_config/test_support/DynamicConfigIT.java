@@ -155,7 +155,7 @@ public class DynamicConfigIT {
     ClusterDefinition clusterDef = getClass().getAnnotation(ClusterDefinition.class);
     this.testRules = RuleChain.emptyRuleChain()
         .around(tmpDir = new TmpDir(parentTmpDir, false))
-        .around(angela = new AngelaRule(angelaOrchestratorRule::getAngelaOrchestrator, createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers()), false, false) {
+        .around(angela = new AngelaRule(angelaOrchestratorRule::getAngelaOrchestrator, null, false, false) {
           ConfigurationContext oldConfiguration;
 
           @Override
@@ -169,6 +169,8 @@ public class DynamicConfigIT {
             InlineServers inline = description.getAnnotation(InlineServers.class);
             if (inline != null) {
               oldConfiguration = configure(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), inline.value()));
+            } else {
+              configure(createConfigurationContext(clusterDef.stripes(), clusterDef.nodesPerStripe(), clusterDef.netDisruptionEnabled(), clusterDef.inlineServers()));
             }
             super.before(description);
           }
